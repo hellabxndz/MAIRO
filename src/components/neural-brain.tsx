@@ -1,7 +1,12 @@
-// A stylized neural-network "brain" visual for the marketing hero. Pure SVG +
-// CSS/SMIL animation — no canvas/WebGL — so it server-renders its markup and
-// costs nothing idle. Dragging is handled by the caller (see hero-brain.tsx),
-// this component just renders the visual.
+"use client";
+
+import { useRef } from "react";
+
+// A stylized, cursor-reactive neural-network "brain" visual for the
+// marketing hero. Move your mouse over it: nearby nodes light up and scale,
+// and a live web of connections draws from your cursor to the closest ones —
+// like the network is sensing where you are. Pure SVG + refs (no React
+// re-renders per mouse move, no canvas/WebGL).
 
 type Node = { x: number; y: number; r: number; delay: number; hue: "violet" | "cyan" | "fuchsia" };
 
@@ -32,8 +37,6 @@ const EDGES: [number, number][] = [
   [3, 13], [4, 14], [7, 15], [7, 16], [8, 13], [9, 14],
 ];
 
-// A handful of edges get a traveling spark to sell the "signal flowing
-// through the network" feel.
 const SPARK_EDGES = [0, 3, 8, 12, 16, 20];
 
 const HUE_FILL: Record<Node["hue"], string> = {
@@ -42,9 +45,83 @@ const HUE_FILL: Record<Node["hue"], string> = {
   fuchsia: "#f0abfc",
 };
 
+const VIEW_W = 600;
+const VIEW_H = 480;
+const REACT_RADIUS = 130; // how far a node "feels" the cursor, in viewBox units
+const LINK_COUNT = 4; // how many of the nearest nodes get a live link to the cursor
+
 export function NeuralBrain({ className = "" }: { className?: string }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const nodeRefs = useRef<(SVGCircleElement | null)[]>([]);
+  const linkRefs = useRef<(SVGLineElement | null)[]>([]);
+  const cursorDotRef = useRef<SVGCircleElement>(null);
+  const frame = useRef<number | null>(null);
+
+  const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * VIEW_W;
+    const py = ((e.clientY - rect.top) / rect.height) * VIEW_H;
+
+    if (frame.current) cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      cursorDotRef.current?.setAttribute("cx", String(px));
+      cursorDotRef.current?.setAttribute("cy", String(py));
+      cursorDotRef.current?.setAttribute("opacity", "1");
+
+      const distances = NODES.map((n, i) => ({
+        i,
+        d: Math.hypot(n.x - px, n.y - py),
+      })).sort((a, b) => a.d - b.d);
+
+      NODES.forEach((n, i) => {
+        const el = nodeRefs.current[i];
+        if (!el) return;
+        const d = Math.hypot(n.x - px, n.y - py);
+        const proximity = Math.max(0, 1 - d / REACT_RADIUS);
+        el.style.transform = `scale(${1 + proximity * 0.9})`;
+        el.style.filter = proximity > 0.05 ? `brightness(${1 + proximity})` : "";
+      });
+
+      for (let k = 0; k < LINK_COUNT; k++) {
+        const link = linkRefs.current[k];
+        if (!link) continue;
+        const target = distances[k];
+        if (!target || target.d > REACT_RADIUS) {
+          link.setAttribute("opacity", "0");
+          continue;
+        }
+        const n = NODES[target.i];
+        link.setAttribute("x1", String(px));
+        link.setAttribute("y1", String(py));
+        link.setAttribute("x2", String(n.x));
+        link.setAttribute("y2", String(n.y));
+        link.setAttribute("opacity", String(0.7 * (1 - target.d / REACT_RADIUS)));
+      }
+    });
+  };
+
+  const handleLeave = () => {
+    cursorDotRef.current?.setAttribute("opacity", "0");
+    nodeRefs.current.forEach((el) => {
+      if (!el) return;
+      el.style.transform = "scale(1)";
+      el.style.filter = "";
+    });
+    linkRefs.current.forEach((link) => link?.setAttribute("opacity", "0"));
+  };
+
   return (
-    <svg viewBox="0 0 600 480" className={className} role="img" aria-label="Animated neural network visualization">
+    <svg
+      ref={svgRef}
+      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+      className={className}
+      role="img"
+      aria-label="Interactive neural network visualization — move your cursor over it"
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+    >
       <defs>
         <radialGradient id="nb-core" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#e9d5ff" />
@@ -65,7 +142,6 @@ export function NeuralBrain({ className = "" }: { className?: string }) {
         </filter>
       </defs>
 
-      {/* Slowly rotating orbit rings for the "orbiting a core" feel */}
       <g stroke="#a855f7" strokeOpacity={0.25} fill="none">
         <ellipse cx={300} cy={220} rx={170} ry={80} className="nb-orbit-a" strokeDasharray="2 8" />
         <ellipse cx={300} cy={220} rx={90} ry={160} className="nb-orbit-b" strokeDasharray="2 8" />
@@ -87,7 +163,6 @@ export function NeuralBrain({ className = "" }: { className?: string }) {
         ))}
       </g>
 
-      {/* Traveling sparks along a few edges */}
       <g filter="url(#nb-glow)">
         {SPARK_EDGES.map((edgeIndex, i) => {
           const [a, b] = EDGES[edgeIndex];
@@ -104,25 +179,34 @@ export function NeuralBrain({ className = "" }: { className?: string }) {
         })}
       </g>
 
+      {/* Live links from the cursor to the nearest nodes */}
+      <g stroke="#f5f3ff" strokeWidth={1} filter="url(#nb-glow)">
+        {Array.from({ length: LINK_COUNT }).map((_, i) => (
+          <line key={i} ref={(el) => { linkRefs.current[i] = el; }} opacity={0} />
+        ))}
+      </g>
+
       <g filter="url(#nb-glow)">
         {NODES.map((n, i) => (
           <circle
             key={i}
+            ref={(el) => { nodeRefs.current[i] = el; }}
             cx={n.x}
             cy={n.y}
             r={n.r}
             fill={i === 0 ? "#f5f3ff" : HUE_FILL[n.hue]}
             className="nb-node"
-            style={{ animationDelay: `${n.delay}s` }}
+            style={{ animationDelay: `${n.delay}s`, transformOrigin: `${n.x}px ${n.y}px` }}
           />
         ))}
+        {/* The cursor's own point in the network */}
+        <circle ref={cursorDotRef} r={4} fill="#ffffff" opacity={0} style={{ transition: "opacity 0.2s" }} />
       </g>
 
       <style>{`
         .nb-node {
           animation: nb-pulse 3.2s ease-in-out infinite;
-          transform-origin: center;
-          transform-box: fill-box;
+          transition: transform 0.15s ease-out, filter 0.15s ease-out;
         }
         .nb-edge {
           animation: nb-flow 4s ease-in-out infinite;
@@ -141,8 +225,8 @@ export function NeuralBrain({ className = "" }: { className?: string }) {
           transform-origin: 300px 220px;
         }
         @keyframes nb-pulse {
-          0%, 100% { opacity: 0.55; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.35); }
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
         }
         @keyframes nb-flow {
           0%, 100% { opacity: 0.15; }
