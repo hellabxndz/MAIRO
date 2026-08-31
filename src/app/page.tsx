@@ -28,8 +28,9 @@ const agents = [
 
 export default function Home() {
   return (
-    <div className="relative flex-1 overflow-hidden bg-[#050507]">
-      {/* Ambient background glow */}
+    <div className="relative flex-1 bg-[#050507]">
+      {/* Ambient background glow. overflow-hidden lives on this inner layer,
+          not an ancestor of <header>, so it doesn't break position: sticky. */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/25 blur-[120px]" />
         <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-cyan-500/20 blur-[120px]" />
@@ -37,25 +38,27 @@ export default function Home() {
       </div>
 
       <div className="relative">
-        <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-          <span className="text-lg font-semibold tracking-tight text-white">MAIRO</span>
-          <nav className="flex items-center gap-6 text-sm text-neutral-300">
-            <a href="#how-it-works" className="hover:text-white">
-              How it works
-            </a>
-            <a href="#agents" className="hover:text-white">
-              AI specialists
-            </a>
-            <Link href="/sign-in" className="hover:text-white">
-              Sign in
-            </Link>
-            <Link
-              href="/sign-up"
-              className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 font-medium text-black shadow-[0_0_20px_-4px_rgba(139,92,246,0.7)] transition hover:shadow-[0_0_28px_-2px_rgba(139,92,246,0.9)]"
-            >
-              Get started
-            </Link>
-          </nav>
+        <header className="sticky top-0 z-20 border-b border-white/5 bg-[#050507]/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <span className="text-lg font-semibold tracking-tight text-white">MAIRO</span>
+            <nav className="flex items-center gap-6 text-sm text-neutral-300">
+              <a href="#how-it-works" className="hover:text-white">
+                How it works
+              </a>
+              <a href="#agents" className="hover:text-white">
+                AI specialists
+              </a>
+              <Link href="/sign-in" className="hover:text-white">
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 font-medium text-black shadow-[0_0_20px_-4px_rgba(139,92,246,0.7)] transition hover:shadow-[0_0_28px_-2px_rgba(139,92,246,0.9)]"
+              >
+                Get started
+              </Link>
+            </nav>
+          </div>
         </header>
 
         <section className="mx-auto grid max-w-6xl items-center gap-8 px-6 pt-16 pb-24 lg:grid-cols-2 lg:pt-20">
@@ -76,18 +79,20 @@ export default function Home() {
               become an ads expert. Tell us your goal and budget — our AI plans, builds,
               and manages your campaigns for you.
             </p>
-            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
+            <div className="mt-10 flex flex-col items-stretch gap-4 sm:flex-row lg:justify-start">
               <Link
                 href="/sign-up"
-                className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 text-sm font-medium text-black shadow-[0_0_30px_-6px_rgba(139,92,246,0.8)] transition hover:shadow-[0_0_40px_-4px_rgba(139,92,246,1)]"
+                className="group flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-8 py-4 text-base font-semibold text-black shadow-[0_0_30px_-6px_rgba(139,92,246,0.8)] transition hover:scale-[1.03] hover:shadow-[0_0_45px_-4px_rgba(139,92,246,1)]"
               >
-                Start your first plan
+                Start your plan now
+                <span className="transition group-hover:translate-x-1">→</span>
               </Link>
               <a
                 href="#how-it-works"
-                className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white hover:border-violet-400/50 hover:bg-violet-500/5"
+                className="group flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/[0.03] px-8 py-4 text-base font-semibold text-white transition hover:scale-[1.03] hover:border-violet-400/60 hover:bg-violet-500/10"
               >
                 See how it works
+                <span className="transition group-hover:translate-y-0.5">↓</span>
               </a>
             </div>
           </div>
