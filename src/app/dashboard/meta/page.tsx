@@ -1,0 +1,73 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { Card, PageHeader, Badge, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
+import { disconnectMetaAction } from "@/lib/actions/meta-actions";
+
+export default async function MetaConnectionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; connected?: string }>;
+}) {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/sign-in");
+
+  const { error, connected } = await searchParams;
+
+  const metaAccount = await db.metaAdAccount.findUnique({
+    where: { organizationId: session.user.organizationId },
+  });
+
+  return (
+    <div>
+      <PageHeader
+        title="Meta connection"
+        description="Connect your Facebook/Instagram ad account so MyRo can launch and manage campaigns for you."
+      />
+
+      {error && (
+        <Card className="mb-6 border-red-500/30 bg-red-500/[0.06]">
+          <p className="text-sm text-red-300">{decodeURIComponent(error)}</p>
+        </Card>
+      )}
+      {connected && (
+        <Card className="mb-6 border-emerald-500/30 bg-emerald-500/[0.06]">
+          <p className="text-sm text-emerald-300">Meta account connected successfully.</p>
+        </Card>
+      )}
+
+      <Card>
+        {metaAccount ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Badge tone={metaAccount.status === "CONNECTED" ? "green" : "red"}>
+                {metaAccount.status}
+              </Badge>
+              <span className="text-sm text-neutral-400">
+                Ad account {metaAccount.metaAdAccountId}
+              </span>
+            </div>
+            <p className="text-sm text-neutral-500">
+              Connected {metaAccount.connectedAt.toLocaleDateString()}
+            </p>
+            <form action={disconnectMetaAction}>
+              <button type="submit" className={secondaryButtonClass}>
+                Disconnect
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-400">
+              You&apos;ll be redirected to Facebook to log in and grant MyRo access to your
+              ad account.
+            </p>
+            <a href="/api/meta/connect" className={primaryButtonClass}>
+              Connect Meta account
+            </a>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

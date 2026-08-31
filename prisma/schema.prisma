@@ -1,0 +1,235 @@
+// MyRo (MAIRO) — schema for the ad-management SaaS platform.
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth / accounts -------------------------------------------------------
+
+enum UserRole {
+  OWNER // MyRo staff — sees the AIOS dashboard and every client org
+  CLIENT // a business owner using the app to run their ads
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  role         UserRole  @default(CLIENT)
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  agentThreads AgentThread[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// --- Client business -------------------------------------------------------
+
+enum AdGoal {
+  LEADS
+  SALES
+  AWARENESS
+  TRAFFIC
+  APP_PROMOTION
+}
+
+enum PlanStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  ACTIVE
+  COMPLETE
+}
+
+enum SubscriptionTier {
+  NONE
+  STARTER
+  GROWTH
+  SCALE
+}
+
+model Organization {
+  id                 String    @id @default(cuid())
+  name               String
+  website            String?
+  industry           String?
+  timezone           String    @default("America/New_York")
+  subscriptionTier   SubscriptionTier @default(NONE)
+
+  users              User[]
+  intake             OnboardingIntake?
+  monthlyPlans       MonthlyPlan[]
+  metaAdAccount      MetaAdAccount?
+  campaigns          Campaign[]
+  creativeRequests   CreativeRequest[]
+  agentThreads       AgentThread[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model OnboardingIntake {
+  id               String   @id @default(cuid())
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String   @unique
+
+  primaryGoal      AdGoal
+  monthlyBudgetCents Int
+  targetAudience   String?
+  brandVoice       String?
+  competitors      String?
+  notes            String?
+
+  completedAt      DateTime @default(now())
+}
+
+model MonthlyPlan {
+  id               String   @id @default(cuid())
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+
+  month            String   // e.g. "2026-09"
+  status           PlanStatus @default(DRAFT)
+  strategySummary  String   @db.Text // AI-generated narrative
+  budgetAllocationJson String @db.Text // JSON: { channel, percent, amountCents }[]
+  keyMetrics       String?  @db.Text // JSON of target KPIs
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([organizationId, month])
+}
+
+// --- Meta integration --------------------------------------------------
+
+enum MetaConnectionStatus {
+  DISCONNECTED
+  CONNECTED
+  TOKEN_EXPIRED
+  ERROR
+}
+
+model MetaAdAccount {
+  id                String   @id @default(cuid())
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String   @unique
+
+  metaAdAccountId   String   // act_xxxxxxxx
+  metaBusinessId    String?
+  pageId            String?
+  accessToken       String   @db.Text // long-lived user/system token
+  tokenExpiresAt    DateTime?
+  status            MetaConnectionStatus @default(CONNECTED)
+
+  campaigns         Campaign[]
+
+  connectedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model Campaign {
+  id               String   @id @default(cuid())
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId   String
+  metaAdAccount    MetaAdAccount? @relation(fields: [metaAdAccountId], references: [id])
+  metaAdAccountId  String?
+
+  metaCampaignId   String?  // null until pushed live to Meta
+  name             String
+  objective        AdGoal
+  status           CampaignStatus @default(DRAFT)
+  dailyBudgetCents Int
+  startDate        DateTime?
+  endDate          DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// --- Creative production ----------------------------------------------
+
+enum CreativeType {
+  IMAGE
+  VIDEO
+  COPY
+  CAROUSEL
+}
+
+enum CreativeStatus {
+  REQUESTED
+  IN_PROGRESS
+  IN_REVIEW
+  APPROVED
+  DELIVERED
+}
+
+model CreativeRequest {
+  id             String   @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  month          String   // e.g. "2026-09"
+  type           CreativeType
+  brief          String   @db.Text
+  status         CreativeStatus @default(REQUESTED)
+  assetUrl       String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// --- AI agents -----------------------------------------------------------
+
+enum AgentType {
+  STRATEGIST
+  CREATIVE
+  SUPPORT
+  OWNER_COPILOT
+}
+
+model AgentThread {
+  id             String   @id @default(cuid())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
+  agentType      AgentType
+  title          String?
+  messages       AgentMessage[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model AgentMessage {
+  id        String   @id @default(cuid())
+  thread    AgentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId  String
+
+  role      MessageRole
+  content   String   @db.Text
+
+  createdAt DateTime @default(now())
+}
