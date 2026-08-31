@@ -1,5 +1,10 @@
+"use client";
+
+import { useRef } from "react";
+
 // A stylized neural-network "brain" visual for the marketing hero. Pure SVG +
-// CSS animation (no canvas/JS), so it server-renders and costs nothing at runtime.
+// CSS animation for the pulsing, plus a light cursor-tracked parallax tilt —
+// no canvas/WebGL, so it server-renders its markup and costs nothing idle.
 
 type Node = { x: number; y: number; r: number; delay: number };
 
@@ -26,12 +31,37 @@ const EDGES: [number, number][] = [
 ];
 
 export function NeuralBrain({ className = "" }: { className?: string }) {
+  const groupRef = useRef<SVGGElement>(null);
+  const frame = useRef<number | null>(null);
+
+  const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+
+    if (frame.current) cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      groupRef.current?.style.setProperty(
+        "transform",
+        `rotateX(${-py * 10}deg) rotateY(${px * 14}deg) translate(${px * 10}px, ${py * 10}px)`
+      );
+    });
+  };
+
+  const handleLeave = () => {
+    groupRef.current?.style.setProperty("transform", "rotateX(0deg) rotateY(0deg) translate(0,0)");
+  };
+
   return (
     <svg
       viewBox="0 0 600 480"
       className={className}
       role="img"
       aria-label="Animated neural network visualization"
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ perspective: 900 }}
     >
       <defs>
         <radialGradient id="nb-core" cx="50%" cy="50%" r="50%">
@@ -52,34 +82,42 @@ export function NeuralBrain({ className = "" }: { className?: string }) {
         </filter>
       </defs>
 
-      <circle cx={300} cy={220} r={90} fill="url(#nb-core)" opacity={0.35} />
+      <g
+        ref={groupRef}
+        style={{
+          transformOrigin: "300px 240px",
+          transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        <circle cx={300} cy={220} r={90} fill="url(#nb-core)" opacity={0.35} />
 
-      <g stroke="url(#nb-edge)" strokeWidth={1} opacity={0.35}>
-        {EDGES.map(([a, b], i) => (
-          <line
-            key={i}
-            x1={NODES[a].x}
-            y1={NODES[a].y}
-            x2={NODES[b].x}
-            y2={NODES[b].y}
-            className="nb-edge"
-            style={{ animationDelay: `${(i % 7) * 0.3}s` }}
-          />
-        ))}
-      </g>
+        <g stroke="url(#nb-edge)" strokeWidth={1} opacity={0.35}>
+          {EDGES.map(([a, b], i) => (
+            <line
+              key={i}
+              x1={NODES[a].x}
+              y1={NODES[a].y}
+              x2={NODES[b].x}
+              y2={NODES[b].y}
+              className="nb-edge"
+              style={{ animationDelay: `${(i % 7) * 0.3}s` }}
+            />
+          ))}
+        </g>
 
-      <g filter="url(#nb-glow)">
-        {NODES.map((n, i) => (
-          <circle
-            key={i}
-            cx={n.x}
-            cy={n.y}
-            r={n.r}
-            fill={i === 0 ? "#f5f3ff" : "#a5b4fc"}
-            className="nb-node"
-            style={{ animationDelay: `${n.delay}s` }}
-          />
-        ))}
+        <g filter="url(#nb-glow)">
+          {NODES.map((n, i) => (
+            <circle
+              key={i}
+              cx={n.x}
+              cy={n.y}
+              r={n.r}
+              fill={i === 0 ? "#f5f3ff" : "#a5b4fc"}
+              className="nb-node"
+              style={{ animationDelay: `${n.delay}s` }}
+            />
+          ))}
+        </g>
       </g>
 
       <style>{`
