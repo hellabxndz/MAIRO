@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NeuralBrain } from "@/components/neural-brain";
+import { HeroBrain } from "@/components/hero-brain";
 import { CursorGlow } from "@/components/cursor-glow";
 import { Reveal } from "@/components/reveal";
 import { TiltCard } from "@/components/tilt-card";
@@ -107,7 +107,10 @@ export default function Home() {
           </Reveal>
 
           <Reveal delay={0.2} className="relative mx-auto aspect-[5/4] w-full max-w-lg">
-            <NeuralBrain className="h-full w-full" />
+            <HeroBrain className="h-full w-full" />
+            <p className="pointer-events-none absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs text-neutral-600">
+              drag me
+            </p>
           </Reveal>
         </section>
 
