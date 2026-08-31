@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen">
       <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 p-6">
         <Link href="/" className="mb-1 text-lg font-semibold">
-          MyRo
+          MAIRO
         </Link>
         <p className="mb-8 truncate text-sm text-neutral-500">{organization?.name}</p>
 

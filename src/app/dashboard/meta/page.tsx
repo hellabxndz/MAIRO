@@ -22,7 +22,7 @@ export default async function MetaConnectionPage({
     <div>
       <PageHeader
         title="Meta connection"
-        description="Connect your Facebook/Instagram ad account so MyRo can launch and manage campaigns for you."
+        description="Connect your Facebook/Instagram ad account so MAIRO can launch and manage campaigns for you."
       />
 
       {error && (
@@ -59,7 +59,7 @@ export default async function MetaConnectionPage({
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-neutral-400">
-              You&apos;ll be redirected to Facebook to log in and grant MyRo access to your
+              You&apos;ll be redirected to Facebook to log in and grant MAIRO access to your
               ad account.
             </p>
             <a href="/api/meta/connect" className={primaryButtonClass}>

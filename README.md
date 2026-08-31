@@ -1,7 +1,7 @@
-# MyRo
+# MAIRO
 
-MyRo is an ad-management platform for business owners who don't want to learn
-Meta Ads. A client sets a goal and a monthly budget; MyRo generates a monthly
+MAIRO is an ad-management platform for business owners who don't want to learn
+Meta Ads. A client sets a goal and a monthly budget; MAIRO generates a monthly
 strategy, launches and manages the campaigns on their connected Meta ad
 account, and gives them AI specialists (Strategist, Creative, Support) to talk
 to. The owner gets a separate **AIOS** dashboard (`/aios`) to run every client

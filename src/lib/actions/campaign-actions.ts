@@ -17,7 +17,7 @@ export type CampaignActionState = { error?: string } | undefined;
 
 // Creates the campaign record, and pushes it live to Meta immediately if the
 // organization has a connected ad account. Otherwise it's saved as a draft
-// the MyRo team can push once Meta is connected.
+// the MAIRO team can push once Meta is connected.
 export async function createCampaignAction(
   _prevState: CampaignActionState,
   formData: FormData

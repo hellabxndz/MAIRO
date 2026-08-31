@@ -1,7 +1,7 @@
 import { metaGraphRequest } from "@/lib/meta/client";
 import type { AdGoal } from "@/generated/prisma/enums";
 
-// Maps MyRo's simplified client-facing goal to a Meta campaign objective.
+// Maps MAIRO's simplified client-facing goal to a Meta campaign objective.
 // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/#odax
 const OBJECTIVE_MAP: Record<AdGoal, string> = {
   LEADS: "OUTCOME_LEADS",

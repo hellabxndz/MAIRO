@@ -13,7 +13,7 @@ export default async function SetupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-16 text-white">
       <div className="w-full max-w-sm">
-        <p className="mb-8 text-center text-lg font-semibold tracking-tight">MyRo</p>
+        <p className="mb-8 text-center text-lg font-semibold tracking-tight">MAIRO</p>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-xl">
           <h1 className="mb-1 text-xl font-semibold">Create your owner account</h1>
           <p className="mb-6 text-sm text-neutral-400">

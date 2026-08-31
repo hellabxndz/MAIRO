@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           href="/"
           className="mb-8 block text-center text-lg font-semibold tracking-tight text-white"
         >
-          MyRo
+          MAIRO
         </Link>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-xl">
           {children}

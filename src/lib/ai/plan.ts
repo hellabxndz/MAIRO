@@ -52,7 +52,7 @@ export async function generateMonthlyPlan(input: PlanInput): Promise<GeneratedPl
     model: agentModel,
     schema: planSchema,
     system:
-      "You are MyRo's ad strategist AI. You write a first-month Meta ads plan for a " +
+      "You are MAIRO's ad strategist AI. You write a first-month Meta ads plan for a " +
       "small business owner. Be specific and realistic for the stated budget — do not " +
       "recommend tactics that require a budget far larger than what's given.",
     prompt: `Business: ${input.businessName}

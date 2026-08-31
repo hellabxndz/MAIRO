@@ -16,7 +16,7 @@ export function SignInForm() {
   return (
     <div>
       <h1 className="mb-1 text-xl font-semibold text-white">Welcome back</h1>
-      <p className="mb-6 text-sm text-neutral-400">Sign in to your MyRo dashboard.</p>
+      <p className="mb-6 text-sm text-neutral-400">Sign in to your MAIRO dashboard.</p>
 
       <form action={formAction} className="space-y-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />

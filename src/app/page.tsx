@@ -29,7 +29,7 @@ export default function Home() {
   return (
     <div className="flex-1">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <span className="text-lg font-semibold tracking-tight">MyRo</span>
+        <span className="text-lg font-semibold tracking-tight">MAIRO</span>
         <nav className="flex items-center gap-6 text-sm text-neutral-300">
           <a href="#how-it-works" className="hover:text-white">
             How it works
@@ -56,7 +56,7 @@ export default function Home() {
           <span className="text-neutral-400">Without learning Meta ads.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-400">
-          MyRo is the ad platform for business owners who don&apos;t have time to become
+          MAIRO is the ad platform for business owners who don&apos;t have time to become
           an ads expert. Tell us your goal and budget — we plan, build, and manage your
           campaigns for you.
         </p>
@@ -134,7 +134,7 @@ export default function Home() {
 
       <footer className="border-t border-white/10 py-8">
         <div className="mx-auto max-w-6xl px-6 text-sm text-neutral-500">
-          © {new Date().getFullYear()} MyRo. All rights reserved.
+          © {new Date().getFullYear()} MAIRO. All rights reserved.
         </div>
       </footer>
     </div>

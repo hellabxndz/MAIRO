@@ -14,7 +14,7 @@ export default function SignUpPage() {
     <div>
       <h1 className="mb-1 text-xl font-semibold text-white">Create your account</h1>
       <p className="mb-6 text-sm text-neutral-400">
-        Set up your business and start running ads with MyRo.
+        Set up your business and start running ads with MAIRO.
       </p>
 
       <form action={formAction} className="space-y-4">

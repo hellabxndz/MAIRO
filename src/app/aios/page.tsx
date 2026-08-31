@@ -19,7 +19,7 @@ export default async function AiosOverviewPage() {
 
   return (
     <div>
-      <PageHeader title="MyRo overview" description="Everything running across every client." />
+      <PageHeader title="MAIRO overview" description="Everything running across every client." />
 
       <div className="grid gap-6 sm:grid-cols-4">
         <Card>

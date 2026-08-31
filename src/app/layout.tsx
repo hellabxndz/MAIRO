@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MyRo — Run your Meta ads without the guesswork",
+  title: "MAIRO — Run your Meta ads without the guesswork",
   description:
-    "MyRo plans, builds, and manages your Meta ad campaigns for you, backed by AI specialists and a real strategy every month.",
+    "MAIRO plans, builds, and manages your Meta ad campaigns for you, backed by AI specialists and a real strategy every month.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
