@@ -2,21 +2,23 @@
 
 import { useRef } from "react";
 
-// A restrained, monochrome constellation used as an ambient background layer
-// — not a hero centerpiece. White/gray only, one sparing accent on the
-// cursor's live links. Nodes barely breathe; the only strong reaction is to
-// the cursor, and even that stays subtle.
+// A galaxy-toned, cursor-reactive constellation. Move your mouse over it:
+// the nearest stars brighten and pull glowing violet/cyan threads to your
+// cursor, like you've reached into the network.
 
-type NodePos = { x: number; y: number; r: number };
+type NodePos = { x: number; y: number; r: number; hue: "white" | "violet" | "cyan" };
 
 const NODES: NodePos[] = [
-  { x: 300, y: 220, r: 2 }, { x: 140, y: 120, r: 1.4 }, { x: 460, y: 110, r: 1.4 },
-  { x: 90, y: 260, r: 1.2 }, { x: 500, y: 260, r: 1.2 }, { x: 210, y: 340, r: 1.6 },
-  { x: 390, y: 350, r: 1.6 }, { x: 300, y: 60, r: 1.2 }, { x: 60, y: 190, r: 1 },
-  { x: 540, y: 170, r: 1 }, { x: 300, y: 420, r: 1.4 }, { x: 150, y: 420, r: 1 },
-  { x: 450, y: 420, r: 1 }, { x: 30, y: 340, r: 0.9 }, { x: 570, y: 340, r: 0.9 },
-  { x: 220, y: 20, r: 0.9 }, { x: 380, y: 20, r: 0.9 }, { x: 250, y: 180, r: 1 },
-  { x: 350, y: 260, r: 1 }, { x: 180, y: 250, r: 1 },
+  { x: 300, y: 220, r: 2.6, hue: "white" }, { x: 140, y: 120, r: 1.6, hue: "violet" },
+  { x: 460, y: 110, r: 1.6, hue: "cyan" }, { x: 90, y: 260, r: 1.3, hue: "white" },
+  { x: 500, y: 260, r: 1.3, hue: "violet" }, { x: 210, y: 340, r: 1.8, hue: "cyan" },
+  { x: 390, y: 350, r: 1.8, hue: "white" }, { x: 300, y: 60, r: 1.3, hue: "violet" },
+  { x: 60, y: 190, r: 1.1, hue: "cyan" }, { x: 540, y: 170, r: 1.1, hue: "white" },
+  { x: 300, y: 420, r: 1.5, hue: "violet" }, { x: 150, y: 420, r: 1.1, hue: "cyan" },
+  { x: 450, y: 420, r: 1.1, hue: "white" }, { x: 30, y: 340, r: 1, hue: "violet" },
+  { x: 570, y: 340, r: 1, hue: "cyan" }, { x: 220, y: 20, r: 1, hue: "white" },
+  { x: 380, y: 20, r: 1, hue: "violet" }, { x: 250, y: 180, r: 1.1, hue: "cyan" },
+  { x: 350, y: 260, r: 1.1, hue: "white" }, { x: 180, y: 250, r: 1.1, hue: "violet" },
 ];
 
 const EDGES: [number, number][] = [
@@ -26,10 +28,16 @@ const EDGES: [number, number][] = [
   [0, 17], [0, 18], [1, 19], [17, 18],
 ];
 
+const HUE_FILL: Record<NodePos["hue"], string> = {
+  white: "#ffffff",
+  violet: "#d8b4fe",
+  cyan: "#a5f3fc",
+};
+
 const VIEW_W = 600;
 const VIEW_H = 480;
-const REACT_RADIUS = 150;
-const LINK_COUNT = 3;
+const REACT_RADIUS = 190;
+const LINK_COUNT = 5;
 
 export function AmbientNetwork({ className = "" }: { className?: string }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -41,8 +49,17 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
     const svg = svgRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width) * VIEW_W;
-    const py = ((e.clientY - rect.top) / rect.height) * VIEW_H;
+    // preserveAspectRatio="xMidYMid slice" scales the viewBox uniformly to
+    // COVER the element (like background-size: cover) and crops the
+    // overflow — a plain (clientX/width)*VIEW_W mapping is only correct
+    // when the element's aspect ratio happens to match the viewBox's. This
+    // inverts the actual cover transform so hit-testing lines up regardless
+    // of the element's shape.
+    const scale = Math.max(rect.width / VIEW_W, rect.height / VIEW_H);
+    const offsetX = (rect.width - VIEW_W * scale) / 2;
+    const offsetY = (rect.height - VIEW_H * scale) / 2;
+    const px = (e.clientX - rect.left - offsetX) / scale;
+    const py = (e.clientY - rect.top - offsetY) / scale;
 
     if (frame.current) cancelAnimationFrame(frame.current);
     frame.current = requestAnimationFrame(() => {
@@ -55,8 +72,8 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
         if (!el) return;
         const d = Math.hypot(n.x - px, n.y - py);
         const proximity = Math.max(0, 1 - d / REACT_RADIUS);
-        el.style.opacity = String(0.3 + proximity * 0.7);
-        el.style.transform = `scale(${1 + proximity * 0.6})`;
+        el.style.opacity = String(0.45 + proximity * 0.55);
+        el.style.transform = `scale(${1 + proximity * 1.4})`;
       });
 
       for (let k = 0; k < LINK_COUNT; k++) {
@@ -72,7 +89,7 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
         link.setAttribute("y1", String(py));
         link.setAttribute("x2", String(n.x));
         link.setAttribute("y2", String(n.y));
-        link.setAttribute("opacity", String(0.5 * (1 - target.d / REACT_RADIUS)));
+        link.setAttribute("opacity", String(0.75 * (1 - target.d / REACT_RADIUS)));
       }
     });
   };
@@ -80,7 +97,7 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
   const handleLeave = () => {
     nodeRefs.current.forEach((el) => {
       if (!el) return;
-      el.style.opacity = "0.3";
+      el.style.opacity = "0.45";
       el.style.transform = "scale(1)";
     });
     linkRefs.current.forEach((l) => l?.setAttribute("opacity", "0"));
@@ -95,19 +112,33 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
     >
-      <g stroke="#ffffff" strokeWidth={0.5} opacity={0.12}>
+      <defs>
+        <linearGradient id="an-link" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#67e8f9" />
+          <stop offset="100%" stopColor="#d8b4fe" />
+        </linearGradient>
+        <filter id="an-glow" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <g stroke="#c4b5fd" strokeWidth={0.6} opacity={0.18}>
         {EDGES.map(([a, b], i) => (
           <line key={i} x1={NODES[a].x} y1={NODES[a].y} x2={NODES[b].x} y2={NODES[b].y} />
         ))}
       </g>
 
-      <g stroke="#e0e7ff" strokeWidth={0.75}>
+      <g stroke="url(#an-link)" strokeWidth={1} filter="url(#an-glow)">
         {Array.from({ length: LINK_COUNT }).map((_, i) => (
           <line key={i} ref={(el) => { linkRefs.current[i] = el; }} opacity={0} />
         ))}
       </g>
 
-      <g>
+      <g filter="url(#an-glow)">
         {NODES.map((n, i) => (
           <circle
             key={i}
@@ -115,8 +146,8 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
             cx={n.x}
             cy={n.y}
             r={n.r}
-            fill="#ffffff"
-            opacity={0.3}
+            fill={HUE_FILL[n.hue]}
+            opacity={0.45}
             className="an-node"
             style={{ transformOrigin: `${n.x}px ${n.y}px`, transition: "opacity 0.2s, transform 0.2s" }}
           />
@@ -128,8 +159,8 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
         .an-node:nth-child(3n) { animation-delay: -2s; }
         .an-node:nth-child(3n+1) { animation-delay: -4s; }
         @keyframes an-breathe {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.45; }
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.65; }
         }
         @media (prefers-reduced-motion: reduce) {
           .an-node { animation: none; }

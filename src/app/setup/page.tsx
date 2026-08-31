@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { AiBackground } from "@/components/ai-background";
+import { Galaxy } from "@/components/galaxy";
 import { SetupForm } from "./setup-form";
 
 // This has to check the database fresh on every request (is there an OWNER
@@ -13,7 +13,7 @@ export default async function SetupPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-16 text-white">
-      <AiBackground />
+      <Galaxy />
       <div className="relative w-full max-w-sm">
         <p className="mb-8 text-center text-lg font-semibold tracking-tight">MAIRO</p>
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-[0_0_60px_-15px_rgba(255,255,255,0.15)] backdrop-blur-xl">

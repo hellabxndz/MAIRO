@@ -16,7 +16,7 @@ export function TextReveal({
   className?: string;
 }) {
   return (
-    <span className={`block overflow-hidden ${className}`}>
+    <span className={`pointer-events-none block overflow-hidden ${className}`}>
       <motion.span
         className="block"
         initial={{ y: "110%" }}

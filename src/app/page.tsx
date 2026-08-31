@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Grain } from "@/components/grain";
+import { Galaxy } from "@/components/galaxy";
 import { SiteNav } from "@/components/site-nav";
 import { HeroParallaxBg } from "@/components/hero-parallax-bg";
 import { Reveal } from "@/components/reveal";
@@ -33,24 +34,25 @@ const agents = [
 
 export default function Home() {
   return (
-    <div className="flex-1 bg-black">
+    <div className="relative flex-1">
+      <Galaxy />
       <Grain />
       <SiteNav />
 
       {/* Hero */}
       <section className="relative flex min-h-screen flex-col justify-center overflow-hidden px-6 sm:px-10">
         <HeroParallaxBg />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#030209]" />
 
-        <div className="relative mx-auto w-full max-w-[1400px] pt-24">
-          <Reveal duration={0.8}>
+        <div className="pointer-events-none relative mx-auto w-full max-w-[1400px] pt-24">
+          <Reveal duration={0.8} className="pointer-events-none">
             <p className="text-xs uppercase tracking-[0.25em] text-neutral-500">
               AI-run ad management
             </p>
           </Reveal>
 
           <h1
-            className="mt-8 font-medium leading-[0.95] text-white"
+            className="pointer-events-none mt-8 font-medium leading-[0.95] text-white"
             style={{ fontSize: "clamp(3rem, 9vw, 8.5rem)" }}
           >
             <TextReveal>Run winning</TextReveal>
@@ -59,16 +61,23 @@ export default function Home() {
             </TextReveal>
           </h1>
 
-          <div className="mt-12 flex flex-col items-start gap-10 sm:flex-row sm:items-end sm:justify-between">
-            <Reveal delay={0.4} className="max-w-sm">
+          <Reveal delay={0.25} className="pointer-events-none mt-8 max-w-xl">
+            <p className="text-lg leading-snug text-neutral-300">
+              Without having to learn how. You set the goal and budget — our AI plans,
+              creates, and runs the campaigns for you.
+            </p>
+          </Reveal>
+
+          <div className="pointer-events-none mt-10 flex flex-col items-start gap-10 sm:flex-row sm:items-end sm:justify-between">
+            <Reveal delay={0.4} className="pointer-events-none max-w-sm">
               <p className="text-sm leading-relaxed text-neutral-400">
-                MAIRO is the ad platform for business owners who don&apos;t have time to
-                become an ads expert. Tell us your goal and budget — our AI plans, builds,
-                and manages your campaigns for you.
+                MAIRO is the ad platform for business owners who&apos;d rather not become
+                an ads expert. No campaigns to configure, no jargon to learn — just a
+                monthly plan that runs itself.
               </p>
             </Reveal>
 
-            <Reveal delay={0.5} className="flex items-center gap-8">
+            <Reveal delay={0.5} className="pointer-events-auto flex items-center gap-8">
               <Magnetic>
                 <Link
                   href="/sign-up"
@@ -88,6 +97,10 @@ export default function Home() {
             </Reveal>
           </div>
         </div>
+
+        <p className="pointer-events-none absolute bottom-24 right-6 hidden text-xs uppercase tracking-[0.2em] text-neutral-600 sm:block sm:right-10">
+          move your cursor to interact
+        </p>
 
         <div className="pointer-events-none absolute bottom-10 left-1/2 hidden -translate-x-1/2 sm:block">
           <div className="h-10 w-px bg-gradient-to-b from-transparent via-white/30 to-transparent" />
