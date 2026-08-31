@@ -18,19 +18,20 @@ const PARTICLES = [
 
 export function AiBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#050507]">
-      {/* Depth-layered gradient orbs, each drifting on its own slow orbit */}
-      <div className="absolute left-[10%] top-[-10%] h-[45vw] w-[45vw] max-w-[600px] max-h-[600px] rounded-full bg-violet-600/25 blur-[110px] ai-bg-drift-a" />
-      <div className="absolute right-[5%] top-[20%] h-[38vw] w-[38vw] max-w-[500px] max-h-[500px] rounded-full bg-cyan-500/20 blur-[110px] ai-bg-drift-b" />
-      <div className="absolute left-[20%] bottom-[-10%] h-[35vw] w-[35vw] max-w-[460px] max-h-[460px] rounded-full bg-fuchsia-500/15 blur-[110px] ai-bg-drift-c" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-black">
+      {/* Depth-layered light sources, each drifting on its own slow orbit — kept to a
+          near-monochrome white/gray so accent color stays sparing across the site. */}
+      <div className="absolute left-[10%] top-[-10%] h-[45vw] w-[45vw] max-w-[600px] max-h-[600px] rounded-full bg-white/[0.06] blur-[110px] ai-bg-drift-a" />
+      <div className="absolute right-[5%] top-[20%] h-[38vw] w-[38vw] max-w-[500px] max-h-[500px] rounded-full bg-slate-400/[0.05] blur-[110px] ai-bg-drift-b" />
+      <div className="absolute left-[20%] bottom-[-10%] h-[35vw] w-[35vw] max-w-[460px] max-h-[460px] rounded-full bg-white/[0.04] blur-[110px] ai-bg-drift-c" />
 
       {/* Flowing data-stream lines */}
-      <svg className="absolute inset-0 h-full w-full opacity-40" preserveAspectRatio="none">
+      <svg className="absolute inset-0 h-full w-full opacity-30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="aib-line" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0" />
-            <stop offset="50%" stopColor="#c084fc" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="50%" stopColor="#ffffff" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d="M-100,120 C200,80 400,200 800,140" stroke="url(#aib-line)" strokeWidth="1" fill="none" className="ai-bg-flow" style={{ animationDelay: "0s" }} />
@@ -42,7 +43,7 @@ export function AiBackground() {
       {PARTICLES.map((p, i) => (
         <span
           key={i}
-          className="absolute h-1 w-1 rounded-full bg-violet-200/60 ai-bg-particle"
+          className="absolute h-1 w-1 rounded-full bg-white/50 ai-bg-particle"
           style={{
             left: `${p.x}%`,
             top: `${p.y}%`,
@@ -88,7 +89,7 @@ export function AiBackground() {
         }
         .ai-bg-particle {
           animation: ai-particle-drift linear infinite;
-          box-shadow: 0 0 6px 1px rgba(196,181,253,0.5);
+          box-shadow: 0 0 6px 1px rgba(255,255,255,0.35);
         }
         @keyframes ai-particle-drift {
           0% { transform: translateY(0) translateX(0); opacity: 0; }
