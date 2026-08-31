@@ -72,6 +72,75 @@ export async function signUpAction(
   return undefined;
 }
 
+const createOwnerSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+// First-run bootstrap: lets whoever gets here first create the OWNER account
+// through the browser, no terminal/database access needed. Only works while
+// zero OWNER accounts exist yet — see src/app/setup/page.tsx, which also
+// redirects away once one does.
+export async function createOwnerAction(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const parsed = createOwnerSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { name, email, password } = parsed.data;
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  try {
+    await db.$transaction(async (tx) => {
+      const ownerCount = await tx.user.count({ where: { role: "OWNER" } });
+      if (ownerCount > 0) {
+        throw new Error("OWNER_EXISTS");
+      }
+
+      const existing = await tx.user.findUnique({ where: { email } });
+      if (existing) {
+        throw new Error("EMAIL_TAKEN");
+      }
+
+      await tx.user.create({
+        data: { email, name, passwordHash, role: "OWNER" },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "OWNER_EXISTS") {
+      return { error: "An owner account already exists. Go to /sign-in instead." };
+    }
+    if (error instanceof Error && error.message === "EMAIL_TAKEN") {
+      return { error: "An account with that email already exists." };
+    }
+    throw error;
+  }
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/aios",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Account created, but sign-in failed. Please sign in manually." };
+    }
+    throw error;
+  }
+
+  return undefined;
+}
+
 export async function signInAction(
   _prevState: AuthActionState,
   formData: FormData

@@ -78,11 +78,16 @@ Client sign-up and the dashboard work without this — you'll just see a
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get
-into the AIOS dashboard at `/aios`, seed an owner account:
+into the AIOS dashboard at `/aios`, you need one `OWNER` account. Two ways:
 
-```bash
-OWNER_EMAIL=you@example.com OWNER_PASSWORD=a-strong-password npm run db:seed
-```
+- **From a browser (works on a deployed instance, no terminal needed):**
+  visit `/setup`. It only works once — the first account created there
+  becomes the OWNER, and the page redirects to `/sign-in` for everyone after
+  that. Do this immediately after your first deploy, before sharing the URL.
+- **From a terminal (local dev):**
+  ```bash
+  OWNER_EMAIL=you@example.com OWNER_PASSWORD=a-strong-password npm run db:seed
+  ```
 
 ### 7. Run it
 
