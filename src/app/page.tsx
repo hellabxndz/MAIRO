@@ -10,20 +10,20 @@ import { PLANS } from "@/lib/plans";
 
 const steps = [
   {
-    title: "Tell us your goal",
-    body: "Leads, sales, awareness, or traffic — and your monthly ad budget. Takes about two minutes.",
+    title: "Tell the AI your goal",
+    body: "Leads, sales, awareness, or traffic — and your monthly budget. Two minutes, in plain English. No ad settings to configure.",
   },
   {
-    title: "We build your plan",
-    body: "A real strategist and our AI plan your monthly campaigns, budget split, and creative calendar.",
+    title: "The AI writes your plan",
+    body: "It builds the month's campaigns, splits your budget across them, and lays out a creative calendar. You just approve it.",
   },
   {
-    title: "We create and launch",
-    body: "We write the ad copy, build the creative, and push live campaigns straight to your Meta ad account.",
+    title: "Ask it for the creative",
+    body: "Tell the AI what you want an ad to say and it writes the copy and builds the creative for you — as many versions as you need.",
   },
   {
-    title: "You watch it work",
-    body: "Track performance in one dashboard, and chat with an AI specialist anytime you have a question.",
+    title: "The AI runs the campaigns",
+    body: "It launches straight to your Meta ad account and keeps them running. You watch results in one dashboard and ask questions any time.",
   },
 ];
 
@@ -118,8 +118,9 @@ export default function Home() {
             </Reveal>
             <Reveal delay={0.1}>
               <h2 className="mt-6 text-4xl font-medium leading-[1.05] text-white sm:text-5xl">
-                From zero to
-                <br />a live campaign.
+                You ask.
+                <br />
+                The AI runs it.
               </h2>
             </Reveal>
           </div>

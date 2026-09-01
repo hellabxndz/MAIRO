@@ -154,18 +154,11 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
         ))}
       </g>
 
-      <style>{`
-        .an-node { animation: an-breathe 6s ease-in-out infinite; }
-        .an-node:nth-child(3n) { animation-delay: -2s; }
-        .an-node:nth-child(3n+1) { animation-delay: -4s; }
-        @keyframes an-breathe {
-          0%, 100% { opacity: 0.35; }
-          50% { opacity: 0.65; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .an-node { animation: none; }
-        }
-      `}</style>
+      {/* No idle "breathing" animation on these nodes. Continuously animating
+          opacity on SVG children repaints this hero-sized SVG every frame and
+          measured as roughly half the page's frame budget on desktop. The
+          network still comes alive on cursor movement, which only paints while
+          the pointer is actually moving. */}
     </svg>
   );
 }
