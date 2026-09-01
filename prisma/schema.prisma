@@ -189,6 +189,15 @@ model CreativeRequest {
   status         CreativeStatus @default(REQUESTED)
   assetUrl       String?
 
+  // An optional picture the client uploads as the starting point — a product
+  // shot, a competitor's ad, a mood reference. Stored as a data URL because it
+  // is downscaled to well under a megabyte in the browser before upload and
+  // there is no object store configured yet; move this to blob storage before
+  // volume makes it a problem.
+  referenceImage String? @db.Text
+  // What the Creative agent made of that picture and the brief together.
+  aiConcept      String? @db.Text
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

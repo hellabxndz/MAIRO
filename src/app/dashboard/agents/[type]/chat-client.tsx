@@ -19,7 +19,7 @@ export function ChatClient({
 }) {
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     id: threadId,
     messages: initialMessages,
     transport: new DefaultChatTransport({
@@ -61,6 +61,16 @@ export function ChatClient({
           </div>
         ))}
         {pending && <p className="text-xs text-neutral-500">Thinking...</p>}
+
+        {/* A failed request used to just swallow the message, which reads as
+            the agent ignoring you. Say what actually went wrong instead. */}
+        {error && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/[0.06] px-4 py-3">
+            <p className="text-sm text-red-200">
+              {error.message || "Something went wrong reaching the agent."}
+            </p>
+          </div>
+        )}
       </div>
 
       <form

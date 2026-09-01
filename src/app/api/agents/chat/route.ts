@@ -20,6 +20,17 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  // Checked here rather than left to fail inside the provider, because a
+  // missing key otherwise surfaces as a stream that ends with no text — which
+  // reads as "the agent is ignoring me" rather than "this deployment isn't
+  // configured".
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) {
+    return new Response(
+      "The AI isn't configured on this deployment. Add ANTHROPIC_API_KEY in your hosting environment variables and redeploy — /aios/setup shows whether it's set.",
+      { status: 503 }
+    );
+  }
+
   const { messages, threadId, agentType } = (await req.json()) as {
     messages: UIMessage[];
     threadId: string;
@@ -43,6 +54,9 @@ export async function POST(req: Request) {
     system: systemPromptFor(agentType),
     messages: convertToModelMessages(messages),
     onFinish: async ({ text }) => {
+      // An empty completion isn't worth a row, and storing one makes the
+      // thread look like the agent replied with silence next time it loads.
+      if (!text.trim()) return;
       await db.agentMessage.create({
         data: { threadId, role: "ASSISTANT", content: text },
       });
@@ -53,5 +67,22 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    // Without this the SDK masks every streaming failure as the string
+    // "An error occurred", which tells the person at the keyboard nothing.
+    onError: (error) => {
+      console.error("Agent chat failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      if (/api[_ -]?key|authentication|401/i.test(message)) {
+        return "The AI provider rejected our API key. Check ANTHROPIC_API_KEY in your environment variables.";
+      }
+      if (/rate.?limit|429/i.test(message)) {
+        return "The AI provider is rate limiting us. Wait a moment and try again.";
+      }
+      if (/credit|balance|quota|billing/i.test(message)) {
+        return "The Anthropic account is out of credit. Top it up at console.anthropic.com and try again.";
+      }
+      return `The agent couldn't reply: ${message}`;
+    },
+  });
 }

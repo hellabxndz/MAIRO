@@ -5,6 +5,11 @@ import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { planFor } from "@/lib/plans";
 import { currentMonthKey } from "@/lib/utils/month";
 import { CreativeRequestForm } from "./creative-request-form";
+import { RegenerateConceptButton } from "./regenerate-concept-button";
+
+// A concept is generated inside the request action, and a vision call takes
+// longer than the platform default allows.
+export const maxDuration = 60;
 
 const statusTone = {
   REQUESTED: "neutral",
@@ -67,14 +72,53 @@ export default async function CreativesPage() {
       ) : (
         <div className="space-y-3">
           {requests.map((r) => (
-            <Card key={r.id} className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-neutral-400">
-                  {r.type} · {r.month}
-                </p>
-                <p className="mt-1">{r.brief}</p>
+            <Card key={r.id}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm text-neutral-400">
+                    {r.type} · {r.month}
+                  </p>
+                  <p className="mt-1">{r.brief}</p>
+                </div>
+                <Badge tone={statusTone[r.status]}>{r.status.replace("_", " ")}</Badge>
               </div>
-              <Badge tone={statusTone[r.status]}>{r.status.replace("_", " ")}</Badge>
+
+              {(r.referenceImage || r.aiConcept) && (
+                <div className="mt-5 flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row">
+                  {r.referenceImage && (
+                    <div className="shrink-0">
+                      <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                        Your reference
+                      </p>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- stored
+                          as a data URL, so there is no remote origin to optimise. */}
+                      <img
+                        src={r.referenceImage}
+                        alt="Reference supplied with this request"
+                        className="max-h-44 rounded-lg border border-white/10 object-contain"
+                      />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                      Concept
+                    </p>
+                    {r.aiConcept ? (
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
+                        {r.aiConcept}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-neutral-500">
+                          No concept yet — the AI didn&apos;t manage to write one.
+                        </p>
+                        <RegenerateConceptButton creativeRequestId={r.id} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </Card>
           ))}
         </div>
