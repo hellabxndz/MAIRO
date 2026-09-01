@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
-import { disconnectMetaAction } from "@/lib/actions/meta-actions";
+import { disconnectMetaAction, exploreWithoutMetaAction } from "@/lib/actions/meta-actions";
 
 export default async function MetaConnectionPage({
   searchParams,
@@ -79,9 +79,23 @@ export default async function MetaConnectionPage({
               You&apos;ll be redirected to Facebook to log in and grant MAIRO access to your
               ad account.
             </p>
-            <a href="/api/meta/connect" className={primaryButtonClass}>
-              Connect Meta account
-            </a>
+            <div className="flex flex-wrap items-center gap-4">
+              <a href="/api/meta/connect" className={primaryButtonClass}>
+                Connect Meta account
+              </a>
+              <form action={exploreWithoutMetaAction}>
+                <button
+                  type="submit"
+                  className="text-sm text-neutral-400 underline underline-offset-4 transition hover:text-white"
+                >
+                  Look around first
+                </button>
+              </form>
+            </div>
+            <p className="text-xs leading-relaxed text-neutral-600">
+              You can explore the dashboard, build a plan, and talk to the AI
+              specialists without connecting. Nothing goes live until you do.
+            </p>
           </div>
         )}
       </Card>

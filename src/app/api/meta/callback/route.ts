@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { exchangeCodeForToken, exchangeForLongLivedToken, fetchAdAccounts, fetchPages } from "@/lib/meta/oauth";
+import { stopExploring } from "@/lib/explore-mode";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
@@ -75,6 +76,10 @@ export async function GET(req: NextRequest) {
         status: "CONNECTED",
       },
     });
+
+    // A real connection makes "looking around first" moot — drop the flag so
+    // the not-connected banner disappears and the funnel is back to normal.
+    await stopExploring();
 
     return NextResponse.redirect(new URL("/dashboard/meta?connected=1", origin));
   } catch (err) {
