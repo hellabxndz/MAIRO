@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { currentMonthKey } from "@/lib/utils/month";
 import { planFor } from "@/lib/plans";
 import { generateCreativeConcept } from "@/lib/ai/creative";
+import { reviewCreative } from "@/lib/ai/review";
 
 const requestSchema = z.object({
   type: z.enum(["IMAGE", "VIDEO", "COPY", "CAROUSEL"]),
@@ -63,8 +64,13 @@ export async function requestCreativeAction(
   if (!organization) return { error: "Organization not found" };
 
   const plan = planFor(organization.subscriptionTier);
+  // Blocked requests don't count against the allowance. A policy refusal —
+  // including a false positive — shouldn't cost someone one of the two
+  // creatives their plan gives them. The tradeoff is that a blocked brief can
+  // be retried freely, so repeat offenders show up in the AIOS pipeline
+  // rather than being rate-limited here.
   const usedThisMonth = await db.creativeRequest.count({
-    where: { organizationId, month },
+    where: { organizationId, month, status: { not: "BLOCKED" } },
   });
 
   if (usedThisMonth >= plan.limits.creativesPerMonth) {
@@ -92,20 +98,24 @@ export async function requestCreativeAction(
 }
 
 /**
- * Generates (or regenerates) the AI concept for one request. Safe to call when
- * the AI isn't configured — it just leaves aiConcept null.
+ * Writes the concept for one request, then puts it through the automated
+ * safety and advertising-policy review that decides whether it is approved.
+ *
+ * Returns an error string for the caller to surface, or null on success.
+ * "Success" includes a BLOCK — the pipeline worked, the answer was no.
  */
 async function tryGenerateConcept(creativeRequestId: string): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY?.trim()) return "The AI isn't configured on this deployment yet.";
 
-  try {
-    const request = await db.creativeRequest.findUnique({
-      where: { id: creativeRequestId },
-      include: { organization: { include: { intake: true } } },
-    });
-    if (!request) return "That request no longer exists.";
+  const request = await db.creativeRequest.findUnique({
+    where: { id: creativeRequestId },
+    include: { organization: { include: { intake: true } } },
+  });
+  if (!request) return "That request no longer exists.";
 
-    const concept = await generateCreativeConcept({
+  let concept: string;
+  try {
+    concept = await generateCreativeConcept({
       type: request.type,
       brief: request.brief,
       businessName: request.organization.name,
@@ -114,16 +124,62 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
       brandVoice: request.organization.intake?.brandVoice ?? null,
       targetAudience: request.organization.intake?.targetAudience ?? null,
     });
-
-    await db.creativeRequest.update({
-      where: { id: creativeRequestId },
-      data: { aiConcept: concept, status: "IN_REVIEW" },
-    });
-    return null;
   } catch (error) {
     console.error("Creative concept generation failed:", error);
     return error instanceof Error ? error.message : "The AI couldn't write a concept.";
   }
+
+  // Nothing reaches APPROVED without passing this. If the review itself fails,
+  // the request lands in IN_REVIEW for a person to look at — an unreviewable ad
+  // is never auto-approved just because the checker was unavailable.
+  let review: Awaited<ReturnType<typeof reviewCreative>> | null = null;
+  try {
+    review = await reviewCreative({
+      type: request.type,
+      brief: request.brief,
+      concept,
+      businessName: request.organization.name,
+      referenceImage: request.referenceImage,
+    });
+  } catch (error) {
+    console.error("Creative safety review failed:", error);
+  }
+
+  if (!review) {
+    await db.creativeRequest.update({
+      where: { id: creativeRequestId },
+      data: { aiConcept: concept, status: "IN_REVIEW", reviewedAt: null },
+    });
+    return null;
+  }
+
+  if (review.verdict === "BLOCK") {
+    await db.creativeRequest.update({
+      where: { id: creativeRequestId },
+      data: {
+        // The concept is kept for the record but not shown to the client, so a
+        // blocked idea can't be lifted straight off the page and run anyway.
+        aiConcept: concept,
+        status: "BLOCKED",
+        reviewedAt: new Date(),
+        reviewCategory: review.category || "policy",
+        reviewNotes: review.reason || "This request can't be turned into an ad we can run.",
+      },
+    });
+    return null;
+  }
+
+  await db.creativeRequest.update({
+    where: { id: creativeRequestId },
+    data: {
+      aiConcept: concept,
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      reviewCategory: null,
+      reviewNotes: null,
+    },
+  });
+  return null;
 }
 
 export async function regenerateConceptAction(

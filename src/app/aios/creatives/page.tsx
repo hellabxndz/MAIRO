@@ -4,7 +4,7 @@ import { Card, PageHeader, EmptyState } from "@/components/ui";
 import { StatusSelect } from "@/components/status-select";
 import { updateCreativeStatusAction } from "@/lib/actions/aios-actions";
 
-const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "IN_REVIEW", "APPROVED", "DELIVERED"];
+const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "IN_REVIEW", "BLOCKED", "APPROVED", "DELIVERED"];
 
 export default async function CreativePipelinePage() {
   const requests = await db.creativeRequest.findMany({

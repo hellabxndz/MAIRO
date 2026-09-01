@@ -16,6 +16,7 @@ const statusTone = {
   REQUESTED: "neutral",
   IN_PROGRESS: "yellow",
   IN_REVIEW: "blue",
+  BLOCKED: "red",
   APPROVED: "green",
   DELIVERED: "green",
 } as const;
@@ -36,7 +37,10 @@ export default async function CreativesPage() {
       where: { id: organizationId },
       select: { subscriptionTier: true },
     }),
-    db.creativeRequest.count({ where: { organizationId, month } }),
+    // Mirrors requestCreativeAction: blocked requests are not charged.
+    db.creativeRequest.count({
+      where: { organizationId, month, status: { not: "BLOCKED" } },
+    }),
   ]);
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
@@ -84,39 +88,69 @@ export default async function CreativesPage() {
                 <Badge tone={statusTone[r.status]}>{r.status.replace("_", " ")}</Badge>
               </div>
 
-              {(r.referenceImage || r.aiConcept) && (
-                <div className="mt-5 flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row">
-                  {r.referenceImage && (
-                    <div className="shrink-0">
-                      <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
-                        Your reference
-                      </p>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- stored
-                          as a data URL, so there is no remote origin to optimise. */}
-                      <img
-                        src={r.referenceImage}
-                        alt="Reference supplied with this request"
-                        className="max-h-44 rounded-lg border border-white/10 object-contain"
-                      />
-                    </div>
-                  )}
-
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
-                      Concept
-                    </p>
-                    {r.aiConcept ? (
-                      <ConceptText text={r.aiConcept} />
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-sm text-neutral-500">
-                          No concept yet — the AI didn&apos;t manage to write one.
+              {r.status === "BLOCKED" ? (
+                <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/[0.06] p-4">
+                  <p className="text-xs uppercase tracking-[0.12em] text-red-300">
+                    Can&apos;t run this one{r.reviewCategory ? ` · ${r.reviewCategory}` : ""}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-300">
+                    {r.reviewNotes}
+                  </p>
+                  <p className="mt-3 text-xs leading-relaxed text-neutral-500">
+                    Every ad is checked against Meta&apos;s advertising policies before we
+                    approve it. Running this would put your ad account at risk. Change the
+                    brief and request it again — this one didn&apos;t use up any of your monthly requests.
+                  </p>
+                </div>
+              ) : (
+                (r.referenceImage || r.aiConcept) && (
+                  <div className="mt-5 flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row">
+                    {r.referenceImage && (
+                      <div className="shrink-0">
+                        <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                          Your reference
                         </p>
-                        <RegenerateConceptButton creativeRequestId={r.id} />
+                        {/* eslint-disable-next-line @next/next/no-img-element -- stored
+                            as a data URL, so there is no remote origin to optimise. */}
+                        <img
+                          src={r.referenceImage}
+                          alt="Reference supplied with this request"
+                          className="max-h-44 rounded-lg border border-white/10 object-contain"
+                        />
                       </div>
                     )}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                        Concept
+                      </p>
+                      {r.aiConcept ? (
+                        <>
+                          <ConceptText text={r.aiConcept} />
+                          {r.status === "APPROVED" && (
+                            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-neutral-600">
+                              Approved automatically — checked against Meta&apos;s advertising
+                              policies and our safety rules before it reached you.
+                            </p>
+                          )}
+                          {r.status === "IN_REVIEW" && (
+                            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-amber-300/80">
+                              The automatic policy check couldn&apos;t run on this one, so a
+                              person is looking at it before it&apos;s approved.
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm text-neutral-500">
+                            No concept yet — the AI didn&apos;t manage to write one.
+                          </p>
+                          <RegenerateConceptButton creativeRequestId={r.id} />
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )
               )}
             </Card>
           ))}

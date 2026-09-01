@@ -173,7 +173,8 @@ enum CreativeType {
 enum CreativeStatus {
   REQUESTED
   IN_PROGRESS
-  IN_REVIEW
+  IN_REVIEW // a person needs to look — the automated check could not run
+  BLOCKED // the automated safety/policy check refused it
   APPROVED
   DELIVERED
 }
@@ -197,6 +198,12 @@ model CreativeRequest {
   referenceImage String? @db.Text
   // What the Creative agent made of that picture and the brief together.
   aiConcept      String? @db.Text
+
+  // The automated safety and advertising-policy check that gates approval.
+  // reviewNotes carries the refusal reason shown to the client when BLOCKED.
+  reviewedAt     DateTime?
+  reviewCategory String?
+  reviewNotes    String? @db.Text
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
