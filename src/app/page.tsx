@@ -290,6 +290,11 @@ export default function Home() {
       <footer className="border-t border-white/10 px-6 py-10 sm:px-10">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 text-xs tracking-wide text-neutral-600 sm:flex-row">
           <span>© {new Date().getFullYear()} MAIRO</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            <Link href="/privacy" className="transition hover:text-neutral-300">Privacy</Link>
+            <Link href="/terms" className="transition hover:text-neutral-300">Terms</Link>
+            <Link href="/data-deletion" className="transition hover:text-neutral-300">Data deletion</Link>
+          </div>
           <span>Meta ads, run by AI.</span>
         </div>
       </footer>
