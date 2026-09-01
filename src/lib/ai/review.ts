@@ -110,3 +110,50 @@ export async function reviewCreative(input: {
 
   return object;
 }
+
+/**
+ * Reviews a generated picture at the moment the client chooses it to run.
+ *
+ * The draft passes are not reviewed — they cost money and nothing happens to
+ * them. This is the gate that matters: the picture is about to be used in a
+ * real ad on a real ad account.
+ */
+export async function reviewAdImage(input: {
+  imageDataUrl: string;
+  brief: string;
+  businessName: string;
+}): Promise<CreativeReview> {
+  const image = parseDataUrl(input.imageDataUrl);
+  if (!image) {
+    return {
+      verdict: "BLOCK",
+      category: "unreadable",
+      reason: "That picture couldn't be read, so it can't be checked or used.",
+    };
+  }
+
+  const text = [
+    `Business: ${input.businessName}`,
+    `What they asked for: ${input.brief}`,
+    "",
+    "The attached picture is the finished advertisement about to run. Review the picture itself.",
+    "Additionally, block it if the picture makes a claim the business plainly cannot keep, shows a product misleadingly, or contains text that would breach advertising policy.",
+  ].join("\n");
+
+  const { object } = await generateObject({
+    model: agentModel,
+    schema: verdictSchema,
+    system: SYSTEM,
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text" as const, text },
+          { type: "image" as const, image: image.base64, mediaType: image.mediaType },
+        ],
+      },
+    ],
+  });
+
+  return object;
+}

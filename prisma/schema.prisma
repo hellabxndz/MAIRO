@@ -205,8 +205,44 @@ model CreativeRequest {
   reviewCategory String?
   reviewNotes    String? @db.Text
 
+  images         CreativeImage[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// One pass of the picture the client is working on. Every time they say
+// "make the background darker", the AI edits the current picture and a new
+// row lands here.
+//
+// Superseded drafts are deleted as new ones arrive (see generateAdImageAction)
+// so a long back-and-forth doesn't accumulate megabytes of dead images in the
+// database — only the current draft and the finals the client chose survive.
+model CreativeImage {
+  id                String   @id @default(cuid())
+  creativeRequest   CreativeRequest @relation(fields: [creativeRequestId], references: [id], onDelete: Cascade)
+  creativeRequestId String
+
+  version     Int
+  // The generated picture, as a data URL. Same reasoning as
+  // CreativeRequest.referenceImage: no object store is configured yet, and
+  // this is the first thing to move to blob storage when one is.
+  imageData   String  @db.Text
+  // What the client typed to get this version. Null on the first one, which
+  // comes from the concept rather than an instruction.
+  instruction String? @db.Text
+  // Chosen to actually run in the campaign. Capped per request in code.
+  isFinal     Boolean @default(false)
+
+  // The safety check that runs when a picture is chosen as final, since that
+  // is the point at which it would really be used in an ad.
+  reviewedAt  DateTime?
+  reviewNotes String?  @db.Text
+
+  createdAt   DateTime @default(now())
+
+  @@unique([creativeRequestId, version])
+  @@index([creativeRequestId])
 }
 
 // --- AI agents -----------------------------------------------------------

@@ -7,10 +7,12 @@ import { currentMonthKey } from "@/lib/utils/month";
 import { CreativeRequestForm } from "./creative-request-form";
 import { RegenerateConceptButton } from "./regenerate-concept-button";
 import { ConceptText } from "@/components/concept-text";
+import { ImageStudio } from "./image-studio";
 
 // A concept is generated inside the request action, and a vision call takes
 // longer than the platform default allows.
-export const maxDuration = 60;
+// Image editing is slower than a text call; give the action room to finish.
+export const maxDuration = 120;
 
 const statusTone = {
   REQUESTED: "neutral",
@@ -32,6 +34,7 @@ export default async function CreativesPage() {
     db.creativeRequest.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
+      include: { images: { orderBy: { version: "desc" } } },
     }),
     db.organization.findUnique({
       where: { id: organizationId },
@@ -138,6 +141,23 @@ export default async function CreativesPage() {
                               The automatic policy check couldn&apos;t run on this one, so a
                               person is looking at it before it&apos;s approved.
                             </p>
+                          )}
+
+                          {r.status === "APPROVED" && (
+                            <div className="mt-6 border-t border-white/10 pt-5">
+                              <ImageStudio
+                                creativeRequestId={r.id}
+                                hasReference={Boolean(r.referenceImage)}
+                                images={r.images.map((i) => ({
+                                  id: i.id,
+                                  version: i.version,
+                                  imageData: i.imageData,
+                                  instruction: i.instruction,
+                                  isFinal: i.isFinal,
+                                  reviewNotes: i.reviewNotes,
+                                }))}
+                              />
+                            </div>
                           )}
                         </>
                       ) : (
