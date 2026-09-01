@@ -12,9 +12,40 @@ function requireEnv(name: string): string {
   return value;
 }
 
+// Where Facebook sends the user back after they approve access.
+//
+// This is derived rather than hand-configured wherever possible. Facebook
+// compares the redirect_uri byte-for-byte against the list registered on the
+// app and rejects the whole login with "URL blocked" on any mismatch — a
+// trailing slash or a stray newline pasted along with the URL is enough. So
+// the value is only read from an env var when someone deliberately sets one;
+// otherwise it comes from VERCEL_PROJECT_PRODUCTION_URL, which Vercel injects
+// into every deployment automatically and which cannot be mistyped.
+//
+// The path must stay in sync with src/app/api/meta/callback/route.ts.
+export const META_CALLBACK_PATH = "/api/meta/callback";
+
+export function metaRedirectUri(): string {
+  const explicit = process.env.META_REDIRECT_URI?.trim();
+  if (explicit) return explicit.replace(/\/+$/, "");
+
+  const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (productionDomain) return `https://${productionDomain}${META_CALLBACK_PATH}`;
+
+  if (process.env.NODE_ENV !== "production") {
+    return `http://localhost:3000${META_CALLBACK_PATH}`;
+  }
+
+  throw new Error(
+    "Cannot determine the Meta redirect URI. Set META_REDIRECT_URI to " +
+      `https://<your-domain>${META_CALLBACK_PATH} and register the exact same ` +
+      "string under Valid OAuth Redirect URIs on your Meta app."
+  );
+}
+
 export function buildMetaAuthUrl(state: string): string {
   const appId = requireEnv("META_APP_ID");
-  const redirectUri = requireEnv("META_REDIRECT_URI");
+  const redirectUri = metaRedirectUri();
 
   const url = new URL(`https://www.facebook.com/${graphApiVersion()}/dialog/oauth`);
   url.searchParams.set("client_id", appId);
@@ -30,7 +61,7 @@ type TokenResponse = { access_token: string; token_type: string; expires_in?: nu
 export async function exchangeCodeForToken(code: string): Promise<TokenResponse> {
   const appId = requireEnv("META_APP_ID");
   const appSecret = requireEnv("META_APP_SECRET");
-  const redirectUri = requireEnv("META_REDIRECT_URI");
+  const redirectUri = metaRedirectUri();
 
   return metaGraphRequest<TokenResponse>("/oauth/access_token", {
     params: {
