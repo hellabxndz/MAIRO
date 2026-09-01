@@ -5,11 +5,12 @@
 // remote endpoints. The client component imports these for its counters.
 
 /**
- * How many pictures a client can actually run per creative request. Three
- * official images per campaign — enough to test variations against each other
- * without spreading the budget too thin.
+ * How many pictures a client can actually run per creative request. Two
+ * official images per campaign — enough to test one against the other
+ * without spreading the budget too thin. Typing to refine them is unlimited;
+ * this caps only what actually gets produced and run.
  */
-export const MAX_FINAL_IMAGES = 3;
+export const MAX_FINAL_IMAGES = 2;
 
 /**
  * Revisions are meant to feel unlimited. This is not a product limit, it is a

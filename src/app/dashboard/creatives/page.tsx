@@ -8,6 +8,7 @@ import { CreativeRequestForm } from "./creative-request-form";
 import { RegenerateConceptButton } from "./regenerate-concept-button";
 import { ConceptText } from "@/components/concept-text";
 import { ImageStudio } from "./image-studio";
+import { ConceptReply } from "./concept-reply";
 
 // A concept is generated inside the request action, and a vision call takes
 // longer than the platform default allows.
@@ -142,6 +143,8 @@ export default async function CreativesPage() {
                               person is looking at it before it&apos;s approved.
                             </p>
                           )}
+
+                          <ConceptReply creativeRequestId={r.id} />
 
                           {r.status === "APPROVED" && (
                             <div className="mt-6 border-t border-white/10 pt-5">

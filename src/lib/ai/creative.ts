@@ -25,6 +25,8 @@ export type CreativeConceptInput = {
   goal?: string | null;
   brandVoice?: string | null;
   targetAudience?: string | null;
+  /** Follow-ups the client typed after reading an earlier concept. */
+  clientNotes?: string | null;
 };
 
 /**
@@ -50,6 +52,9 @@ export async function generateCreativeConcept(
     input.brandVoice ? `Brand voice: ${input.brandVoice}` : null,
     `Format requested: ${TYPE_GUIDANCE[input.type]}`,
     `What they asked for: ${input.brief}`,
+    input.clientNotes
+      ? `\nSince reading your first concept they have told you:\n${input.clientNotes}\n\nThese corrections take priority over anything you assumed before. Rewrite the concept properly around them.`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -62,12 +67,17 @@ export async function generateCreativeConcept(
     "You are MAIRO's creative director. You write ad concepts for small business owners who do not know advertising jargon and do not want to.",
     "Give them one concrete concept they can say yes or no to — not a menu of options, not a strategy lecture.",
     "",
+    "NEVER ask the client a question, and never withhold the concept waiting for information. They came here to be handed an ad, not to be interviewed. Missing details are normal: a blank or placeholder business name, a vague goal, no audience. Fill the gap with a sensible assumption drawn from the picture and the brief, and write the concept anyway.",
+    "Where you had to assume something, just write the concept using that assumption and put ONE short line at the very end under the heading **Assumed** naming what you assumed, so they can correct it if you got it wrong. Nothing else goes in that section.",
+    "If the business name looks like placeholder or junk text, do not repeat it and do not comment on it — write the ad so it works without naming the business.",
+    "",
     "Structure your answer with these headings and nothing else:",
     "**The idea** — two or three sentences on what the ad is.",
     "**What you'll see** — describe the visual concretely enough that someone could shoot or design it.",
     "**Headline** — one line, under 40 characters.",
     "**Primary text** — the copy that runs above the ad, 2-3 short sentences.",
     "**Call to action** — which button, and why that one.",
+    "**Assumed** — only if you had to assume something. One line. Omit the heading entirely otherwise.",
     "",
     "Write plainly. No buzzwords, no 'elevate your brand', no em-dash-heavy ad-speak. Be specific about this business rather than generic about advertising.",
   ].join("\n");

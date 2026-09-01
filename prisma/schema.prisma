@@ -198,6 +198,10 @@ model CreativeRequest {
   referenceImage String? @db.Text
   // What the Creative agent made of that picture and the brief together.
   aiConcept      String? @db.Text
+  // Follow-up the client typed after reading the concept ("my shop is called
+  // X", "make it about the sale"). Appended to, and fed back into the next
+  // rewrite. Refining never costs another creative request.
+  clientNotes    String? @db.Text
 
   // The automated safety and advertising-policy check that gates approval.
   // reviewNotes carries the refusal reason shown to the client when BLOCKED.

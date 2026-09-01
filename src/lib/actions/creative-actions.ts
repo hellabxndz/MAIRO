@@ -120,6 +120,7 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
       brief: request.brief,
       businessName: request.organization.name,
       referenceImage: request.referenceImage,
+      clientNotes: request.clientNotes,
       goal: request.organization.intake?.primaryGoal ?? null,
       brandVoice: request.organization.intake?.brandVoice ?? null,
       targetAudience: request.organization.intake?.targetAudience ?? null,
@@ -195,6 +196,49 @@ export async function regenerateConceptAction(
     select: { id: true },
   });
   if (!owned) return { error: "Not found" };
+
+  const error = await tryGenerateConcept(creativeRequestId);
+  revalidatePath("/dashboard/creatives");
+  return error ? { error } : undefined;
+}
+
+
+/**
+ * Lets the client answer the concept in their own words and have it rewritten.
+ *
+ * This deliberately does NOT consume a creative request. Typing is how the
+ * client tells us what we got wrong; charging them for that would mean a
+ * misunderstanding costs them a month's allowance. Their note is appended so
+ * every correction so far is carried into the rewrite, and the safety review
+ * runs again on the result.
+ */
+export async function refineConceptAction(
+  creativeRequestId: string,
+  _prevState: CreativeActionState,
+  formData: FormData
+): Promise<CreativeActionState> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not authenticated" };
+
+  const rawMessage = formData.get("message");
+  const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
+  if (message.length < 2) return { error: "Tell the AI what to change." };
+  if (message.length > 2000) return { error: "That's a bit long — keep it under 2000 characters." };
+
+  const request = await db.creativeRequest.findFirst({
+    where: { id: creativeRequestId, organizationId: session.user.organizationId },
+    select: { id: true, clientNotes: true, status: true },
+  });
+  if (!request) return { error: "Not found" };
+  if (request.status === "BLOCKED") {
+    return { error: "This request was blocked, so it can't be reworked. Start a new one." };
+  }
+
+  const notes = [request.clientNotes, `- ${message}`].filter(Boolean).join("\n");
+  await db.creativeRequest.update({
+    where: { id: creativeRequestId },
+    data: { clientNotes: notes },
+  });
 
   const error = await tryGenerateConcept(creativeRequestId);
   revalidatePath("/dashboard/creatives");
