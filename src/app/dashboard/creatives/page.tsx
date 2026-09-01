@@ -6,6 +6,7 @@ import { planFor } from "@/lib/plans";
 import { currentMonthKey } from "@/lib/utils/month";
 import { CreativeRequestForm } from "./creative-request-form";
 import { RegenerateConceptButton } from "./regenerate-concept-button";
+import { ConceptText } from "@/components/concept-text";
 
 // A concept is generated inside the request action, and a vision call takes
 // longer than the platform default allows.
@@ -105,9 +106,7 @@ export default async function CreativesPage() {
                       Concept
                     </p>
                     {r.aiConcept ? (
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
-                        {r.aiConcept}
-                      </div>
+                      <ConceptText text={r.aiConcept} />
                     ) : (
                       <div className="space-y-3">
                         <p className="text-sm text-neutral-500">
