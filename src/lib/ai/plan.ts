@@ -48,17 +48,26 @@ export async function generateMonthlyPlan(input: PlanInput): Promise<GeneratedPl
     maximumFractionDigits: 0,
   });
 
+  const dailyBudget = input.monthlyBudgetCents / 100 / 30;
+
   const { object } = await generateObject({
     model: agentModel,
     schema: planSchema,
     system:
       "You are MAIRO's ad strategist AI. You write a first-month Meta ads plan for a " +
       "small business owner. Be specific and realistic for the stated budget — do not " +
-      "recommend tactics that require a budget far larger than what's given.",
+      "recommend tactics that require a budget far larger than what's given.\n\n" +
+      "Be honest about what the budget can do rather than overselling. Meta ad sets " +
+      "generally need roughly $10-20/day to get through the learning phase at a " +
+      "reasonable pace. Below that, results build slowly and the right move is a " +
+      "single tightly-targeted ad set rather than splitting spend across several. " +
+      "If the budget is thin, say so plainly in the strategy summary and set " +
+      "expectations for a slower ramp — a business owner who knows it's a slow build " +
+      "will stay; one who expected instant leads will churn.",
     prompt: `Business: ${input.businessName}
 Industry: ${input.industry ?? "Not specified"}
 Primary goal: ${input.primaryGoal}
-Monthly ad budget: ${budget}
+Monthly ad budget: ${budget} (about $${dailyBudget.toFixed(2)}/day)
 Target audience: ${input.targetAudience || "Not specified — suggest one"}
 Brand voice: ${input.brandVoice || "Not specified — assume friendly and professional"}
 Known competitors: ${input.competitors || "None given"}

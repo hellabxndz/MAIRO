@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMetaCampaign } from "@/lib/meta/campaigns";
 import { MetaApiError } from "@/lib/meta/client";
+import { planFor } from "@/lib/plans";
 
 const createCampaignSchema = z.object({
   name: z.string().min(1),
@@ -37,6 +38,26 @@ export async function createCampaignAction(
 
   const { name, objective, dailyBudget } = parsed.data;
   const dailyBudgetCents = Math.round(dailyBudget * 100);
+
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { subscriptionTier: true },
+  });
+  if (!organization) return { error: "Organization not found" };
+
+  // An archived campaign has been retired, so it doesn't hold a slot.
+  const plan = planFor(organization.subscriptionTier);
+  const activeCount = await db.campaign.count({
+    where: { organizationId, status: { not: "ARCHIVED" } },
+  });
+
+  if (activeCount >= plan.limits.campaigns) {
+    return {
+      error: `The ${plan.name} plan runs ${plan.limits.campaigns} campaign${
+        plan.limits.campaigns === 1 ? "" : "s"
+      } at a time. Archive one to free up a slot, or upgrade for more.`,
+    };
+  }
 
   const metaAccount = await db.metaAdAccount.findUnique({ where: { organizationId } });
 

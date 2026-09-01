@@ -6,6 +6,7 @@ import { HeroParallaxBg } from "@/components/hero-parallax-bg";
 import { Reveal } from "@/components/reveal";
 import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
+import { PLANS } from "@/lib/plans";
 
 const steps = [
   {
@@ -32,48 +33,6 @@ const agents = [
   { name: "Support", desc: "Answers questions about your account, billing, and performance." },
 ];
 
-const plans = [
-  {
-    name: "Starter",
-    price: "$499",
-    tagline: "Get your first campaigns live.",
-    features: [
-      "1 active campaign",
-      "Monthly AI-generated plan",
-      "Strategist + Support agent access",
-      "AI-drafted ad copy",
-      "Monthly performance report",
-    ],
-  },
-  {
-    name: "Growth",
-    price: "$999",
-    tagline: "What most businesses run on.",
-    featured: true,
-    features: [
-      "Everything in Starter",
-      "Up to 5 active campaigns",
-      "Full agent team, including Creative",
-      "Custom photo/video creative requests",
-      "Weekly optimization checks",
-      "A/B creative testing",
-      "Priority support",
-    ],
-  },
-  {
-    name: "Scale",
-    price: "$1,999",
-    tagline: "For teams ready to spend more.",
-    features: [
-      "Everything in Growth",
-      "Unlimited active campaigns",
-      "Dedicated human strategist",
-      "48-hour rush creative turnaround",
-      "Advanced audience & retargeting setup",
-      "Quarterly strategy calls",
-    ],
-  },
-];
 
 export default function Home() {
   return (
@@ -208,8 +167,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing — the case for the higher tiers is unlimited campaigns, a
-          human strategist, and faster turnaround, not just "more features" */}
+      {/* Pricing — rendered from src/lib/plans.ts, the same config the server
+          actions enforce limits from, so the page can't promise what the app
+          won't allow */}
       <section id="pricing" className="border-t border-white/10 px-6 py-32 sm:px-10 sm:py-48">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
@@ -224,13 +184,14 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.15}>
             <p className="mt-6 max-w-xl text-sm leading-relaxed text-neutral-400">
-              Every plan runs on the same AI. What changes is how much runs on autopilot —
-              more campaigns, faster creative, and a real human strategist as you go up.
+              Every plan runs on the same AI. What changes is how much of it runs for you —
+              more campaigns, more creative made each month, and a human strategist as you
+              scale up.
             </p>
           </Reveal>
 
           <div className="mt-16 grid gap-6 lg:grid-cols-3">
-            {plans.map((plan, i) => (
+            {PLANS.map((plan, i) => (
               <Reveal key={plan.name} delay={i * 0.08}>
                 <div
                   className={`flex h-full flex-col border p-8 ${
@@ -247,8 +208,11 @@ export default function Home() {
                   <h3 className="text-2xl font-medium text-white">{plan.name}</h3>
                   <p className="mt-2 text-sm text-neutral-500">{plan.tagline}</p>
                   <p className="mt-8 text-4xl font-medium text-white">
-                    {plan.price}
+                    ${plan.priceMonthly}
                     <span className="text-base font-normal text-neutral-500">/mo</span>
+                  </p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.1em] text-neutral-600">
+                    {plan.spendGuidance}
                   </p>
 
                   <ul className="mt-8 flex flex-1 flex-col gap-3 border-t border-white/10 pt-8">
@@ -278,12 +242,16 @@ export default function Home() {
             ))}
           </div>
 
-          <Reveal delay={0.3} className="mt-10 max-w-2xl text-sm leading-relaxed text-neutral-500">
+          <Reveal delay={0.3} className="mt-10 max-w-2xl space-y-4 text-sm leading-relaxed text-neutral-500">
             <p>
-              Starter caps out at one campaign because that&apos;s about as much as manual
-              oversight can keep sharp. Growth and Scale unlock more campaigns and a
-              dedicated strategist — the cost per campaign actually goes down as you move
-              up, and turnaround gets faster.
+              A freelancer runs $500–1,500 a month and most agencies won&apos;t take you at
+              all under $2,000 in monthly spend. Starter exists because a business putting
+              $5 a day into ads still deserves someone running them properly.
+            </p>
+            <p>
+              Moving up a plan gets cheaper per campaign, not more expensive: Starter is
+              roughly 19% of a $150 ad budget, Scale is closer to 4% of a $5,000 one — and
+              that&apos;s where the human review and the faster creative turnaround kick in.
             </p>
           </Reveal>
         </div>

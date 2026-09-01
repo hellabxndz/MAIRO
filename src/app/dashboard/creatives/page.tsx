@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { planFor } from "@/lib/plans";
+import { currentMonthKey } from "@/lib/utils/month";
 import { CreativeRequestForm } from "./creative-request-form";
 
 const statusTone = {
@@ -16,20 +18,48 @@ export default async function CreativesPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const requests = await db.creativeRequest.findMany({
-    where: { organizationId: session.user.organizationId },
-    orderBy: { createdAt: "desc" },
-  });
+  const organizationId = session.user.organizationId;
+  const month = currentMonthKey();
+
+  const [requests, organization, usedThisMonth] = await Promise.all([
+    db.creativeRequest.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { subscriptionTier: true },
+    }),
+    db.creativeRequest.count({ where: { organizationId, month } }),
+  ]);
+
+  const plan = planFor(organization?.subscriptionTier ?? "NONE");
+  const remaining = Math.max(0, plan.limits.creativesPerMonth - usedThisMonth);
 
   return (
     <div>
       <PageHeader
         title="Creatives"
         description="Request ad creative and copy — our team and the Creative agent put it together."
+        action={
+          <Badge tone={remaining === 0 ? "yellow" : "neutral"}>
+            {usedThisMonth} / {plan.limits.creativesPerMonth} used this month
+          </Badge>
+        }
       />
 
       <Card className="mb-8">
-        <CreativeRequestForm />
+        {remaining === 0 ? (
+          <div className="space-y-2">
+            <p className="font-medium">You&apos;re out of creative requests this month</p>
+            <p className="text-sm text-neutral-400">
+              The {plan.name} plan includes {plan.limits.creativesPerMonth} a month. They reset
+              on the 1st — or upgrade your plan for more.
+            </p>
+          </div>
+        ) : (
+          <CreativeRequestForm />
+        )}
       </Card>
 
       {requests.length === 0 ? (

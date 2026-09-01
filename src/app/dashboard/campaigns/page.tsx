@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { planFor } from "@/lib/plans";
 import { NewCampaignForm } from "./new-campaign-form";
 
 const statusTone = {
@@ -16,20 +17,48 @@ export default async function CampaignsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const campaigns = await db.campaign.findMany({
-    where: { organizationId: session.user.organizationId },
-    orderBy: { createdAt: "desc" },
-  });
+  const organizationId = session.user.organizationId;
+
+  const [campaigns, organization] = await Promise.all([
+    db.campaign.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { subscriptionTier: true },
+    }),
+  ]);
+
+  const plan = planFor(organization?.subscriptionTier ?? "NONE");
+  const activeCount = campaigns.filter((c) => c.status !== "ARCHIVED").length;
+  const atLimit = activeCount >= plan.limits.campaigns;
 
   return (
     <div>
       <PageHeader
         title="Campaigns"
         description="Create a campaign and, once Meta is connected, we push it live for review."
+        action={
+          <Badge tone={atLimit ? "yellow" : "neutral"}>
+            {activeCount} / {plan.limits.campaigns} campaigns
+          </Badge>
+        }
       />
 
       <Card className="mb-8">
-        <NewCampaignForm />
+        {atLimit ? (
+          <div className="space-y-2">
+            <p className="font-medium">
+              You&apos;re running the most campaigns the {plan.name} plan allows
+            </p>
+            <p className="text-sm text-neutral-400">
+              Archive one to free up a slot, or upgrade for more concurrent campaigns.
+            </p>
+          </div>
+        ) : (
+          <NewCampaignForm />
+        )}
       </Card>
 
       {campaigns.length === 0 ? (

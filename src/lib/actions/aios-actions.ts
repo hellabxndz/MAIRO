@@ -35,3 +35,16 @@ export async function updatePlanStatusAction(
   await db.monthlyPlan.update({ where: { id: planId }, data: { status } });
   revalidatePath(`/aios/organizations/${organizationId}`);
 }
+
+// Until billing is wired up, tiers are assigned by hand here after payment is
+// collected however you collect it. This is what actually raises a client's
+// campaign and creative limits.
+export async function updateSubscriptionTierAction(organizationId: string, formData: FormData) {
+  await requireOwner();
+  const subscriptionTier = formData.get(
+    "subscriptionTier"
+  ) as import("@/generated/prisma/enums").SubscriptionTier;
+  await db.organization.update({ where: { id: organizationId }, data: { subscriptionTier } });
+  revalidatePath(`/aios/organizations/${organizationId}`);
+  revalidatePath("/aios/organizations");
+}

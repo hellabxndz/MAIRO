@@ -2,11 +2,17 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { StatusSelect } from "@/components/status-select";
-import { updateCreativeStatusAction, updatePlanStatusAction } from "@/lib/actions/aios-actions";
-import { formatMonthKey } from "@/lib/utils/month";
+import {
+  updateCreativeStatusAction,
+  updatePlanStatusAction,
+  updateSubscriptionTierAction,
+} from "@/lib/actions/aios-actions";
+import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
+import { planFor } from "@/lib/plans";
 
 const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
 const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "IN_REVIEW", "APPROVED", "DELIVERED"];
+const TIERS = ["NONE", "STARTER", "GROWTH", "SCALE"];
 
 export default async function OrganizationDetailPage({
   params,
@@ -29,6 +35,11 @@ export default async function OrganizationDetailPage({
 
   if (!org) notFound();
 
+  const plan = planFor(org.subscriptionTier);
+  const month = currentMonthKey();
+  const creativesThisMonth = org.creativeRequests.filter((r) => r.month === month).length;
+  const activeCampaigns = org.campaigns.filter((c) => c.status !== "ARCHIVED").length;
+
   return (
     <div>
       <PageHeader
@@ -40,6 +51,31 @@ export default async function OrganizationDetailPage({
           </Badge>
         }
       />
+
+      <Card className="mb-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-medium">Plan &amp; usage</h2>
+            <p className="mt-1 text-sm text-neutral-400">
+              On {plan.name} (${plan.priceMonthly}/mo) · {activeCampaigns}/
+              {plan.limits.campaigns} campaigns · {creativesThisMonth}/
+              {plan.limits.creativesPerMonth} creatives this month
+            </p>
+            {org.subscriptionTier === "NONE" && (
+              <p className="mt-1 text-xs text-amber-400">
+                No tier assigned — being treated as {plan.name} limits.
+              </p>
+            )}
+          </div>
+          <form action={updateSubscriptionTierAction.bind(null, org.id)}>
+            <StatusSelect
+              name="subscriptionTier"
+              defaultValue={org.subscriptionTier}
+              options={TIERS}
+            />
+          </form>
+        </div>
+      </Card>
 
       {org.intake && (
         <Card className="mb-6">
