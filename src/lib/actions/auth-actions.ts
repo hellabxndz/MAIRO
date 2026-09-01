@@ -6,6 +6,7 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
+import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
 
 const signUpSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -81,7 +82,8 @@ const createOwnerSchema = z.object({
 // First-run bootstrap: lets whoever gets here first create the OWNER account
 // through the browser, no terminal/database access needed. Only works while
 // zero OWNER accounts exist yet — see src/app/setup/page.tsx, which also
-// redirects away once one does.
+// redirects away once one does — unless a valid OWNER_SETUP_TOKEN is supplied,
+// which additionally allows resetting an existing owner (see above).
 export async function createOwnerAction(
   _prevState: AuthActionState,
   formData: FormData
@@ -99,21 +101,45 @@ export async function createOwnerAction(
   const { name, email, password } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
+  const tokenValue = formData.get("token");
+  const recovering = ownerSetupTokenIsValid(
+    typeof tokenValue === "string" ? tokenValue : undefined
+  );
+
   try {
     await db.$transaction(async (tx) => {
       const ownerCount = await tx.user.count({ where: { role: "OWNER" } });
-      if (ownerCount > 0) {
+      if (ownerCount > 0 && !recovering) {
         throw new Error("OWNER_EXISTS");
       }
 
       const existing = await tx.user.findUnique({ where: { email } });
+
       if (existing) {
-        throw new Error("EMAIL_TAKEN");
+        // Without a token this is a plain collision. With one, taking over the
+        // named account is the whole point — that is how an owner login with a
+        // lost password gets recovered.
+        if (!recovering) throw new Error("EMAIL_TAKEN");
+
+        await tx.user.update({
+          where: { id: existing.id },
+          data: { name, passwordHash, role: "OWNER" },
+        });
+      } else {
+        await tx.user.create({
+          data: { email, name, passwordHash, role: "OWNER" },
+        });
       }
 
-      await tx.user.create({
-        data: { email, name, passwordHash, role: "OWNER" },
-      });
+      // A recovery leaves exactly one owner. Any other OWNER rows are demoted,
+      // so an account someone else created on the public first-run page cannot
+      // keep owner access afterwards.
+      if (recovering) {
+        await tx.user.updateMany({
+          where: { role: "OWNER", email: { not: email } },
+          data: { role: "CLIENT" },
+        });
+      }
     });
   } catch (error) {
     if (error instanceof Error && error.message === "OWNER_EXISTS") {
