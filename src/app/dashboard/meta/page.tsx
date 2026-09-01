@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
@@ -7,12 +8,12 @@ import { disconnectMetaAction } from "@/lib/actions/meta-actions";
 export default async function MetaConnectionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; connected?: string }>;
+  searchParams: Promise<{ error?: string; connected?: string; required?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const { error, connected } = await searchParams;
+  const { error, connected, required } = await searchParams;
 
   const metaAccount = await db.metaAdAccount.findUnique({
     where: { organizationId: session.user.organizationId },
@@ -24,6 +25,15 @@ export default async function MetaConnectionPage({
         title="Meta connection"
         description="Connect your Facebook/Instagram ad account so MAIRO can launch and manage campaigns for you."
       />
+
+      {required && !metaAccount && (
+        <Card className="mb-6 border-amber-500/30 bg-amber-500/[0.06]">
+          <p className="text-sm text-amber-300">
+            One last step — connect your Meta ad account to unlock the rest of your dashboard.
+            We can&apos;t plan or launch campaigns without it.
+          </p>
+        </Card>
+      )}
 
       {error && (
         <Card className="mb-6 border-red-500/30 bg-red-500/[0.06]">
@@ -50,11 +60,18 @@ export default async function MetaConnectionPage({
             <p className="text-sm text-neutral-500">
               Connected {metaAccount.connectedAt.toLocaleDateString()}
             </p>
-            <form action={disconnectMetaAction}>
-              <button type="submit" className={secondaryButtonClass}>
-                Disconnect
-              </button>
-            </form>
+            <div className="flex flex-wrap gap-3">
+              {required && (
+                <Link href="/dashboard" className={primaryButtonClass}>
+                  Continue to your dashboard →
+                </Link>
+              )}
+              <form action={disconnectMetaAction}>
+                <button type="submit" className={secondaryButtonClass}>
+                  Disconnect
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

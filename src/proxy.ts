@@ -32,7 +32,13 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/aios", req.nextUrl.origin));
   }
 
-  return NextResponse.next();
+  // Server Components can't read the current pathname directly, only params.
+  // Stamp it onto a request header here so dashboard/layout.tsx (which needs
+  // it to avoid redirect-looping on /dashboard/meta itself) can read it back
+  // via headers().
+  const headers = new Headers(req.headers);
+  headers.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers } });
 });
 
 export const config = {

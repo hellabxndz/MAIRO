@@ -38,8 +38,8 @@ export default async function CampaignsPage() {
           description="Create your first campaign above, or ask the Strategist agent for a recommendation."
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-white/[0.03] text-neutral-400">
               <tr>
                 <th className="px-4 py-3 font-medium">Name</th>

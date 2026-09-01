@@ -126,5 +126,5 @@ export async function completeOnboardingAction(
     });
   }
 
-  redirect("/dashboard");
+  redirect("/dashboard/meta?required=1");
 }

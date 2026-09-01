@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
+import { DashboardShell } from "@/components/dashboard-shell";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -16,43 +17,32 @@ const NAV = [
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
+  const organizationId = session.user.organizationId;
 
-  const organization = await db.organization.findUnique({
-    where: { id: session.user.organizationId },
-    select: { name: true },
-  });
+  const pathname = (await headers()).get("x-pathname") ?? "";
+
+  const [organization, intake, metaAccount] = await Promise.all([
+    db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
+    db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
+    db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
+  ]);
+
+  // Enforce the intended funnel: sign up -> onboarding -> connect Meta ->
+  // rest of the dashboard. /dashboard/meta itself is exempt from the second
+  // check so there's somewhere for a not-yet-connected client to land.
+  if (!intake) redirect("/onboarding");
+  if (!metaAccount && !pathname.startsWith("/dashboard/meta")) {
+    redirect("/dashboard/meta?required=1");
+  }
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-white/10 p-6">
-        <Link href="/" className="mb-1 text-lg font-semibold">
-          MAIRO
-        </Link>
-        <p className="mb-8 truncate text-sm text-neutral-500">{organization?.name}</p>
-
-        <nav className="flex flex-1 flex-col gap-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-lg px-3 py-2 text-sm text-neutral-300 hover:bg-white/5 hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-neutral-500 hover:bg-white/5 hover:text-white"
-          >
-            Sign out
-          </button>
-        </form>
-      </aside>
-
-      <main className="flex-1 overflow-y-auto px-10 py-10">{children}</main>
-    </div>
+    <DashboardShell
+      navItems={NAV}
+      brandLabel="MAIRO"
+      subtitle={organization?.name}
+      onSignOut={signOutAction}
+    >
+      {children}
+    </DashboardShell>
   );
 }

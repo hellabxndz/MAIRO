@@ -32,6 +32,49 @@ const agents = [
   { name: "Support", desc: "Answers questions about your account, billing, and performance." },
 ];
 
+const plans = [
+  {
+    name: "Starter",
+    price: "$499",
+    tagline: "Get your first campaigns live.",
+    features: [
+      "1 active campaign",
+      "Monthly AI-generated plan",
+      "Strategist + Support agent access",
+      "AI-drafted ad copy",
+      "Monthly performance report",
+    ],
+  },
+  {
+    name: "Growth",
+    price: "$999",
+    tagline: "What most businesses run on.",
+    featured: true,
+    features: [
+      "Everything in Starter",
+      "Up to 5 active campaigns",
+      "Full agent team, including Creative",
+      "Custom photo/video creative requests",
+      "Weekly optimization checks",
+      "A/B creative testing",
+      "Priority support",
+    ],
+  },
+  {
+    name: "Scale",
+    price: "$1,999",
+    tagline: "For teams ready to spend more.",
+    features: [
+      "Everything in Growth",
+      "Unlimited active campaigns",
+      "Dedicated human strategist",
+      "48-hour rush creative turnaround",
+      "Advanced audience & retargeting setup",
+      "Quarterly strategy calls",
+    ],
+  },
+];
+
 export default function Home() {
   return (
     <div className="relative flex-1">
@@ -162,6 +205,87 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing — the case for the higher tiers is unlimited campaigns, a
+          human strategist, and faster turnaround, not just "more features" */}
+      <section id="pricing" className="border-t border-white/10 px-6 py-32 sm:px-10 sm:py-48">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal>
+            <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Pricing</p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="mt-6 max-w-2xl text-4xl font-medium leading-[1.05] text-white sm:text-5xl">
+              Pick how much of this
+              <br />
+              you want off your plate.
+            </h2>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="mt-6 max-w-xl text-sm leading-relaxed text-neutral-400">
+              Every plan runs on the same AI. What changes is how much runs on autopilot —
+              more campaigns, faster creative, and a real human strategist as you go up.
+            </p>
+          </Reveal>
+
+          <div className="mt-16 grid gap-6 lg:grid-cols-3">
+            {plans.map((plan, i) => (
+              <Reveal key={plan.name} delay={i * 0.08}>
+                <div
+                  className={`flex h-full flex-col border p-8 ${
+                    plan.featured
+                      ? "border-white/40 bg-white/[0.03]"
+                      : "border-white/10"
+                  }`}
+                >
+                  {plan.featured && (
+                    <span className="mb-6 inline-block w-fit border border-white/30 px-3 py-1 text-[10px] uppercase tracking-[0.15em] text-neutral-300">
+                      Most businesses choose this
+                    </span>
+                  )}
+                  <h3 className="text-2xl font-medium text-white">{plan.name}</h3>
+                  <p className="mt-2 text-sm text-neutral-500">{plan.tagline}</p>
+                  <p className="mt-8 text-4xl font-medium text-white">
+                    {plan.price}
+                    <span className="text-base font-normal text-neutral-500">/mo</span>
+                  </p>
+
+                  <ul className="mt-8 flex flex-1 flex-col gap-3 border-t border-white/10 pt-8">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3 text-sm text-neutral-300">
+                        <span className="mt-1 text-neutral-600">—</span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Magnetic className="mt-10">
+                    <Link
+                      href="/sign-up"
+                      className={`group flex items-center justify-center gap-3 border px-6 py-3 text-xs uppercase tracking-[0.15em] transition ${
+                        plan.featured
+                          ? "border-white bg-white text-black hover:bg-neutral-200"
+                          : "border-white/25 text-white hover:border-white hover:bg-white hover:text-black"
+                      }`}
+                    >
+                      Start with {plan.name}
+                      <span className="transition group-hover:translate-x-1">→</span>
+                    </Link>
+                  </Magnetic>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={0.3} className="mt-10 max-w-2xl text-sm leading-relaxed text-neutral-500">
+            <p>
+              Starter caps out at one campaign because that&apos;s about as much as manual
+              oversight can keep sharp. Growth and Scale unlock more campaigns and a
+              dedicated strategist — the cost per campaign actually goes down as you move
+              up, and turnaround gets faster.
+            </p>
+          </Reveal>
         </div>
       </section>
 
