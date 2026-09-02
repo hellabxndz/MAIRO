@@ -103,13 +103,59 @@ export async function editAdImage(input: {
   return runImageModel(google, prompt, source);
 }
 
+/**
+ * Turns a provider failure into something the business owner can act on.
+ *
+ * The raw errors are long, name internal metrics, and repeat themselves — not
+ * something to put in front of someone trying to make an ad.
+ */
+function friendlyImageError(error: unknown): Error {
+  const raw = error instanceof Error ? error.message : String(error);
+
+  // "limit: 0" is the tell for a capability that is not on the free tier at
+  // all, as opposed to an allowance that has been used up. Different problem,
+  // different fix: billing, not waiting.
+  if (/limit:\s*0/.test(raw)) {
+    return new Error(
+      "Making pictures needs billing switched on for the Google AI key — image generation isn't included in the free tier. Turn it on at aistudio.google.com, then try again."
+    );
+  }
+  if (/quota|rate.?limit|RESOURCE_EXHAUSTED|429/i.test(raw)) {
+    return new Error(
+      "The picture service is rate limiting us right now. Wait a minute and try again."
+    );
+  }
+  if (/not found|NOT_FOUND|unsupported|invalid.*model|404/i.test(raw)) {
+    return new Error(
+      `The image model "${MODEL}" wasn't accepted. Set the IMAGE_MODEL environment variable to a model your key can use, then redeploy.`
+    );
+  }
+  if (/API key|PERMISSION_DENIED|UNAUTHENTICATED|401|403/i.test(raw)) {
+    return new Error(
+      "The Google AI key was rejected. Check GOOGLE_GENERATIVE_AI_API_KEY in your environment variables."
+    );
+  }
+  if (/safety|blocked|PROHIBITED/i.test(raw)) {
+    return new Error(
+      "The picture service refused this one on its own safety rules. Try describing it differently."
+    );
+  }
+  return new Error(raw);
+}
+
 async function runImageModel(
   google: ReturnType<typeof createGoogleGenerativeAI>,
   prompt: string,
   source: { mediaType: string; base64: string }
 ): Promise<AdImageResult> {
-  const result = await generateText({
+  let result;
+  try {
+    result = await generateText({
     model: google(MODEL),
+    // A quota or billing refusal will refuse identically every time, so the
+    // SDK's default retries just make the person wait longer for the same
+    // answer. One retry covers a genuine blip.
+    maxRetries: 1,
     providerOptions: {
       // Without this the model answers with text about the picture instead of
       // returning a picture.
@@ -124,7 +170,11 @@ async function runImageModel(
         ],
       },
     ],
-  });
+    });
+  } catch (error) {
+    console.error("Image model call failed:", error);
+    throw friendlyImageError(error);
+  }
 
   const file = result.files.find((f) => f.mediaType?.startsWith("image/"));
   if (!file) {
