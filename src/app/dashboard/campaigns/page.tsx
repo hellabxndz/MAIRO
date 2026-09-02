@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { planFor } from "@/lib/plans";
 import { NewCampaignForm } from "./new-campaign-form";
+import { fetchPerformance } from "@/lib/meta/performance";
+import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
+
+// Each row's figures are a live call to Meta. See the note in
+// src/app/dashboard/page.tsx — same reason, same budget.
+export const maxDuration = 30;
 
 const statusTone = {
   DRAFT: "neutral",
@@ -19,7 +25,7 @@ export default async function CampaignsPage() {
 
   const organizationId = session.user.organizationId;
 
-  const [campaigns, organization] = await Promise.all([
+  const [campaigns, organization, metaAccount] = await Promise.all([
     db.campaign.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
@@ -28,7 +34,19 @@ export default async function CampaignsPage() {
       where: { id: organizationId },
       select: { subscriptionTier: true },
     }),
+    db.metaAdAccount.findUnique({
+      where: { organizationId },
+      select: { accessToken: true },
+    }),
   ]);
+
+  const performance = await fetchPerformance({
+    accessToken: metaAccount?.accessToken ?? null,
+    campaigns,
+  });
+  // Indexed by MAIRO's campaign id so a row can find its own figures without
+  // scanning the list again for every render.
+  const byCampaign = new Map(performance.rows.map((r) => [r.id, r]));
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   const activeCount = campaigns.filter((c) => c.status !== "ARCHIVED").length;
@@ -76,10 +94,23 @@ export default async function CampaignsPage() {
                 <th className="px-4 py-3 font-medium">Daily budget</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">On Meta</th>
+                <th className="px-4 py-3 text-right font-medium">Spend</th>
+                <th className="px-4 py-3 text-right font-medium">Impressions</th>
+                <th className="px-4 py-3 text-right font-medium">Clicks</th>
               </tr>
             </thead>
             <tbody>
-              {campaigns.map((c) => (
+              {campaigns.map((c) => {
+                const result = byCampaign.get(c.id);
+                const insights = result?.insights;
+                // A campaign that has run reports numbers; one that never has
+                // reports nothing at all. Only the first case gets figures —
+                // the rest get a dash, because "0 clicks" and "never started"
+                // are different things and only one of them is bad news.
+                const ran = Boolean(
+                  insights && (insights.impressions || insights.clicks || insights.spend)
+                );
+                return (
                 <tr key={c.id} className="border-t border-white/10">
                   <td className="px-4 py-3">{c.name}</td>
                   <td className="px-4 py-3 text-neutral-400">{c.objective}</td>
@@ -92,11 +123,29 @@ export default async function CampaignsPage() {
                   <td className="px-4 py-3 text-neutral-500">
                     {c.metaCampaignId ? "Yes" : "Not yet"}
                   </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+                    {ran ? formatMoney(Number(insights?.spend ?? 0)) : NO_VALUE}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+                    {ran ? formatInteger(Number(insights?.impressions ?? 0)) : NO_VALUE}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+                    {ran ? formatInteger(Number(insights?.clicks ?? 0)) : NO_VALUE}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {campaigns.length > 0 && (
+        <p className="mt-4 text-xs leading-relaxed text-neutral-600">
+          {performance.unavailable
+            ? performance.unavailable
+            : "Spend, impressions and clicks are read live from your Meta ad account. A dash means the campaign hasn't run yet — MAIRO creates every campaign paused, so nothing spends until you switch it on."}
+        </p>
       )}
     </div>
   );

@@ -4,6 +4,13 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
 import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
+import { fetchPerformance } from "@/lib/meta/performance";
+import { PerformanceBand } from "@/components/performance-band";
+
+// Results are read live from Meta on every load, so this page is only as fast
+// as their API is. The default budget is not enough when several campaigns are
+// queried at once and Meta is having a slow moment.
+export const maxDuration = 30;
 
 const statusTone = {
   DRAFT: "neutral",
@@ -18,15 +25,28 @@ export default async function DashboardOverviewPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = session.user.organizationId;
 
-  const [organization, plan, metaAccount, campaignCount, creativeCount] = await Promise.all([
+  const [organization, plan, metaAccount, campaigns, creativeCount] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),
     db.monthlyPlan.findUnique({
       where: { organizationId_month: { organizationId, month: currentMonthKey() } },
     }),
     db.metaAdAccount.findUnique({ where: { organizationId } }),
-    db.campaign.count({ where: { organizationId } }),
+    db.campaign.findMany({
+      where: { organizationId, status: { not: "ARCHIVED" } },
+      select: { id: true, metaCampaignId: true },
+    }),
     db.creativeRequest.count({ where: { organizationId } }),
   ]);
+
+  // Live figures from Meta. This runs after the queries above rather than
+  // alongside them because it needs the token one of them returns, and it is
+  // written never to throw — a slow or unhappy Meta must not cost the client
+  // their whole dashboard.
+  const performance = await fetchPerformance({
+    accessToken: metaAccount?.accessToken ?? null,
+    campaigns,
+  });
+  const campaignCount = campaigns.length;
 
   return (
     <div>
@@ -54,6 +74,10 @@ export default async function DashboardOverviewPage() {
           <p className="text-sm text-neutral-400">Creative requests</p>
           <p className="mt-2 text-2xl font-semibold">{creativeCount}</p>
         </Card>
+      </div>
+
+      <div className="mt-6">
+        <PerformanceBand report={performance} />
       </div>
 
       <div className="mt-8">
