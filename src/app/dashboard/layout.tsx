@@ -14,7 +14,18 @@ const NAV = [
   { href: "/dashboard/creatives", label: "Creatives" },
   { href: "/dashboard/meta", label: "Meta connection" },
   { href: "/dashboard/agents", label: "AI specialists" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
+
+// Pages the not-yet-connected client can still open.
+//
+// /dashboard/meta is the obvious one — it is where the funnel sends them and
+// there has to be somewhere to land. Settings is the less obvious one, and
+// leaving it out was a trap: someone who mistyped their business name at
+// signup is by definition someone who has not connected an ad account yet, so
+// gating the only screen that fixes it behind connecting one leaves them stuck
+// with a name the AI will put in every ad it writes.
+const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings"];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -40,7 +51,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // cannot see past this screen at all.
   const exploring = await isExploring();
   if (!intake) redirect("/onboarding");
-  if (!metaAccount && !exploring && !pathname.startsWith("/dashboard/meta")) {
+  if (!metaAccount && !exploring && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
     redirect("/dashboard/meta?required=1");
   }
 
