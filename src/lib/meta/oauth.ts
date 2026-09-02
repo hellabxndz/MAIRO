@@ -1,6 +1,18 @@
 import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 
-const SCOPES = ["ads_management", "ads_read", "business_management", "pages_show_list"];
+// Only what the app actually calls. `business_management` was requested here
+// and never used: nothing in this codebase touches /me/businesses or any
+// business asset endpoint, and ad accounts owned by a Business Manager still
+// come back from /me/adaccounts under ads_read. Asking for it cost us twice —
+// App Review requires a recorded demonstration of every permission requested,
+// so an unused one is a rejection waiting to happen, and until then every
+// customer was being asked to hand over control of their business assets to
+// grant it.
+//
+// If an ad account ever fails to appear for a customer whose account is owned
+// by a Business Manager, that is the symptom that would justify adding it back
+// — with a flow that actually calls a business endpoint.
+const SCOPES = ["ads_management", "ads_read", "pages_show_list"];
 
 function requireEnv(name: string): string {
   // Trimmed, because these are pasted by hand into a hosting dashboard and a
