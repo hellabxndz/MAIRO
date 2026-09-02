@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Grain } from "@/components/grain";
-import { Galaxy } from "@/components/galaxy";
+import { Aurora } from "@/components/aurora";
+import { Marquee } from "@/components/marquee";
+import { Faq } from "@/components/faq";
+import { ConceptDemo } from "@/components/concept-demo";
 import { SiteNav } from "@/components/site-nav";
 import { HeroParallaxBg } from "@/components/hero-parallax-bg";
 import { Reveal } from "@/components/reveal";
@@ -28,16 +31,71 @@ const steps = [
 ];
 
 const agents = [
-  { name: "Strategist", desc: "Plans budget, targeting, and monthly goals with you." },
-  { name: "Creative", desc: "Drafts ad copy and creative briefs for your campaigns." },
-  { name: "Support", desc: "Answers questions about your account, billing, and performance." },
+  {
+    name: "Strategist",
+    desc: "Plans budget, targeting, and monthly goals with you.",
+    asks: "\u201cShould I put more into retargeting this month?\u201d",
+  },
+  {
+    name: "Creative",
+    desc: "Writes the ad copy and builds the creative from your own photos.",
+    asks: "\u201cMake this one feel more premium.\u201d",
+  },
+  {
+    name: "Support",
+    desc: "Answers questions about your account, billing, and performance.",
+    asks: "\u201cWhy did my cost per click go up?\u201d",
+  },
+];
+
+const marqueeItems = [
+  "No ad manager to learn",
+  "Campaigns built for you",
+  "Creative from your own photos",
+  "Budget split automatically",
+  "Every ad policy-checked",
+  "Cancel any time",
+];
+
+const proof = [
+  { figure: "2 min", label: "to set your goal and budget" },
+  { figure: "$5/day", label: "is enough to start" },
+  { figure: "0", label: "ad settings you have to touch" },
+  { figure: "24/7", label: "specialists you can message" },
+];
+
+const faqs = [
+  {
+    q: "Do I need to know anything about Meta ads?",
+    a: "No. That is the entire point. You tell MAIRO your goal and your monthly budget in plain English, and it builds the campaigns, writes the ads, and runs them. There is no ad manager for you to learn and no settings for you to configure.",
+  },
+  {
+    q: "Whose ad account do the ads run on?",
+    a: "Yours. You connect your own Meta ad account and MAIRO works inside it. You can see everything in Meta Ads Manager, and you can revoke access whenever you like. Your ad spend goes to Meta directly, never through us.",
+  },
+  {
+    q: "What if I do not like what the AI writes?",
+    a: "Tell it what to change and it rewrites, as many times as you want. Reworking a concept is free and never uses up one of your monthly creative requests \u2014 you only spend those on new ideas, not on corrections.",
+  },
+  {
+    q: "Can it use my own product photos?",
+    a: "Yes, and it works best that way. Upload a photo of what you sell, and the AI builds the ad around what it can actually see in it, rather than inventing something generic.",
+  },
+  {
+    q: "Is anything checked before it runs?",
+    a: "Every ad is reviewed against Meta\u2019s advertising policies before it can go live. Ads that would put your account at risk are stopped and explained, in plain language, rather than quietly failing later.",
+  },
+  {
+    q: "What happens if I cancel?",
+    a: "The campaigns stay in your Meta ad account, because they were always yours. Nothing is deleted or taken back. You can pause them, keep running them, or hand them to someone else.",
+  },
 ];
 
 
 export default function Home() {
   return (
     <div className="relative flex-1">
-      <Galaxy />
+      <Aurora />
       <Grain />
       <SiteNav />
 
@@ -109,6 +167,8 @@ export default function Home() {
         </div>
       </section>
 
+      <Marquee items={marqueeItems} />
+
       {/* How it works — heading stays put while the steps scroll past it */}
       <section id="how-it-works" className="relative border-t border-white/10 px-6 py-32 sm:px-10 sm:py-48">
         <div className="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-[0.8fr_1.4fr] lg:gap-24">
@@ -141,7 +201,56 @@ export default function Home() {
         </div>
       </section>
 
-      {/* AI specialists — editorial rows, not cards */}
+      {/* Show the thing rather than describe it — the output is the pitch */}
+      <section className="border-t border-white/10 px-6 py-32 sm:px-10 sm:py-40">
+        <div className="mx-auto grid max-w-[1400px] items-center gap-16 lg:grid-cols-2 lg:gap-24">
+          <div>
+            <Reveal>
+              <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Live</p>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <h2 className="mt-6 text-4xl font-medium leading-[1.05] text-white sm:text-5xl">
+                This is what
+                <br />
+                it hands you.
+              </h2>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-400">
+                Upload a photo of what you sell and say what you want the ad to do. You get
+                back a finished concept — the idea, the headline, the copy, and the right
+                button — not a form to fill in.
+              </p>
+            </Reveal>
+            <Reveal delay={0.3}>
+              <p className="mt-6 max-w-md text-sm leading-relaxed text-neutral-500">
+                Don&apos;t like it? Tell it what to change and it rewrites. That part is free
+                and unlimited.
+              </p>
+            </Reveal>
+          </div>
+
+          <Reveal delay={0.15}>
+            <ConceptDemo />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Numbers band — the shape of the offer at a glance */}
+      <section className="border-t border-white/10 px-6 py-20 sm:px-10">
+        <div className="mx-auto grid max-w-[1400px] gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {proof.map((item, i) => (
+            <Reveal key={item.label} delay={i * 0.06}>
+              <div className="border-l border-white/15 pl-5">
+                <p className="text-4xl font-medium text-white sm:text-5xl">{item.figure}</p>
+                <p className="mt-2 text-sm leading-snug text-neutral-500">{item.label}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* AI specialists — editorial rows that open up on hover */}
       <section id="agents" className="border-t border-white/10 px-6 py-32 sm:px-10 sm:py-48">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
@@ -152,15 +261,32 @@ export default function Home() {
               AI specialists, on call.
             </h2>
           </Reveal>
+          <Reveal delay={0.15}>
+            <p className="mt-6 max-w-lg text-sm leading-relaxed text-neutral-400">
+              Three of them, inside your dashboard. Message them the way you&apos;d message
+              someone who runs ads for a living — because that&apos;s the job they&apos;re doing.
+            </p>
+          </Reveal>
 
           <div className="mt-20 border-t border-white/10">
             {agents.map((agent, i) => (
               <Reveal key={agent.name} delay={i * 0.06}>
-                <div className="group flex flex-col justify-between gap-4 border-b border-white/10 py-10 sm:flex-row sm:items-center">
-                  <h3 className="text-3xl font-medium text-white transition duration-300 group-hover:translate-x-3 sm:text-4xl">
-                    {agent.name}
-                  </h3>
-                  <p className="max-w-sm text-sm leading-relaxed text-neutral-400">{agent.desc}</p>
+                <div className="group relative overflow-hidden border-b border-white/10 py-10">
+                  {/* A wash that sweeps in from the left on hover. Transform and
+                      opacity only, so it never costs a layout. */}
+                  <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-violet-500/10 via-violet-500/[0.04] to-transparent transition-transform duration-500 group-hover:translate-x-0" />
+                  <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div className="flex items-baseline gap-5">
+                      <span className="text-xs text-neutral-700">0{i + 1}</span>
+                      <h3 className="text-3xl font-medium text-white transition duration-300 group-hover:translate-x-2 sm:text-4xl">
+                        {agent.name}
+                      </h3>
+                    </div>
+                    <div className="max-w-sm sm:text-right">
+                      <p className="text-sm leading-relaxed text-neutral-400">{agent.desc}</p>
+                      <p className="mt-2 text-sm italic text-violet-300/70">{agent.asks}</p>
+                    </div>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -254,6 +380,27 @@ export default function Home() {
               roughly 19% of a $150 ad budget, Scale is closer to 4% of a $5,000 one — and
               that&apos;s where the human review and the faster creative turnaround kick in.
             </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Questions people actually ask before handing over an ad account */}
+      <section className="border-t border-white/10 px-6 py-32 sm:px-10 sm:py-40">
+        <div className="mx-auto grid max-w-[1400px] gap-14 lg:grid-cols-[0.7fr_1.3fr] lg:gap-24">
+          <div className="lg:sticky lg:top-32 lg:self-start">
+            <Reveal>
+              <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">Questions</p>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <h2 className="mt-6 text-4xl font-medium leading-[1.05] text-white sm:text-5xl">
+                Before you
+                <br />
+                hand it over.
+              </h2>
+            </Reveal>
+          </div>
+          <Reveal delay={0.15}>
+            <Faq items={faqs} />
           </Reveal>
         </div>
       </section>

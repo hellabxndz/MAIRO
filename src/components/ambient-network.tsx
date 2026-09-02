@@ -5,6 +5,17 @@ import { useRef } from "react";
 // A galaxy-toned, cursor-reactive constellation. Move your mouse over it:
 // the nearest stars brighten and pull glowing violet/cyan threads to your
 // cursor, like you've reached into the network.
+//
+// The glow is painted, not filtered. An <feGaussianBlur> over these nodes is
+// the obvious way to write it and it was what this file did — but an SVG
+// filter is a paint-time operation the compositor cannot cache, and this one
+// declared a filter region of 300% in each direction, so roughly nine hero-
+// sized areas of blur had to be recomputed every time the tiles underneath it
+// were repainted. That cost nothing while the page behind it was still; the
+// moment the backdrop started drifting it re-ran the blur every frame and took
+// the whole page from 60fps to 16. Each node is now a soft radial-gradient
+// halo with a crisp dot on top of it, which reads the same and is just two
+// more shapes to draw once.
 
 type NodePos = { x: number; y: number; r: number; hue: "white" | "violet" | "cyan" };
 
@@ -34,6 +45,9 @@ const HUE_FILL: Record<NodePos["hue"], string> = {
   cyan: "#a5f3fc",
 };
 
+// How much wider the halo is than the star inside it.
+const HALO_SCALE = 6;
+
 const VIEW_W = 600;
 const VIEW_H = 480;
 const REACT_RADIUS = 190;
@@ -41,8 +55,9 @@ const LINK_COUNT = 5;
 
 export function AmbientNetwork({ className = "" }: { className?: string }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const nodeRefs = useRef<(SVGCircleElement | null)[]>([]);
+  const nodeRefs = useRef<(SVGGElement | null)[]>([]);
   const linkRefs = useRef<(SVGLineElement | null)[]>([]);
+  const linkGlowRefs = useRef<(SVGLineElement | null)[]>([]);
   const frame = useRef<number | null>(null);
 
   const handleMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -78,18 +93,27 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
 
       for (let k = 0; k < LINK_COUNT; k++) {
         const link = linkRefs.current[k];
+        const glow = linkGlowRefs.current[k];
         if (!link) continue;
         const target = distances[k];
         if (!target || target.d > REACT_RADIUS) {
           link.setAttribute("opacity", "0");
+          glow?.setAttribute("opacity", "0");
           continue;
         }
         const n = NODES[target.i];
-        link.setAttribute("x1", String(px));
-        link.setAttribute("y1", String(py));
-        link.setAttribute("x2", String(n.x));
-        link.setAttribute("y2", String(n.y));
-        link.setAttribute("opacity", String(0.75 * (1 - target.d / REACT_RADIUS)));
+        const strength = 1 - target.d / REACT_RADIUS;
+        for (const line of [link, glow]) {
+          if (!line) continue;
+          line.setAttribute("x1", String(px));
+          line.setAttribute("y1", String(py));
+          line.setAttribute("x2", String(n.x));
+          line.setAttribute("y2", String(n.y));
+        }
+        link.setAttribute("opacity", String(0.75 * strength));
+        // The bloom pass is faint on its own; stacked under the bright line it
+        // reads as the same halo the blur used to give.
+        glow?.setAttribute("opacity", String(0.16 * strength));
       }
     });
   };
@@ -101,6 +125,7 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
       el.style.transform = "scale(1)";
     });
     linkRefs.current.forEach((l) => l?.setAttribute("opacity", "0"));
+    linkGlowRefs.current.forEach((l) => l?.setAttribute("opacity", "0"));
   };
 
   return (
@@ -117,13 +142,13 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
           <stop offset="0%" stopColor="#67e8f9" />
           <stop offset="100%" stopColor="#d8b4fe" />
         </linearGradient>
-        <filter id="an-glow" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        {(Object.keys(HUE_FILL) as NodePos["hue"][]).map((hue) => (
+          <radialGradient key={hue} id={`an-halo-${hue}`}>
+            <stop offset="0%" stopColor={HUE_FILL[hue]} stopOpacity={0.55} />
+            <stop offset="35%" stopColor={HUE_FILL[hue]} stopOpacity={0.22} />
+            <stop offset="100%" stopColor={HUE_FILL[hue]} stopOpacity={0} />
+          </radialGradient>
+        ))}
       </defs>
 
       <g stroke="#c4b5fd" strokeWidth={0.6} opacity={0.18}>
@@ -132,25 +157,39 @@ export function AmbientNetwork({ className = "" }: { className?: string }) {
         ))}
       </g>
 
-      <g stroke="url(#an-link)" strokeWidth={1} filter="url(#an-glow)">
+      {/* Each thread is drawn twice: a wide, faint pass for the bloom and a
+          thin bright one over it. Two ordinary lines instead of a blur. */}
+      <g stroke="url(#an-link)" strokeLinecap="round">
         {Array.from({ length: LINK_COUNT }).map((_, i) => (
-          <line key={i} ref={(el) => { linkRefs.current[i] = el; }} opacity={0} />
+          <line
+            key={`glow-${i}`}
+            ref={(el) => { linkGlowRefs.current[i] = el; }}
+            strokeWidth={5}
+            opacity={0}
+          />
+        ))}
+        {Array.from({ length: LINK_COUNT }).map((_, i) => (
+          <line
+            key={i}
+            ref={(el) => { linkRefs.current[i] = el; }}
+            strokeWidth={1}
+            opacity={0}
+          />
         ))}
       </g>
 
-      <g filter="url(#an-glow)">
+      <g>
         {NODES.map((n, i) => (
-          <circle
+          <g
             key={i}
             ref={(el) => { nodeRefs.current[i] = el; }}
-            cx={n.x}
-            cy={n.y}
-            r={n.r}
-            fill={HUE_FILL[n.hue]}
-            opacity={0.45}
             className="an-node"
+            opacity={0.45}
             style={{ transformOrigin: `${n.x}px ${n.y}px`, transition: "opacity 0.2s, transform 0.2s" }}
-          />
+          >
+            <circle cx={n.x} cy={n.y} r={n.r * HALO_SCALE} fill={`url(#an-halo-${n.hue})`} />
+            <circle cx={n.x} cy={n.y} r={n.r} fill={HUE_FILL[n.hue]} />
+          </g>
         ))}
       </g>
 
