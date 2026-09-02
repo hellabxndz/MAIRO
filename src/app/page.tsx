@@ -437,14 +437,13 @@ export default function Home() {
 
       <footer className="border-t border-white/10 px-6 py-10 sm:px-10">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 text-xs tracking-wide text-neutral-600 sm:flex-row">
-          {/* The operating company is named here, not only in the legal pages.
-              Meta's Tech Provider review asks for a website showing "details of
-              the business providing the service", and a reviewer matching a
-              verified business portfolio against a site that never mentions it
-              has no way to tell they are the same people. */}
-          <span>
-            © {new Date().getFullYear()} {LEGAL.productName} — a product of {LEGAL.companyName}
-          </span>
+          {/* The operating company is deliberately NOT named here. MAIRO is
+              positioned as a product in its own right, not as an agency's side
+              service, and the marketing pages are where that positioning is
+              made. The legal entity is still named on /privacy and /terms,
+              which is where it is legally required and where a reviewer
+              checking who operates the service will look. */}
+          <span>© {new Date().getFullYear()} {LEGAL.productName}</span>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Link href="/privacy" className="transition hover:text-neutral-300">Privacy</Link>
             <Link href="/terms" className="transition hover:text-neutral-300">Terms</Link>
