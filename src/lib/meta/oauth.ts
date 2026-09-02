@@ -3,7 +3,13 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 const SCOPES = ["ads_management", "ads_read", "business_management", "pages_show_list"];
 
 function requireEnv(name: string): string {
-  const value = process.env[name];
+  // Trimmed, because these are pasted by hand into a hosting dashboard and a
+  // copied secret very often arrives with a trailing newline or space attached.
+  // Meta compares the secret byte-for-byte and answers "Error validating client
+  // secret" for a value that looks identical to the one on the screen, which is
+  // a miserable thing to debug. Nothing Meta issues has meaningful leading or
+  // trailing whitespace, so trimming can only help.
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(
       `${name} is not set. Add it to your .env file — see .env.example and the README's Meta App setup section.`
