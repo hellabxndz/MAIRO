@@ -1,18 +1,30 @@
 import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 
-// Only what the app actually calls. `business_management` was requested here
-// and never used: nothing in this codebase touches /me/businesses or any
-// business asset endpoint, and ad accounts owned by a Business Manager still
-// come back from /me/adaccounts under ads_read. Asking for it cost us twice —
-// App Review requires a recorded demonstration of every permission requested,
-// so an unused one is a rejection waiting to happen, and until then every
-// customer was being asked to hand over control of their business assets to
-// grant it.
+// business_management is here for a reason that is not obvious from grepping
+// for call sites, so it is written down: nothing in this codebase calls a
+// business endpoint, and it was removed on exactly that reasoning — then put
+// back after the removal broke Page discovery.
 //
-// If an ad account ever fails to appear for a customer whose account is owned
-// by a Business Manager, that is the symptom that would justify adding it back
-// — with a flow that actually calls a business endpoint.
-const SCOPES = ["ads_management", "ads_read", "pages_show_list"];
+// /me/accounts returns the Pages a person manages. When a Page is owned by a
+// Meta Business portfolio rather than by the person directly, it is omitted
+// from that response unless the token carries business_management. Verified
+// against a real business-owned Page in the Graph API Explorer: identical call,
+// identical user, empty `data` without the permission and the Page returned
+// with it.
+//
+// That is not an edge case. Most businesses past their first year run their
+// Pages through Business Manager, and Meta requires an ad to run from a Page —
+// so without this, MAIRO cannot find the Page of the customers most likely to
+// be paying for it.
+//
+// Ad accounts are unaffected; /me/adaccounts returns business-owned accounts
+// under ads_read alone. Pages are the case that needs it.
+const SCOPES = [
+  "ads_management",
+  "ads_read",
+  "pages_show_list",
+  "business_management",
+];
 
 function requireEnv(name: string): string {
   // Trimmed, because these are pasted by hand into a hosting dashboard and a
