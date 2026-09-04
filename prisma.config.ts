@@ -15,5 +15,11 @@ export default defineConfig({
     // (src/lib/db.ts) still connects via the pooled DATABASE_URL at
     // runtime, which is what you want for normal queries.
     url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
+
+    // Only needed to *author* a migration locally: `prisma migrate diff`
+    // replays the existing migrations into a scratch database to work out what
+    // changed. Unset in production, where migrations are only ever applied
+    // (`prisma migrate deploy`) and nothing is diffed.
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

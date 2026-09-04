@@ -63,6 +63,19 @@ model Organization {
   timezone           String    @default("America/New_York")
   subscriptionTier   SubscriptionTier @default(NONE)
 
+  // Billing. Stripe is the source of truth for what someone is paying for —
+  // these columns are a local copy kept in step by the webhook, so a page load
+  // never has to call Stripe to know what plan a client is on.
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  // Mirrors Stripe's subscription status: active, trialing, past_due,
+  // canceled, incomplete... Stored as text rather than an enum because Stripe
+  // adds statuses and a migration should not be needed to receive one.
+  subscriptionStatus   String?
+  // When the paid period ends. A cancelled subscription keeps working until
+  // this passes, which is what the client paid for.
+  currentPeriodEnd     DateTime?
+
   users              User[]
   intake             OnboardingIntake?
   monthlyPlans       MonthlyPlan[]

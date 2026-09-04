@@ -37,6 +37,18 @@ const CHECKS: { name: string; label: string; why: string }[] = [
     why: "Postgres connection. Already working if you can read this page.",
   },
   {
+    name: "STRIPE_SECRET_KEY",
+    label: "Stripe secret key",
+    why: "Takes subscription payments. Without it the plan buttons are inert.",
+  },
+  {
+    name: "STRIPE_WEBHOOK_SECRET",
+    label: "Stripe webhook secret",
+    why:
+      "Proves an incoming webhook really came from Stripe. Without it every " +
+      "delivery is refused, and a subscription would be paid for but never applied.",
+  },
+  {
     name: "TOKEN_ENCRYPTION_KEY",
     label: "Token encryption key",
     why:

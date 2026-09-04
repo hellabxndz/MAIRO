@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
+import { BillingSection } from "./billing-section";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -12,7 +13,15 @@ export default async function SettingsPage() {
   const [organization, intake] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, industry: true, website: true },
+      select: {
+        name: true,
+        industry: true,
+        website: true,
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        currentPeriodEnd: true,
+        stripeCustomerId: true,
+      },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
   ]);
@@ -36,6 +45,15 @@ export default async function SettingsPage() {
           website={organization.website ?? ""}
         />
       </Card>
+
+      <div className="mb-8">
+        <BillingSection
+          tier={organization.subscriptionTier}
+          status={organization.subscriptionStatus}
+          periodEnd={organization.currentPeriodEnd}
+          hasCustomer={Boolean(organization.stripeCustomerId)}
+        />
+      </div>
 
       <Card>
         <h2 className="mb-1 text-sm font-medium">Your brief</h2>

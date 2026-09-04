@@ -79,14 +79,48 @@ export const PLANS: Plan[] = [
   },
 ];
 
-// Organizations start on NONE because there's no billing yet. Treat them as
-// Starter so the limits are live and testable from day one; the owner can
-// raise a tier by hand from the AIOS dashboard after taking payment.
+// What an organization on NONE — nobody who has paid — is allowed to do.
+//
+// This is a switch, and it is deliberately off by default.
+//
+// While off, NONE is treated as Starter: everyone gets a working product for
+// free. That is how MAIRO shipped, and it is what the Meta App Review
+// submission tells the reviewer to expect — "billing is not yet enabled, so
+// this account has full access". Turning enforcement on before that review
+// completes would put a paywall in front of a reviewer we promised wouldn't
+// see one, which is a rejection.
+//
+// Set BILLING_ENFORCED=1 once App Review is through. Then an organization
+// without a subscription can still sign up, look around, and talk to the AI —
+// but cannot run campaigns or spend a creative request, which are the two
+// things that cost real money to serve.
 const DEFAULT_TIER: SubscriptionTier = "STARTER";
 
+export function billingEnforced(): boolean {
+  return process.env.BILLING_ENFORCED?.trim() === "1";
+}
+
+const UNSUBSCRIBED: Plan = {
+  tier: "NONE",
+  name: "No plan",
+  priceMonthly: 0,
+  tagline: "Pick a plan to start running ads.",
+  spendGuidance: "",
+  limits: { campaigns: 0, creativesPerMonth: 0 },
+  features: [
+    "Look around the dashboard",
+    "Talk to the AI specialists",
+    "Choose a plan whenever you're ready",
+  ],
+};
+
 export function planFor(tier: SubscriptionTier): Plan {
-  const resolved = tier === "NONE" ? DEFAULT_TIER : tier;
-  return PLANS.find((p) => p.tier === resolved) ?? PLANS[0];
+  if (tier === "NONE") {
+    return billingEnforced()
+      ? UNSUBSCRIBED
+      : PLANS.find((p) => p.tier === DEFAULT_TIER) ?? PLANS[0];
+  }
+  return PLANS.find((p) => p.tier === tier) ?? PLANS[0];
 }
 
 export function limitsFor(tier: SubscriptionTier): PlanLimits {
