@@ -31,7 +31,7 @@ export const PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 29,
+    priceMonthly: 39.99,
     tagline: "Get your first campaign live.",
     spendGuidance: "Best for $100–500/mo in ad spend",
     limits: { campaigns: 1, creativesPerMonth: 2 },
@@ -47,7 +47,7 @@ export const PLANS: Plan[] = [
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 79,
+    priceMonthly: 100,
     tagline: "What most businesses run on.",
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
@@ -64,7 +64,7 @@ export const PLANS: Plan[] = [
   {
     tier: "SCALE",
     name: "Scale",
-    priceMonthly: 199,
+    priceMonthly: 249.99,
     tagline: "For spend that needs real attention.",
     spendGuidance: "Best for $2,000+/mo in ad spend",
     limits: { campaigns: 10, creativesPerMonth: 20 },
