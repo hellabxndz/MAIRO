@@ -47,7 +47,7 @@ export const PLANS: Plan[] = [
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 100,
+    priceMonthly: 99.99,
     tagline: "What most businesses run on.",
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
