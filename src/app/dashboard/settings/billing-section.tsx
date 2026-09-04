@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui";
 import { PLANS, planFor, billingEnforced } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
-import { startCheckoutAction, openBillingPortalAction } from "@/lib/actions/billing-actions";
-import { primaryButtonClass, secondaryButtonClass } from "@/components/ui";
+import { openBillingPortalAction } from "@/lib/actions/billing-actions";
+import { PlanButton } from "./plan-button";
+import { secondaryButtonClass } from "@/components/ui";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 
 // What a client sees about money.
@@ -126,12 +127,7 @@ export function BillingSection({
                         </button>
                       </form>
                     ) : (
-                      <form action={startCheckoutAction} className="mt-4">
-                        <input type="hidden" name="tier" value={plan.tier} />
-                        <button type="submit" className={`${primaryButtonClass} w-full`}>
-                          Choose {plan.name}
-                        </button>
-                      </form>
+                      <PlanButton tier={plan.tier} label={`Choose ${plan.name}`} />
                     )}
                   </div>
                 );

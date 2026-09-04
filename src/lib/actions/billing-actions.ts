@@ -10,6 +10,45 @@ import type { SubscriptionTier } from "@/generated/prisma/enums";
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
 
+
+/**
+ * Turns a Stripe failure into something the person clicking the button can act
+ * on, and — more often — something the person who configured the deployment can.
+ *
+ * The generic Next.js error page tells nobody anything, and a failed checkout is
+ * a failed sale. Every case here is a real configuration mistake seen in
+ * practice rather than a guess at what Stripe might say.
+ */
+function explainStripeError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+
+  // The most common one by far, and the least obvious: Stripe keeps test and
+  // live data completely separate, so a live key genuinely cannot see a price
+  // created in test mode. The ids look identical, which is what makes it
+  // confusing.
+  if (/No such price|resource_missing/i.test(raw)) {
+    return (
+      "Stripe doesn't recognise this plan's price. That usually means the API key " +
+      "and the products are in different modes — a test key can't see live prices, " +
+      "or the other way round. Check that STRIPE_SECRET_KEY and the STRIPE_PRICE_* " +
+      "ids all come from the same mode."
+    );
+  }
+  if (/Invalid API Key|No API key|Expired API Key/i.test(raw)) {
+    return "Stripe rejected the API key. Check STRIPE_SECRET_KEY on this deployment.";
+  }
+  if (/testmode|test mode|live mode/i.test(raw)) {
+    return (
+      "Stripe reported a test/live mode mismatch. The API key and the price ids " +
+      "have to come from the same mode."
+    );
+  }
+  if (/rate limit/i.test(raw)) {
+    return "Stripe is rate limiting us. Try again in a moment.";
+  }
+  return `Stripe couldn't start the checkout: ${raw}`;
+}
+
 /** The site's own origin, so Stripe knows where to send someone back to. */
 async function originUrl(): Promise<string> {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
@@ -62,7 +101,12 @@ async function customerIdFor(organizationId: string, email: string): Promise<str
  * Redirects, so it never returns on success. A failure throws and is caught by
  * the error boundary rather than silently leaving the button dead.
  */
-export async function startCheckoutAction(formData: FormData): Promise<void> {
+export type BillingActionState = { error?: string } | undefined;
+
+export async function startCheckoutAction(
+  _prevState: BillingActionState,
+  formData: FormData
+): Promise<BillingActionState> {
   const session = await auth();
   if (!session?.user?.organizationId || !session.user.email) {
     redirect("/sign-in");
@@ -70,11 +114,32 @@ export async function startCheckoutAction(formData: FormData): Promise<void> {
 
   const tier = formData.get("tier");
   if (tier !== "STARTER" && tier !== "GROWTH" && tier !== "SCALE") {
-    throw new Error("That isn't a plan we sell.");
+    return { error: "That isn't a plan we sell." };
   }
 
   const organizationId = session.user.organizationId;
-  const customerId = await customerIdFor(organizationId, session.user.email);
+  const email = session.user.email;
+
+  // The redirect has to happen outside the try: Next signals a redirect by
+  // throwing, so catching around it would swallow the navigation and report a
+  // successful checkout as a failure.
+  let checkoutUrl: string;
+  try {
+    checkoutUrl = await createCheckoutUrl({ organizationId, email, tier });
+  } catch (error) {
+    console.error("Stripe checkout failed:", error);
+    return { error: explainStripeError(error) };
+  }
+  redirect(checkoutUrl);
+}
+
+async function createCheckoutUrl(input: {
+  organizationId: string;
+  email: string;
+  tier: "STARTER" | "GROWTH" | "SCALE";
+}): Promise<string> {
+  const { organizationId, email, tier } = input;
+  const customerId = await customerIdFor(organizationId, email);
   const origin = await originUrl();
 
   const checkout = await stripe().checkout.sessions.create({
@@ -93,7 +158,7 @@ export async function startCheckoutAction(formData: FormData): Promise<void> {
   });
 
   if (!checkout.url) throw new Error("Stripe didn't return a checkout page.");
-  redirect(checkout.url);
+  return checkout.url;
 }
 
 /**
