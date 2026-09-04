@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createMetaCampaign } from "@/lib/meta/campaigns";
+import { loadMetaConnection } from "@/lib/meta/connection";
 import { MetaApiError } from "@/lib/meta/client";
 import { planFor } from "@/lib/plans";
 
@@ -59,7 +60,7 @@ export async function createCampaignAction(
     };
   }
 
-  const metaAccount = await db.metaAdAccount.findUnique({ where: { organizationId } });
+  const metaAccount = await loadMetaConnection(organizationId);
 
   if (!metaAccount || metaAccount.status !== "CONNECTED") {
     await db.campaign.create({

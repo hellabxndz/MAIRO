@@ -5,6 +5,7 @@ import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { planFor } from "@/lib/plans";
 import { NewCampaignForm } from "./new-campaign-form";
 import { fetchPerformance } from "@/lib/meta/performance";
+import { loadMetaConnection } from "@/lib/meta/connection";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 
 // Each row's figures are a live call to Meta. See the note in
@@ -34,10 +35,7 @@ export default async function CampaignsPage() {
       where: { id: organizationId },
       select: { subscriptionTier: true },
     }),
-    db.metaAdAccount.findUnique({
-      where: { organizationId },
-      select: { accessToken: true },
-    }),
+    loadMetaConnection(organizationId),
   ]);
 
   const performance = await fetchPerformance({

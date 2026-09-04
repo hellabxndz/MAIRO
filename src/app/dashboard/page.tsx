@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
 import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
 import { fetchPerformance } from "@/lib/meta/performance";
+import { loadMetaConnection } from "@/lib/meta/connection";
 import { PerformanceBand } from "@/components/performance-band";
 
 // Results are read live from Meta on every load, so this page is only as fast
@@ -30,7 +31,7 @@ export default async function DashboardOverviewPage() {
     db.monthlyPlan.findUnique({
       where: { organizationId_month: { organizationId, month: currentMonthKey() } },
     }),
-    db.metaAdAccount.findUnique({ where: { organizationId } }),
+    loadMetaConnection(organizationId),
     db.campaign.findMany({
       where: { organizationId, status: { not: "ARCHIVED" } },
       select: { id: true, metaCampaignId: true },

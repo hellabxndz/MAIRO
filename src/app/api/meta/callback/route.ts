@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import {
   exchangeCodeForToken,
   exchangeForLongLivedToken,
@@ -10,6 +9,7 @@ import {
   metaRedirectUri,
 } from "@/lib/meta/oauth";
 import { stopExploring } from "@/lib/explore-mode";
+import { saveMetaConnection } from "@/lib/meta/connection";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
@@ -64,23 +64,12 @@ export async function GET(req: NextRequest) {
       ? new Date(Date.now() + longLived.expires_in * 1000)
       : null;
 
-    await db.metaAdAccount.upsert({
-      where: { organizationId },
-      create: {
-        organizationId,
-        metaAdAccountId: adAccounts[0].id,
-        pageId: pages[0]?.id,
-        accessToken: longLived.access_token,
-        tokenExpiresAt,
-        status: "CONNECTED",
-      },
-      update: {
-        metaAdAccountId: adAccounts[0].id,
-        pageId: pages[0]?.id,
-        accessToken: longLived.access_token,
-        tokenExpiresAt,
-        status: "CONNECTED",
-      },
+    await saveMetaConnection({
+      organizationId,
+      metaAdAccountId: adAccounts[0].id,
+      pageId: pages[0]?.id ?? null,
+      accessToken: longLived.access_token,
+      tokenExpiresAt,
     });
 
     // A real connection makes "looking around first" moot — drop the flag so

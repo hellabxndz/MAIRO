@@ -36,6 +36,14 @@ const CHECKS: { name: string; label: string; why: string }[] = [
     label: "Database",
     why: "Postgres connection. Already working if you can read this page.",
   },
+  {
+    name: "TOKEN_ENCRYPTION_KEY",
+    label: "Token encryption key",
+    why:
+      "Encrypts the Meta access tokens at rest. Without it they are stored in plain " +
+      "text, and anyone who obtained a copy of the database could spend your clients' " +
+      "ad budgets. Generate with: openssl rand -base64 32",
+  },
 ];
 
 export default async function SetupPage() {

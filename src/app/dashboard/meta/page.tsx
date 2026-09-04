@@ -15,8 +15,12 @@ export default async function MetaConnectionPage({
 
   const { error, connected, required } = await searchParams;
 
+  // Selected explicitly rather than loading the whole row: this page shows the
+  // account id and when it was connected, and has no business pulling the
+  // stored access token into a rendered component at all.
   const metaAccount = await db.metaAdAccount.findUnique({
     where: { organizationId: session.user.organizationId },
+    select: { status: true, metaAdAccountId: true, connectedAt: true },
   });
 
   return (
