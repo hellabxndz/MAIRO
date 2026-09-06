@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SpaceStage } from "./space-stage";
+import { CosmicVeil } from "@/components/cosmic-veil";
 import { IntroAudio } from "./intro-audio";
 import {
   AD_TERMS,
@@ -213,6 +214,19 @@ export function CinematicIntro() {
         onEnd={() => close("seen")}
         onTooSlow={() => close("unsupported")}
       />
+
+      {/* The marketing page's own nebulae, inside the film.
+          
+          Not a copy of them — the same component, so there is one definition of
+          what MAIRO's sky looks like and the two can never drift apart. They
+          come in once the camera is through the galaxy and past Earth, which is
+          the point the film stops travelling and starts explaining; from there
+          to the final fade, what you are looking at IS the homepage backdrop.
+          So the handoff at the end is a crossfade between two frames of the
+          same sky rather than a cut between two different ones. */}
+      {scene !== "enter" && scene !== "earth" && (
+        <CosmicVeil className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 [animation:intro-fade_2.4s_forwards]" />
+      )}
 
       {/* Everything below floats over the sky. */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center sm:px-10">

@@ -35,9 +35,19 @@ const FORMATIONS = [
   },
 ];
 
-export function CosmicVeil() {
+/**
+ * @param className Overrides the positioning and stacking. The default puts the
+ *   veil behind the marketing page; the intro overlay passes its own so the
+ *   same nebulae can sit inside it, which is the point — the film and the site
+ *   are meant to be the same sky, not two that resemble each other.
+ */
+export function CosmicVeil({
+  className = "pointer-events-none fixed inset-0 -z-[9] overflow-hidden",
+}: {
+  className?: string;
+} = {}) {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-[9] overflow-hidden">
+    <div aria-hidden className={className}>
       {FORMATIONS.map((f) => (
         <div
           key={f.id}

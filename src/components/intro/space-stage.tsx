@@ -67,10 +67,14 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
   const gauss = () => (rand() + rand() + rand() + rand() - 2) * 0.5;
 
   // Halo: a very faint wash so the arms sit in something rather than on black.
+  // Violet and blue, matching the nebulae on the marketing page. An earlier
+  // version was amber all the way through, which looked good on its own and
+  // then handed off to a completely different-coloured website — two skies
+  // instead of one.
   const halo = x.createRadialGradient(mid, mid, 0, mid, mid, R);
-  halo.addColorStop(0, "rgba(255,232,196,0.30)");
-  halo.addColorStop(0.22, "rgba(210,190,255,0.10)");
-  halo.addColorStop(0.62, "rgba(120,140,255,0.045)");
+  halo.addColorStop(0, "rgba(255,236,208,0.22)");
+  halo.addColorStop(0.16, "rgba(178,150,255,0.16)");
+  halo.addColorStop(0.52, "rgba(96,110,235,0.07)");
   halo.addColorStop(1, "rgba(0,0,0,0)");
   x.fillStyle = halo;
   x.fillRect(0, 0, size, size);
@@ -102,9 +106,12 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
       // stars are forming. Real spirals do this and it is most of the colour.
       let col: string;
       const roll = rand();
-      if (d < 0.2) col = `rgba(255,${222 + rand() * 30},${180 + rand() * 50},`;
-      else if (roll > 0.965) col = `rgba(255,${140 + rand() * 40},${185 + rand() * 40},`;
-      else if (roll > 0.55) col = `rgba(${196 + rand() * 40},${216 + rand() * 30},255,`;
+      // A real spiral is warm in the middle and blue in the arms. Keeping the
+      // warm centre but shrinking it, and pushing the arms cooler, lands the
+      // whole thing on the site's violet without losing that.
+      if (d < 0.14) col = `rgba(255,${226 + rand() * 26},${192 + rand() * 44},`;
+      else if (roll > 0.95) col = `rgba(${216 + rand() * 30},${146 + rand() * 40},255,`;
+      else if (roll > 0.42) col = `rgba(${190 + rand() * 36},${206 + rand() * 32},255,`;
       else col = `rgba(255,255,255,`;
 
       const alpha = (0.5 - d * 0.34) * (0.35 + rand() * 0.65);
@@ -122,17 +129,18 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
     const t = rand() * 2 - 1;
     const px = mid + t * R * 0.34 + gauss() * R * 0.045;
     const py = mid + gauss() * R * 0.055;
-    x.fillStyle = `rgba(255,${226 + rand() * 26},${190 + rand() * 45},${(0.32 * (1 - Math.abs(t) * 0.5)).toFixed(3)})`;
+    x.fillStyle = `rgba(255,${232 + rand() * 22},${212 + rand() * 40},${(0.26 * (1 - Math.abs(t) * 0.5)).toFixed(3)})`;
     x.beginPath();
     x.arc(px, py, 0.45 + rand() * 0.9, 0, Math.PI * 2);
     x.fill();
   }
 
   // Core.
-  const core = x.createRadialGradient(mid, mid, 0, mid, mid, R * 0.2);
-  core.addColorStop(0, "rgba(255,246,226,0.95)");
-  core.addColorStop(0.35, "rgba(255,226,170,0.42)");
-  core.addColorStop(1, "rgba(255,200,140,0)");
+  const core = x.createRadialGradient(mid, mid, 0, mid, mid, R * 0.16);
+  core.addColorStop(0, "rgba(255,248,232,0.9)");
+  core.addColorStop(0.3, "rgba(248,214,190,0.34)");
+  core.addColorStop(0.7, "rgba(186,150,255,0.12)");
+  core.addColorStop(1, "rgba(150,120,255,0)");
   x.fillStyle = core;
   x.fillRect(0, 0, size, size);
 
@@ -483,9 +491,9 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Pro
         ctx!.rotate(-0.42);
         const g = ctx!.createLinearGradient(0, -height * 0.5, 0, height * 0.5);
         g.addColorStop(0, "rgba(0,0,0,0)");
-        g.addColorStop(0.4, "rgba(150,160,220,0.10)");
-        g.addColorStop(0.5, "rgba(224,220,255,0.20)");
-        g.addColorStop(0.6, "rgba(150,160,220,0.10)");
+        g.addColorStop(0.4, "rgba(126,112,220,0.12)");
+        g.addColorStop(0.5, "rgba(226,216,255,0.22)");
+        g.addColorStop(0.6, "rgba(126,112,220,0.12)");
         g.addColorStop(1, "rgba(0,0,0,0)");
         ctx!.fillStyle = g;
         const w = Math.hypot(width, height) * 1.2;
