@@ -62,34 +62,33 @@ export type Caption = {
  * more, never as something that will make a business money.
  */
 export const CAPTIONS: Caption[] = [
-  // These times are GENERATED, not authored. Every line is synthesised, its
-  // real duration measured, and the schedule packed so each starts at its scene
-  // anchor or just after the previous line ends, whichever is later. Hand-picked
-  // numbers kept leaving the voice still talking while the screen had moved on.
-  // Change a line's wording and the timings have to be regenerated with it.
+  // GENERATED, not authored. Every line is synthesised, warmed, measured, and
+  // the schedule packed so each starts at its scene anchor or just after the
+  // previous line ends. Change a line's wording and these have to be
+  // regenerated with it.
   //
   // Two things stay out of the copy however warm it gets: nothing suggests
   // anyone in the traditional process is dishonest — only that going through
   // them costs money and time, which is true — and nothing promises a result.
-  { from: 2.6, to: 5.03, text: "Something is changing in advertising." },
-  { from: 5.6, to: 8.12, text: "And for small businesses, it's about time." },
-  { from: 8.8, to: 10.53, text: "So let me ask you something." },
-  { from: 10.8, to: 13.2, text: "What's stopping you from letting AI run your ads?", hero: true },
-  { from: 13.5, to: 16.63, text: "Look — running your business is already a full-time job." },
-  { from: 16.85, to: 19.15, text: "Running your ads shouldn't have to be another one." },
-  { from: 19.7, to: 23.02, text: "Right now, here's how it goes. You find someone." },
-  { from: 23.24, to: 26.47, text: "You explain your whole business. You wait for creatives." },
-  { from: 26.69, to: 31.41, text: "You ask for changes. You wait again. And you're paying management fees the whole time." },
-  { from: 31.63, to: 32.78, text: "MAIRO changes that." },
-  { from: 33.4, to: 35.38, text: "And here's how simple it gets." },
-  { from: 36.2, to: 39.77, text: "You tell it what you sell, what you want, and what you can spend." },
-  { from: 40.0, to: 42.11, text: "That's your part. That's the whole thing." },
-  { from: 42.33, to: 47.52, text: "From there, it builds the strategy. Writes the creative. Recommends who to show it to." },
-  { from: 47.74, to: 51.61, text: "It plans where every dollar goes, and shows you before anything runs." },
-  { from: 53.7, to: 58.06, text: "Now — why AI? Because AI doesn't need a week to read your numbers." },
-  { from: 58.28, to: 62.31, text: "It reads them in seconds. So you move faster, and you test more." },
-  { from: 62.53, to: 65.09, text: "Your business already knows where it wants to go." },
-  { from: 65.31, to: 67.37, text: "Give it the intelligence to get there." },
+  { from: 2.6, to: 5.28, text: "Something is changing in advertising." },
+  { from: 5.6, to: 8.18, text: "And for small businesses, it's about time." },
+  { from: 8.8, to: 10.42, text: "So let me ask you something." },
+  { from: 10.8, to: 13.17, text: "What's stopping you from letting AI run your ads?", hero: true },
+  { from: 13.59, to: 16.82, text: "Look — running your business is already a full-time job." },
+  { from: 17.13, to: 19.48, text: "Running your ads shouldn't have to be another one." },
+  { from: 19.73, to: 23.0, text: "Right now, here's how it goes. You find someone." },
+  { from: 23.3, to: 26.76, text: "You explain your whole business. You wait for creatives." },
+  { from: 27.0, to: 31.67, text: "You ask for changes. You wait again. And you're paying management fees the whole time." },
+  { from: 32.13, to: 33.38, text: "MAIRO changes that." },
+  { from: 33.62, to: 35.59, text: "And here's how simple it gets." },
+  { from: 36.2, to: 39.79, text: "You tell it what you sell, what you want, and what you can spend." },
+  { from: 40.23, to: 42.39, text: "That's your part. That's the whole thing." },
+  { from: 42.71, to: 47.93, text: "From there, it builds the strategy. Writes the creative. Recommends who to show it to." },
+  { from: 48.37, to: 52.52, text: "It plans where every dollar goes, and shows you before anything runs." },
+  { from: 53.7, to: 58.07, text: "Now — why AI? Because AI doesn't need a week to read your numbers." },
+  { from: 58.39, to: 62.54, text: "It reads them in seconds. So you move faster, and you test more." },
+  { from: 62.78, to: 65.47, text: "Your business already knows where it wants to go." },
+  { from: 65.71, to: 67.89, text: "Give it the intelligence to get there." },
 ];
 
 /** Drifting behind the WHY MAIRO? type. Deliberately faint. */
