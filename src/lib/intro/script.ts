@@ -62,29 +62,28 @@ export type Caption = {
 export const CAPTIONS: Caption[] = [
   { from: 4.2, to: 6.4, text: "Advertising is changing." },
   { from: 9.4, to: 12.8, text: "So what's stopping you from letting AI run your ads?", hero: true },
-  { from: 13.6, to: 16.3, text: "Because running your business is already your job." },
+  { from: 13.6, to: 16.3, text: "Running your business is already your job." },
   { from: 16.5, to: 18.9, text: "Running your ads shouldn't have to be another one." },
-  {
-    from: 19.8,
-    to: 28.4,
-    text:
-      "The traditional way means finding someone, explaining your business, waiting for creatives, requesting changes, and paying management fees — before your budget starts working.",
-  },
+
+  // Short sentences, spoken order. This was one long clause with five commas in
+  // it, which reads fine on a page and sounds like someone reading a page.
+  { from: 19.8, to: 22.6, text: "Right now? You find someone. You explain your whole business to them." },
+  { from: 22.8, to: 25.6, text: "Then you wait for creatives. Ask for changes. Wait again." },
+  { from: 25.8, to: 28.6, text: "And you're paying management fees before your budget has done anything at all." },
+
   { from: 29.6, to: 31.6, text: "MAIRO changes that." },
-  { from: 35.0, to: 39.4, text: "Tell MAIRO about your business, your goal, and your budget." },
+  { from: 35.0, to: 39.4, text: "You just tell it what you sell, what you want, and what you can spend." },
+
+  { from: 41.0, to: 44.4, text: "It turns that into a strategy. The creative. Who to show it to." },
+  { from: 44.6, to: 48.6, text: "Where every dollar goes. All of it, in one place." },
+
+  { from: 51.4, to: 54.6, text: "AI doesn't need a week to see what's already in the numbers." },
   {
-    from: 41.0,
-    to: 48.6,
-    text:
-      "MAIRO turns that into campaign strategy, creative concepts, targeting recommendations and budget decisions — in one place.",
-  },
-  { from: 51.4, to: 54.8, text: "AI doesn't need days to analyse what can be understood in seconds." },
-  {
-    from: 55.0,
+    from: 54.8,
     to: 58.6,
-    text:
-      "Instead of paying for layers of manual work, MAIRO is a faster, simpler way to build and manage advertising.",
+    text: "So instead of paying for every step to be done by hand, it's faster. And it's simpler.",
   },
+
   { from: 59.4, to: 61.3, text: "Your business knows where it wants to go." },
   { from: 61.7, to: 63.4, text: "Give it the intelligence to get there." },
 ];

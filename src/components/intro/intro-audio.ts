@@ -1,19 +1,28 @@
 // Sound for the intro.
 //
-// There is no audio file to ship, so the score is synthesised: a low drone from
-// three detuned oscillators through a lowpass, plus a filtered noise bed that
-// swells and falls. It is a few lines of WebAudio instead of a megabyte of MP3,
-// and it can run indefinitely without looping audibly.
+// Two separate things, in order of preference.
 //
-// The voice lines go through the browser's own speech synthesiser. That is an
-// honest trade and worth being clear about: it will not sound like a hired
-// voice actor. It is off by default, every line is on screen as a caption
-// regardless, and the film is built to be watched silently — which is how most
-// of the web is watched anyway.
+// 1. A REAL RECORDED VOICEOVER at /intro/voice.mp3. If that file exists it is
+//    played as one continuous track, seeked to wherever the film has got to, and
+//    the synthesiser is never used. This is the only way the narration actually
+//    sounds like a person; drop a recording in and it takes over automatically,
+//    with no code change. The captions in script.ts are the script to read.
 //
-// Nothing here starts without a click. Browsers block audio that starts on its
-// own, and an experience that half-plays is worse than one that waits to be
-// asked.
+// 2. SPEECH SYNTHESIS, if there is no recording. It is a fallback and it sounds
+//    like one — a browser reading a line, not somebody saying it. It is tuned as
+//    far as it goes: the best voice on the device rather than the default, a
+//    slower rate, and each line broken into clauses queued separately so there
+//    are breaths between them instead of one flat run-on.
+//
+// Under both, a synthesised score plays: a low drone from three detuned
+// oscillators through a lowpass, plus a filtered noise bed that swells and
+// falls. A few lines of WebAudio instead of a megabyte of MP3, and it never
+// loops audibly.
+//
+// Nothing starts without a click. Browsers block audio that starts on its own,
+// and an experience that half-plays is worse than one that waits to be asked.
+
+const VOICE_URL = "/intro/voice.mp3";
 
 export class IntroAudio {
   private ctx: AudioContext | null = null;
@@ -21,9 +30,27 @@ export class IntroAudio {
   private nodes: AudioScheduledSourceNode[] = [];
   private spoken = new Set<number>();
 
-  /** Must be called from a user gesture. */
-  start() {
+  private voice: HTMLAudioElement | null = null;
+  /** Until the probe resolves we do not know whether to speak or to play. */
+  private mode: "probing" | "recorded" | "synthesised" = "probing";
+  /** The line that was on screen while we were still deciding. */
+  private queued: [number, string] | null = null;
+  private stopped = false;
+
+  /**
+   * Must be called from a user gesture.
+   *
+   * @param atSeconds Where the film has already got to, so a recording starts
+   *   in the right place rather than from the top.
+   */
+  start(atSeconds = 0) {
     if (this.ctx) return;
+    this.stopped = false;
+    this.startScore();
+    void this.chooseVoice(atSeconds);
+  }
+
+  private startScore() {
     type WithLegacy = typeof window & { webkitAudioContext?: typeof AudioContext };
     const Ctor = window.AudioContext ?? (window as WithLegacy).webkitAudioContext;
     if (!Ctor) return;
@@ -34,7 +61,7 @@ export class IntroAudio {
 
       const master = ctx.createGain();
       master.gain.setValueAtTime(0, ctx.currentTime);
-      master.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 2.2);
+      master.gain.linearRampToValueAtTime(0.42, ctx.currentTime + 2.2);
       master.connect(ctx.destination);
       this.master = master;
 
@@ -75,7 +102,7 @@ export class IntroAudio {
       band.frequency.value = 620;
       band.Q.value = 1.4;
       const ng = ctx.createGain();
-      ng.gain.value = 0.05;
+      ng.gain.value = 0.045;
 
       // An LFO sweeping the band gives the "something is thinking" texture.
       const lfo = ctx.createOscillator();
@@ -90,8 +117,46 @@ export class IntroAudio {
       this.nodes.push(noise, lfo);
     } catch {
       // Audio is a bonus. If the context will not open, the film is unaffected.
-      this.stop();
+      this.ctx = null;
+      this.master = null;
     }
+  }
+
+  /**
+   * Decides between a recording and the synthesiser, once, before anything is
+   * said. Probing first rather than racing the two means a line is never read
+   * aloud a moment before the recording of it starts.
+   */
+  private async chooseVoice(atSeconds: number) {
+    let found = false;
+    try {
+      const res = await fetch(VOICE_URL, { method: "HEAD" });
+      found = res.ok;
+    } catch {
+      found = false;
+    }
+    if (this.stopped) return;
+
+    if (found) {
+      try {
+        const el = new Audio(VOICE_URL);
+        el.preload = "auto";
+        el.volume = 0.95;
+        el.currentTime = Math.max(0, atSeconds);
+        await el.play();
+        this.voice = el;
+        this.mode = "recorded";
+        this.queued = null;
+        return;
+      } catch {
+        // Present but unplayable. Fall through and read it instead.
+      }
+    }
+
+    this.mode = "synthesised";
+    const pending = this.queued;
+    this.queued = null;
+    if (pending) this.speak(pending[0], pending[1]);
   }
 
   /** A soft low hit, for a scene change. */
@@ -106,7 +171,7 @@ export class IntroAudio {
       osc.frequency.exponentialRampToValueAtTime(38, ctx.currentTime + 0.9);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.32, ctx.currentTime + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.03);
       g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.1);
       osc.connect(g).connect(master);
       osc.start();
@@ -116,32 +181,84 @@ export class IntroAudio {
     }
   }
 
-  /** Speaks a caption once. Repeat calls for the same index do nothing. */
+  /** Narrates a caption once. Does nothing if a recording is carrying the film. */
   say(index: number, text: string) {
     if (!this.ctx || this.spoken.has(index)) return;
+    if (this.mode === "recorded") return;
+    if (this.mode === "probing") {
+      // Hold it. If the probe lands on the synthesiser this is spoken then; if
+      // it finds a recording it is dropped, which is what we want.
+      this.queued = [index, text];
+      return;
+    }
     this.spoken.add(index);
+    this.speak(index, text);
+  }
+
+  /**
+   * The best English voice the device has.
+   *
+   * Platforms ship a default that is usually the oldest and flattest one
+   * installed, so the named-quality voices are worth hunting for: they are
+   * neural, and they are the difference between a line being spoken and a line
+   * being pronounced.
+   */
+  private pickVoice(): SpeechSynthesisVoice | undefined {
+    const voices = speechSynthesis.getVoices().filter((v) => /^en(-|_|$)/i.test(v.lang));
+    if (!voices.length) return undefined;
+    const rank = (v: SpeechSynthesisVoice) => {
+      const n = `${v.name}`.toLowerCase();
+      if (/natural|neural/.test(n)) return 0;
+      if (/premium|enhanced/.test(n)) return 1;
+      if (/\b(ava|jenny|aria|serena|samantha|sonia|libby)\b/.test(n)) return 2;
+      if (/google/.test(n)) return 3;
+      return 4;
+    };
+    return [...voices].sort((a, b) => rank(a) - rank(b))[0];
+  }
+
+  private speak(index: number, text: string) {
     if (typeof speechSynthesis === "undefined") return;
+    this.spoken.add(index);
     try {
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.94;
-      u.pitch = 0.92;
-      u.volume = 0.95;
-      const voice = speechSynthesis
-        .getVoices()
-        .find((v) => /en[-_](GB|US)/i.test(v.lang) && /female|samantha|serena|zira|google/i.test(v.name));
-      if (voice) u.voice = voice;
-      speechSynthesis.speak(u);
+      // One utterance per clause. The synthesiser runs a whole string together
+      // at one pace; splitting it puts a breath where a person would take one.
+      const clauses = text
+        .split(/(?<=[.?!])\s+|\s+—\s+/)
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const voice = this.pickVoice();
+      for (const clause of clauses) {
+        const u = new SpeechSynthesisUtterance(clause);
+        u.rate = 0.92;
+        u.pitch = 1.0;
+        u.volume = 0.95;
+        if (voice) u.voice = voice;
+        speechSynthesis.speak(u);
+      }
     } catch {
       /* the caption is already on screen */
     }
   }
 
   stop() {
+    this.stopped = true;
+    this.queued = null;
     try {
       if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
     } catch {
       /* nothing to cancel */
     }
+    if (this.voice) {
+      try {
+        this.voice.pause();
+        this.voice.src = "";
+      } catch {
+        /* already gone */
+      }
+      this.voice = null;
+    }
+
     const ctx = this.ctx;
     const master = this.master;
     if (ctx && master) {
@@ -172,5 +289,6 @@ export class IntroAudio {
     }, 300);
     this.ctx = null;
     this.master = null;
+    this.mode = "probing";
   }
 }

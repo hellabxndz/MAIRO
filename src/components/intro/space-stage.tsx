@@ -421,18 +421,25 @@ type Props = {
   onEnd: () => void;
   /** Called if the device cannot hold a watchable frame rate. */
   onTooSlow: () => void;
+  /**
+   * Written with the film's elapsed seconds every frame. A ref rather than a
+   * callback because this changes sixty times a second and nothing should
+   * re-render for it — it exists so that turning sound on mid-film can seek a
+   * recorded voiceover to the right place instead of starting it from the top.
+   */
+  clock?: { current: number };
   mobile: boolean;
 };
 
-export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Props) {
+export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   // Held in a ref, and refreshed after render rather than during it, so that a
   // re-render swaps the callbacks without tearing down the canvas and starting
   // the film again from black.
-  const cb = useRef({ onScene, onCaption, onEnd, onTooSlow });
+  const cb = useRef({ onScene, onCaption, onEnd, onTooSlow, clock });
   useEffect(() => {
-    cb.current = { onScene, onCaption, onEnd, onTooSlow };
+    cb.current = { onScene, onCaption, onEnd, onTooSlow, clock };
   });
 
   useEffect(() => {
@@ -532,6 +539,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Pro
       const t = (now - started) / 1000;
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
+      if (cb.current.clock) cb.current.clock.current = t;
 
       // Health check. If the device genuinely cannot render this, the film gets
       // out of the way rather than stuttering through sixty seconds of it.

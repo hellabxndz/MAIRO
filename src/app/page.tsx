@@ -29,7 +29,7 @@ const capabilities = [
     eyebrow: "Ask",
     title: "Talk to it\nlike a person.",
     body:
-      "Three specialists, always available. Ask why your cost per click moved, what to do with £500, whether a campaign is worth keeping. Plain English in, plain English back.",
+      "Three specialists, always available. Ask why your cost per click moved, what to do with $500, whether a campaign is worth keeping. Plain English in, plain English back.",
     panel: "Strategist",
     lines: [
       { who: "you", text: "why did my cost per click go up this week?" },

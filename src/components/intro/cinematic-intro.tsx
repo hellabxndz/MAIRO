@@ -80,6 +80,8 @@ export function CinematicIntro() {
   const [sound, setSound] = useState(false);
 
   const audio = useRef<IntroAudio | null>(null);
+  /** Where the film has got to, updated by the stage every frame. */
+  const clock = useRef(0);
   const alive = useRef(false);
   const closeTimer = useRef<number | undefined>(undefined);
 
@@ -181,7 +183,9 @@ export function CinematicIntro() {
 
   const enableSound = () => {
     if (!audio.current) audio.current = new IntroAudio();
-    audio.current.start();
+    // Passing the film's position means a recorded voiceover starts from where
+    // we actually are, not from the beginning of a film that is half over.
+    audio.current.start(clock.current);
     setSound(true);
     // Pick up whatever line is on screen, rather than waiting for the next one.
     if (caption >= 0) audio.current.say(caption, CAPTIONS[caption].text);
@@ -209,6 +213,7 @@ export function CinematicIntro() {
     >
       <SpaceStage
         mobile={mobile}
+        clock={clock}
         onScene={onScene}
         onCaption={onCaption}
         onEnd={() => close("seen")}
@@ -229,7 +234,12 @@ export function CinematicIntro() {
       )}
 
       {/* Everything below floats over the sky. */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center sm:px-10">
+      {/* The padding is load-bearing. The caption is pinned near the bottom of
+          the frame, so without a reserved band a tall scene centres itself
+          straight through it — which is exactly what the budget-split row did
+          on a phone, printing over the paragraph. Scenes now centre within the
+          space that is left. */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pb-44 pt-24 text-center sm:px-10 sm:pb-36 sm:pt-28">
         <div
           key={scene}
           className="w-full max-w-[1400px]"
@@ -290,17 +300,15 @@ export function CinematicIntro() {
 
           {scene === "old" && (
             <div>
-              {/* Scattered rather than listed. The point of the scene is that
-                  the traditional process does not line up into one place. */}
               {/* Scattered across a wide screen; stacked with a slight lean on
                   a narrow one. Absolute percentages that look fragmented at
                   1440px just run off the side of a phone. */}
               {mobile ? (
-                <div className="mx-auto flex max-w-xs flex-col gap-2">
+                <div className="mx-auto flex max-w-xs flex-col gap-1.5">
                   {OLD_WAY.map((step, i) => (
                     <span
                       key={step}
-                      className="whitespace-nowrap rounded-full border border-white/[0.10] bg-white/[0.03] px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-neutral-400"
+                      className="whitespace-nowrap rounded-full border border-white/[0.10] bg-white/[0.03] px-4 py-1.5 text-[10px] uppercase tracking-[0.16em] text-neutral-400"
                       style={{
                         alignSelf: i % 2 ? "flex-end" : "flex-start",
                         animation: `intro-rise 0.9s ${0.3 + i * 0.36}s both`,
@@ -330,7 +338,7 @@ export function CinematicIntro() {
 
               {/* Where the money goes before it reaches an auction. */}
               <div
-                className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[10px] uppercase tracking-[0.2em] sm:text-xs"
+                className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[10px] uppercase tracking-[0.2em] sm:text-xs"
                 style={{ animation: "intro-rise 1s 5.4s both" }}
               >
                 {BUDGET_SPLIT.map((part, i) => (
