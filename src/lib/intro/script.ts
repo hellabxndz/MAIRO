@@ -21,19 +21,21 @@ export type Scene = {
 };
 
 /**
- * The film runs a little over sixty seconds. The extra time is the Milky Way
- * and the descent to Earth, which needs room to breathe or it reads as a jump
- * cut rather than a journey.
+ * Just under seventy seconds. It grew twice for good reasons: the Milky Way and
+ * the descent to Earth need room or they read as a jump cut rather than a
+ * journey, and the narration is now near-continuous, which takes the time it
+ * takes. Scene lengths are set by how long the lines spoken over them actually
+ * are — see CAPTIONS.
  */
 export const SCENES: Scene[] = [
-  { id: "enter", from: 0, to: 6.5 },     // black, a point of light, the galaxy
-  { id: "earth", from: 6.5, to: 13 },    // into the Milky Way, down to Earth
-  { id: "why", from: 13, to: 19 },       // WHY MAIRO?
-  { id: "old", from: 19, to: 29 },       // the traditional way
-  { id: "intro", from: 29, to: 40 },     // introducing MAIRO
-  { id: "build", from: 40, to: 51 },     // the AI builds the campaign
-  { id: "whyai", from: 51, to: 59 },     // why AI
-  { id: "final", from: 59, to: 64.5 },   // the reveal, then two seconds to hold
+  { id: "enter", from: 0, to: 6.5 },       // black, a point of light, the galaxy
+  { id: "earth", from: 6.5, to: 13.2 },    // into the Milky Way, down to Earth
+  { id: "why", from: 13.2, to: 19.4 },     // WHY MAIRO?
+  { id: "old", from: 19.4, to: 30.2 },     // the traditional way
+  { id: "intro", from: 30.2, to: 41.6 },   // introducing MAIRO
+  { id: "build", from: 41.6, to: 53.4 },   // the AI builds the campaign
+  { id: "whyai", from: 53.4, to: 61.8 },   // why AI
+  { id: "final", from: 61.8, to: 68.5 },   // the reveal, then a hold on ENTER MAIRO
 ];
 
 export const RUNTIME = SCENES[SCENES.length - 1].to;
@@ -60,32 +62,34 @@ export type Caption = {
  * more, never as something that will make a business money.
  */
 export const CAPTIONS: Caption[] = [
-  // The windows are not guesses. Each line was synthesised, measured, and the
-  // window widened (or the line shortened) until the speech fits inside it —
-  // otherwise the narration runs on over the next caption, saying one thing
-  // while the screen says another.
-  { from: 4.2, to: 6.4, text: "Advertising is changing." },
-  { from: 9.4, to: 12.8, text: "So what's stopping you from letting AI run your ads?", hero: true },
-  { from: 13.6, to: 16.3, text: "Running your business is already your job." },
-  { from: 16.5, to: 18.9, text: "Running your ads shouldn't have to be another one." },
-
-  // Short sentences, spoken order. This was one clause with five commas in it,
-  // which reads fine on a page and sounds exactly like someone reading a page.
-  { from: 19.5, to: 22.6, text: "Right now? You find someone. You explain everything." },
-  { from: 22.8, to: 25.9, text: "You wait for creatives. Ask for changes. Wait again." },
-  { from: 26.1, to: 29.2, text: "Then you pay management fees. Before your budget does anything." },
-
-  { from: 29.6, to: 31.6, text: "MAIRO changes that." },
-  { from: 35.0, to: 39.4, text: "You just tell it what you sell, what you want, and what you can spend." },
-
-  { from: 41.0, to: 44.6, text: "It turns that into a strategy. The creative. Who to show it to." },
-  { from: 44.8, to: 48.6, text: "Where every dollar goes. All of it, in one place." },
-
-  { from: 51.4, to: 54.6, text: "AI doesn't need a week to see what's already in the numbers." },
-  { from: 54.8, to: 59.0, text: "So instead of paying for every step by hand, it's faster. And simpler." },
-
-  { from: 59.4, to: 61.3, text: "Your business knows where it wants to go." },
-  { from: 61.7, to: 63.8, text: "Give it the intelligence to get there." },
+  // These times are GENERATED, not authored. Every line is synthesised, its
+  // real duration measured, and the schedule packed so each starts at its scene
+  // anchor or just after the previous line ends, whichever is later. Hand-picked
+  // numbers kept leaving the voice still talking while the screen had moved on.
+  // Change a line's wording and the timings have to be regenerated with it.
+  //
+  // Two things stay out of the copy however warm it gets: nothing suggests
+  // anyone in the traditional process is dishonest — only that going through
+  // them costs money and time, which is true — and nothing promises a result.
+  { from: 2.6, to: 5.03, text: "Something is changing in advertising." },
+  { from: 5.6, to: 8.12, text: "And for small businesses, it's about time." },
+  { from: 8.8, to: 10.53, text: "So let me ask you something." },
+  { from: 10.8, to: 13.2, text: "What's stopping you from letting AI run your ads?", hero: true },
+  { from: 13.5, to: 16.63, text: "Look — running your business is already a full-time job." },
+  { from: 16.85, to: 19.15, text: "Running your ads shouldn't have to be another one." },
+  { from: 19.7, to: 23.02, text: "Right now, here's how it goes. You find someone." },
+  { from: 23.24, to: 26.47, text: "You explain your whole business. You wait for creatives." },
+  { from: 26.69, to: 31.41, text: "You ask for changes. You wait again. And you're paying management fees the whole time." },
+  { from: 31.63, to: 32.78, text: "MAIRO changes that." },
+  { from: 33.4, to: 35.38, text: "And here's how simple it gets." },
+  { from: 36.2, to: 39.77, text: "You tell it what you sell, what you want, and what you can spend." },
+  { from: 40.0, to: 42.11, text: "That's your part. That's the whole thing." },
+  { from: 42.33, to: 47.52, text: "From there, it builds the strategy. Writes the creative. Recommends who to show it to." },
+  { from: 47.74, to: 51.61, text: "It plans where every dollar goes, and shows you before anything runs." },
+  { from: 53.7, to: 58.06, text: "Now — why AI? Because AI doesn't need a week to read your numbers." },
+  { from: 58.28, to: 62.31, text: "It reads them in seconds. So you move faster, and you test more." },
+  { from: 62.53, to: 65.09, text: "Your business already knows where it wants to go." },
+  { from: 65.31, to: 67.37, text: "Give it the intelligence to get there." },
 ];
 
 /** Drifting behind the WHY MAIRO? type. Deliberately faint. */

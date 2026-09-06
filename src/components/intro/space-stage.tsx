@@ -515,8 +515,8 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
       if (t < 6.5) return 70 + 380 * ramp(4, 6.5, t);
       if (t < 9) return 450 + 420 * ramp(6.5, 9, t);
       if (t < 13) return 870 * (1 - ramp(9, 12.6, t)) + 20;
-      if (t < 58) return 18;
-      return -34 * ramp(58, 60.5, t);
+      if (t < 60.4) return 18;
+      return -34 * ramp(60.4, 62.9, t);
     }
 
     const bucketW = [1, 1.8, 2.9];
@@ -568,7 +568,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
       // It comes back at the very end, small, as the camera pulls out.
       const approach = ramp(1.1, 6.5, t);
       const leaving = ramp(6.4, 8.6, t);
-      const returning = ramp(58.6, 63, t);
+      const returning = ramp(61, 65.4, t);
       const gAlpha = Math.max((1 - leaving) * ramp(1.0, 2.4, t), returning * 0.85);
 
       if (gAlpha > 0.002) {
@@ -678,7 +678,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
       // ── The quiet middle ───────────────────────────────────────────────
       // Behind the explanatory scenes: near-empty space with a little colour,
       // so the type has somewhere to sit without competing with it.
-      const calm = ramp(13.4, 15.5, t) * (1 - ramp(58, 60, t));
+      const calm = ramp(13.4, 15.5, t) * (1 - ramp(60.4, 62.4, t));
       if (calm > 0.002) {
         const g = ctx!.createRadialGradient(cx, cy * 1.1, 0, cx, cy, Math.max(width, height) * 0.75);
         g.addColorStop(0, `rgba(96,70,190,${(0.16 * calm).toFixed(3)})`);
@@ -689,7 +689,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
       }
 
       // The intelligence everything orbits in the "why AI" scene.
-      const core = ramp(51, 52.6, t) * (1 - ramp(57.6, 58.8, t));
+      const core = ramp(53.4, 55, t) * (1 - ramp(60.2, 61.4, t));
       if (core > 0.002) {
         const pulse = 1 + Math.sin(t * 2.1) * 0.06;
         const r = Math.min(width, height) * 0.1 * pulse;

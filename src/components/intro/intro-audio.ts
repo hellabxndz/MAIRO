@@ -2,11 +2,13 @@
 //
 // Two separate things, in order of preference.
 //
-// 1. A REAL RECORDED VOICEOVER at /intro/voice.mp3. If that file exists it is
-//    played as one continuous track, seeked to wherever the film has got to, and
-//    the synthesiser is never used. This is the only way the narration actually
-//    sounds like a person; drop a recording in and it takes over automatically,
-//    with no code change. The captions in script.ts are the script to read.
+// 1. A REAL RECORDED TRACK at /intro/voice.mp3 — narration and a music bed
+//    mixed together, the music ducking under every line so nothing competes
+//    with the voice. If that file exists it is played as one continuous track,
+//    seeked to wherever the film has got to, the synthesiser is never used, and
+//    the drone below is faded out because the track brings its own score. Drop a
+//    different recording in and it takes over automatically, with no code
+//    change. The captions in script.ts are the script it reads.
 //
 // 2. SPEECH SYNTHESIS, if there is no recording. It is a fallback and it sounds
 //    like one — a browser reading a line, not somebody saying it. It is tuned as
@@ -177,6 +179,9 @@ export class IntroAudio {
         this.voice = el;
         this.mode = "recorded";
         this.queued = null;
+        // The recording carries its own music, so the synthesised drone would
+        // just be a second, unrelated piece of music playing over the top of it.
+        this.fadeOutScore();
         return;
       } catch {
         // Present but unplayable. Fall through and read it instead.
@@ -189,11 +194,25 @@ export class IntroAudio {
     if (pending) this.speak(pending[0], pending[1]);
   }
 
-  /** A soft low hit, for a scene change. */
-  accent() {
+  /** Fades the synthesised score out, for when a real mix takes over. */
+  private fadeOutScore() {
     const ctx = this.ctx;
     const master = this.master;
     if (!ctx || !master) return;
+    try {
+      master.gain.cancelScheduledValues(ctx.currentTime);
+      master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.4);
+    } catch {
+      /* the recording is the important half */
+    }
+  }
+
+  /** A soft low hit, for a scene change. Silent once a real mix is playing. */
+  accent() {
+    const ctx = this.ctx;
+    const master = this.master;
+    if (!ctx || !master || this.mode === "recorded") return;
     try {
       const osc = ctx.createOscillator();
       osc.type = "sine";
