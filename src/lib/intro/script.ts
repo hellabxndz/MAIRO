@@ -60,32 +60,32 @@ export type Caption = {
  * more, never as something that will make a business money.
  */
 export const CAPTIONS: Caption[] = [
+  // The windows are not guesses. Each line was synthesised, measured, and the
+  // window widened (or the line shortened) until the speech fits inside it —
+  // otherwise the narration runs on over the next caption, saying one thing
+  // while the screen says another.
   { from: 4.2, to: 6.4, text: "Advertising is changing." },
   { from: 9.4, to: 12.8, text: "So what's stopping you from letting AI run your ads?", hero: true },
   { from: 13.6, to: 16.3, text: "Running your business is already your job." },
   { from: 16.5, to: 18.9, text: "Running your ads shouldn't have to be another one." },
 
-  // Short sentences, spoken order. This was one long clause with five commas in
-  // it, which reads fine on a page and sounds like someone reading a page.
-  { from: 19.8, to: 22.6, text: "Right now? You find someone. You explain your whole business to them." },
-  { from: 22.8, to: 25.6, text: "Then you wait for creatives. Ask for changes. Wait again." },
-  { from: 25.8, to: 28.6, text: "And you're paying management fees before your budget has done anything at all." },
+  // Short sentences, spoken order. This was one clause with five commas in it,
+  // which reads fine on a page and sounds exactly like someone reading a page.
+  { from: 19.5, to: 22.6, text: "Right now? You find someone. You explain everything." },
+  { from: 22.8, to: 25.9, text: "You wait for creatives. Ask for changes. Wait again." },
+  { from: 26.1, to: 29.2, text: "Then you pay management fees. Before your budget does anything." },
 
   { from: 29.6, to: 31.6, text: "MAIRO changes that." },
   { from: 35.0, to: 39.4, text: "You just tell it what you sell, what you want, and what you can spend." },
 
-  { from: 41.0, to: 44.4, text: "It turns that into a strategy. The creative. Who to show it to." },
-  { from: 44.6, to: 48.6, text: "Where every dollar goes. All of it, in one place." },
+  { from: 41.0, to: 44.6, text: "It turns that into a strategy. The creative. Who to show it to." },
+  { from: 44.8, to: 48.6, text: "Where every dollar goes. All of it, in one place." },
 
   { from: 51.4, to: 54.6, text: "AI doesn't need a week to see what's already in the numbers." },
-  {
-    from: 54.8,
-    to: 58.6,
-    text: "So instead of paying for every step to be done by hand, it's faster. And it's simpler.",
-  },
+  { from: 54.8, to: 59.0, text: "So instead of paying for every step by hand, it's faster. And simpler." },
 
   { from: 59.4, to: 61.3, text: "Your business knows where it wants to go." },
-  { from: 61.7, to: 63.4, text: "Give it the intelligence to get there." },
+  { from: 61.7, to: 63.8, text: "Give it the intelligence to get there." },
 ];
 
 /** Drifting behind the WHY MAIRO? type. Deliberately faint. */

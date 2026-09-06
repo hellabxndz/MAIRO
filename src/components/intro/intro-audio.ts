@@ -36,6 +36,7 @@ export class IntroAudio {
   /** The line that was on screen while we were still deciding. */
   private queued: [number, string] | null = null;
   private stopped = false;
+  private voiceCache: SpeechSynthesisVoice[] | null = null;
 
   /**
    * Must be called from a user gesture.
@@ -46,8 +47,34 @@ export class IntroAudio {
   start(atSeconds = 0) {
     if (this.ctx) return;
     this.stopped = false;
+    // Order matters. Both of these have to happen synchronously inside the
+    // click, before anything is awaited.
+    this.unlockSpeech();
     this.startScore();
     void this.chooseVoice(atSeconds);
+  }
+
+  /**
+   * Unlocks the speech synthesiser inside the user gesture.
+   *
+   * Safari — iOS especially — only permits speech that BEGINS during a user
+   * gesture. Probing for a recording awaits a fetch first, and by the time that
+   * resolves the gesture is over, so every later speak() is dropped in silence
+   * with no error. Speaking a single inaudible space synchronously here, while
+   * the click is still on the stack, unlocks it for the rest of the session.
+   *
+   * This is the difference between the narration working on an iPhone and the
+   * narration simply never happening.
+   */
+  private unlockSpeech() {
+    if (typeof speechSynthesis === "undefined") return;
+    try {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0.01;
+      speechSynthesis.speak(u);
+    } catch {
+      /* nothing to unlock */
+    }
   }
 
   private startScore() {
@@ -58,6 +85,9 @@ export class IntroAudio {
     try {
       const ctx = new Ctor();
       this.ctx = ctx;
+      // Safari hands back a suspended context even when it was created inside a
+      // gesture, and a suspended context is simply silent.
+      if (ctx.state === "suspended") void ctx.resume();
 
       const master = ctx.createGain();
       master.gain.setValueAtTime(0, ctx.currentTime);
@@ -204,7 +234,12 @@ export class IntroAudio {
    * being pronounced.
    */
   private pickVoice(): SpeechSynthesisVoice | undefined {
-    const voices = speechSynthesis.getVoices().filter((v) => /^en(-|_|$)/i.test(v.lang));
+    // getVoices() is empty until the list has loaded on Chrome and on first
+    // load in Safari, so the list is cached the moment it appears rather than
+    // read fresh each time and coming back empty.
+    const all = speechSynthesis.getVoices();
+    if (all.length) this.voiceCache = all;
+    const voices = (this.voiceCache ?? all).filter((v) => /^en(-|_|$)/i.test(v.lang));
     if (!voices.length) return undefined;
     const rank = (v: SpeechSynthesisVoice) => {
       const n = `${v.name}`.toLowerCase();
