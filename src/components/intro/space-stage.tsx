@@ -166,15 +166,26 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
 }
 
 /**
- * Earth. Not a texture map — an impression of one, built from overlapping
- * ellipses inside a circular clip, lit from the upper left with a terminator
- * falling away to the lower right and an atmosphere drawn outside the disc.
+ * Earth at night, from orbit.
  *
- * It is deliberately not a real coastline. A recognisable but non-literal blue
- * planet reads correctly at the size it is on screen and does not pretend to be
- * satellite imagery.
+ * A daylight planet has to get its coastlines right or it reads as painted,
+ * and the first two attempts here did exactly that. The night side is both more
+ * convincing and more honest: what you actually recognise in a photograph of
+ * Earth after dark is not the shape of the land, it is the pattern of the
+ * lights — dense along coasts, clustered into metros, thinning to nothing over
+ * deserts and ocean. Get that distribution right and the continents draw
+ * themselves.
+ *
+ * So the land is generated first as closed coastline paths, rendered into an
+ * off-screen mask, and the lights are then scattered against that mask: only on
+ * ground, three times as likely within a few pixels of a coast, and modulated
+ * by a low-frequency field so some regions blaze and others stay dark the way
+ * they really do. Nothing is placed by hand.
+ *
+ * It also suits the film. The camera arrives at a world where every light is
+ * somebody's business, which is the thing the next fifty seconds are about.
  */
-function buildEarth(size: number): HTMLCanvasElement {
+function buildEarth(size: number, dense: boolean): HTMLCanvasElement {
   const c = document.createElement("canvas");
   c.width = size;
   c.height = size;
@@ -185,41 +196,11 @@ function buildEarth(size: number): HTMLCanvasElement {
   const R = size * 0.38;
   const rand = seeded(31415);
 
-  // Atmosphere first, so the disc lands on top of its inner edge.
-  const air = x.createRadialGradient(mid, mid, R * 0.92, mid, mid, R * 1.22);
-  air.addColorStop(0, "rgba(120,190,255,0)");
-  air.addColorStop(0.35, "rgba(120,190,255,0.30)");
-  air.addColorStop(0.7, "rgba(80,150,255,0.13)");
-  air.addColorStop(1, "rgba(60,120,255,0)");
-  x.fillStyle = air;
-  x.fillRect(0, 0, size, size);
-
-  x.save();
-  x.beginPath();
-  x.arc(mid, mid, R, 0, Math.PI * 2);
-  x.clip();
-
-  // Ocean, lit from the upper left.
-  const sea = x.createRadialGradient(mid - R * 0.35, mid - R * 0.4, R * 0.05, mid, mid, R * 1.25);
-  sea.addColorStop(0, "#2f7fd0");
-  sea.addColorStop(0.4, "#14538f");
-  sea.addColorStop(0.78, "#08284d");
-  sea.addColorStop(1, "#03101f");
-  x.fillStyle = sea;
-  x.fillRect(0, 0, size, size);
-
-  // Land. Each continent is one closed path whose radius is modulated by a
-  // couple of harmonics, drawn through the midpoints of its vertices so the
-  // outline comes out as a smooth, irregular coastline.
-  //
-  // The first version of this was clusters of overlapping ellipses. At the size
-  // Earth reaches on screen they merged into one green mass with no coast and
-  // no open ocean — recognisably algae in a dish rather than a planet. A shape
-  // with an actual edge is what makes it read.
-  const coast = (ox: number, oy: number, base: number) => {
-    const N = 26;
+  // ── Coastlines, generated once so the mask and the visible planet agree ──
+  const coastPts = (ox: number, oy: number, base: number) => {
+    const N = 30;
     const h1 = 0.26 + rand() * 0.26;
-    const h2 = 0.10 + rand() * 0.16;
+    const h2 = 0.1 + rand() * 0.16;
     const p1 = rand() * 6.283;
     const p2 = rand() * 6.283;
     const k1 = 2 + Math.floor(rand() * 2);
@@ -227,111 +208,209 @@ function buildEarth(size: number): HTMLCanvasElement {
     const pts: Array<[number, number]> = [];
     for (let i = 0; i < N; i++) {
       const a = (i / N) * Math.PI * 2;
-      const r = base * (1 + h1 * Math.sin(a * k1 + p1) + h2 * Math.sin(a * k2 + p2)) * (0.88 + rand() * 0.24);
+      const r =
+        base * (1 + h1 * Math.sin(a * k1 + p1) + h2 * Math.sin(a * k2 + p2)) * (0.88 + rand() * 0.24);
       pts.push([ox + Math.cos(a) * r, oy + Math.sin(a) * r * 0.84]);
     }
-    x.beginPath();
-    x.moveTo((pts[0][0] + pts[N - 1][0]) / 2, (pts[0][1] + pts[N - 1][1]) / 2);
+    return pts;
+  };
+  const trace = (ctx: CanvasRenderingContext2D, pts: Array<[number, number]>) => {
+    const N = pts.length;
+    ctx.beginPath();
+    ctx.moveTo((pts[0][0] + pts[N - 1][0]) / 2, (pts[0][1] + pts[N - 1][1]) / 2);
     for (let i = 0; i < N; i++) {
       const cur = pts[i];
       const next = pts[(i + 1) % N];
-      x.quadraticCurveTo(cur[0], cur[1], (cur[0] + next[0]) / 2, (cur[1] + next[1]) / 2);
+      ctx.quadraticCurveTo(cur[0], cur[1], (cur[0] + next[0]) / 2, (cur[1] + next[1]) / 2);
     }
-    x.closePath();
+    ctx.closePath();
   };
 
-  // Placed to leave real ocean between them. Nothing here is a real coastline;
-  // it is an impression of a populated blue planet, not a map.
   const masses: Array<[number, number, number]> = [
-    [-0.44, -0.46, 0.21], [0.20, -0.54, 0.15], [-0.34, 0.22, 0.24],
-    [0.38, 0.04, 0.20], [0.54, 0.56, 0.12], [-0.66, 0.18, 0.10],
+    [-0.44, -0.46, 0.22], [0.20, -0.54, 0.15], [-0.34, 0.22, 0.25],
+    [0.38, 0.04, 0.21], [0.54, 0.56, 0.12], [-0.66, 0.18, 0.10],
     [0.02, 0.66, 0.11], [0.68, -0.36, 0.09],
   ];
-  for (const [cx, cy, scale] of masses) {
-    const ox = mid + cx * R;
-    const oy = mid + cy * R;
-    coast(ox, oy, R * scale);
-    const g = x.createLinearGradient(ox, oy - R * scale, ox, oy + R * scale);
-    g.addColorStop(0, "#5d7a45");
-    g.addColorStop(0.45, "#4a6b38");
-    g.addColorStop(1, "#3d5b30");
-    x.fillStyle = g;
-    x.fill();
-
-    // Arid interior, so the land is not one flat green.
-    x.save();
-    x.clip();
-    for (let i = 0; i < 5; i++) {
-      const a = rand() * Math.PI * 2;
-      const d = rand() * R * scale * 0.5;
-      coast(ox + Math.cos(a) * d, oy + Math.sin(a) * d, R * scale * (0.22 + rand() * 0.32));
-      x.fillStyle = `rgba(${(126 + rand() * 40) | 0},${(108 + rand() * 26) | 0},${(66 + rand() * 26) | 0},${(0.4 + rand() * 0.35).toFixed(2)})`;
-      x.fill();
-    }
-    x.restore();
-  }
-
-  // Islands.
-  for (let i = 0; i < 14; i++) {
+  const land = masses.map(([cx, cy, sc]) => coastPts(mid + cx * R, mid + cy * R, R * sc));
+  for (let i = 0; i < 16; i++) {
     const a = rand() * Math.PI * 2;
-    const d = Math.pow(rand(), 0.5) * R * 0.92;
-    coast(mid + Math.cos(a) * d, mid + Math.sin(a) * d, R * (0.012 + rand() * 0.03));
-    x.fillStyle = `rgba(78,104,58,${(0.55 + rand() * 0.4).toFixed(2)})`;
-    x.fill();
+    const d = Math.pow(rand(), 0.5) * R * 0.9;
+    land.push(coastPts(mid + Math.cos(a) * d, mid + Math.sin(a) * d, R * (0.014 + rand() * 0.032)));
   }
 
-  // Ice at both poles.
-  for (const sign of [-1, 1]) {
-    const ice = x.createRadialGradient(mid, mid + sign * R, 0, mid, mid + sign * R, R * 0.55);
-    ice.addColorStop(0, "rgba(238,248,255,0.92)");
-    ice.addColorStop(0.6, "rgba(215,238,255,0.28)");
-    ice.addColorStop(1, "rgba(215,238,255,0)");
-    x.fillStyle = ice;
-    x.fillRect(0, 0, size, size);
+  // ── Land mask: where the lights are allowed to be ──
+  const mask = document.createElement("canvas");
+  mask.width = size;
+  mask.height = size;
+  const mx = mask.getContext("2d", { willReadFrequently: true });
+  let md: Uint8ClampedArray | null = null;
+  if (mx) {
+    mx.fillStyle = "#fff";
+    for (const pts of land) {
+      trace(mx, pts);
+      mx.fill();
+    }
+    md = mx.getImageData(0, 0, size, size).data;
   }
+  const isLand = (px: number, py: number) => {
+    if (!md || px < 0 || py < 0 || px >= size || py >= size) return false;
+    return md[(((py | 0) * size + (px | 0)) * 4) + 3] > 40;
+  };
 
-  // Cloud systems: thin, banded, and following latitudes rather than scattered
-  // at random, which is what stops them reading as smudges on a lens.
-  for (let i = 0; i < 190; i++) {
-    const lat = (rand() * 2 - 1) * 0.94;
-    const band = Math.cos(lat * 3.1) * 0.5 + 0.5;
-    if (rand() > 0.16 + band * 0.42) continue;
-    const lon = (rand() * 2 - 1) * Math.sqrt(Math.max(1 - lat * lat, 0));
-    const px = mid + lon * R;
-    const py = mid + lat * R;
-    // Widely varied sizes. Uniform wisps tile into something that reads as
-    // texture on a lens rather than weather on a planet.
-    const w = R * (0.015 + Math.pow(rand(), 2) * 0.16);
-    x.fillStyle = `rgba(255,255,255,${(0.06 + rand() * 0.17).toFixed(3)})`;
-    x.beginPath();
-    x.ellipse(px, py, w, w * (0.12 + rand() * 0.3), (rand() - 0.5) * 0.7, 0, Math.PI * 2);
-    x.fill();
-  }
-
-  // Terminator: night falling away to the lower right.
-  const night = x.createRadialGradient(mid - R * 0.45, mid - R * 0.5, R * 0.1, mid, mid, R * 1.45);
-  night.addColorStop(0, "rgba(0,0,0,0)");
-  night.addColorStop(0.52, "rgba(0,0,6,0.12)");
-  night.addColorStop(0.82, "rgba(0,0,8,0.68)");
-  night.addColorStop(1, "rgba(0,0,10,0.93)");
-  x.fillStyle = night;
-  x.fillRect(0, 0, size, size);
-
-  x.restore();
-
-  // A bright edge where the atmosphere catches the light. Drawn as a soft band
-  // hugging the limb from inside rather than as a stroked arc, which read as a
-  // circle someone had drawn on top of the planet.
-  const limb = x.createRadialGradient(mid, mid, R * 0.93, mid, mid, R);
-  limb.addColorStop(0, "rgba(150,205,255,0)");
-  limb.addColorStop(1, "rgba(175,220,255,0.42)");
   x.save();
   x.beginPath();
   x.arc(mid, mid, R, 0, Math.PI * 2);
   x.clip();
-  x.fillStyle = limb;
+
+  // Ocean: not black, but very close to it, and slightly blue.
+  const sea = x.createRadialGradient(mid - R * 0.3, mid - R * 0.35, R * 0.1, mid, mid, R * 1.2);
+  sea.addColorStop(0, "#04070f");
+  sea.addColorStop(0.6, "#020409");
+  sea.addColorStop(1, "#000103");
+  x.fillStyle = sea;
   x.fillRect(0, 0, size, size);
+
+  // Land: barely lighter than the sea. Enough to give the lights something to
+  // sit on, not enough to read as a daylight map.
+  // Almost exactly the sea's value. On a real night side you do not see the
+  // ground at all; you infer the coast from where the lights stop. Drawn any
+  // lighter and it reads as grey continents cut out of black paper, which is
+  // what the first pass looked like.
+  for (const pts of land) {
+    trace(x, pts);
+    x.fillStyle = "#05070c";
+    x.fill();
+  }
+
+  // ── City lights ──
+  // A low-frequency field so population comes in continents-worth of variation
+  // rather than evenly. Some regions blaze, some stay almost dark.
+  const nA = rand() * 6.283;
+  const nB = rand() * 6.283;
+  const nC = rand() * 6.283;
+  const density = (px: number, py: number) => {
+    const u = (px - mid) / R;
+    const v = (py - mid) / R;
+    return Math.max(
+      0,
+      0.46 + 0.3 * Math.sin(u * 3.1 + nA) + 0.26 * Math.sin(v * 2.4 + nB) + 0.2 * Math.sin((u + v) * 4.4 + nC)
+    );
+  };
+  const reach = Math.max(2, size * 0.019);
+  const coastal = (px: number, py: number) =>
+    !isLand(px + reach, py) || !isLand(px - reach, py) || !isLand(px, py + reach) || !isLand(px, py - reach);
+
+  // Sodium orange dominates, as it does in reality, with some whiter LED and a
+  // rare cool one.
+  const lightColour = () => {
+    const roll = rand();
+    if (roll > 0.88) return `${(190 + rand() * 40) | 0},${(215 + rand() * 30) | 0},255`;
+    if (roll > 0.55) return `255,${(238 + rand() * 17) | 0},${(206 + rand() * 40) | 0}`;
+    return `255,${(186 + rand() * 40) | 0},${(96 + rand() * 60) | 0}`;
+  };
+
+  const attempts = dense ? 340000 : 80000;
+  for (let i = 0; i < attempts; i++) {
+    const px = rand() * size;
+    const py = rand() * size;
+    if (!isLand(px, py)) continue;
+
+    const dr = Math.hypot(px - mid, py - mid) / R;
+    // Foreshortening: near the limb we are looking across the surface, so the
+    // lights crowd together and dim.
+    const limb = 1 - Math.pow(dr, 3) * 0.75;
+    let chance = 0.085 * density(px, py) * limb;
+    if (coastal(px, py)) chance *= 6.5;
+    if (rand() > chance) continue;
+
+    const bright = Math.pow(rand(), 1.75) * 0.9 + 0.14;
+    x.fillStyle = `rgba(${lightColour()},${(bright * limb).toFixed(3)})`;
+    x.fillRect(px, py, 1, 1);
+  }
+
+  // Metro cores: a bright centre with a halo, which is what makes a city read
+  // as a city rather than as noise.
+  const metros = dense ? 78 : 30;
+  for (let i = 0, guard = 0; i < metros && guard < 4000; guard++) {
+    const px = rand() * size;
+    const py = rand() * size;
+    if (!isLand(px, py)) continue;
+    if (rand() > density(px, py)) continue;
+    i++;
+
+    const dr = Math.hypot(px - mid, py - mid) / R;
+    const limb = 1 - Math.pow(dr, 3) * 0.75;
+    const rr = R * (0.008 + rand() * 0.026);
+    const glow = x.createRadialGradient(px, py, 0, px, py, rr);
+    glow.addColorStop(0, `rgba(255,214,150,${(0.20 * limb).toFixed(3)})`);
+    glow.addColorStop(0.4, `rgba(255,180,104,${(0.06 * limb).toFixed(3)})`);
+    glow.addColorStop(1, "rgba(255,160,80,0)");
+    x.fillStyle = glow;
+    x.fillRect(px - rr, py - rr, rr * 2, rr * 2);
+
+    // Suburbs thinning out from the centre.
+    for (let k = 0; k < 150; k++) {
+      const a = rand() * Math.PI * 2;
+      const d = Math.pow(rand(), 1.7) * rr;
+      const sx = px + Math.cos(a) * d;
+      const sy = py + Math.sin(a) * d;
+      if (!isLand(sx, sy)) continue;
+      x.fillStyle = `rgba(${lightColour()},${(Math.pow(rand(), 1.6) * 0.9 * limb).toFixed(3)})`;
+      x.fillRect(sx, sy, 1, 1);
+    }
+  }
+
+  // Thin cloud, lit from underneath by the cities it sits over.
+  for (let i = 0; i < 70; i++) {
+    const lat = (rand() * 2 - 1) * 0.92;
+    const lon = (rand() * 2 - 1) * Math.sqrt(Math.max(1 - lat * lat, 0));
+    const px = mid + lon * R;
+    const py = mid + lat * R;
+    const w = R * (0.02 + Math.pow(rand(), 2) * 0.13);
+    x.fillStyle = `rgba(${(150 + rand() * 60) | 0},${(160 + rand() * 60) | 0},${(180 + rand() * 60) | 0},${(0.008 + rand() * 0.022).toFixed(3)})`;
+    x.beginPath();
+    x.ellipse(px, py, w, w * (0.14 + rand() * 0.26), (rand() - 0.5) * 0.7, 0, Math.PI * 2);
+    x.fill();
+  }
+
+  // Curvature: the limb falls away from the eye, so it darkens.
+  const curve = x.createRadialGradient(mid, mid, R * 0.55, mid, mid, R);
+  curve.addColorStop(0, "rgba(0,0,0,0)");
+  curve.addColorStop(1, "rgba(0,0,4,0.55)");
+  x.fillStyle = curve;
+  x.fillRect(0, 0, size, size);
+
   x.restore();
+
+  // ── Airglow: the band of atmosphere seen edge-on ──
+  // Brighter on one side, faded round with destination-out, so the planet has a
+  // light source rather than an even ring drawn around it.
+  const glowLayer = document.createElement("canvas");
+  glowLayer.width = size;
+  glowLayer.height = size;
+  const gx = glowLayer.getContext("2d");
+  if (gx) {
+    const ring = gx.createRadialGradient(mid, mid, R * 0.985, mid, mid, R * 1.055);
+    ring.addColorStop(0, "rgba(90,170,255,0)");
+    ring.addColorStop(0.3, "rgba(130,205,255,0.34)");
+    ring.addColorStop(0.62, "rgba(70,150,255,0.09)");
+    ring.addColorStop(1, "rgba(40,110,235,0)");
+    gx.fillStyle = ring;
+    gx.fillRect(0, 0, size, size);
+
+    // Erased away hard everywhere except the upper left, so the planet has a
+    // sun somewhere rather than an even ring drawn around it.
+    const fall = gx.createLinearGradient(mid - R * 0.9, mid - R * 0.9, mid + R * 0.35, mid + R * 0.35);
+    fall.addColorStop(0, "rgba(0,0,0,0)");
+    fall.addColorStop(0.3, "rgba(0,0,0,0.5)");
+    fall.addColorStop(0.65, "rgba(0,0,0,0.9)");
+    fall.addColorStop(1, "rgba(0,0,0,0.97)");
+    gx.globalCompositeOperation = "destination-out";
+    gx.fillStyle = fall;
+    gx.fillRect(0, 0, size, size);
+
+    x.drawImage(glowLayer, 0, 0);
+  }
 
   return c;
 }
@@ -370,7 +449,25 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Pro
     let height = 0;
 
     const galaxy = buildGalaxy(mobile ? 720 : 1400, !mobile);
-    const earth = buildEarth(mobile ? 560 : 1024);
+
+    // Earth is not on screen until eight and a half seconds in, and it is by
+    // far the most expensive thing to build — a full-resolution land mask read
+    // back as pixels, then a few hundred thousand candidate light positions
+    // tested against it. Building it up front delayed the start of the whole
+    // film for something nobody sees yet, so it is built off the critical path
+    // and simply not drawn until it exists. There is a full eight seconds of
+    // slack; the timeout is only there for browsers without idle callbacks.
+    let earth: HTMLCanvasElement | null = null;
+    const buildEarthSoon = () => {
+      earth = buildEarth(mobile ? 640 : 1024, !mobile);
+    };
+    type WithIdle = typeof window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    const idle = (window as WithIdle).requestIdleCallback;
+    const earthTimer = idle
+      ? (idle(buildEarthSoon, { timeout: 2500 }), undefined)
+      : window.setTimeout(buildEarthSoon, 400);
 
     const COUNT = mobile ? 380 : 900;
     const rand = seeded(777);
@@ -556,7 +653,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Pro
       // rest of it talks about happens down there.
       const eIn = ramp(8.5, 12.9, t);
       const eOut = ramp(12.9, 14.1, t);
-      if (eIn > 0.001 && eOut < 0.999) {
+      if (earth && eIn > 0.001 && eOut < 0.999) {
         // Ends with the disc just filling the frame. An earlier version ran to
         // 1.75x and pushed straight through the surface, at which point you are
         // not looking at a planet any more, you are looking at the brush work.
@@ -625,6 +722,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, mobile }: Pro
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(earthTimer);
       window.clearTimeout(resizeTimer);
       window.removeEventListener("resize", onResize);
     };
