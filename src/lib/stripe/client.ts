@@ -29,6 +29,26 @@ export function billingConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
 }
 
+/**
+ * Which Stripe mode this deployment's key is for, read straight off the key's
+ * prefix.
+ *
+ * Worth having because test and live are completely separate worlds in Stripe —
+ * separate products, separate prices, separate customers — and price ids look
+ * identical across them. A live key genuinely cannot see a price created in
+ * test mode, and the only symptom is "No such price", which sounds like the
+ * price is missing rather than like it is in the other mode.
+ *
+ * Returning it lets an error say which mode the key is actually in instead of
+ * asking someone to go and check.
+ */
+export function stripeMode(): "test" | "live" | "unknown" {
+  const key = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+  if (key.startsWith("sk_test_") || key.startsWith("rk_test_")) return "test";
+  if (key.startsWith("sk_live_") || key.startsWith("rk_live_")) return "live";
+  return "unknown";
+}
+
 // The Stripe price for each paid tier. These are ids, not secrets — they name a
 // price object in the Stripe dashboard and are safe in logs or error messages.
 const PRICE_ENV: Record<Exclude<SubscriptionTier, "NONE">, string> = {

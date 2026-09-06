@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { stripe, priceIdFor } from "@/lib/stripe/client";
+import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
@@ -27,12 +27,17 @@ function explainStripeError(error: unknown): string {
   // created in test mode. The ids look identical, which is what makes it
   // confusing.
   if (/No such price|resource_missing/i.test(raw)) {
-    return (
-      "Stripe doesn't recognise this plan's price. That usually means the API key " +
-      "and the products are in different modes — a test key can't see live prices, " +
-      "or the other way round. Check that STRIPE_SECRET_KEY and the STRIPE_PRICE_* " +
-      "ids all come from the same mode."
-    );
+    const mode = stripeMode();
+    // Naming the mode the key is in turns this from a thing to go and check
+    // into a thing to go and fix. The prices have to have been created in the
+    // same mode, and the mode is not visible anywhere in a price id.
+    const which =
+      mode === "unknown"
+        ? "Check that STRIPE_SECRET_KEY and the STRIPE_PRICE_* ids all come from the same mode."
+        : `This deployment's STRIPE_SECRET_KEY is a ${mode.toUpperCase()} mode key, so every ` +
+          `STRIPE_PRICE_* id has to be a price created in ${mode} mode. Prices from the other ` +
+          `mode are invisible to it, even though the ids look the same.`;
+    return `Stripe doesn't recognise this plan's price. ${which}`;
   }
   if (/Invalid API Key|No API key|Expired API Key/i.test(raw)) {
     return "Stripe rejected the API key. Check STRIPE_SECRET_KEY on this deployment.";
