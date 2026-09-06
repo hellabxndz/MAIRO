@@ -4,6 +4,8 @@ import { CosmicVeil } from "@/components/cosmic-veil";
 import { SpacePanel } from "@/components/space-panel";
 import { Grain } from "@/components/grain";
 import { SiteNav } from "@/components/site-nav";
+import { CinematicIntro } from "@/components/intro/cinematic-intro";
+import { ReplayIntroLink } from "@/components/intro/replay-intro-link";
 import { Reveal } from "@/components/reveal";
 import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
@@ -87,6 +89,11 @@ export default function Home() {
     // completely, which is exactly what it did. The black comes from <body> and
     // from the star canvas itself.
     <div className="relative min-h-screen text-white">
+      {/* Sits above everything below when it plays, and renders nothing at all
+          otherwise. The page underneath is fully loaded and working the whole
+          time — closing the intro is a state change, not a navigation. */}
+      <CinematicIntro />
+
       <GalaxyField />
       <CosmicVeil />
       <Grain />
@@ -367,6 +374,7 @@ export default function Home() {
           <div className="mt-20 flex flex-col gap-6 text-xs tracking-wide text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} MAIRO</span>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
+              <ReplayIntroLink className="transition hover:text-neutral-300" />
               <Link href="/privacy" className="transition hover:text-neutral-300">Privacy</Link>
               <Link href="/terms" className="transition hover:text-neutral-300">Terms</Link>
               <Link href="/data-deletion" className="transition hover:text-neutral-300">Data deletion</Link>
