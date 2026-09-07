@@ -118,7 +118,7 @@ class OrbWidget(QWidget):
         painter.setRenderHint(QPainter.Antialiasing, True)
         centre = QPointF(self.width() / 2, self.height() / 2)
         breathe = 1.0 + 0.035 * math.sin(self._phase * 1.6)
-        radius = side * 0.26 * breathe * (1.0 + 0.09 * self._smoothed)
+        radius = side * 0.23 * breathe * (1.0 + 0.09 * self._smoothed)
         primary, secondary = self._state_colors()
 
         self._draw_halo(painter, centre, radius, primary)

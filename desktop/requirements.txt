@@ -14,6 +14,10 @@ numpy>=1.24             # level metering
 pyttsx3>=2.90           # offline system voice (SAPI5 on Windows)
 SpeechRecognition>=3.10 # optional no-key speech recognition fallback
 
+# Machine readings for the HUD panels (processor, memory, uptime, network).
+# Without it the app still runs; those panels say so instead of guessing.
+psutil>=5.9
+
 # Computer actions
 mss>=9.0                # screenshots
 pyperclip>=1.8          # clipboard

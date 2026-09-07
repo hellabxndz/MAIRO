@@ -59,15 +59,57 @@ The first launch walks through four short steps: a welcome, an API key check
 (with instructions if the key is missing), a microphone test, and a voice
 choice. You can change all of it later under **Settings**.
 
-The window then opens: a glowing orb in the middle of a starfield, a status
-line that reads Ready, Listening, Thinking or Speaking, the transcript below,
-and the microphone button bottom right.
+The window then opens.
+
+## The layout
+
+Mairo is a heads-up display in three columns. Every panel is labelled in plain
+words and shows a real measurement — a reading this machine will not give up is
+drawn as a dash, never a made-up number.
+
+Across the top: the wordmark, a strip of every day in the current month with
+today highlighted, and the History and Settings buttons.
+
+**Left — what the computer is doing.**
+
+| Panel | Shows |
+|---|---|
+| Time and date | A clock ring that fills with the passing minute, and a date ring that fills as the month goes by |
+| This computer | Processor load, memory in use, disk in use with free space, how long the machine has been running |
+| Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, how much it remembers, how many conversations are saved |
+
+**Middle — Mairo itself.** The glowing orb, which breathes when idle, blooms
+with your voice while listening, spins while thinking and ripples while
+speaking. Under it the waveform, the status line (Ready, Listening, Thinking,
+Working, Speaking), and the box where you can type instead of talking.
+
+**Right — talking and shortcuts.**
+
+| Panel | Shows |
+|---|---|
+| Conversation | The running transcript: what you said, what Mairo replied, and every action it took |
+| Quick actions | Six buttons that send a request for you, so you can see what Mairo understands without typing |
+| Network | Download and upload throughput over the last minute and a half |
+
+The History button swaps the right column for your saved conversations, so the
+middle never gets squeezed. Opening one, or starting a new one, brings the
+transcript back.
+
+Processor, memory, uptime and network come from the `psutil` package, which
+`requirements.txt` installs. Without it the app runs exactly the same and those
+panels say so instead of guessing; the clock, disk and everything else are
+unaffected.
 
 ## Talking to Mairo
 
 Click **Hold to speak** (or press `Ctrl+M`), say your request, and stop
 speaking — Mairo notices the silence, transcribes, answers, and speaks the
 answer back. You can also type in the box at the bottom.
+
+The six **Quick actions** buttons send a written-out request for you: time and
+date, open Downloads, read notes, take a screenshot, what Mairo remembers, and
+lock the screen. Hover one to see the exact words it sends. The last two go
+through the same confirmation dialog as anything else risky.
 
 Things it understands today:
 
@@ -158,8 +200,8 @@ desktop/
     tools/                one file per family of computer actions
     memory/               long-term preferences
     database/             SQLite schema and access
-    ui/                   window, orb, starfield, waveform, panels, dialogs
-    utils/                logging, errors, platform and audio helpers
+    ui/                   window, orb, starfield, waveform, gauges, panels, dialogs
+    utils/                logging, errors, platform, audio and machine readings
   tests/                  unit, interface and provider tests
 ```
 
@@ -234,7 +276,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-55 tests cover memory, conversation history, the tool registry, the reasoning
+74 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.

@@ -36,7 +36,7 @@ class HistoryPanel(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.conversations = conversations
         self.palette_colors = palette
-        self.setFixedWidth(PANEL_WIDTH)
+        self.setMinimumWidth(PANEL_WIDTH)
 
         header = QLabel("CONVERSATIONS")
         header.setProperty("role", "subtitle")
@@ -135,11 +135,14 @@ class HistoryPanel(QWidget):
 
     def apply_palette(self, palette: Palette) -> None:
         self.palette_colors = palette
+        # Matches the framing of the other HUD panels.
+        red, green, blue = (int(palette.panel.lstrip("#")[i : i + 2], 16) for i in (0, 2, 4))
         self.setStyleSheet(
             f"""
             QWidget#historyPanel {{
-                background-color: {palette.panel};
-                border-left: 1px solid {palette.border};
+                background-color: rgba({red}, {green}, {blue}, 0.65);
+                border: 1px solid {palette.border};
+                border-radius: 10px;
             }}
             """
         )

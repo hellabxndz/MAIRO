@@ -1,19 +1,29 @@
-"""The Mairo window: orb, transcript, controls and the panels around them."""
+"""The Mairo window.
+
+A heads-up display: machine readings down the left, the orb and controls in
+the middle, the conversation and quick actions down the right. Every panel is
+labelled in plain words and shows a real measurement — a reading the machine
+will not give us is drawn as a dash, never invented.
+"""
 
 from __future__ import annotations
 
+import calendar
+from datetime import datetime
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -23,9 +33,11 @@ from app.ai.conversation import ConversationStore
 from app.config.paths import env_file, logs_dir
 from app.config.settings import Settings
 from app.ui import transcript as tr
+from app.ui.gauges import BarGauge, RingGauge
 from app.ui.history_panel import HistoryPanel
 from app.ui.onboarding import OnboardingDialog
 from app.ui.orb import OrbWidget
+from app.ui.panels import HudPanel, MonthStrip, ThroughputGraph
 from app.ui.settings_dialog import SettingsDialog
 from app.ui.starfield import Starfield
 from app.ui.status_indicator import StatusIndicator
@@ -35,6 +47,7 @@ from app.ui.waveform import WaveformWidget
 from app.ui.workers import AssistantWorker, ConfirmationRequest
 from app.utils.errors import MairoError
 from app.utils.logging_setup import get_logger
+from app.utils.system_monitor import SystemMonitor, SystemReading
 from app.voice.manager import VoiceManager
 
 log = get_logger("ui.window")
@@ -42,6 +55,19 @@ log = get_logger("ui.window")
 WINDOW_TITLE = "Mairo"
 MIC_IDLE = "🎙  Hold to speak"
 MIC_ACTIVE = "■  Stop listening"
+LEFT_COLUMN_WIDTH = 252
+RIGHT_COLUMN_WIDTH = 336
+
+# Label on the button, and the request it sends. Screenshot and Lock screen go
+# through the same confirmation dialog as any other risky action.
+QUICK_ACTIONS = [
+    ("Time and date", "What time and date is it?"),
+    ("Downloads", "Open my Downloads folder."),
+    ("My notes", "Read my notes."),
+    ("Screenshot", "Take a screenshot."),
+    ("What you remember", "What do you remember about me?"),
+    ("Lock screen", "Lock the computer."),
+]
 
 
 class MainWindow(QMainWindow):
@@ -66,12 +92,16 @@ class MainWindow(QMainWindow):
         self._listening = False
 
         self.setWindowTitle(WINDOW_TITLE)
-        self.resize(1080, 760)
-        self.setMinimumSize(880, 620)
+        self.resize(1300, 820)
+        self.setMinimumSize(1060, 680)
+
+        self.monitor = SystemMonitor(self)
+        self.monitor.updated.connect(self._on_system_reading)
 
         self._build_ui()
         self._apply_theme()
         self._install_shortcuts()
+        self._start_clock()
         QTimer.singleShot(150, self._first_run_checks)
 
     # ----------------------------------------------------------- building
@@ -84,67 +114,36 @@ class MainWindow(QMainWindow):
         self.starfield.lower()
 
         self.content = QWidget(central)
-        root = QHBoxLayout(self.content)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
+        root = QVBoxLayout(self.content)
+        root.setContentsMargins(20, 14, 20, 16)
+        root.setSpacing(12)
+        root.addWidget(self._build_top_bar())
 
-        column = QVBoxLayout()
-        column.setContentsMargins(26, 18, 26, 22)
-        column.setSpacing(14)
-        column.addWidget(self._build_top_bar())
-        column.addWidget(self._build_banner())
-
-        self.orb = OrbWidget(self.palette_colors)
-        column.addWidget(self.orb, 3)
-
-        self.waveform = WaveformWidget(self.palette_colors)
-        column.addWidget(self.waveform)
-
-        self.status = StatusIndicator(self.palette_colors)
-        status_row = QHBoxLayout()
-        status_row.addStretch(1)
-        status_row.addWidget(self.status)
-        status_row.addStretch(1)
-        column.addLayout(status_row)
-
-        self.empty_state = EmptyState(self.palette_colors)
-        column.addWidget(self.empty_state)
-
-        self.transcript = TranscriptView(self.palette_colors)
-        self.transcript.setMinimumHeight(170)
-        column.addWidget(self.transcript, 2)
-
-        column.addWidget(self._build_input_row())
-
-        left = QWidget()
-        left.setLayout(column)
-        root.addWidget(left, 1)
-
-        self.history = HistoryPanel(self.conversations, self.palette_colors)
-        self.history.conversation_opened.connect(self._open_conversation)
-        self.history.new_conversation_requested.connect(self._new_conversation)
-        self.history.history_cleared.connect(self._history_cleared)
-        self.history.setVisible(False)
-        root.addWidget(self.history)
+        columns = QHBoxLayout()
+        columns.setContentsMargins(0, 0, 0, 0)
+        columns.setSpacing(14)
+        columns.addWidget(self._build_left_column())
+        columns.addWidget(self._build_centre_column(), 1)
+        columns.addWidget(self._build_right_column())
+        root.addLayout(columns, 1)
 
     def _build_top_bar(self) -> QWidget:
         bar = QWidget()
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(18)
 
         self.wordmark = QLabel("M A I R O")
-        self.wordmark.setProperty("role", "title")
         self.tagline = QLabel("local assistant")
-        self.tagline.setProperty("role", "caption")
-
         title_column = QVBoxLayout()
         title_column.setContentsMargins(0, 0, 0, 0)
-        title_column.setSpacing(6)
+        title_column.setSpacing(4)
         title_column.addWidget(self.wordmark)
         title_column.addWidget(self.tagline)
         layout.addLayout(title_column)
-        layout.addStretch(1)
+
+        self.month_strip = MonthStrip(self.palette_colors)
+        layout.addWidget(self.month_strip, 1)
 
         self.history_button = QPushButton("History")
         self.history_button.setProperty("role", "ghost")
@@ -157,6 +156,121 @@ class MainWindow(QMainWindow):
         self.settings_button.clicked.connect(self.open_settings)
         layout.addWidget(self.settings_button)
         return bar
+
+    # ----------------------------------------------------- left: readings
+
+    def _build_left_column(self) -> QWidget:
+        column = QWidget()
+        column.setFixedWidth(LEFT_COLUMN_WIDTH)
+        layout = QVBoxLayout(column)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+
+        # Clock and calendar.
+        self.clock_panel = HudPanel(self.palette_colors, "Time and date")
+        self.clock_gauge = RingGauge(self.palette_colors, "clock", 104)
+        self.date_gauge = RingGauge(self.palette_colors, "today", 104)
+        clock_row = QHBoxLayout()
+        clock_row.setSpacing(6)
+        clock_row.addStretch(1)
+        clock_row.addWidget(self.clock_gauge)
+        clock_row.addWidget(self.date_gauge)
+        clock_row.addStretch(1)
+        self.clock_panel.body.addLayout(clock_row)
+        layout.addWidget(self.clock_panel)
+
+        # Machine readings.
+        self.system_panel = HudPanel(self.palette_colors, "This computer")
+        self.cpu_gauge = RingGauge(self.palette_colors, "processor", 104)
+        self.memory_gauge = RingGauge(self.palette_colors, "memory", 104)
+        gauge_row = QHBoxLayout()
+        gauge_row.setSpacing(6)
+        gauge_row.addStretch(1)
+        gauge_row.addWidget(self.cpu_gauge)
+        gauge_row.addWidget(self.memory_gauge)
+        gauge_row.addStretch(1)
+        self.system_panel.body.addLayout(gauge_row)
+
+        self.disk_bar = BarGauge(self.palette_colors, "Disk in use")
+        self.system_panel.body.addWidget(self.disk_bar)
+
+        self.uptime_label = QLabel("Running for —")
+        self.memory_label = QLabel("Memory —")
+        for label in (self.uptime_label, self.memory_label):
+            label.setWordWrap(True)
+            self.system_panel.body.addWidget(label)
+        layout.addWidget(self.system_panel)
+
+        # What Mairo itself is running with.
+        self.assistant_panel = HudPanel(self.palette_colors, "Assistant")
+        self.model_label = QLabel()
+        self.voice_label = QLabel()
+        self.listen_label = QLabel()
+        self.memory_count_label = QLabel()
+        self.conversation_count_label = QLabel()
+        self._assistant_labels = [
+            self.model_label,
+            self.voice_label,
+            self.listen_label,
+            self.memory_count_label,
+            self.conversation_count_label,
+        ]
+        for label in self._assistant_labels:
+            label.setWordWrap(True)
+            self.assistant_panel.body.addWidget(label)
+        layout.addWidget(self.assistant_panel)
+        layout.addStretch(1)
+        self.refresh_assistant_panel()
+        return column
+
+    def refresh_assistant_panel(self) -> None:
+        """Restate what Mairo is running with, after any change that affects it."""
+        voice_engine = "System voice" if self.settings.tts_provider == "system" else "OpenAI voice"
+        if not self.settings.voice_output_enabled:
+            voice_engine = "Replies not spoken"
+        recogniser = "OpenAI" if self.settings.stt_provider == "openai" else "Google"
+
+        self.model_label.setText(f"Thinking with {self.settings.active_model}")
+        self.voice_label.setText(f"Speaking with {voice_engine}")
+        self.listen_label.setText(f"Listening with {recogniser}")
+        try:
+            remembered = len(self.memory.all())
+            saved = len(self.conversations.list_conversations())
+        except Exception:  # a locked database must not break the panel
+            remembered = saved = 0
+        self.memory_count_label.setText(
+            f"{remembered} thing{'' if remembered == 1 else 's'} remembered"
+        )
+        self.conversation_count_label.setText(
+            f"{saved} saved conversation{'' if saved == 1 else 's'}"
+        )
+
+    # ----------------------------------------------------- centre: Mairo
+
+    def _build_centre_column(self) -> QWidget:
+        column = QWidget()
+        layout = QVBoxLayout(column)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+        layout.addWidget(self._build_banner())
+
+        self.orb = OrbWidget(self.palette_colors)
+        layout.addWidget(self.orb, 1)
+
+        self.waveform = WaveformWidget(self.palette_colors)
+        layout.addWidget(self.waveform)
+
+        self.status = StatusIndicator(self.palette_colors)
+        status_row = QHBoxLayout()
+        status_row.addStretch(1)
+        status_row.addWidget(self.status)
+        status_row.addStretch(1)
+        layout.addLayout(status_row)
+
+        self.empty_state = EmptyState(self.palette_colors)
+        layout.addWidget(self.empty_state)
+        layout.addWidget(self._build_input_row())
+        return column
 
     def _build_banner(self) -> QWidget:
         self.banner = QFrame()
@@ -192,10 +306,56 @@ class MainWindow(QMainWindow):
         self.mic_button = QPushButton(MIC_IDLE)
         self.mic_button.setProperty("role", "primary")
         self.mic_button.setMinimumHeight(44)
-        self.mic_button.setMinimumWidth(180)
+        self.mic_button.setMinimumWidth(170)
         self.mic_button.clicked.connect(self.toggle_listening)
         layout.addWidget(self.mic_button)
         return row
+
+    # ------------------------------------------- right: talk and shortcuts
+
+    def _build_right_column(self) -> QWidget:
+        """Two pages in one column, so opening history never squeezes the middle."""
+        self.right_stack = QStackedWidget()
+        self.right_stack.setFixedWidth(RIGHT_COLUMN_WIDTH)
+
+        column = QWidget()
+        layout = QVBoxLayout(column)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+
+        self.conversation_panel = HudPanel(self.palette_colors, "Conversation")
+        self.transcript = TranscriptView(self.palette_colors)
+        self.transcript.setMinimumHeight(180)
+        self.conversation_panel.body.addWidget(self.transcript)
+        layout.addWidget(self.conversation_panel, 1)
+
+        self.actions_panel = HudPanel(self.palette_colors, "Quick actions")
+        grid = QGridLayout()
+        grid.setSpacing(7)
+        self.quick_buttons: list[QPushButton] = []
+        for index, (label, request) in enumerate(QUICK_ACTIONS):
+            button = QPushButton(label)
+            button.setToolTip(f'Sends: "{request}"')
+            button.setMinimumHeight(34)
+            button.clicked.connect(lambda _checked=False, text=request: self.ask(text))
+            grid.addWidget(button, index // 2, index % 2)
+            self.quick_buttons.append(button)
+        self.actions_panel.body.addLayout(grid)
+        layout.addWidget(self.actions_panel)
+
+        self.network_panel = HudPanel(self.palette_colors, "Network")
+        self.network_graph = ThroughputGraph(self.palette_colors)
+        self.network_panel.body.addWidget(self.network_graph)
+        layout.addWidget(self.network_panel)
+
+        self.history = HistoryPanel(self.conversations, self.palette_colors)
+        self.history.conversation_opened.connect(self._open_conversation)
+        self.history.new_conversation_requested.connect(self._new_conversation)
+        self.history.history_cleared.connect(self._history_cleared)
+
+        self.right_stack.addWidget(column)
+        self.right_stack.addWidget(self.history)
+        return self.right_stack
 
     def _install_shortcuts(self) -> None:
         QShortcut(QKeySequence("Ctrl+M"), self, activated=self.toggle_listening)
@@ -203,6 +363,41 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+H"), self, activated=self.history_button.click)
         QShortcut(QKeySequence("Ctrl+,"), self, activated=self.open_settings)
         QShortcut(QKeySequence("Escape"), self, activated=self._stop_everything)
+
+    # -------------------------------------------------------------- clock
+
+    def _start_clock(self) -> None:
+        self._clock_timer = QTimer(self)
+        self._clock_timer.timeout.connect(self._update_clock)
+        self._clock_timer.start(1000)
+        self._update_clock()
+
+    def _update_clock(self) -> None:
+        now = datetime.now()
+        self.clock_gauge.set_reading(
+            now.second / 60 * 100, now.strftime("%H:%M"), now.strftime("%A")
+        )
+        days_in_month = calendar.monthrange(now.year, now.month)[1]
+        self.date_gauge.set_reading(
+            now.day / days_in_month * 100, f"{now.day}", now.strftime("%b %Y")
+        )
+
+    @Slot(object)
+    def _on_system_reading(self, reading: SystemReading) -> None:
+        self.cpu_gauge.set_reading(reading.cpu_percent)
+        self.memory_gauge.set_reading(reading.memory_percent)
+        self.disk_bar.set_reading(
+            reading.disk_percent,
+            f"{reading.disk_free_gb:.0f} GB free" if reading.disk_free_gb is not None else "—",
+        )
+        self.uptime_label.setText(f"Running for {reading.uptime_text}")
+        if reading.memory_used_gb is not None and reading.memory_total_gb is not None:
+            self.memory_label.setText(
+                f"Memory {reading.memory_used_gb:.1f} of {reading.memory_total_gb:.1f} GB"
+            )
+        else:
+            self.memory_label.setText("Memory readings need the psutil package")
+        self.network_graph.add_sample(reading.download_kbps, reading.upload_kbps)
 
     # -------------------------------------------------------------- theme
 
@@ -217,12 +412,29 @@ class MainWindow(QMainWindow):
         self.transcript.set_palette_colors(palette)
         self.empty_state.set_palette_colors(palette)
         self.history.apply_palette(palette)
+        self.month_strip.set_palette_colors(palette)
+        self.network_graph.set_palette_colors(palette)
+        self.disk_bar.set_palette_colors(palette)
+        for gauge in (self.clock_gauge, self.date_gauge, self.cpu_gauge, self.memory_gauge):
+            gauge.set_palette_colors(palette)
+        for panel in (
+            self.clock_panel,
+            self.system_panel,
+            self.assistant_panel,
+            self.conversation_panel,
+            self.actions_panel,
+            self.network_panel,
+        ):
+            panel.apply_palette(palette)
+
         self.wordmark.setStyleSheet(
             f"color: {palette.text}; font-size: 24px; font-weight: 600; letter-spacing: 7px;"
         )
         self.tagline.setStyleSheet(
             f"color: {palette.text_dim}; font-size: 11px; letter-spacing: 3px;"
         )
+        for label in [self.uptime_label, self.memory_label] + self._assistant_labels:
+            label.setStyleSheet(f"color: {palette.text_dim}; font-size: 11px;")
         self.banner.setStyleSheet(
             f"QFrame#banner {{ background-color: {palette.panel_alt};"
             f" border: 1px solid {palette.danger}; border-radius: 10px; }}"
@@ -246,8 +458,7 @@ class MainWindow(QMainWindow):
 
         if not self.settings.has_api_key:
             self.show_banner(
-                "No OpenAI API key found. Add OPENAI_API_KEY to "
-                f"{env_file()} and restart Mairo."
+                f"No OpenAI API key found. Add OPENAI_API_KEY to {env_file()} and restart Mairo."
             )
             self._add_message(
                 tr.SYSTEM,
@@ -272,6 +483,13 @@ class MainWindow(QMainWindow):
         self.banner.setVisible(True)
 
     # ------------------------------------------------------------ turns
+
+    def ask(self, text: str) -> None:
+        """Send a request as though the user had typed it."""
+        if self._worker is not None and self._worker.isRunning():
+            return
+        self._add_message(tr.USER, text)
+        self._start_turn(text=text)
 
     def toggle_listening(self) -> None:
         if self._listening:
@@ -308,6 +526,7 @@ class MainWindow(QMainWindow):
             self.mic_button.setText(MIC_ACTIVE)
             self.waveform.set_active(True)
         self.send_button.setEnabled(False)
+        self._set_quick_actions_enabled(False)
 
         worker = AssistantWorker(self.brain, self.voice, text=text, speak_reply=True, parent=self)
         worker.status_changed.connect(self._on_status)
@@ -321,6 +540,10 @@ class MainWindow(QMainWindow):
         worker.finished.connect(worker.deleteLater)
         self._worker = worker
         worker.start()
+
+    def _set_quick_actions_enabled(self, enabled: bool) -> None:
+        for button in self.quick_buttons:
+            button.setEnabled(enabled)
 
     def _stop_everything(self) -> None:
         if self._worker is not None and self._worker.isRunning():
@@ -360,8 +583,10 @@ class MainWindow(QMainWindow):
         self.mic_button.setText(MIC_IDLE)
         self.mic_button.setEnabled(True)
         self.send_button.setEnabled(True)
+        self._set_quick_actions_enabled(True)
         self.waveform.set_active(False)
         self.history.refresh()
+        self.refresh_assistant_panel()
         self._worker = None
 
     @Slot(object)
@@ -387,6 +612,7 @@ class MainWindow(QMainWindow):
         self.transcript.add_message(kind, text)
 
     def _new_conversation(self) -> None:
+        self._show_conversation_page()
         self.conversations.start_new()
         self.transcript.clear_messages()
         self.empty_state.setVisible(True)
@@ -395,6 +621,7 @@ class MainWindow(QMainWindow):
         self.orb.set_state("ready")
 
     def _open_conversation(self, conversation_id: int) -> None:
+        self._show_conversation_page()
         messages = self.conversations.open(conversation_id)
         self.transcript.clear_messages()
         self.empty_state.setVisible(not messages)
@@ -408,9 +635,13 @@ class MainWindow(QMainWindow):
             self.empty_state.setVisible(True)
 
     def _toggle_history(self, checked: bool) -> None:
-        self.history.setVisible(checked)
+        self.right_stack.setCurrentIndex(1 if checked else 0)
         if checked:
             self.history.refresh()
+
+    def _show_conversation_page(self) -> None:
+        self.history_button.setChecked(False)
+        self.right_stack.setCurrentIndex(0)
 
     # ------------------------------------------------------------ settings
 
@@ -424,12 +655,14 @@ class MainWindow(QMainWindow):
                 self._apply_theme()
             if self.settings.has_api_key:
                 self.banner.setVisible(False)
+            self.refresh_assistant_panel()
             self._add_message(tr.SYSTEM, "Settings saved.")
 
     # ------------------------------------------------------------ closing
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt naming
         self._stop_everything()
+        self.monitor.stop()
         if self._worker is not None:
             self._worker.wait(2500)
         log.info("Mairo closed. Logs are in %s", logs_dir())
