@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Secrets — .env holds the API key and must never be committed.
+.env
+
+# Local runtime data, if MAIRO_HOME points inside the project
+data/
+logs/
