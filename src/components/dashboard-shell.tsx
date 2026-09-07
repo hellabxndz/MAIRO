@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AmbientSky } from "@/components/ambient-sky";
 
 type NavItem = { href: string; label: string };
 
@@ -25,8 +26,8 @@ export function DashboardShell({
   const linkClass = (href: string) =>
     `rounded-lg px-3 py-2 text-sm transition ${
       pathname === href
-        ? "bg-white/10 text-white"
-        : "text-neutral-300 hover:bg-white/5 hover:text-white"
+        ? "bg-white/[0.09] text-white"
+        : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
     }`;
 
   const navList = (onNavigate?: () => void) => (
@@ -51,10 +52,12 @@ export function DashboardShell({
   );
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="relative flex min-h-screen flex-col md:flex-row">
+      <AmbientSky />
+
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 md:hidden">
-        <Link href="/" className="text-lg font-semibold">
+      <div className="flex items-center justify-between border-b border-white/[0.07] bg-black/30 px-4 py-3 backdrop-blur-md md:hidden">
+        <Link href="/" className="text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>
         <button
@@ -77,9 +80,9 @@ export function DashboardShell({
             className="absolute inset-0 bg-black/70"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-white/10 bg-neutral-950 p-6">
+          <div className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-white/[0.07] bg-neutral-950/95 p-6 backdrop-blur-xl">
             <div className="mb-8 flex items-center justify-between">
-              <Link href="/" className="text-lg font-semibold" onClick={() => setOpen(false)}>
+              <Link href="/" className="text-sm font-light tracking-[0.28em]" onClick={() => setOpen(false)}>
                 {brandLabel}
               </Link>
               <button
@@ -99,11 +102,15 @@ export function DashboardShell({
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 p-6 md:flex">
-        <Link href="/" className="mb-1 text-lg font-semibold">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-black/20 p-6 backdrop-blur-md md:flex">
+        <Link href="/" className="mb-1 text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>
-        {subtitle && <p className="mb-8 truncate text-sm text-neutral-500">{subtitle}</p>}
+        {subtitle && (
+          <p className="mb-8 truncate text-xs uppercase tracking-[0.14em] text-neutral-500">
+            {subtitle}
+          </p>
+        )}
         {navList()}
         {signOutButton}
       </aside>

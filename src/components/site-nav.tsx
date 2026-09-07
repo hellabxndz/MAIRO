@@ -14,6 +14,7 @@ import Link from "next/link";
 const LINKS = [
   { href: "#capabilities", label: "Capabilities" },
   { href: "#pricing", label: "Pricing" },
+  { href: "#freelancers", label: "Freelancers" },
 ];
 
 export function SiteNav() {

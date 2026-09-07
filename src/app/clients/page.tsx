@@ -6,6 +6,7 @@ import { limitsFor, planFor } from "@/lib/plans";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { switchClientAction, removeClientAction } from "@/lib/actions/client-actions";
 import { AddClientForm } from "./add-client-form";
+import { AmbientSky } from "@/components/ambient-sky";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -46,12 +47,15 @@ export default async function ClientsPage() {
   const room = Math.max(allowed - clients.length, 0);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
-      <header className="border-b border-white/10">
+    <div className="relative min-h-screen text-white">
+      <AmbientSky />
+      <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
-            <p className="text-sm font-medium tracking-[0.2em]">MAIRO</p>
-            <p className="mt-1 text-xs text-neutral-500">{workspace.name}</p>
+            <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
+              {workspace.name}
+            </p>
           </div>
           <div className="flex items-center gap-5 text-xs text-neutral-400">
             <span>
@@ -70,7 +74,9 @@ export default async function ClientsPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="text-2xl font-light">Your clients</h1>
+        <h1 className="font-light tracking-[-0.02em]" style={{ fontSize: "clamp(32px, 4.4vw, 52px)" }}>
+          Your clients
+        </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-neutral-400">
           Each business here has its own ad account, its own campaigns and its own
           creatives. Open one to work inside it.
@@ -88,7 +94,7 @@ export default async function ClientsPage() {
             return (
               <div
                 key={client.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.02] px-5 py-4"
+                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] px-5 py-4 transition hover:border-white/20"
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">{client.name}</p>

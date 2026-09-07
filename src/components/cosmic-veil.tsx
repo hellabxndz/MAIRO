@@ -43,8 +43,19 @@ const FORMATIONS = [
  */
 export function CosmicVeil({
   className = "pointer-events-none fixed inset-0 -z-[9] overflow-hidden",
+  still = false,
 }: {
   className?: string;
+  /**
+   * Renders the formations without their drift.
+   *
+   * Behind a marketing page the movement is the point. Behind a dashboard it
+   * is measurably expensive and gains nothing: three large translucent
+   * gradients being recomposited every frame took the signed-in screens from
+   * 117fps to 29fps, and nobody working in a spreadsheet is watching the sky
+   * move. Stopping the animation was worth four times the frame rate.
+   */
+  still?: boolean;
 } = {}) {
   return (
     <div aria-hidden className={className}>
@@ -69,10 +80,10 @@ export function CosmicVeil({
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.22)_55%,rgba(0,0,0,0.72)_100%)]" />
 
       <style>{`
-        .veil-a, .veil-b, .veil-c { will-change: transform; }
-        .veil-a { ${FORMATIONS[0].css} animation: veil-a ${FORMATIONS[0].seconds}s ease-in-out infinite; }
-        .veil-b { ${FORMATIONS[1].css} animation: veil-b ${FORMATIONS[1].seconds}s ease-in-out infinite; }
-        .veil-c { ${FORMATIONS[2].css} animation: veil-c ${FORMATIONS[2].seconds}s ease-in-out infinite; }
+        ${still ? "" : ".veil-a, .veil-b, .veil-c { will-change: transform; }"}
+        .veil-a { ${FORMATIONS[0].css} ${still ? "" : `animation: veil-a ${FORMATIONS[0].seconds}s ease-in-out infinite;`} }
+        .veil-b { ${FORMATIONS[1].css} ${still ? "" : `animation: veil-b ${FORMATIONS[1].seconds}s ease-in-out infinite;`} }
+        .veil-c { ${FORMATIONS[2].css} ${still ? "" : `animation: veil-c ${FORMATIONS[2].seconds}s ease-in-out infinite;`} }
 
         @keyframes veil-a {
           0%,100% { transform: translate3d(0,0,0) scale(1); }

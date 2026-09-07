@@ -10,7 +10,7 @@ import { Reveal } from "@/components/reveal";
 import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ConceptDemo } from "@/components/concept-demo";
-import { PLANS } from "@/lib/plans";
+import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 
 // The marketing page.
 //
@@ -331,6 +331,78 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── For the people this could have replaced ───────────────────── */}
+      <section id="freelancers" className="relative px-6 py-40 sm:px-10 sm:py-56">
+        <div className="mx-auto max-w-[1500px]">
+          <Reveal>
+            <p className="text-[11px] uppercase tracking-[0.42em] text-neutral-500">
+              For freelancers and studios
+            </p>
+          </Reveal>
+
+          <h2
+            className="mt-8 font-light leading-[0.94] tracking-[-0.03em]"
+            style={{ fontSize: "clamp(34px, 5.4vw, 82px)" }}
+          >
+            <TextReveal>Run it for</TextReveal>
+            <TextReveal delay={0.1} className="text-neutral-600">
+              everyone else.
+            </TextReveal>
+          </h2>
+
+          <div className="mt-16 grid gap-16 lg:grid-cols-2 lg:gap-28">
+            <Reveal delay={0.2}>
+              <p className="max-w-md leading-relaxed text-neutral-400">
+                If running ads is what you do for a living, MAIRO is not competing
+                with you — it is the thing you run. One login, every business you
+                work with, each with its own ad account, its own campaigns and its
+                own creatives.
+              </p>
+              <p className="mt-7 max-w-md leading-relaxed text-neutral-400">
+                Take on the clients whose budgets never justified your hourly rate.
+                Do the strategy and the relationship; let MAIRO do the building.
+              </p>
+              <Magnetic>
+                <Link
+                  href="/for-freelancers"
+                  className="group mt-12 inline-flex items-center gap-3 rounded-full border border-white/20 px-9 py-4 text-xs uppercase tracking-[0.16em] text-neutral-200 transition hover:border-white hover:bg-white hover:text-black"
+                >
+                  Set up a studio
+                  <span className="transition group-hover:translate-x-1">→</span>
+                </Link>
+              </Magnetic>
+            </Reveal>
+
+            <Reveal delay={0.3} y={48} duration={1.2}>
+              <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-2">
+                {FREELANCER_PLANS.map((plan) => (
+                  <div key={plan.tier} className="flex h-full flex-col bg-black/60 p-8">
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-500">
+                      {plan.name}
+                    </p>
+                    <p className="mt-6 text-4xl font-light tabular-nums tracking-tight">
+                      ${plan.priceMonthly}
+                      <span className="ml-1 text-sm text-neutral-600">/mo</span>
+                    </p>
+                    <p className="mt-4 text-xs leading-relaxed text-neutral-500">
+                      {plan.spendGuidance}
+                    </p>
+                    <ul className="mt-8 flex-1 space-y-3 text-sm text-neutral-400">
+                      {plan.features.slice(0, 4).map((f) => (
+                        <li key={f} className="flex gap-3">
+                          <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
       {/* ── Final call ───────────────────────────────────────────────── */}
       <section className="relative flex min-h-[85vh] items-center justify-center px-6 text-center sm:px-10">
         <div className="mx-auto max-w-4xl">
@@ -375,6 +447,7 @@ export default function Home() {
             <span>© {new Date().getFullYear()} MAIRO</span>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
               <ReplayIntroLink className="transition hover:text-neutral-300" />
+              <Link href="/for-freelancers" className="transition hover:text-neutral-300">For freelancers</Link>
               <Link href="/privacy" className="transition hover:text-neutral-300">Privacy</Link>
               <Link href="/terms" className="transition hover:text-neutral-300">Terms</Link>
               <Link href="/data-deletion" className="transition hover:text-neutral-300">Data deletion</Link>
