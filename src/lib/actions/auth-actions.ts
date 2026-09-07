@@ -17,6 +17,65 @@ const signUpSchema = z.object({
 
 export type AuthActionState = { error?: string } | undefined;
 
+const freelancerSignUpSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  studioName: z.string().min(1, "Give your studio a name"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+/**
+ * Signs up someone who runs ads for other people rather than for themselves.
+ *
+ * The difference from signUpAction is what gets created: a WORKSPACE
+ * organization instead of a BUSINESS one. A workspace never runs ads itself —
+ * it exists to hold the client businesses beneath it and to carry the
+ * subscription that pays for them — so there is no onboarding intake, no Meta
+ * connection and no campaigns at this level. Those all belong to the clients.
+ */
+export async function freelancerSignUpAction(
+  _prevState: AuthActionState,
+  formData: FormData
+): Promise<AuthActionState> {
+  const parsed = freelancerSignUpSchema.safeParse({
+    name: formData.get("name"),
+    studioName: formData.get("studioName"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { name, studioName, email, password } = parsed.data;
+
+  const existing = await db.user.findUnique({ where: { email } });
+  if (existing) {
+    return { error: "An account with that email already exists." };
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await db.$transaction(async (tx) => {
+    const workspace = await tx.organization.create({
+      data: { name: studioName, kind: "WORKSPACE" },
+    });
+    await tx.user.create({
+      data: { email, name, passwordHash, role: "FREELANCER", organizationId: workspace.id },
+    });
+  });
+
+  try {
+    await signIn("credentials", { email, password, redirect: false });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Account created, but sign-in failed. Try signing in." };
+    }
+    throw error;
+  }
+  redirect("/clients");
+}
+
 export async function signUpAction(
   _prevState: AuthActionState,
   formData: FormData

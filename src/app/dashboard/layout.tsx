@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { isExploring } from "@/lib/explore-mode";
-import { activeOrganizationId } from "@/lib/active-org";
+import { activeOrg } from "@/lib/active-org";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -31,7 +31,14 @@ const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings"];
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
-  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const active = await activeOrg();
+  const organizationId = active?.id ?? session.user.organizationId;
+
+  // A freelancer who has not opened a client yet has nothing to show here —
+  // their workspace runs no ads of its own. Send them to pick one.
+  if (session.user.role === "FREELANCER" && !active?.actingAsClient) {
+    redirect("/clients");
+  }
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
@@ -63,6 +70,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
       subtitle={organization?.name}
       onSignOut={signOutAction}
     >
+      {/* Whose account you are in, and the way back out. A freelancer moving
+          between clients needs this on every screen — editing the wrong
+          business's campaigns because you forgot which one you had open is
+          exactly the mistake this prevents. */}
+      {active?.actingAsClient && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+          <p className="text-sm text-neutral-300">
+            Working in <span className="font-medium text-white">{organization?.name}</span>
+          </p>
+          <Link
+            href="/clients"
+            className="shrink-0 rounded-lg border border-white/15 px-4 py-2 text-xs text-neutral-300 transition hover:border-white/40 hover:text-white"
+          >
+            All clients
+          </Link>
+        </div>
+      )}
+
       {!metaAccount && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-amber-200">
