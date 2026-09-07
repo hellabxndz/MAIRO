@@ -15,19 +15,20 @@ datasource db {
 enum UserRole {
   OWNER // MyRo staff — sees the AIOS dashboard and every client org
   CLIENT // a business owner using the app to run their ads
+  FREELANCER // runs ads for several businesses from one login
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String?
-  role         UserRole  @default(CLIENT)
-  organization Organization? @relation(fields: [organizationId], references: [id])
+  id             String        @id @default(cuid())
+  email          String        @unique
+  passwordHash   String
+  name           String?
+  role           UserRole      @default(CLIENT)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
-  agentThreads AgentThread[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  agentThreads   AgentThread[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 // --- Client business -------------------------------------------------------
@@ -53,21 +54,55 @@ enum SubscriptionTier {
   STARTER
   GROWTH
   SCALE
+  // Freelancer tiers. Priced by how many client businesses can be run at once
+  // rather than by how much advertising one business does, because that is the
+  // thing that actually scales for someone doing this for a living.
+  STUDIO
+  AGENCY
+}
+
+/// What an Organization *is*.
+///
+/// BUSINESS is every organization that existed before freelancers: a company
+/// running its own advertising. WORKSPACE is a freelancer's own account — it
+/// never runs ads itself, it exists to own the client businesses beneath it and
+/// to hold the subscription that pays for them.
+enum OrganizationKind {
+  BUSINESS
+  WORKSPACE
 }
 
 model Organization {
-  id                 String    @id @default(cuid())
-  name               String
-  website            String?
-  industry           String?
-  timezone           String    @default("America/New_York")
-  subscriptionTier   SubscriptionTier @default(NONE)
+  id               String           @id @default(cuid())
+  name             String
+  website          String?
+  industry         String?
+  timezone         String           @default("America/New_York")
+  subscriptionTier SubscriptionTier @default(NONE)
+
+  kind OrganizationKind @default(BUSINESS)
+
+  // A freelancer's clients hang off their workspace.
+  //
+  // Deliberately a parent link rather than a User-to-Organization join table.
+  // Every query in the app is already scoped by organizationId, and a join
+  // table would mean revisiting all of them; a parent link leaves those queries
+  // untouched and makes "can this user reach this organization?" a single
+  // comparison — it is your own organization, or its parent is.
+  //
+  // Cascade: deleting a freelancer's workspace deletes the client businesses
+  // inside it. That is the right default because the workspace is the account
+  // and the clients only exist within it, but it does mean the delete-account
+  // path is more destructive for a freelancer than for a business owner.
+  parent   Organization?  @relation("WorkspaceClients", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String?
+  clients  Organization[] @relation("WorkspaceClients")
 
   // Billing. Stripe is the source of truth for what someone is paying for —
   // these columns are a local copy kept in step by the webhook, so a page load
   // never has to call Stripe to know what plan a client is on.
-  stripeCustomerId     String?  @unique
-  stripeSubscriptionId String?  @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
   // Mirrors Stripe's subscription status: active, trialing, past_due,
   // canceled, incomplete... Stored as text rather than an enum because Stripe
   // adds statuses and a migration should not be needed to receive one.
@@ -76,46 +111,46 @@ model Organization {
   // this passes, which is what the client paid for.
   currentPeriodEnd     DateTime?
 
-  users              User[]
-  intake             OnboardingIntake?
-  monthlyPlans       MonthlyPlan[]
-  metaAdAccount      MetaAdAccount?
-  campaigns          Campaign[]
-  creativeRequests   CreativeRequest[]
-  agentThreads       AgentThread[]
+  users            User[]
+  intake           OnboardingIntake?
+  monthlyPlans     MonthlyPlan[]
+  metaAdAccount    MetaAdAccount?
+  campaigns        Campaign[]
+  creativeRequests CreativeRequest[]
+  agentThreads     AgentThread[]
 
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OnboardingIntake {
-  id               String   @id @default(cuid())
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String   @unique
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
 
-  primaryGoal      AdGoal
+  primaryGoal        AdGoal
   monthlyBudgetCents Int
-  targetAudience   String?
-  brandVoice       String?
-  competitors      String?
-  notes            String?
+  targetAudience     String?
+  brandVoice         String?
+  competitors        String?
+  notes              String?
 
-  completedAt      DateTime @default(now())
+  completedAt DateTime @default(now())
 }
 
 model MonthlyPlan {
-  id               String   @id @default(cuid())
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 
-  month            String   // e.g. "2026-09"
-  status           PlanStatus @default(DRAFT)
-  strategySummary  String   @db.Text // AI-generated narrative
-  budgetAllocationJson String @db.Text // JSON: { channel, percent, amountCents }[]
-  keyMetrics       String?  @db.Text // JSON of target KPIs
+  month                String // e.g. "2026-09"
+  status               PlanStatus @default(DRAFT)
+  strategySummary      String     @db.Text // AI-generated narrative
+  budgetAllocationJson String     @db.Text // JSON: { channel, percent, amountCents }[]
+  keyMetrics           String?    @db.Text // JSON of target KPIs
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, month])
 }
@@ -130,21 +165,21 @@ enum MetaConnectionStatus {
 }
 
 model MetaAdAccount {
-  id                String   @id @default(cuid())
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId    String   @unique
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
 
-  metaAdAccountId   String   // act_xxxxxxxx
-  metaBusinessId    String?
-  pageId            String?
-  accessToken       String   @db.Text // long-lived user/system token
-  tokenExpiresAt    DateTime?
-  status            MetaConnectionStatus @default(CONNECTED)
+  metaAdAccountId String // act_xxxxxxxx
+  metaBusinessId  String?
+  pageId          String?
+  accessToken     String               @db.Text // long-lived user/system token
+  tokenExpiresAt  DateTime?
+  status          MetaConnectionStatus @default(CONNECTED)
 
-  campaigns         Campaign[]
+  campaigns Campaign[]
 
-  connectedAt       DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum CampaignStatus {
@@ -156,13 +191,13 @@ enum CampaignStatus {
 }
 
 model Campaign {
-  id               String   @id @default(cuid())
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId   String
-  metaAdAccount    MetaAdAccount? @relation(fields: [metaAdAccountId], references: [id])
-  metaAdAccountId  String?
+  id              String         @id @default(cuid())
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  metaAdAccount   MetaAdAccount? @relation(fields: [metaAdAccountId], references: [id])
+  metaAdAccountId String?
 
-  metaCampaignId   String?  // null until pushed live to Meta
+  metaCampaignId   String? // null until pushed live to Meta
   name             String
   objective        AdGoal
   status           CampaignStatus @default(DRAFT)
@@ -170,8 +205,8 @@ model Campaign {
   startDate        DateTime?
   endDate          DateTime?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // --- Creative production ----------------------------------------------
@@ -193,15 +228,15 @@ enum CreativeStatus {
 }
 
 model CreativeRequest {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
 
-  month          String   // e.g. "2026-09"
-  type           CreativeType
-  brief          String   @db.Text
-  status         CreativeStatus @default(REQUESTED)
-  assetUrl       String?
+  month    String // e.g. "2026-09"
+  type     CreativeType
+  brief    String         @db.Text
+  status   CreativeStatus @default(REQUESTED)
+  assetUrl String?
 
   // An optional picture the client uploads as the starting point — a product
   // shot, a competitor's ad, a mood reference. Stored as a data URL because it
@@ -220,12 +255,12 @@ model CreativeRequest {
   // reviewNotes carries the refusal reason shown to the client when BLOCKED.
   reviewedAt     DateTime?
   reviewCategory String?
-  reviewNotes    String? @db.Text
+  reviewNotes    String?   @db.Text
 
-  images         CreativeImage[]
+  images CreativeImage[]
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // One pass of the picture the client is working on. Every time they say
@@ -236,7 +271,7 @@ model CreativeRequest {
 // so a long back-and-forth doesn't accumulate megabytes of dead images in the
 // database — only the current draft and the finals the client chose survive.
 model CreativeImage {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   creativeRequest   CreativeRequest @relation(fields: [creativeRequestId], references: [id], onDelete: Cascade)
   creativeRequestId String
 
@@ -254,9 +289,9 @@ model CreativeImage {
   // The safety check that runs when a picture is chosen as final, since that
   // is the point at which it would really be used in an ad.
   reviewedAt  DateTime?
-  reviewNotes String?  @db.Text
+  reviewNotes String?   @db.Text
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([creativeRequestId, version])
   @@index([creativeRequestId])
@@ -272,18 +307,18 @@ enum AgentType {
 }
 
 model AgentThread {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String?
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
 
-  agentType      AgentType
-  title          String?
-  messages       AgentMessage[]
+  agentType AgentType
+  title     String?
+  messages  AgentMessage[]
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum MessageRole {
@@ -293,12 +328,12 @@ enum MessageRole {
 }
 
 model AgentMessage {
-  id        String   @id @default(cuid())
-  thread    AgentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  threadId  String
+  id       String      @id @default(cuid())
+  thread   AgentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId String
 
-  role      MessageRole
-  content   String   @db.Text
+  role    MessageRole
+  content String      @db.Text
 
   createdAt DateTime @default(now())
 }

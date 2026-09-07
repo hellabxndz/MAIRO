@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import type { UserRole } from "@/generated/prisma/enums";
 
 // Edge-safe auth config: no providers here, since Credentials + bcrypt + the
 // Prisma client depend on Node.js APIs the Edge middleware runtime doesn't
@@ -22,7 +23,7 @@ export const authConfig: NextAuthConfig = {
     session: async ({ session, token }) => {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as "OWNER" | "CLIENT";
+        session.user.role = token.role as UserRole;
         session.user.organizationId = (token.organizationId as string | null) ?? null;
       }
       return session;

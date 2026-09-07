@@ -14,6 +14,15 @@ export type PlanLimits = {
   campaigns: number;
   /** Creative requests per calendar month. */
   creativesPerMonth: number;
+  /**
+   * Client businesses a freelancer can run at once. Absent on business plans,
+   * which are one business by definition.
+   *
+   * This is the thing freelancer pricing scales on. A business pays more as it
+   * advertises more; a freelancer pays more as they take on more clients, and
+   * the per-client limits below apply to each of those clients separately.
+   */
+  clients?: number;
 };
 
 export type Plan = {
@@ -79,6 +88,65 @@ export const PLANS: Plan[] = [
   },
 ];
 
+/**
+ * Plans for someone running ads as their job rather than for their own
+ * business.
+ *
+ * Kept out of PLANS on purpose: the landing page's pricing grid renders PLANS,
+ * and a business owner comparing Starter against Growth should not be shown an
+ * agency tier. These surface on the freelancer side of the site instead.
+ *
+ * The per-client limits are Growth-level, because a freelancer's client is a
+ * real business running real campaigns — the freelancer is paying for reach
+ * across several of them, not for a cheaper version of the product.
+ *
+ * PRICES ARE A STARTING POINT, not a recommendation. They need to be checked
+ * against what a freelancer in this market actually charges their own clients.
+ */
+export const FREELANCER_PLANS: Plan[] = [
+  {
+    tier: "STUDIO",
+    name: "Studio",
+    priceMonthly: 149.99,
+    tagline: "For a freelancer with a handful of clients.",
+    spendGuidance: "Up to 5 client businesses",
+    limits: { campaigns: 3, creativesPerMonth: 6, clients: 5 },
+    features: [
+      "Up to 5 client businesses",
+      "3 active campaigns per client",
+      "6 creative requests a month per client",
+      "Switch between clients from one login",
+      "All three AI specialists on every client",
+      "Separate Meta ad account per client",
+    ],
+  },
+  {
+    tier: "AGENCY",
+    name: "Agency",
+    priceMonthly: 399.99,
+    tagline: "For a book of business.",
+    spendGuidance: "Up to 20 client businesses",
+    featured: true,
+    limits: { campaigns: 10, creativesPerMonth: 20, clients: 20 },
+    features: [
+      "Everything in Studio",
+      "Up to 20 client businesses",
+      "10 active campaigns per client",
+      "20 creative requests a month per client",
+      "Video creative included",
+      "48-hour creative turnaround",
+    ],
+  },
+];
+
+/** Every plan that exists, whichever side of the product it belongs to. */
+export const ALL_PLANS: Plan[] = [...PLANS, ...FREELANCER_PLANS];
+
+/** True for the tiers that come with client businesses attached. */
+export function isFreelancerTier(tier: SubscriptionTier): boolean {
+  return tier === "STUDIO" || tier === "AGENCY";
+}
+
 // What an organization on NONE — nobody who has paid — is allowed to do.
 //
 // This is a switch, and it is deliberately off by default.
@@ -120,7 +188,7 @@ export function planFor(tier: SubscriptionTier): Plan {
       ? UNSUBSCRIBED
       : PLANS.find((p) => p.tier === DEFAULT_TIER) ?? PLANS[0];
   }
-  return PLANS.find((p) => p.tier === tier) ?? PLANS[0];
+  return ALL_PLANS.find((p) => p.tier === tier) ?? PLANS[0];
 }
 
 export function limitsFor(tier: SubscriptionTier): PlanLimits {

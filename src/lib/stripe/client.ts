@@ -55,6 +55,11 @@ const PRICE_ENV: Record<Exclude<SubscriptionTier, "NONE">, string> = {
   STARTER: "STRIPE_PRICE_STARTER",
   GROWTH: "STRIPE_PRICE_GROWTH",
   SCALE: "STRIPE_PRICE_SCALE",
+  // Freelancer tiers. purchasableTiers() filters on whether the variable is
+  // set, so until these prices exist in Stripe the freelancer plans simply
+  // cannot be bought — which is the right behaviour, not an error.
+  STUDIO: "STRIPE_PRICE_STUDIO",
+  AGENCY: "STRIPE_PRICE_AGENCY",
 };
 
 export function priceIdFor(tier: Exclude<SubscriptionTier, "NONE">): string {
