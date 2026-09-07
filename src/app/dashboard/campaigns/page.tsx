@@ -7,6 +7,7 @@ import { NewCampaignForm } from "./new-campaign-form";
 import { fetchPerformance } from "@/lib/meta/performance";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
+import { activeOrganizationId } from "@/lib/active-org";
 
 // Each row's figures are a live call to Meta. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget.
@@ -24,7 +25,7 @@ export default async function CampaignsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   const [campaigns, organization, metaAccount] = await Promise.all([
     db.campaign.findMany({

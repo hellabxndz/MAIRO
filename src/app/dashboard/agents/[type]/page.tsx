@@ -5,6 +5,7 @@ import { AGENT_LABELS } from "@/lib/ai/agents";
 import type { AgentType } from "@/generated/prisma/enums";
 import { PageHeader } from "@/components/ui";
 import { ChatClient } from "./chat-client";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const CLIENT_AGENT_TYPES: AgentType[] = ["STRATEGIST", "CREATIVE", "SUPPORT"];
 
@@ -16,13 +17,16 @@ export default async function AgentChatPage({
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const { type } = await params;
   const agentType = type.toUpperCase() as AgentType;
   if (!CLIENT_AGENT_TYPES.includes(agentType)) notFound();
 
   const thread = await findOrCreateThread(
     session.user.id,
-    session.user.organizationId,
+    organizationId,
     agentType
   );
   const initialMessages = await loadThreadMessages(thread.id);

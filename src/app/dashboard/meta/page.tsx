@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import { disconnectMetaAction, exploreWithoutMetaAction } from "@/lib/actions/meta-actions";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export default async function MetaConnectionPage({
   searchParams,
@@ -13,13 +14,16 @@ export default async function MetaConnectionPage({
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const { error, connected, required } = await searchParams;
 
   // Selected explicitly rather than loading the whole row: this page shows the
   // account id and when it was connected, and has no business pulling the
   // stored access token into a rendered component at all.
   const metaAccount = await db.metaAdAccount.findUnique({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: organizationId },
     select: { status: true, metaAdAccountId: true, connectedAt: true },
   });
 

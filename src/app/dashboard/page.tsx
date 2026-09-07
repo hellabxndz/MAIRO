@@ -7,6 +7,7 @@ import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
 import { fetchPerformance } from "@/lib/meta/performance";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { PerformanceBand } from "@/components/performance-band";
+import { activeOrganizationId } from "@/lib/active-org";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -24,7 +25,7 @@ const statusTone = {
 export default async function DashboardOverviewPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   const [organization, plan, metaAccount, campaigns, creativeCount] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),

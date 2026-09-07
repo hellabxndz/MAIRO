@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { createAdImage, editAdImage, imageGenerationConfigured } from "@/lib/ai/image";
 import { reviewAdImage } from "@/lib/ai/review";
 import { MAX_FINAL_IMAGES, MAX_REVISIONS } from "@/lib/creative-limits";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export type ImageActionState = { error?: string } | undefined;
 
@@ -13,8 +14,11 @@ async function loadOwnedRequest(creativeRequestId: string) {
   const session = await auth();
   if (!session?.user?.organizationId) return null;
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   return db.creativeRequest.findFirst({
-    where: { id: creativeRequestId, organizationId: session.user.organizationId },
+    where: { id: creativeRequestId, organizationId: organizationId },
     include: {
       organization: { select: { name: true } },
       images: { orderBy: { version: "desc" } },
@@ -126,10 +130,13 @@ export async function chooseImageAction(imageId: string): Promise<ImageActionSta
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const image = await db.creativeImage.findFirst({
     where: {
       id: imageId,
-      creativeRequest: { organizationId: session.user.organizationId },
+      creativeRequest: { organizationId: organizationId },
     },
     include: {
       creativeRequest: {
@@ -189,10 +196,13 @@ export async function unchooseImageAction(imageId: string): Promise<ImageActionS
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const image = await db.creativeImage.findFirst({
     where: {
       id: imageId,
-      creativeRequest: { organizationId: session.user.organizationId },
+      creativeRequest: { organizationId: organizationId },
     },
     select: { id: true },
   });

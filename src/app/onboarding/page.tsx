@@ -2,13 +2,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { OnboardingForm } from "./onboarding-form";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export default async function OnboardingPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const existingIntake = await db.onboardingIntake.findUnique({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: organizationId },
   });
 
   if (existingIntake) redirect("/dashboard");

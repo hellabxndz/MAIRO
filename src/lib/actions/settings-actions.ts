@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { activeOrganizationId } from "@/lib/active-org";
 
 // Everything a client told us about their business, changeable afterwards.
 //
@@ -46,6 +47,9 @@ export async function updateBusinessAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const parsed = businessSchema.safeParse({
     name: formData.get("name"),
     industry: formData.get("industry"),
@@ -56,7 +60,7 @@ export async function updateBusinessAction(
   }
 
   await db.organization.update({
-    where: { id: session.user.organizationId },
+    where: { id: organizationId },
     data: {
       name: parsed.data.name,
       industry: orNull(parsed.data.industry),
@@ -89,7 +93,7 @@ export async function updateBriefAction(
     return { error: parsed.error.issues[0]?.message ?? "Please check your answers." };
   }
 
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const data = {
     primaryGoal: parsed.data.primaryGoal,
     monthlyBudgetCents: Math.round(parsed.data.monthlyBudget * 100),

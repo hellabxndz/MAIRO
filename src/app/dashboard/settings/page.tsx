@@ -4,11 +4,12 @@ import { db } from "@/lib/db";
 import { Card, PageHeader } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   const [organization, intake] = await Promise.all([
     db.organization.findUnique({

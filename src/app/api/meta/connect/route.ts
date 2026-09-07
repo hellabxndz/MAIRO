@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { auth } from "@/lib/auth";
 import { buildMetaAuthUrl } from "@/lib/meta/oauth";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
@@ -12,8 +13,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", req.nextUrl.origin));
   }
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const nonce = randomBytes(16).toString("hex");
-  const state = `${session.user.organizationId}.${nonce}`;
+  const state = `${organizationId}.${nonce}`;
 
   const cookieStore = await cookies();
   cookieStore.set(STATE_COOKIE, state, {

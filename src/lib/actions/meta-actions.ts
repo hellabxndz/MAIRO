@@ -5,13 +5,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { startExploring } from "@/lib/explore-mode";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export async function disconnectMetaAction() {
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   await db.metaAdAccount.deleteMany({
-    where: { organizationId: session.user.organizationId },
+    where: { organizationId: organizationId },
   });
 
   revalidatePath("/dashboard/meta");

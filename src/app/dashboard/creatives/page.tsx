@@ -9,6 +9,7 @@ import { RegenerateConceptButton } from "./regenerate-concept-button";
 import { ConceptText } from "@/components/concept-text";
 import { ImageStudio } from "./image-studio";
 import { ConceptReply } from "./concept-reply";
+import { activeOrganizationId } from "@/lib/active-org";
 
 // A concept is generated inside the request action, and a vision call takes
 // longer than the platform default allows.
@@ -28,7 +29,7 @@ export default async function CreativesPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const month = currentMonthKey();
 
   const [requests, organization, usedThisMonth] = await Promise.all([

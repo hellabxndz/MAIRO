@@ -10,6 +10,7 @@ import {
 } from "@/lib/meta/oauth";
 import { stopExploring } from "@/lib/explore-mode";
 import { saveMetaConnection } from "@/lib/meta/connection";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
@@ -42,7 +43,17 @@ export async function GET(req: NextRequest) {
   }
 
   const [organizationId] = state.split(".");
-  if (organizationId !== session.user.organizationId) {
+
+  // The organization in the state has to be one this session may actually act
+  // on. Comparing it against the session's own organization was right when
+  // everyone had exactly one — but a freelancer connecting Meta for a client
+  // carries that CLIENT's id in the state while their session holds the
+  // workspace, so the old check refused every connection they tried to make.
+  //
+  // The state itself is already proven genuine by the cookie comparison above;
+  // this is the separate question of whether it belongs to the caller.
+  const permitted = await activeOrganizationId();
+  if (!organizationId || organizationId !== permitted) {
     return redirectWithError(origin, "This connection doesn't match your account.");
   }
 

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
@@ -45,7 +46,7 @@ export async function completeOnboardingAction(
   }
 
   const data = parsed.data;
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const monthlyBudgetCents = Math.round(data.monthlyBudget * 100);
 
   const organization = await db.organization.update({

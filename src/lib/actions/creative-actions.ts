@@ -8,6 +8,7 @@ import { currentMonthKey } from "@/lib/utils/month";
 import { planFor } from "@/lib/plans";
 import { generateCreativeConcept } from "@/lib/ai/creative";
 import { reviewCreative } from "@/lib/ai/review";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const requestSchema = z.object({
   type: z.enum(["IMAGE", "VIDEO", "COPY", "CAROUSEL"]),
@@ -54,7 +55,7 @@ export async function requestCreativeAction(
   const reference = readReferenceImage(formData);
   if (reference.error) return { error: reference.error };
 
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const month = currentMonthKey();
 
   const organization = await db.organization.findUnique({
@@ -189,10 +190,13 @@ export async function regenerateConceptAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   // Scoped to the caller's own organization so an id from elsewhere can't be
   // used to spend someone else's AI budget or read their brief.
   const owned = await db.creativeRequest.findFirst({
-    where: { id: creativeRequestId, organizationId: session.user.organizationId },
+    where: { id: creativeRequestId, organizationId: organizationId },
     select: { id: true },
   });
   if (!owned) return { error: "Not found" };
@@ -220,13 +224,16 @@ export async function refineConceptAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const rawMessage = formData.get("message");
   const message = typeof rawMessage === "string" ? rawMessage.trim() : "";
   if (message.length < 2) return { error: "Tell the AI what to change." };
   if (message.length > 2000) return { error: "That's a bit long — keep it under 2000 characters." };
 
   const request = await db.creativeRequest.findFirst({
-    where: { id: creativeRequestId, organizationId: session.user.organizationId },
+    where: { id: creativeRequestId, organizationId: organizationId },
     select: { id: true, clientNotes: true, status: true },
   });
   if (!request) return { error: "Not found" };

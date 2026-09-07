@@ -8,6 +8,7 @@ import { createMetaCampaign } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { MetaApiError } from "@/lib/meta/client";
 import { planFor } from "@/lib/plans";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const createCampaignSchema = z.object({
   name: z.string().min(1),
@@ -26,7 +27,7 @@ export async function createCampaignAction(
 ): Promise<CampaignActionState> {
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   const parsed = createCampaignSchema.safeParse({
     name: formData.get("name"),

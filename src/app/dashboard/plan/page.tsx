@@ -5,6 +5,7 @@ import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
 import { regeneratePlanAction, approvePlanAction } from "@/lib/actions/plan-actions";
 import { RegenerateButton } from "./regenerate-button";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const statusTone = {
   DRAFT: "neutral",
@@ -21,10 +22,13 @@ export default async function PlanPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   const plan = await db.monthlyPlan.findUnique({
     where: {
       organizationId_month: {
-        organizationId: session.user.organizationId,
+        organizationId: organizationId,
         month: currentMonthKey(),
       },
     },

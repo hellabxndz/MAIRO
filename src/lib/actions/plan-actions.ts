@@ -5,12 +5,13 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
+import { activeOrganizationId } from "@/lib/active-org";
 
 export async function regeneratePlanAction() {
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const [organization, intake] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
@@ -57,10 +58,13 @@ export async function approvePlanAction() {
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
+
   await db.monthlyPlan.update({
     where: {
       organizationId_month: {
-        organizationId: session.user.organizationId,
+        organizationId: organizationId,
         month: currentMonthKey(),
       },
     },

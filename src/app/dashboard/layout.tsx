@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { isExploring } from "@/lib/explore-mode";
+import { activeOrganizationId } from "@/lib/active-org";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -30,7 +31,7 @@ const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings"];
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
-  const organizationId = session.user.organizationId;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
