@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AmbientSky } from "@/components/ambient-sky";
+import { StartTourLink } from "@/components/tour";
 
 type NavItem = { href: string; label: string };
 
@@ -33,7 +34,14 @@ export function DashboardShell({
   const navList = (onNavigate?: () => void) => (
     <nav className="flex flex-1 flex-col gap-1">
       {navItems.map((item) => (
-        <Link key={item.href} href={item.href} onClick={onNavigate} className={linkClass(item.href)}>
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={onNavigate}
+          // Lets the walkthrough point at a specific nav entry.
+          data-tour={`nav:${item.href}`}
+          className={linkClass(item.href)}
+        >
           {item.label}
         </Link>
       ))}
@@ -41,14 +49,17 @@ export function DashboardShell({
   );
 
   const signOutButton = (
-    <form action={onSignOut}>
+    <>
+      <StartTourLink className="w-full rounded-lg px-3 py-2 text-left text-sm text-neutral-500 transition hover:bg-white/5 hover:text-white" />
+      <form action={onSignOut}>
       <button
         type="submit"
         className="w-full rounded-lg px-3 py-2 text-left text-sm text-neutral-500 transition hover:bg-white/5 hover:text-white"
       >
         Sign out
       </button>
-    </form>
+      </form>
+    </>
   );
 
   return (

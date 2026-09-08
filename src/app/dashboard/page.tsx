@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { OwnerGettingStarted } from "./getting-started";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
@@ -40,6 +41,13 @@ export default async function DashboardOverviewPage() {
     db.creativeRequest.count({ where: { organizationId } }),
   ]);
 
+  // The checklist reads what has already been loaded above, plus the one thing
+  // that had not been — whether setup was ever completed.
+  const intake = await db.onboardingIntake.findUnique({
+    where: { organizationId },
+    select: { id: true },
+  });
+
   // Live figures from Meta. This runs after the queries above rather than
   // alongside them because it needs the token one of them returns, and it is
   // written never to throw — a slow or unhappy Meta must not cost the client
@@ -55,6 +63,16 @@ export default async function DashboardOverviewPage() {
       <PageHeader
         title={`Welcome back, ${organization?.name}`}
         description="Here's where things stand this month."
+      />
+
+      <OwnerGettingStarted
+        state={{
+          hasSetup: Boolean(intake),
+          hasMeta: Boolean(metaAccount),
+          hasPlan: Boolean(plan),
+          hasCreative: creativeCount > 0,
+          hasCampaign: campaignCount > 0,
+        }}
       />
 
       <div className="grid gap-6 sm:grid-cols-3">

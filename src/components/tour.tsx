@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// A walk through the freelancer side, one part at a time.
+// A walk through a part of the app, one element at a time.
 //
 // A page of instructions gets skimmed; being shown the actual button while
 // somebody tells you what it does gets remembered. So this dims the screen,
@@ -21,66 +21,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // frame to move two boxes, which is both slower and the thing the
 // set-state-in-effect rule exists to prevent.
 
-type Step = {
+export type Step = {
   /** Matches a data-tour attribute. Absent means a centred card with no hole. */
   target?: string;
   title: string;
   body: string;
 };
 
-const STEPS: Step[] = [
-  {
-    title: "Two minutes, and you'll know the whole thing",
-    body:
-      "This is your studio — the account you pay from. Every business you run ads for lives inside it. Let's walk through it.",
-  },
-  {
-    target: "list",
-    title: "Your clients",
-    body:
-      "One row per business you run ads for. Each has its own Meta ad account, its own campaigns and its own creatives — nothing is shared between them.",
-  },
-  {
-    target: "open",
-    title: "Open takes you inside",
-    body:
-      "This is the important one. Opening a client puts every screen — plan, campaigns, creatives, the AI — into that business's account. Their name stays at the top so you always know whose ads you're editing.",
-  },
-  {
-    target: "add",
-    title: "Adding a business",
-    body:
-      "A name is enough to start. You'll be dropped straight into their setup, where you describe the business — that description is what every plan and every ad gets written from.",
-  },
-  {
-    target: "checklist",
-    title: "Where you're up to",
-    body:
-      "This ticks itself off as you actually do things, so it doubles as a status board. If one client still has no ad account connected, you'll see it here.",
-  },
-  {
-    target: "guide",
-    title: "The long version",
-    body:
-      "Everything in more depth — briefs, connecting Meta, why campaigns arrive paused, which specialist to ask what. Worth ten minutes at some point.",
-  },
-  {
-    target: "billing",
-    title: "Your plan",
-    body:
-      "Your subscription and how many client slots it covers. Your clients are never billed and never log in — this is all you.",
-  },
-  {
-    title: "That's the whole thing",
-    body:
-      "Add a client, describe their business, connect their ad account, and let MAIRO write the plan. You approve; it builds the campaigns paused, so nothing spends until you say so.",
-  },
-];
-
-const STORAGE_KEY = "mairo.tour.freelancer";
 const PAD = 10;
 
-export function Tour({ autoStart }: { autoStart: boolean }) {
+
+export function Tour({
+  steps,
+  storageKey,
+  autoStart,
+}: {
+  steps: Step[];
+  /** Where "they have seen this" is remembered. One per tour. */
+  storageKey: string;
+  autoStart: boolean;
+}) {
   const [step, setStep] = useState<number | null>(null);
   const holeRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -89,19 +49,19 @@ export function Tour({ autoStart }: { autoStart: boolean }) {
 
   const finish = useCallback(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, "done");
+      localStorage.setItem(storageKey, "done");
     } catch {
       /* it will offer itself again; harmless */
     }
     setStep(null);
-  }, []);
+  }, [storageKey]);
 
   // Offered automatically only right after subscribing, and only once.
   useEffect(() => {
     if (!autoStart) return;
     let seen = false;
     try {
-      seen = localStorage.getItem(STORAGE_KEY) !== null;
+      seen = localStorage.getItem(storageKey) !== null;
     } catch {
       /* treat as unseen */
     }
@@ -110,7 +70,7 @@ export function Tour({ autoStart }: { autoStart: boolean }) {
       const t = window.setTimeout(start, 450);
       return () => window.clearTimeout(t);
     }
-  }, [autoStart, start]);
+  }, [autoStart, start, storageKey]);
 
   // Anyone can ask for it again.
   useEffect(() => {
@@ -119,7 +79,7 @@ export function Tour({ autoStart }: { autoStart: boolean }) {
     return () => window.removeEventListener("mairo:start-tour", replay);
   }, []);
 
-  const current = step === null ? null : STEPS[step];
+  const current = step === null ? null : steps[step];
 
   // Position the hole and the card. Imperative on purpose — see the note above.
   useEffect(() => {
@@ -191,17 +151,17 @@ export function Tour({ autoStart }: { autoStart: boolean }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") finish();
       if (e.key === "ArrowRight" || e.key === "Enter") {
-        setStep((s) => (s === null ? s : s + 1 >= STEPS.length ? (finish(), null) : s + 1));
+        setStep((s) => (s === null ? s : s + 1 >= steps.length ? (finish(), null) : s + 1));
       }
       if (e.key === "ArrowLeft") setStep((s) => (s === null ? s : Math.max(0, s - 1)));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [step, finish]);
+  }, [step, finish, steps.length]);
 
   if (step === null || !current) return null;
 
-  const last = step === STEPS.length - 1;
+  const last = step === steps.length - 1;
 
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Product tour">
@@ -225,7 +185,7 @@ export function Tour({ autoStart }: { autoStart: boolean }) {
         className="absolute w-[min(360px,calc(100vw-24px))] rounded-2xl border border-white/[0.12] bg-neutral-950 p-6 shadow-2xl"
       >
         <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-500">
-          {step + 1} of {STEPS.length}
+          {step + 1} of {steps.length}
         </p>
         <h3 className="mt-3 text-lg font-light leading-snug tracking-[-0.01em] text-white">
           {current.title}

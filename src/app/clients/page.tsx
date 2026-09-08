@@ -9,7 +9,8 @@ import { AddClientForm } from "./add-client-form";
 import { AmbientSky } from "@/components/ambient-sky";
 import { Welcome } from "./welcome";
 import { GettingStarted } from "./getting-started";
-import { Tour, StartTourLink } from "./tour";
+import { Tour, StartTourLink } from "@/components/tour";
+import { FREELANCER_TOUR, FREELANCER_TOUR_KEY } from "./tour-steps";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -69,7 +70,7 @@ export default async function ClientsPage({
         <Welcome planName={plan.name} clientLimit={limitsFor(workspace.subscriptionTier).clients ?? 0} />
       )}
       {/* Offers itself once, right after paying. Available on demand after that. */}
-      <Tour autoStart={justSubscribed} />
+      <Tour steps={FREELANCER_TOUR} storageKey={FREELANCER_TOUR_KEY} autoStart={justSubscribed} />
       <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>

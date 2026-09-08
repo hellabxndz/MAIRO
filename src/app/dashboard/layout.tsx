@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { Tour } from "@/components/tour";
+import { OWNER_TOUR, OWNER_TOUR_KEY } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 
@@ -16,6 +18,7 @@ const NAV = [
   { href: "/dashboard/meta", label: "Meta connection" },
   { href: "/dashboard/agents", label: "AI specialists" },
   { href: "/dashboard/settings", label: "Settings" },
+  { href: "/dashboard/guide", label: "How it works" },
 ];
 
 // Pages the not-yet-connected client can still open.
@@ -26,7 +29,7 @@ const NAV = [
 // signup is by definition someone who has not connected an ad account yet, so
 // gating the only screen that fixes it behind connecting one leaves them stuck
 // with a name the AI will put in every ad it writes.
-const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings"];
+const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings", "/dashboard/guide"];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -70,6 +73,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
       subtitle={organization?.name}
       onSignOut={signOutAction}
     >
+      {/* Offered on the first visit after setup, and on demand after that.
+          Mounted in the layout so it works from whichever screen someone
+          starts it on — every step points at the sidebar, which is always
+          there.
+
+          Gated on having finished onboarding rather than on a query
+          parameter, because a layout cannot read one, and because being
+          shown around before you have told MAIRO what your business is would
+          be a tour of screens that have nothing in them yet. The tour itself
+          remembers it has run, so this offers it exactly once. */}
+      <Tour steps={OWNER_TOUR} storageKey={OWNER_TOUR_KEY} autoStart={Boolean(intake)} />
+
       {/* Whose account you are in, and the way back out. A freelancer moving
           between clients needs this on every screen — editing the wrong
           business's campaigns because you forgot which one you had open is
