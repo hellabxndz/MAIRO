@@ -78,10 +78,17 @@ today highlighted, and the History and Settings buttons.
 | This computer | Processor load, memory in use, disk in use with free space, how long the machine has been running |
 | Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, whether the wake word is on, how much it remembers, how many conversations are saved |
 
-**Middle — Mairo itself.** The glowing orb, which breathes when idle, blooms
-with your voice while listening, spins while thinking and ripples while
-speaking. Under it the waveform, the status line (Ready, Listening, Thinking,
-Working, Speaking), and the box where you can type instead of talking.
+**Middle — Mairo itself.** A sphere of about nine hundred points of light,
+rotated and projected every frame. It breathes when idle, blooms with your
+voice while listening, draws tight while thinking, and a shockwave travels
+through it when it speaks. Under it the waveform, the status line (Ready,
+Listening, Thinking, Working, Speaking), and the box where you can type
+instead of talking.
+
+**The panels recede when you talk to it.** The moment Mairo starts listening,
+thinking or speaking, both side columns fade back and what was said appears in
+large type beneath the orb — dense when you are reading it, bare when you are
+talking to it. When it returns to Ready, the HUD comes back.
 
 **Right — talking and shortcuts.**
 
@@ -335,7 +342,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-128 tests cover memory, conversation history, the tool registry, the reasoning
+142 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.

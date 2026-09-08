@@ -12,10 +12,11 @@ import calendar
 from datetime import datetime
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Signal, Slot
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFrame,
+    QGraphicsOpacityEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -38,7 +39,13 @@ from app.ui.gauges import BarGauge, RingGauge
 from app.ui.history_panel import HistoryPanel
 from app.ui.onboarding import OnboardingDialog
 from app.ui.orb import OrbWidget
-from app.ui.panels import HudPanel, MonthStrip, ThroughputGraph
+from app.ui.panels import (
+    HudPanel,
+    MonthStrip,
+    ScanlineOverlay,
+    TelemetryTicker,
+    ThroughputGraph,
+)
 from app.ui.settings_dialog import SettingsDialog
 from app.ui.starfield import Starfield
 from app.ui.status_indicator import StatusIndicator
@@ -104,6 +111,7 @@ class MainWindow(QMainWindow):
         self.monitor.updated.connect(self._on_system_reading)
 
         self._build_ui()
+        self._setup_focus_mode()
         self._apply_theme()
         self._install_shortcuts()
         self._start_clock()
@@ -133,6 +141,13 @@ class MainWindow(QMainWindow):
         columns.addWidget(self._build_centre_column(), 1)
         columns.addWidget(self._build_right_column())
         root.addLayout(columns, 1)
+
+        self.ticker = TelemetryTicker(self.palette_colors)
+        root.addWidget(self.ticker)
+
+        # Above the content, so the whole window reads as a projection.
+        self.scanlines = ScanlineOverlay(self.palette_colors, central)
+        self.scanlines.raise_()
 
     def _build_top_bar(self) -> QWidget:
         bar = QWidget()
@@ -231,7 +246,8 @@ class MainWindow(QMainWindow):
         layout.addStretch(1)
         self.refresh_assistant_panel()
 
-        scroller = QScrollArea()
+        self.left_column = QScrollArea()
+        scroller = self.left_column
         scroller.setWidget(column)
         scroller.setWidgetResizable(True)
         scroller.setFixedWidth(LEFT_COLUMN_WIDTH)
@@ -292,6 +308,13 @@ class MainWindow(QMainWindow):
         status_row.addWidget(self.status)
         status_row.addStretch(1)
         layout.addLayout(status_row)
+
+        self.focus_caption = QLabel("")
+        self.focus_caption.setAlignment(Qt.AlignCenter)
+        self.focus_caption.setWordWrap(True)
+        self.focus_caption.setMinimumHeight(64)
+        self.focus_caption.setVisible(False)
+        layout.addWidget(self.focus_caption)
 
         self.empty_state = EmptyState(self.palette_colors)
         layout.addWidget(self.empty_state)
@@ -392,6 +415,57 @@ class MainWindow(QMainWindow):
 
     # -------------------------------------------------------------- clock
 
+    def _setup_focus_mode(self) -> None:
+        """Fade the side columns while Mairo is listening, thinking or speaking.
+
+        Dense when you are reading it, bare when you are talking to it.
+        """
+        self._focus_animations: list[QPropertyAnimation] = []
+        self._focused = False
+        for widget in (self.left_column, self.right_stack):
+            effect = QGraphicsOpacityEffect(widget)
+            effect.setOpacity(1.0)
+            # Disabled while fully opaque: an enabled effect forces the whole
+            # column through an offscreen pass on every repaint, and the HUD is
+            # at full opacity almost all the time.
+            effect.setEnabled(False)
+            widget.setGraphicsEffect(effect)
+            animation = QPropertyAnimation(effect, b"opacity", self)
+            animation.setDuration(420)
+            animation.setEasingCurve(QEasingCurve.InOutCubic)
+            animation.finished.connect(self._settle_focus_effects)
+            self._focus_animations.append(animation)
+
+    def _set_focused(self, focused: bool) -> None:
+        if focused == self._focused:
+            return
+        self._focused = focused
+        target = 0.18 if focused else 1.0
+        for animation in self._focus_animations:
+            effect = animation.targetObject()
+            animation.stop()
+            effect.setEnabled(True)
+            animation.setStartValue(effect.opacity())
+            animation.setEndValue(target)
+            animation.start()
+        self.focus_caption.setVisible(focused)
+        if not focused:
+            self.focus_caption.setText("")
+
+    def _settle_focus_effects(self) -> None:
+        """Switch the effect off once the columns are back to full opacity."""
+        for animation in self._focus_animations:
+            effect = animation.targetObject()
+            if effect.opacity() >= 0.999:
+                effect.setEnabled(False)
+
+    def _show_caption(self, text: str) -> None:
+        """Put a line in very large type under the orb, while focused."""
+        trimmed = text.strip()
+        if len(trimmed) > 180:
+            trimmed = trimmed[:177].rstrip() + "…"
+        self.focus_caption.setText(trimmed)
+
     def _start_clock(self) -> None:
         self._clock_timer = QTimer(self)
         self._clock_timer.timeout.connect(self._update_clock)
@@ -425,6 +499,20 @@ class MainWindow(QMainWindow):
             self.memory_label.setText("Memory readings need the psutil package")
         self.network_graph.add_sample(reading.download_kbps, reading.upload_kbps)
 
+        segments = [f"MAIRO // {self.settings.active_model.upper()}"]
+        if reading.cpu_percent is not None:
+            segments.append(f"CPU {reading.cpu_percent:04.1f}%")
+        if reading.memory_percent is not None:
+            segments.append(f"MEM {reading.memory_percent:04.1f}%")
+        if reading.disk_free_gb is not None:
+            segments.append(f"DISK {reading.disk_free_gb:.0f}GB FREE")
+        segments.append(f"UPTIME {reading.uptime_text.upper()}")
+        if reading.download_kbps is not None:
+            segments.append(f"NET {reading.download_kbps:.0f}/{reading.upload_kbps:.0f} KB/S")
+        segments.append(f"{len(self.brain.tools.names())} TOOLS ARMED")
+        segments.append(self.status.current_label().upper())
+        self.ticker.set_segments(segments)
+
     # -------------------------------------------------------------- theme
 
     def _apply_theme(self) -> None:
@@ -440,6 +528,12 @@ class MainWindow(QMainWindow):
         self.history.apply_palette(palette)
         self.month_strip.set_palette_colors(palette)
         self.network_graph.set_palette_colors(palette)
+        self.scanlines.set_palette_colors(palette)
+        self.ticker.set_palette_colors(palette)
+        self.focus_caption.setStyleSheet(
+            f"color: {palette.text}; font-size: 26px; font-weight: 300;"
+            f" letter-spacing: 1px; line-height: 150%;"
+        )
         self.disk_bar.set_palette_colors(palette)
         for gauge in (self.clock_gauge, self.date_gauge, self.cpu_gauge, self.memory_gauge):
             gauge.set_palette_colors(palette)
@@ -473,6 +567,8 @@ class MainWindow(QMainWindow):
         size = self.centralWidget().size()
         self.starfield.resize(size)
         self.content.resize(size)
+        self.scanlines.resize(size)
+        self.scanlines.raise_()
 
     # --------------------------------------------------------- first run
 
@@ -568,6 +664,7 @@ class MainWindow(QMainWindow):
             return
         self.input.clear()
         self._add_message(tr.USER, text)
+        self._show_caption(text)
         self._start_turn(text=text)
 
     def _start_turn(self, text: str | None) -> None:
@@ -596,8 +693,8 @@ class MainWindow(QMainWindow):
         worker = AssistantWorker(self.brain, self.voice, text=text, speak_reply=True, parent=self)
         worker.status_changed.connect(self._on_status)
         worker.level_changed.connect(self._on_level)
-        worker.heard.connect(lambda said: self._add_message(tr.USER, said))
-        worker.replied.connect(lambda reply: self._add_message(tr.MAIRO, reply))
+        worker.heard.connect(self._on_heard)
+        worker.replied.connect(self._on_replied)
         worker.tool_ran.connect(self._on_tool)
         worker.failed.connect(self._on_failure)
         worker.finished_turn.connect(self._on_turn_finished)
@@ -620,11 +717,24 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_status(self, state: str) -> None:
         self.status.set_state(state)
+        self._set_focused(state in ("listening", "thinking", "acting", "waiting", "speaking"))
         orb_state = state if state in ("listening", "thinking", "speaking", "error") else "ready"
         if state in ("acting", "waiting"):
             orb_state = "thinking"
         self.orb.set_state(orb_state)
-        self.waveform.set_active(state in ("listening", "speaking"))
+        self.waveform.set_active(
+            state in ("listening", "speaking"), synthetic=(state == "speaking")
+        )
+
+    @Slot(str)
+    def _on_heard(self, said: str) -> None:
+        self._add_message(tr.USER, said)
+        self._show_caption(said)
+
+    @Slot(str)
+    def _on_replied(self, reply: str) -> None:
+        self._add_message(tr.MAIRO, reply)
+        self._show_caption(reply)
 
     @Slot(float)
     def _on_level(self, level: float) -> None:

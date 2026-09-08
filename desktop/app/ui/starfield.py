@@ -1,24 +1,25 @@
-"""The space backdrop: drifting stars over soft nebula clouds.
+"""The space backdrop: stars over soft nebula clouds.
 
-Stars are generated once and drawn each frame; the nebula is painted into a
-cached pixmap that is only rebuilt when the widget resizes, which keeps the
-animation cheap enough to run continuously.
+The whole sky — nebulae and stars together — is painted once into a pixmap
+and then simply blitted. It does not animate, and that is the point: this
+widget covers the entire window, so every frame it drew would force every
+panel and the orb above it to redraw too. Measured, a drifting sky cost more
+than everything else in the interface combined. The motion in this design
+belongs to the orb.
 """
 
 from __future__ import annotations
 
-import math
 import random
 from dataclasses import dataclass
 
-from PySide6.QtCore import QPointF, Qt, QTimer
+from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QColor, QPainter, QPixmap, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
 from app.ui.theme import Palette
 
-STAR_COUNT = 190
-FRAME_MS = 40
+STAR_COUNT = 150
 
 
 @dataclass
@@ -27,9 +28,6 @@ class Star:
     y: float
     size: float
     brightness: float
-    drift: float
-    twinkle_phase: float
-    twinkle_speed: float
 
 
 class Starfield(QWidget):
@@ -39,16 +37,11 @@ class Starfield(QWidget):
         super().__init__(parent)
         self.palette_colors = palette
         self._stars: list[Star] = []
-        self._nebula: QPixmap | None = None
-        self._tick = 0.0
+        self._sky: QPixmap | None = None
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         random.seed(7)  # a stable sky between runs
         self._generate_stars()
-
-        self._timer = QTimer(self)
-        self._timer.timeout.connect(self._advance)
-        self._timer.start(FRAME_MS)
 
     # ------------------------------------------------------------ content
 
@@ -59,34 +52,22 @@ class Starfield(QWidget):
                 y=random.random(),
                 size=random.uniform(0.6, 2.1),
                 brightness=random.uniform(0.25, 1.0),
-                drift=random.uniform(0.004, 0.02),
-                twinkle_phase=random.uniform(0, math.tau),
-                twinkle_speed=random.uniform(0.6, 2.4),
             )
             for _ in range(STAR_COUNT)
         ]
 
     def set_palette_colors(self, palette: Palette) -> None:
         self.palette_colors = palette
-        self._nebula = None
-        self.update()
-
-    def _advance(self) -> None:
-        self._tick += FRAME_MS / 1000.0
-        for star in self._stars:
-            star.x -= star.drift * (FRAME_MS / 1000.0) * 0.35
-            if star.x < -0.02:
-                star.x = 1.02
-                star.y = random.random()
+        self._sky = None
         self.update()
 
     # ------------------------------------------------------------ painting
 
     def resizeEvent(self, event) -> None:  # noqa: N802 - Qt naming
-        self._nebula = None
+        self._sky = None
         super().resizeEvent(event)
 
-    def _build_nebula(self) -> QPixmap:
+    def _build_sky(self) -> QPixmap:
         colors = self.palette_colors
         pixmap = QPixmap(self.size())
         pixmap.fill(QColor(colors.deep))
@@ -127,28 +108,25 @@ class Starfield(QWidget):
         vignette.setColorAt(1.0, edge)
         painter.setBrush(vignette)
         painter.drawRect(0, 0, width, height)
+
+        # The stars go into the same pixmap, so a repaint is one blit.
+        base = QColor(colors.text)
+        painter.setPen(Qt.NoPen)
+        for star in self._stars:
+            color = QColor(base)
+            color.setAlphaF(max(0.0, min(1.0, star.brightness * 0.9)))
+            painter.setBrush(color)
+            painter.drawEllipse(
+                QPointF(star.x * width, star.y * height), star.size, star.size
+            )
         painter.end()
         return pixmap
 
     def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming
         if self.width() <= 0 or self.height() <= 0:
             return
-        if self._nebula is None or self._nebula.size() != self.size():
-            self._nebula = self._build_nebula()
-
+        if self._sky is None or self._sky.size() != self.size():
+            self._sky = self._build_sky()
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
-        painter.drawPixmap(0, 0, self._nebula)
-
-        base = QColor(self.palette_colors.text)
-        painter.setPen(Qt.NoPen)
-        for star in self._stars:
-            twinkle = 0.65 + 0.35 * math.sin(self._tick * star.twinkle_speed + star.twinkle_phase)
-            color = QColor(base)
-            color.setAlphaF(max(0.0, min(1.0, star.brightness * twinkle * 0.9)))
-            painter.setBrush(color)
-            radius = star.size * (0.85 + 0.25 * twinkle)
-            painter.drawEllipse(
-                QPointF(star.x * self.width(), star.y * self.height()), radius, radius
-            )
+        painter.drawPixmap(0, 0, self._sky)
         painter.end()

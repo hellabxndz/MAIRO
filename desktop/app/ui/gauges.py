@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from app.ui.theme import Palette
 
-FRAME_MS = 40
+FRAME_MS = 100
 SWEEP_DEGREES = 280  # the gap at the bottom is what makes it read as a gauge
 START_DEGREES = 230
 
@@ -64,9 +64,9 @@ class RingGauge(QWidget):
         self._spin += FRAME_MS / 1000.0
         if abs(self._target - self._shown) > 0.05:
             self._shown += (self._target - self._shown) * 0.18
-            self.update()
-        elif self._has_reading:
-            self.update()  # keep the tick marks drifting
+        elif not self._has_reading:
+            return
+        self.update()
 
     # ------------------------------------------------------------- painting
 

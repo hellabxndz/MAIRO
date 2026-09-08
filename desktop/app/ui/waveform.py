@@ -23,6 +23,7 @@ class WaveformWidget(QWidget):
         super().__init__(parent)
         self.palette_colors = palette
         self._active = False
+        self._synthetic = False
         self._level = 0.0
         self._phase = 0.0
         self._smoothed = 0.0
@@ -37,8 +38,11 @@ class WaveformWidget(QWidget):
         self._timer.timeout.connect(self._advance)
         self._timer.start(FRAME_MS)
 
-    def set_active(self, active: bool) -> None:
+    def set_active(self, active: bool, synthetic: bool = False) -> None:
+        """Show movement. `synthetic` drives itself, for when Mairo is talking
+        and there is no microphone level to follow."""
         self._active = active
+        self._synthetic = synthetic
         if not active:
             self._level = 0.0
 
@@ -50,11 +54,20 @@ class WaveformWidget(QWidget):
         self.update()
 
     def _advance(self) -> None:
-        self._phase += FRAME_MS / 1000.0
-        target = self._level if self._active else 0.0
+        if self._active:
+            self._phase += FRAME_MS / 1000.0
+        if self._active and self._synthetic:
+            target = 0.32 + 0.22 * abs(math.sin(self._phase * 4.7))
+        else:
+            target = self._level if self._active else 0.0
         # Ease towards the new level so the bars glide instead of snapping.
         self._smoothed += (target - self._smoothed) * 0.28
         self._bars.append(self._smoothed)
+        if not self._active and self._smoothed < 0.004:
+            # Settled flat: there is nothing to redraw until audio returns.
+            return
+        if not self._active:
+            self._phase += FRAME_MS / 1000.0
         self.update()
 
     def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming

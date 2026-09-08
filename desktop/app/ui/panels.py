@@ -7,7 +7,15 @@ from collections import deque
 from datetime import datetime
 
 from PySide6.QtCore import QPointF, QRectF, Qt, QTimer
-from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QLinearGradient,
+    QPainter,
+    QPen,
+    QPixmap,
+    QPolygonF,
+)
 from PySide6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from app.ui.theme import Palette
@@ -50,17 +58,52 @@ class HudPanel(QWidget):
         colors = self.palette_colors
         rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
 
-        background = QColor(colors.panel)
-        background.setAlpha(165)  # the starfield stays faintly visible behind
+        # Glass: a translucent pane, lit from its top edge, with the sky
+        # showing faintly through it.
+        body = QLinearGradient(rect.topLeft(), rect.bottomLeft())
+        top = QColor(colors.panel_alt)
+        top.setAlpha(150)
+        bottom = QColor(colors.panel)
+        bottom.setAlpha(96)
+        body.setColorAt(0.0, top)
+        body.setColorAt(1.0, bottom)
         painter.setPen(Qt.NoPen)
-        painter.setBrush(background)
+        painter.setBrush(body)
         painter.drawRoundedRect(rect, 10, 10)
 
+        # A sheen across the top few pixels sells the pane as glass.
+        sheen_rect = QRectF(rect.left(), rect.top(), rect.width(), min(26.0, rect.height() / 2))
+        sheen = QLinearGradient(sheen_rect.topLeft(), sheen_rect.bottomLeft())
+        lit = QColor(colors.accent_soft)
+        lit.setAlpha(30)
+        clear = QColor(colors.accent_soft)
+        clear.setAlpha(0)
+        sheen.setColorAt(0.0, lit)
+        sheen.setColorAt(1.0, clear)
+        painter.setBrush(sheen)
+        painter.drawRoundedRect(sheen_rect, 10, 10)
+
         edge = QColor(colors.border)
-        edge.setAlpha(190)
+        edge.setAlpha(210)
         painter.setPen(QPen(edge, 1))
         painter.setBrush(Qt.NoBrush)
         painter.drawRoundedRect(rect, 10, 10)
+
+        # A fixed highlight along the top edge, brightest near the title.
+        glint_x = rect.left() + rect.width() * 0.28
+        glint = QLinearGradient(glint_x - 90, 0, glint_x + 90, 0)
+        edge_lit = QColor(colors.accent_soft)
+        edge_lit.setAlpha(150)
+        edge_clear = QColor(colors.accent_soft)
+        edge_clear.setAlpha(0)
+        glint.setColorAt(0.0, edge_clear)
+        glint.setColorAt(0.5, edge_lit)
+        glint.setColorAt(1.0, edge_clear)
+        painter.setPen(QPen(glint, 1.4))
+        painter.drawLine(
+            QPointF(rect.left() + 10, rect.top() + 0.5),
+            QPointF(rect.right() - 10, rect.top() + 0.5),
+        )
 
         # Corner brackets, the detail that makes it read as an instrument panel.
         bracket = QColor(colors.accent)
@@ -205,4 +248,133 @@ class ThroughputGraph(QWidget):
             painter.setPen(QPen(line, 1.6))
             painter.setBrush(Qt.NoBrush)
             painter.drawPolyline(points)
+        painter.end()
+
+
+class ScanlineOverlay(QWidget):
+    """A projected-image feel: fine scanlines and one slow sweep down the glass.
+
+    The static lines are painted once into a tile and blitted, so this costs
+    almost nothing per frame despite covering the whole window.
+    """
+
+    LINE_SPACING = 3
+
+    def __init__(self, palette: Palette, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.palette_colors = palette
+        self._tile: QPixmap | None = None
+        self._sweep = 0.0
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+
+        # A full-window overlay is expensive to repaint, and the sweep is slow
+        # enough that ten frames a second is indistinguishable from thirty.
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._advance)
+        self._timer.start(100)
+
+    def set_palette_colors(self, palette: Palette) -> None:
+        self.palette_colors = palette
+        self._tile = None
+        self.update()
+
+    def _band_rect(self) -> QRectF:
+        height = max(90.0, self.height() * 0.16)
+        return QRectF(0, self._sweep * self.height() - height, self.width(), height)
+
+    def _advance(self) -> None:
+        previous = self._band_rect()
+        self._sweep += 0.007
+        if self._sweep > 1.4:
+            self._sweep = -0.25
+        # Repaint only the band. This widget covers the window, and a full
+        # update would drag every panel and the orb beneath it into the repaint.
+        damaged = previous.united(self._band_rect()).toAlignedRect()
+        self.update(damaged.adjusted(-2, -2, 2, 2))
+
+    def _build_tile(self) -> QPixmap:
+        tile = QPixmap(8, self.LINE_SPACING)
+        tile.fill(Qt.transparent)
+        painter = QPainter(tile)
+        line = QColor(0, 0, 0, 34)
+        painter.setPen(QPen(line, 1))
+        painter.drawLine(0, 0, 8, 0)
+        painter.end()
+        return tile
+
+    def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming
+        if self.width() <= 0 or self.height() <= 0:
+            return
+        painter = QPainter(self)
+        if self._tile is None:
+            self._tile = self._build_tile()
+        painter.drawTiledPixmap(self.rect(), self._tile)
+
+        # One soft band travelling down, like a projector refreshing.
+        band = self._band_rect()
+        top = band.top()
+        band_height = band.height()
+        gradient = QLinearGradient(0, top, 0, top + band_height)
+        glow = QColor(self.palette_colors.accent_soft)
+        glow.setAlpha(16)
+        clear = QColor(self.palette_colors.accent_soft)
+        clear.setAlpha(0)
+        gradient.setColorAt(0.0, clear)
+        gradient.setColorAt(0.5, glow)
+        gradient.setColorAt(1.0, clear)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(gradient)
+        painter.drawRect(QRectF(0, top, self.width(), band_height))
+        painter.end()
+
+
+class TelemetryTicker(QWidget):
+    """A single line of scrolling readouts along the foot of the window."""
+
+    def __init__(self, palette: Palette, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.palette_colors = palette
+        self._segments: list[str] = ["SYSTEM READY"]
+        self._offset = 0.0
+        self.setFixedHeight(18)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._advance)
+        self._timer.start(55)
+
+    def set_segments(self, segments: list[str]) -> None:
+        self._segments = [s for s in segments if s] or ["SYSTEM READY"]
+
+    def set_palette_colors(self, palette: Palette) -> None:
+        self.palette_colors = palette
+        self.update()
+
+    def _advance(self) -> None:
+        self._offset += 0.85
+        self.update()
+
+    def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming
+        if self.width() <= 0:
+            return
+        painter = QPainter(self)
+        font = QFont("Consolas, monospace")
+        font.setPointSizeF(8.0)
+        font.setStyleHint(QFont.Monospace)
+        painter.setFont(font)
+
+        text = "     ·     ".join(self._segments) + "     ·     "
+        metrics = painter.fontMetrics()
+        span = max(1, metrics.horizontalAdvance(text))
+        self._offset %= span
+
+        color = QColor(self.palette_colors.text_dim)
+        color.setAlpha(150)
+        painter.setPen(color)
+        x = -self._offset
+        while x < self.width():
+            painter.drawText(QPointF(x, self.height() - 5), text)
+            x += span
         painter.end()
