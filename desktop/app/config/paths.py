@@ -15,7 +15,11 @@ APP_DIR_NAME = "Mairo"
 
 
 def project_root() -> Path:
-    """The `desktop/` folder that contains main.py and .env."""
+    """The folder holding .env: next to the executable once packaged."""
+    if getattr(sys, "frozen", False):
+        # PyInstaller: __file__ points inside the bundle, so the user's .env
+        # lives beside the executable instead.
+        return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[2]
 
 

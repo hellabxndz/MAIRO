@@ -177,6 +177,26 @@ this build ships a detector that never listens, so nothing records in the
 background. The microphone button is the way in. To add real detection, write a
 `WakeWordDetector` subclass and return it from `create_detector`.
 
+## Making a standalone Mairo.exe
+
+If you would rather not keep a Python environment around, build Mairo into a
+folder you can copy anywhere and start with a double-click:
+
+```bat
+build_windows.bat
+```
+
+That installs PyInstaller, builds with `mairo.spec`, and puts your `.env` next
+to the executable. The result is `dist\Mairo\Mairo.exe`; the whole `dist\Mairo`
+folder is what you copy or shortcut to. It needs no Python installed.
+
+The build takes a few minutes and the folder is large (a few hundred megabytes
+— most of it is Qt). Your key lives in `dist\Mairo\.env`, so keep that folder
+to yourself.
+
+PyInstaller does not cross-compile: a Windows executable has to be built on
+Windows. The same spec builds a macOS or Linux binary on those systems.
+
 ## Where your data lives
 
 Everything is under `%APPDATA%\Mairo`:
@@ -199,7 +219,9 @@ desktop/
   main.py                 entry point: wires everything together
   requirements.txt
   .env.example
-  run_mairo.bat
+  run_mairo.bat           start Mairo from the virtual environment
+  build_windows.bat       build a standalone Mairo.exe
+  mairo.spec              PyInstaller recipe
   app/
     config/               settings, paths, the system persona
     ai/                   provider interface, OpenAI provider, brain, history

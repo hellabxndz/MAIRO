@@ -104,15 +104,18 @@ def set_startup_shortcut(enabled: bool, app_name: str = "Mairo") -> tuple[bool, 
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE) as key:
             if enabled:
-                launcher = Path(sys.executable)
-                # pythonw.exe starts the app without a console window.
-                windowless = launcher.with_name("pythonw.exe")
-                if windowless.exists():
-                    launcher = windowless
-                main_py = Path(__file__).resolve().parents[2] / "main.py"
-                winreg.SetValueEx(
-                    key, app_name, 0, winreg.REG_SZ, f'"{launcher}" "{main_py}"'
-                )
+                if getattr(sys, "frozen", False):
+                    # A packaged build is its own launcher.
+                    command = f'"{Path(sys.executable).resolve()}"'
+                else:
+                    launcher = Path(sys.executable)
+                    # pythonw.exe starts the app without a console window.
+                    windowless = launcher.with_name("pythonw.exe")
+                    if windowless.exists():
+                        launcher = windowless
+                    main_py = Path(__file__).resolve().parents[2] / "main.py"
+                    command = f'"{launcher}" "{main_py}"'
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, command)
                 return True, "Mairo will start when you sign in to Windows."
             try:
                 winreg.DeleteValue(key, app_name)

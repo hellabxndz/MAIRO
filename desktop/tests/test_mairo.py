@@ -316,6 +316,34 @@ class SettingsTests(unittest.TestCase):
         del os.environ["OPENAI_API_KEY"]
 
 
+class PackagingTests(unittest.TestCase):
+    """Paths have to move when the app is built into a single executable."""
+
+    def test_env_sits_beside_the_executable_when_frozen(self):
+        from app.config import paths
+
+        original = getattr(sys, "frozen", None)
+        sys.frozen = True
+        previous_executable = sys.executable
+        sys.executable = str(Path(_TEMP) / "Mairo" / "Mairo.exe")
+        try:
+            self.assertEqual(paths.project_root(), Path(_TEMP) / "Mairo")
+            self.assertEqual(paths.env_file(), Path(_TEMP) / "Mairo" / ".env")
+        finally:
+            sys.executable = previous_executable
+            if original is None:
+                del sys.frozen
+            else:
+                sys.frozen = original
+
+    def test_env_sits_in_the_project_when_running_from_source(self):
+        from app.config import paths
+
+        self.assertFalse(getattr(sys, "frozen", False))
+        self.assertEqual(paths.env_file().name, ".env")
+        self.assertTrue((paths.project_root() / "main.py").exists())
+
+
 class LoggingTests(unittest.TestCase):
     def test_secrets_are_redacted(self):
         redact = RedactingFilter.redact
