@@ -7,6 +7,8 @@ import { signOutAction } from "@/lib/actions/auth-actions";
 import { switchClientAction, removeClientAction } from "@/lib/actions/client-actions";
 import { AddClientForm } from "./add-client-form";
 import { AmbientSky } from "@/components/ambient-sky";
+import { Welcome } from "./welcome";
+import { GettingStarted } from "./getting-started";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -15,7 +17,12 @@ import { AmbientSky } from "@/components/ambient-sky";
 // connection — belongs to a single client, and you reach it by choosing one
 // from here.
 
-export default async function ClientsPage() {
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ subscribed?: string }>;
+}) {
+  const justSubscribed = (await searchParams).subscribed === "1";
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   // A business owner has no clients and no use for this page.
@@ -34,7 +41,7 @@ export default async function ClientsPage() {
         id: true,
         name: true,
         industry: true,
-        _count: { select: { campaigns: true } },
+        _count: { select: { campaigns: true, monthlyPlans: true } },
         metaAdAccount: { select: { status: true } },
         intake: { select: { id: true } },
       },
@@ -43,12 +50,23 @@ export default async function ClientsPage() {
   if (!workspace) redirect("/sign-in");
 
   const plan = planFor(workspace.subscriptionTier);
+  // Read off the clients we already loaded, so the guide costs no extra query.
+  const guide = {
+    hasClient: clients.length > 0,
+    hasSetup: clients.some((c) => c.intake),
+    hasMeta: clients.some((c) => c.metaAdAccount?.status === "CONNECTED"),
+    hasPlan: clients.some((c) => c._count.monthlyPlans > 0),
+    hasCampaign: clients.some((c) => c._count.campaigns > 0),
+  };
   const allowed = limitsFor(workspace.subscriptionTier).clients ?? 0;
   const room = Math.max(allowed - clients.length, 0);
 
   return (
     <div className="relative min-h-screen text-white">
       <AmbientSky />
+      {justSubscribed && (
+        <Welcome planName={plan.name} clientLimit={limitsFor(workspace.subscriptionTier).clients ?? 0} />
+      )}
       <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
@@ -135,6 +153,8 @@ export default async function ClientsPage() {
         </div>
 
         <AddClientForm room={room} allowed={allowed} />
+
+        <GettingStarted state={guide} />
       </main>
     </div>
   );

@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
-import { ALL_PLANS } from "@/lib/plans";
+import { ALL_PLANS, isFreelancerTier } from "@/lib/plans";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -154,12 +154,18 @@ async function createCheckoutUrl(input: {
   const customerId = await customerIdFor(organizationId, email);
   const origin = await originUrl();
 
+  // Come back to the screen that is actually yours. A freelancer who paid and
+  // landed on /dashboard/settings would either be bounced back to /clients
+  // (no client open) or shown some client's business settings — neither of
+  // which is the account that just bought anything.
+  const home = isFreelancerTier(tier) ? "/clients" : "/dashboard/settings";
+
   const checkout = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceIdFor(tier), quantity: 1 }],
-    success_url: `${origin}/dashboard/settings?subscribed=1`,
-    cancel_url: `${origin}/dashboard/settings?checkout=cancelled`,
+    success_url: `${origin}${home}?subscribed=1`,
+    cancel_url: `${origin}${home}?checkout=cancelled`,
     // Carried onto the subscription so the webhook can identify the
     // organization without a lookup, and without trusting anything the client
     // sent us.
