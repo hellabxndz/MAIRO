@@ -60,7 +60,7 @@ export function GettingStarted({ state }: { state: GuideState }) {
   const nextIndex = STEPS.findIndex((s) => !state[s.key]);
 
   return (
-    <section className="mt-14 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-8">
+    <section data-tour="checklist" className="mt-14 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">How this works</h2>
         <div className="flex items-center gap-4">

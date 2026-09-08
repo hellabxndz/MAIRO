@@ -125,10 +125,15 @@ export function Welcome({ planName, clientLimit }: { planName: string; clientLim
 
         <button
           type="button"
-          onClick={close}
+          onClick={() => {
+            close();
+            // Hands straight over to the walkthrough rather than leaving
+            // somebody on a screen they have never seen before.
+            window.dispatchEvent(new CustomEvent("mairo:start-tour"));
+          }}
           className="relative mt-9 w-full rounded-full bg-white px-6 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-black transition hover:bg-neutral-200"
         >
-          Add my first client
+          Show me around
         </button>
         <a
           href="/clients/guide"

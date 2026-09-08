@@ -15,14 +15,14 @@ export function AddClientForm({ room, allowed }: { room: number; allowed: number
 
   if (allowed === 0) {
     return (
-      <div className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 text-sm text-neutral-400">
+      <div data-tour="add" className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 text-sm text-neutral-400">
         Choose a freelancer plan to start adding client businesses.
       </div>
     );
   }
 
   return (
-    <form action={action} className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
+    <form action={action} data-tour="add" className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
       <p className="text-sm font-medium">Add a client</p>
       <p className="mt-1 text-xs text-neutral-500">
         {room > 0

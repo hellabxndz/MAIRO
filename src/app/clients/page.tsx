@@ -9,6 +9,7 @@ import { AddClientForm } from "./add-client-form";
 import { AmbientSky } from "@/components/ambient-sky";
 import { Welcome } from "./welcome";
 import { GettingStarted } from "./getting-started";
+import { Tour, StartTourLink } from "./tour";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -67,6 +68,8 @@ export default async function ClientsPage({
       {justSubscribed && (
         <Welcome planName={plan.name} clientLimit={limitsFor(workspace.subscriptionTier).clients ?? 0} />
       )}
+      {/* Offers itself once, right after paying. Available on demand after that. */}
+      <Tour autoStart={justSubscribed} />
       <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
@@ -82,10 +85,11 @@ export default async function ClientsPage({
             {/* The workspace's own billing, not a client's. A freelancer has no
                 dashboard of their own to put this on — /dashboard is always
                 some client's dashboard. */}
-            <Link href="/clients/guide" className="hover:text-white">
+            <StartTourLink className="hover:text-white" />
+            <Link href="/clients/guide" data-tour="guide" className="hover:text-white">
               Guide
             </Link>
-            <Link href="/clients/billing" className="hover:text-white">
+            <Link href="/clients/billing" data-tour="billing" className="hover:text-white">
               Billing
             </Link>
             <form action={signOutAction}>
@@ -106,7 +110,7 @@ export default async function ClientsPage({
           creatives. Open one to work inside it.
         </p>
 
-        <div className="mt-10 space-y-3">
+        <div data-tour="list" className="mt-10 space-y-3">
           {clients.length === 0 && (
             <p className="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-neutral-500">
               No clients yet. Add the first business you run ads for.
@@ -132,7 +136,7 @@ export default async function ClientsPage({
                     {!client.intake && " · setup unfinished"}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div data-tour="open" className="flex items-center gap-2">
                   <form action={switchClientAction.bind(null, client.id)}>
                     <button
                       type="submit"
