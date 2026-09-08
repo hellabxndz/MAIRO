@@ -130,6 +130,12 @@ export function Welcome({ planName, clientLimit }: { planName: string; clientLim
         >
           Add my first client
         </button>
+        <a
+          href="/clients/guide"
+          className="relative mt-4 block text-center text-xs text-neutral-500 transition hover:text-neutral-300"
+        >
+          Or read the guide first
+        </a>
 
         <style>{`
           @keyframes welcome-in {

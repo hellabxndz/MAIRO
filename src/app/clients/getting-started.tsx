@@ -63,9 +63,14 @@ export function GettingStarted({ state }: { state: GuideState }) {
     <section className="mt-14 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">How this works</h2>
-        <p className="text-xs text-neutral-500">
-          {done} of {STEPS.length} done
-        </p>
+        <div className="flex items-center gap-4">
+          <a href="/clients/guide" className="text-xs text-neutral-400 underline transition hover:text-white">
+            Read the full guide
+          </a>
+          <p className="text-xs text-neutral-500">
+            {done} of {STEPS.length} done
+          </p>
+        </div>
       </div>
 
       {/* Progress, as a single hairline. A bar with a percentage would be more

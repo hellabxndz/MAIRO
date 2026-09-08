@@ -82,6 +82,9 @@ export default async function ClientsPage({
             {/* The workspace's own billing, not a client's. A freelancer has no
                 dashboard of their own to put this on — /dashboard is always
                 some client's dashboard. */}
+            <Link href="/clients/guide" className="hover:text-white">
+              Guide
+            </Link>
             <Link href="/clients/billing" className="hover:text-white">
               Billing
             </Link>
