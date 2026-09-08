@@ -11,7 +11,10 @@ python-dotenv>=1.0
 sounddevice>=0.4.6      # microphone capture (bundles PortAudio on Windows)
 soundfile>=0.12         # decoding the audio returned by the OpenAI voice
 numpy>=1.24             # level metering
-pyttsx3>=2.90           # offline system voice (SAPI5 on Windows)
+# Offline system voice on Windows and Linux. Excluded on macOS: Mairo speaks
+# there through the built-in `say` command, and pyttsx3 would drag in the whole
+# of pyobjc (a hundred-odd packages) for a driver that is never used.
+pyttsx3>=2.90; sys_platform != "darwin"
 SpeechRecognition>=3.10 # optional no-key speech recognition fallback
 
 # Machine readings for the HUD panels (processor, memory, uptime, network).
