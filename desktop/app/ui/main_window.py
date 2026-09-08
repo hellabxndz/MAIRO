@@ -12,7 +12,7 @@ import calendar
 from datetime import datetime
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Slot
+from PySide6.QtCore import Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QFrame,
@@ -75,6 +75,9 @@ QUICK_ACTIONS = [
 class MainWindow(QMainWindow):
     """Everything the user sees once Mairo is running."""
 
+    # Emitted from the wake-word thread; delivered on the interface thread.
+    wake_word_heard = Signal()
+
     def __init__(
         self,
         settings: Settings,
@@ -92,6 +95,7 @@ class MainWindow(QMainWindow):
         self.palette_colors = get_palette(settings.theme)
         self._worker: AssistantWorker | None = None
         self._listening = False
+        self._wake_word_notice_shown = False
 
         self.setWindowTitle(WINDOW_TITLE)
         self.resize(1300, 820)
@@ -104,8 +108,10 @@ class MainWindow(QMainWindow):
         self._apply_theme()
         self._install_shortcuts()
         self._start_clock()
+        self.wake_word_heard.connect(self._on_wake_word, Qt.QueuedConnection)
         QTimer.singleShot(150, self._first_run_checks)
         QTimer.singleShot(900, self.weather_panel.refresh)
+        QTimer.singleShot(1200, self._start_wake_word)
 
     # ----------------------------------------------------------- building
 
@@ -211,10 +217,12 @@ class MainWindow(QMainWindow):
         self.listen_label = QLabel()
         self.memory_count_label = QLabel()
         self.conversation_count_label = QLabel()
+        self.wake_label = QLabel()
         self._assistant_labels = [
             self.model_label,
             self.voice_label,
             self.listen_label,
+            self.wake_label,
             self.memory_count_label,
             self.conversation_count_label,
         ]
@@ -258,6 +266,15 @@ class MainWindow(QMainWindow):
         self.conversation_count_label.setText(
             f"{saved} saved conversation{'' if saved == 1 else 's'}"
         )
+        if self.settings.wake_word_enabled:
+            detector = getattr(self.voice, "wake_detector", None)
+            self.wake_label.setText(
+                f"Wake word “{self.settings.wake_word}” is on"
+                if getattr(detector, "available", False)
+                else "Wake word is on but no engine is installed"
+            )
+        else:
+            self.wake_label.setText("Wake word is off")
 
     # ----------------------------------------------------- centre: Mairo
 
@@ -493,6 +510,39 @@ class MainWindow(QMainWindow):
             self.mic_button.setEnabled(False)
             self.mic_button.setToolTip(message)
 
+    def _start_wake_word(self) -> None:
+        """Listen for the wake phrase, if the user asked for it and it can work."""
+        if not self.settings.wake_word_enabled:
+            return
+        detector = getattr(self.voice, "wake_detector", None)
+        if detector is None:
+            return
+        if not getattr(detector, "available", False):
+            if not self._wake_word_notice_shown:
+                self._wake_word_notice_shown = True
+                self._add_message(tr.SYSTEM, detector.status_text)
+            return
+        if detector.is_running or (self._worker is not None and self._worker.isRunning()):
+            return
+        detector.start(self.wake_word_heard.emit)
+        log.info("Wake word listening started")
+
+    def _stop_wake_word(self) -> None:
+        detector = getattr(self.voice, "wake_detector", None)
+        if detector is None:
+            return
+        try:
+            detector.stop()
+        except Exception as exc:
+            log.debug("Stopping the wake word failed: %s", exc)
+
+    @Slot()
+    def _on_wake_word(self) -> None:
+        """The phrase was heard: take the microphone and start a turn."""
+        if self._worker is not None and self._worker.isRunning():
+            return
+        self.toggle_listening()
+
     def show_banner(self, text: str) -> None:
         self.banner_label.setText(text)
         self.banner.setVisible(True)
@@ -542,6 +592,7 @@ class MainWindow(QMainWindow):
             self.waveform.set_active(True)
         self.send_button.setEnabled(False)
         self._set_quick_actions_enabled(False)
+        self._stop_wake_word()
 
         worker = AssistantWorker(self.brain, self.voice, text=text, speak_reply=True, parent=self)
         worker.status_changed.connect(self._on_status)
@@ -603,6 +654,7 @@ class MainWindow(QMainWindow):
         self.history.refresh()
         self.refresh_assistant_panel()
         self._worker = None
+        self._start_wake_word()
 
     @Slot(object)
     def _on_confirmation(self, request: ConfirmationRequest) -> None:
@@ -670,6 +722,9 @@ class MainWindow(QMainWindow):
                 self._apply_theme()
             if self.settings.has_api_key:
                 self.banner.setVisible(False)
+            self._stop_wake_word()
+            self._wake_word_notice_shown = False
+            self._start_wake_word()
             self.refresh_assistant_panel()
             self.weather_panel.location_changed()
             self._add_message(tr.SYSTEM, "Settings saved.")
@@ -678,6 +733,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt naming
         self._stop_everything()
+        self._stop_wake_word()
         self.monitor.stop()
         if self._worker is not None:
             self._worker.wait(2500)

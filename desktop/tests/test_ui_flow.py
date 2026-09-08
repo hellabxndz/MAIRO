@@ -50,10 +50,13 @@ class FakeVoice:
     """Stands in for the microphone and speaker."""
 
     def __init__(self, heard: str = "", fail: bool = False, speaks_aloud: bool = True):
+        from app.voice.wake_word import NullWakeWordDetector
+
         self.heard = heard
         self.fail = fail
         self.speaks_aloud = speaks_aloud
         self.spoken: list[str] = []
+        self.wake_detector = NullWakeWordDetector()
 
     def listen(self, on_level=None):
         if self.fail:

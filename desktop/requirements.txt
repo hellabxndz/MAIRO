@@ -18,6 +18,11 @@ SpeechRecognition>=3.10 # optional no-key speech recognition fallback
 # Without it the app still runs; those panels say so instead of guessing.
 psutil>=5.9
 
+# Optional: offline wake-word detection ("Hey Mairo"). Needs a free Picovoice
+# access key in .env. Mairo runs fine without it; the microphone button is
+# always available.
+# pvporcupine>=3.0
+
 # Computer actions
 mss>=9.0                # screenshots
 pyperclip>=1.8          # clipboard

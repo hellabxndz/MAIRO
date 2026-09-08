@@ -36,6 +36,30 @@ MODEL_SUGGESTIONS = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1", "o4-min
 NORMAL_RATE = 180  # words per minute the system voice treats as normal speed
 
 
+def _wake_word_note() -> str:
+    """Say plainly whether the wake word can actually work on this machine."""
+    from app.voice.wake_word import access_key, porcupine_available
+
+    if porcupine_available() and access_key():
+        return (
+            "Detection runs offline through Picovoice; audio never leaves this computer. "
+            "A custom “Hey Mairo” phrase needs a keyword file trained free at "
+            "console.picovoice.ai — set PICOVOICE_KEYWORD_FILE in .env. Without one Mairo "
+            "listens for the built-in word “computer”."
+        )
+    if porcupine_available():
+        return (
+            "pvporcupine is installed, but PICOVOICE_ACCESS_KEY is missing from .env. "
+            "Get a free key at console.picovoice.ai. Until then nothing listens in the "
+            "background and the microphone button is the way in."
+        )
+    return (
+        "Wake-word detection needs the pvporcupine package (pip install pvporcupine) and a "
+        "free key from console.picovoice.ai. Until both are present nothing listens in the "
+        "background — turning this on will not record you."
+    )
+
+
 def _openai_speed(words_per_minute: int) -> float:
     """Map the words-per-minute slider onto the OpenAI voice's speed multiplier."""
     return round(max(0.5, min(2.0, words_per_minute / NORMAL_RATE)), 2)
@@ -184,10 +208,7 @@ class SettingsDialog(QDialog):
         self.wake_edit = QLineEdit(self.settings.wake_word)
         form.addRow("Wake phrase", self.wake_edit)
 
-        wake_note = QLabel(
-            "Wake-word detection is not included in this build; the microphone button is the "
-            "way in. The setting is kept so a detection engine can be added later."
-        )
+        wake_note = QLabel(_wake_word_note())
         wake_note.setWordWrap(True)
         wake_note.setProperty("role", "caption")
         form.addRow("", wake_note)

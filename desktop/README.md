@@ -76,7 +76,7 @@ today highlighted, and the History and Settings buttons.
 |---|---|
 | Time and date | A clock ring that fills with the passing minute, and a date ring that fills as the month goes by |
 | This computer | Processor load, memory in use, disk in use with free space, how long the machine has been running |
-| Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, how much it remembers, how many conversations are saved |
+| Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, whether the wake word is on, how much it remembers, how many conversations are saved |
 | Weather | Current conditions for your city and the next three days |
 
 **Middle — Mairo itself.** The glowing orb, which breathes when idle, blooms
@@ -153,7 +153,8 @@ Mairo acknowledges and moves on rather than trying another way.
 recent messages to send as context, request timeout.
 
 **Voice** — speak replies on or off, voice engine, voice, speaking speed,
-speech recognition engine, microphone, maximum recording length, wake word.
+speech recognition engine, microphone, maximum recording length, wake word and
+its phrase.
 
 **Application** — theme (Nebula, Aurora, Ember, Monochrome), the weather panel
 and your city, whether to save conversation history, start with Windows.
@@ -172,10 +173,43 @@ endpoint is available as a no-key fallback.
 
 ### Wake word
 
-The setting and the architecture are in place (`app/voice/wake_word.py`), but
-this build ships a detector that never listens, so nothing records in the
-background. The microphone button is the way in. To add real detection, write a
-`WakeWordDetector` subclass and return it from `create_detector`.
+Mairo can listen for a spoken phrase instead of a button press. Detection runs
+**offline** through Picovoice Porcupine — the audio is processed on your
+computer and never leaves it.
+
+It is off by default and takes two things to switch on:
+
+```bat
+pip install pvporcupine
+```
+
+then a free access key from [console.picovoice.ai](https://console.picovoice.ai),
+put in `.env`:
+
+```
+PICOVOICE_ACCESS_KEY=your-key-here
+```
+
+Turn it on under Settings › Voice. Porcupine ships a set of ready-made words
+but "Hey Mairo" is not one of them, so out of the box it listens for the
+built-in word **computer**. To use "Hey Mairo", train a keyword file free on
+the same console and point `.env` at it:
+
+```
+PICOVOICE_KEYWORD_FILE=C:\path\to\hey-mairo.ppn
+```
+
+Until both the package and the key are present, **nothing listens in the
+background** — the detector is a placeholder that never opens the microphone,
+so turning the setting on cannot record you by accident. The Settings screen
+and the Assistant panel both say which state you are in.
+
+While Mairo is answering, the wake word stops listening and hands the
+microphone to the conversation, then resumes when the turn ends.
+
+To add a different engine, subclass `WakeWordDetector` in
+`app/voice/wake_word.py` and return it from `create_detector`. Nothing above
+that file needs to change.
 
 ## Making a standalone Mairo.exe
 
@@ -294,6 +328,8 @@ or token replaced by `[redacted]`.
 | "The microphone could not be opened" | Windows Settings › Privacy & security › Microphone, allow desktop apps. |
 | "Nothing was heard" | Speak a little louder or closer, then try again. |
 | "No system speech voice could be started" | Add a voice under Windows Settings › Time & language › Speech, or switch to the OpenAI voice. |
+| Wake word does nothing | It needs `pip install pvporcupine` and `PICOVOICE_ACCESS_KEY` in `.env`. The Assistant panel says which is missing. |
+| Weather says it cannot be reached | No internet, or a firewall is blocking open-meteo.com. |
 | An app will not open | Tell Mairo the full path once: "remember that Spotify is at C:\…\Spotify.exe". |
 | `pip install` fails on PySide6 | Use 64-bit Python 3.10–3.13 and upgrade pip: `python -m pip install --upgrade pip`. |
 
@@ -305,7 +341,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-98 tests cover memory, conversation history, the tool registry, the reasoning
+118 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.
