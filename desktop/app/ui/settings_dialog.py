@@ -225,6 +225,28 @@ class SettingsDialog(QDialog):
         self.theme_box.setCurrentIndex(max(0, theme_index))
         form.addRow("Theme", self.theme_box)
 
+        self.weather_check = QCheckBox("Show the weather panel")
+        self.weather_check.setChecked(self.settings.weather_enabled)
+        form.addRow("", self.weather_check)
+
+        self.weather_city = QLineEdit(self.settings.weather_location)
+        self.weather_city.setPlaceholderText("Your city, e.g. Vienna")
+        form.addRow("Weather city", self.weather_city)
+
+        self.weather_units = QComboBox()
+        self.weather_units.addItem("Celsius and km/h", "metric")
+        self.weather_units.addItem("Fahrenheit and mph", "imperial")
+        units_index = self.weather_units.findData(self.settings.weather_units)
+        self.weather_units.setCurrentIndex(max(0, units_index))
+        form.addRow("Weather units", self.weather_units)
+
+        weather_note = QLabel(
+            "Weather comes from Open-Meteo, which is free and needs no account or API key."
+        )
+        weather_note.setWordWrap(True)
+        weather_note.setProperty("role", "caption")
+        form.addRow("", weather_note)
+
         self.history_check = QCheckBox("Save conversation history on this computer")
         self.history_check.setChecked(self.settings.save_history)
         form.addRow("", self.history_check)
@@ -311,6 +333,9 @@ class SettingsDialog(QDialog):
 
         self.settings.theme = self.theme_box.currentData() or "nebula"
         self.settings.save_history = self.history_check.isChecked()
+        self.settings.weather_enabled = self.weather_check.isChecked()
+        self.settings.weather_location = self.weather_city.text().strip()
+        self.settings.weather_units = self.weather_units.currentData() or "metric"
 
         wanted_startup = self.startup_check.isChecked()
         if wanted_startup != self.settings.start_with_windows:

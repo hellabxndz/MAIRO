@@ -77,6 +77,7 @@ today highlighted, and the History and Settings buttons.
 | Time and date | A clock ring that fills with the passing minute, and a date ring that fills as the month goes by |
 | This computer | Processor load, memory in use, disk in use with free space, how long the machine has been running |
 | Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, how much it remembers, how many conversations are saved |
+| Weather | Current conditions for your city and the next three days |
 
 **Middle — Mairo itself.** The glowing orb, which breathes when idle, blooms
 with your voice while listening, spins while thinking and ripples while
@@ -94,6 +95,11 @@ Working, Speaking), and the box where you can type instead of talking.
 The History button swaps the right column for your saved conversations, so the
 middle never gets squeezed. Opening one, or starting a new one, brings the
 transcript back.
+
+Weather comes from [Open-Meteo](https://open-meteo.com), which is free and
+needs no account and no API key — set your city under Settings › Application
+and it works. If it cannot reach the service the panel says so; it never shows
+a stale or invented forecast.
 
 Processor, memory, uptime and network come from the `psutil` package, which
 `requirements.txt` installs. Without it the app runs exactly the same and those
@@ -124,6 +130,7 @@ Things it understands today:
 - "Remember that I always use Chrome." / "What do you remember about me?" /
   "Forget that preference."
 - "What time is it?"
+- "What's the weather like?" / "Will it rain in Vienna tomorrow?"
 - "Lock my computer."
 
 Anything that captures your screen, reads your clipboard, locks the machine or
@@ -148,8 +155,8 @@ recent messages to send as context, request timeout.
 **Voice** — speak replies on or off, voice engine, voice, speaking speed,
 speech recognition engine, microphone, maximum recording length, wake word.
 
-**Application** — theme (Nebula, Aurora, Ember, Monochrome), whether to save
-conversation history, start with Windows.
+**Application** — theme (Nebula, Aurora, Ember, Monochrome), the weather panel
+and your city, whether to save conversation history, start with Windows.
 
 Settings are saved immediately and survive restarts.
 
@@ -276,7 +283,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-74 tests cover memory, conversation history, the tool registry, the reasoning
+98 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.

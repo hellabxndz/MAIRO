@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -44,6 +45,7 @@ from app.ui.status_indicator import StatusIndicator
 from app.ui.theme import build_stylesheet, get_palette
 from app.ui.transcript import EmptyState, TranscriptView
 from app.ui.waveform import WaveformWidget
+from app.ui.weather_panel import WeatherPanel
 from app.ui.workers import AssistantWorker, ConfirmationRequest
 from app.utils.errors import MairoError
 from app.utils.logging_setup import get_logger
@@ -103,6 +105,7 @@ class MainWindow(QMainWindow):
         self._install_shortcuts()
         self._start_clock()
         QTimer.singleShot(150, self._first_run_checks)
+        QTimer.singleShot(900, self.weather_panel.refresh)
 
     # ----------------------------------------------------------- building
 
@@ -161,15 +164,15 @@ class MainWindow(QMainWindow):
 
     def _build_left_column(self) -> QWidget:
         column = QWidget()
-        column.setFixedWidth(LEFT_COLUMN_WIDTH)
+        column.setStyleSheet("background: transparent;")
         layout = QVBoxLayout(column)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(10)
 
         # Clock and calendar.
         self.clock_panel = HudPanel(self.palette_colors, "Time and date")
-        self.clock_gauge = RingGauge(self.palette_colors, "clock", 104)
-        self.date_gauge = RingGauge(self.palette_colors, "today", 104)
+        self.clock_gauge = RingGauge(self.palette_colors, "clock", 96)
+        self.date_gauge = RingGauge(self.palette_colors, "today", 96)
         clock_row = QHBoxLayout()
         clock_row.setSpacing(6)
         clock_row.addStretch(1)
@@ -181,8 +184,8 @@ class MainWindow(QMainWindow):
 
         # Machine readings.
         self.system_panel = HudPanel(self.palette_colors, "This computer")
-        self.cpu_gauge = RingGauge(self.palette_colors, "processor", 104)
-        self.memory_gauge = RingGauge(self.palette_colors, "memory", 104)
+        self.cpu_gauge = RingGauge(self.palette_colors, "processor", 96)
+        self.memory_gauge = RingGauge(self.palette_colors, "memory", 96)
         gauge_row = QHBoxLayout()
         gauge_row.setSpacing(6)
         gauge_row.addStretch(1)
@@ -219,9 +222,20 @@ class MainWindow(QMainWindow):
             label.setWordWrap(True)
             self.assistant_panel.body.addWidget(label)
         layout.addWidget(self.assistant_panel)
+
+        self.weather_panel = WeatherPanel(self.settings, self.palette_colors)
+        layout.addWidget(self.weather_panel)
         layout.addStretch(1)
         self.refresh_assistant_panel()
-        return column
+
+        scroller = QScrollArea()
+        scroller.setWidget(column)
+        scroller.setWidgetResizable(True)
+        scroller.setFixedWidth(LEFT_COLUMN_WIDTH)
+        scroller.setFrameShape(QFrame.NoFrame)
+        scroller.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroller.setStyleSheet("background: transparent;")
+        return scroller
 
     def refresh_assistant_panel(self) -> None:
         """Restate what Mairo is running with, after any change that affects it."""
@@ -421,6 +435,7 @@ class MainWindow(QMainWindow):
             self.clock_panel,
             self.system_panel,
             self.assistant_panel,
+            self.weather_panel,
             self.conversation_panel,
             self.actions_panel,
             self.network_panel,
@@ -656,6 +671,7 @@ class MainWindow(QMainWindow):
             if self.settings.has_api_key:
                 self.banner.setVisible(False)
             self.refresh_assistant_panel()
+            self.weather_panel.location_changed()
             self._add_message(tr.SYSTEM, "Settings saved.")
 
     # ------------------------------------------------------------ closing

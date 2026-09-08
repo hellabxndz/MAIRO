@@ -25,14 +25,14 @@ class HudPanel(QWidget):
         self._title_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(13, 9, 13, 12)
-        outer.setSpacing(8)
+        outer.setContentsMargins(12, 8, 12, 10)
+        outer.setSpacing(7)
         if title:
             outer.addWidget(self._title_label)
 
         self.body = QVBoxLayout()
         self.body.setContentsMargins(0, 0, 0, 0)
-        self.body.setSpacing(9)
+        self.body.setSpacing(7)
         outer.addLayout(self.body)
 
         self.apply_palette(palette)

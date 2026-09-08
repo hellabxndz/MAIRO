@@ -55,6 +55,11 @@ class Settings:
     wake_word_enabled: bool = False
     wake_word: str = "hey mairo"
 
+    # Weather (Open-Meteo, no API key needed)
+    weather_enabled: bool = True
+    weather_location: str = ""
+    weather_units: str = "metric"  # "metric" or "imperial"
+
     # App behaviour
     start_with_windows: bool = False
     save_history: bool = True
