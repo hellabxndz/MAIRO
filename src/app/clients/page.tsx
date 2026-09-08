@@ -61,7 +61,10 @@ export default async function ClientsPage() {
             <span>
               {plan.name} · {clients.length}/{allowed} clients
             </span>
-            <Link href="/dashboard/settings" className="hover:text-white">
+            {/* The workspace's own billing, not a client's. A freelancer has no
+                dashboard of their own to put this on — /dashboard is always
+                some client's dashboard. */}
+            <Link href="/clients/billing" className="hover:text-white">
               Billing
             </Link>
             <form action={signOutAction}>

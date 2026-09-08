@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
+import { ALL_PLANS } from "@/lib/plans";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -117,10 +118,16 @@ export async function startCheckoutAction(
     redirect("/sign-in");
   }
 
+  // Derived from the plans themselves rather than spelled out here. The
+  // hand-written list did not know the freelancer tiers existed, so Studio and
+  // Agency came back as "not a plan we sell" — a list of literals in one file
+  // that has to be kept in step with another file will eventually not be.
   const tier = formData.get("tier");
-  if (tier !== "STARTER" && tier !== "GROWTH" && tier !== "SCALE") {
+  const sellable = ALL_PLANS.map((p) => p.tier);
+  if (typeof tier !== "string" || !sellable.includes(tier as SubscriptionTier)) {
     return { error: "That isn't a plan we sell." };
   }
+  const chosen = tier as Exclude<SubscriptionTier, "NONE">;
 
   const organizationId = session.user.organizationId;
   const email = session.user.email;
@@ -130,7 +137,7 @@ export async function startCheckoutAction(
   // successful checkout as a failure.
   let checkoutUrl: string;
   try {
-    checkoutUrl = await createCheckoutUrl({ organizationId, email, tier });
+    checkoutUrl = await createCheckoutUrl({ organizationId, email, tier: chosen });
   } catch (error) {
     console.error("Stripe checkout failed:", error);
     return { error: explainStripeError(error) };
@@ -141,7 +148,7 @@ export async function startCheckoutAction(
 async function createCheckoutUrl(input: {
   organizationId: string;
   email: string;
-  tier: "STARTER" | "GROWTH" | "SCALE";
+  tier: Exclude<SubscriptionTier, "NONE">;
 }): Promise<string> {
   const { organizationId, email, tier } = input;
   const customerId = await customerIdFor(organizationId, email);
@@ -150,7 +157,7 @@ async function createCheckoutUrl(input: {
   const checkout = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: priceIdFor(tier as Exclude<SubscriptionTier, "NONE">), quantity: 1 }],
+    line_items: [{ price: priceIdFor(tier), quantity: 1 }],
     success_url: `${origin}/dashboard/settings?subscribed=1`,
     cancel_url: `${origin}/dashboard/settings?checkout=cancelled`,
     // Carried onto the subscription so the webhook can identify the
