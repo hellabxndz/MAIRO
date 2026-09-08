@@ -113,12 +113,29 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
 
   const periodEnd = subscription.items.data[0]?.current_period_end;
 
+  // An unrecognised price used to fall through to NONE, which meant one typo
+  // in a STRIPE_PRICE_* variable would silently strip paying customers of the
+  // plan they had just bought — no error, nothing in the logs, and the only
+  // symptom a confused person with a receipt and no access.
+  //
+  // Now an active subscription whose price does not map leaves the tier alone
+  // and says so loudly. Failing to upgrade someone is recoverable; quietly
+  // downgrading someone who is paying is not.
+  if (!finished && !tier) {
+    console.error(
+      `Stripe webhook: subscription ${subscription.id} is ${subscription.status} on price ` +
+        `${priceId ?? "(none)"}, which matches no STRIPE_PRICE_* variable on this deployment. ` +
+        `Leaving the plan as it is. Check that every price id in Stripe has a matching variable.`
+    );
+  }
+
   await db.organization.update({
     where: { id: organizationId },
     data: {
       stripeSubscriptionId: finished ? null : subscription.id,
       subscriptionStatus: subscription.status,
-      subscriptionTier: finished ? "NONE" : tier ?? "NONE",
+      // Left untouched when the price is unrecognised, rather than reset.
+      ...(finished ? { subscriptionTier: "NONE" as const } : tier ? { subscriptionTier: tier } : {}),
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
