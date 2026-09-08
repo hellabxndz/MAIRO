@@ -45,7 +45,6 @@ from app.ui.status_indicator import StatusIndicator
 from app.ui.theme import build_stylesheet, get_palette
 from app.ui.transcript import EmptyState, TranscriptView
 from app.ui.waveform import WaveformWidget
-from app.ui.weather_panel import WeatherPanel
 from app.ui.workers import AssistantWorker, ConfirmationRequest
 from app.utils.errors import MairoError
 from app.utils.logging_setup import get_logger
@@ -110,7 +109,6 @@ class MainWindow(QMainWindow):
         self._start_clock()
         self.wake_word_heard.connect(self._on_wake_word, Qt.QueuedConnection)
         QTimer.singleShot(150, self._first_run_checks)
-        QTimer.singleShot(900, self.weather_panel.refresh)
         QTimer.singleShot(1200, self._start_wake_word)
 
     # ----------------------------------------------------------- building
@@ -230,9 +228,6 @@ class MainWindow(QMainWindow):
             label.setWordWrap(True)
             self.assistant_panel.body.addWidget(label)
         layout.addWidget(self.assistant_panel)
-
-        self.weather_panel = WeatherPanel(self.settings, self.palette_colors)
-        layout.addWidget(self.weather_panel)
         layout.addStretch(1)
         self.refresh_assistant_panel()
 
@@ -452,7 +447,6 @@ class MainWindow(QMainWindow):
             self.clock_panel,
             self.system_panel,
             self.assistant_panel,
-            self.weather_panel,
             self.conversation_panel,
             self.actions_panel,
             self.network_panel,
@@ -726,7 +720,6 @@ class MainWindow(QMainWindow):
             self._wake_word_notice_shown = False
             self._start_wake_word()
             self.refresh_assistant_panel()
-            self.weather_panel.location_changed()
             self._add_message(tr.SYSTEM, "Settings saved.")
 
     # ------------------------------------------------------------ closing

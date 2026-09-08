@@ -77,7 +77,6 @@ today highlighted, and the History and Settings buttons.
 | Time and date | A clock ring that fills with the passing minute, and a date ring that fills as the month goes by |
 | This computer | Processor load, memory in use, disk in use with free space, how long the machine has been running |
 | Assistant | The model Mairo is thinking with, the voice it speaks with, the recogniser it listens with, whether the wake word is on, how much it remembers, how many conversations are saved |
-| Weather | Current conditions for your city and the next three days |
 
 **Middle — Mairo itself.** The glowing orb, which breathes when idle, blooms
 with your voice while listening, spins while thinking and ripples while
@@ -95,11 +94,6 @@ Working, Speaking), and the box where you can type instead of talking.
 The History button swaps the right column for your saved conversations, so the
 middle never gets squeezed. Opening one, or starting a new one, brings the
 transcript back.
-
-Weather comes from [Open-Meteo](https://open-meteo.com), which is free and
-needs no account and no API key — set your city under Settings › Application
-and it works. If it cannot reach the service the panel says so; it never shows
-a stale or invented forecast.
 
 Processor, memory, uptime and network come from the `psutil` package, which
 `requirements.txt` installs. Without it the app runs exactly the same and those
@@ -130,7 +124,6 @@ Things it understands today:
 - "Remember that I always use Chrome." / "What do you remember about me?" /
   "Forget that preference."
 - "What time is it?"
-- "What's the weather like?" / "Will it rain in Vienna tomorrow?"
 - "Lock my computer."
 
 Anything that captures your screen, reads your clipboard, locks the machine or
@@ -156,8 +149,8 @@ recent messages to send as context, request timeout.
 speech recognition engine, microphone, maximum recording length, wake word and
 its phrase.
 
-**Application** — theme (Nebula, Aurora, Ember, Monochrome), the weather panel
-and your city, whether to save conversation history, start with Windows.
+**Application** — theme (Nebula, Aurora, Ember, Monochrome), whether to save
+conversation history, start with Windows.
 
 Settings are saved immediately and survive restarts.
 
@@ -273,25 +266,27 @@ desktop/
 Tools are the extension point. Write a class, register it, done:
 
 ```python
-# app/tools/weather.py
+# app/tools/timer.py
 from app.tools.base import Tool, ToolResult
 
-class WeatherTool(Tool):
-    name = "get_weather"
-    description = "Get the current weather for a place."
+class StartTimerTool(Tool):
+    name = "start_timer"
+    description = "Start a countdown timer for a number of minutes."
     parameters = {
         "type": "object",
-        "properties": {"place": {"type": "string"}},
-        "required": ["place"],
+        "properties": {"minutes": {"type": "integer"}},
+        "required": ["minutes"],
     }
     requires_confirmation = False   # True for anything risky or private
 
     def run(self, args):
-        place = args.get("place", "")
-        return ToolResult.success(f"It is 18 degrees and clear in {place}.")
+        minutes = int(args.get("minutes", 0))
+        if minutes <= 0:
+            return ToolResult.failure("A timer needs a length in minutes.")
+        return ToolResult.success(f"Timer set for {minutes} minutes.")
 ```
 
-Then add `weather.WeatherTool` to the list in
+Then add `timer.StartTimerTool` to the list in
 `app/tools/registry.py::build_default_registry`. The description is the only
 instruction the model gets, so write it the way you would brief a person.
 
@@ -329,7 +324,6 @@ or token replaced by `[redacted]`.
 | "Nothing was heard" | Speak a little louder or closer, then try again. |
 | "No system speech voice could be started" | Add a voice under Windows Settings › Time & language › Speech, or switch to the OpenAI voice. |
 | Wake word does nothing | It needs `pip install pvporcupine` and `PICOVOICE_ACCESS_KEY` in `.env`. The Assistant panel says which is missing. |
-| Weather says it cannot be reached | No internet, or a firewall is blocking open-meteo.com. |
 | An app will not open | Tell Mairo the full path once: "remember that Spotify is at C:\…\Spotify.exe". |
 | `pip install` fails on PySide6 | Use 64-bit Python 3.10–3.13 and upgrade pip: `python -m pip install --upgrade pip`. |
 
@@ -341,7 +335,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-118 tests cover memory, conversation history, the tool registry, the reasoning
+94 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.

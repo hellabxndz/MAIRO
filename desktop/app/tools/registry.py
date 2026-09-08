@@ -53,7 +53,7 @@ class ToolRegistry:
 
 def build_default_registry(context: ToolContext) -> ToolRegistry:
     """Every tool shipped with the MVP."""
-    from app.tools import apps, files, notes, system, time_tools, weather, web
+    from app.tools import apps, files, notes, system, time_tools, web
     from app.tools import memory_tools
 
     registry = ToolRegistry(context)
@@ -69,7 +69,6 @@ def build_default_registry(context: ToolContext) -> ToolRegistry:
             web.SearchYouTubeTool,
             files.OpenPathTool,
             time_tools.CurrentDateTimeTool,
-            weather.GetWeatherTool,
             notes.CreateNoteTool,
             notes.ReadNotesTool,
             system.SetVolumeTool,
