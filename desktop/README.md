@@ -13,12 +13,14 @@ short window of recent messages are ever sent to the AI provider.
 
 | Requirement | Notes |
 |---|---|
-| Windows 10 or 11 | macOS and Linux run too, minus the Windows-only extras |
-| Python 3.10 or newer | Tick **Add python.exe to PATH** in the installer |
+| Windows 10 or 11, or macOS | Linux runs too, minus the platform extras |
+| Python 3.10 or newer | On Windows, tick **Add python.exe to PATH** in the installer |
 | An OpenAI API key | From <https://platform.openai.com/api-keys> |
 | A microphone | Optional — you can type to Mairo instead |
 
 ## Install (exact commands)
+
+### On Windows
 
 Open **PowerShell** or **Command Prompt** in the folder that contains this
 README, then run these six commands:
@@ -52,6 +54,37 @@ Or double-click **run_mairo.bat**, which does both and hides the console.
 > If PowerShell refuses to run the activate script, use
 > `.venv\Scripts\activate.bat`, or allow scripts once with
 > `Set-ExecutionPolicy -Scope Process RemoteSigned`.
+
+### On macOS
+
+The same steps, with Unix paths. In Terminal, from this folder:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+open -e .env
+python main.py
+```
+
+Put your key in the file that opens, save it, and run the last line again.
+Later sessions are `source .venv/bin/activate` then `python main.py`.
+
+Works on Apple Silicon and Intel. On **macOS 13 (Ventura) or newer** you get
+the current Qt; on macOS 11 or 12, pip automatically installs an older PySide6
+(6.9) that still works.
+
+macOS asks permission the first time Mairo uses something: allow **Microphone**
+to talk to it, and **Screen Recording** if you ask for a screenshot. Both are
+under System Settings › Privacy & Security. The Windows-only packages
+(pywin32, pycaw, comtypes) are skipped automatically.
+
+What differs on a Mac: the voice is the built-in `say` command, so every system
+voice on your Mac is available and nothing extra is installed. Applications
+open by their Mac names, and Windows names map to the Mac equivalent — asking
+for Task Manager opens Activity Monitor, Notepad opens TextEdit, File Explorer
+opens Finder. "Start with Windows" is the one setting that does nothing here.
 
 ## First run
 
@@ -165,7 +198,7 @@ Settings are saved immediately and survive restarts.
 
 | Engine | Cost | Needs internet | Quality |
 |---|---|---|---|
-| System voice (default) | free | no | good, uses the Windows voices |
+| System voice (default) | free | no | good — Windows SAPI5, or macOS `say` |
 | OpenAI voice | per request | yes | noticeably better |
 
 Speech recognition defaults to OpenAI (accurate, uses your key). The Google web
@@ -342,7 +375,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-142 tests cover memory, conversation history, the tool registry, the reasoning
+157 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.

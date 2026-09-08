@@ -8,7 +8,15 @@ from typing import Any
 
 from app.tools.base import Tool, ToolResult
 from app.utils.logging_setup import get_logger
-from app.utils.platform_utils import expand, is_windows, launch_detached, open_path, which
+from app.utils.platform_utils import (
+    expand,
+    is_macos,
+    is_windows,
+    launch_detached,
+    open_macos_app,
+    open_path,
+    which,
+)
 
 log = get_logger("tools.apps")
 
@@ -16,6 +24,7 @@ log = get_logger("tools.apps")
 # Windows paths use environment variables so they work for any user account.
 KNOWN_APPS: dict[str, dict[str, list[str]]] = {
     "spotify": {
+        "macos": ["Spotify"],
         "commands": ["spotify"],
         "windows": [
             r"%APPDATA%\Spotify\Spotify.exe",
@@ -26,6 +35,7 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         "web": ["https://open.spotify.com"],
     },
     "discord": {
+        "macos": ["Discord"],
         "commands": ["discord"],
         "windows": [
             r"%LOCALAPPDATA%\Discord\Update.exe",
@@ -35,6 +45,7 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         "web": ["https://discord.com/app"],
     },
     "chrome": {
+        "macos": ["Google Chrome"],
         "commands": ["google-chrome", "chrome", "chromium"],
         "windows": [
             r"%PROGRAMFILES%\Google\Chrome\Application\chrome.exe",
@@ -43,6 +54,7 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "vs code": {
+        "macos": ["Visual Studio Code"],
         "commands": ["code"],
         "windows": [
             r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe",
@@ -50,6 +62,7 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "edge": {
+        "macos": ["Microsoft Edge"],
         "commands": ["microsoft-edge"],
         "windows": [
             r"%PROGRAMFILES(X86)%\Microsoft\Edge\Application\msedge.exe",
@@ -57,22 +70,30 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         ],
     },
     "firefox": {
+        "macos": ["Firefox"],
         "commands": ["firefox"],
         "windows": [r"%PROGRAMFILES%\Mozilla Firefox\firefox.exe"],
     },
     "steam": {
+        "macos": ["Steam"],
         "commands": ["steam"],
         "windows": [r"%PROGRAMFILES(X86)%\Steam\steam.exe"],
     },
-    "notepad": {"commands": ["notepad"], "windows": [r"%WINDIR%\system32\notepad.exe"]},
-    "calculator": {"commands": ["calc"], "windows": [r"%WINDIR%\system32\calc.exe"]},
-    "file explorer": {"commands": ["explorer"], "windows": [r"%WINDIR%\explorer.exe"]},
+    "notepad": {
+        "macos": ["TextEdit"],"commands": ["notepad"], "windows": [r"%WINDIR%\system32\notepad.exe"]},
+    "calculator": {
+        "macos": ["Calculator"],"commands": ["calc"], "windows": [r"%WINDIR%\system32\calc.exe"]},
+    "file explorer": {
+        "macos": ["Finder"],"commands": ["explorer"], "windows": [r"%WINDIR%\explorer.exe"]},
     "terminal": {
+        "macos": ["Terminal"],
         "commands": ["wt", "powershell", "cmd", "gnome-terminal", "x-terminal-emulator"],
         "windows": [r"%LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe"],
     },
-    "task manager": {"commands": ["taskmgr"], "windows": [r"%WINDIR%\system32\taskmgr.exe"]},
-    "settings": {"commands": [], "windows": [], "uri": ["ms-settings:"]},
+    "task manager": {
+        "macos": ["Activity Monitor"],"commands": ["taskmgr"], "windows": [r"%WINDIR%\system32\taskmgr.exe"]},
+    "settings": {
+        "macos": ["System Settings"],"commands": [], "windows": [], "uri": ["ms-settings:"]},
 }
 
 ALIASES = {
@@ -154,6 +175,12 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
             except OSError as exc:
                 log.warning("Launching %s failed: %s", found, exc)
 
+    # 2b. On a Mac, applications are bundles rather than executables on PATH.
+    if is_macos():
+        for app_name in list(spec.get("macos", [])) + [name.strip().title(), name.strip()]:
+            if app_name and open_macos_app(app_name):
+                return ToolResult.success(f"Opened {name}.")
+
     # 3. Anything on PATH, including the raw name the user said.
     for command in list(spec.get("commands", [])) + [key, name.strip()]:
         if not command:
@@ -193,8 +220,8 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
             pass
 
     return ToolResult.failure(
-        f"{name} could not be found on this computer. Ask the user for the full path to its "
-        f"program file, then remember it as 'app_path_{key}'."
+        f"{name} could not be found on this computer. Ask the user where it is installed, "
+        f"then remember that path as 'app_path_{key}'."
     )
 
 

@@ -76,6 +76,18 @@ def known_folder(name: str) -> Path | None:
     return folders.get(cleaned)
 
 
+def open_macos_app(app_name: str) -> bool:
+    """Launch a Mac application by its display name, e.g. "Google Chrome"."""
+    try:
+        result = subprocess.run(
+            ["open", "-a", app_name], capture_output=True, timeout=15, check=False
+        )
+        return result.returncode == 0
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.warning("Launching %s failed: %s", app_name, exc)
+        return False
+
+
 def lock_workstation() -> bool:
     """Lock the screen. Returns False when the platform is not supported."""
     if is_windows():
