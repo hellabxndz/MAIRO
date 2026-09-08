@@ -90,6 +90,21 @@ ALIASES = {
 }
 
 
+def is_plain_name(name: str) -> bool:
+    """True for something that looks like an application name, not a path.
+
+    The model chooses this argument, and text it has read could try to steer it
+    towards a file path. Paths belong to open_path, which checks that the
+    target exists; this tool only ever resolves names.
+    """
+    candidate = name.strip()
+    if not candidate or len(candidate) > 80:
+        return False
+    if any(marker in candidate for marker in ("/", "\\", "..", "\x00", "\n")):
+        return False
+    return True
+
+
 def canonical_name(name: str) -> str:
     cleaned = name.strip().lower().removeprefix("the ").removesuffix(" app").strip()
     return ALIASES.get(cleaned, cleaned)
@@ -105,9 +120,14 @@ def _first_existing(paths: list[str]) -> Path | None:
 
 def launch_named_app(name: str, memory: Any = None) -> ToolResult:
     """Find and start an application, trying the most reliable route first."""
-    key = canonical_name(name)
-    if not key:
+    if not name.strip():
         return ToolResult.failure("No application name was given.")
+    if not is_plain_name(name):
+        return ToolResult.failure(
+            f"“{name.strip()[:60]}” looks like a file path rather than an application name. "
+            "Use open_path for files and folders."
+        )
+    key = canonical_name(name)
 
     # 1. A path the user asked Mairo to remember wins over the built-in list.
     if memory is not None:

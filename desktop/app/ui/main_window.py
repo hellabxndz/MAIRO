@@ -582,6 +582,11 @@ class MainWindow(QMainWindow):
         self.empty_state.setVisible(False)
         self._listening = text is None
         if self._listening:
+            # Arm here, on the interface thread, so a stop pressed while the
+            # worker is starting is not cleared by the worker itself.
+            arm = getattr(self.voice, "arm_recording", None)
+            if arm is not None:
+                arm()
             self.mic_button.setText(MIC_ACTIVE)
             self.waveform.set_active(True)
         self.send_button.setEnabled(False)

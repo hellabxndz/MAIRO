@@ -23,6 +23,10 @@ CHANNELS = 1
 BLOCK_SIZE = 1024
 SILENCE_THRESHOLD = 0.012  # RMS below this counts as silence
 MIN_SPEECH_SECONDS = 0.6
+# How long to wait for the speaker to begin before giving up. Without this, a
+# user who clicks the microphone and hesitates waits out the whole recording
+# limit for an error.
+INITIAL_SILENCE_SECONDS = 5.0
 
 
 def _sounddevice():
@@ -93,6 +97,14 @@ class Recorder:
     def is_recording(self) -> bool:
         return self._recording
 
+    def arm(self) -> None:
+        """Clear a stale stop before a recording begins.
+
+        This runs on the interface thread, before the worker starts, so a stop
+        the user presses during startup cannot be cleared out from under them.
+        """
+        self._stop.clear()
+
     def stop(self) -> None:
         self._stop.set()
 
@@ -107,13 +119,13 @@ class Recorder:
         import numpy as np
 
         sd = _sounddevice()
-        self._stop.clear()
         self._recording = True
         frames: list[bytes] = []
         heard_speech = False
         silent_blocks = 0
         blocks_per_second = SAMPLE_RATE / BLOCK_SIZE
-        silence_limit = int(silence_seconds * blocks_per_second)
+        silence_limit = max(1, int(silence_seconds * blocks_per_second))
+        opening_limit = max(1, int(INITIAL_SILENCE_SECONDS * blocks_per_second))
         max_blocks = int(max_seconds * blocks_per_second)
 
         try:
@@ -140,9 +152,12 @@ class Recorder:
                     if level > SILENCE_THRESHOLD:
                         heard_speech = True
                         silent_blocks = 0
-                    elif heard_speech:
+                    else:
                         silent_blocks += 1
-                        if silent_blocks >= silence_limit:
+                        # A pause after speaking ends the turn; silence before
+                        # any speech gives up sooner, rather than recording
+                        # nothing until the limit.
+                        if silent_blocks >= (silence_limit if heard_speech else opening_limit):
                             break
         except VoiceError:
             raise

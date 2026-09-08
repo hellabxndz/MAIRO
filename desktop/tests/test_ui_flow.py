@@ -56,6 +56,7 @@ class FakeVoice:
         self.fail = fail
         self.speaks_aloud = speaks_aloud
         self.spoken: list[str] = []
+        self.armed = False
         self.wake_detector = NullWakeWordDetector()
 
     def listen(self, on_level=None):
@@ -68,6 +69,9 @@ class FakeVoice:
     def speak(self, text):
         if self.speaks_aloud:
             self.spoken.append(text)
+
+    def arm_recording(self):
+        self.armed = True
 
     def stop_recording(self):
         pass
@@ -152,6 +156,23 @@ class WindowFlowTests(unittest.TestCase):
         self._run_until_idle(window)
         self.assertIn("Quietly done.", self._texts(window))
         self.assertEqual(voice.spoken, [])
+
+    def test_the_recorder_is_armed_before_the_worker_starts(self):
+        """Guards the race where a stop pressed during startup was swallowed."""
+        voice = FakeVoice(heard="hello")
+        window = self._window(ScriptedProvider([LLMResponse(text="Hello.")]), voice)
+        self.assertFalse(voice.armed)
+        window.toggle_listening()
+        self.assertTrue(voice.armed, "the recorder must be armed on the interface thread")
+        self._run_until_idle(window)
+
+    def test_typing_does_not_arm_the_recorder(self):
+        voice = FakeVoice()
+        window = self._window(ScriptedProvider([LLMResponse(text="Fine.")]), voice)
+        window.input.setText("hello")
+        window._send_typed()
+        self._run_until_idle(window)
+        self.assertFalse(voice.armed)
 
     def test_spoken_request_is_transcribed_and_answered(self):
         voice = FakeVoice(heard="open my downloads folder")
@@ -257,3 +278,45 @@ class WindowFlowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+@unittest.skipIf(QApplication is None, "PySide6 is not installed")
+class RobustnessTests(unittest.TestCase):
+    """Edges that only bite after the app has been open a while."""
+
+    app = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def test_the_transcript_stops_growing_for_ever(self):
+        from app.ui.theme import get_palette
+        from app.ui.transcript import MAX_VISIBLE_MESSAGES, TranscriptView
+
+        view = TranscriptView(get_palette("nebula"))
+        for index in range(MAX_VISIBLE_MESSAGES + 40):
+            view.add_message("user", f"message {index}")
+        self.assertEqual(len(view._bubbles), MAX_VISIBLE_MESSAGES)
+        # The newest message is the one kept.
+        self.assertIn(
+            f"message {MAX_VISIBLE_MESSAGES + 39}", view._bubbles[-1].body.text()
+        )
+
+    def test_cancelling_releases_a_pending_confirmation(self):
+        """Closing the window must not leave the worker blocked on a dialog."""
+        from app.ui.workers import AssistantWorker, ConfirmationRequest
+
+        worker = AssistantWorker(brain=None, voice=FakeVoice(), text="hello")
+        request = ConfirmationRequest("lock_computer", "Lock the computer?")
+        worker._pending_confirmation = request
+        worker.cancel()
+        self.assertTrue(request.event.is_set(), "the worker would still be waiting")
+        self.assertFalse(request.allowed, "a cancelled turn must not authorise anything")
+
+    def test_a_cancelled_turn_declines_further_confirmations(self):
+        from app.ui.workers import AssistantWorker
+
+        worker = AssistantWorker(brain=None, voice=FakeVoice(), text="hello")
+        worker.cancel()
+        self.assertFalse(worker._ask_confirmation("lock_computer", "Lock?"))

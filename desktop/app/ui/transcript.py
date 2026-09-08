@@ -21,6 +21,10 @@ def translucent(hex_color: str, alpha: float) -> str:
     red, green, blue = (int(value[i : i + 2], 16) for i in (0, 2, 4))
     return f"rgba({red}, {green}, {blue}, {alpha:.2f})"
 
+# Long sessions would otherwise keep a widget per message for ever; the full
+# conversation is still on disk and in the history panel.
+MAX_VISIBLE_MESSAGES = 200
+
 USER = "user"
 MAIRO = "assistant"
 SYSTEM = "system"
@@ -128,8 +132,17 @@ class TranscriptView(QScrollArea):
         bubble = MessageBubble(kind, text, self.palette_colors)
         self._layout.addWidget(bubble)
         self._bubbles.append(bubble)
+        self._trim()
         QTimer.singleShot(0, self._scroll_to_bottom)
         return bubble
+
+    def _trim(self) -> None:
+        """Drop the oldest bubbles once the view gets long."""
+        while len(self._bubbles) > MAX_VISIBLE_MESSAGES:
+            oldest = self._bubbles.pop(0)
+            self._layout.removeWidget(oldest)
+            oldest.setParent(None)
+            oldest.deleteLater()
 
     def clear_messages(self) -> None:
         for bubble in self._bubbles:

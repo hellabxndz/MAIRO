@@ -87,6 +87,10 @@ class VoiceManager:
             on_level=on_level,
         )
 
+    def arm_recording(self) -> None:
+        """Ready the recorder for a turn. Call before starting the worker."""
+        self.recorder.arm()
+
     def stop_recording(self) -> None:
         self.recorder.stop()
 

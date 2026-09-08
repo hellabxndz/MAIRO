@@ -67,9 +67,15 @@ class AssistantWorker(QThread):
         self.text = text
         self.speak_reply = speak_reply
         self._cancelled = False
+        self._pending_confirmation: ConfirmationRequest | None = None
 
     def cancel(self) -> None:
         self._cancelled = True
+        # A turn waiting on a confirmation dialog would otherwise stay blocked
+        # until the request timed out, holding the thread open past shutdown.
+        pending = self._pending_confirmation
+        if pending is not None:
+            pending.answer(False)
         try:
             self.voice.stop_recording()
             self.voice.stop_speaking()
@@ -119,9 +125,15 @@ class AssistantWorker(QThread):
             self.finished_turn.emit()
 
     def _ask_confirmation(self, tool_name: str, question: str) -> bool:
+        if self._cancelled:
+            return False
         request = ConfirmationRequest(tool_name, question)
-        self.confirmation_needed.emit(request)
-        return request.wait()
+        self._pending_confirmation = request
+        try:
+            self.confirmation_needed.emit(request)
+            return request.wait()
+        finally:
+            self._pending_confirmation = None
 
 
 class SpeechWorker(QThread):

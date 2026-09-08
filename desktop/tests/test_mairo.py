@@ -168,6 +168,21 @@ class ToolTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("no tool called", result.message)
 
+    def test_an_application_name_is_not_a_path(self):
+        from app.tools.apps import is_plain_name
+
+        self.assertTrue(is_plain_name("Spotify"))
+        self.assertTrue(is_plain_name("vs code"))
+        self.assertFalse(is_plain_name("../../evil.exe"))
+        self.assertFalse(is_plain_name("C:/Windows/System32/cmd.exe"))
+        self.assertFalse(is_plain_name(r"..\payload.bat"))
+        self.assertFalse(is_plain_name(""))
+
+    def test_the_launcher_refuses_a_path(self):
+        result = self.tools.run("open_application", {"name": "../../thing.exe"})
+        self.assertFalse(result.ok)
+        self.assertIn("open_path", result.message)
+
     def test_url_normalisation(self):
         self.assertEqual(normalise_url("youtube"), "https://www.youtube.com")
         self.assertEqual(normalise_url("example.com"), "https://example.com")

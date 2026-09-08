@@ -335,7 +335,7 @@ pip install pytest
 python -m pytest tests -q
 ```
 
-94 tests cover memory, conversation history, the tool registry, the reasoning
+128 tests cover memory, conversation history, the tool registry, the reasoning
 loop with its confirmation gate, settings, log redaction, the OpenAI wire
 format against a local stand-in server, and the window itself driven
 end-to-end without a display.
