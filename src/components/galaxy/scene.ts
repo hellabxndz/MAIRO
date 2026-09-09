@@ -196,6 +196,8 @@ export type SceneOptions = {
 };
 
 export type Scene = {
+  /** The quality tier currently in use. Falls on its own if the device struggles. */
+  readonly tier: Tier;
   /** 0 at the top of the page, 1 at the bottom. */
   setProgress(p: number): void;
   /** −1..1 in each axis. */
@@ -203,7 +205,6 @@ export type Scene = {
   resize(): void;
   start(): void;
   dispose(): void;
-  tier: Tier;
 };
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string, label: string): WebGLShader {
@@ -342,6 +343,8 @@ export function createScene(opts: SceneOptions): Scene | null {
   let bloomB: Target | null = null;
   let width = 0;
   let height = 0;
+  /** Which tier the current set of targets was built for. */
+  let builtFor: Tier | null = null;
 
   function dropTargets() {
     for (const t of [hdr, vol, bloomA, bloomB]) {
@@ -355,9 +358,20 @@ export function createScene(opts: SceneOptions): Scene | null {
     const dpr = Math.min(window.devicePixelRatio || 1, cfg.renderScale);
     const w = Math.max(2, Math.round(opts.canvas.clientWidth * dpr));
     const h = Math.max(2, Math.round(opts.canvas.clientHeight * dpr));
-    if (w === width && h === height && hdr) return;
+
+    // The tier has to be part of this test, not just the size.
+    //
+    // On an ordinary-density display devicePixelRatio is 1, so it wins the
+    // min() against every tier's render scale and the canvas comes out the
+    // same size at all three. Comparing sizes alone therefore made a demotion
+    // a no-op for the render targets — the volume kept the resolution it was
+    // built at, and since the volume is well over half the frame time and
+    // scales with its area, stepping down gave back almost nothing on exactly
+    // the machines that needed it.
+    if (w === width && h === height && hdr && builtFor === tier) return;
 
     width = w; height = h;
+    builtFor = tier;
     opts.canvas.width = w;
     opts.canvas.height = h;
 
@@ -592,7 +606,10 @@ export function createScene(opts: SceneOptions): Scene | null {
   }
 
   return {
-    tier,
+    // A getter, not a copy: the tier changes underneath the caller when the
+    // renderer demotes itself, and a snapshot taken at construction would
+    // report the starting tier forever.
+    get tier() { return tier; },
     setProgress(p) { progress = Math.min(Math.max(p, 0), 1); },
     setPointer(x, y) { pointerX = x; pointerY = y; },
     resize,

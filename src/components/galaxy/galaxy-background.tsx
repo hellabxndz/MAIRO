@@ -74,7 +74,7 @@ export function GalaxyBackground() {
 
     let scene: Scene | null = null;
     let cancelled = false;
-    let raf = 0;
+    let resizeTimer: number | undefined;
 
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -87,10 +87,10 @@ export function GalaxyBackground() {
       );
     };
     const onResize = () => {
-      cancelAnimationFrame(raf);
       // Rebuilding four render targets on every pixel of a window drag is
       // wasted work; this waits for the drag to finish.
-      raf = window.setTimeout(() => scene?.resize(), 180) as unknown as number;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => scene?.resize(), 180);
     };
 
     (async () => {
@@ -130,7 +130,7 @@ export function GalaxyBackground() {
 
     return () => {
       cancelled = true;
-      clearTimeout(raf);
+      window.clearTimeout(resizeTimer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("resize", onResize);
