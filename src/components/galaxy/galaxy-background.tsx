@@ -158,7 +158,7 @@ export function GalaxyBackground() {
           makes the galaxy look bright. This darkens the left third, where the
           type is, and the very top and bottom, where the navigation and the
           footer are, and leaves the rest of the frame alone. */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.46)_26%,rgba(0,0,0,0.10)_52%,rgba(0,0,0,0)_78%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.56)_26%,rgba(0,0,0,0.16)_54%,rgba(0,0,0,0)_78%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)]" />
     </div>
   );

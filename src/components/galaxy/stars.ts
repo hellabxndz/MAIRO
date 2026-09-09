@@ -84,6 +84,7 @@ export const GALAXY = {
   thickness: 26,
   /** Radius of the central bulge. */
   bulge: 135,
+  /** Two major arms. Two more, weaker, sit between them — see buildGalaxyStars. */
   arms: 2,
   /** Winding. Smaller is more tightly wound. */
   pitch: 0.235,
@@ -129,13 +130,21 @@ function buildGalaxyStars(count: number, seed: number): Float32Array {
 
     // Which arm, and how far around it. The logarithmic spiral: theta grows
     // with the log of the radius.
-    const arm = Math.floor(r() * arms);
-    const spiral = Math.log(Math.max(rad, 40) / 40) / pitch;
+    //
+    // Two thirds of arm stars go to the two major arms and the rest to a
+    // second, weaker pair between them, matching the gas. The Milky Way is a
+    // four-armed barred spiral with two dominant arms, and putting everything
+    // on two of them gives a galaxy that is recognisably not this one.
+    const minor = r() < 0.32;
+    const count_ = minor ? arms * 2 : arms;
+    const arm = Math.floor(r() * count_);
+    const spiral = (Math.log(Math.max(rad, 40) / 40) / pitch) * (minor ? 1 : 1);
     // Arms are tight near the core and fray towards the rim, and about a fifth
     // of disc stars ignore the arms entirely so the gaps are never empty.
     const inArm = r() > 0.22;
-    const scatter = inArm ? (0.16 + t * 0.42) * gauss(r) : (r() * 2 - 1) * Math.PI;
-    const theta = spiral + (arm * 2 * Math.PI) / arms + scatter;
+    const scatter = inArm ? (0.16 + t * 0.42) * gauss(r) * (minor ? 1.5 : 1) : (r() * 2 - 1) * Math.PI;
+    const theta =
+      spiral + (arm * 2 * Math.PI) / count_ + (minor ? 1.9 / count_ : 0) + scatter;
 
     // A bar through the middle: inside the bulge radius the orbits are
     // stretched along one axis, which is what gives the core its shape.

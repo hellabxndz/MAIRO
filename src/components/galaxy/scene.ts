@@ -15,7 +15,7 @@
 import { buildNoiseVolume, NOISE_SIZE } from "./noise";
 import { buildGalaxy, STAR_STRIDE, type StarBuffers } from "./stars";
 import {
-  STAR_VERT, STAR_FRAG, MOTE_VERT, MOTE_FRAG,
+  STAR_VERT, STAR_FRAG, MOTE_VERT, MOTE_FRAG, PLANET_VERT, PLANET_FRAG,
   FULLSCREEN_VERT, VOLUME_FRAG, BRIGHT_FRAG, BLUR_FRAG, COMPOSITE_FRAG, COPY_FRAG,
 } from "./shaders";
 
@@ -133,7 +133,11 @@ const PATH: Array<{ at: number; eye: [number, number, number]; look: [number, nu
   { at: 0.00, eye: [ 470,  205,  600], look: [-230,  -95, -260] },
   { at: 0.18, eye: [ 380,  158,  505], look: [-200,  -55, -220] },
   { at: 0.38, eye: [ 300,   98,  430], look: [-180,    6, -160] },
-  { at: 0.58, eye: [ 110,   48,  250], look: [-120,    8, -120] },
+  // Down in the plane, looking along it. This is the shot everyone actually
+  // means by "the Milky Way" — the band arcing across the sky with the rift
+  // down the middle of it — and it only exists if the camera gets low enough
+  // to be inside the disc rather than looking down on it.
+  { at: 0.58, eye: [ 150,   17,  250], look: [-260,   12,  -95] },
   { at: 0.76, eye: [-120,   28,  130], look: [ -20,    2,  -40] },
   { at: 0.90, eye: [ -48,   16,   62], look: [   6,    0,  -10] },
   // And then all the way out, so the last thing the page does is show how far
@@ -165,6 +169,74 @@ function sampleSpline(p: number, key: "eye" | "look", out: number[]): void {
         (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
         (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
   }
+}
+
+/**
+ * The worlds you pass on the way in.
+ *
+ * Positioned in the camera's own frame at a point on the journey rather than
+ * in absolute coordinates: `at` picks the moment, `fwd` is how far down the
+ * road it sits, and `right`/`up` push it off to one side of the frame. Placing
+ * them in world coordinates by hand meant guessing where the camera would be
+ * looking and getting it wrong; this way a planet put slightly left and a long
+ * way ahead is exactly that, and stays that way if the path is retimed.
+ *
+ * They are kept out of the middle of the frame and mostly on the side the type
+ * is not on. A planet is an event, and one parked over a headline is a
+ * mistake.
+ */
+const PLANETS = [
+  // Hero: a large pale world low and left, half out of frame.
+  { at: 0.02, right: -78, up: -30, fwd: 150, radius: 15, color: [0.40, 0.47, 0.60], seed: 0.21 },
+  // A rusty one drifting past on the right as the descent starts.
+  { at: 0.26, right: 62, up: 20, fwd: 105, radius: 8, color: [0.66, 0.40, 0.28], seed: 0.34 },
+  // A banded giant, close, once the camera is down among the arms.
+  { at: 0.47, right: -46, up: 17, fwd: 78, radius: 17, color: [0.74, 0.64, 0.47], seed: 0.82 },
+  // Small and pale, passing quickly.
+  { at: 0.66, right: 26, up: -11, fwd: 40, radius: 4.5, color: [0.54, 0.60, 0.72], seed: 0.44 },
+  // An icy one near the core, lit hard from one side.
+  { at: 0.82, right: -19, up: 8, fwd: 26, radius: 3.4, color: [0.78, 0.76, 0.70], seed: 0.69 },
+  // And one final giant on the way back out.
+  { at: 0.965, right: 120, up: 46, fwd: 300, radius: 34, color: [0.36, 0.43, 0.60], seed: 0.91 },
+] as const;
+
+const PLANET_STRIDE = 8;
+
+/** Resolves every planet's world position from the path it was placed against. */
+function buildPlanetInstances(): Float32Array {
+  const eye: number[] = [0, 0, 0];
+  const look: number[] = [0, 0, 0];
+  const out = new Float32Array(PLANETS.length * PLANET_STRIDE);
+  let o = 0;
+
+  for (const pl of PLANETS) {
+    sampleSpline(pl.at, "eye", eye);
+    sampleSpline(pl.at, "look", look);
+
+    let fx = look[0] - eye[0], fy = look[1] - eye[1], fz = look[2] - eye[2];
+    const fl = Math.hypot(fx, fy, fz) || 1;
+    fx /= fl; fy /= fl; fz /= fl;
+
+    // right = forward x worldUp, then up = right x forward. The same basis the
+    // view matrix builds, so "right" here means right on screen.
+    let rx = -fz, ry = 0, rz = fx;
+    const rl = Math.hypot(rx, ry, rz) || 1;
+    rx /= rl; ry /= rl; rz /= rl;
+
+    const ux = ry * fz - rz * fy;
+    const uy = rz * fx - rx * fz;
+    const uz = rx * fy - ry * fx;
+
+    out[o++] = eye[0] + fx * pl.fwd + rx * pl.right + ux * pl.up;
+    out[o++] = eye[1] + fy * pl.fwd + ry * pl.right + uy * pl.up;
+    out[o++] = eye[2] + fz * pl.fwd + rz * pl.right + uz * pl.up;
+    out[o++] = pl.radius;
+    out[o++] = pl.color[0];
+    out[o++] = pl.color[1];
+    out[o++] = pl.color[2];
+    out[o++] = pl.seed;
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -272,6 +344,7 @@ export function createScene(opts: SceneOptions): Scene | null {
   // --- programs ---
   const progStar = link(gl, STAR_VERT, STAR_FRAG, "star");
   const progMote = link(gl, MOTE_VERT, MOTE_FRAG, "mote");
+  const progPlanet = link(gl, PLANET_VERT, PLANET_FRAG, "planet");
   const progVolume = link(gl, FULLSCREEN_VERT, VOLUME_FRAG, "volume");
   const progBright = link(gl, FULLSCREEN_VERT, BRIGHT_FRAG, "bright");
   const progBlur = link(gl, FULLSCREEN_VERT, BLUR_FRAG, "blur");
@@ -289,6 +362,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
+  const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime"]);
   const uVol = uni(progVolume, [
     "uInvViewProj", "uCamPos", "uTime", "uSteps", "uDensity", "uDust",
     "uEnergy", "uSmooth", "uNoise", "uArmPitch", "uReveal",
@@ -322,6 +396,31 @@ export function createScene(opts: SceneOptions): Scene | null {
   const distantCloud = makeCloud(buffers.distant);
   const moteCloud = makeCloud(buffers.motes);
   const emptyVao = gl.createVertexArray()!;
+
+  // Planets: one quad, drawn once per world with instanced attributes.
+  const planetVao = gl.createVertexArray()!;
+  const planetQuad = gl.createBuffer()!;
+  const planetInst = gl.createBuffer()!;
+  {
+    gl.bindVertexArray(planetVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetQuad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1,  1, 1,
+      -1, -1,  1,  1, -1, 1,
+    ]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, planetInst);
+    gl.bufferData(gl.ARRAY_BUFFER, buildPlanetInstances(), gl.STATIC_DRAW);
+    const st = PLANET_STRIDE * 4;
+    for (const [loc, size, off] of [[1, 3, 0], [2, 1, 12], [3, 3, 16], [4, 1, 28]] as const) {
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, st, off);
+      gl.vertexAttribDivisor(loc, 1);
+    }
+    gl.bindVertexArray(null);
+  }
 
   // --- noise volume ---
   const noiseTex = gl.createTexture()!;
@@ -560,7 +659,27 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1f(uMote.uReveal, revealEase);
     gl.bindVertexArray(moteCloud.vao);
     gl.drawArrays(gl.POINTS, 0, Math.round(buffers.moteCount * cfg.motes));
+
+    // Planets last, and the only thing in the scene that is not additive —
+    // they are solid objects and have to cover what is behind them rather than
+    // glow on top of it.
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(progPlanet);
+    gl.uniformMatrix4fv(uPlanet.uViewProj, false, viewProj);
+    gl.uniform3fv(uPlanet.uCamPos, eye);
+    // The view matrix's first two rows are the camera's right and up in world
+    // space, which is exactly what the billboard needs.
+    gl.uniform3f(uPlanet.uRight, view[0], view[4], view[8]);
+    gl.uniform3f(uPlanet.uUp, view[1], view[5], view[9]);
+    gl.uniform1f(uPlanet.uTime, t);
+    gl.uniform1f(uPlanet.uReveal, Math.max(0, (revealEase - 0.45) / 0.55));
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_3D, noiseTex);
+    gl.uniform1i(uPlanet.uNoise, 0);
+    gl.bindVertexArray(planetVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, PLANETS.length);
     gl.bindVertexArray(null);
+    gl.blendFunc(gl.ONE, gl.ONE);
 
     // ---- bloom ----
     if (cfg.bloom) {
@@ -665,7 +784,10 @@ export function createScene(opts: SceneOptions): Scene | null {
         gl.deleteBuffer(c.vbo);
       }
       gl.deleteVertexArray(emptyVao);
-      for (const p of [progStar, progMote, progVolume, progBright, progBlur, progComposite, progCopy]) {
+      gl.deleteVertexArray(planetVao);
+      gl.deleteBuffer(planetQuad);
+      gl.deleteBuffer(planetInst);
+      for (const p of [progStar, progMote, progPlanet, progVolume, progBright, progBlur, progComposite, progCopy]) {
         gl.deleteProgram(p);
       }
     },

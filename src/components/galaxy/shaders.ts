@@ -24,12 +24,30 @@ const float R_DISC   = 1000.0;
 const float R_SCALE  = 250.0;
 const float H_DISC   = 18.0;
 const float R_BULGE  = 135.0;
-const float ARMS     = 2.0;
 
 /** Four octaves of tileable value noise from a single fetch. */
 float fbm(vec3 p) {
   vec4 n = texture(uNoise, p);
   return n.r * 0.5333 + n.g * 0.2667 + n.b * 0.1333 + n.a * 0.0667;
+}
+
+/**
+ * Where the arms are, as a number from zero to one.
+ *
+ * Two major arms and two minor ones between them, which is the structure the
+ * Milky Way actually has — a grand-design two-armed spiral is prettier and
+ * belongs to a different galaxy. The minor pair carries about a third of the
+ * weight and is offset in phase so it does not simply thicken the major arms.
+ *
+ * Shared by the gas and the dust, with the dust passing a phase shift, so the
+ * dark lanes track the same arms the light does instead of drifting across
+ * them.
+ */
+float armField(float r, float theta, float shift) {
+  float w = log(max(r, 40.0) / 40.0) / uArmPitch;
+  float major = pow(0.5 + 0.5 * cos(theta * 2.0 - w * 2.0 + shift), 2.2);
+  float minor = pow(0.5 + 0.5 * cos(theta * 4.0 - w * 4.0 + 1.9 + shift), 2.8);
+  return major * 0.68 + minor * 0.32;
 }
 
 /**
@@ -52,11 +70,9 @@ float discDensity(vec3 p) {
   float h = H_DISC * (0.55 + t * 1.15);
   float vert = exp(-abs(p.y) / h);
 
-  // Spiral arms: a ridge in the logarithmic-spiral phase.
+  // Spiral arms.
   float theta = atan(p.z, p.x);
-  float phase = theta * ARMS - log(max(r, 40.0) / 40.0) * (ARMS / uArmPitch);
-  float arm = 0.5 + 0.5 * cos(phase);
-  arm = pow(arm, 2.2);
+  float arm = armField(r, theta, 0.0);
   // The arms lose definition towards the middle, where the bar takes over.
   float armMix = smoothstep(0.05, 0.42, t);
   // Pushed harder than a photograph would be. The arms are meant to be a
@@ -97,9 +113,7 @@ float dustDensityFast(vec3 p) {
   float h = H_DISC * (0.22 + t * 0.62);
   float base = exp(-r / (R_SCALE * 1.15)) * exp(-abs(p.y) / h);
 
-  float theta = atan(p.z, p.x);
-  float phase = theta * ARMS - log(max(r, 40.0) / 40.0) * (ARMS / uArmPitch) - 0.85;
-  float arm = pow(0.5 + 0.5 * cos(phase), 1.6);
+  float arm = armField(r, atan(p.z, p.x), -0.85);
   float lane = mix(1.0, 0.16 + 2.80 * arm, smoothstep(0.04, 0.34, t));
 
   float n = pow(clamp(fbm(p * 0.00135) * 2.05, 0.0, 1.0), 2.1);
@@ -120,9 +134,7 @@ float dustDensity(vec3 p, float smooth_) {
   // Dust piles up on the inner edge of each arm, a quarter turn ahead of the
   // stars. Giving it its own phase is what produces lanes *between* the arms
   // instead of a haze that dims everything equally.
-  float theta = atan(p.z, p.x);
-  float phase = theta * ARMS - log(max(r, 40.0) / 40.0) * (ARMS / uArmPitch) - 0.85;
-  float arm = pow(0.5 + 0.5 * cos(phase), 1.6);
+  float arm = armField(r, atan(p.z, p.x), -0.85);
   float lane = mix(1.0, 0.16 + 2.80 * arm, smoothstep(0.04, 0.34, t));
 
   vec3 q = p * 0.00135;
@@ -562,5 +574,131 @@ uniform float uScale;
 void main() {
   vec4 c = texture(uSrc, vUv);
   outColor = vec4(c.rgb * uScale, 1.0);
+}
+`;
+
+/**
+ * Worlds, close enough to pass.
+ *
+ * Drawn as instanced camera-facing quads and turned into spheres in the
+ * fragment shader: the quad's own coordinates give the disc, and the height of
+ * the sphere above it is just sqrt(1 - r²), which is enough to build a real
+ * surface normal from. Six planets is twelve triangles — the entire layer
+ * costs less than a hundredth of what the dust does.
+ *
+ * The light comes from the galactic core. That is the detail that keeps these
+ * from looking stuck on: they are lit by the thing behind them, so the lit
+ * limb always faces the bright part of the frame and the rest of each world is
+ * a silhouette against the stars.
+ */
+export const PLANET_VERT = /* glsl */ `#version 300 es
+precision highp float;
+
+layout(location = 0) in vec2 aCorner;    // the quad, -1..1
+layout(location = 1) in vec3 aCentre;    // per instance
+layout(location = 2) in float aRadius;
+layout(location = 3) in vec3 aColor;
+layout(location = 4) in float aSeed;
+
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform vec3 uRight;
+uniform vec3 uUp;
+
+out vec2 vLocal;
+out vec3 vCentre;
+out vec3 vColor;
+out float vSeed;
+out float vRadius;
+
+void main() {
+  vec3 world = aCentre + (uRight * aCorner.x + uUp * aCorner.y) * aRadius;
+  gl_Position = uViewProj * vec4(world, 1.0);
+  vLocal = aCorner;
+  vCentre = aCentre;
+  vColor = aColor;
+  vSeed = aSeed;
+  vRadius = aRadius;
+}
+`;
+
+export const PLANET_FRAG = /* glsl */ `#version 300 es
+precision highp float;
+precision highp sampler3D;
+
+in vec2 vLocal;
+in vec3 vCentre;
+in vec3 vColor;
+in float vSeed;
+in float vRadius;
+
+out vec4 outColor;
+
+uniform sampler3D uNoise;
+uniform vec3 uCamPos;
+uniform vec3 uRight;
+uniform vec3 uUp;
+uniform float uReveal;
+uniform float uTime;
+
+float fbm3(vec3 p) {
+  vec4 n = texture(uNoise, p);
+  return n.r * 0.5333 + n.g * 0.2667 + n.b * 0.1333 + n.a * 0.0667;
+}
+
+void main() {
+  float r2 = dot(vLocal, vLocal);
+  if (r2 > 1.0) discard;
+
+  vec3 toCam = normalize(uCamPos - vCentre);
+  float z = sqrt(max(1.0 - r2, 0.0));
+
+  // The surface normal, rebuilt from the flat quad. The two screen axes give
+  // the across-the-disc part and the square root gives the height, which is
+  // all a sphere is from this side.
+  vec3 n = normalize(uRight * vLocal.x + uUp * vLocal.y + toCam * z);
+
+  // Lit by the galaxy. Not by an invented sun off-camera — the core is the
+  // brightest thing in the scene and it would be the light source, so the
+  // terminator always sits at the right angle relative to what the viewer can
+  // already see.
+  vec3 L = normalize(-vCentre);
+
+  // Wrapped, not clamped. A galaxy is not a point source — from a planet
+  // sitting inside one it is an enormous extended light filling half the sky,
+  // and light from a source that large wraps well past the terminator. Clamped
+  // Lambert gave a hard-edged black hemisphere and every world read as a hole
+  // cut out of the frame rather than an object in it.
+  float wrap = dot(n, L) * 0.5 + 0.5;
+  float lit = pow(wrap, 1.5);
+
+  // Surface. Sampled in the sphere's own frame so it turns with the world
+  // rather than sliding across it as the camera moves.
+  vec3 q = n * (1.35 + vSeed * 1.4) + vSeed * 27.0;
+  float detail = fbm3(q) * 0.62 + fbm3(q * 2.9 + 4.1) * 0.38;
+
+  // Above a threshold the planet is banded instead of mottled: gas giants and
+  // rocky worlds in the same handful, so they do not all read as siblings.
+  float banded = step(0.55, vSeed);
+  float bands = 0.5 + 0.5 * sin(n.y * (9.0 + vSeed * 14.0) + detail * 3.4);
+  float surface = mix(0.42 + detail * 1.30, 0.52 + bands * 0.80, banded);
+
+  vec3 albedo = vColor * surface;
+
+  // And a floor under it, for the light coming from everything that is not the
+  // core: the rest of the disc, the arms, the stars nearby.
+  vec3 ambient = vColor * 0.115;
+
+  // Atmosphere, on the lit limb only. Strongest where the surface turns away
+  // from the camera, which is where a real one is thickest along the sightline.
+  float fres = pow(1.0 - z, 3.2);
+  vec3 rim = vec3(0.42, 0.60, 1.05) * fres * (0.25 + lit * 1.5);
+
+  vec3 col = albedo * (0.16 + lit * 1.25) + ambient + rim;
+
+  // Edge coverage, so the silhouette is not a staircase.
+  float edge = smoothstep(1.0, 0.965, r2);
+
+  outColor = vec4(col * uReveal, edge * uReveal);
 }
 `;
