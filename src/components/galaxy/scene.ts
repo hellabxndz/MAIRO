@@ -470,7 +470,7 @@ function buildTravellers(): Float32Array {
     7.5,        // speed
     74,         // period: a minute and a quarter to cross and come round again
     9,
-    20.0,       // size
+    30.0,       // size
     0.9, 0.94, 1.0,
     1,          // kind: craft
   ]);
@@ -602,7 +602,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
-  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal"]);
+  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal", "uRocket", "uRocketLoaded"]);
   const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
     "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
   const uVol = uni(progVolume, [
@@ -799,7 +799,26 @@ export function createScene(opts: SceneOptions): Scene | null {
    * in the hero, so these are wanted immediately, and at 270KB across both
    * files they are a fraction of what Earth costs.
    */
+  let rocketTex: WebGLTexture | null = null;
+  let rocketLoaded = 0;
+
   function loadSurfaces() {
+    // The ship's hull. Twelve kilobytes, and it is on screen in the hero.
+    loadImage("/sky/rocket")
+      .then((img) => {
+        const tex = gl.createTexture()!;
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        rocketTex = tex;
+        rocketLoaded = 1;
+      })
+      .catch(() => {});
+
     Promise.all([loadImage("/sky/planets"), loadImage("/sky/planets-relief")])
       .then(([albedo, reliefImg]) => {
         albedoArr = uploadArray(albedo, ALBEDO_W, ALBEDO_H, PLANET_LAYERS);
@@ -1076,7 +1095,12 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bindVertexArray(moteCloud.vao);
     gl.drawArrays(gl.POINTS, 0, Math.round(buffers.moteCount * cfg.motes));
 
-    // Meteors and the ship, additively — they are light rather than objects.
+    // Meteors and the ship. Premultiplied rather than additive: a meteor is
+    // light and emits zero alpha, so it blends exactly as it always did, but
+    // the ship's hull is a solid black object and additive blending made it a
+    // ghost — you could read the star field straight through it, which is most
+    // of why it looked fake. Alpha here is coverage, so the hull erases what
+    // is behind it and the exhaust still only adds.
     //
     // Before the planets, not after. There is no depth buffer in this scene,
     // so whatever is drawn last wins, and a meteor drawn afterwards cut
@@ -1084,6 +1108,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     // Drawing them first lets the planets paint over the ones behind them,
     // which is wrong for the few genuinely in front and right for all the
     // rest.
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(progTraveller);
     gl.uniformMatrix4fv(uTrav.uViewProj, false, viewProj);
     gl.uniform3fv(uTrav.uCamPos, eye);
@@ -1094,6 +1119,10 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform3f(uTrav.uFwd, -view[2], -view[6], -view[10]);
     gl.uniform1f(uTrav.uTime, t);
     gl.uniform1f(uTrav.uReveal, revealEase);
+    gl.uniform1f(uTrav.uRocketLoaded, rocketLoaded);
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, rocketTex ?? blankTex);
+    gl.uniform1i(uTrav.uRocket, 6);
     gl.bindVertexArray(travVao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
     gl.bindVertexArray(null);

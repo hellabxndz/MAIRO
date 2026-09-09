@@ -1025,6 +1025,8 @@ in float vFade;
 out vec4 outColor;
 
 uniform float uTime;
+uniform sampler2D uRocket;
+uniform float uRocketLoaded;
 
 void main() {
   if (vFade <= 0.001) discard;
@@ -1037,33 +1039,29 @@ void main() {
 
   if (vKind > 0.5) {
     // ---- the craft ----
-    // Hull, engine, plume and a long ion trail, all distance fields rather
-    // than geometry, so the whole ship is still two triangles.
     //
-    // The hull sits in the front third of the quad and the remaining two
-    // thirds are the trail. Giving the trail its own room is the only way to
-    // have one: the earlier version filled the quad with hull and had nowhere
-    // to put the wake.
-    float nose = 0.95;
-    float tail = 0.30;
-
-    float hull = smoothstep(nose + 0.02, nose - 0.05, u) * smoothstep(tail - 0.08, tail + 0.02, u);
-
-    // Pointed at the nose, slim down the body, then flaring into fins just
-    // ahead of the engine.
+    // The hull is a picture, not a distance field. A vehicle needs panel
+    // seams, a cockpit, fins with a lit edge, an engine bell and a name down
+    // the side, and none of that is worth writing as shader maths for one
+    // object — it is drawn once by scripts/render-rocket.py and sampled here.
+    // What stays procedural is the part that has to move: the exhaust.
     //
-    // The flare is what makes it a spacecraft. Without it the silhouette is a
-    // tapered needle, and at a couple of hundred pixels a needle with a glow
-    // behind it reads as a comet — which is what the first version looked
-    // like, sitting next to actual comets.
-    float radius = mix(0.20, 0.62, smoothstep(nose, tail + 0.14, u));
-    radius += smoothstep(tail + 0.20, tail + 0.01, u) * 0.62;
-    float body = smoothstep(radius, radius * 0.62, v) * hull;
+    // The hull occupies u in 0.20..1.0 — the front forty per cent of the quad
+    // — and everything behind it is wake. That region's aspect has to match
+    // the sprite's exactly or the ship comes out stretched, which is why the
+    // numbers here and the quad's proportions in the vertex shader are tied
+    // together.
+    float tail = 0.20;
 
-    // Lit along one flank, so it reads as a solid object rather than a decal,
-    // and darker along the spine where the curvature turns away.
-    float flank = smoothstep(-1.0, 0.7, vLocal.y);
-    vec3 metal = mix(vec3(0.26, 0.29, 0.36), vec3(0.90, 0.93, 1.00), flank * 0.9);
+    vec2 sprite = vec2((u - tail) / (1.0 - tail), vLocal.y * 0.5 + 0.5);
+    vec4 ship = vec4(0.0);
+    if (uRocketLoaded > 0.5 && sprite.x >= 0.0 && sprite.x <= 1.0
+        && sprite.y >= 0.0 && sprite.y <= 1.0) {
+      ship = texture(uRocket, sprite);
+    }
+
+    float body = ship.a;
+    vec3 metal = ship.rgb;
 
     // The engine. Flickers on two frequencies, because a steady glow reads as
     // a light bulb rather than combustion.
@@ -1089,11 +1087,13 @@ void main() {
                // ended in a straight vertical cut.
                * smoothstep(-1.0, -0.62, u);
 
-    col = metal * body * 1.35
+    col = metal * body
         + vec3(0.60, 0.80, 1.35) * plume * 1.8
         + vec3(0.50, 0.74, 1.30) * glow * 1.4
         + vec3(0.34, 0.55, 1.10) * wake * 0.34;
-    a = clamp(body + plume * 0.85 + glow * 0.7 + wake * 0.26, 0.0, 1.0);
+    // Alpha is occlusion, not brightness. The hull is a solid object and has
+    // to cover the stars behind it; the exhaust is light and must not.
+    a = body;
   } else {
     // ---- a meteor ----
     // A hot point at the head with a trail falling away behind it, narrowing
@@ -1106,9 +1106,14 @@ void main() {
     float core = exp((u - 1.0) * 26.0) * exp(-v * v * 14.0);
 
     col = vTint * body * 1.5 + vec3(1.0, 0.97, 0.92) * core * 3.2;
-    a = clamp(body * 1.2 + core * 2.0, 0.0, 1.0);
+    // A meteor occludes nothing at all, and zero alpha under the premultiplied
+    // blend below is exactly the additive draw it had before.
+    a = 0.0;
   }
 
+  // Premultiplied: col is already scaled by whatever coverage produced it, so
+  // the pass blends ONE / ONE_MINUS_SRC_ALPHA and gets both behaviours from
+  // one draw — solid where the hull is, purely additive everywhere else.
   outColor = vec4(col * vFade, a * vFade);
 }
 `;
