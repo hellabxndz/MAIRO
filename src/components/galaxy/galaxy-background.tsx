@@ -36,9 +36,13 @@ function initialTier(): { tier: Tier; stars: number } {
   // Phones start low. Not because they cannot render it — a recent phone GPU
   // is quick — but because the volume pass is fill-rate bound and a phone has
   // three times the pixels of a laptop and a battery to think about.
-  if (coarse || narrow) return { tier: 0, stars: 140_000 };
-  if (cores <= 4 || mem <= 4) return { tier: 1, stars: 260_000 };
-  return { tier: 2, stars: 420_000 };
+  // Roughly forty per cent fewer than this started with. A dense carpet of
+  // stars is what makes a real exposure look deep, but this is a page with
+  // words on it, and past a certain density every headline sits on texture
+  // instead of on sky. The galaxy still reads; the type wins.
+  if (coarse || narrow) return { tier: 0, stars: 82_000 };
+  if (cores <= 4 || mem <= 4) return { tier: 1, stars: 150_000 };
+  return { tier: 2, stars: 240_000 };
 }
 
 /**
@@ -161,7 +165,7 @@ export function GalaxyBackground() {
           makes the galaxy look bright. This darkens the left third, where the
           type is, and the very top and bottom, where the navigation and the
           footer are, and leaves the rest of the frame alone. */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.80)_0%,rgba(0,0,0,0.56)_26%,rgba(0,0,0,0.16)_54%,rgba(0,0,0,0)_78%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.66)_26%,rgba(0,0,0,0.24)_54%,rgba(0,0,0,0)_80%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)]" />
     </div>
   );

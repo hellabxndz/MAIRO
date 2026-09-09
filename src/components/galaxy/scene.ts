@@ -458,14 +458,19 @@ function buildTravellers(): Float32Array {
     ]);
   }
 
-  // The ship. Crosses slowly, far enough out to read as something enormous.
+  // The ship. Crosses slowly, low and to one side.
+  //
+  // Big enough to be the thing you notice, and no bigger: at twice this it
+  // spanned the whole hero and sat across the headline, which turns a passing
+  // craft into a permanent fixture. Kept below the centre line for the same
+  // reason the planets are — the type lives in the upper left.
   rows.push([
-    -170, 46, 235,
-    0.95, -0.10, 0.28,
+    -175, -58, 320,
+    0.95, -0.06, 0.26,
     7.5,        // speed
     74,         // period: a minute and a quarter to cross and come round again
     9,
-    17.0,       // size
+    20.0,       // size
     0.9, 0.94, 1.0,
     1,          // kind: craft
   ]);
