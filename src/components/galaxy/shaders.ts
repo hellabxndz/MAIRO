@@ -936,8 +936,12 @@ export const TRAVELLER_VERT = /* glsl */ `#version 300 es
 precision highp float;
 
 layout(location = 0) in vec2 aCorner;    // x: -1 tail .. 1 nose, y: across
+// The next two mean different things for the two kinds, because the two kinds
+// move in completely different ways. For a meteor: a starting point and a unit
+// heading, both in camera axes. For the craft: the centre of its loop, and
+// then the loop's lateral radius, depth radius and bank. See craftPath.
 layout(location = 1) in vec3 aOrigin;    // in camera axes: right, up, forward
-layout(location = 2) in vec3 aDir;       // ditto, unit
+layout(location = 2) in vec3 aDir;       // meteor: unit heading; craft: A, B, bank
 layout(location = 3) in vec4 aParams;    // speed, period, phase, size
 layout(location = 4) in vec3 aTint;
 layout(location = 5) in float aKind;     // 0 meteor, 1 craft
@@ -954,6 +958,29 @@ out vec2 vLocal;
 out vec3 vTint;
 out float vKind;
 out float vFade;
+
+// Where the craft is, a fraction of the way round its lap.
+//
+// A closed loop around the camera rather than a line off into nothing: it
+// sweeps out to one side, turns, comes back across at a different depth, and
+// keeps going. Two things about the shape are not free.
+//
+// It never passes behind the camera — the depth radius is smaller than the
+// centre's distance — because the hull is a picture of a ship seen side-on,
+// and a ship crossing the lens would have to be drawn nose-on, which a
+// picture cannot do.
+//
+// And the loop is banked rather than flat. On a flat loop the craft heads
+// straight at, then straight away from, the camera at the near and far points
+// of the lap. Its motion projects to nothing on screen there, and the
+// billboard's along-vector — which is that projection — degenerates and spins.
+// Tilting the plane of the loop means those two moments carry vertical motion
+// instead, so there is always a direction left to point the nose.
+vec3 craftPath(float ang, vec3 centre, vec3 shape) {
+  vec3 e1 = normalize(vec3(1.0, 0.10, 0.0));
+  vec3 e2 = normalize(vec3(0.0, shape.z, 1.0));
+  return centre + e1 * (shape.x * cos(ang)) + e2 * (shape.y * sin(ang));
+}
 
 void main() {
   float speed = aParams.x;
@@ -978,10 +1005,27 @@ void main() {
   // the pricing table is invisibly distant from the hero. Anchoring to the
   // camera costs nothing in realism — each one exists for a second and a half,
   // far too briefly for anyone to notice it was not there before.
-  vec3 origin = uCamPos + uRight * aOrigin.x + uUp * aOrigin.y + uFwd * aOrigin.z;
-  vec3 dir = normalize(uRight * aDir.x + uUp * aDir.y + uFwd * aDir.z);
+  // Both kinds work out where they are and which way they are pointing in the
+  // camera's own axes first, and get transformed into the world once at the
+  // end. The basis is orthonormal, so doing it in this order costs nothing and
+  // means neither path has to think about where the camera is.
+  vec3 pos;
+  vec3 heading;
+  if (aKind > 0.5) {
+    float ang = t * (6.28318530718 / period);
+    // The tangent, by stepping a little way further round the lap. Analytic
+    // would be tidier and this is a curve whose derivative nobody will ever
+    // need to keep in step with the curve itself.
+    float d = 0.02;
+    pos = craftPath(ang, aOrigin, aDir);
+    heading = normalize(craftPath(ang + d, aOrigin, aDir) - pos);
+  } else {
+    pos = aOrigin + aDir * (speed * t);
+    heading = normalize(aDir);
+  }
 
-  vec3 head = origin + dir * (speed * t);
+  vec3 head = uCamPos + uRight * pos.x + uUp * pos.y + uFwd * pos.z;
+  vec3 dir = normalize(uRight * heading.x + uUp * heading.y + uFwd * heading.z);
 
   vec3 toCam = normalize(uCamPos - head);
   // The travel direction, flattened into the plane facing the camera.

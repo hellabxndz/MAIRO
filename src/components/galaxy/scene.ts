@@ -458,18 +458,28 @@ function buildTravellers(): Float32Array {
     ]);
   }
 
-  // The ship. Crosses slowly, low and to one side.
+  // The ship, flying a lap around the camera. It used to cross in a straight
+  // line, which meant it was either arriving or leaving and never simply
+  // there; on a loop it is always somewhere in the sky, near or far, coming or
+  // going, and it turns.
   //
   // Big enough to be the thing you notice, and no bigger: at twice this it
   // spanned the whole hero and sat across the headline, which turns a passing
-  // craft into a permanent fixture. Kept below the centre line for the same
-  // reason the planets are — the type lives in the upper left.
+  // craft into a permanent fixture. The loop's centre is pushed right and
+  // below the eye line for the same reason the planets are — the type lives in
+  // the upper left, behind a heavy scrim.
   rows.push([
-    -175, -58, 320,
-    0.95, -0.06, 0.26,
-    7.5,        // speed
-    74,         // period: a minute and a quarter to cross and come round again
-    9,
+    // Centre of the lap, in camera axes.
+    240, -120, 700,
+    // Lateral radius, depth radius, bank. Depth stays well under the centre's
+    // distance so the craft never crosses behind the camera, and the bank is
+    // what stops the billboard degenerating at the ends of the lap — both are
+    // explained at craftPath() in the vertex shader.
+    470, 250, 0.55,
+    0,          // speed: unused here, the craft is paced by its period
+    72,         // period: a little over a minute for one lap
+    54,         // phase: opens at the near point of the lap, where the craft is
+                //   largest and crossing fastest, so it reads as moving at once
     30.0,       // size
     0.9, 0.94, 1.0,
     1,          // kind: craft
