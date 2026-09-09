@@ -69,7 +69,20 @@ python main.py
 ```
 
 Put your key in the file that opens, save it, and run the last line again.
-Later sessions are `source .venv/bin/activate` then `python main.py`.
+
+**To start it again later**, double-click **`run_mairo.command`** in the
+`desktop` folder — Finder opens it in Terminal and Mairo starts. The first
+time, macOS may refuse to run a downloaded script: right-click the file and
+choose **Open**, then **Open** again on the warning, and it will trust it from
+then on.
+
+From a Terminal instead:
+
+```bash
+cd ~/MAIRO/desktop && source .venv/bin/activate && python main.py
+```
+
+Either way, keep the Terminal window that appears — closing it quits Mairo.
 
 Works on Apple Silicon and Intel. On **macOS 13 (Ventura) or newer** you get
 the current Qt; on macOS 11 or 12, pip automatically installs an older PySide6
@@ -286,7 +299,8 @@ desktop/
   main.py                 entry point: wires everything together
   requirements.txt
   .env.example
-  run_mairo.bat           start Mairo from the virtual environment
+  run_mairo.bat           start Mairo on Windows (double-click)
+  run_mairo.command       start Mairo on macOS (double-click)
   build_windows.bat       build a standalone Mairo.exe
   mairo.spec              PyInstaller recipe
   app/
