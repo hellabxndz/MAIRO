@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QFrame,
+    QMenu,
     QLabel,
     QScrollArea,
     QSizePolicy,
@@ -45,7 +47,11 @@ class MessageBubble(QFrame):
         self.speaker.setStyleSheet("letter-spacing: 2px; font-size: 10px; font-weight: 700;")
         self.body = QLabel(text)
         self.body.setWordWrap(True)
-        self.body.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.body.setTextInteractionFlags(
+            Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard
+        )
+        self.body.setCursor(Qt.IBeamCursor)
+        self.setContextMenuPolicy(Qt.DefaultContextMenu)
         self.body.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
 
         layout = QVBoxLayout(self)
@@ -103,6 +109,21 @@ class MessageBubble(QFrame):
     def set_text(self, text: str) -> None:
         self.body.setText(text)
 
+    def contextMenuEvent(self, event) -> None:  # noqa: N802 - Qt naming
+        """Right-click to copy, because selecting text alone is not obvious."""
+        menu = QMenu(self)
+        selection = self.body.selectedText()
+        if selection:
+            copy_selection = menu.addAction("Copy selection")
+            copy_selection.triggered.connect(
+                lambda: QGuiApplication.clipboard().setText(selection)
+            )
+        copy_all = menu.addAction("Copy message")
+        copy_all.triggered.connect(
+            lambda: QGuiApplication.clipboard().setText(self.body.text())
+        )
+        menu.exec(event.globalPos())
+
 
 class TranscriptView(QScrollArea):
     """A scrolling column of bubbles that always shows the newest message."""
@@ -143,6 +164,13 @@ class TranscriptView(QScrollArea):
             self._layout.removeWidget(oldest)
             oldest.setParent(None)
             oldest.deleteLater()
+
+    def conversation_text(self) -> str:
+        """The whole visible exchange, as plain text."""
+        lines = []
+        for bubble in self._bubbles:
+            lines.append(f"{bubble.speaker.text()}: {bubble.body.text()}")
+        return "\n\n".join(lines)
 
     def clear_messages(self) -> None:
         for bubble in self._bubbles:

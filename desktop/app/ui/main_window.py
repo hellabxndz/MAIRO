@@ -13,8 +13,9 @@ from datetime import datetime
 from typing import Any
 
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal, Slot
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QGraphicsOpacityEffect,
     QGridLayout,
@@ -55,6 +56,7 @@ from app.ui.waveform import WaveformWidget
 from app.ui.workers import AssistantWorker, ConfirmationRequest
 from app.utils.errors import MairoError
 from app.utils.logging_setup import get_logger
+from app.utils.platform_utils import is_macos
 from app.utils.system_monitor import SystemMonitor, SystemReading
 from app.voice.manager import VoiceManager
 
@@ -111,6 +113,7 @@ class MainWindow(QMainWindow):
         self.monitor.updated.connect(self._on_system_reading)
 
         self._build_ui()
+        self._build_menus()
         self._setup_focus_mode()
         self._apply_theme()
         self._install_shortcuts()
@@ -405,6 +408,61 @@ class MainWindow(QMainWindow):
         self.right_stack.addWidget(column)
         self.right_stack.addWidget(self.history)
         return self.right_stack
+
+    def _build_menus(self) -> None:
+        """A standard menu, on macOS only.
+
+        Qt puts this in the system menu bar there, which is also what makes the
+        usual Cmd+C / Cmd+V routing behave in a Qt application. On Windows a
+        menu bar would sit inside the window and cut across the HUD, and the
+        shortcuts work without it, so it is not built there.
+        """
+        if not is_macos():
+            return
+
+        menus = self.menuBar()
+
+        conversation = menus.addMenu("Conversation")
+        new_action = QAction("New Conversation", self)
+        new_action.setShortcut(QKeySequence.New)
+        new_action.triggered.connect(self._new_conversation)
+        conversation.addAction(new_action)
+
+        settings_action = QAction("Settings…", self)
+        settings_action.setShortcut(QKeySequence.Preferences)
+        settings_action.setMenuRole(QAction.PreferencesRole)
+        settings_action.triggered.connect(self.open_settings)
+        conversation.addAction(settings_action)
+
+        edit = menus.addMenu("Edit")
+        for label, sequence, method in (
+            ("Cut", QKeySequence.Cut, "cut"),
+            ("Copy", QKeySequence.Copy, "copy"),
+            ("Paste", QKeySequence.Paste, "paste"),
+            ("Select All", QKeySequence.SelectAll, "selectAll"),
+        ):
+            action = QAction(label, self)
+            action.setShortcut(sequence)
+            action.triggered.connect(lambda _checked=False, name=method: self._edit_action(name))
+            edit.addAction(action)
+
+        edit.addSeparator()
+        copy_all = QAction("Copy Whole Conversation", self)
+        copy_all.triggered.connect(self._copy_conversation)
+        edit.addAction(copy_all)
+
+    def _edit_action(self, method_name: str) -> None:
+        """Send a standard edit command to whatever currently has focus."""
+        widget = QApplication.focusWidget()
+        method = getattr(widget, method_name, None)
+        if callable(method):
+            method()
+
+    def _copy_conversation(self) -> None:
+        text = self.transcript.conversation_text()
+        if text:
+            QGuiApplication.clipboard().setText(text)
+            self._add_message(tr.SYSTEM, "Conversation copied to the clipboard.")
 
     def _install_shortcuts(self) -> None:
         QShortcut(QKeySequence("Ctrl+M"), self, activated=self.toggle_listening)

@@ -253,3 +253,80 @@ class FocusModeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+@unittest.skipIf(QApplication is None, "PySide6 is not installed")
+class CopyPasteTests(unittest.TestCase):
+    """Getting text out of the transcript, which had no obvious route before."""
+
+    app = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def _transcript(self):
+        from app.ui.theme import get_palette
+        from app.ui.transcript import TranscriptView
+
+        view = TranscriptView(get_palette("nebula"))
+        view.resize(420, 300)
+        return view
+
+    def test_message_text_is_selectable_by_mouse_and_keyboard(self):
+        from PySide6.QtCore import Qt
+
+        view = self._transcript()
+        bubble = view.add_message("assistant", "The time is ten past four.")
+        flags = bubble.body.textInteractionFlags()
+        self.assertTrue(flags & Qt.TextSelectableByMouse)
+        self.assertTrue(flags & Qt.TextSelectableByKeyboard)
+
+    def test_a_whole_message_can_be_copied(self):
+        from PySide6.QtGui import QGuiApplication
+
+        view = self._transcript()
+        bubble = view.add_message("assistant", "Spotify is open.")
+        QGuiApplication.clipboard().setText("")
+        QGuiApplication.clipboard().setText(bubble.body.text())
+        self.assertEqual(QGuiApplication.clipboard().text(), "Spotify is open.")
+
+    def test_the_whole_conversation_can_be_copied(self):
+        view = self._transcript()
+        view.add_message("user", "what time is it?")
+        view.add_message("assistant", "Ten past four.")
+        text = view.conversation_text()
+        self.assertIn("YOU: what time is it?", text)
+        self.assertIn("MAIRO: Ten past four.", text)
+
+    def test_an_empty_transcript_copies_nothing(self):
+        self.assertEqual(self._transcript().conversation_text(), "")
+
+    def test_the_input_box_accepts_pasted_text(self):
+        from PySide6.QtGui import QGuiApplication
+
+        from app.ai.brain import Brain
+        from app.ai.conversation import ConversationStore
+        from app.config.settings import Settings
+        from app.database.db import Database
+        from app.memory.memory_store import MemoryStore
+        from app.tools.base import ToolContext
+        from app.tools.registry import build_default_registry
+        from app.ui.main_window import MainWindow
+        from tests.test_ui_flow import FakeVoice, ScriptedProvider
+
+        database = Database(Path(os.environ["MAIRO_HOME"]) / f"cp-{os.urandom(4).hex()}.db")
+        settings = Settings()
+        settings.first_run_complete = True
+        memory = MemoryStore(database)
+        conversations = ConversationStore(database, enabled=True)
+        conversations.start_new()
+        tools = build_default_registry(ToolContext(settings=settings, memory=memory, db=database))
+        brain = Brain(ScriptedProvider([]), tools, memory, conversations, settings)
+        window = MainWindow(settings, brain, FakeVoice(), conversations, memory)
+        window.database = database
+
+        QGuiApplication.clipboard().setText("pasted request")
+        window.input.setFocus()
+        window.input.paste()
+        self.assertEqual(window.input.text(), "pasted request")
