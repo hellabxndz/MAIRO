@@ -116,6 +116,23 @@ drawn as a dash, never a made-up number.
 Across the top: the wordmark, a strip of every day in the current month with
 today highlighted, and the History and Settings buttons.
 
+### Reading web pages
+
+Give Mairo a link and ask what is on it — "read this and summarise it" — and it
+fetches the page and answers from the text. Public pages only; anything behind
+a login comes back as an error.
+
+Two things are deliberate. The address is checked before anything is opened:
+only `http` and `https`, and never an address on your own machine or local
+network, which is how an assistant gets talked into reading a router's admin
+page or a cloud metadata endpoint. And the text that comes back is handed to
+the model explicitly labelled as untrusted content, because a page can try to
+issue instructions to an assistant that holds tools. Mairo is told to report
+what a page says and never to act on it.
+
+To point it at something on your own machine anyway, set
+`MAIRO_ALLOW_LOCAL_FETCH=1` in `.env`.
+
 **Left — what the computer is doing.**
 
 | Panel | Shows |
@@ -177,6 +194,7 @@ Things it understands today:
 - "Remember that I always use Chrome." / "What do you remember about me?" /
   "Forget that preference."
 - "What time is it?"
+- "Read https://example.com/article and summarise it."
 - "Lock my computer."
 
 Anything that captures your screen, reads your clipboard, locks the machine or
