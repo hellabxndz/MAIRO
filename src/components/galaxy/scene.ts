@@ -406,7 +406,28 @@ export function createScene(opts: SceneOptions): Scene | null {
   let lastFrame = 0;
   let settleUntil = 0;
 
+  /**
+   * Whether this device has ever failed to hold its budget.
+   *
+   * Once it has, the scene stops trying to climb. Promotion is only ever
+   * attempted on the way up from a conservative start — a device that has
+   * already proved it cannot hold a tier must not be offered that tier again,
+   * because the alternative is a loop that demotes, recovers, promotes,
+   * demotes again, and rebuilds every render target each time round.
+   */
+  let hasDemoted = false;
+
+  function stepUp() {
+    if (hasDemoted || tier >= 2) return;
+    tier = (tier + 1) as Tier;
+    times.length = 0;
+    settleUntil = performance.now() + 1200;
+    resize();
+    opts.onTier?.(tier);
+  }
+
   function stepDown(median: number) {
+    hasDemoted = true;
     if (tier === 0) {
       // Giving up is judged against a much lower bar than demoting is.
       // Dropping a tier to claw back headroom is cheap; abandoning the scene
@@ -597,7 +618,20 @@ export function createScene(opts: SceneOptions): Scene | null {
         times.length = 0;
         // 21ms is comfortably past a 60Hz frame and not so tight that a single
         // slow moment demotes a machine that is otherwise fine.
-        if (median > 21) stepDown(median);
+        if (median > 21) {
+          stepDown(median);
+        } else if (median < 11) {
+          // And upwards, if there is obvious room.
+          //
+          // The opening guess is made from core count and memory, which are a
+          // poor proxy for a GPU — a thin laptop reporting four cores may have
+          // a perfectly good one, and it would otherwise be pinned to the
+          // lowest tier for the life of the page on the strength of a number
+          // that says nothing about rendering. Eleven milliseconds is half the
+          // demotion threshold, so a tier is only offered to a device with
+          // room to spare rather than one scraping past.
+          stepUp();
+        }
       }
     }
     lastFrame = now;
