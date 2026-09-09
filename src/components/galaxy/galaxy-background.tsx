@@ -121,10 +121,13 @@ export function GalaxyBackground() {
         window.addEventListener("scroll", onScroll, { passive: true });
         window.addEventListener("pointermove", onPointer, { passive: true });
         window.addEventListener("resize", onResize);
-      } catch {
+      } catch (error) {
         // A shader that will not compile on some driver is not a reason to
         // show a broken page — the panorama is already on screen and simply
-        // stays there.
+        // stays there. It is worth saying so out loud, though: silence here
+        // cost an hour once, with the scene falling back correctly and no
+        // indication anywhere of why.
+        console.warn("Galaxy scene unavailable, using the still sky instead.", error);
       }
     })();
 

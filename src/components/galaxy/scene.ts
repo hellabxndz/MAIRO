@@ -205,6 +205,8 @@ type Planet = {
   seed: number;
   /** 0 rocky, 1 gas giant, 2 Earth. */
   kind: 0 | 1 | 2;
+  /** Index into the surface atlas rendered by scripts/render-planets.py. */
+  layer?: number;
   /**
    * Latitude and longitude that should be turned towards the camera at `faceAt`.
    *
@@ -223,22 +225,22 @@ const PLANETS: readonly Planet[] = [
   // and it rendered correctly and was still invisible — the scrim that keeps
   // the headline legible sits at sixty per cent opacity over exactly that part
   // of the frame and took the planet down with it.
-  { at: 0.02, right: 95, up: -52, fwd: 132, radius: 22, color: [0.40, 0.47, 0.60], seed: 0.21, kind: 0 },
+  { at: 0.02, right: 95, up: -52, fwd: 132, radius: 22, color: [0.40, 0.47, 0.60], seed: 0.21, kind: 0, layer: 0 },
   // A rusty one drifting past on the right as the descent starts.
-  { at: 0.26, right: 62, up: 20, fwd: 105, radius: 8, color: [0.66, 0.40, 0.28], seed: 0.34, kind: 0 },
+  { at: 0.26, right: 62, up: 20, fwd: 105, radius: 8, color: [0.66, 0.40, 0.28], seed: 0.34, kind: 0, layer: 1 },
   // A banded giant, close, once the camera is down among the arms.
   //
   // Everything here is kept to the right of frame and below the headline. The
   // type lives in the left third of every section on this page, and a planet
   // is worth nothing if it is sitting behind a sentence — the first placement
   // put this one directly across "without the expert".
-  { at: 0.47, right: 74, up: -60, fwd: 84, radius: 17, color: [0.74, 0.64, 0.47], seed: 0.82, kind: 1 },
+  { at: 0.47, right: 74, up: -60, fwd: 84, radius: 17, color: [0.74, 0.64, 0.47], seed: 0.82, kind: 1, layer: 2 },
   // Small and pale, passing quickly.
-  { at: 0.66, right: 26, up: -11, fwd: 40, radius: 4.5, color: [0.54, 0.60, 0.72], seed: 0.44, kind: 0 },
+  { at: 0.66, right: 26, up: -11, fwd: 40, radius: 4.5, color: [0.54, 0.60, 0.72], seed: 0.44, kind: 0, layer: 3 },
   // An icy one near the core, lit hard from one side.
-  { at: 0.82, right: 24, up: -6, fwd: 28, radius: 5.0, color: [0.78, 0.76, 0.70], seed: 0.69, kind: 0 },
+  { at: 0.82, right: 24, up: -6, fwd: 28, radius: 5.0, color: [0.78, 0.76, 0.70], seed: 0.69, kind: 0, layer: 4 },
   // A second giant, seen during the pull-back.
-  { at: 0.94, right: 210, up: -120, fwd: 620, radius: 46, color: [0.52, 0.46, 0.62], seed: 0.61, kind: 1 },
+  { at: 0.94, right: 210, up: -120, fwd: 620, radius: 46, color: [0.52, 0.46, 0.62], seed: 0.61, kind: 1, layer: 5 },
 
   // And Earth, at a fixed point outside the galaxy. Fixed rather than placed
   // against the path because the last two camera keyframes are positioned
@@ -256,8 +258,8 @@ const PLANETS: readonly Planet[] = [
   },
 ];
 
-/** centre(3) radius(1) colour(3) seed(1) orientation(4) kind(1). */
-const PLANET_STRIDE = 13;
+/** centre(3) radius(1) colour(3) seed(1) orientation(4) kind(1) layer(1). */
+const PLANET_STRIDE = 14;
 
 /** The camera's own axes at a point on the path. */
 function cameraFrame(at: number) {
@@ -379,12 +381,19 @@ function buildPlanetInstances(): Float32Array {
       const D = [c.eye[0] - centre[0], c.eye[1] - centre[1], c.eye[2] - centre[2]];
       q = orientation(pl.face[0], pl.face[1], D, [c.u[0], c.u[1], c.u[2]]);
     } else {
-      // An arbitrary but fixed tilt, so worlds are not all lined up with the
-      // galactic plane like a diagram.
-      const a = pl.seed * 6.283;
-      q = [Math.sin(a) * 0.3, Math.cos(a * 1.7) * 0.35, Math.sin(a * 2.3) * 0.25, 0.88];
-      const l = Math.hypot(q[0], q[1], q[2], q[3]);
-      q = q.map((v) => v / l);
+      // Turn a point near the equator towards wherever the camera will be when
+      // this world is on screen.
+      //
+      // A random orientation would sometimes aim a pole at the viewer, and an
+      // equirectangular map has no detail there — every column of the texture
+      // converges on that one point, so it renders as a starburst. Choosing a
+      // low latitude guarantees the poles sit near the limb, where the
+      // projection is well behaved and nobody is looking anyway.
+      const c = cameraFrame(pl.at ?? 0);
+      const D = [c.eye[0] - centre[0], c.eye[1] - centre[1], c.eye[2] - centre[2]];
+      const lat = (pl.seed - 0.5) * 46;
+      const lon = pl.seed * 720 - 180;
+      q = orientation(lat, lon, D, [c.u[0], c.u[1], c.u[2]]);
     }
 
     out[o++] = centre[0]; out[o++] = centre[1]; out[o++] = centre[2];
@@ -393,6 +402,9 @@ function buildPlanetInstances(): Float32Array {
     out[o++] = pl.seed;
     out[o++] = q[0]; out[o++] = q[1]; out[o++] = q[2]; out[o++] = q[3];
     out[o++] = pl.kind;
+    // Which slice of the surface atlas. Earth has its own pair of textures and
+    // never reads the atlas, so its layer is arbitrary.
+    out[o++] = pl.layer ?? 0;
   }
   return out;
 }
@@ -520,7 +532,8 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
-  const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail"]);
+  const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
+    "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
   const uVol = uni(progVolume, [
     "uInvViewProj", "uCamPos", "uTime", "uSteps", "uDensity", "uDust",
     "uEnergy", "uSmooth", "uNoise", "uArmPitch", "uReveal",
@@ -573,7 +586,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bufferData(gl.ARRAY_BUFFER, buildPlanetInstances(), gl.STATIC_DRAW);
     const st = PLANET_STRIDE * 4;
     for (const [loc, size, off] of
-      [[1, 3, 0], [2, 1, 12], [3, 3, 16], [4, 1, 28], [5, 4, 32], [6, 1, 48]] as const) {
+      [[1, 3, 0], [2, 1, 12], [3, 3, 16], [4, 1, 28], [5, 4, 32], [6, 1, 48], [7, 1, 52]] as const) {
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, st, off);
       gl.vertexAttribDivisor(loc, 1);
@@ -608,6 +621,47 @@ export function createScene(opts: SceneOptions): Scene | null {
    * point all six of the others appeared at once. Binding something valid to
    * those units from the start is the whole fix.
    */
+  const PLANET_LAYERS = 6;
+  const ALBEDO_W = 768, ALBEDO_H = 384;
+  const RELIEF_W = 384, RELIEF_H = 192;
+
+  let albedoArr: WebGLTexture | null = null;
+  let reliefArr: WebGLTexture | null = null;
+  let mapsLoaded = 0;
+
+  /**
+   * Decodes an image into a 2D texture array, one layer per planet.
+   *
+   * The atlas is a single tall image with the layers stacked, which is exactly
+   * how a texture array wants its data — rows are contiguous, so the whole
+   * thing uploads in one call with no slicing.
+   */
+  function uploadArray(img: HTMLImageElement, w: number, h: number, layers: number): WebGLTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h * layers;
+    const ctx2d = canvas.getContext("2d", { willReadFrequently: false })!;
+    ctx2d.drawImage(img, 0, 0, w, h * layers);
+    const pixels = ctx2d.getImageData(0, 0, w, h * layers).data;
+
+    const tex = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, w, h, layers, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+
+  const blankArr = gl.createTexture()!;
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, blankArr);
+  gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA8, 1, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    new Uint8Array([128, 128, 128, 255]));
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
   const blankTex = gl.createTexture()!;
   gl.bindTexture(gl.TEXTURE_2D, blankTex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0]));
@@ -627,28 +681,43 @@ export function createScene(opts: SceneOptions): Scene | null {
   let earthLoaded = 0;
   let earthStarted = false;
 
+  /** Fetches an image, falling back from AVIF to WebP. */
+  function loadImage(base: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        const fallback = new Image();
+        fallback.onload = () => resolve(fallback);
+        fallback.onerror = reject;
+        fallback.src = `${base}.webp`;
+      };
+      img.src = `${base}.avif`;
+    });
+  }
+
+  /**
+   * The planet surfaces. Fetched straight away, unlike Earth's — a planet is
+   * in the hero, so these are wanted immediately, and at 270KB across both
+   * files they are a fraction of what Earth costs.
+   */
+  function loadSurfaces() {
+    Promise.all([loadImage("/sky/planets"), loadImage("/sky/planets-relief")])
+      .then(([albedo, reliefImg]) => {
+        albedoArr = uploadArray(albedo, ALBEDO_W, ALBEDO_H, PLANET_LAYERS);
+        reliefArr = uploadArray(reliefImg, RELIEF_W, RELIEF_H, PLANET_LAYERS);
+        mapsLoaded = 1;
+      })
+      .catch(() => {
+        // The procedural surfaces stay. Worse, but not broken.
+      });
+  }
+
   function loadEarth() {
     if (earthStarted) return;
     earthStarted = true;
 
-    const load = (base: string): Promise<HTMLImageElement> =>
-      new Promise((resolve, reject) => {
-        const img = new Image();
-        // AVIF where it decodes and WebP where it does not. A browser can
-        // support WebGL2 and not AVIF, and that combination would otherwise
-        // land on a blank planet at the one moment the page is asking to be
-        // looked at.
-        img.onload = () => resolve(img);
-        img.onerror = () => {
-          const fallback = new Image();
-          fallback.onload = () => resolve(fallback);
-          fallback.onerror = reject;
-          fallback.src = `${base}.webp`;
-        };
-        img.src = `${base}.avif`;
-      });
-
-    Promise.all([load("/sky/earth-day"), load("/sky/earth-night")])
+    Promise.all([loadImage("/sky/earth-day"), loadImage("/sky/earth-night")])
       .then(([day, night]) => {
         const upload = (img: HTMLImageElement): WebGLTexture => {
           const tex = gl.createTexture()!;
@@ -914,6 +983,14 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1f(uPlanet.uTime, t);
     gl.uniform1f(uPlanet.uReveal, Math.max(0, (revealEase - 0.45) / 0.55));
     gl.uniform1f(uPlanet.uDetail, tier === 0 ? 0 : 1);
+    gl.uniform1f(uPlanet.uMapsLoaded, mapsLoaded);
+    gl.uniform2f(uPlanet.uReliefTexel, 1 / RELIEF_W, 1 / RELIEF_H);
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, albedoArr ?? blankArr);
+    gl.uniform1i(uPlanet.uPlanetAlbedo, 4);
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, reliefArr ?? blankArr);
+    gl.uniform1i(uPlanet.uPlanetRelief, 5);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_3D, noiseTex);
     gl.uniform1i(uPlanet.uNoise, 0);
@@ -1022,6 +1099,7 @@ export function createScene(opts: SceneOptions): Scene | null {
       if (running) return;
       running = true;
       resize();
+      loadSurfaces();
       start = performance.now();
       settleUntil = start + 1000;
       raf = requestAnimationFrame(frame);

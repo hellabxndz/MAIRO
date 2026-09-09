@@ -601,6 +601,7 @@ layout(location = 3) in vec3 aColor;
 layout(location = 4) in float aSeed;
 layout(location = 5) in vec4 aOrient;    // unit quaternion, planet space -> world
 layout(location = 6) in float aKind;     // 0 rocky, 1 gas giant, 2 Earth
+layout(location = 7) in float aLayer;    // which slice of the surface atlas
 
 uniform mat4 uViewProj;
 uniform vec3 uRight;
@@ -612,6 +613,7 @@ out vec3 vColor;
 out float vSeed;
 out vec4 vOrient;
 out float vKind;
+out float vLayer;
 
 void main() {
   vec3 world = aCentre + (uRight * aCorner.x + uUp * aCorner.y) * aRadius;
@@ -622,12 +624,16 @@ void main() {
   vSeed = aSeed;
   vOrient = aOrient;
   vKind = aKind;
+  vLayer = aLayer;
 }
 `;
 
 export const PLANET_FRAG = /* glsl */ `#version 300 es
 precision highp float;
 precision highp sampler3D;
+// GLSL ES 3.00 has no default precision for sampler array types, and omitting
+// it is a compile error rather than a warning.
+precision highp sampler2DArray;
 
 in vec2 vLocal;
 in vec3 vCentre;
@@ -635,13 +641,18 @@ in vec3 vColor;
 in float vSeed;
 in vec4 vOrient;
 in float vKind;
+in float vLayer;
 
 out vec4 outColor;
 
 uniform sampler3D uNoise;
 uniform sampler2D uEarthDay;
 uniform sampler2D uEarthNight;
+uniform sampler2DArray uPlanetAlbedo;
+uniform sampler2DArray uPlanetRelief;
 uniform float uEarthLoaded;
+uniform float uMapsLoaded;
+uniform vec2 uReliefTexel;
 uniform vec3 uCamPos;
 uniform vec3 uRight;
 uniform vec3 uUp;
@@ -658,6 +669,50 @@ float fbm3(vec3 p) {
 vec3 unrotate(vec4 q, vec3 v) {
   vec3 u = -q.xyz;
   return v + 2.0 * cross(u, cross(u, v) + q.w * v);
+}
+
+/** And the other way: planet space back out into world space. */
+vec3 rotate(vec4 q, vec3 v) {
+  return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+}
+
+/**
+ * Perturbs the surface normal from the elevation map.
+ *
+ * This is the single thing that separates a photographed surface from a
+ * painted one. Without it every world is a smooth ball with a picture on it,
+ * lit by one smooth gradient, and no amount of detail in the picture fixes
+ * that — the eye reads the lighting, not the texture. With it, crater rims
+ * catch the light on one side and shade on the other, and the terminator
+ * breaks up into thousands of small shadows the way a real one does.
+ *
+ * The height difference across two texels gives the slope; the two tangent
+ * directions on the sphere turn that into a tilt. Longitude is divided by the
+ * cosine of latitude because an equirectangular map squeezes it towards the
+ * poles, and without that correction every surface tilts harder the further
+ * from the equator it gets.
+ */
+vec3 relief(vec3 np, vec2 uv, float layer, float lat, float strength) {
+  vec2 t = uReliefTexel;
+  float hl = texture(uPlanetRelief, vec3(uv - vec2(t.x, 0.0), layer)).r;
+  float hr = texture(uPlanetRelief, vec3(uv + vec2(t.x, 0.0), layer)).r;
+  float hd = texture(uPlanetRelief, vec3(uv - vec2(0.0, t.y), layer)).r;
+  float hu = texture(uPlanetRelief, vec3(uv + vec2(0.0, t.y), layer)).r;
+
+  vec3 east = normalize(cross(vec3(0.0, 1.0, 0.0), np));
+  vec3 north = cross(np, east);
+
+  // The longitude correction blows up at the poles, where an equirectangular
+  // map has squeezed a single point across an entire row. Clamping it is not
+  // quite enough on its own — the last few degrees still amplify into a
+  // starburst — so the relief also fades out there. Nothing is lost: the poles
+  // are edge-on from anywhere the planet is worth looking at.
+  float coslat = max(cos(lat), 0.35);
+  float polar = 1.0 - smoothstep(0.80, 0.98, abs(np.y));
+  float dlon = (hr - hl) / coslat;
+  float dlat = (hu - hd);
+
+  return normalize(np - (east * dlon + north * dlat) * strength * polar);
 }
 
 /**
@@ -724,17 +779,20 @@ void main() {
   // has its own light on the dark side, and dimming the night down to almost
   // nothing is exactly what lets the cities carry it.
   float lit = pow(ndl * 0.5 + 0.5, vKind > 1.5 ? 3.6 : 1.5);
-  float day = smoothstep(-0.14, 0.30, ndl);
 
   vec3 albedo;
   vec3 emissive = vec3(0.0);
   vec3 atmosphere = vec3(0.42, 0.60, 1.05);
 
+  // Latitude and longitude on this world, for every textured path below.
+  float plat = asin(clamp(np.y, -1.0, 1.0));
+  float plon = atan(np.z, np.x);
+  vec2 puv = vec2(plon * 0.15915494 + 0.5, 0.5 - plat * 0.31830989);
+
   if (vKind > 1.5 && uEarthLoaded > 0.5) {
     // ---- Earth ----
-    float lat = asin(clamp(np.y, -1.0, 1.0));
-    float lon = atan(np.z, np.x);
-    vec2 uv = vec2(lon * 0.15915494 + 0.5, 0.5 - lat * 0.31830989);
+    float lat = plat;
+    vec2 uv = puv;
 
     vec3 surface = equirect(uEarthDay, uv).rgb;
 
@@ -771,8 +829,23 @@ void main() {
 
     emissive = lights * flicker * 5.2;
     atmosphere = vec3(0.32, 0.55, 1.15);
+  } else if (uMapsLoaded > 0.5) {
+    // ---- a rendered surface ----
+    //
+    // Built offline by scripts/render-planets.py, which can afford to place
+    // craters with rims and ejecta, flood the low ground with lava, cut
+    // canyons and shear cloud bands along a turbulent flow. None of that fits
+    // in a fragment shader, and all of it is what the surfaces were missing.
+    albedo = texture(uPlanetAlbedo, vec3(puv, vLayer)).rgb;
+
+    // Cloud tops have almost no relief; rock has a great deal.
+    n = rotate(vOrient, relief(np, puv, vLayer, plat, vKind > 0.5 ? 0.30 : 1.7));
+    ndl = dot(n, L);
+    lit = pow(ndl * 0.5 + 0.5, 1.5);
+
+    atmosphere = vKind > 0.5 ? vColor * 1.1 : mix(vec3(0.55, 0.58, 0.70), vColor, 0.4);
   } else if (vKind > 0.5) {
-    // ---- gas giant ----
+    // ---- gas giant, before the maps arrive ----
     // Bands displaced by turbulence rather than drawn straight. Latitude
     // stripes on their own read as a beach ball; letting the noise push the
     // band coordinate around is what makes them shear and curl the way a real
@@ -793,7 +866,7 @@ void main() {
     albedo = mix(albedo, vec3(0.78, 0.42, 0.30), storm);
     atmosphere = vColor * 1.1;
   } else {
-    // ---- rocky ----
+    // ---- rocky, before the maps arrive ----
     float base = warped(np * (1.5 + vSeed * 1.6) + vSeed * 23.0);
 
     // Ridged noise, which is what a cratered or eroded surface looks like:
