@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { GalaxyField } from "@/components/galaxy-field";
-import { CosmicVeil } from "@/components/cosmic-veil";
+import { GalaxyBackground } from "@/components/galaxy/galaxy-background";
 import { SpacePanel } from "@/components/space-panel";
 import { Grain } from "@/components/grain";
 import { SiteNav } from "@/components/site-nav";
@@ -94,8 +93,12 @@ export default function Home() {
           time — closing the intro is a state change, not a navigation. */}
       <CinematicIntro />
 
-      <GalaxyField />
-      <CosmicVeil />
+      {/* The galaxy the whole page lives inside. Fixed, never unmounted, and
+          driven by scroll — moving down the page flies the camera through it
+          rather than sliding a picture upwards. Falls back to a still 4K
+          render of the same galaxy where WebGL2 is unavailable or motion is
+          not wanted. */}
+      <GalaxyBackground />
       <Grain />
       <SiteNav />
 

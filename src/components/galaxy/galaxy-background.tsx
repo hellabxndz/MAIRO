@@ -1,0 +1,165 @@
+"use client";
+
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { MilkyWay } from "@/components/milky-way";
+import type { Scene, Tier } from "./scene";
+
+// The environment the whole site lives inside.
+//
+// It is fixed behind everything and never unmounts, so scrolling from the hero
+// to the footer is one continuous flight rather than a series of backgrounds.
+// The page's own markup sits on top of it untouched — nothing about the
+// content had to change to put it in here.
+//
+// Three things about how it loads matter more than the rendering does.
+//
+// The WebGL is dynamically imported. It is the largest piece of JavaScript on
+// the page and none of it is needed to read the words, so it is fetched after
+// the page is interactive rather than in the critical path.
+//
+// There is a real fallback, not a black screen. Anything without WebGL2 — and
+// anyone who has asked their system for reduced motion — gets the rendered
+// panorama instead: a still, 4K photograph of the same galaxy that costs
+// 144KB and holds sixty frames a second on anything. The site is never worse
+// than it was; the scene is what it becomes when the machine can take it.
+//
+// And the quality tier is not guessed once and left. The renderer watches its
+// own frame times and steps itself down if it cannot hold the budget, which is
+// the only honest way to handle a laptop that looks capable and is not.
+
+function initialTier(): { tier: Tier; stars: number } {
+  const cores = navigator.hardwareConcurrency ?? 4;
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const narrow = window.innerWidth < 900;
+
+  // Phones start low. Not because they cannot render it — a recent phone GPU
+  // is quick — but because the volume pass is fill-rate bound and a phone has
+  // three times the pixels of a laptop and a battery to think about.
+  if (coarse || narrow) return { tier: 0, stars: 140_000 };
+  if (cores <= 4 || mem <= 4) return { tier: 1, stars: 260_000 };
+  return { tier: 2, stars: 420_000 };
+}
+
+/**
+ * Whether this browser should be offered the scene at all.
+ *
+ * Cached, because `useSyncExternalStore` may ask more than once a render and
+ * creating a WebGL context to answer is not free. Nothing it depends on can
+ * change during a session, so the subscription is a no-op and the server
+ * always answers "no" — which is what puts the still panorama into the HTML
+ * that ships, rather than a black rectangle waiting for JavaScript.
+ */
+let capability: boolean | null = null;
+
+function readCapability(): boolean {
+  if (capability !== null) return capability;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    capability = false;
+  } else {
+    capability = Boolean(document.createElement("canvas").getContext("webgl2"));
+  }
+  return capability;
+}
+
+const neverChanges = () => () => {};
+
+export function GalaxyBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const capable = useSyncExternalStore(neverChanges, readCapability, () => false);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    if (!capable) return;
+
+    let scene: Scene | null = null;
+    let cancelled = false;
+    let raf = 0;
+
+    const onScroll = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      scene?.setProgress(max > 0 ? window.scrollY / max : 0);
+    };
+    const onPointer = (e: PointerEvent) => {
+      scene?.setPointer(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        (e.clientY / window.innerHeight) * 2 - 1
+      );
+    };
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      // Rebuilding four render targets on every pixel of a window drag is
+      // wasted work; this waits for the drag to finish.
+      raf = window.setTimeout(() => scene?.resize(), 180) as unknown as number;
+    };
+
+    (async () => {
+      try {
+        const { createScene } = await import("./scene");
+        if (cancelled || !canvasRef.current) return;
+
+        const { tier, stars } = initialTier();
+        scene = createScene({
+          canvas: canvasRef.current,
+          starCount: stars,
+          tier,
+          onGiveUp: () => {
+            // Back to the panorama, and stop rendering entirely. The crossfade
+            // is the same one that brought the scene in, so this reads as a
+            // deliberate settle rather than a failure.
+            setLive(false);
+            scene?.dispose();
+            scene = null;
+          },
+        });
+        if (!scene) return;
+
+        setLive(true);
+        onScroll();
+        scene.start();
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("pointermove", onPointer, { passive: true });
+        window.addEventListener("resize", onResize);
+      } catch {
+        // A shader that will not compile on some driver is not a reason to
+        // show a broken page — the panorama is already on screen and simply
+        // stays there.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("resize", onResize);
+      scene?.dispose();
+    };
+  }, [capable]);
+
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] bg-black">
+      {/* Present from the first frame, so the page has a real sky while the
+          renderer is still being fetched, and keeps one for good if it can't
+          run. Hidden the moment the scene takes over. */}
+      {!live && <MilkyWay />}
+
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full"
+        style={{ opacity: live ? 1 : 0, transition: "opacity 900ms ease" }}
+      />
+
+      {/* Legibility, without flattening the picture.
+
+          A flat wash over the whole frame would be the easy fix and it is the
+          wrong one: it lifts the black sky to grey, and the darkness is what
+          makes the galaxy look bright. This darkens the left third, where the
+          type is, and the very top and bottom, where the navigation and the
+          footer are, and leaves the rest of the frame alone. */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.46)_26%,rgba(0,0,0,0.10)_52%,rgba(0,0,0,0)_78%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)]" />
+    </div>
+  );
+}

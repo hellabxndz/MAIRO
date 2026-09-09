@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { CosmicVeil } from "@/components/cosmic-veil";
+import { MilkyWayStill } from "@/components/milky-way";
 
 // The signed-in backdrop: the same sky as the marketing page, turned right
 // down.
@@ -17,15 +17,16 @@ import { CosmicVeil } from "@/components/cosmic-veil";
 //   because travelling through it is the point; here it would just be a
 //   battery drain behind a spreadsheet.
 //
-//   The nebulae behind them do not drift either. Measured: three large
-//   translucent gradients being recomposited every frame took these screens
-//   from 117fps to 29fps. A still sky costs nothing and, behind a tool, looks
-//   more deliberate than a moving one.
+//   Behind them is the same rendered panorama the marketing page uses, held
+//   still and taken down to a third of its brightness. It replaced three large
+//   animated gradients, which were measured taking these screens from 117fps
+//   to 29fps by being recomposited every frame. A photograph that never moves
+//   costs one decode and then nothing at all — and behind a tool it looks more
+//   deliberate than something drifting.
 //
-//   They are dimmer and sparser than the marketing sky, and the nebulae behind
-//   them sit at a fraction of their usual opacity. Text over this has to stay
-//   as readable as text over flat black, which is the constraint that set
-//   every number below.
+//   The stars are dimmer and sparser than the marketing sky. Text over this
+//   has to stay as readable as text over flat black, which is the constraint
+//   that set every number below.
 //
 // One frame, then nothing.
 
@@ -96,11 +97,10 @@ export function AmbientSky() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-neutral-950">
+      {/* The galaxy first, then the drawn stars on top of it, so the sharp
+          points sit in front of the photograph rather than under it. */}
+      <MilkyWayStill opacity={0.42} />
       <canvas ref={ref} className="absolute inset-0 h-full w-full" />
-      {/* The marketing page's own nebulae, at a fraction of their strength. */}
-      <CosmicVeil still className="pointer-events-none absolute inset-0 overflow-hidden opacity-40" />
-      {/* Keeps the working area of the screen quieter than the edges. */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgba(10,10,14,0.72)_0%,rgba(10,10,14,0.35)_55%,rgba(10,10,14,0)_100%)]" />
     </div>
   );
 }

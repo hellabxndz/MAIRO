@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Galaxy } from "@/components/galaxy";
+import { AmbientSky } from "@/components/ambient-sky";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
-      <Galaxy />
+      <AmbientSky />
       <div className="relative w-full max-w-sm">
         <Link
           href="/"

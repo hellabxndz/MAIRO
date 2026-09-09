@@ -49,11 +49,15 @@ export function CosmicVeil({
   /**
    * Renders the formations without their drift.
    *
-   * Behind a marketing page the movement is the point. Behind a dashboard it
-   * is measurably expensive and gains nothing: three large translucent
-   * gradients being recomposited every frame took the signed-in screens from
-   * 117fps to 29fps, and nobody working in a spreadsheet is watching the sky
-   * move. Stopping the animation was worth four times the frame rate.
+   * Behind a marketing page the movement is the point. Anywhere someone is
+   * working it is measurably expensive and gains nothing: three large
+   * translucent gradients recomposited every frame took the signed-in screens
+   * from 117fps to 29fps, and nobody reading a table is watching the sky move.
+   *
+   * Nothing passes this today — the signed-in shell moved to a still frame of
+   * the rendered panorama instead, which is cheaper again — but the option is
+   * kept because the finding behind it is the reason not to reach for the
+   * animated version next time.
    */
   still?: boolean;
 } = {}) {

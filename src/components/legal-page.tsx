@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Galaxy } from "@/components/galaxy";
+import { AmbientSky } from "@/components/ambient-sky";
 import { LEGAL } from "@/lib/legal";
 
 // Shared shell for the public legal pages. These have to stay reachable
@@ -18,7 +18,7 @@ export function LegalPage({
 }) {
   return (
     <div className="relative min-h-screen text-white">
-      <Galaxy />
+      <AmbientSky />
 
       <div className="relative mx-auto max-w-3xl px-6 py-16 sm:px-10 sm:py-24">
         <Link
