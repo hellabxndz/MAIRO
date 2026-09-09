@@ -599,9 +599,10 @@ layout(location = 1) in vec3 aCentre;    // per instance
 layout(location = 2) in float aRadius;
 layout(location = 3) in vec3 aColor;
 layout(location = 4) in float aSeed;
+layout(location = 5) in vec4 aOrient;    // unit quaternion, planet space -> world
+layout(location = 6) in float aKind;     // 0 rocky, 1 gas giant, 2 Earth
 
 uniform mat4 uViewProj;
-uniform vec3 uCamPos;
 uniform vec3 uRight;
 uniform vec3 uUp;
 
@@ -609,7 +610,8 @@ out vec2 vLocal;
 out vec3 vCentre;
 out vec3 vColor;
 out float vSeed;
-out float vRadius;
+out vec4 vOrient;
+out float vKind;
 
 void main() {
   vec3 world = aCentre + (uRight * aCorner.x + uUp * aCorner.y) * aRadius;
@@ -618,7 +620,8 @@ void main() {
   vCentre = aCentre;
   vColor = aColor;
   vSeed = aSeed;
-  vRadius = aRadius;
+  vOrient = aOrient;
+  vKind = aKind;
 }
 `;
 
@@ -630,20 +633,65 @@ in vec2 vLocal;
 in vec3 vCentre;
 in vec3 vColor;
 in float vSeed;
-in float vRadius;
+in vec4 vOrient;
+in float vKind;
 
 out vec4 outColor;
 
 uniform sampler3D uNoise;
+uniform sampler2D uEarthDay;
+uniform sampler2D uEarthNight;
+uniform float uEarthLoaded;
 uniform vec3 uCamPos;
 uniform vec3 uRight;
 uniform vec3 uUp;
 uniform float uReveal;
 uniform float uTime;
+uniform float uDetail;
 
 float fbm3(vec3 p) {
   vec4 n = texture(uNoise, p);
   return n.r * 0.5333 + n.g * 0.2667 + n.b * 0.1333 + n.a * 0.0667;
+}
+
+/** Rotate v by the inverse of unit quaternion q — world space into planet space. */
+vec3 unrotate(vec4 q, vec3 v) {
+  vec3 u = -q.xyz;
+  return v + 2.0 * cross(u, cross(u, v) + q.w * v);
+}
+
+/**
+ * Equirectangular lookup that survives the seam.
+ *
+ * Longitude wraps from +180 to -180 down one meridian, and the texture
+ * derivatives across that column come out enormous, so the hardware picks the
+ * smallest mip level it has and draws a blurred grey line from pole to pole.
+ * Correcting the derivatives by a whole turn where they have obviously wrapped
+ * and sampling with textureGrad removes it.
+ */
+vec4 equirect(sampler2D tex, vec2 uv) {
+  vec2 dx = dFdx(uv);
+  vec2 dy = dFdy(uv);
+  if (abs(dx.x) > 0.5) dx.x -= sign(dx.x);
+  if (abs(dy.x) > 0.5) dy.x -= sign(dy.x);
+  return textureGrad(tex, uv, dx, dy);
+}
+
+/**
+ * Two octaves, with the second warped by the first — or one, on a device that
+ * cannot afford it.
+ *
+ * Warping is what stops a surface looking like noise: the second octave is
+ * displaced by the first, so features stretch and curl into each other instead
+ * of sitting in an even lattice. It also doubles the texture fetches, and at
+ * the lowest quality tier the planets are drawn into a third-resolution buffer
+ * where the difference cannot be resolved anyway.
+ */
+float warped(vec3 p) {
+  float a = fbm3(p);
+  if (uDetail < 0.5) return a;
+  vec3 q = p + vec3(a, a * 0.7, a * 1.3) * 0.55;
+  return fbm3(q * 2.1) * 0.55 + a * 0.45;
 }
 
 void main() {
@@ -653,48 +701,142 @@ void main() {
   vec3 toCam = normalize(uCamPos - vCentre);
   float z = sqrt(max(1.0 - r2, 0.0));
 
-  // The surface normal, rebuilt from the flat quad. The two screen axes give
+  // The surface normal, rebuilt from the flat quad: the two screen axes give
   // the across-the-disc part and the square root gives the height, which is
   // all a sphere is from this side.
   vec3 n = normalize(uRight * vLocal.x + uUp * vLocal.y + toCam * z);
 
-  // Lit by the galaxy. Not by an invented sun off-camera — the core is the
-  // brightest thing in the scene and it would be the light source, so the
-  // terminator always sits at the right angle relative to what the viewer can
-  // already see.
+  // Into the planet's own frame, so the surface turns with the world instead
+  // of sliding across it as the camera moves.
+  vec3 np = normalize(unrotate(vOrient, n));
+
+  // Lit by the galaxy. Wrapped, not clamped: from inside a galaxy the light is
+  // an enormous extended source filling half the sky, and light that broad
+  // reaches well past the terminator. Clamped Lambert gave every world a hard
+  // black hemisphere and they read as holes cut in the frame.
   vec3 L = normalize(-vCentre);
+  float ndl = dot(n, L);
+  // The exponent sets how hard the terminator falls. Low values wrap the light
+  // most of the way round and every planet reads as evenly lit.
+  //
+  // Earth gets a much harder falloff than the rest. The others need the wrap,
+  // because a dark hemisphere with nothing in it is a hole in the frame. Earth
+  // has its own light on the dark side, and dimming the night down to almost
+  // nothing is exactly what lets the cities carry it.
+  float lit = pow(ndl * 0.5 + 0.5, vKind > 1.5 ? 3.6 : 1.5);
+  float day = smoothstep(-0.14, 0.30, ndl);
 
-  // Wrapped, not clamped. A galaxy is not a point source — from a planet
-  // sitting inside one it is an enormous extended light filling half the sky,
-  // and light from a source that large wraps well past the terminator. Clamped
-  // Lambert gave a hard-edged black hemisphere and every world read as a hole
-  // cut out of the frame rather than an object in it.
-  float wrap = dot(n, L) * 0.5 + 0.5;
-  float lit = pow(wrap, 1.5);
+  vec3 albedo;
+  vec3 emissive = vec3(0.0);
+  vec3 atmosphere = vec3(0.42, 0.60, 1.05);
 
-  // Surface. Sampled in the sphere's own frame so it turns with the world
-  // rather than sliding across it as the camera moves.
-  vec3 q = n * (1.35 + vSeed * 1.4) + vSeed * 27.0;
-  float detail = fbm3(q) * 0.62 + fbm3(q * 2.9 + 4.1) * 0.38;
+  if (vKind > 1.5 && uEarthLoaded > 0.5) {
+    // ---- Earth ----
+    float lat = asin(clamp(np.y, -1.0, 1.0));
+    float lon = atan(np.z, np.x);
+    vec2 uv = vec2(lon * 0.15915494 + 0.5, 0.5 - lat * 0.31830989);
 
-  // Above a threshold the planet is banded instead of mottled: gas giants and
-  // rocky worlds in the same handful, so they do not all read as siblings.
-  float banded = step(0.55, vSeed);
-  float bands = 0.5 + 0.5 * sin(n.y * (9.0 + vSeed * 14.0) + detail * 3.4);
-  float surface = mix(0.42 + detail * 1.30, 0.52 + bands * 0.80, banded);
+    vec3 surface = equirect(uEarthDay, uv).rgb;
 
-  vec3 albedo = vColor * surface;
+    // Cloud. The one part of this planet that has no business being accurate —
+    // weather is different every day, and a photograph of a specific afternoon
+    // would be a stranger choice than something that simply looks like
+    // weather. Two octaves of the volume noise, turning slowly.
+    vec3 cq = np * 2.6 + vec3(uTime * 0.0045, 0.0, 0.0);
+    float cloud = warped(cq);
+    cloud = smoothstep(0.50, 0.78, cloud);
+    // Thinner over the deserts and the poles, heavier over the tropics and the
+    // storm belts, which is roughly where weather is.
+    cloud *= 0.35 + 0.65 * smoothstep(0.0, 0.35, abs(sin(lat * 2.1)));
 
-  // And a floor under it, for the light coming from everything that is not the
-  // core: the rest of the disc, the arms, the stars nearby.
-  vec3 ambient = vColor * 0.115;
+    surface = mix(surface, vec3(0.90, 0.93, 0.98), cloud * 0.70);
+    albedo = surface;
 
-  // Atmosphere, on the lit limb only. Strongest where the surface turns away
-  // from the camera, which is where a real one is thickest along the sightline.
-  float fres = pow(1.0 - z, 3.2);
-  vec3 rim = vec3(0.42, 0.60, 1.05) * fres * (0.25 + lit * 1.5);
+    // ---- the lights ----
+    vec3 lights = equirect(uEarthNight, uv).rgb;
 
-  vec3 col = albedo * (0.16 + lit * 1.25) + ambient + rim;
+    // Only on the night side, and only through gaps in the cloud.
+    float night = 1.0 - smoothstep(-0.22, 0.16, ndl);
+    lights *= night * (1.0 - cloud * 0.80);
+
+    // The flicker. Cities do not actually twinkle from orbit — this is the
+    // atmosphere doing to city light what it does to starlight, and without it
+    // the night side is a static texture and reads as one. Two frequencies so
+    // it never falls into an obvious rhythm, and shallow enough that you notice
+    // it as life rather than as an effect.
+    float h = fract(sin(dot(floor(uv * 1400.0), vec2(12.9898, 78.233))) * 43758.5);
+    float flicker = 0.86
+      + 0.14 * sin(uTime * (1.7 + h * 4.3) + h * 62.0)
+      + 0.07 * sin(uTime * (5.2 + h * 6.1) + h * 17.0);
+
+    emissive = lights * flicker * 5.2;
+    atmosphere = vec3(0.32, 0.55, 1.15);
+  } else if (vKind > 0.5) {
+    // ---- gas giant ----
+    // Bands displaced by turbulence rather than drawn straight. Latitude
+    // stripes on their own read as a beach ball; letting the noise push the
+    // band coordinate around is what makes them shear and curl the way a real
+    // atmosphere does.
+    float turb = warped(np * 1.9 + vSeed * 31.0);
+    float band = np.y * (7.0 + vSeed * 12.0) + turb * 2.9;
+    float bands = 0.5 + 0.5 * sin(band);
+    bands = pow(bands, 1.4);
+
+    // One storm, placed by the seed.
+    vec3 spot = normalize(vec3(cos(vSeed * 14.0), -0.28 + vSeed * 0.3, sin(vSeed * 14.0)));
+    float d = 1.0 - dot(np, spot);
+    float storm = smoothstep(0.055, 0.004, d) * 0.75;
+
+    vec3 dark = vColor * 0.55;
+    vec3 light = vColor * 1.28;
+    albedo = mix(dark, light, bands);
+    albedo = mix(albedo, vec3(0.78, 0.42, 0.30), storm);
+    atmosphere = vColor * 1.1;
+  } else {
+    // ---- rocky ----
+    float base = warped(np * (1.5 + vSeed * 1.6) + vSeed * 23.0);
+
+    // Ridged noise, which is what a cratered or eroded surface looks like:
+    // sharp lines with smooth ground between, rather than the even lumpiness a
+    // plain fBm gives.
+    float ridge = 1.0 - abs(2.0 * fbm3(np * (4.2 + vSeed * 3.0) + 9.7) - 1.0);
+    ridge = pow(clamp(ridge, 0.0, 1.0), 3.4);
+
+    float shade = 0.52 + base * 0.95 + ridge * 0.30;
+
+    // Ice at the poles, cut back where the surface is rough.
+    float polar = smoothstep(0.72, 0.95, abs(np.y)) * (0.55 + 0.45 * base);
+    albedo = vColor * shade;
+    albedo = mix(albedo, vec3(0.88, 0.91, 0.96), clamp(polar, 0.0, 1.0) * 0.8);
+    atmosphere = mix(vec3(0.55, 0.58, 0.70), vColor, 0.4);
+  }
+
+  // A floor under the lit side, for the light coming from everything that is
+  // not the core: the rest of the disc, the arms, the stars nearby.
+  vec3 ambient = albedo * (vKind > 1.5 ? 0.018 : 0.075);
+
+  // Atmosphere. Strongest where the surface turns away from the camera, which
+  // is where a real one is thickest along the sightline, and brightest on the
+  // lit limb.
+  float fres = pow(1.0 - z, 3.0);
+  vec3 rim = atmosphere * fres * (0.20 + lit * 1.70);
+
+  // Warm scatter right at the terminator — the sunset seen from orbit.
+  float term = exp(-abs(ndl) * 12.0) * (1.0 - z * 0.55);
+  rim += vec3(1.0, 0.52, 0.24) * term * 0.55;
+
+  // Forward scattering, for a world with the light behind it.
+  //
+  // Most of these are backlit: they sit between the camera and the core,
+  // because that is where the camera is pointed. Lit only from the front they
+  // would be near-black discs in a dark corner — which is what the hero planet
+  // was. Light passing through the limb of an atmosphere towards the viewer is
+  // both real and the reason a backlit planet is the most beautiful way to
+  // photograph one: it comes apart into a ring.
+  float behind = clamp(-dot(L, toCam), 0.0, 1.0);
+  rim += atmosphere * pow(1.0 - z, 2.0) * pow(behind, 2.0) * 1.45;
+
+  vec3 col = albedo * ((vKind > 1.5 ? 0.010 : 0.17) + lit * 1.90) + ambient + rim + emissive;
 
   // Edge coverage, so the silhouette is not a staircase.
   float edge = smoothstep(1.0, 0.965, r2);

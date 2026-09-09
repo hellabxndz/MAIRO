@@ -139,10 +139,17 @@ const PATH: Array<{ at: number; eye: [number, number, number]; look: [number, nu
   // to be inside the disc rather than looking down on it.
   { at: 0.58, eye: [ 150,   17,  250], look: [-260,   12,  -95] },
   { at: 0.76, eye: [-120,   28,  130], look: [ -20,    2,  -40] },
-  { at: 0.90, eye: [ -48,   16,   62], look: [   6,    0,  -10] },
-  // And then all the way out, so the last thing the page does is show how far
-  // the journey went.
-  { at: 1.00, eye: [ 840,  980, 1950], look: [   0,    0,    0] },
+  { at: 0.86, eye: [ -48,   16,   62], look: [   6,    0,  -10] },
+  // Out, so the page shows how far the journey went...
+  { at: 0.94, eye: [ 900, 1050, 2050], look: [   0,    0,    0] },
+  // ...and then round onto Earth, which has been sitting off to one side of
+  // that shot the whole time, a small disc near the edge of the frame. The
+  // camera does not reverse to find it — turning a hundred and eighty degrees
+  // in the last few per cent of the page would be a lurch. It is already in
+  // view; the ending just goes to it.
+  // Ninety-two units from a world fifty-five across, so it overfills the frame
+  // and the United States is most of what is left in it.
+  { at: 1.00, eye: [1272,  812, 1330], look: [1312,  786, 1251] },
 ];
 
 /** Catmull–Rom through the stops, so the camera never changes direction sharply. */
@@ -185,56 +192,207 @@ function sampleSpline(p: number, key: "eye" | "look", out: number[]): void {
  * is not on. A planet is an event, and one parked over a headline is a
  * mistake.
  */
-const PLANETS = [
-  // Hero: a large pale world low and left, half out of frame.
-  { at: 0.02, right: -78, up: -30, fwd: 150, radius: 15, color: [0.40, 0.47, 0.60], seed: 0.21 },
+type Planet = {
+  /** Placed in the camera's frame at this point on the journey... */
+  at?: number;
+  right?: number;
+  up?: number;
+  fwd?: number;
+  /** ...or at an absolute world position, for one that has to be somewhere exact. */
+  world?: readonly [number, number, number];
+  radius: number;
+  color: readonly [number, number, number];
+  seed: number;
+  /** 0 rocky, 1 gas giant, 2 Earth. */
+  kind: 0 | 1 | 2;
+  /**
+   * Latitude and longitude that should be turned towards the camera at `faceAt`.
+   *
+   * Only Earth uses it, and it is the whole reason the ending works: the
+   * planet is oriented so that the middle of the United States is the part
+   * facing the viewer when the camera arrives, rather than whichever ocean
+   * happened to be pointing that way.
+   */
+  face?: readonly [number, number];
+  faceAt?: number;
+};
+
+const PLANETS: readonly Planet[] = [
+  // Hero: low and to the right, in front of the galaxy's glow rather than in
+  // the dark corner where the type is. The first placement was on the left,
+  // and it rendered correctly and was still invisible — the scrim that keeps
+  // the headline legible sits at sixty per cent opacity over exactly that part
+  // of the frame and took the planet down with it.
+  { at: 0.02, right: 95, up: -52, fwd: 132, radius: 22, color: [0.40, 0.47, 0.60], seed: 0.21, kind: 0 },
   // A rusty one drifting past on the right as the descent starts.
-  { at: 0.26, right: 62, up: 20, fwd: 105, radius: 8, color: [0.66, 0.40, 0.28], seed: 0.34 },
+  { at: 0.26, right: 62, up: 20, fwd: 105, radius: 8, color: [0.66, 0.40, 0.28], seed: 0.34, kind: 0 },
   // A banded giant, close, once the camera is down among the arms.
-  { at: 0.47, right: -46, up: 17, fwd: 78, radius: 17, color: [0.74, 0.64, 0.47], seed: 0.82 },
+  //
+  // Everything here is kept to the right of frame and below the headline. The
+  // type lives in the left third of every section on this page, and a planet
+  // is worth nothing if it is sitting behind a sentence — the first placement
+  // put this one directly across "without the expert".
+  { at: 0.47, right: 74, up: -60, fwd: 84, radius: 17, color: [0.74, 0.64, 0.47], seed: 0.82, kind: 1 },
   // Small and pale, passing quickly.
-  { at: 0.66, right: 26, up: -11, fwd: 40, radius: 4.5, color: [0.54, 0.60, 0.72], seed: 0.44 },
+  { at: 0.66, right: 26, up: -11, fwd: 40, radius: 4.5, color: [0.54, 0.60, 0.72], seed: 0.44, kind: 0 },
   // An icy one near the core, lit hard from one side.
-  { at: 0.82, right: -19, up: 8, fwd: 26, radius: 3.4, color: [0.78, 0.76, 0.70], seed: 0.69 },
-  // And one final giant on the way back out.
-  { at: 0.965, right: 120, up: 46, fwd: 300, radius: 34, color: [0.36, 0.43, 0.60], seed: 0.91 },
-] as const;
+  { at: 0.82, right: 24, up: -6, fwd: 28, radius: 5.0, color: [0.78, 0.76, 0.70], seed: 0.69, kind: 0 },
+  // A second giant, seen during the pull-back.
+  { at: 0.94, right: 210, up: -120, fwd: 620, radius: 46, color: [0.52, 0.46, 0.62], seed: 0.61, kind: 1 },
 
-const PLANET_STRIDE = 8;
+  // And Earth, at a fixed point outside the galaxy. Fixed rather than placed
+  // against the path because the last two camera keyframes are positioned
+  // around it, and a planet whose position depends on the camera that is
+  // aiming at it is a circle with nowhere to start.
+  {
+    world: [1312, 786, 1251],
+    radius: 55,
+    color: [1, 1, 1],
+    seed: 0.5,
+    kind: 2,
+    // The geographic centre of the contiguous United States.
+    face: [39.5, -98.35],
+    faceAt: 1.0,
+  },
+];
 
-/** Resolves every planet's world position from the path it was placed against. */
-function buildPlanetInstances(): Float32Array {
+/** centre(3) radius(1) colour(3) seed(1) orientation(4) kind(1). */
+const PLANET_STRIDE = 13;
+
+/** The camera's own axes at a point on the path. */
+function cameraFrame(at: number) {
   const eye: number[] = [0, 0, 0];
   const look: number[] = [0, 0, 0];
+  sampleSpline(at, "eye", eye);
+  sampleSpline(at, "look", look);
+
+  let fx = look[0] - eye[0], fy = look[1] - eye[1], fz = look[2] - eye[2];
+  const fl = Math.hypot(fx, fy, fz) || 1;
+  fx /= fl; fy /= fl; fz /= fl;
+
+  // right = forward x worldUp, then up = right x forward. The same basis the
+  // view matrix builds, so "right" here means right on screen.
+  let rx = -fz, ry = 0, rz = fx;
+  const rl = Math.hypot(rx, ry, rz) || 1;
+  rx /= rl; ry /= rl; rz /= rl;
+
+  return {
+    eye,
+    f: [fx, fy, fz] as const,
+    r: [rx, ry, rz] as const,
+    u: [ry * fz - rz * fy, rz * fx - rx * fz, rx * fy - ry * fx] as const,
+  };
+}
+
+function norm(v: number[]): number[] {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+
+function cross(a: readonly number[], b: readonly number[]): number[] {
+  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+
+/**
+ * A rotation that turns the planet-space point at (lat, lon) towards world
+ * direction `D`, keeping the planet's north pole as close to `U` as it can.
+ *
+ * Both frames are built as orthonormal triples — the point, the component of
+ * north perpendicular to it, and their cross product — and the rotation is the
+ * one that carries the first onto the second. Two spin angles could not do
+ * this: they would aim the right place at the camera and leave the pole
+ * wherever it fell, and a tilted Earth reads as a mistake rather than a choice.
+ */
+function orientation(latDeg: number, lonDeg: number, D: number[], U: number[]): number[] {
+  const lat = (latDeg * Math.PI) / 180;
+  const lon = (lonDeg * Math.PI) / 180;
+  const P = [Math.cos(lat) * Math.cos(lon), Math.sin(lat), Math.cos(lat) * Math.sin(lon)];
+
+  const north = [0, 1, 0];
+  const e1 = norm(P);
+  const dotN = north[0] * e1[0] + north[1] * e1[1] + north[2] * e1[2];
+  const e2 = norm([north[0] - e1[0] * dotN, north[1] - e1[1] * dotN, north[2] - e1[2] * dotN]);
+  const e3 = cross(e1, e2);
+
+  const f1 = norm(D);
+  const dotU = U[0] * f1[0] + U[1] * f1[1] + U[2] * f1[2];
+  const f2 = norm([U[0] - f1[0] * dotU, U[1] - f1[1] * dotU, U[2] - f1[2] * dotU]);
+  const f3 = cross(f1, f2);
+
+  // R = F * E^T, in row-major 3x3.
+  const m: number[][] = [];
+  for (let i = 0; i < 3; i++) {
+    m.push([0, 1, 2].map((j) => f1[i] * e1[j] + f2[i] * e2[j] + f3[i] * e3[j]));
+  }
+
+  // Matrix to quaternion, branching on the largest diagonal term so the square
+  // root is never taken of something near zero.
+  const tr = m[0][0] + m[1][1] + m[2][2];
+  let x: number, y: number, z: number, w: number;
+  if (tr > 0) {
+    const sq = Math.sqrt(tr + 1) * 2;
+    w = 0.25 * sq;
+    x = (m[2][1] - m[1][2]) / sq;
+    y = (m[0][2] - m[2][0]) / sq;
+    z = (m[1][0] - m[0][1]) / sq;
+  } else if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) {
+    const sq = Math.sqrt(1 + m[0][0] - m[1][1] - m[2][2]) * 2;
+    w = (m[2][1] - m[1][2]) / sq;
+    x = 0.25 * sq;
+    y = (m[0][1] + m[1][0]) / sq;
+    z = (m[0][2] + m[2][0]) / sq;
+  } else if (m[1][1] > m[2][2]) {
+    const sq = Math.sqrt(1 + m[1][1] - m[0][0] - m[2][2]) * 2;
+    w = (m[0][2] - m[2][0]) / sq;
+    x = (m[0][1] + m[1][0]) / sq;
+    y = 0.25 * sq;
+    z = (m[1][2] + m[2][1]) / sq;
+  } else {
+    const sq = Math.sqrt(1 + m[2][2] - m[0][0] - m[1][1]) * 2;
+    w = (m[1][0] - m[0][1]) / sq;
+    x = (m[0][2] + m[2][0]) / sq;
+    y = (m[1][2] + m[2][1]) / sq;
+    z = 0.25 * sq;
+  }
+  return [x, y, z, w];
+}
+
+/** Resolves every planet's world position and orientation. */
+function buildPlanetInstances(): Float32Array {
   const out = new Float32Array(PLANETS.length * PLANET_STRIDE);
   let o = 0;
 
   for (const pl of PLANETS) {
-    sampleSpline(pl.at, "eye", eye);
-    sampleSpline(pl.at, "look", look);
+    let centre: number[];
+    if (pl.world) {
+      centre = [pl.world[0], pl.world[1], pl.world[2]];
+    } else {
+      const c = cameraFrame(pl.at ?? 0);
+      centre = [0, 1, 2].map(
+        (i) => c.eye[i] + c.f[i] * (pl.fwd ?? 0) + c.r[i] * (pl.right ?? 0) + c.u[i] * (pl.up ?? 0)
+      );
+    }
 
-    let fx = look[0] - eye[0], fy = look[1] - eye[1], fz = look[2] - eye[2];
-    const fl = Math.hypot(fx, fy, fz) || 1;
-    fx /= fl; fy /= fl; fz /= fl;
+    let q = [0, 0, 0, 1];
+    if (pl.face && pl.faceAt !== undefined) {
+      const c = cameraFrame(pl.faceAt);
+      const D = [c.eye[0] - centre[0], c.eye[1] - centre[1], c.eye[2] - centre[2]];
+      q = orientation(pl.face[0], pl.face[1], D, [c.u[0], c.u[1], c.u[2]]);
+    } else {
+      // An arbitrary but fixed tilt, so worlds are not all lined up with the
+      // galactic plane like a diagram.
+      const a = pl.seed * 6.283;
+      q = [Math.sin(a) * 0.3, Math.cos(a * 1.7) * 0.35, Math.sin(a * 2.3) * 0.25, 0.88];
+      const l = Math.hypot(q[0], q[1], q[2], q[3]);
+      q = q.map((v) => v / l);
+    }
 
-    // right = forward x worldUp, then up = right x forward. The same basis the
-    // view matrix builds, so "right" here means right on screen.
-    let rx = -fz, ry = 0, rz = fx;
-    const rl = Math.hypot(rx, ry, rz) || 1;
-    rx /= rl; ry /= rl; rz /= rl;
-
-    const ux = ry * fz - rz * fy;
-    const uy = rz * fx - rx * fz;
-    const uz = rx * fy - ry * fx;
-
-    out[o++] = eye[0] + fx * pl.fwd + rx * pl.right + ux * pl.up;
-    out[o++] = eye[1] + fy * pl.fwd + ry * pl.right + uy * pl.up;
-    out[o++] = eye[2] + fz * pl.fwd + rz * pl.right + uz * pl.up;
+    out[o++] = centre[0]; out[o++] = centre[1]; out[o++] = centre[2];
     out[o++] = pl.radius;
-    out[o++] = pl.color[0];
-    out[o++] = pl.color[1];
-    out[o++] = pl.color[2];
+    out[o++] = pl.color[0]; out[o++] = pl.color[1]; out[o++] = pl.color[2];
     out[o++] = pl.seed;
+    out[o++] = q[0]; out[o++] = q[1]; out[o++] = q[2]; out[o++] = q[3];
+    out[o++] = pl.kind;
   }
   return out;
 }
@@ -362,7 +520,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
-  const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime"]);
+  const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail"]);
   const uVol = uni(progVolume, [
     "uInvViewProj", "uCamPos", "uTime", "uSteps", "uDensity", "uDust",
     "uEnergy", "uSmooth", "uNoise", "uArmPitch", "uReveal",
@@ -414,7 +572,8 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bindBuffer(gl.ARRAY_BUFFER, planetInst);
     gl.bufferData(gl.ARRAY_BUFFER, buildPlanetInstances(), gl.STATIC_DRAW);
     const st = PLANET_STRIDE * 4;
-    for (const [loc, size, off] of [[1, 3, 0], [2, 1, 12], [3, 3, 16], [4, 1, 28]] as const) {
+    for (const [loc, size, off] of
+      [[1, 3, 0], [2, 1, 12], [3, 3, 16], [4, 1, 28], [5, 4, 32], [6, 1, 48]] as const) {
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, st, off);
       gl.vertexAttribDivisor(loc, 1);
@@ -434,6 +593,87 @@ export function createScene(opts: SceneOptions): Scene | null {
   gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.REPEAT);
   gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.REPEAT);
   gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.REPEAT);
+
+  /**
+   * A one-pixel texture that keeps the Earth sampler units valid.
+   *
+   * WebGL rejects a draw call outright — INVALID_OPERATION, nothing rendered,
+   * no error thrown anywhere a page can see — if two samplers of different
+   * types point at the same texture unit. The planet shader has a sampler3D
+   * for the noise volume and two sampler2Ds for Earth, and an unset sampler
+   * uniform is zero, so before Earth's textures loaded all three named unit 0.
+   *
+   * The symptom was that every planet in the scene was invisible until the
+   * scroll passed the point where the Earth textures were fetched, at which
+   * point all six of the others appeared at once. Binding something valid to
+   * those units from the start is the whole fix.
+   */
+  const blankTex = gl.createTexture()!;
+  gl.bindTexture(gl.TEXTURE_2D, blankTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  // --- Earth ---
+  //
+  // Four hundred kilobytes of texture for one object that is only on screen at
+  // the very end of the page, so it is not fetched until the scroll is most of
+  // the way there. Someone who reads the hero and leaves never pays for it,
+  // and by the time it is needed it has had a third of a page of scrolling to
+  // arrive. Until it does, Earth draws with the procedural rocky surface, so
+  // there is never a hole where a planet should be.
+  let earthDay: WebGLTexture | null = null;
+  let earthNight: WebGLTexture | null = null;
+  let earthLoaded = 0;
+  let earthStarted = false;
+
+  function loadEarth() {
+    if (earthStarted) return;
+    earthStarted = true;
+
+    const load = (base: string): Promise<HTMLImageElement> =>
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        // AVIF where it decodes and WebP where it does not. A browser can
+        // support WebGL2 and not AVIF, and that combination would otherwise
+        // land on a blank planet at the one moment the page is asking to be
+        // looked at.
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          const fallback = new Image();
+          fallback.onload = () => resolve(fallback);
+          fallback.onerror = reject;
+          fallback.src = `${base}.webp`;
+        };
+        img.src = `${base}.avif`;
+      });
+
+    Promise.all([load("/sky/earth-day"), load("/sky/earth-night")])
+      .then(([day, night]) => {
+        const upload = (img: HTMLImageElement): WebGLTexture => {
+          const tex = gl.createTexture()!;
+          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB8, gl.RGB, gl.UNSIGNED_BYTE, img);
+          // Mipmaps, because Earth is small on screen for most of its life and
+          // a four-thousand-pixel map of city lights sampled at one pixel per
+          // degree without them is a field of aliasing.
+          gl.generateMipmap(gl.TEXTURE_2D);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          // Wrapping in longitude, clamped in latitude: the map joins itself
+          // around the equator but the poles are edges.
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          return tex;
+        };
+        earthDay = upload(day);
+        earthNight = upload(night);
+        earthLoaded = 1;
+      })
+      .catch(() => {
+        // Leave it procedural. A missing texture is not worth a broken page.
+      });
+  }
 
   // --- render targets ---
   let hdr: Target | null = null;
@@ -673,9 +913,18 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform3f(uPlanet.uUp, view[1], view[5], view[9]);
     gl.uniform1f(uPlanet.uTime, t);
     gl.uniform1f(uPlanet.uReveal, Math.max(0, (revealEase - 0.45) / 0.55));
+    gl.uniform1f(uPlanet.uDetail, tier === 0 ? 0 : 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_3D, noiseTex);
     gl.uniform1i(uPlanet.uNoise, 0);
+    gl.uniform1f(uPlanet.uEarthLoaded, earthLoaded);
+    // Always bound, and never to unit 0 — see blankTex above.
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, earthDay ?? blankTex);
+    gl.uniform1i(uPlanet.uEarthDay, 2);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, earthNight ?? blankTex);
+    gl.uniform1i(uPlanet.uEarthNight, 3);
     gl.bindVertexArray(planetVao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, PLANETS.length);
     gl.bindVertexArray(null);
@@ -763,7 +1012,10 @@ export function createScene(opts: SceneOptions): Scene | null {
     // renderer demotes itself, and a snapshot taken at construction would
     // report the starting tier forever.
     get tier() { return tier; },
-    setProgress(p) { progress = Math.min(Math.max(p, 0), 1); },
+    setProgress(p) {
+      progress = Math.min(Math.max(p, 0), 1);
+      if (progress > 0.55) loadEarth();
+    },
     setPointer(x, y) { pointerX = x; pointerY = y; },
     resize,
     start() {
