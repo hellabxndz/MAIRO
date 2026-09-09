@@ -43,17 +43,23 @@ export function SiteNav() {
           cut the one full-bleed view of the backdrop the page gets. */}
       <div
         aria-hidden
-        className={`absolute inset-x-0 top-0 h-[176px] transition-opacity duration-500 ${
+        className={`absolute inset-x-0 top-0 h-[150px] transition-opacity duration-500 ${
           floating ? "opacity-100" : "opacity-0"
         }`}
         style={{
-          // Fully opaque across the row the links actually occupy, then fading
-          // to nothing. Ninety-odd per cent was not enough: the remaining few
-          // per cent of a headline is still a headline, and sharp text crossing
-          // the navigation reads as broken however faint it is. Below the links
-          // the fade does the rest, so there is no edge anywhere.
+          // Opaque exactly as far as the links reach, then off quickly.
+          //
+          // Both ends of this were wrong once. A short, heavy ramp hid the
+          // collision but also swallowed the two lines beneath it, so
+          // paragraphs read as clipped. Stretching it to three hundred pixels
+          // fixed the clipping and put a haze over a third of the viewport
+          // instead, dimming text that was nowhere near the navigation.
+          //
+          // What works is a hard floor and a fast exit: solid through the row
+          // the links occupy, and nothing left by a hundred and fifty pixels
+          // down, where the page is simply the page again.
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.80) 56%, rgba(0,0,0,0.38) 76%, rgba(0,0,0,0) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.55) 66%, rgba(0,0,0,0.22) 82%, rgba(0,0,0,0) 100%)",
         }}
       />
 

@@ -917,3 +917,158 @@ void main() {
   outColor = vec4(col * uReveal, edge * uReveal);
 }
 `;
+
+/**
+ * Meteors and one spacecraft.
+ *
+ * Both are the same thing geometrically — a quad stretched along a direction
+ * of travel — so they share a pass. A meteor is a bright head with a tapering
+ * tail; the craft is a slim hull with an engine plume behind it. One draw call
+ * covers the lot.
+ *
+ * The quad is oriented by projecting the direction of travel into the plane
+ * facing the camera. That is what keeps a streak pointing the way it is
+ * actually going: billboarding it flat would leave every meteor drawn
+ * horizontally regardless of its path, which is the thing that makes cheap
+ * versions of this look like scratches on the lens.
+ */
+export const TRAVELLER_VERT = /* glsl */ `#version 300 es
+precision highp float;
+
+layout(location = 0) in vec2 aCorner;    // x: -1 tail .. 1 nose, y: across
+layout(location = 1) in vec3 aOrigin;    // in camera axes: right, up, forward
+layout(location = 2) in vec3 aDir;       // ditto, unit
+layout(location = 3) in vec4 aParams;    // speed, period, phase, size
+layout(location = 4) in vec3 aTint;
+layout(location = 5) in float aKind;     // 0 meteor, 1 craft
+
+uniform mat4 uViewProj;
+uniform vec3 uCamPos;
+uniform vec3 uRight;
+uniform vec3 uUp;
+uniform vec3 uFwd;
+uniform float uTime;
+uniform float uReveal;
+
+out vec2 vLocal;
+out vec3 vTint;
+out float vKind;
+out float vFade;
+
+void main() {
+  float speed = aParams.x;
+  float period = aParams.y;
+  float phase = aParams.z;
+  float size = aParams.w;
+
+  float t = mod(uTime + phase, period);
+
+  // A meteor burns for a second and a half of a much longer cycle, so the sky
+  // is mostly empty and one crosses it every so often. The craft is always on
+  // its way somewhere.
+  float life = aKind > 0.5 ? period : 1.6;
+  float u = clamp(t / life, 0.0, 1.0);
+
+  // Both the starting point and the heading are given in the camera's own
+  // axes, so a meteor always crosses the view you are actually looking at.
+  //
+  // Fixing them in the world was the first attempt and it does not work: the
+  // camera travels thousands of units down the page, so a meteor placed for
+  // the hero is a long way behind you by the pricing table, and one placed for
+  // the pricing table is invisibly distant from the hero. Anchoring to the
+  // camera costs nothing in realism — each one exists for a second and a half,
+  // far too briefly for anyone to notice it was not there before.
+  vec3 origin = uCamPos + uRight * aOrigin.x + uUp * aOrigin.y + uFwd * aOrigin.z;
+  vec3 dir = normalize(uRight * aDir.x + uUp * aDir.y + uFwd * aDir.z);
+
+  vec3 head = origin + dir * (speed * t);
+
+  vec3 toCam = normalize(uCamPos - head);
+  // The travel direction, flattened into the plane facing the camera.
+  vec3 along = dir - toCam * dot(dir, toCam);
+  float alen = length(along);
+  along = alen > 1e-4 ? along / alen : normalize(cross(toCam, vec3(0.0, 1.0, 0.0)));
+  vec3 across = normalize(cross(along, toCam));
+
+  // Meteors fade in and out across their life; the craft holds steady.
+  float envelope = aKind > 0.5 ? 1.0 : sin(u * 3.14159) * step(t, life);
+
+  float len = size * (aKind > 0.5 ? 1.0 : 9.0);
+  // Very thin. The first attempt was three times this and every meteor read
+  // as a grey rod laid across the sky — a streak is mostly length, and the
+  // width only exists so the core has something to bloom into.
+  float wid = size * (aKind > 0.5 ? 0.16 : 0.045);
+
+  vec3 world = head + along * (aCorner.x * len) + across * (aCorner.y * wid);
+  gl_Position = uViewProj * vec4(world, 1.0);
+
+  vLocal = aCorner;
+  vTint = aTint;
+  vKind = aKind;
+  vFade = envelope * smoothstep(0.35, 0.85, uReveal);
+}
+`;
+
+export const TRAVELLER_FRAG = /* glsl */ `#version 300 es
+precision highp float;
+
+in vec2 vLocal;
+in vec3 vTint;
+in float vKind;
+in float vFade;
+
+out vec4 outColor;
+
+uniform float uTime;
+
+void main() {
+  if (vFade <= 0.001) discard;
+
+  float u = vLocal.x;        // -1 at the tail, +1 at the nose
+  float v = abs(vLocal.y);
+
+  vec3 col;
+  float a;
+
+  if (vKind > 0.5) {
+    // ---- the craft ----
+    // A hull that tapers to a point at the nose, and a plume behind it. Both
+    // are distance fields rather than geometry, so the whole ship is two
+    // triangles.
+    float hull = smoothstep(0.62, 0.46, u) * smoothstep(-0.30, -0.10, u);
+    float taper = mix(0.26, 1.0, smoothstep(0.62, -0.08, u));
+    float body = smoothstep(taper, taper * 0.55, v) * hull;
+
+    // Lit along one flank, so it reads as a solid object rather than a decal.
+    float flank = smoothstep(-0.9, 0.9, vLocal.y);
+    vec3 metal = mix(vec3(0.30, 0.33, 0.40), vec3(0.88, 0.91, 1.00), flank * 0.85);
+
+    // The engine. Flickers on two frequencies, because a steady glow reads as
+    // a light bulb rather than combustion.
+    float flick = 0.78 + 0.16 * sin(uTime * 47.0) + 0.10 * sin(uTime * 113.0 + 1.7);
+    float plume = smoothstep(-0.24, -0.34, u) * exp((u + 0.34) * 2.2);
+    plume *= exp(-v * v * 26.0) * flick;
+    float glow = exp(-((u + 0.30) * (u + 0.30)) * 26.0) * exp(-v * v * 7.0) * 0.60 * flick;
+
+    col = metal * body * 1.25
+        + vec3(0.55, 0.78, 1.35) * plume * 1.5
+        + vec3(0.45, 0.70, 1.25) * glow;
+    a = clamp(body + plume * 0.9 + glow * 0.7, 0.0, 1.0);
+  } else {
+    // ---- a meteor ----
+    // A hot point at the head with a trail falling away behind it, narrowing
+    // as it goes. Two terms: a small intense core that the bloom pass picks
+    // up, and a longer, dimmer trail that gives it its direction.
+    float trail = exp((u - 1.0) * 2.6);
+    float taper = mix(0.14, 1.0, clamp((u + 1.0) * 0.5, 0.0, 1.0));
+    float body = exp(-(v * v) / (taper * taper * 0.55)) * trail;
+
+    float core = exp((u - 1.0) * 26.0) * exp(-v * v * 14.0);
+
+    col = vTint * body * 1.5 + vec3(1.0, 0.97, 0.92) * core * 3.2;
+    a = clamp(body * 1.2 + core * 2.0, 0.0, 1.0);
+  }
+
+  outColor = vec4(col * vFade, a * vFade);
+}
+`;

@@ -16,6 +16,7 @@ import { buildNoiseVolume, NOISE_SIZE } from "./noise";
 import { buildGalaxy, STAR_STRIDE, type StarBuffers } from "./stars";
 import {
   STAR_VERT, STAR_FRAG, MOTE_VERT, MOTE_FRAG, PLANET_VERT, PLANET_FRAG,
+  TRAVELLER_VERT, TRAVELLER_FRAG,
   FULLSCREEN_VERT, VOLUME_FRAG, BRIGHT_FRAG, BLUR_FRAG, COMPOSITE_FRAG, COPY_FRAG,
 } from "./shaders";
 
@@ -409,6 +410,69 @@ function buildPlanetInstances(): Float32Array {
   return out;
 }
 
+/** origin(3) dir(3) speed/period/phase/size(4) tint(3) kind(1). */
+const TRAVELLER_STRIDE = 14;
+
+/**
+ * Meteors, and the one ship.
+ *
+ * The meteors are placed near the camera path rather than out in the galaxy,
+ * because a streak a thousand units away is a stationary dot however fast it
+ * is really moving. These pass close enough to cross the frame.
+ *
+ * Their periods are deliberately not multiples of each other. Give six meteors
+ * a tidy set of intervals and they fall into step within a minute and start
+ * arriving in a rhythm, which is the one thing a shooting star must never do.
+ */
+function buildTravellers(): Float32Array {
+  const rows: number[][] = [];
+
+  const rng = (() => {
+    let x = 0x2f6e2b1;
+    return () => {
+      x ^= x << 13; x >>>= 0;
+      x ^= x >> 17;
+      x ^= x << 5; x >>>= 0;
+      return x / 4294967296;
+    };
+  })();
+
+  // Periods that share no common factor. Give ten meteors a tidy set of
+  // intervals and they drift into step within a minute and start arriving in a
+  // rhythm, which is the one thing a shooting star must never do.
+  const periods = [6.7, 8.3, 9.7, 11.3, 13.1, 15.7, 18.3, 21.7, 26.9, 33.1];
+
+  for (let i = 0; i < periods.length; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    rows.push([
+      // Off to one side, above, and out in front.
+      side * (60 + rng() * 130), 40 + rng() * 90, 110 + rng() * 190,
+      // Crossing the view and falling, with a little variation.
+      -side * (0.72 + rng() * 0.3), -(0.34 + rng() * 0.4), rng() * 0.3 - 0.1,
+      70 + rng() * 90,             // speed
+      periods[i],
+      rng() * periods[i],          // phase
+      11 + rng() * 13,             // size
+      ...(rng() < 0.35 ? [1.0, 0.84, 0.58] : [0.74, 0.87, 1.0]),
+      0,                           // kind: meteor
+    ]);
+  }
+
+  // The ship. Crosses slowly, far enough out to read as something enormous.
+  rows.push([
+    -170, 46, 235,
+    0.95, -0.10, 0.28,
+    7.5,        // speed
+    74,         // period: a minute and a quarter to cross and come round again
+    9,
+    17.0,       // size
+    0.9, 0.94, 1.0,
+    1,          // kind: craft
+  ]);
+
+  return new Float32Array(rows.flat());
+}
+
 // ---------------------------------------------------------------------------
 // Quality
 // ---------------------------------------------------------------------------
@@ -515,6 +579,7 @@ export function createScene(opts: SceneOptions): Scene | null {
   const progStar = link(gl, STAR_VERT, STAR_FRAG, "star");
   const progMote = link(gl, MOTE_VERT, MOTE_FRAG, "mote");
   const progPlanet = link(gl, PLANET_VERT, PLANET_FRAG, "planet");
+  const progTraveller = link(gl, TRAVELLER_VERT, TRAVELLER_FRAG, "traveller");
   const progVolume = link(gl, FULLSCREEN_VERT, VOLUME_FRAG, "volume");
   const progBright = link(gl, FULLSCREEN_VERT, BRIGHT_FRAG, "bright");
   const progBlur = link(gl, FULLSCREEN_VERT, BLUR_FRAG, "blur");
@@ -532,6 +597,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
+  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal"]);
   const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
     "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
   const uVol = uni(progVolume, [
@@ -621,6 +687,33 @@ export function createScene(opts: SceneOptions): Scene | null {
    * point all six of the others appeared at once. Binding something valid to
    * those units from the start is the whole fix.
    */
+  // Meteors and the ship: same quad, same instancing idea as the planets.
+  const travCount = buildTravellers().length / TRAVELLER_STRIDE;
+  const travVao = gl.createVertexArray()!;
+  const travQuad = gl.createBuffer()!;
+  const travInst = gl.createBuffer()!;
+  {
+    gl.bindVertexArray(travVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, travQuad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1,  1, 1,
+      -1, -1,  1,  1, -1, 1,
+    ]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, travInst);
+    gl.bufferData(gl.ARRAY_BUFFER, buildTravellers(), gl.STATIC_DRAW);
+    const st = TRAVELLER_STRIDE * 4;
+    for (const [loc, size, off] of
+      [[1, 3, 0], [2, 3, 12], [3, 4, 24], [4, 3, 40], [5, 1, 52]] as const) {
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, st, off);
+      gl.vertexAttribDivisor(loc, 1);
+    }
+    gl.bindVertexArray(null);
+  }
+
   const PLANET_LAYERS = 6;
   const ALBEDO_W = 768, ALBEDO_H = 384;
   const RELIEF_W = 384, RELIEF_H = 192;
@@ -873,14 +966,23 @@ export function createScene(opts: SceneOptions): Scene | null {
     easedPX += (pointerX - easedPX) * 0.028;
     easedPY += (pointerY - easedPY) * 0.028;
 
-    // Six and a half seconds, and deliberately slow at the start.
+    // Three and a half seconds, and front-loaded.
     //
-    // The opening is meant to read as the universe coming up rather than an
-    // image fading in, and that needs the first second and a half to be almost
-    // nothing — a few distant points — so that the dust arriving, and then the
-    // galaxy behind it, land as separate events.
-    const reveal = Math.min(t / 6.5, 1);
-    const revealEase = Math.pow(reveal, 1.45) * (2 - Math.pow(reveal, 1.45));
+    // The opening still assembles out of the dark in three stages, but the
+    // galaxy itself is the thing worth seeing and it was arriving too late —
+    // six and a half seconds of build-up is a long time to look at an empty
+    // page, and most people had started scrolling before the arms appeared.
+    // The stages are still there; they just happen quickly.
+    // Clamped at zero as well as one.
+    //
+    // requestAnimationFrame hands back a timestamp that can predate the call
+    // that scheduled it, so on the very first frame t is slightly negative —
+    // and a negative base with a fractional exponent is NaN. That NaN went
+    // into the camera's z, which is how a one-frame glitch hid inside a scene
+    // that otherwise looked perfect. The old easing used an integer power and
+    // never showed it.
+    const reveal = Math.min(Math.max(t, 0) / 3.5, 1);
+    const revealEase = Math.pow(reveal, 0.85) * (2 - Math.pow(reveal, 0.85));
 
     sampleSpline(easedProgress, "eye", eye);
     sampleSpline(easedProgress, "look", look);
@@ -916,7 +1018,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1f(uVol.uSmooth, tier === 0 ? 0.35 : 0.0);
     gl.uniform1f(uVol.uArmPitch, 0.235);
     // The gas waits for the stars. Second stage of the three.
-    const gasReveal = Math.max(0, (revealEase - 0.30) / 0.70);
+    const gasReveal = Math.max(0, (revealEase - 0.16) / 0.84);
     gl.uniform1f(uVol.uReveal, gasReveal * gasReveal * (3 - 2 * gasReveal));
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_3D, noiseTex);
@@ -969,6 +1071,28 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bindVertexArray(moteCloud.vao);
     gl.drawArrays(gl.POINTS, 0, Math.round(buffers.moteCount * cfg.motes));
 
+    // Meteors and the ship, additively — they are light rather than objects.
+    //
+    // Before the planets, not after. There is no depth buffer in this scene,
+    // so whatever is drawn last wins, and a meteor drawn afterwards cut
+    // straight across the face of the nearest moon like a scratch on the lens.
+    // Drawing them first lets the planets paint over the ones behind them,
+    // which is wrong for the few genuinely in front and right for all the
+    // rest.
+    gl.useProgram(progTraveller);
+    gl.uniformMatrix4fv(uTrav.uViewProj, false, viewProj);
+    gl.uniform3fv(uTrav.uCamPos, eye);
+    gl.uniform3f(uTrav.uRight, view[0], view[4], view[8]);
+    gl.uniform3f(uTrav.uUp, view[1], view[5], view[9]);
+    // The camera looks down its own negative z, so forward is the negated
+    // third row of the view matrix.
+    gl.uniform3f(uTrav.uFwd, -view[2], -view[6], -view[10]);
+    gl.uniform1f(uTrav.uTime, t);
+    gl.uniform1f(uTrav.uReveal, revealEase);
+    gl.bindVertexArray(travVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
+    gl.bindVertexArray(null);
+
     // Planets last, and the only thing in the scene that is not additive —
     // they are solid objects and have to cover what is behind them rather than
     // glow on top of it.
@@ -1006,6 +1130,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, PLANETS.length);
     gl.bindVertexArray(null);
     gl.blendFunc(gl.ONE, gl.ONE);
+
 
     // ---- bloom ----
     if (cfg.bloom) {
@@ -1115,9 +1240,12 @@ export function createScene(opts: SceneOptions): Scene | null {
       }
       gl.deleteVertexArray(emptyVao);
       gl.deleteVertexArray(planetVao);
+      gl.deleteVertexArray(travVao);
+      gl.deleteBuffer(travQuad);
+      gl.deleteBuffer(travInst);
       gl.deleteBuffer(planetQuad);
       gl.deleteBuffer(planetInst);
-      for (const p of [progStar, progMote, progPlanet, progVolume, progBright, progBlur, progComposite, progCopy]) {
+      for (const p of [progStar, progMote, progPlanet, progTraveller, progVolume, progBright, progBlur, progComposite, progCopy]) {
         gl.deleteProgram(p);
       }
     },
