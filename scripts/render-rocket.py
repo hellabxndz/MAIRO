@@ -73,8 +73,8 @@ def lerp(dst: np.ndarray, colour: np.ndarray, mask: np.ndarray) -> np.ndarray:
 def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
     """Returns RGBA float in 0..1, nose pointing +x.
 
-    With mirror_text the wordmark is drawn back to front. That is not a mistake
-    — see main() for why the sprite ships as two rows.
+    With mirror_text the markings are drawn back to front. That is not a
+    mistake — see main() for why the sprite ships as two rows.
     """
     rng = np.random.default_rng(7)
     x = np.arange(w, dtype=np.float32)[None, :] + np.zeros((h, 1), dtype=np.float32)
@@ -84,12 +84,22 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
 
     # ---- the stack --------------------------------------------------------
     nose_tip = px(0.988)
-    fairing = px(0.800)          # shoulder of the nose cone
+    fairing = px(0.780)          # shoulder of the nose cone
     joint_a = px(0.560)          # fairing / forward tank
-    inter_f, inter_a = px(0.545), px(0.500)   # ribbed interstage, steps out
+    inter_f, inter_a = px(0.545), px(0.505)   # ribbed interstage, steps out
     skirt = px(0.208)            # thrust structure begins
     bell_f, bell_a = px(0.150), px(0.052)
-    R = h * 0.158
+
+    # Six calibers, not twelve.
+    #
+    # The first version was a real launch vehicle's proportions — a slender
+    # tube about twelve times longer than it is wide — and at the size this
+    # appears on screen it read as a scratch on the lens rather than as a
+    # ship. Nothing else about it mattered while that was true: the panel
+    # seams, the fins and the name were all there and all invisible. A stubbier
+    # rocket is less accurate to any particular launcher and enormously more
+    # legible at a hundred pixels.
+    R = h * 0.200
 
     # Ogive nose: the radius follows a circular arc, which is the profile that
     # reads as aerodynamic rather than as a cone.
@@ -112,7 +122,7 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
     # Two swept deltas with a curved trailing edge, rooted on the aft tank and
     # overhanging the engine. A root fillet blends them into the tube so they
     # do not look glued on.
-    span = h * 0.235
+    span = h * 0.200
     s = np.clip((ady - R * 0.88) / span, 0.0, 1.0)             # 0 root, 1 tip
     root = np.power(1.0 - s, 3.0)                              # fillet at the join
     lead = px(0.318) - s * px(0.128) + root * px(0.030)        # sweep
@@ -135,13 +145,16 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
     # Near-black paint. The diffuse term is deliberately tiny: the top of the
     # tube only just separates from the bottom, and the edges do the rest.
     hull = np.zeros((h, w, 3), dtype=np.float32)
-    # These two numbers are set for what comes out of the scene's tone map, not
-    # for what the sprite looks like on its own. The composite runs an arcsinh
-    # stretch, which lifts shadows hard: paint that reads black in a viewer
-    # came out gunmetal on the page, three times brighter than the sky behind
-    # it. Judge this by the rendered frame.
-    hull += np.array([0.006, 0.0065, 0.009], dtype=np.float32)[None, None, :]
-    hull += (lam * 0.013)[..., None] * np.array([0.85, 0.87, 0.94], dtype=np.float32)
+    # Set for what comes out of the scene's tone map, not for what the sprite
+    # looks like on its own. The composite runs an arcsinh stretch, which lifts
+    # shadows hard — but there is a floor below which that stops helping and
+    # the ship simply becomes a hole in the sky. That is what happened at half
+    # these numbers: a genuinely black hull on a black background has no
+    # silhouette at all, and no amount of rim light rescues it. This is
+    # graphite rather than ink: still unmistakably a black rocket, still much
+    # darker than anything around it, but with a surface you can see.
+    hull += np.array([0.030, 0.032, 0.040], dtype=np.float32)[None, None, :]
+    hull += (lam * 0.055)[..., None] * np.array([0.85, 0.87, 0.94], dtype=np.float32)
 
     # The specular band. Tight and restrained — an early pass used four times
     # this and the top half came out white, which is not a black rocket, it is
@@ -224,26 +237,15 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
 
     # ---- livery -----------------------------------------------------------
     # A white band round the shoulder of the fairing, and a thin one aft.
-    band = smoothstep(px(0.746), px(0.756), x) * smoothstep(px(0.790), px(0.780), x)
-    band += smoothstep(px(0.238), px(0.243), x) * smoothstep(px(0.258), px(0.253), x) * 0.8
+    band = smoothstep(px(0.716), px(0.728), x) * smoothstep(px(0.766), px(0.754), x)
     band = np.clip(band, 0, 1) * mask
     hull = lerp(hull, WHITE, band * (0.10 + 0.90 * np.power(np.clip(nz, 0, 1), 0.9)))
-
-    # Cockpit: a recessed port with a lit sill along its upper edge.
-    wx, wy = px(0.688), cy - R * 0.30
-    wd = np.sqrt(((x - wx) / px(0.0175)) ** 2 + ((y - wy) / (h * 0.042)) ** 2)
-    win = smoothstep(1.02, 0.86, wd) * mask
-    hull = lerp(hull, np.array([0.05, 0.09, 0.17], dtype=np.float32), win)
-    hull += (win * np.power(np.clip(-ny, 0, 1), 1.5) * 0.30)[..., None] * np.array(
-        [0.45, 0.62, 0.95], dtype=np.float32
-    )
-    hull += ((smoothstep(1.06, 0.98, wd) - smoothstep(0.98, 0.90, wd)) * mask * 0.22)[..., None]
 
     # ---- fins -------------------------------------------------------------
     # A plate seen nearly edge-on: dark face, a lit leading edge with visible
     # thickness, a darker trailing edge, and a spar shadow across the middle.
     face = np.zeros((h, w, 3), dtype=np.float32)
-    face += np.array([0.008, 0.0085, 0.012], dtype=np.float32)[None, None, :]
+    face += np.array([0.026, 0.028, 0.036], dtype=np.float32)[None, None, :]
     face += (smoothstep(0.0, 1.0, s) * 0.010)[..., None]            # tip catches more
     edge = smoothstep(3.4, 0.0, np.abs(x - lead))
     face += (edge * 0.46)[..., None] * np.array([0.62, 0.74, 1.00], dtype=np.float32)
@@ -262,7 +264,7 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
     stri = 0.5 + 0.5 * np.cos(dy * (2 * np.pi / (h * 0.030)))
     heat = smoothstep(bell_a, bell_f, x)
     bell_col = np.zeros((h, w, 3), dtype=np.float32)
-    bell_col += np.array([0.026, 0.028, 0.036], dtype=np.float32)[None, None, :]
+    bell_col += np.array([0.050, 0.054, 0.068], dtype=np.float32)[None, None, :]
     bell_col += ((stri ** 2) * 0.045)[..., None] * np.array([0.80, 0.84, 0.95], dtype=np.float32)
     bell_col += (np.power(np.clip(-ny * 0.9, 0, 1), 6.0) * 0.30)[..., None] * RIM
     bell_col += (heat * 0.34)[..., None] * FLAME
@@ -275,20 +277,44 @@ def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
     # Drawn last, straight onto the hull, then dimmed by the same cylinder term
     # so it curves away with the surface rather than sitting on top like a
     # sticker, and dirtied by the streaks so it belongs to the paint.
-    label = Image.new("L", (w, h), 0)
-    d = ImageDraw.Draw(label)
-    font = load_font(int(h * 0.150))
+    # Sizes here are set by what survives the trip to the screen, not by what
+    # looks balanced in the sprite. This picture ends up about a hundred pixels
+    # tall on the page, so a wordmark at a tasteful tenth of the hull's height
+    # arrives as four pixels of grey mush — which is what it was doing, and why
+    # a ship covered in panel seams and rivets read as a bare dark sliver.
+    # Both marks are deliberately enormous: the name is most of the tube's
+    # diameter and the roundel very nearly spans it. It looks overbearing at
+    # this magnification and reads as a marked ship at the size anyone sees it.
+    marks = Image.new("L", (w, h), 0)
+    d = ImageDraw.Draw(marks)
+
+    # The roundel, on the forward tank where a real vehicle carries its
+    # operator's mark: a heavy ring with an M inside it.
+    ex, ey = px(0.640), cy
+    er = int(h * 0.150)
+    d.ellipse([ex - er, ey - er, ex + er, ey + er], outline=255, width=int(h * 0.030))
+    mono = load_font(int(er * 1.30))
+    box = d.textbbox((0, 0), "M", font=mono)
+    d.text(
+        (ex - (box[2] - box[0]) / 2 - box[0], ey - (box[3] - box[1]) / 2 - box[1]),
+        "M",
+        font=mono,
+        fill=255,
+    )
+
+    # The name, letterspaced down the flank.
+    font = load_font(int(h * 0.230))
     text = "MAIRO"
-    track = int(h * 0.062)
+    track = int(h * 0.050)
     widths = [d.textlength(c, font=font) for c in text]
     total = sum(widths) + track * (len(text) - 1)
-    tx = px(0.372) - total / 2
-    ty = cy - h * 0.092
+    tx = px(0.318) - total / 2
+    ty = cy - h * 0.150
     for c, cw in zip(text, widths):
         d.text((tx, ty), c, font=font, fill=255)
         tx += cw + track
 
-    lab = np.asarray(label, dtype=np.float32) / 255.0
+    lab = np.asarray(marks, dtype=np.float32) / 255.0
     if mirror_text:
         lab = lab[:, ::-1]
     lab *= np.power(np.clip(nz, 0, 1), 0.80)          # wraps with the tube
@@ -318,8 +344,9 @@ def main() -> None:
     # Rendered at twice the output size and averaged down, which is the whole
     # antialiasing strategy — every edge here is a hard threshold on a distance,
     # and at final resolution they would all be stairs.
-    w, h = args.width * 2, (args.width * 2) // 4
-    tile = (args.width, args.width // 4)
+    # 8:3 rather than 4:1 — see the note on calibers in render().
+    w, h = args.width * 2, int(args.width * 2 * 0.375)
+    tile = (args.width, int(args.width * 0.375))
 
     # Two rows, and the reason is the wordmark.
     #

@@ -482,7 +482,7 @@ function buildTravellers(): Float32Array {
     72,         // period: a little over a minute for one lap
     54,         // phase: opens at the near point of the lap, where the craft is
                 //   largest and crossing fastest, so it reads as moving at once
-    44.0,       // size
+    60.0,       // size
     0.9, 0.94, 1.0,
     1,          // kind: craft
   ]);

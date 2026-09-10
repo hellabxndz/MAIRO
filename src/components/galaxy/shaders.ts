@@ -1035,19 +1035,49 @@ void main() {
   along = alen > 1e-4 ? along / alen : normalize(cross(toCam, vec3(0.0, 1.0, 0.0)));
   vec3 across = normalize(cross(along, toCam));
 
+  // Keep the ship the right way up.
+  //
+  // The quad is built from the direction of travel, so it is rigidly rotated
+  // by wherever the craft is heading — and on the far half of its lap, where
+  // it travels right to left, that rotation is a full 180 degrees. The hull
+  // does not care. The markings very much do: they arrive upside down.
+  //
+  // This was diagnosed wrong the first time and the wrong fix shipped. The
+  // assumption was that leftward travel MIRRORS the sprite, so the second
+  // sprite row was given a mirrored wordmark to cancel it. But cross products
+  // do not mirror anything — both basis vectors reverse together, which is a
+  // rotation, determinant +1 — so the pre-mirrored row was mirroring an
+  // already-rotated image and made it worse.
+  //
+  // What actually keeps the artwork upright is choosing the sign of across
+  // so the sprite's down always points down the screen. That turns the 180
+  // degree rotation into a reflection about the craft's own long axis, which
+  // IS a mirror, and which the second row then cancels correctly.
+  //
+  // The sign changes at the moment the craft is travelling straight up or down
+  // the screen. Some discontinuity there is unavoidable — no rigid billboard
+  // can stay both nose-first and upright through a full turn — but that is by
+  // far the cheapest place for it: at that instant the flip is about the
+  // craft's own axis, and a rocket is very nearly symmetrical about that, so
+  // what changes is which flank faces you rather than which way up it is.
+  float upsideDown = step(0.0, dot(across, uUp));
+  across *= mix(1.0, -1.0, upsideDown);
+
   // Meteors fade in and out across their life; the craft holds steady.
   float envelope = aKind > 0.5 ? 1.0 : sin(u * 3.14159) * step(t, life);
 
   // The craft's quad is long because most of it is trail: the hull lives in
   // the front third and the rest is what it leaves behind.
   float len = size * (aKind > 0.5 ? 4.2 : 1.0);
-  // Very thin. The first attempt was three times this and every meteor read
-  // as a grey rod laid across the sky — a streak is mostly length, and the
-  // width only exists so the core has something to bloom into.
   // Very thin for a meteor. The first attempt was three times this and every
   // one read as a grey rod laid across the sky — a streak is mostly length,
   // and the width only exists so the core has something to bloom into.
-  float wid = size * (aKind > 0.5 ? 0.42 : 0.045);
+  //
+  // The craft is far wider, and it has to be exactly this wide: the hull
+  // occupies the front forty per cent of the quad, so its aspect works out as
+  // 0.4 * len / wid, and that has to equal the sprite's 8:3 or the ship comes
+  // out stretched. Change one of these three numbers and change the others.
+  float wid = size * (aKind > 0.5 ? 0.63 : 0.045);
 
   vec3 world = head + along * (aCorner.x * len) + across * (aCorner.y * wid);
   gl_Position = uViewProj * vec4(world, 1.0);
@@ -1056,10 +1086,11 @@ void main() {
   vTint = aTint;
   vKind = aKind;
   vFade = envelope * smoothstep(0.35, 0.85, uReveal);
-  // Which side of the craft is facing us — that is, whether it is crossing the
-  // screen left to right or right to left. The sprite ships as two rows and
-  // this picks between them; see the note in scripts/render-rocket.py.
-  vSide = step(dot(along, uRight), 0.0);
+  // Which flank is facing us, which is exactly the question the flip above
+  // just answered. The sprite ships as two rows differing only in which way
+  // round the markings are painted; this picks the one that comes out
+  // readable. See the note in scripts/render-rocket.py.
+  vSide = upsideDown;
 }
 `;
 
