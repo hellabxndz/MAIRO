@@ -124,6 +124,9 @@ model Organization {
   mairoCampaigns       MairoCampaign[]
   platformCreatives    PlatformCreative[]
   autoOptimizeSettings AutoOptimizeSettings?
+  managedSetups        ManagedAccountSetup[]
+  tiktokPosts          TikTokPost[]
+  tiktokCreator        TikTokCreatorConnection?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -278,6 +281,7 @@ model CreativeRequest {
   reviewNotes    String?   @db.Text
 
   images CreativeImage[]
+  tiktokPosts TikTokPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -664,4 +668,193 @@ model PlanConfig {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// How far along MAIRO is with setting a customer's TikTok account up for them.
+///
+/// This is a worked queue, not an API call, and the enum says so. TikTok has no
+/// endpoint that creates a TikTok account — no network does, because account
+/// creation is where they enforce their own identity and anti-abuse checks. So
+/// "MAIRO sets your TikTok up for you" is real work someone does on the
+/// customer's behalf, and these are the states that work actually passes
+/// through.
+enum ManagedSetupStatus {
+  /// The customer asked. Nobody has picked it up yet.
+  REQUESTED
+  /// Someone at MAIRO is working on it.
+  IN_PROGRESS
+  /// Blocked on the customer — a verification code, a decision, a document.
+  NEEDS_CUSTOMER
+  /// The account exists and the customer has been handed the login.
+  READY
+  /// Not going ahead, with a reason.
+  DECLINED
+}
+
+/// A customer asking MAIRO to create their TikTok presence for them.
+///
+/// The business owners MAIRO is for very often have no TikTok at all, and the
+/// gap between "I'd like to advertise on TikTok" and "I have a TikTok Business
+/// account, a Business Center, and an advertiser id" is where most of them
+/// stop. This is the record of MAIRO closing that gap for them.
+///
+/// Nothing in here is a credential. The account MAIRO creates belongs to the
+/// customer and its password is handed to them out of band — storing it would
+/// make MAIRO the custodian of a login it has no business holding, and would
+/// break the promise in the Terms that MAIRO never stores platform passwords.
+model ManagedAccountSetup {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  platform       AdPlatform
+
+  status ManagedSetupStatus @default(REQUESTED)
+
+  /// What the customer wants to be called on the platform, and their fallbacks
+  /// — handles are first-come-first-served and the first choice is usually gone.
+  preferredHandle  String?
+  alternateHandles String?
+  /// Where MAIRO reaches them for the verification steps only they can do.
+  contactEmail     String
+  contactPhone     String?
+  /// The business as it should appear on the account.
+  displayName      String
+  category         String?
+  bio              String?  @db.Text
+  websiteUrl       String?
+
+  /// What the customer told us, and what we told them. Not a chat — a record.
+  customerNotes String? @db.Text
+  internalNotes String? @db.Text
+
+  /// Set once the account exists. The handle, not a credential.
+  createdHandle String?
+  /// Where the customer goes to take ownership.
+  handoffUrl    String?
+
+  requestedAt   DateTime  @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  /// One open request per platform at a time; a finished one is closed first.
+  @@index([organizationId, platform])
+  @@index([status])
+}
+
+/// Where a video MAIRO posted to TikTok on the customer's behalf got to.
+///
+/// Mirrors TikTok's own Content Posting states rather than inventing simpler
+/// ones, because the differences are the ones a customer asks about. A video
+/// that reached TikTok and is still transcoding is not the same as one that
+/// published, and neither is the same as one that landed in the creator's
+/// drafts because MAIRO only had upload permission rather than publish
+/// permission.
+enum TikTokPostStatus {
+  /// Written, not sent.
+  DRAFT
+  /// Bytes going to TikTok.
+  UPLOADING
+  /// TikTok has it and is processing.
+  PROCESSING
+  /// Live on the customer's profile.
+  PUBLISHED
+  /// In the customer's TikTok drafts for them to post themselves.
+  IN_TIKTOK_DRAFTS
+  /// TikTok refused it, or the upload broke. `error` says which.
+  FAILED
+}
+
+/// How the video was sent.
+enum TikTokPostMode {
+  /// Straight to the profile. Needs the video.publish scope and an audited app.
+  DIRECT_POST
+  /// Into the creator's TikTok inbox/drafts. Needs only video.upload.
+  INBOX
+}
+
+/// One video MAIRO posted, or tried to post, to a customer's TikTok.
+///
+/// Every row here is a real call to TikTok's Content Posting API — there is no
+/// path that writes a PUBLISHED row without TikTok having said so. A post that
+/// was never sent stays DRAFT and a post TikTok refused is FAILED with its own
+/// words in `error`, because a customer looking at this list is entitled to
+/// know what is actually on their profile.
+model TikTokPost {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// The creative this came from, when it came from one.
+  creativeRequest   CreativeRequest? @relation(fields: [creativeRequestId], references: [id], onDelete: SetNull)
+  creativeRequestId String?
+
+  caption String @db.Text
+  /// TikTok's own value: PUBLIC_TO_EVERYONE, MUTUAL_FOLLOW_FRIENDS, SELF_ONLY.
+  /// Stored as text because TikTok adds them and the set differs per creator.
+  privacyLevel String @default("SELF_ONLY")
+
+  mode   TikTokPostMode   @default(INBOX)
+  status TikTokPostStatus @default(DRAFT)
+
+  /// TikTok's handle on the publish job, used to poll for the outcome.
+  publishId String? @unique
+  /// The finished post, once TikTok gives it to us.
+  postUrl   String?
+  /// TikTok's own words when it refused. Shown to the customer.
+  error     String? @db.Text
+
+  /// Source video. A data URL is never stored here — this is an https URL to
+  /// the file MAIRO uploaded from.
+  sourceUrl        String?  @db.Text
+  durationSeconds  Int?
+  sizeBytes        Int?
+
+  postedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([organizationId, status])
+}
+
+/// The customer's authorization for MAIRO to post on their TikTok profile.
+///
+/// Deliberately separate from PlatformConnection, because it genuinely is a
+/// separate thing and hiding that would cause bugs. TikTok has two APIs that
+/// share a name and nothing else: the Business API at business-api.tiktok.com,
+/// which spends money on advertising and authenticates with an `Access-Token`
+/// header against an advertiser id; and the Open API at open.tiktokapis.com,
+/// which posts videos to a person's profile and authenticates with a normal
+/// OAuth bearer token against a creator. Different hosts, different consent
+/// screens, different scopes, different token shapes, and an advertiser token
+/// is rejected by the posting endpoints.
+///
+/// So connecting TikTok for ads does not grant posting, and a customer who
+/// wants both authorizes twice. That is TikTok's design, not MAIRO's, and
+/// modelling it as one row would only mean discovering it later at runtime.
+model TikTokCreatorConnection {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// TikTok's stable id for the creator under this app.
+  openId   String
+  unionId  String?
+  username String?
+  nickname String?
+  avatarUrl String? @db.Text
+
+  accessToken      String    @db.Text
+  refreshToken     String?   @db.Text
+  tokenExpiresAt   DateTime?
+  refreshExpiresAt DateTime?
+  /// Space-separated. video.upload alone means drafts only; video.publish is
+  /// what allows posting straight to the profile.
+  scopes           String?
+
+  status    PlatformConnectionStatus @default(CONNECTED)
+  lastError String?                  @db.Text
+
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "check:budget": "tsx scripts/check-budget-math.ts",
-    "check:entitlements": "tsx scripts/check-entitlements.ts"
+    "check:entitlements": "tsx scripts/check-entitlements.ts",
+    "check:tiktok": "tsx scripts/check-tiktok-posting.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

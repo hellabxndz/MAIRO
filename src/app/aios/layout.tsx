@@ -7,6 +7,7 @@ const NAV = [
   { href: "/aios", label: "Overview" },
   { href: "/aios/organizations", label: "Organizations" },
   { href: "/aios/creatives", label: "Creative pipeline" },
+  { href: "/aios/account-setups", label: "Account setups" },
   { href: "/aios/copilot", label: "Copilot" },
   { href: "/aios/setup", label: "Setup check" },
 ];

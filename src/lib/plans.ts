@@ -65,6 +65,10 @@ export const PLANS: Plan[] = [
       "Creative generation",
       "Performance dashboard",
       "1 active campaign, 2 creative requests a month",
+      // Said out loud rather than left as an absence. Somebody comparing the
+      // cards should learn where TikTok lives from the Starter card, not by
+      // picking it and hitting an upgrade prompt later.
+      "Meta only — TikTok is on Growth",
     ],
   },
   {
@@ -78,6 +82,8 @@ export const PLANS: Plan[] = [
     features: [
       "Everything in Starter",
       "Meta + TikTok advertising",
+      "MAIRO sets up your TikTok account for you",
+      "MAIRO posts to your TikTok for you",
       "TikTok Growth Mode",
       "TikTok-native creative generation",
       "Cross-platform analytics",

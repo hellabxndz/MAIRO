@@ -100,6 +100,56 @@ To switch it on:
    `video_list` on top. It is requested separately, only when a customer asks
    for it, so a first-time connection shows the smallest consent screen it can.
 
+### 5c. Set up TikTok posting (optional, and separate)
+
+Advertising on TikTok and posting to TikTok are two different registrations,
+and this trips people up. `TIKTOK_APP_ID`/`TIKTOK_APP_SECRET` above are the
+Business API — buying placements against an advertiser id. Posting a video to
+the customer's own profile is the Open API, with its own app, its own
+credentials, its own consent screen, and tokens that are rejected by the other
+one. A customer who wants both authorizes twice, and the integrations page
+tells them so.
+
+Leave `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET` unset and the posting card
+reports itself as unconfigured. Advertising is unaffected.
+
+To switch it on:
+
+1. Create an app at <https://developers.tiktok.com/> and add **Login Kit** and
+   **Content Posting API**.
+2. Copy the **Client key** and **Client secret** into `TIKTOK_CLIENT_KEY` and
+   `TIKTOK_CLIENT_SECRET`.
+3. Register `https://<your-domain>/api/tiktok/creator/callback` as a redirect
+   URI, byte-for-byte, no trailing slash. Override with
+   `TIKTOK_CREATOR_REDIRECT_URI` if the derived value is wrong.
+4. Request the `video.upload` and `video.publish` scopes. With only
+   `video.upload`, MAIRO puts videos in the customer's TikTok drafts and the
+   product says "send to my TikTok drafts" rather than "post" — which is the
+   truth, and the difference a customer would otherwise discover by opening
+   TikTok and finding nothing there.
+5. Apply for TikTok's **content posting audit**. Until it passes, TikTok forces
+   everything an unaudited app posts to private regardless of what the request
+   asks for. `TIKTOK_CONTENT_AUDITED` is what tells MAIRO the audit is through;
+   leave it unset until it actually is, or the product will promise a public
+   post and deliver a private one.
+
+### 5d. Setting a customer's TikTok up for them
+
+"MAIRO sets up your TikTok" is a worked queue at `/aios/account-setups`, not an
+integration, and it is worth knowing why: no platform has an API that registers
+a user account. Account creation is exactly where TikTok runs its identity, age
+and anti-abuse checks, and it is deliberately not automatable.
+
+So a customer on Growth or above fills in what they want the account called,
+and somebody works the queue: registers it, converts it to a Business account,
+sets up the Business Center and advertiser, and hands the login over. The
+status and the note set on that page are what the customer reads on their own
+integrations page, so the note is written for them rather than for us.
+
+There is no password field on that screen and there should never be one. The
+account belongs to the customer, and the Terms say MAIRO never stores a
+platform login.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

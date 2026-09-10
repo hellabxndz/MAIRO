@@ -48,3 +48,36 @@ export async function updateSubscriptionTierAction(organizationId: string, formD
   revalidatePath(`/aios/organizations/${organizationId}`);
   revalidatePath("/aios/organizations");
 }
+
+/**
+ * Moves a managed account setup along, and records what MAIRO did.
+ *
+ * The owner-side half of the "we'll build your TikTok for you" promise. The
+ * fields here are deliberately the ones the customer sees — the handle they
+ * ended up with, and a note explaining anything they need to do — because a
+ * queue nobody reports back through is just a list of people waiting.
+ *
+ * There is no password field, and there should never be one. The account
+ * belongs to the customer and the handoff happens out of band; storing a
+ * platform login here would make MAIRO the custodian of a credential its own
+ * Terms say it never keeps.
+ */
+export async function updateManagedSetupAction(setupId: string, formData: FormData) {
+  await requireOwner();
+
+  const status = formData.get("status") as import("@/generated/prisma/enums").ManagedSetupStatus;
+  const read = (key: string) => {
+    const raw = formData.get(key);
+    return typeof raw === "string" ? raw.trim() || null : undefined;
+  };
+
+  const { advanceSetup } = await import("@/lib/tiktok/managed-setup");
+  await advanceSetup(setupId, status, {
+    internalNotes: read("internalNotes"),
+    createdHandle: read("createdHandle"),
+    handoffUrl: read("handoffUrl"),
+  });
+
+  revalidatePath("/aios/account-setups");
+  revalidatePath("/dashboard/integrations");
+}

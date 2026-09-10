@@ -34,6 +34,10 @@ export type Entitlements = {
   cross_platform_campaigns: boolean;
   /** TikTok Growth Mode: native creative, hook variations, Spark readiness. */
   tiktok_growth: boolean;
+  /** MAIRO's team creates the customer's TikTok Business presence for them. */
+  tiktok_account_setup: boolean;
+  /** MAIRO posts videos to the customer's own TikTok profile for them. */
+  tiktok_organic_posting: boolean;
   /** Let MAIRO move budget by itself, within the customer's limits. */
   auto_optimize: boolean;
   /** Per-platform breakdowns, creative-level figures, video metrics. */
@@ -63,6 +67,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: false,
     cross_platform_campaigns: false,
     tiktok_growth: false,
+    tiktok_account_setup: false,
+    tiktok_organic_posting: false,
     auto_optimize: false,
     advanced_analytics: false,
     creative_limit: 0,
@@ -73,6 +79,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: false,
     cross_platform_campaigns: false,
     tiktok_growth: false,
+    tiktok_account_setup: false,
+    tiktok_organic_posting: false,
     auto_optimize: false,
     advanced_analytics: false,
     creative_limit: 2,
@@ -83,6 +91,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: true,
     cross_platform_campaigns: true,
     tiktok_growth: true,
+    tiktok_account_setup: true,
+    tiktok_organic_posting: true,
     auto_optimize: false,
     advanced_analytics: true,
     creative_limit: 8,
@@ -98,6 +108,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: true,
     cross_platform_campaigns: true,
     tiktok_growth: true,
+    tiktok_account_setup: true,
+    tiktok_organic_posting: true,
     auto_optimize: true,
     advanced_analytics: true,
     creative_limit: 20,
@@ -110,6 +122,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: true,
     cross_platform_campaigns: true,
     tiktok_growth: true,
+    tiktok_account_setup: true,
+    tiktok_organic_posting: true,
     auto_optimize: false,
     advanced_analytics: true,
     creative_limit: 8,
@@ -120,6 +134,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_ads: true,
     cross_platform_campaigns: true,
     tiktok_growth: true,
+    tiktok_account_setup: true,
+    tiktok_organic_posting: true,
     auto_optimize: true,
     advanced_analytics: true,
     creative_limit: 20,
@@ -133,6 +149,8 @@ export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   tiktok_ads: "TikTok ads",
   cross_platform_campaigns: "Cross-platform campaigns",
   tiktok_growth: "TikTok Growth Mode",
+  tiktok_account_setup: "MAIRO sets up your TikTok",
+  tiktok_organic_posting: "MAIRO posts to TikTok for you",
   auto_optimize: "Mairo Auto Optimize",
   advanced_analytics: "Advanced analytics",
 };
