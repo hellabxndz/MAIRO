@@ -463,9 +463,11 @@ function buildTravellers(): Float32Array {
   // there; on a loop it is always somewhere in the sky, near or far, coming or
   // going, and it turns.
   //
-  // Big enough to be the thing you notice, and no bigger: at twice this it
-  // spanned the whole hero and sat across the headline, which turns a passing
-  // craft into a permanent fixture. The loop's centre is pushed right and
+  // Big enough to be the thing you notice. There is a ceiling — far past this
+  // it spans the whole hero and sits across the headline, which turns a
+  // passing craft into a permanent fixture — but a craft on a lap stays below
+  // the type and keeps moving, so it carries a lot more size than one crossing
+  // through the middle of the frame could. The loop's centre is pushed right and
   // below the eye line for the same reason the planets are — the type lives in
   // the upper left, behind a heavy scrim.
   rows.push([
@@ -480,7 +482,7 @@ function buildTravellers(): Float32Array {
     72,         // period: a little over a minute for one lap
     54,         // phase: opens at the near point of the lap, where the craft is
                 //   largest and crossing fastest, so it reads as moving at once
-    30.0,       // size
+    44.0,       // size
     0.9, 0.94, 1.0,
     1,          // kind: craft
   ]);

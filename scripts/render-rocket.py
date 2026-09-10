@@ -70,8 +70,12 @@ def lerp(dst: np.ndarray, colour: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return dst + (colour[None, None, :] - dst) * mask[..., None]
 
 
-def render(w: int, h: int) -> np.ndarray:
-    """Returns RGBA float in 0..1, nose pointing +x."""
+def render(w: int, h: int, mirror_text: bool = False) -> np.ndarray:
+    """Returns RGBA float in 0..1, nose pointing +x.
+
+    With mirror_text the wordmark is drawn back to front. That is not a mistake
+    — see main() for why the sprite ships as two rows.
+    """
     rng = np.random.default_rng(7)
     x = np.arange(w, dtype=np.float32)[None, :] + np.zeros((h, 1), dtype=np.float32)
     y = np.zeros((1, w), dtype=np.float32) + np.arange(h, dtype=np.float32)[:, None]
@@ -136,19 +140,19 @@ def render(w: int, h: int) -> np.ndarray:
     # stretch, which lifts shadows hard: paint that reads black in a viewer
     # came out gunmetal on the page, three times brighter than the sky behind
     # it. Judge this by the rendered frame.
-    hull += np.array([0.009, 0.010, 0.013], dtype=np.float32)[None, None, :]
-    hull += (lam * 0.018)[..., None] * np.array([0.85, 0.87, 0.94], dtype=np.float32)
+    hull += np.array([0.006, 0.0065, 0.009], dtype=np.float32)[None, None, :]
+    hull += (lam * 0.013)[..., None] * np.array([0.85, 0.87, 0.94], dtype=np.float32)
 
     # The specular band. Tight and restrained — an early pass used four times
     # this and the top half came out white, which is not a black rocket, it is
     # a chrome one. A narrow highlight is enough to describe the curve.
-    spec = np.power(lam, 44.0) * 0.30 + np.power(lam, 15.0) * 0.028
+    spec = np.power(lam, 40.0) * 0.46 + np.power(lam, 15.0) * 0.030
     hull += spec[..., None] * np.array([0.92, 0.95, 1.00], dtype=np.float32)
 
     # Cool rim on the top edge from the galaxy behind, and a fainter one under
     # the belly so the silhouette closes on both sides instead of dissolving.
-    hull += (np.power(np.clip(-ny, 0.0, 1.0), 11.0) * 0.46)[..., None] * RIM
-    hull += (np.power(np.clip(ny, 0.0, 1.0), 16.0) * 0.14)[..., None] * RIM
+    hull += (np.power(np.clip(-ny, 0.0, 1.0), 10.0) * 0.62)[..., None] * RIM
+    hull += (np.power(np.clip(ny, 0.0, 1.0), 14.0) * 0.22)[..., None] * RIM
 
     # Warm bounce along the underside from the engine, dying towards the nose.
     bounce = np.power(np.clip(ny, 0.0, 1.0), 4.0) * 0.26 * smoothstep(px(0.60), px(0.11), x)
@@ -239,10 +243,10 @@ def render(w: int, h: int) -> np.ndarray:
     # A plate seen nearly edge-on: dark face, a lit leading edge with visible
     # thickness, a darker trailing edge, and a spar shadow across the middle.
     face = np.zeros((h, w, 3), dtype=np.float32)
-    face += np.array([0.012, 0.013, 0.017], dtype=np.float32)[None, None, :]
+    face += np.array([0.008, 0.0085, 0.012], dtype=np.float32)[None, None, :]
     face += (smoothstep(0.0, 1.0, s) * 0.010)[..., None]            # tip catches more
     edge = smoothstep(3.4, 0.0, np.abs(x - lead))
-    face += (edge * 0.34)[..., None] * np.array([0.62, 0.74, 1.00], dtype=np.float32)
+    face += (edge * 0.46)[..., None] * np.array([0.62, 0.74, 1.00], dtype=np.float32)
     face += (smoothstep(6.5, 3.4, np.abs(x - lead)) * 0.06)[..., None]      # thickness
     face -= (smoothstep(4.0, 0.0, np.abs(x - trail)) * 0.012)[..., None]
     face += (np.exp(-((x - (lead + trail) * 0.5) ** 2) / (px(0.006) ** 2)) * 0.020)[..., None]
@@ -285,9 +289,11 @@ def render(w: int, h: int) -> np.ndarray:
         tx += cw + track
 
     lab = np.asarray(label, dtype=np.float32) / 255.0
+    if mirror_text:
+        lab = lab[:, ::-1]
     lab *= np.power(np.clip(nz, 0, 1), 0.80)          # wraps with the tube
     lab *= mask * (1.0 - 0.30 * np.clip(streak, 0, 1))
-    rgb = lerp(rgb, np.array([0.94, 0.96, 1.00], dtype=np.float32), lab * 0.96)
+    rgb = lerp(rgb, np.array([0.97, 0.98, 1.00], dtype=np.float32), lab * 0.99)
 
     return np.concatenate([rgb, alpha[..., None]], axis=2)
 
@@ -313,8 +319,30 @@ def main() -> None:
     # antialiasing strategy — every edge here is a hard threshold on a distance,
     # and at final resolution they would all be stairs.
     w, h = args.width * 2, (args.width * 2) // 4
-    img = to_srgb8(render(w, h))
-    full = Image.fromarray(img, "RGBA").resize((args.width, args.width // 4), Image.LANCZOS)
+    tile = (args.width, args.width // 4)
+
+    # Two rows, and the reason is the wordmark.
+    #
+    # The craft flies a lap, so for half of it the direction of travel points
+    # left across the screen. The quad is built along that direction — nose at
+    # the leading end, always — which means when it travels left the texture is
+    # mapped right-to-left and the whole sprite appears mirrored. The hull does
+    # not care, it is very nearly symmetrical. MAIRO very much does: it came
+    # out back to front, which is the sort of thing nobody can un-see.
+    #
+    # A reflection cannot be undone by another reflection in the same axis, so
+    # there is no sampling trick here. The second row is the same hull with the
+    # wordmark painted back to front, so that the screen's own mirror turns it
+    # the right way round. Row 0 is the starboard side, row 1 the port side,
+    # and the vertex shader picks between them by the sign of the travel
+    # direction along the camera's right axis.
+    rows = [
+        Image.fromarray(to_srgb8(render(w, h, mirror_text=m)), "RGBA").resize(tile, Image.LANCZOS)
+        for m in (False, True)
+    ]
+    full = Image.new("RGBA", (tile[0], tile[1] * 2), (0, 0, 0, 0))
+    for i, row in enumerate(rows):
+        full.paste(row, (0, i * tile[1]))
 
     os.makedirs(args.out, exist_ok=True)
     full.save(os.path.join(args.out, "rocket.avif"), quality=82)
@@ -328,7 +356,7 @@ def main() -> None:
 
     for f in ["rocket.avif", "rocket.webp"]:
         p = os.path.join(args.out, f)
-        print(f"  {p}  {os.path.getsize(p) / 1024:.0f} KB  ({args.width}x{args.width // 4})")
+        print(f"  {p}  {os.path.getsize(p) / 1024:.0f} KB  ({full.width}x{full.height}, 2 rows)")
 
 
 if __name__ == "__main__":

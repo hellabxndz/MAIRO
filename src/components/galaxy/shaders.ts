@@ -958,6 +958,7 @@ out vec2 vLocal;
 out vec3 vTint;
 out float vKind;
 out float vFade;
+out float vSide;
 
 // Where the craft is, a fraction of the way round its lap.
 //
@@ -1055,6 +1056,10 @@ void main() {
   vTint = aTint;
   vKind = aKind;
   vFade = envelope * smoothstep(0.35, 0.85, uReveal);
+  // Which side of the craft is facing us — that is, whether it is crossing the
+  // screen left to right or right to left. The sprite ships as two rows and
+  // this picks between them; see the note in scripts/render-rocket.py.
+  vSide = step(dot(along, uRight), 0.0);
 }
 `;
 
@@ -1065,6 +1070,7 @@ in vec2 vLocal;
 in vec3 vTint;
 in float vKind;
 in float vFade;
+in float vSide;
 
 out vec4 outColor;
 
@@ -1097,10 +1103,15 @@ void main() {
     // together.
     float tail = 0.20;
 
-    vec2 sprite = vec2((u - tail) / (1.0 - tail), vLocal.y * 0.5 + 0.5);
+    // The sprite is two rows: starboard on top, port underneath, differing
+    // only in which way round the wordmark is painted. vSide picks the one
+    // facing us.
+    vec2 sprite = vec2(
+      (u - tail) / (1.0 - tail),
+      (vLocal.y * 0.5 + 0.5) * 0.5 + vSide * 0.5
+    );
     vec4 ship = vec4(0.0);
-    if (uRocketLoaded > 0.5 && sprite.x >= 0.0 && sprite.x <= 1.0
-        && sprite.y >= 0.0 && sprite.y <= 1.0) {
+    if (uRocketLoaded > 0.5 && sprite.x >= 0.0 && sprite.x <= 1.0) {
       ship = texture(uRocket, sprite);
     }
 
