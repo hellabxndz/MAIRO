@@ -410,11 +410,11 @@ function buildPlanetInstances(): Float32Array {
   return out;
 }
 
-/** origin(3) dir(3) speed/period/phase/size(4) tint(3) kind(1). */
-const TRAVELLER_STRIDE = 14;
+/** origin(3) dir(3) speed/period/phase/size(4) tint(3). */
+const TRAVELLER_STRIDE = 13;
 
 /**
- * Meteors, and the one ship.
+ * Meteors.
  *
  * The meteors are placed near the camera path rather than out in the galaxy,
  * because a streak a thousand units away is a stationary dot however fast it
@@ -454,38 +454,8 @@ function buildTravellers(): Float32Array {
       rng() * periods[i],          // phase
       11 + rng() * 13,             // size
       ...(rng() < 0.35 ? [1.0, 0.84, 0.58] : [0.74, 0.87, 1.0]),
-      0,                           // kind: meteor
     ]);
   }
-
-  // The ship, flying a lap around the camera. It used to cross in a straight
-  // line, which meant it was either arriving or leaving and never simply
-  // there; on a loop it is always somewhere in the sky, near or far, coming or
-  // going, and it turns.
-  //
-  // Big enough to be the thing you notice. There is a ceiling — far past this
-  // it spans the whole hero and sits across the headline, which turns a
-  // passing craft into a permanent fixture — but a craft on a lap stays below
-  // the type and keeps moving, so it carries a lot more size than one crossing
-  // through the middle of the frame could. The loop's centre is pushed right and
-  // below the eye line for the same reason the planets are — the type lives in
-  // the upper left, behind a heavy scrim.
-  rows.push([
-    // Centre of the lap, in camera axes.
-    240, -120, 700,
-    // Lateral radius, depth radius, bank. Depth stays well under the centre's
-    // distance so the craft never crosses behind the camera, and the bank is
-    // what stops the billboard degenerating at the ends of the lap — both are
-    // explained at craftPath() in the vertex shader.
-    470, 250, 0.55,
-    0,          // speed: unused here, the craft is paced by its period
-    72,         // period: a little over a minute for one lap
-    54,         // phase: opens at the near point of the lap, where the craft is
-                //   largest and crossing fastest, so it reads as moving at once
-    60.0,       // size
-    0.9, 0.94, 1.0,
-    1,          // kind: craft
-  ]);
 
   return new Float32Array(rows.flat());
 }
@@ -624,7 +594,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
-  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal", "uRocket", "uRocketLoaded", "uOnlyKind"]);
+  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal"]);
   const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
     "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
   const uVol = uni(progVolume, [
@@ -733,7 +703,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bufferData(gl.ARRAY_BUFFER, buildTravellers(), gl.STATIC_DRAW);
     const st = TRAVELLER_STRIDE * 4;
     for (const [loc, size, off] of
-      [[1, 3, 0], [2, 3, 12], [3, 4, 24], [4, 3, 40], [5, 1, 52]] as const) {
+      [[1, 3, 0], [2, 3, 12], [3, 4, 24], [4, 3, 40]] as const) {
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, st, off);
       gl.vertexAttribDivisor(loc, 1);
@@ -821,26 +791,7 @@ export function createScene(opts: SceneOptions): Scene | null {
    * in the hero, so these are wanted immediately, and at 270KB across both
    * files they are a fraction of what Earth costs.
    */
-  let rocketTex: WebGLTexture | null = null;
-  let rocketLoaded = 0;
-
   function loadSurfaces() {
-    // The ship's hull. Twelve kilobytes, and it is on screen in the hero.
-    loadImage("/sky/rocket")
-      .then((img) => {
-        const tex = gl.createTexture()!;
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        rocketTex = tex;
-        rocketLoaded = 1;
-      })
-      .catch(() => {});
-
     Promise.all([loadImage("/sky/planets"), loadImage("/sky/planets-relief")])
       .then(([albedo, reliefImg]) => {
         albedoArr = uploadArray(albedo, ALBEDO_W, ALBEDO_H, PLANET_LAYERS);
@@ -1191,13 +1142,6 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform3f(uTrav.uFwd, -view[2], -view[6], -view[10]);
     gl.uniform1f(uTrav.uTime, t);
     gl.uniform1f(uTrav.uReveal, revealEase);
-    gl.uniform1f(uTrav.uRocketLoaded, rocketLoaded);
-    gl.activeTexture(gl.TEXTURE6);
-    gl.bindTexture(gl.TEXTURE_2D, rocketTex ?? blankTex);
-    gl.uniform1i(uTrav.uRocket, 6);
-    // Meteors only, here. The craft is drawn again after the planets — see
-    // the note there for why the two are split.
-    gl.uniform1f(uTrav.uOnlyKind, 0);
     gl.bindVertexArray(travVao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
     gl.bindVertexArray(null);
@@ -1239,31 +1183,6 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, PLANETS.length);
     gl.bindVertexArray(null);
 
-    // ---- the craft, over the top of everything ----
-    //
-    // Split from the meteors, which went before the planets. That ordering is
-    // right for a meteor: there is no depth buffer in this scene, so whatever
-    // is drawn last wins, and a meteor drawn afterwards cut across the face of
-    // the nearest moon like a scratch on the lens.
-    //
-    // It is wrong for the craft. Its lap passes close by the planets, and with
-    // the ship at this size the moon was painting straight over it — the ship
-    // disappearing behind scenery for a good part of every orbit, which is
-    // exactly what it looked like.
-    //
-    // Neither order is right in general without a depth buffer. This one is
-    // right more often and fails better: the craft is the thing on this page
-    // anyone is actually watching, and a ship that is briefly in front of a
-    // planet it should be behind is a far smaller problem than a ship that
-    // keeps vanishing.
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.useProgram(progTraveller);
-    gl.uniform1f(uTrav.uOnlyKind, 1);
-    gl.bindVertexArray(travVao);
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
-    gl.bindVertexArray(null);
-
-    gl.blendFunc(gl.ONE, gl.ONE);
 
 
     // ---- bloom ----

@@ -935,16 +935,11 @@ void main() {
 export const TRAVELLER_VERT = /* glsl */ `#version 300 es
 precision highp float;
 
-layout(location = 0) in vec2 aCorner;    // x: -1 tail .. 1 nose, y: across
-// The next two mean different things for the two kinds, because the two kinds
-// move in completely different ways. For a meteor: a starting point and a unit
-// heading, both in camera axes. For the craft: the centre of its loop, and
-// then the loop's lateral radius, depth radius and bank. See craftPath.
+layout(location = 0) in vec2 aCorner;    // x: -1 tail .. 1 head, y: across
 layout(location = 1) in vec3 aOrigin;    // in camera axes: right, up, forward
-layout(location = 2) in vec3 aDir;       // meteor: unit heading; craft: A, B, bank
+layout(location = 2) in vec3 aDir;       // ditto, unit
 layout(location = 3) in vec4 aParams;    // speed, period, phase, size
 layout(location = 4) in vec3 aTint;
-layout(location = 5) in float aKind;     // 0 meteor, 1 craft
 
 uniform mat4 uViewProj;
 uniform vec3 uCamPos;
@@ -953,37 +948,10 @@ uniform vec3 uUp;
 uniform vec3 uFwd;
 uniform float uTime;
 uniform float uReveal;
-/// Draw only meteors (0) or only the craft (1). See the note at the draw call.
-uniform float uOnlyKind;
 
 out vec2 vLocal;
 out vec3 vTint;
-out float vKind;
 out float vFade;
-out float vSide;
-
-// Where the craft is, a fraction of the way round its lap.
-//
-// A closed loop around the camera rather than a line off into nothing: it
-// sweeps out to one side, turns, comes back across at a different depth, and
-// keeps going. Two things about the shape are not free.
-//
-// It never passes behind the camera — the depth radius is smaller than the
-// centre's distance — because the hull is a picture of a ship seen side-on,
-// and a ship crossing the lens would have to be drawn nose-on, which a
-// picture cannot do.
-//
-// And the loop is banked rather than flat. On a flat loop the craft heads
-// straight at, then straight away from, the camera at the near and far points
-// of the lap. Its motion projects to nothing on screen there, and the
-// billboard's along-vector — which is that projection — degenerates and spins.
-// Tilting the plane of the loop means those two moments carry vertical motion
-// instead, so there is always a direction left to point the nose.
-vec3 craftPath(float ang, vec3 centre, vec3 shape) {
-  vec3 e1 = normalize(vec3(1.0, 0.10, 0.0));
-  vec3 e2 = normalize(vec3(0.0, shape.z, 1.0));
-  return centre + e1 * (shape.x * cos(ang)) + e2 * (shape.y * sin(ang));
-}
 
 void main() {
   float speed = aParams.x;
@@ -994,9 +962,8 @@ void main() {
   float t = mod(uTime + phase, period);
 
   // A meteor burns for a second and a half of a much longer cycle, so the sky
-  // is mostly empty and one crosses it every so often. The craft is always on
-  // its way somewhere.
-  float life = aKind > 0.5 ? period : 1.6;
+  // is mostly empty and one crosses it every so often.
+  float life = 1.6;
   float u = clamp(t / life, 0.0, 1.0);
 
   // Both the starting point and the heading are given in the camera's own
@@ -1008,24 +975,11 @@ void main() {
   // the pricing table is invisibly distant from the hero. Anchoring to the
   // camera costs nothing in realism — each one exists for a second and a half,
   // far too briefly for anyone to notice it was not there before.
-  // Both kinds work out where they are and which way they are pointing in the
-  // camera's own axes first, and get transformed into the world once at the
-  // end. The basis is orthonormal, so doing it in this order costs nothing and
-  // means neither path has to think about where the camera is.
-  vec3 pos;
-  vec3 heading;
-  if (aKind > 0.5) {
-    float ang = t * (6.28318530718 / period);
-    // The tangent, by stepping a little way further round the lap. Analytic
-    // would be tidier and this is a curve whose derivative nobody will ever
-    // need to keep in step with the curve itself.
-    float d = 0.02;
-    pos = craftPath(ang, aOrigin, aDir);
-    heading = normalize(craftPath(ang + d, aOrigin, aDir) - pos);
-  } else {
-    pos = aOrigin + aDir * (speed * t);
-    heading = normalize(aDir);
-  }
+  // Worked out in the camera's own axes first and transformed into the world
+  // once at the end. The basis is orthonormal, so doing it in this order costs
+  // nothing and means the path never has to think about where the camera is.
+  vec3 pos = aOrigin + aDir * (speed * t);
+  vec3 heading = normalize(aDir);
 
   vec3 head = uCamPos + uRight * pos.x + uUp * pos.y + uFwd * pos.z;
   vec3 dir = normalize(uRight * heading.x + uUp * heading.y + uFwd * heading.z);
@@ -1037,67 +991,22 @@ void main() {
   along = alen > 1e-4 ? along / alen : normalize(cross(toCam, vec3(0.0, 1.0, 0.0)));
   vec3 across = normalize(cross(along, toCam));
 
-  // Keep the ship the right way up.
-  //
-  // The quad is built from the direction of travel, so it is rigidly rotated
-  // by wherever the craft is heading — and on the far half of its lap, where
-  // it travels right to left, that rotation is a full 180 degrees. The hull
-  // does not care. The markings very much do: they arrive upside down.
-  //
-  // This was diagnosed wrong the first time and the wrong fix shipped. The
-  // assumption was that leftward travel MIRRORS the sprite, so the second
-  // sprite row was given a mirrored wordmark to cancel it. But cross products
-  // do not mirror anything — both basis vectors reverse together, which is a
-  // rotation, determinant +1 — so the pre-mirrored row was mirroring an
-  // already-rotated image and made it worse.
-  //
-  // What actually keeps the artwork upright is choosing the sign of across
-  // so the sprite's down always points down the screen. That turns the 180
-  // degree rotation into a reflection about the craft's own long axis, which
-  // IS a mirror, and which the second row then cancels correctly.
-  //
-  // The sign changes at the moment the craft is travelling straight up or down
-  // the screen. Some discontinuity there is unavoidable — no rigid billboard
-  // can stay both nose-first and upright through a full turn — but that is by
-  // far the cheapest place for it: at that instant the flip is about the
-  // craft's own axis, and a rocket is very nearly symmetrical about that, so
-  // what changes is which flank faces you rather than which way up it is.
-  float upsideDown = step(0.0, dot(across, uUp));
-  across *= mix(1.0, -1.0, upsideDown);
 
-  // Meteors fade in and out across their life; the craft holds steady.
-  float envelope = aKind > 0.5 ? 1.0 : sin(u * 3.14159) * step(t, life);
+  // A meteor fades in and out across its life.
+  float envelope = sin(u * 3.14159) * step(t, life);
 
-  // The craft's quad is long because most of it is trail: the hull lives in
-  // the front third and the rest is what it leaves behind.
-  float len = size * (aKind > 0.5 ? 4.2 : 1.0);
-  // Very thin for a meteor. The first attempt was three times this and every
-  // one read as a grey rod laid across the sky — a streak is mostly length,
-  // and the width only exists so the core has something to bloom into.
-  //
-  // The craft is far wider, and it has to be exactly this wide: the hull
-  // occupies the front forty per cent of the quad, so its aspect works out as
-  // 0.4 * len / wid, and that has to equal the sprite's 8:3 or the ship comes
-  // out stretched. Change one of these three numbers and change the others.
-  float wid = size * (aKind > 0.5 ? 0.63 : 0.045);
+  float len = size;
+  // Very thin. The first attempt was three times this and every one read as a
+  // grey rod laid across the sky — a streak is mostly length, and the width
+  // only exists so the core has something to bloom into.
+  float wid = size * 0.045;
 
   vec3 world = head + along * (aCorner.x * len) + across * (aCorner.y * wid);
   gl_Position = uViewProj * vec4(world, 1.0);
 
   vLocal = aCorner;
   vTint = aTint;
-  vKind = aKind;
-  // Instances of the other kind collapse to nothing and are discarded in the
-  // fragment shader. Two draws over the same buffer is far simpler than
-  // splitting it into two, and the skipped instances cost one vertex shader
-  // invocation each on a buffer of eleven.
-  float wanted = step(abs(aKind - uOnlyKind), 0.5);
-  vFade = envelope * smoothstep(0.35, 0.85, uReveal) * wanted;
-  // Which flank is facing us, which is exactly the question the flip above
-  // just answered. The sprite ships as two rows differing only in which way
-  // round the markings are painted; this picks the one that comes out
-  // readable. See the note in scripts/render-rocket.py.
-  vSide = upsideDown;
+  vFade = envelope * smoothstep(0.35, 0.85, uReveal);
 }
 `;
 
@@ -1106,15 +1015,9 @@ precision highp float;
 
 in vec2 vLocal;
 in vec3 vTint;
-in float vKind;
 in float vFade;
-in float vSide;
 
 out vec4 outColor;
-
-uniform float uTime;
-uniform sampler2D uRocket;
-uniform float uRocketLoaded;
 
 void main() {
   if (vFade <= 0.001) discard;
@@ -1122,91 +1025,19 @@ void main() {
   float u = vLocal.x;        // -1 at the tail, +1 at the nose
   float v = abs(vLocal.y);
 
-  vec3 col;
-  float a;
+  // A hot point at the head with a trail falling away behind it, narrowing as
+  // it goes. Two terms: a small intense core that the bloom pass picks up, and
+  // a longer, dimmer trail that gives it its direction.
+  float trail = exp((u - 1.0) * 2.6);
+  float taper = mix(0.14, 1.0, clamp((u + 1.0) * 0.5, 0.0, 1.0));
+  float body = exp(-(v * v) / (taper * taper * 0.55)) * trail;
 
-  if (vKind > 0.5) {
-    // ---- the craft ----
-    //
-    // The hull is a picture, not a distance field. A vehicle needs panel
-    // seams, a cockpit, fins with a lit edge, an engine bell and a name down
-    // the side, and none of that is worth writing as shader maths for one
-    // object — it is drawn once by scripts/render-rocket.py and sampled here.
-    // What stays procedural is the part that has to move: the exhaust.
-    //
-    // The hull occupies u in 0.20..1.0 — the front forty per cent of the quad
-    // — and everything behind it is wake. That region's aspect has to match
-    // the sprite's exactly or the ship comes out stretched, which is why the
-    // numbers here and the quad's proportions in the vertex shader are tied
-    // together.
-    float tail = 0.20;
+  float core = exp((u - 1.0) * 26.0) * exp(-v * v * 14.0);
 
-    // The sprite is two rows: starboard on top, port underneath, differing
-    // only in which way round the wordmark is painted. vSide picks the one
-    // facing us.
-    vec2 sprite = vec2(
-      (u - tail) / (1.0 - tail),
-      (vLocal.y * 0.5 + 0.5) * 0.5 + vSide * 0.5
-    );
-    vec4 ship = vec4(0.0);
-    if (uRocketLoaded > 0.5 && sprite.x >= 0.0 && sprite.x <= 1.0) {
-      ship = texture(uRocket, sprite);
-    }
+  vec3 col = vTint * body * 1.5 + vec3(1.0, 0.97, 0.92) * core * 3.2;
 
-    float body = ship.a;
-    vec3 metal = ship.rgb;
-
-    // The engine. Flickers on two frequencies, because a steady glow reads as
-    // a light bulb rather than combustion.
-    float flick = 0.80 + 0.14 * sin(uTime * 47.0) + 0.09 * sin(uTime * 113.0 + 1.7);
-
-    // Bright, tight exhaust immediately behind the engine bell...
-    float plume = smoothstep(tail, tail - 0.16, u) * exp((u - tail) * 5.0);
-    plume *= exp(-v * v * 22.0) * flick;
-
-    // ...the glow of the bell itself...
-    float glow = exp(-((u - tail) * (u - tail)) * 90.0) * exp(-v * v * 5.0) * 0.9 * flick;
-
-    // ...and the trail, running all the way to the end of the quad, spreading
-    // as it goes and thinning out. This is what makes the ship read as moving
-    // rather than parked.
-    float spread = mix(0.10, 0.85, smoothstep(tail, -1.0, u));
-    float wake = smoothstep(tail - 0.02, tail - 0.20, u)
-               * exp((u - tail) * 1.25)
-               * exp(-(v * v) / (spread * spread))
-               * (0.85 + 0.15 * sin(u * 30.0 - uTime * 9.0))
-               // Off to nothing before the quad runs out. Without this the
-               // trail still had a fifth of its brightness at the edge and
-               // ended in a straight vertical cut.
-               * smoothstep(-1.0, -0.62, u);
-
-    col = metal * body
-        + vec3(0.60, 0.80, 1.35) * plume * 1.8
-        + vec3(0.50, 0.74, 1.30) * glow * 1.4
-        + vec3(0.34, 0.55, 1.10) * wake * 0.34;
-    // Alpha is occlusion, not brightness. The hull is a solid object and has
-    // to cover the stars behind it; the exhaust is light and must not.
-    a = body;
-  } else {
-    // ---- a meteor ----
-    // A hot point at the head with a trail falling away behind it, narrowing
-    // as it goes. Two terms: a small intense core that the bloom pass picks
-    // up, and a longer, dimmer trail that gives it its direction.
-    float trail = exp((u - 1.0) * 2.6);
-    float taper = mix(0.14, 1.0, clamp((u + 1.0) * 0.5, 0.0, 1.0));
-    float body = exp(-(v * v) / (taper * taper * 0.55)) * trail;
-
-    float core = exp((u - 1.0) * 26.0) * exp(-v * v * 14.0);
-
-    col = vTint * body * 1.5 + vec3(1.0, 0.97, 0.92) * core * 3.2;
-    // A meteor occludes nothing at all, and zero alpha under the premultiplied
-    // blend below is exactly the additive draw it had before.
-    a = 0.0;
-  }
-
-  // Premultiplied: col is already scaled by whatever coverage produced it, so
-  // the pass blends ONE / ONE_MINUS_SRC_ALPHA and gets both behaviours from
-  // one draw — solid where the hull is, purely additive everywhere else.
-  outColor = vec4(col * vFade, a * vFade);
+  // A meteor is light rather than an object, so it occludes nothing. Zero
+  // alpha under the pass's premultiplied blend is exactly an additive draw.
+  outColor = vec4(col * vFade, 0.0);
 }
 `;
