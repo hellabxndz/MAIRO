@@ -69,7 +69,8 @@ export function ConceptDemo() {
   });
 
   return (
-    <div ref={ref} className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-sm sm:p-8">
+    <div ref={ref} // No backdrop-filter here; see the note in space-panel.tsx.
+      className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 sm:p-8">
       <div className="mb-6 flex items-center gap-3 border-b border-white/10 pb-4">
         <span className="h-2 w-2 rounded-full bg-emerald-400" />
         <span className="text-xs uppercase tracking-[0.15em] text-neutral-500">

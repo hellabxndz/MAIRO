@@ -323,7 +323,7 @@ export function CinematicIntro() {
                   {OLD_WAY.map((step, i) => (
                     <span
                       key={step}
-                      className="absolute whitespace-nowrap rounded-full border border-white/[0.10] bg-white/[0.03] px-5 py-2 text-xs uppercase tracking-[0.18em] text-neutral-400 backdrop-blur-[2px]"
+                      className="absolute whitespace-nowrap rounded-full border border-white/[0.10] bg-white/[0.05] px-5 py-2 text-xs uppercase tracking-[0.18em] text-neutral-400"
                       style={{
                         left: `${[2, 38, 66, 10, 44, 70, 24, 52][i]}%`,
                         top: `${[6, 0, 16, 34, 44, 52, 70, 84][i]}%`,
@@ -362,7 +362,7 @@ export function CinematicIntro() {
                 MAIRO
               </p>
               <div
-                className="mt-12 space-y-5 rounded-2xl border border-white/[0.09] bg-white/[0.025] p-6 text-left backdrop-blur-[3px] sm:p-9"
+                className="mt-12 space-y-5 rounded-2xl border border-white/[0.09] bg-white/[0.045] p-6 text-left sm:p-9"
                 style={{ animation: "intro-rise 1.2s 1.6s both" }}
               >
                 {ONBOARDING.map((row, i) => (
@@ -552,7 +552,7 @@ export function CinematicIntro() {
         type="button"
         onClick={() => close("dismissed")}
         aria-label="Close introduction and go to the site"
-        className="absolute z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.06] text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/[0.16]"
+        className="absolute z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.10] text-white transition hover:border-white/30 hover:bg-white/[0.16]"
         style={{
           top: "max(24px, calc(env(safe-area-inset-top) + 12px))",
           right: "max(20px, calc(env(safe-area-inset-right) + 20px))",
@@ -569,7 +569,7 @@ export function CinematicIntro() {
         <button
           type="button"
           onClick={enableSound}
-          className="absolute z-20 flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.06] px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-neutral-300 backdrop-blur-md transition hover:border-white/30 hover:text-white"
+          className="absolute z-20 flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.10] px-4 py-2.5 text-[10px] uppercase tracking-[0.18em] text-neutral-300 transition hover:border-white/30 hover:text-white"
           style={{
             bottom: "max(24px, calc(env(safe-area-inset-bottom) + 20px))",
             right: "max(20px, calc(env(safe-area-inset-right) + 20px))",

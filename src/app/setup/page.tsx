@@ -27,7 +27,7 @@ export default async function SetupPage({
       <AmbientSky />
       <div className="relative w-full max-w-sm">
         <p className="mb-8 text-center text-lg font-semibold tracking-tight">MAIRO</p>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-[0_0_60px_-15px_rgba(255,255,255,0.15)] backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-[0_0_60px_-15px_rgba(255,255,255,0.15)]">
           {recovering && ownerCount > 0 ? (
             <>
               <h1 className="mb-1 text-xl font-semibold">Reset owner access</h1>

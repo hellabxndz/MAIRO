@@ -67,7 +67,7 @@ export function DashboardShell({
       <AmbientSky />
 
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-white/[0.07] bg-black/30 px-4 py-3 backdrop-blur-md md:hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.07] bg-black/60 px-4 py-3 md:hidden">
         <Link href="/" className="text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>
@@ -91,7 +91,7 @@ export function DashboardShell({
             className="absolute inset-0 bg-black/70"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-white/[0.07] bg-neutral-950/95 p-6 backdrop-blur-xl">
+          <div className="absolute left-0 top-0 flex h-full w-72 flex-col border-r border-white/[0.07] bg-neutral-950/[0.97] p-6">
             <div className="mb-8 flex items-center justify-between">
               <Link href="/" className="text-sm font-light tracking-[0.28em]" onClick={() => setOpen(false)}>
                 {brandLabel}
@@ -113,7 +113,7 @@ export function DashboardShell({
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-black/20 p-6 backdrop-blur-md md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-black/40 p-6 md:flex">
         <Link href="/" className="mb-1 text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>

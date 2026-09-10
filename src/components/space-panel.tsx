@@ -6,6 +6,21 @@ import type { ReactNode } from "react";
 // a barely-there translucent fill. No glow, no gradient border, no heavy glass.
 // The starfield showing faintly through the panel is what sells it as floating
 // rather than pasted on, and any more treatment on the panel itself buries that.
+//
+// No backdrop-filter, and that is not a stylistic choice — it is the bug this
+// component shipped with for weeks.
+//
+// Everything behind this panel is position: fixed — the galaxy canvas and the
+// still panorama both are. A backdrop-filter cannot sample a fixed-position
+// backdrop on mobile browsers: with nothing to blur it composites the element
+// on its own, and a nearly-transparent fill over no backdrop paints as an
+// opaque black rectangle. Wrapping the panel in a transform animation (Reveal
+// does exactly that) makes it worse by forcing a separate compositing layer.
+//
+// The result on a phone was a black box with a hairline border drifting up the
+// screen as you scrolled, once per section, which is precisely what it looked
+// like. The blur was two pixels and invisible on any device where it did work,
+// so it is gone and the fill carries the glass on its own.
 
 export function SpacePanel({
   label,
@@ -18,7 +33,7 @@ export function SpacePanel({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/[0.09] bg-white/[0.025] backdrop-blur-[2px] ${className}`}
+      className={`rounded-2xl border border-white/[0.09] bg-white/[0.045] ${className}`}
       style={{ boxShadow: "0 40px 120px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.02) inset" }}
     >
       {label && (

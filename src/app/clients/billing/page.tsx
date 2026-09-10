@@ -46,7 +46,7 @@ export default async function FreelancerBillingPage() {
     <div className="relative min-h-screen text-white">
       <AmbientSky />
 
-      <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
+      <header className="border-b border-white/[0.07] bg-black/50">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
           <div>
             <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>

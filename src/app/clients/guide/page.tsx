@@ -239,7 +239,7 @@ export default async function GuidePage() {
     <div className="relative min-h-screen text-white">
       <AmbientSky />
 
-      <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
+      <header className="border-b border-white/[0.07] bg-black/50">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
           <Link href="/clients" className="text-xs text-neutral-400 transition hover:text-white">

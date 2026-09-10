@@ -114,7 +114,7 @@ export function SiteNav() {
       </div>
 
       {open && (
-        <div className="pointer-events-auto mx-auto mt-2 max-w-[1500px] rounded-3xl border border-white/[0.08] bg-black/90 px-7 py-7 backdrop-blur-xl md:hidden">
+        <div className="pointer-events-auto mx-auto mt-2 max-w-[1500px] rounded-3xl border border-white/[0.08] bg-black/95 px-7 py-7 md:hidden">
           <nav className="flex flex-col gap-6 text-xs uppercase tracking-[0.2em] text-neutral-400">
             {LINKS.map((link) => (
               <a

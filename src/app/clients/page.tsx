@@ -71,7 +71,7 @@ export default async function ClientsPage({
       )}
       {/* Offers itself once, right after paying. Available on demand after that. */}
       <Tour steps={FREELANCER_TOUR} storageKey={FREELANCER_TOUR_KEY} autoStart={justSubscribed} />
-      <header className="border-b border-white/[0.07] bg-black/20 backdrop-blur-md">
+      <header className="border-b border-white/[0.07] bg-black/50">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
             <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
