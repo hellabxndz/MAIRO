@@ -69,6 +69,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Prefer an account that can actually run ads.
+    //
+    // This used to take adAccounts[0] and ask no questions, which is fine right
+    // up until somebody's first account is a disabled or unsettled one and
+    // their second is the working one. They would connect successfully, create
+    // a campaign, and watch nothing ever deliver, with the dashboard reporting
+    // a healthy connection throughout.
+    //
+    // Meta's account_status 1 is the only value that can spend. Falling back to
+    // the first account when none qualify is deliberate: a connection to a
+    // troubled account is still better than refusing to connect at all, and the
+    // billing card on the Meta page names the problem either way.
+    const chosen = adAccounts.find((a) => a.account_status === 1) ?? adAccounts[0];
+
     const pages = await fetchPages(longLived.access_token);
 
     const tokenExpiresAt = longLived.expires_in
@@ -77,7 +91,7 @@ export async function GET(req: NextRequest) {
 
     await saveMetaConnection({
       organizationId,
-      metaAdAccountId: adAccounts[0].id,
+      metaAdAccountId: chosen.id,
       pageId: pages[0]?.id ?? null,
       accessToken: longLived.access_token,
       tokenExpiresAt,
@@ -87,7 +101,13 @@ export async function GET(req: NextRequest) {
     // the not-connected banner disappears and the funnel is back to normal.
     await stopExploring();
 
-    return NextResponse.redirect(new URL("/dashboard/meta?connected=1", origin));
+    // A connected account that cannot be charged is the single most common
+    // reason a first campaign never runs, so it is called out on arrival
+    // rather than left for the customer to find.
+    const url = new URL("/dashboard/meta", origin);
+    url.searchParams.set("connected", "1");
+    if (chosen.account_status !== 1) url.searchParams.set("checkBilling", "1");
+    return NextResponse.redirect(url);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to connect to Meta.";
     return redirectWithError(origin, explainMetaError(message));

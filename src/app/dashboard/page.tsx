@@ -12,6 +12,7 @@ import { OptimizationCard } from "@/components/optimization-card";
 import { PlatformIcons } from "@/components/platform-icons";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
+import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -64,6 +65,15 @@ export default async function DashboardOverviewPage() {
   // which is the correct answer for a campaign in its first week.
   const recommendations = await buildRecommendations(organizationId);
 
+  // Whether the ad account can actually be charged. A campaign that has been
+  // created, looks healthy and delivers nothing is almost always this, and it
+  // is the one problem a business owner has no way of diagnosing themselves.
+  const billing = connectedPlatforms.some((c) => c.platform === "META")
+    ? await fetchMetaBillingStatus(organizationId)
+    : null;
+  const billingProblem =
+    billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
+
   const campaignCount = campaigns.length;
   // Every network any campaign runs on, for the icon row.
   const allPlatformsInUse = [
@@ -86,6 +96,42 @@ export default async function DashboardOverviewPage() {
           hasCampaign: campaignCount > 0,
         }}
       />
+
+      {/* Ads that cannot be paid for outrank everything, including an
+          optimization: there is no point tuning a budget split on a campaign
+          Meta will not run. */}
+      {billingProblem && (
+        <div className="mb-6">
+          <Card className="border-amber-500/30 bg-amber-500/[0.06]">
+            <p className="font-medium text-amber-200">
+              {billingProblem.state === "no_payment_method"
+                ? "Meta has no way to charge for your ads yet"
+                : "Meta can't run your ads right now"}
+            </p>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
+              {billingProblem.message}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {billingProblem.actionUrl && (
+                <a
+                  href={billingProblem.actionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200"
+                >
+                  {billingProblem.actionLabel} →
+                </a>
+              )}
+              <Link
+                href="/dashboard/meta"
+                className="rounded-full border border-white/10 px-5 py-2.5 text-xs text-neutral-300 transition hover:border-white/25 hover:text-white"
+              >
+                See the details
+              </Link>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* An optimization worth acting on outranks everything else on this
           page, so it sits above the numbers rather than below them. */}

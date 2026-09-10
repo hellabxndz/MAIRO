@@ -9,6 +9,7 @@ import { allPlatforms, platformMeta } from "@/lib/ad-platforms/registry";
 import { entitlementsFor } from "@/lib/entitlements";
 import { planFor, PLANS } from "@/lib/plans";
 import { PlatformIcon } from "@/components/platform-icons";
+import { billingUrlFor } from "@/lib/ad-platforms/billing";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
 // Where a business connects the places it wants to advertise.
@@ -115,6 +116,23 @@ export default async function IntegrationsPage({
                     <p className="mt-1 text-xs text-neutral-500">{meta.surfaces}</p>
                     {summary?.accountName && (
                       <p className="mt-1.5 text-xs text-neutral-400">{summary.accountName}</p>
+                    )}
+                    {/* Connecting an account and putting a card on it are two
+                        different things, and nothing in the product used to say
+                        so. This is where someone looks when they wonder how the
+                        ads get paid for. */}
+                    {connected && summary?.accountId && billingUrlFor(meta.platform, summary.accountId) && (
+                      <p className="mt-2 text-xs text-neutral-500">
+                        You pay {meta.name} directly for ad spend.{" "}
+                        <a
+                          href={billingUrlFor(meta.platform, summary.accountId)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline underline-offset-4 hover:text-neutral-300"
+                        >
+                          Manage payment on {meta.name}
+                        </a>
+                      </p>
                     )}
                     {summary?.problem && (
                       <p className="mt-2 max-w-md text-xs text-amber-200/80">{summary.problem}</p>
