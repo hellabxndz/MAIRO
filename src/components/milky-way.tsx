@@ -135,16 +135,19 @@ export function MilkyWay() {
         </div>
       </div>
 
-      {/* Legibility, in two parts.
-
-          A flat wash over the whole picture would be the easy way and it is the
-          wrong one — it lifts the black sky to grey and the image stops reading
-          as a photograph at all. Instead the darkening is a gradient that is
-          strongest at the top and bottom, where the headlines and the footer
-          sit, and lightest across the middle band, where the galaxy is and
-          where there is the least type. */}
-      <div className="milkyway-veil absolute inset-0" />
-      <div className="milkyway-vignette absolute inset-0" />
+      {/* No legibility scrim here, deliberately.
+          
+          This component used to carry its own — a vertical veil and a vignette,
+          written back when it was the whole background and had to protect the
+          type by itself. It is not that any more: it only ever renders inside
+          GalaxyBackground, which lays its own scrims over whatever is beneath
+          it, and those are tuned against the live scene.
+          
+          So the two were stacking, and the sky the fallback showed came out at
+          roughly half the brightness of the live one. Measured on the hero at
+          1280x800: mean luminance 15 against the live scene's 29. That is what
+          "the galaxy stopped showing" actually was — not a failure to render,
+          but a fallback dimmed until it read as an empty black page. */}
 
       <style>{`
         /* Scaled slightly past the viewport so the parallax has somewhere to
@@ -153,18 +156,24 @@ export function MilkyWay() {
 
         /* Tall enough to fill the viewport at the image's own 16:9 ratio, and
            never narrower than the viewport, because two tiles only pan
-           seamlessly while one tile is at least a screen wide. */
-        .milkyway-tile { width: max(100vw, 177.78vh); }
-
-        .milkyway-veil {
-          background: linear-gradient(to bottom,
-            rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.20) 28%, rgba(0,0,0,0.12) 52%,
-            rgba(0,0,0,0.34) 78%, rgba(0,0,0,0.68) 100%);
-        }
-        .milkyway-vignette {
-          background: radial-gradient(ellipse at center,
-            rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.66) 100%);
-        }
+           seamlessly while one tile is at least a screen wide.
+           
+           Mirrored, which is not a stylistic choice. The galactic bulge sits
+           at about three tenths of the way across the panorama, and the page's
+           legibility scrim is heaviest across the left third — so the one part
+           of this picture anybody would call "the galaxy" was landing directly
+           underneath the darkest part of the page and the sky read as empty.
+           Flipping puts it at seven tenths instead, well clear of the type, and
+           unlike a pan offset it does that at every viewport size rather than
+           at the one it was tuned for.
+           
+           The seam survives it, and for a reason rather than by luck. The join
+           between two tiles put the image's last column next to its first, and
+           that pair was measured smooth when the panorama was built. Mirroring
+           each tile individually puts the same two columns next to each other
+           in the opposite order, so the difference across the join is
+           identical — the same measurement, unchanged. */
+        .milkyway-tile { width: max(100vw, 177.78vh); transform: scaleX(-1); }
 
         .milkyway-pan {
           /* One tile's width in 210 seconds. Slow enough that it never pulls
@@ -207,10 +216,10 @@ export function MilkyWay() {
 
            The delay follows from the same numbers, and with no crop it is an
            easy sum: the fraction of the pan elapsed is exactly the image
-           fraction at the left edge of the screen. Opening on the bulge, which
-           sits at about 0.30 of the width, means starting 0.18 of the way into
-           the 210s cycle, which puts the bulge just left of centre with the
-           bright arm climbing away to the right.
+           fraction at the left edge of the screen. The bulge sits at about 0.30
+           of the width — 0.70 once the tile is mirrored, see above — so
+           centring it in a 0.40-wide window means starting half way through
+           the 210s cycle.
 
            Do not pick that number by looking for the brightest column. The
            broad blue arm further along wins on brightness per column and the
@@ -225,24 +234,8 @@ export function MilkyWay() {
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 84%, transparent 100%);
             mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 84%, transparent 100%);
           }
-          .milkyway-pan { animation-delay: -38s; }
+          .milkyway-pan { animation-delay: -105s; }
 
-          /* Most of this comes off on a phone. These two were drawn for a
-             full-bleed image that ran to all four edges and needed holding
-             down at the top and bottom; the band does not reach the top or
-             bottom, its own mask already fades it out, and the page's scrim
-             covers it a second time on top of that. Left at full strength the
-             three of them stacked up and put the galaxy back under fog, which
-             is the thing this was all meant to fix. */
-          .milkyway-veil {
-            background: linear-gradient(to bottom,
-              rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.10) 30%, rgba(0,0,0,0.04) 55%,
-              rgba(0,0,0,0.14) 80%, rgba(0,0,0,0.34) 100%);
-          }
-          .milkyway-vignette {
-            background: radial-gradient(ellipse at center,
-              rgba(0,0,0,0) 0%, rgba(0,0,0,0.06) 62%, rgba(0,0,0,0.30) 100%);
-          }
         }
 
         @media (prefers-reduced-motion: reduce) {

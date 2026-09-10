@@ -966,6 +966,18 @@ export function createScene(opts: SceneOptions): Scene | null {
    */
   let hasDemoted = false;
 
+  /**
+   * Consecutive measurement windows in which the lowest tier was too slow.
+   *
+   * Giving up is permanent for the life of the page — the scene is disposed
+   * and never rebuilt — so it must not be reachable by one bad moment. A
+   * background tab, a garbage collection pause, another tab compiling
+   * something heavy: any of these can blow out a single window on a machine
+   * that is otherwise perfectly capable, and the visitor is left looking at a
+   * still image for the rest of their visit with no way back.
+   */
+  let slowWindows = 0;
+
   function stepUp() {
     if (hasDemoted || tier >= 2) return;
     tier = (tier + 1) as Tier;
@@ -983,7 +995,17 @@ export function createScene(opts: SceneOptions): Scene | null {
       // throws away the whole thing, and a device holding the lowest tier at
       // forty frames a second is doing fine — it should not be punished for
       // failing to reach sixty.
-      if (median > 34) opts.onGiveUp?.();
+      // Three windows in a row, not one. At forty frames a window that is
+      // roughly four seconds of sustained trouble before the scene is
+      // abandoned — long enough that a transient stall cannot do it, short
+      // enough that a device which genuinely cannot cope is not made to
+      // struggle on for long.
+      if (median > 34) {
+        slowWindows += 1;
+        if (slowWindows >= 3) opts.onGiveUp?.();
+      } else {
+        slowWindows = 0;
+      }
       return;
     }
     tier = (tier - 1) as Tier;
@@ -1262,7 +1284,14 @@ export function createScene(opts: SceneOptions): Scene | null {
 
     // ---- watch the frame time ----
     if (lastFrame && now > settleUntil) {
-      times.push(now - lastFrame);
+      const delta = now - lastFrame;
+      // A quarter of a second between frames is not a slow scene. requestAnimationFrame
+      // stops entirely in a hidden tab, so the first frame after someone
+      // switches back carries the whole time they were away; the same goes for
+      // a machine that stalled on something else. Counting those as rendering
+      // cost is how a scene gets demoted, and then abandoned, for the crime of
+      // the visitor looking at another tab.
+      if (delta < 250) times.push(delta);
       // Forty frames, not ninety. On a machine that is genuinely struggling,
       // ninety frames is twenty seconds of the visitor watching it struggle
       // before anything is done about it.
