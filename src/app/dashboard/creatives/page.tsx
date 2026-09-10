@@ -55,7 +55,7 @@ export default async function CreativesPage() {
     <div>
       <PageHeader
         title="Creatives"
-        description="Request ad creative and copy — our team and the Creative agent put it together."
+        description="Show MAIRO a picture of what you're selling, or just describe it, and it writes the ad."
         action={
           <Badge tone={remaining === 0 ? "yellow" : "neutral"}>
             {usedThisMonth} / {plan.limits.creativesPerMonth} used this month
@@ -78,7 +78,10 @@ export default async function CreativesPage() {
       </Card>
 
       {requests.length === 0 ? (
-        <EmptyState title="No creative requests yet" description="Request your first one above." />
+        <EmptyState
+          title="No ads yet"
+          description="Start one above — a picture of what you're selling, or a sentence about it."
+        />
       ) : (
         <div className="space-y-3">
           {requests.map((r) => (

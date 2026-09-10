@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { currentMonthKey } from "@/lib/utils/month";
 import { planFor } from "@/lib/plans";
 import { generateCreativeConcept } from "@/lib/ai/creative";
+import { suggestCreativeIdea } from "@/lib/ai/suggest";
 import { reviewCreative } from "@/lib/ai/review";
 import { activeOrganizationId } from "@/lib/active-org";
 
@@ -22,6 +23,78 @@ const MAX_REFERENCE_CHARS = 2_800_000; // ~2MB of base64
 const DATA_URL_RE = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/;
 
 export type CreativeActionState = { error?: string } | undefined;
+
+export type SuggestionResult =
+  | { ok: true; idea: string }
+  | { ok: false; error: string };
+
+/**
+ * MAIRO's own idea, for the customer who does not have one.
+ *
+ * Kept separate from requestCreativeAction and free: it spends no creative
+ * allowance and writes nothing to the database. Asking what to advertise is
+ * not the same as asking for an advertisement, and charging one of a Starter
+ * customer's two monthly creatives for a sentence of advice would make the
+ * feature unusable by exactly the people who need it.
+ */
+export async function suggestIdeaAction(input: {
+  type: "IMAGE" | "VIDEO" | "COPY" | "CAROUSEL";
+  referenceImage?: string | null;
+  platform?: "META" | "TIKTOK" | null;
+}): Promise<SuggestionResult> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not authenticated" };
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) {
+    return { ok: false, error: "The AI isn't configured on this deployment yet." };
+  }
+
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  // The picture arrives from the browser, so it goes through the same
+  // validation as a real request rather than straight to the model.
+  let reference: string | null = null;
+  if (input.referenceImage) {
+    if (!DATA_URL_RE.test(input.referenceImage.trim())) {
+      return { ok: false, error: "That file isn't an image we can read." };
+    }
+    if (input.referenceImage.length > MAX_REFERENCE_CHARS) {
+      return { ok: false, error: "That image is too large. Try one under 2MB." };
+    }
+    reference = input.referenceImage.trim();
+  }
+
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, industry: true, intake: true },
+  });
+  if (!organization) return { ok: false, error: "Organization not found" };
+
+  // What they have already advertised, so asking twice gives two ideas rather
+  // than the same one reworded.
+  const previous = await db.creativeRequest.findMany({
+    where: { organizationId },
+    select: { brief: true },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+  });
+
+  try {
+    const idea = await suggestCreativeIdea({
+      businessName: organization.name,
+      industry: organization.industry,
+      goal: organization.intake?.primaryGoal ?? null,
+      targetAudience: organization.intake?.targetAudience ?? null,
+      brandVoice: organization.intake?.brandVoice ?? null,
+      type: input.type,
+      platform: input.platform ?? null,
+      referenceImage: reference,
+      previousBriefs: previous.map((p) => p.brief),
+    });
+    return { ok: true, idea };
+  } catch {
+    return { ok: false, error: "Couldn't think of one just now. Try again in a moment." };
+  }
+}
 
 function readReferenceImage(formData: FormData): { value: string | null; error?: string } {
   const raw = formData.get("referenceImage");
