@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import { agentModel } from "@/lib/ai/model";
-import type { CreativeType } from "@/generated/prisma/enums";
+import type { AdPlatform, CreativeType } from "@/generated/prisma/enums";
+import { creativeDirectionFor, creativeSpecFor } from "@/lib/ai/creative-briefs";
 
 // Turns a client's brief — and optionally a picture they uploaded — into a
 // concrete ad creative concept they can react to.
@@ -18,6 +19,16 @@ const TYPE_GUIDANCE: Record<CreativeType, string> = {
 
 export type CreativeConceptInput = {
   type: CreativeType;
+  /**
+   * Which network this ad is for.
+   *
+   * Optional, and absent means Meta — which is what every creative in the
+   * database before multi-platform was, so an old request regenerated after
+   * this shipped comes back as the same kind of ad it was.
+   */
+  platform?: AdPlatform | null;
+  /** TikTok Growth Mode: written for a business with no following yet. */
+  growthMode?: boolean;
   brief: string;
   businessName: string;
   /** A data URL, as stored on CreativeRequest.referenceImage. */
@@ -51,6 +62,7 @@ export async function generateCreativeConcept(
     input.targetAudience ? `Target audience: ${input.targetAudience}` : null,
     input.brandVoice ? `Brand voice: ${input.brandVoice}` : null,
     `Format requested: ${TYPE_GUIDANCE[input.type]}`,
+    `Where it will run: ${creativeSpecFor(input.platform ?? "META").placements.join(", ")}`,
     `What they asked for: ${input.brief}`,
     input.clientNotes
       ? `\nSince reading your first concept they have told you:\n${input.clientNotes}\n\nThese corrections take priority over anything you assumed before. Rewrite the concept properly around them.`
@@ -80,6 +92,12 @@ export async function generateCreativeConcept(
     "**Assumed** — only if you had to assume something. One line. Omit the heading entirely otherwise.",
     "",
     "Write plainly. No buzzwords, no 'elevate your brand', no em-dash-heavy ad-speak. Be specific about this business rather than generic about advertising.",
+    "",
+    // The platform direction goes last, so it has the final word over the
+    // generic structure above. A TikTok ad's shape is genuinely different from
+    // a Meta one's, and the instruction that says so should not be buried
+    // above six lines of house style it needs to override.
+    creativeDirectionFor(input.platform ?? "META", { growthMode: input.growthMode }),
   ].join("\n");
 
   const { text } = await generateText({

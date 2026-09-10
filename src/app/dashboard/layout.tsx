@@ -14,8 +14,13 @@ const NAV = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/plan", label: "Monthly plan" },
   { href: "/dashboard/campaigns", label: "Campaigns" },
+  { href: "/dashboard/analytics", label: "Performance" },
   { href: "/dashboard/creatives", label: "Creatives" },
-  { href: "/dashboard/meta", label: "Meta connection" },
+  // Was "Meta connection" when Meta was the only place to advertise. The
+  // Meta-specific screen still exists at /dashboard/meta and is linked from
+  // here, because it does more than connect — it picks a Page and explains
+  // Meta's own failure modes.
+  { href: "/dashboard/integrations", label: "Where you advertise" },
   { href: "/dashboard/agents", label: "AI specialists" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/guide", label: "How it works" },
@@ -29,7 +34,17 @@ const NAV = [
 // signup is by definition someone who has not connected an ad account yet, so
 // gating the only screen that fixes it behind connecting one leaves them stuck
 // with a name the AI will put in every ad it writes.
-const ALWAYS_REACHABLE = ["/dashboard/meta", "/dashboard/settings", "/dashboard/guide"];
+//
+// /dashboard/integrations joins them for the same reason as /dashboard/meta:
+// it is now the screen that lists every network a business can connect, and
+// gating "connect somewhere to advertise" behind having connected somewhere
+// to advertise is the same trap in a wider form.
+const ALWAYS_REACHABLE = [
+  "/dashboard/meta",
+  "/dashboard/integrations",
+  "/dashboard/settings",
+  "/dashboard/guide",
+];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

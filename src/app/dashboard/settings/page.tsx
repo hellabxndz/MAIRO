@@ -4,14 +4,17 @@ import { db } from "@/lib/db";
 import { Card, PageHeader } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
+import { AutoOptimizeSection } from "./auto-optimize-section";
 import { activeOrganizationId } from "@/lib/active-org";
+import { entitlementsFor } from "@/lib/entitlements";
+import { planFor, PLANS } from "@/lib/plans";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, intake] = await Promise.all([
+  const [organization, intake, autoOptimize, entitlements] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -25,8 +28,16 @@ export default async function SettingsPage() {
       },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
+    db.autoOptimizeSettings.findUnique({ where: { organizationId } }),
+    entitlementsFor(organizationId),
   ]);
   if (!organization) redirect("/sign-in");
+
+  const plan = planFor(organization.subscriptionTier);
+  // The plan to point at, found by price rather than named, so changing which
+  // tier includes Auto Optimize changes this with it.
+  const upgradeTarget =
+    PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ?? PLANS[PLANS.length - 1];
 
   return (
     <div>
@@ -53,6 +64,25 @@ export default async function SettingsPage() {
           status={organization.subscriptionStatus}
           periodEnd={organization.currentPeriodEnd}
           hasCustomer={Boolean(organization.stripeCustomerId)}
+        />
+      </div>
+
+      <div className="mb-8">
+        <AutoOptimizeSection
+          allowed={entitlements.auto_optimize}
+          upgradePlanName={upgradeTarget.name}
+          values={{
+            // Defaults chosen to be safe rather than useful: a ceiling of
+            // twice what they spend now, and a 20% daily step. Someone who
+            // switches this on without reading the fields gets conservative
+            // behaviour, not a blank cheque.
+            enabled: autoOptimize?.enabled ?? false,
+            maxDailyBudget: autoOptimize ? autoOptimize.maxDailyBudgetCents / 100 : 100,
+            maxDailyIncreasePercent: autoOptimize?.maxDailyIncreasePercent ?? 20,
+            minRoas: autoOptimize?.minRoas ?? null,
+            maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
+            platforms: autoOptimize?.platforms ?? [],
+          }}
         />
       </div>
 

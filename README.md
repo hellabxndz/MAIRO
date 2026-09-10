@@ -75,6 +75,31 @@ Client sign-up and the dashboard work without this — you'll just see a
 6. Make sure the Meta user connecting has admin access to a Business Manager
    with at least one ad account.
 
+### 5b. Set up your TikTok app (optional)
+
+TikTok is optional in the strictest sense: leave `TIKTOK_APP_ID` and
+`TIKTOK_APP_SECRET` unset and it simply isn't offered. The platform registry
+reports it as unconfigured, the campaign form doesn't show it, and nothing
+attempts a call that cannot succeed. Everything else works exactly as before.
+
+To switch it on:
+
+1. Create an app at <https://business-api.tiktok.com/portal>, under a TikTok
+   Business Center account.
+2. Copy the **App ID** and **Secret** into `TIKTOK_APP_ID` and
+   `TIKTOK_APP_SECRET`.
+3. Register the redirect URL. It must match byte-for-byte what the app
+   resolves to — `https://<your-domain>/api/tiktok/callback`, no trailing
+   slash. On Vercel this is derived from the production domain automatically;
+   set `TIKTOK_REDIRECT_URI` only to override that.
+4. Request the advertising scopes (`advertiser_read`, `campaign_create`,
+   `campaign_update`, `adgroup_create`, `ad_create`, `reporting`). Until
+   TikTok approves them, only accounts added as testers on the app can
+   connect — the same shape of restriction as Meta's App Review.
+5. Spark Ads (promoting a post already on the business's profile) need
+   `video_list` on top. It is requested separately, only when a customer asks
+   for it, so a first-time connection shows the smallest consent screen it can.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get
@@ -110,6 +135,9 @@ prisma/schema.prisma      Data model (orgs, plans, campaigns, creatives, agent t
 src/lib/auth.ts           Auth.js config (credentials provider, JWT session)
 src/lib/db.ts             Prisma client (pg driver adapter)
 src/lib/meta/             Meta Graph API client, OAuth flow, campaign calls
+src/lib/ad-platforms/     One interface per advertising network (see below)
+src/lib/budget/           Budget splitting, and the optimizer's guardrails
+src/lib/entitlements.ts   What each plan allows — the only place that decides
 src/lib/ai/               Claude model config, agent system prompts, plan generator, chat threads
 src/lib/actions/          Server actions (auth, onboarding, campaigns, creatives, plan, AIOS)
 src/app/(auth)/           Sign in / sign up
@@ -117,18 +145,51 @@ src/app/onboarding/       Client intake wizard
 src/app/dashboard/        Client-facing app
 src/app/aios/             Owner-facing app
 src/app/api/meta/         Meta OAuth connect/callback routes
+src/app/api/tiktok/       TikTok OAuth connect/callback routes
 src/app/api/agents/chat/  Streaming Claude chat endpoint (used by both dashboards)
 ```
 
+## Adding an advertising network
+
+Meta and TikTok are reached through one interface, `AdPlatformAdapter` in
+`src/lib/ad-platforms/types.ts`. Nothing above that layer knows which network
+it is talking to: the campaign form renders from `selectablePlatforms()`, the
+dashboard groups by whatever platforms a campaign has, and the optimizer
+compares whatever it is given.
+
+Adding Google Ads is therefore three things and no more:
+
+1. A value in the `AdPlatform` enum (a migration, but a one-line one).
+2. A folder under `src/lib/ad-platforms/` implementing the interface.
+3. An entry in `src/lib/ad-platforms/registry.ts`.
+
+`implemented` in the registry is deliberately separate from the enum, so a
+half-finished adapter can be developed without being offered to customers, and
+a network can be retired without orphaning the rows that reference it.
+
 ## What's stubbed vs. real
 
-- **Meta campaign creation is real** — it calls the live Graph API. It only
-  creates the top-level **Campaign** object (paused by default); ad sets, ad
-  creative, and audience targeting are a further step to build once you
-  decide how much of that flow to automate vs. have your team fill in Ads
-  Manager.
-- **Subscriptions/billing are not implemented.** There's a `subscriptionTier`
-  field on `Organization` ready for when you wire up Stripe.
+- **Campaign creation is real on both networks** — live Graph API calls to
+  Meta and live Business API calls to TikTok. Both create the top-level
+  **Campaign** object and an ad group/ad set, paused by default.
+- **Publishing finished creatives is not.** Both networks require the asset to
+  exist in their own media library first (a hash on Meta, a processed
+  `video_id` on TikTok), and MAIRO has no asset pipeline yet. `createAd`
+  reports this honestly rather than posting an ad with nothing in it — see the
+  note in each adapter.
+- **No network call is ever faked.** If TikTok isn't configured, or an account
+  isn't connected, the adapter returns a typed failure that says which, and
+  the dashboard shows a dash rather than a zero. A campaign that did not reach
+  a network is never recorded as if it had; the whole product rests on the
+  dashboard being true.
+- **Auto Optimize is built but not scheduled.** `runAutoOptimize` is ready for
+  a cron to call and enforces every limit the customer set, but nothing calls
+  it on a timer yet — an unattended job that moves money should be switched on
+  knowingly, once the guardrails have been watched working on real campaigns.
+- **Subscriptions/billing are wired to Stripe** but the prices in
+  `src/lib/plans.ts` are only what the pricing page *displays*. What a customer
+  is charged comes from the Stripe Price behind each `STRIPE_PRICE_*`
+  variable, so changing one without the other makes the page lie.
 - **Creative asset generation** (actual images/video) isn't implemented —
   `CreativeRequest` is a queue your team (or the AIOS dashboard) works from
   manually today.

@@ -6,6 +6,7 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { db } from "../src/lib/db";
+import { seedPlanConfig } from "@/lib/plan-config";
 
 async function main() {
   const email = process.env.OWNER_EMAIL;
@@ -26,6 +27,17 @@ async function main() {
   });
 
   console.log(`OWNER account ready: ${user.email}`);
+
+  // Pricing and feature permissions. Inserted only where a row is missing, so
+  // a price edited in the database survives the next seed — see
+  // src/lib/plan-config.ts for why that matters.
+  const plans = await seedPlanConfig();
+  if (plans.created.length > 0) {
+    console.log(`Plan config seeded: ${plans.created.join(", ")}`);
+  }
+  if (plans.skipped.length > 0) {
+    console.log(`Plan config already present, left alone: ${plans.skipped.join(", ")}`);
+  }
 }
 
 main()

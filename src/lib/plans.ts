@@ -1,13 +1,27 @@
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 
-// Single source of truth for what each plan costs and what it allows.
-// The landing page renders from this, and the server actions enforce from
-// it, so the marketing copy and the product can't drift apart.
+// What each plan costs and what it includes.
+//
+// These are the compiled-in defaults. The database can override them — see
+// src/lib/entitlements.ts, which reads PlanConfig and falls back here — so
+// pricing can change without a deploy while a deployment with an empty
+// PlanConfig table still behaves exactly as this file says.
+//
+// What a plan *allows* is no longer decided here. That moved to
+// entitlements.ts, in one vocabulary of flags, because "can this customer use
+// TikTok" was about to become a tier comparison scattered across the campaign
+// form, the creative generator, the analytics page and the optimizer. The
+// limits below stay because the pricing cards render them.
 //
 // Limits are set around what actually costs us money: creative requests are
 // real production work, and each live campaign is real oversight. AI agent
 // chat is deliberately unlimited on every tier — it costs cents to serve and
 // it's the thing that keeps people logging in.
+//
+// One thing to know before changing a price: the number here is what the
+// customer is SHOWN. What they are charged is the Stripe Price behind the
+// matching STRIPE_PRICE_* variable. Changing one without the other makes the
+// pricing page lie, and nobody notices until a card statement does.
 
 export type PlanLimits = {
   /** Campaigns that aren't archived. */
@@ -40,50 +54,59 @@ export const PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 39.99,
-    tagline: "Get your first campaign live.",
+    priceMonthly: 49,
+    tagline: "Get your first campaign live on Meta.",
     spendGuidance: "Best for $100–500/mo in ad spend",
     limits: { campaigns: 1, creativesPerMonth: 2 },
     features: [
-      "1 active campaign",
-      "2 creative requests a month",
+      "Meta advertising — Facebook + Instagram",
+      "AI campaign builder",
       "AI-written ad copy, unlimited rewrites",
-      "Monthly AI strategy plan",
-      "All three AI specialists, unlimited chat",
+      "Creative generation",
       "Performance dashboard",
+      "1 active campaign, 2 creative requests a month",
     ],
   },
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 99.99,
-    tagline: "What most businesses run on.",
+    priceMonthly: 99,
+    tagline: "Meta and TikTok, from one place.",
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
-    limits: { campaigns: 3, creativesPerMonth: 6 },
+    limits: { campaigns: 3, creativesPerMonth: 8 },
     features: [
       "Everything in Starter",
-      "3 active campaigns",
-      "6 creative requests a month",
-      "Custom images and graphics designed for you",
-      "A/B creative testing",
-      "Weekly optimization pass",
+      "Meta + TikTok advertising",
+      "TikTok Growth Mode",
+      "TikTok-native creative generation",
+      "Cross-platform analytics",
+      "AI budget recommendations",
+      "Creative testing",
+      "3 active campaigns, 8 creative requests a month",
     ],
   },
   {
+    // Shown as "Pro". The tier value stays SCALE because Stripe price ids are
+    // keyed off it in the environment — renaming it would leave every existing
+    // subscriber matching no STRIPE_PRICE_* variable, and the webhook would
+    // read that as having no plan at all.
     tier: "SCALE",
-    name: "Scale",
-    priceMonthly: 249.99,
-    tagline: "For spend that needs real attention.",
+    name: "Pro",
+    priceMonthly: 199,
+    tagline: "Let MAIRO run the budget.",
     spendGuidance: "Best for $2,000+/mo in ad spend",
     limits: { campaigns: 10, creativesPerMonth: 20 },
     features: [
       "Everything in Growth",
-      "10 active campaigns",
-      "20 creative requests a month, video included",
-      "Human strategist review every month",
-      "Advanced retargeting and audience setup",
-      "48-hour creative turnaround",
+      "Advanced AI optimization",
+      "Mairo Auto Optimize",
+      "Automatic budget allocation",
+      "Advanced creative testing",
+      "Advanced analytics",
+      "Priority campaign processing",
+      "Future advertising platforms as they land",
+      "10 active campaigns, 20 creative requests a month",
     ],
   },
 ];
@@ -117,7 +140,7 @@ export const FREELANCER_PLANS: Plan[] = [
       "6 creative requests a month per client",
       "Switch between clients from one login",
       "All three AI specialists on every client",
-      "Separate Meta ad account per client",
+      "Meta + TikTok, with separate ad accounts per client",
     ],
   },
   {

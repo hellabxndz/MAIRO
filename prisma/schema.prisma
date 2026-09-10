@@ -119,6 +119,12 @@ model Organization {
   creativeRequests CreativeRequest[]
   agentThreads     AgentThread[]
 
+  // Multi-platform advertising.
+  platformConnections  PlatformConnection[]
+  mairoCampaigns       MairoCampaign[]
+  platformCreatives    PlatformCreative[]
+  autoOptimizeSettings AutoOptimizeSettings?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -190,12 +196,26 @@ enum CampaignStatus {
   ARCHIVED
 }
 
+/// A Meta campaign, from before MAIRO ran on more than one network.
+///
+/// Superseded by MairoCampaign + PlatformCampaign, which is what every code
+/// path now reads and writes. The migration that introduced those backfilled a
+/// parent and a META child for every row here and set mairoCampaignId, so
+/// nothing was lost and nothing was moved twice.
+///
+/// The table stays because dropping it in the same deploy that introduced its
+/// replacement would leave no way back if the backfill got something wrong.
+/// Delete it in its own migration once the new path has a few weeks behind it.
 model Campaign {
   id              String         @id @default(cuid())
   organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
   metaAdAccount   MetaAdAccount? @relation(fields: [metaAdAccountId], references: [id])
   metaAdAccountId String?
+
+  /// Set by the multi-platform backfill: which MairoCampaign now owns this.
+  mairoCampaign   MairoCampaign? @relation(fields: [mairoCampaignId], references: [id], onDelete: SetNull)
+  mairoCampaignId String?
 
   metaCampaignId   String? // null until pushed live to Meta
   name             String
@@ -336,4 +356,312 @@ model AgentMessage {
   content String      @db.Text
 
   createdAt DateTime @default(now())
+}
+
+// --- Multi-platform advertising -------------------------------------------
+//
+// Everything below this line exists so MAIRO can run a campaign on more than
+// one advertising network while the customer still feels like they made one
+// campaign. The shape is deliberately not "Meta, plus TikTok bolted on": it is
+// a parent the customer owns and a child per network, so adding Google or
+// Snapchat later is a new enum value and a new adapter rather than a schema
+// change.
+//
+// A note on how this landed, because it constrains the design. `vercel-build`
+// runs `prisma migrate deploy`, so any migration here runs against the live
+// database on the next deploy. Everything in this section is therefore purely
+// additive — new tables, new enum values, one new nullable column on Campaign.
+// Nothing is dropped or rewritten. The old Campaign table is backfilled into
+// the new structure and then left alone as a safety net; dropping it is a
+// separate migration to make once the new path has run in production for a
+// while.
+
+/// The networks MAIRO can advertise on.
+///
+/// Values are added here before the adapter exists — `isImplemented` in
+/// src/lib/ad-platforms/registry.ts is what decides whether a platform can
+/// actually be chosen. That split is on purpose: it means a half-finished
+/// platform can be developed behind a flag without a migration to turn it on.
+enum AdPlatform {
+  META
+  TIKTOK
+  GOOGLE
+  SNAPCHAT
+  PINTEREST
+  LINKEDIN
+}
+
+enum PlatformConnectionStatus {
+  DISCONNECTED
+  CONNECTED
+  TOKEN_EXPIRED
+  ERROR
+}
+
+/// One organization's authorization to spend on one network.
+///
+/// The generic replacement for MetaAdAccount. Meta still reads its own table —
+/// it works, it is in production, and moving it is a migration with no user
+/// visible benefit — but every network added from TikTok onwards lives here,
+/// and src/lib/ad-platforms/connections.ts presents both through one interface
+/// so nothing above that layer knows the difference.
+///
+/// Tokens are ciphertext in this table. Nothing outside connections.ts may
+/// read these two columns; see the note there.
+model PlatformConnection {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  platform       AdPlatform
+
+  /// The network's own id for the advertising account — advertiser_id on
+  /// TikTok, act_xxx on Meta. Whatever createCampaign has to be told.
+  externalAccountId   String
+  externalAccountName String?
+  externalBusinessId  String?
+
+  accessToken      String    @db.Text
+  refreshToken     String?   @db.Text
+  tokenExpiresAt   DateTime?
+  refreshExpiresAt DateTime?
+  /// Space-separated list of what the network actually granted, which is not
+  /// always what was asked for. Checked before an action that needs a scope,
+  /// so a missing permission fails with something a person can act on.
+  scopes           String?
+
+  status    PlatformConnectionStatus @default(CONNECTED)
+  lastError String?                  @db.Text
+
+  platformCampaigns PlatformCampaign[]
+
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([organizationId, platform])
+  @@index([organizationId])
+}
+
+/// The campaign the customer thinks they made.
+///
+/// They name it once, set one budget, and pick which networks it should run
+/// on. Everything underneath — a separate real campaign on each network, with
+/// its own id, its own budget and its own status — is MAIRO's problem.
+model MairoCampaign {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  name      String
+  objective AdGoal
+  status    CampaignStatus @default(DRAFT)
+
+  /// The one number the customer entered. The children's budgets are derived
+  /// from this and their allocation percentages, and are kept summing to it.
+  totalDailyBudgetCents Int
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  /// Set when the customer asked for TikTok Growth Mode on this campaign:
+  /// TikTok-native creative, hook variations, and Spark-ad readiness for a
+  /// business that has little or no following yet.
+  tiktokGrowthMode Boolean @default(false)
+
+  platformCampaigns PlatformCampaign[]
+  creatives         PlatformCreative[]
+  recommendations   OptimizationRecommendation[]
+  /// Campaigns created before multi-platform existed, adopted by the backfill.
+  legacyCampaigns   Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+/// One network's half of a Mairo campaign.
+model PlatformCampaign {
+  id              String        @id @default(cuid())
+  mairoCampaign   MairoCampaign @relation(fields: [mairoCampaignId], references: [id], onDelete: Cascade)
+  mairoCampaignId String
+
+  platform     AdPlatform
+  connection   PlatformConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  connectionId String?
+
+  /// Null until the campaign actually reached the network. A row with a
+  /// budget, a status of DRAFT and no external id is one that failed to push
+  /// and is waiting to be retried — not one that is quietly running.
+  externalCampaignId String?
+
+  /// Whole per cent of the parent's budget. Siblings always sum to 100; that
+  /// is enforced in src/lib/budget/allocation.ts rather than by the database,
+  /// because the check spans rows.
+  budgetPercent    Int
+  dailyBudgetCents Int
+
+  status    CampaignStatus @default(DRAFT)
+  lastError String?        @db.Text
+
+  creatives PlatformCreative[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mairoCampaignId, platform])
+  @@index([mairoCampaignId])
+}
+
+/// The shapes a creative can be cut to.
+///
+/// This is on the creative rather than inferred from the platform because one
+/// platform takes several: a Meta campaign wants 9:16 for Stories and Reels
+/// and 1:1 for feed, from the same brief.
+enum CreativeAspect {
+  SQUARE_1_1
+  PORTRAIT_4_5
+  VERTICAL_9_16
+  LANDSCAPE_16_9
+}
+
+/// A single ad creative, written for one network in particular.
+///
+/// Meta and TikTok do not take the same advertisement. A polished product film
+/// that works in a Facebook feed dies in the first second of a TikTok, and a
+/// hand-held creator-style clip with burned-in subtitles looks like a mistake
+/// in a carousel. So the creative carries the platform it was written for, and
+/// the generator is given a different brief for each — see
+/// src/lib/ai/creative-briefs.ts.
+model PlatformCreative {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  mairoCampaign      MairoCampaign?    @relation(fields: [mairoCampaignId], references: [id], onDelete: Cascade)
+  mairoCampaignId    String?
+  platformCampaign   PlatformCampaign? @relation(fields: [platformCampaignId], references: [id], onDelete: SetNull)
+  platformCampaignId String?
+
+  platform     AdPlatform
+  creativeType CreativeType
+  aspectRatio  CreativeAspect
+
+  /// The first one to three seconds. Its own column rather than part of the
+  /// body copy because on TikTok it is the whole ad — everything after it only
+  /// gets seen if the hook works — and because hook variations are the unit
+  /// creative testing compares.
+  hook        String? @db.Text
+  primaryText String? @db.Text
+  headline    String?
+  cta         String?
+  mediaUrl    String? @db.Text
+
+  /// Per-creative figures from the network, as JSON. Untyped on purpose: the
+  /// interesting metrics differ per platform (TikTok cares about six-second
+  /// views and completion rate, Meta does not report them) and pinning columns
+  /// for the union of every network's vocabulary ages badly.
+  performanceData String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([mairoCampaignId])
+}
+
+enum RecommendationStatus {
+  PENDING
+  APPLIED
+  DISMISSED
+  EXPIRED
+}
+
+/// A proposed change to how a campaign's budget is split.
+///
+/// Stored rather than computed on the fly so that applying one is auditable:
+/// what was proposed, on what evidence, who accepted it, and whether MAIRO
+/// applied it itself under Auto Optimize. Money moves here, and "the AI
+/// changed my budget and I don't know why" is not an acceptable state.
+model OptimizationRecommendation {
+  id              String        @id @default(cuid())
+  mairoCampaign   MairoCampaign @relation(fields: [mairoCampaignId], references: [id], onDelete: Cascade)
+  mairoCampaignId String
+
+  status    RecommendationStatus @default(PENDING)
+  /// Plain-language reason shown to the customer.
+  rationale String               @db.Text
+  /// JSON: [{ platform, fromPercent, toPercent }]
+  proposalJson String            @db.Text
+  /// JSON snapshot of the figures this was based on, so a recommendation can
+  /// still be explained a week later when the numbers have moved on.
+  evidenceJson String?           @db.Text
+
+  appliedAt   DateTime?
+  appliedById String?
+  /// True when Auto Optimize applied this without a person clicking anything.
+  automatic   Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([mairoCampaignId])
+}
+
+/// The limits a customer puts on what MAIRO may do to their budget by itself.
+///
+/// Off by default, and every field is a ceiling rather than a target. The
+/// enforcement lives in src/lib/budget/optimizer.ts and runs server-side on
+/// every automatic change — a customer's stated maximum is the one thing in
+/// this feature that must not be advisory.
+model AutoOptimizeSettings {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  enabled Boolean @default(false)
+
+  /// Hard ceiling on total daily spend across every platform.
+  maxDailyBudgetCents Int
+  /// How much MAIRO may raise a daily budget in one day, as a percentage of
+  /// the current budget. Stops a good week compounding into a bad month.
+  maxDailyIncreasePercent Int @default(20)
+  /// Floor and ceiling on performance. Below the ROAS or above the CPA, MAIRO
+  /// may only reduce spend, never increase it.
+  minRoas    Float?
+  maxCpaCents Int?
+
+  /// The networks MAIRO is allowed to touch. Empty means none.
+  platforms AdPlatform[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Pricing and feature permissions, in the database rather than in the code.
+///
+/// The point is that changing what a plan costs or what it unlocks should be a
+/// row edit, not a deploy. src/lib/entitlements.ts reads this table, falls back
+/// to the defaults compiled into src/lib/plans.ts when a row is missing, and is
+/// the only thing in the application allowed to answer "may this organization
+/// do X" — so there is exactly one place to change when pricing changes.
+///
+/// The tier is the primary key and stays an enum, because Stripe price ids are
+/// keyed off it in the environment and renaming one would strip existing
+/// subscribers of their plan on the next webhook.
+model PlanConfig {
+  tier SubscriptionTier @id
+
+  name            String
+  priceMonthly    Int // cents
+  tagline         String
+  spendGuidance   String  @default("")
+  featured        Boolean @default(false)
+  active          Boolean @default(true)
+  sortOrder       Int     @default(0)
+  /// JSON string[] — the bullet list shown on the pricing card.
+  featuresJson    String  @db.Text
+  /// JSON object keyed by the flags in src/lib/entitlements.ts.
+  entitlementsJson String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
