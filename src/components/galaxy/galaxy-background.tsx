@@ -72,6 +72,11 @@ export function GalaxyBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const capable = useSyncExternalStore(neverChanges, readCapability, () => false);
   const [live, setLive] = useState(false);
+  // The panorama stays mounted underneath through the crossfade and only goes
+  // once the canvas is fully opaque over it. Unmounting it the moment the
+  // scene took over meant the two never overlapped, so whatever the canvas had
+  // not finished fading in was black.
+  const [showStill, setShowStill] = useState(true);
 
   useEffect(() => {
     if (!capable) return;
@@ -79,6 +84,7 @@ export function GalaxyBackground() {
     let scene: Scene | null = null;
     let cancelled = false;
     let resizeTimer: number | undefined;
+    let handoverTimer: number | undefined;
 
     const onScroll = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -107,18 +113,30 @@ export function GalaxyBackground() {
           canvas: canvasRef.current,
           starCount: stars,
           tier,
+          onReady: () => {
+            // The sky is lit; cross to it. Until this fires the page is
+            // showing the still panorama, which is in the server-rendered
+            // HTML and therefore up from the first paint.
+            setLive(true);
+            handoverTimer = window.setTimeout(() => setShowStill(false), 1000);
+          },
           onGiveUp: () => {
             // Back to the panorama, and stop rendering entirely. The crossfade
             // is the same one that brought the scene in, so this reads as a
             // deliberate settle rather than a failure.
+            // Cancel the handover if it has not happened yet. Giving up
+            // inside that one-second window would otherwise put the panorama
+            // back and then have the pending timer take it away again, and
+            // the page would be left with a disposed canvas over nothing.
+            window.clearTimeout(handoverTimer);
             setLive(false);
+            setShowStill(true);
             scene?.dispose();
             scene = null;
           },
         });
         if (!scene) return;
 
-        setLive(true);
         onScroll();
         scene.start();
 
@@ -138,6 +156,7 @@ export function GalaxyBackground() {
     return () => {
       cancelled = true;
       window.clearTimeout(resizeTimer);
+      window.clearTimeout(handoverTimer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("resize", onResize);
@@ -149,8 +168,16 @@ export function GalaxyBackground() {
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] bg-black">
       {/* Present from the first frame, so the page has a real sky while the
           renderer is still being fetched, and keeps one for good if it can't
-          run. Hidden the moment the scene takes over. */}
-      {!live && <MilkyWay />}
+          run. It fades out under the canvas rather than being pulled away in
+          front of it. */}
+      {showStill && (
+        <div
+          className="absolute inset-0"
+          style={{ opacity: live ? 0 : 1, transition: "opacity 900ms ease" }}
+        >
+          <MilkyWay />
+        </div>
+      )}
 
       <canvas
         ref={canvasRef}
@@ -162,11 +189,22 @@ export function GalaxyBackground() {
 
           A flat wash over the whole frame would be the easy fix and it is the
           wrong one: it lifts the black sky to grey, and the darkness is what
-          makes the galaxy look bright. This darkens the left third, where the
-          type is, and the very top and bottom, where the navigation and the
-          footer are, and leaves the rest of the frame alone. */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.66)_26%,rgba(0,0,0,0.24)_54%,rgba(0,0,0,0)_80%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)]" />
+          makes the galaxy look bright. So this darkens only where the type
+          actually is — which is a different place on the two shapes of screen,
+          and the reason there are two of these.
+
+          Wide: the type lives in a left-hand column, so the left third gets
+          the weight and the rest of the frame is left alone.
+
+          Narrow: it does not. The type runs the full width, and this same
+          left-to-right wash was covering eighty per cent of a 390px phone at
+          two-thirds black or heavier — a black slab over the picture, which is
+          exactly what it looks like. What a phone needs is a vertical fall:
+          heaviest across the headline at the top, easing off down the frame so
+          the galaxy has somewhere to be. */}
+      <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.66)_26%,rgba(0,0,0,0.24)_54%,rgba(0,0,0,0)_80%)] md:block" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.70)_0%,rgba(0,0,0,0.48)_24%,rgba(0,0,0,0.30)_48%,rgba(0,0,0,0.18)_70%,rgba(0,0,0,0.14)_88%,rgba(0,0,0,0.40)_100%)] md:hidden" />
+      <div className="absolute inset-0 hidden bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)] md:block" />
     </div>
   );
 }

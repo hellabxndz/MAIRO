@@ -514,6 +514,16 @@ export type SceneOptions = {
    * good and costs nothing. Knowing when to stop is part of shipping this.
    */
   onGiveUp?: () => void;
+  /**
+   * Called once, when the opening reveal has brought the sky up far enough to
+   * be worth looking at.
+   *
+   * The still panorama is on screen until this fires. Handing over any earlier
+   * — when the scene is created, which is what it used to do — swaps a lit sky
+   * for a black canvas that then spends two seconds fading up, and the page
+   * opens on a hole.
+   */
+  onReady?: () => void;
 };
 
 export type Scene = {
@@ -933,6 +943,8 @@ export function createScene(opts: SceneOptions): Scene | null {
   let start = 0;
   let raf = 0;
   let running = false;
+  // onReady fires once, the first frame the reveal is bright enough.
+  let announced = false;
 
   // Frame-time watch. The first second is ignored: shader compilation and the
   // first upload of a million vertices land there and say nothing about how the
@@ -1015,8 +1027,20 @@ export function createScene(opts: SceneOptions): Scene | null {
     // into the camera's z, which is how a one-frame glitch hid inside a scene
     // that otherwise looked perfect. The old easing used an integer power and
     // never showed it.
-    const reveal = Math.min(Math.max(t, 0) / 3.5, 1);
+    // Two and a bit seconds, not three and a half. The reveal is the first
+    // thing anyone sees and the longer it runs the longer the page is dark;
+    // opening on a black screen is not atmosphere, it is a page that has not
+    // loaded.
+    const reveal = Math.min(Math.max(t, 0) / 2.2, 1);
     const revealEase = Math.pow(reveal, 0.85) * (2 - Math.pow(reveal, 0.85));
+
+    // Tell the page once the sky is bright enough to be worth crossing over
+    // to. Not when the scene starts — it is black then, and swapping the
+    // panorama out at that moment is what put a hole in the opening.
+    if (!announced && revealEase >= 0.72) {
+      announced = true;
+      opts.onReady?.();
+    }
 
     sampleSpline(easedProgress, "eye", eye);
     sampleSpline(easedProgress, "look", look);
@@ -1028,8 +1052,22 @@ export function createScene(opts: SceneOptions): Scene | null {
     eye[1] += Math.cos(t * 0.037) * 14 + easedPY * -26;
     eye[2] += -drift * 0.35 + (1 - revealEase) * 420;
 
+    // A portrait frame turns a vertical field of view into a very narrow
+    // horizontal one: sixty-six degrees at 390x844 leaves thirty-three degrees
+    // across, against ninety-two on a laptop. The galaxy is a wide, flat thing
+    // and that slice cut it into a smudge — most of the reason the sky read as
+    // nothing much on a phone.
+    //
+    // So the vertical field opens up until the horizontal one is respectable,
+    // capped before the wide-angle stretch at the top and bottom of the frame
+    // starts to tell. A landscape viewport never reaches the floor and is left
+    // exactly as it was.
     const aspect = width / Math.max(height, 1);
-    perspective(proj, (66 * Math.PI) / 180, aspect, 0.35, 34000);
+    const fovy = Math.min(
+      Math.max((66 * Math.PI) / 180, 2 * Math.atan(Math.tan((70 * Math.PI) / 360) / aspect)),
+      (94 * Math.PI) / 180
+    );
+    perspective(proj, fovy, aspect, 0.35, 34000);
     lookAt(view, eye, look, [0, 1, 0]);
     multiply(viewProj, proj, view);
     invert(invViewProj, viewProj);

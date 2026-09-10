@@ -128,19 +128,10 @@ export function MilkyWay() {
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] overflow-hidden bg-black">
       {/* Scaled slightly past the viewport so the parallax has somewhere to
           travel to without ever exposing an edge. */}
-      <div
-        ref={parallax}
-        className="absolute -inset-y-[9%] inset-x-0 will-change-transform"
-      >
+      <div ref={parallax} className="milkyway-frame absolute inset-x-0 will-change-transform">
         <div className="milkyway-pan flex h-full w-max">
-          <Tile
-            className="h-full max-w-none flex-none select-none object-cover"
-            style={{ width: "max(100vw, 177.78vh)" }}
-          />
-          <Tile
-            className="h-full max-w-none flex-none select-none object-cover"
-            style={{ width: "max(100vw, 177.78vh)" }}
-          />
+          <Tile className="milkyway-tile h-full max-w-none flex-none select-none object-cover" />
+          <Tile className="milkyway-tile h-full max-w-none flex-none select-none object-cover" />
         </div>
       </div>
 
@@ -152,10 +143,29 @@ export function MilkyWay() {
           strongest at the top and bottom, where the headlines and the footer
           sit, and lightest across the middle band, where the galaxy is and
           where there is the least type. */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.20)_28%,rgba(0,0,0,0.12)_52%,rgba(0,0,0,0.34)_78%,rgba(0,0,0,0.68)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.18)_58%,rgba(0,0,0,0.66)_100%)]" />
+      <div className="milkyway-veil absolute inset-0" />
+      <div className="milkyway-vignette absolute inset-0" />
 
       <style>{`
+        /* Scaled slightly past the viewport so the parallax has somewhere to
+           travel to without ever exposing an edge. */
+        .milkyway-frame { top: -9%; bottom: -9%; }
+
+        /* Tall enough to fill the viewport at the image's own 16:9 ratio, and
+           never narrower than the viewport, because two tiles only pan
+           seamlessly while one tile is at least a screen wide. */
+        .milkyway-tile { width: max(100vw, 177.78vh); }
+
+        .milkyway-veil {
+          background: linear-gradient(to bottom,
+            rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.20) 28%, rgba(0,0,0,0.12) 52%,
+            rgba(0,0,0,0.34) 78%, rgba(0,0,0,0.68) 100%);
+        }
+        .milkyway-vignette {
+          background: radial-gradient(ellipse at center,
+            rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.66) 100%);
+        }
+
         .milkyway-pan {
           /* One tile's width in 210 seconds. Slow enough that it never pulls
              the eye off the page, fast enough that it is obviously alive if
@@ -173,13 +183,66 @@ export function MilkyWay() {
           to   { transform: translate3d(-50%, 0, 0); }
         }
 
-        /* A phone sees a 390px window onto a 1500px-wide panorama — about a
-           quarter of it — and the quarter it would otherwise open on is the
-           empty end. A negative delay starts the animation part-way through,
-           so the first thing on screen is the galactic core rather than a
-           minute and a half of quiet sky before it arrives. */
+        /* A phone is not a smaller window on the same picture. It is a much
+           more zoomed-in one, and that is what made the sky read as fog rather
+           than as a galaxy on a phone.
+
+           The cause is object-cover, and it is not where you would look for
+           it. Cover scales the image until it fills the box, and on a tall
+           narrow screen the binding dimension is the height — so a full-height
+           container blows a 16:9 panorama up until only about a fifth of its
+           width fits across the screen. The galaxy's structure is all still
+           there; it is just spread out past both edges, leaving the middle of
+           the dust lane filling the frame. Widening the tile does nothing at
+           all about this, which is worth knowing before trying it: the scale
+           is set by the container's height alone.
+
+           So on a phone the sky is a band rather than a full bleed. Fixing the
+           tile at 250vw shows exactly 100/250 — two fifths — of the panorama
+           across the screen, and the height follows from the image's own ratio
+           so nothing is cropped in either direction. Two fifths of a panorama
+           reads as a galaxy where one fifth reads as weather. The band is
+           centred and its edges are masked off into the black, because space
+           is black and a hard horizontal cut is not.
+
+           The delay follows from the same numbers, and with no crop it is an
+           easy sum: the fraction of the pan elapsed is exactly the image
+           fraction at the left edge of the screen. Opening on the bulge, which
+           sits at about 0.30 of the width, means starting 0.18 of the way into
+           the 210s cycle, which puts the bulge just left of centre with the
+           bright arm climbing away to the right.
+
+           Do not pick that number by looking for the brightest column. The
+           broad blue arm further along wins on brightness per column and the
+           bulge is what anyone actually means by the Milky Way; going by
+           column mean opened the phone on the pale half of the picture. */
         @media (max-width: 900px) {
-          .milkyway-pan { animation-delay: -77s; }
+          .milkyway-tile { width: 250vw; }
+          .milkyway-frame {
+            top: calc(50% - 70.32vw);
+            bottom: auto;
+            height: 140.63vw;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 84%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 84%, transparent 100%);
+          }
+          .milkyway-pan { animation-delay: -38s; }
+
+          /* Most of this comes off on a phone. These two were drawn for a
+             full-bleed image that ran to all four edges and needed holding
+             down at the top and bottom; the band does not reach the top or
+             bottom, its own mask already fades it out, and the page's scrim
+             covers it a second time on top of that. Left at full strength the
+             three of them stacked up and put the galaxy back under fog, which
+             is the thing this was all meant to fix. */
+          .milkyway-veil {
+            background: linear-gradient(to bottom,
+              rgba(0,0,0,0.34) 0%, rgba(0,0,0,0.10) 30%, rgba(0,0,0,0.04) 55%,
+              rgba(0,0,0,0.14) 80%, rgba(0,0,0,0.34) 100%);
+          }
+          .milkyway-vignette {
+            background: radial-gradient(ellipse at center,
+              rgba(0,0,0,0) 0%, rgba(0,0,0,0.06) 62%, rgba(0,0,0,0.30) 100%);
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
