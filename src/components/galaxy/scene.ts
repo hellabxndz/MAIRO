@@ -624,7 +624,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
   ]);
   const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
-  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal", "uRocket", "uRocketLoaded"]);
+  const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal", "uRocket", "uRocketLoaded", "uOnlyKind"]);
   const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
     "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
   const uVol = uni(progVolume, [
@@ -1195,6 +1195,9 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.activeTexture(gl.TEXTURE6);
     gl.bindTexture(gl.TEXTURE_2D, rocketTex ?? blankTex);
     gl.uniform1i(uTrav.uRocket, 6);
+    // Meteors only, here. The craft is drawn again after the planets — see
+    // the note there for why the two are split.
+    gl.uniform1f(uTrav.uOnlyKind, 0);
     gl.bindVertexArray(travVao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
     gl.bindVertexArray(null);
@@ -1235,6 +1238,31 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bindVertexArray(planetVao);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, PLANETS.length);
     gl.bindVertexArray(null);
+
+    // ---- the craft, over the top of everything ----
+    //
+    // Split from the meteors, which went before the planets. That ordering is
+    // right for a meteor: there is no depth buffer in this scene, so whatever
+    // is drawn last wins, and a meteor drawn afterwards cut across the face of
+    // the nearest moon like a scratch on the lens.
+    //
+    // It is wrong for the craft. Its lap passes close by the planets, and with
+    // the ship at this size the moon was painting straight over it — the ship
+    // disappearing behind scenery for a good part of every orbit, which is
+    // exactly what it looked like.
+    //
+    // Neither order is right in general without a depth buffer. This one is
+    // right more often and fails better: the craft is the thing on this page
+    // anyone is actually watching, and a ship that is briefly in front of a
+    // planet it should be behind is a far smaller problem than a ship that
+    // keeps vanishing.
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(progTraveller);
+    gl.uniform1f(uTrav.uOnlyKind, 1);
+    gl.bindVertexArray(travVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, travCount);
+    gl.bindVertexArray(null);
+
     gl.blendFunc(gl.ONE, gl.ONE);
 
 

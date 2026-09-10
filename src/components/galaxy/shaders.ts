@@ -953,6 +953,8 @@ uniform vec3 uUp;
 uniform vec3 uFwd;
 uniform float uTime;
 uniform float uReveal;
+/// Draw only meteors (0) or only the craft (1). See the note at the draw call.
+uniform float uOnlyKind;
 
 out vec2 vLocal;
 out vec3 vTint;
@@ -1085,7 +1087,12 @@ void main() {
   vLocal = aCorner;
   vTint = aTint;
   vKind = aKind;
-  vFade = envelope * smoothstep(0.35, 0.85, uReveal);
+  // Instances of the other kind collapse to nothing and are discarded in the
+  // fragment shader. Two draws over the same buffer is far simpler than
+  // splitting it into two, and the skipped instances cost one vertex shader
+  // invocation each on a buffer of eleven.
+  float wanted = step(abs(aKind - uOnlyKind), 0.5);
+  vFade = envelope * smoothstep(0.35, 0.85, uReveal) * wanted;
   // Which flank is facing us, which is exactly the question the flip above
   // just answered. The sprite ships as two rows differing only in which way
   // round the markings are painted; this picks the one that comes out
