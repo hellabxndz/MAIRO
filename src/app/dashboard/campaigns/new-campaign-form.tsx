@@ -5,6 +5,7 @@ import { createCampaignAction } from "@/lib/actions/campaign-actions";
 import { inputClass, primaryButtonClass } from "@/components/ui";
 import { PlatformIcon } from "@/components/platform-icons";
 import { UpgradeModal, type UpgradeCopy } from "@/components/upgrade-modal";
+import { StartTimePicker } from "@/components/start-time-picker";
 import { recommendAllocation, rebalance, splitBudget } from "@/lib/budget/allocation";
 import type { AdGoal, AdPlatform } from "@/generated/prisma/enums";
 
@@ -277,6 +278,11 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
             </p>
           </div>
         )}
+
+        {/* ---- when ---- */}
+        <StartTimePicker
+          reviewer={platforms.includes("META") ? "Meta" : "TikTok"}
+        />
 
         {/* ---- growth mode ---- */}
         {platforms.includes("TIKTOK") && (

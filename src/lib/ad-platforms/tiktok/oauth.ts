@@ -1,5 +1,6 @@
 import { requireTikTokEnv, tiktokRequest } from "./client";
 import type { PlatformAccount } from "../types";
+import { isKnownZone } from "@/lib/campaigns/schedule";
 
 // TikTok's OAuth, which is close enough to Meta's to be misleading.
 //
@@ -146,6 +147,13 @@ type AdvertiserInfoRow = {
   currency?: string;
   status?: string;
   owner_bc_id?: string;
+  /// An IANA zone, e.g. "America/Los_Angeles". What the account's reports and
+  /// its ad group schedules are expressed in.
+  display_timezone?: string;
+  /// The same thing as a fixed offset, e.g. "Etc/GMT+8". Present more often
+  /// than display_timezone, and usable, but it doesn't follow daylight saving
+  /// so it is only a fallback.
+  timezone?: string;
 };
 
 /**
@@ -172,6 +180,8 @@ export async function fetchAdvertisers(
         "currency",
         "status",
         "owner_bc_id",
+        "display_timezone",
+        "timezone",
       ]),
     },
   });
@@ -232,4 +242,42 @@ export function explainTikTokError(raw: string): string {
     return "That TikTok authorization expired before it could be used. Please try connecting again.";
   }
   return raw;
+}
+
+
+/**
+ * The timezone an advertiser account's schedules are expressed in.
+ *
+ * Needed because TikTok takes an ad group's start as a bare "YYYY-MM-DD
+ * HH:MM:SS" with no offset, read in this zone. Meta takes ISO 8601 and works
+ * it out itself, which is why only TikTok needs this call.
+ *
+ * Returns null rather than a guess. A wrong zone here is a campaign that
+ * starts up to a day out, which is worse in every way than one that starts as
+ * soon as it is approved — so the caller sends no schedule at all when this
+ * comes back empty.
+ */
+export async function fetchAdvertiserTimeZone(
+  accessToken: string,
+  advertiserId: string
+): Promise<string | null> {
+  try {
+    const res = await tiktokRequest<{ list?: AdvertiserInfoRow[] }>("/advertiser/info/", {
+      accessToken,
+      params: {
+        advertiser_ids: JSON.stringify([advertiserId]),
+        fields: JSON.stringify(["advertiser_id", "display_timezone", "timezone"]),
+      },
+    });
+    const row = res.list?.find((r) => r.advertiser_id === advertiserId) ?? res.list?.[0];
+    // display_timezone first: it is a real IANA zone and follows daylight
+    // saving. `timezone` is a fixed offset and would drift by an hour half the
+    // year in any country that changes its clocks.
+    for (const candidate of [row?.display_timezone, row?.timezone]) {
+      if (candidate && isKnownZone(candidate)) return candidate;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

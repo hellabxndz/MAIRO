@@ -12,6 +12,8 @@ import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
 import { readinessFor } from "@/lib/readiness";
 import { PendingReason } from "@/components/readiness-panel";
+import { ScheduleControl } from "./schedule-control";
+import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
@@ -241,7 +243,36 @@ export default async function CampaignsPage() {
                     checking it over, when in fact it is waiting on something
                     only the customer can do. */}
                 {campaign.status === "PENDING_REVIEW" && (
-                  <PendingReason readiness={readiness} held={autoLaunch.held} />
+                  <PendingReason
+                    readiness={readiness}
+                    held={autoLaunch.held}
+                    startsAt={
+                      campaign.startDate
+                        ? describeStart(campaign.startDate, campaign.startTimeZone)
+                        : null
+                    }
+                  />
+                )}
+
+                {/* When it begins, and a way to move it. Shown on anything that
+                    hasn't finished, because the window between creating a
+                    campaign and it going live is days — Meta has to approve the
+                    ad — and plenty of people change their mind in it. */}
+                {campaign.status !== "ARCHIVED" && (
+                  <ScheduleControl
+                    campaignId={campaign.id}
+                    running={campaign.status === "ACTIVE"}
+                    describedStart={
+                      campaign.startDate
+                        ? describeStart(campaign.startDate, campaign.startTimeZone)
+                        : null
+                    }
+                    startLocal={
+                      campaign.startDate
+                        ? localInputValue(campaign.startDate, campaign.startTimeZone)
+                        : null
+                    }
+                  />
                 )}
 
                 {/* Whether each network can actually serve an impression.

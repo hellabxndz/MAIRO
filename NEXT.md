@@ -29,7 +29,19 @@ index, the chat page, and the API, which answers 402), and "choose a plan" is
 the first outstanding step on the dashboard checklist. Both are invisible while
 the variable is off, by design.
 
-**4. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
+**4. Set CRON_SECRET in Vercel.** Scheduled campaign starts depend on the
+hourly cron in `vercel.json` hitting `/api/cron/launch`, and that route refuses
+every request without the secret — including Vercel's, if the variable is
+missing. Until it is set, a campaign booked for Friday 6am starts whenever the
+customer next opens the dashboard instead. Mark it **Secret**, not Config.
+
+Two things worth knowing about the schedule itself. On the Hobby plan Vercel
+only runs crons once a day, so the hourly entry needs Pro to mean an hour. And
+the granularity is the cron's, not the customer's: the start time is a floor
+that Meta also enforces through the ad set's own `start_time`, so a campaign
+never begins early — it can begin up to one cron interval late.
+
+**5. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
 changes in the database has never fired with a real event. Worth doing with a
 test-mode card before the first customer.
 

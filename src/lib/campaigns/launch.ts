@@ -67,6 +67,15 @@ export type CreateMairoCampaignInput = {
   tiktokGrowthMode?: boolean;
   /** Campaigns are created paused; this is here for a future "launch now". */
   activate?: boolean;
+  /**
+   * When the customer wants it to begin. Null means as soon as it is approved.
+   *
+   * Travels all the way down to the ad set, where it becomes the network's own
+   * start_time — so the schedule survives MAIRO not being running.
+   */
+  startAt?: Date | null;
+  /** The zone they picked that time in, kept so every screen echoes it back. */
+  startTimeZone?: string | null;
 };
 
 /**
@@ -90,6 +99,8 @@ export async function createMairoCampaign(
       objective: input.objective,
       totalDailyBudgetCents: input.totalDailyBudgetCents,
       tiktokGrowthMode: input.tiktokGrowthMode ?? false,
+      startDate: input.startAt ?? null,
+      startTimeZone: input.startTimeZone ?? null,
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
@@ -113,6 +124,7 @@ export async function createMairoCampaign(
         objective: input.objective,
         dailyBudgetCents: child.dailyBudgetCents,
         activate: input.activate ?? false,
+        startAt: input.startAt ?? null,
       })
     )
   );
@@ -143,6 +155,7 @@ export async function launchOne(input: {
   objective: AdGoal;
   dailyBudgetCents: number;
   activate: boolean;
+  startAt?: Date | null;
 }): Promise<LaunchOutcome["results"][number]> {
   const adapter = getAdapter(input.platform);
 
@@ -207,6 +220,7 @@ export async function launchOne(input: {
     objective: input.objective,
     dailyBudgetCents: input.dailyBudgetCents,
     externalCampaignId: result.data.externalId,
+    startAt: input.startAt ?? null,
   });
 
   return {
@@ -237,6 +251,7 @@ async function buildDeliverable(input: {
   objective: AdGoal;
   dailyBudgetCents: number;
   externalCampaignId: string;
+  startAt?: Date | null;
 }): Promise<{ stage: LaunchStage; blocker: string | null }> {
   // What this business can honestly optimize towards. A pixel is what makes
   // "optimize for purchases" mean anything; without one the adapter falls back
@@ -251,6 +266,10 @@ async function buildDeliverable(input: {
     goal: input.objective,
     campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
     conversion,
+    // The booked start, which becomes the network's own start_time. MAIRO
+    // also holds the campaign paused until then, but only while it is
+    // running — this is what keeps the schedule when it is not.
+    startAt: input.startAt ?? null,
   });
 
   if (!adGroup.ok) {

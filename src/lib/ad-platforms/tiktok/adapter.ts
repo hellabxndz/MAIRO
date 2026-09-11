@@ -28,8 +28,10 @@ import {
   exchangeCodeForToken,
   explainTikTokError,
   fetchAdvertisers,
+  fetchAdvertiserTimeZone,
   grantedScopes,
 } from "./oauth";
+import { isSchedulable, wallClockInZone } from "@/lib/campaigns/schedule";
 
 // TikTok's half of the AdPlatform interface.
 //
@@ -280,6 +282,7 @@ export const tiktokAdapter: AdPlatformAdapter = {
           placement_type: "PLACEMENT_TYPE_NORMAL",
           placements: ["PLACEMENT_TIKTOK"],
           operation_status: "DISABLE",
+          ...(await tiktokSchedule(loaded.creds.accessToken, loaded.creds.externalAccountId, input.startAt)),
           ...(input.targeting ?? {}),
         },
       });
@@ -310,6 +313,42 @@ export const tiktokAdapter: AdPlatformAdapter = {
       "Publishing finished videos to TikTok isn't switched on yet. The campaign and ad group are live; " +
         "the video has to be uploaded in TikTok Ads Manager for now."
     );
+  },
+
+  /**
+   * Moves an ad group's start time after it has been created.
+   *
+   * Clearing the schedule means switching back to SCHEDULE_FROM_NOW with no
+   * start, which is TikTok's way of saying "run once it is approved".
+   */
+  async updateSchedule(input): Promise<PlatformResult<void>> {
+    const loaded = await credentialsOr<void>(input.organizationId);
+    if (!loaded.ok) return loaded.result;
+
+    try {
+      const schedule = await tiktokSchedule(
+        loaded.creds.accessToken,
+        loaded.creds.externalAccountId,
+        input.startAt
+      );
+      await tiktokRequest("/adgroup/update/", {
+        method: "POST",
+        accessToken: loaded.creds.accessToken,
+        body: {
+          advertiser_id: loaded.creds.externalAccountId,
+          adgroup_id: input.externalAdGroupId,
+          schedule_type: "SCHEDULE_FROM_NOW",
+          ...schedule,
+        },
+      });
+      return ok(undefined);
+    } catch (error) {
+      return toFailure(
+        input.organizationId,
+        error,
+        "Couldn't move the start time on TikTok."
+      );
+    }
   },
 
   async updateBudget(input): Promise<PlatformResult<void>> {
@@ -526,3 +565,37 @@ type TikTokReportRow = {
   dimensions?: Record<string, string>;
   metrics?: Record<string, string | number | undefined>;
 };
+
+
+/**
+ * The schedule fields for an ad group, or nothing.
+ *
+ * TikTok wants a bare "YYYY-MM-DD HH:MM:SS" read in the advertiser account's
+ * own timezone — unlike Meta, which takes an offset and converts. So the zone
+ * has to be looked up, and if it cannot be, no schedule is sent at all.
+ *
+ * That refusal is the important part. A start time written in the wrong zone
+ * is a campaign that begins up to a day away from what the customer asked for,
+ * and they would have no way to tell from the screen. Falling back to "starts
+ * when TikTok approves it" is both safe and what MAIRO does by default — and
+ * MAIRO holds the campaign paused until the chosen time regardless, so the
+ * schedule is enforced even when TikTok is not told about it.
+ */
+async function tiktokSchedule(
+  accessToken: string,
+  advertiserId: string,
+  startAt: Date | null | undefined
+): Promise<Record<string, string>> {
+  if (!isSchedulable(startAt)) return {};
+
+  const zone = await fetchAdvertiserTimeZone(accessToken, advertiserId);
+  if (!zone) return {};
+
+  return {
+    // FROM_NOW rather than START_END: the customer picked when to begin and
+    // said nothing about when to stop, and inventing an end date would quietly
+    // switch their campaign off one day.
+    schedule_type: "SCHEDULE_FROM_NOW",
+    schedule_start_time: wallClockInZone(startAt, zone),
+  };
+}

@@ -18,6 +18,7 @@ import { loadCredentials, markConnectionProblem } from "../connections";
 import { MetaApiError, metaGraphRequest } from "@/lib/meta/client";
 import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
+import { isSchedulable, metaStartTime } from "@/lib/campaigns/schedule";
 import {
   createAdCreative,
   createMetaAd,
@@ -236,6 +237,15 @@ export const metaAdapter: AdPlatformAdapter = {
             billing_event: "IMPRESSIONS",
             optimization_goal: optimization,
             status: "PAUSED",
+            // When the customer booked a start. Sent as ISO 8601 in UTC, which
+            // Meta converts into the ad account's own timezone — safer than
+            // MAIRO guessing that timezone, where being wrong means every
+            // scheduled campaign starts hours out.
+            //
+            // Omitted when the time has already arrived, or is about to: Meta
+            // rejects a start_time in the past outright, and failing a whole
+            // launch over a customer who meant "now" would be absurd.
+            ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
             targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
             // Required whenever the ad set optimizes for a pixel conversion,
             // and meaningless otherwise. It is what ties the tracking MAIRO set
@@ -342,6 +352,38 @@ export const metaAdapter: AdPlatformAdapter = {
       return ok(undefined);
     } catch (error) {
       return toFailure(input.organizationId, error, "Couldn't change the budget on Meta.");
+    }
+  },
+
+  /**
+   * Moves an ad set's start time after it has been created.
+   *
+   * Meta takes the same start_time field on an update as on a create, so this
+   * is one POST. Clearing it back to "start on approval" is the awkward case —
+   * Meta has no "unset" for start_time, so the nearest honest thing is to move
+   * it to now, which lets delivery begin the moment review passes.
+   */
+  async updateSchedule(input): Promise<PlatformResult<void>> {
+    const loaded = await credentialsOr<void>(input.organizationId);
+    if (!loaded.ok) return loaded.result;
+
+    try {
+      await metaGraphRequest(`/${input.externalAdGroupId}`, {
+        method: "POST",
+        accessToken: loaded.creds.accessToken,
+        body: {
+          start_time: isSchedulable(input.startAt)
+            ? metaStartTime(input.startAt)
+            : metaStartTime(new Date()),
+        },
+      });
+      return ok(undefined);
+    } catch (error) {
+      return toFailure(
+        input.organizationId,
+        error,
+        "Couldn't move the start time on Meta."
+      );
     }
   },
 

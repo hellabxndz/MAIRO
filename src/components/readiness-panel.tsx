@@ -136,10 +136,28 @@ export function ReadinessPanel({
 export function PendingReason({
   readiness,
   held,
+  /** A booked start, already written out in the customer's own words. */
+  startsAt = null,
 }: {
   readiness: Readiness;
   held: boolean;
+  startsAt?: string | null;
 }) {
+  // A campaign waiting on a date the customer chose is not a campaign waiting
+  // on the customer, and saying "waiting on you" about their own booking would
+  // read as MAIRO having lost track of what it was told.
+  //
+  // The date itself is deliberately not repeated here — the line immediately
+  // below this one already carries it, along with the way to change it, and
+  // printing it twice reads as a system that has lost track of what it said.
+  if (readiness.ready && !held && startsAt) {
+    return (
+      <p className="mt-3 text-xs leading-relaxed text-emerald-300/90">
+        Everything&rsquo;s ready. This is just waiting for the time you picked.
+      </p>
+    );
+  }
+
   if (readiness.ready && !held) {
     return (
       <p className="mt-3 text-xs leading-relaxed text-emerald-300/90">

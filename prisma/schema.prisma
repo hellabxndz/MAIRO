@@ -19,11 +19,11 @@ enum UserRole {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  email          String        @unique
-  passwordHash   String
-  name           String?
-  role           UserRole      @default(CLIENT)
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String
+  name            String?
+  role            UserRole      @default(CLIENT)
   /// When this person finished — or skipped — the walkthrough.
   ///
   /// On the account rather than in the browser, which is the whole point. It
@@ -32,11 +32,11 @@ model User {
   /// site data — and it was shared between two accounts used on one browser,
   /// so the second person to sign in never got shown it at all.
   tourCompletedAt DateTime?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  organizationId String?
-  agentThreads   AgentThread[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  organizationId  String?
+  agentThreads    AgentThread[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 // --- Client business -------------------------------------------------------
@@ -96,7 +96,7 @@ model Organization {
   /// for and making them press a final button is the thing MAIRO exists to
   /// remove. On is the escape hatch for somebody who wants to look first —
   /// and it only ever holds the switch-on, never the building.
-  autoLaunchHeld Boolean @default(false)
+  autoLaunchHeld Boolean   @default(false)
   /// When MAIRO last took a campaign live by itself. A record, and what stops
   /// the dashboard reporting it as a surprise.
   autoLaunchedAt DateTime?
@@ -304,7 +304,7 @@ model CreativeRequest {
   reviewCategory String?
   reviewNotes    String?   @db.Text
 
-  images CreativeImage[]
+  images      CreativeImage[]
   tiktokPosts TikTokPost[]
 
   createdAt DateTime @default(now())
@@ -487,8 +487,27 @@ model MairoCampaign {
   /// from this and their allocation percentages, and are kept summing to it.
   totalDailyBudgetCents Int
 
+  /// When the customer wants the ads to start, as an absolute instant.
+  ///
+  /// Null means "as soon as Meta approves it", which is the default and what
+  /// most people want. A date here is a floor, never a promise: Meta's review
+  /// is asynchronous and nothing delivers before it passes, so the real start
+  /// is the later of this and the approval.
+  ///
+  /// Enforced twice on purpose. It is sent to the network as the ad set's
+  /// start_time, so the network itself holds delivery even if MAIRO is wrong
+  /// about something; and auto-launch refuses to un-pause before it, so a
+  /// network that quietly ignored the field can't start early either.
   startDate DateTime?
-  endDate   DateTime?
+
+  /// The IANA zone the customer picked that time in, e.g. "America/Chicago".
+  ///
+  /// The instant above is unambiguous on its own; this is what lets every
+  /// screen echo back the wall-clock time they actually chose rather than
+  /// re-rendering it in whatever zone the current device happens to be in.
+  startTimeZone String?
+
+  endDate DateTime?
 
   /// Set when the customer asked for TikTok Growth Mode on this campaign:
   /// TikTok-native creative, hook variations, and Spark-ad readiness for a
@@ -625,14 +644,14 @@ model OptimizationRecommendation {
   mairoCampaign   MairoCampaign @relation(fields: [mairoCampaignId], references: [id], onDelete: Cascade)
   mairoCampaignId String
 
-  status    RecommendationStatus @default(PENDING)
+  status       RecommendationStatus @default(PENDING)
   /// Plain-language reason shown to the customer.
-  rationale String               @db.Text
+  rationale    String               @db.Text
   /// JSON: [{ platform, fromPercent, toPercent }]
-  proposalJson String            @db.Text
+  proposalJson String               @db.Text
   /// JSON snapshot of the figures this was based on, so a recommendation can
   /// still be explained a week later when the numbers have moved on.
-  evidenceJson String?           @db.Text
+  evidenceJson String?              @db.Text
 
   appliedAt   DateTime?
   appliedById String?
@@ -658,14 +677,14 @@ model AutoOptimizeSettings {
   enabled Boolean @default(false)
 
   /// Hard ceiling on total daily spend across every platform.
-  maxDailyBudgetCents Int
+  maxDailyBudgetCents     Int
   /// How much MAIRO may raise a daily budget in one day, as a percentage of
   /// the current budget. Stops a good week compounding into a bad month.
-  maxDailyIncreasePercent Int @default(20)
+  maxDailyIncreasePercent Int    @default(20)
   /// Floor and ceiling on performance. Below the ROAS or above the CPA, MAIRO
   /// may only reduce spend, never increase it.
-  minRoas    Float?
-  maxCpaCents Int?
+  minRoas                 Float?
+  maxCpaCents             Int?
 
   /// The networks MAIRO is allowed to touch. Empty means none.
   platforms AdPlatform[]
@@ -688,17 +707,17 @@ model AutoOptimizeSettings {
 model PlanConfig {
   tier SubscriptionTier @id
 
-  name            String
-  priceMonthly    Int // cents
-  tagline         String
-  spendGuidance   String  @default("")
-  featured        Boolean @default(false)
-  active          Boolean @default(true)
-  sortOrder       Int     @default(0)
+  name             String
+  priceMonthly     Int // cents
+  tagline          String
+  spendGuidance    String  @default("")
+  featured         Boolean @default(false)
+  active           Boolean @default(true)
+  sortOrder        Int     @default(0)
   /// JSON string[] — the bullet list shown on the pricing card.
-  featuresJson    String  @db.Text
+  featuresJson     String  @db.Text
   /// JSON object keyed by the flags in src/lib/entitlements.ts.
-  entitlementsJson String @db.Text
+  entitlementsJson String  @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -754,7 +773,7 @@ model ManagedAccountSetup {
   /// The business as it should appear on the account.
   displayName      String
   category         String?
-  bio              String?  @db.Text
+  bio              String? @db.Text
   websiteUrl       String?
 
   /// What the customer told us, and what we told them. Not a chat — a record.
@@ -766,10 +785,10 @@ model ManagedAccountSetup {
   /// Where the customer goes to take ownership.
   handoffUrl    String?
 
-  requestedAt   DateTime  @default(now())
-  startedAt     DateTime?
-  completedAt   DateTime?
-  updatedAt     DateTime  @updatedAt
+  requestedAt DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
 
   /// One open request per platform at a time; a finished one is closed first.
   @@index([organizationId, platform])
@@ -823,7 +842,7 @@ model TikTokPost {
   creativeRequest   CreativeRequest? @relation(fields: [creativeRequestId], references: [id], onDelete: SetNull)
   creativeRequestId String?
 
-  caption String @db.Text
+  caption      String @db.Text
   /// TikTok's own value: PUBLIC_TO_EVERYONE, MUTUAL_FOLLOW_FRIENDS, SELF_ONLY.
   /// Stored as text because TikTok adds them and the set differs per creator.
   privacyLevel String @default("SELF_ONLY")
@@ -840,9 +859,9 @@ model TikTokPost {
 
   /// Source video. A data URL is never stored here — this is an https URL to
   /// the file MAIRO uploaded from.
-  sourceUrl        String?  @db.Text
-  durationSeconds  Int?
-  sizeBytes        Int?
+  sourceUrl       String? @db.Text
+  durationSeconds Int?
+  sizeBytes       Int?
 
   postedAt  DateTime?
   createdAt DateTime  @default(now())
@@ -872,10 +891,10 @@ model TikTokCreatorConnection {
   organizationId String       @unique
 
   /// TikTok's stable id for the creator under this app.
-  openId   String
-  unionId  String?
-  username String?
-  nickname String?
+  openId    String
+  unionId   String?
+  username  String?
+  nickname  String?
   avatarUrl String? @db.Text
 
   accessToken      String    @db.Text
@@ -936,11 +955,11 @@ model TrackingPixel {
   name            String
   origin          PixelOrigin @default(CREATED_BY_MAIRO)
 
-  status PixelStatus @default(PENDING)
+  status        PixelStatus @default(PENDING)
   /// When the network last saw an event. The only honest proof it works.
-  lastFiredAt  DateTime?
+  lastFiredAt   DateTime?
   lastCheckedAt DateTime?
-  lastError    String?   @db.Text
+  lastError     String?     @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -977,7 +996,7 @@ model ConversionEvent {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
 
-  source OrderSource
+  source          OrderSource
   /// The store's own order id. Unique per organization, so a webhook that
   /// arrives twice — which Shopify's retries guarantee — is recorded once.
   externalOrderId String
@@ -985,10 +1004,10 @@ model ConversionEvent {
   /// conversion on this. It has to be the same string in both places, so it
   /// is derived from the order id rather than generated.
   eventId         String
-  eventName       String @default("Purchase")
+  eventName       String      @default("Purchase")
 
   valueCents Int
-  currency   String @default("USD")
+  currency   String   @default("USD")
   occurredAt DateTime
 
   /// Hashed before it is ever written — see src/lib/tracking/hash.ts. MAIRO
@@ -1030,18 +1049,18 @@ enum ForwardStatus {
 /// and a customer asking why their TikTok ROAS is low deserves to see that
 /// rather than a single green tick covering both.
 model ConversionForward {
-  id      String          @id @default(cuid())
-  event   ConversionEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId String
+  id       String          @id @default(cuid())
+  event    ConversionEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId  String
   platform AdPlatform
 
-  status ForwardStatus @default(PENDING)
+  status        ForwardStatus @default(PENDING)
   /// The network's own words when it refused or complained.
-  message String? @db.Text
+  message       String?       @db.Text
   /// How many of the identifiers the network could match on, out of what was
   /// sent. Low numbers are the usual reason attribution looks worse than it is.
   matchedFields Int?
-  sentAt DateTime?
+  sentAt        DateTime?
 
   @@unique([eventId, platform])
   @@index([platform, status])
@@ -1059,12 +1078,12 @@ model StoreIngest {
   organizationId String       @unique
 
   /// Random, in the URL path. Rotatable — rotating invalidates the old URL.
-  token String @unique
+  token         String  @unique
   /// Shopify's webhook signing secret, when they are on Shopify. Encrypted.
   shopifySecret String? @db.Text
 
   lastReceivedAt DateTime?
-  receivedCount  Int      @default(0)
+  receivedCount  Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1089,13 +1108,13 @@ model TrackingProfile {
   /// An id from src/lib/tracking/niches.ts. Text rather than an enum so the
   /// catalogue can grow without a migration — a niche that no longer exists
   /// falls back to the general one rather than breaking the page.
-  nicheId String @default("general")
+  nicheId        String  @default("general")
   /// True once the customer has picked, so MAIRO stops presenting its guess
   /// as a question they have already answered.
   nicheConfirmed Boolean @default(false)
 
   /// Their Google Tag Manager container, e.g. GTM-ABC1234.
-  gtmContainerId String?
+  gtmContainerId   String?
   /// When they last took the container file. Not proof it was imported —
   /// only that they got as far as downloading it.
   containerBuiltAt DateTime?
@@ -1126,11 +1145,11 @@ model GtmConnection {
   /// Shown so the customer can tell which Google account is connected.
   googleEmail  String?
 
-  accessToken      String    @db.Text
-  refreshToken     String?   @db.Text
-  tokenExpiresAt   DateTime?
+  accessToken    String    @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
   /// Space-separated, as granted. Checked before publishing rather than after.
-  scopes           String?
+  scopes         String?
 
   /// Which container MAIRO writes to. Null until the customer picks one —
   /// a Google account can administer dozens and guessing would edit the
@@ -1144,10 +1163,10 @@ model GtmConnection {
   /// is halfway through.
   gtmWorkspaceId     String?
 
-  status    PlatformConnectionStatus @default(CONNECTED)
-  lastError String?                  @db.Text
+  status            PlatformConnectionStatus @default(CONNECTED)
+  lastError         String?                  @db.Text
   /// When MAIRO last successfully published tags into the container.
-  lastPublishedAt DateTime?
+  lastPublishedAt   DateTime?
   /// What was published, so the page can say what is live without asking
   /// Google on every load.
   publishedTagCount Int?

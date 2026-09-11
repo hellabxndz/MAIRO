@@ -138,6 +138,20 @@ export type CreateAdGroupInput = {
     /** The network's own event name, e.g. Meta's "Purchase". */
     event: string;
   } | null;
+  /**
+   * When the customer wants delivery to begin, as an absolute instant.
+   *
+   * Absent means "as soon as the network approves it", which is the default.
+   * A date here is a floor rather than a promise — ad review is asynchronous
+   * and nothing delivers before it passes, so the real start is the later of
+   * this and the approval.
+   *
+   * Adapters must send this to the network rather than relying on MAIRO to
+   * hold the campaign paused until the time arrives. MAIRO does that too, but
+   * it only acts while it is running; the network's own schedule keeps working
+   * when MAIRO is not.
+   */
+  startAt?: Date | null;
 };
 
 export type CreateAdInput = {
@@ -277,6 +291,23 @@ export interface AdPlatformAdapter {
 
   createAdGroup(input: CreateAdGroupInput): Promise<PlatformResult<CreatedEntity>>;
   createAd(input: CreateAdInput): Promise<PlatformResult<CreatedEntity>>;
+
+  /**
+   * Moves the start time of an ad group that already exists.
+   *
+   * Separate from createAdGroup because a customer who books a launch for
+   * Friday and then changes their mind on Wednesday must not have a second
+   * campaign built for them. Passing null clears the schedule, which means
+   * "start as soon as it is approved".
+   *
+   * Networks generally refuse to move the start of something already
+   * delivering, so this is only called on a campaign that has not begun.
+   */
+  updateSchedule(input: {
+    organizationId: string;
+    externalAdGroupId: string;
+    startAt: Date | null;
+  }): Promise<PlatformResult<void>>;
 
   updateBudget(input: {
     organizationId: string;

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import { readinessFor } from "@/lib/readiness";
 import { planFor } from "@/lib/plans";
+import { describeStart, isDue } from "@/lib/campaigns/schedule";
 
 // Putting the ads live without asking.
 //
@@ -27,6 +28,13 @@ import { planFor } from "@/lib/plans";
 //
 // And it is bounded by the plan. A Starter account gets one live campaign, not
 // however many happen to be sitting in a drafts pile.
+//
+// A campaign with a booked start is left alone until that time arrives. The
+// network was also told the start time when the ad set was built, so it would
+// hold delivery anyway — this is the second lock on the same door, and it is
+// worth having because the two fail in different ways: the network's copy is
+// wrong if the field was rejected, and MAIRO's copy is wrong if nothing is
+// running to check it.
 
 export type AutoLaunchOutcome = {
   /** True when something actually went live on this run. */
@@ -68,9 +76,31 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
       // No ad means nothing can be shown, whatever the status says.
       externalAdId: { not: null },
     },
-    include: { mairoCampaign: { select: { id: true, name: true, status: true } } },
+    include: {
+      mairoCampaign: {
+        select: { id: true, name: true, status: true, startDate: true, startTimeZone: true },
+      },
+    },
   });
   if (waiting.length === 0) return NOTHING;
+
+  // Anything booked for later is not this run's business. Reported rather than
+  // skipped silently, so a customer who wonders why a finished campaign is
+  // still paused gets the actual reason.
+  const now = new Date();
+  const due = waiting.filter((c) => isDue(c.mairoCampaign.startDate, now));
+  if (due.length === 0) {
+    const next = waiting
+      .map((c) => c.mairoCampaign)
+      .filter((c) => c.startDate)
+      .sort((a, b) => a.startDate!.getTime() - b.startDate!.getTime())[0];
+    return {
+      ...NOTHING,
+      heldBecause: next
+        ? `Everything's ready. You asked for this to start ${describeStart(next.startDate!, next.startTimeZone)}, so MAIRO is waiting until then.`
+        : null,
+    };
+  }
 
   // The expensive check, and the one that must never be guessed.
   const readiness = await readinessFor(organizationId, { checkFunding: true });
@@ -101,7 +131,7 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
 
   const names: string[] = [];
 
-  for (const child of waiting) {
+  for (const child of due) {
     if (budget === 0) break;
 
     const adapter = getAdapter(child.platform);
