@@ -203,7 +203,7 @@ export default async function IntegrationsPage({
       )}
 
       <PostingCard
-        allowed={entitlements.tiktok_organic_posting}
+        allowed={entitlements.social_posting}
         upgradeName={upgradeTarget.name}
         posting={posting}
       />

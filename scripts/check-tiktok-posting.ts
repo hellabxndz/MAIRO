@@ -139,23 +139,33 @@ console.log("\n— TikTok handles —");
   ok("blank is not an error — it's optional", handleProblem("") === null);
 }
 
-console.log("\n— Starter does not include either TikTok extra —");
+console.log("\n— which plans get which TikTok extra —");
 {
+  // Two different things that are easy to conflate. Setting an account up is
+  // a one-off piece of work; posting to it is MAIRO writing on the customer's
+  // own profile every week. They sit on different plans on purpose.
   const starter = DEFAULT_ENTITLEMENTS.STARTER;
   ok("Starter: no TikTok ads", !starter.tiktok_ads);
   ok("Starter: MAIRO does not set up TikTok", !starter.tiktok_account_setup);
-  ok("Starter: MAIRO does not post to TikTok", !starter.tiktok_organic_posting);
+  ok("Starter: no posting", !starter.social_posting);
   ok("Starter still has Meta", starter.meta_ads);
 
   const growth = DEFAULT_ENTITLEMENTS.GROWTH;
   ok("Growth: setup yes", growth.tiktok_account_setup);
-  ok("Growth: posting yes", growth.tiktok_organic_posting);
+  ok("Growth: posting NO — it moved to Pro", !growth.social_posting);
 
-  ok("Pro keeps both", DEFAULT_ENTITLEMENTS.SCALE.tiktok_account_setup && DEFAULT_ENTITLEMENTS.SCALE.tiktok_organic_posting);
+  ok("Pro: setup yes", DEFAULT_ENTITLEMENTS.SCALE.tiktok_account_setup);
+  ok("Pro: posting yes", DEFAULT_ENTITLEMENTS.SCALE.social_posting);
+
+  // Posting is the top-tier feature on both ladders, so the freelancer plans
+  // have to agree: Studio mirrors Growth, Agency mirrors Pro.
+  ok("Studio: no posting", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
+  ok("Agency: posting yes", DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
+
   ok(
     "an account with no plan has neither",
     !DEFAULT_ENTITLEMENTS.NONE.tiktok_account_setup &&
-      !DEFAULT_ENTITLEMENTS.NONE.tiktok_organic_posting
+      !DEFAULT_ENTITLEMENTS.NONE.social_posting
   );
 }
 

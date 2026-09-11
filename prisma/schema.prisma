@@ -145,6 +145,7 @@ model Organization {
   autoOptimizeSettings AutoOptimizeSettings?
   managedSetups        ManagedAccountSetup[]
   tiktokPosts          TikTokPost[]
+  instagramPosts       InstagramPost[]
   tiktokCreator        TikTokCreatorConnection?
   trackingPixels       TrackingPixel[]
   conversionEvents     ConversionEvent[]
@@ -304,8 +305,9 @@ model CreativeRequest {
   reviewCategory String?
   reviewNotes    String?   @db.Text
 
-  images      CreativeImage[]
-  tiktokPosts TikTokPost[]
+  images         CreativeImage[]
+  tiktokPosts    TikTokPost[]
+  instagramPosts InstagramPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1173,4 +1175,65 @@ model GtmConnection {
 
   connectedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// How far an Instagram post got.
+///
+/// Instagram publishes in two calls — a container is created, then published —
+/// and a container can be accepted and still fail during processing. So CREATED
+/// is a real state and not an implementation detail: the customer has a post
+/// Instagram has accepted but not yet put on their profile.
+enum InstagramPostStatus {
+  /// Written, not sent.
+  DRAFT
+  /// Instagram has the media and is processing it.
+  CREATED
+  /// Live on the customer's profile.
+  PUBLISHED
+  /// Instagram refused it, or processing failed.
+  FAILED
+}
+
+/// A post MAIRO published to the customer's own Instagram.
+///
+/// Separate from TikTokPost rather than folded into one "social posts" table.
+/// The two flows genuinely differ: TikTok has an inbox mode where the video
+/// lands in the customer's drafts for them to post themselves, and a privacy
+/// level chosen per creator; Instagram has neither, and has a container step
+/// that TikTok has no equivalent of. One table would be two thirds nullable
+/// columns and a status enum nothing could reason about.
+model InstagramPost {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// The creative this came from, when it came from one.
+  creativeRequest   CreativeRequest? @relation(fields: [creativeRequestId], references: [id], onDelete: SetNull)
+  creativeRequestId String?
+
+  caption String @db.Text
+
+  status InstagramPostStatus @default(DRAFT)
+
+  /// The Instagram Business account this went to. Recorded per post because a
+  /// customer can reconnect a different Page, and a post made to the old
+  /// profile is not reachable from the new one.
+  igUserId    String?
+  /// Instagram's handle on the pending container, between the two calls.
+  containerId String?
+  /// The finished post's own id, once Instagram publishes it.
+  mediaId     String? @unique
+  permalink   String?
+  /// Instagram's own words when it refused. Shown to the customer.
+  error       String? @db.Text
+
+  /// The picture Instagram was told to fetch. An https URL — Instagram pulls
+  /// the bytes itself and will not accept a data URL or an upload.
+  sourceUrl String? @db.Text
+
+  postedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([organizationId, status])
 }

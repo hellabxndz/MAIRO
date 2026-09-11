@@ -41,7 +41,21 @@ the granularity is the cron's, not the customer's: the start time is a floor
 that Meta also enforces through the ad set's own `start_time`, so a campaign
 never begins early — it can begin up to one cron interval late.
 
-**5. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
+**5. Create a $129 Growth price in Stripe.** The pricing page now says $129,
+and `priceMonthly` in src/lib/plans.ts is only what the customer is *shown* —
+what they are charged is the Stripe Price behind `STRIPE_PRICE_GROWTH`, which
+is still the old one. Until a new Price exists and that variable points at it,
+the site advertises $129 and the card is charged $99. Existing Growth
+subscribers stay on the price they signed up at unless their subscription is
+migrated, which is a separate decision.
+
+**6. Meta App Review needs two more permissions.** `instagram_basic` and
+`instagram_content_publish` were added to the OAuth scopes for Pro-plan
+Instagram posting. Both are review-gated, so until they clear, only accounts
+added as testers can post — the rest get a permission error from Meta. Worth
+submitting in the same round as the ads permissions rather than after.
+
+**7. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
 changes in the database has never fired with a real event. Worth doing with a
 test-mode card before the first customer.
 

@@ -17,6 +17,11 @@ const NAV = [
   { href: "/dashboard/campaigns", label: "Campaigns" },
   { href: "/dashboard/analytics", label: "Performance" },
   { href: "/dashboard/creatives", label: "Creatives" },
+  // Next to Creatives because it is what happens to one afterwards: the ads
+  // are the paid half, this is the customer's own feed. Shown on every plan
+  // rather than hidden below Pro — the page itself sells the upgrade, and a
+  // feature nobody can see is a feature nobody buys.
+  { href: "/dashboard/social", label: "Your social posts" },
   // Was "Meta connection" when Meta was the only place to advertise. The
   // Meta-specific screen still exists at /dashboard/meta and is linked from
   // here, because it does more than connect — it picks a Page and explains

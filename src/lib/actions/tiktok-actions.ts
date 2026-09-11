@@ -94,7 +94,7 @@ export async function postToTikTokAction(input: {
 
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  if (!(await can(organizationId, "tiktok_organic_posting"))) {
+  if (!(await can(organizationId, "social_posting"))) {
     return {
       ok: false,
       error: "MAIRO posting to TikTok for you is part of Growth. Starter covers Meta advertising.",

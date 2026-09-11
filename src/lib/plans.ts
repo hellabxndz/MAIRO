@@ -74,7 +74,7 @@ export const PLANS: Plan[] = [
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 99,
+    priceMonthly: 129,
     tagline: "Meta and TikTok, from one place.",
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
@@ -83,13 +83,16 @@ export const PLANS: Plan[] = [
       "Everything in Starter",
       "Meta + TikTok advertising",
       "MAIRO sets up your TikTok account for you",
-      "MAIRO posts to your TikTok for you",
       "TikTok Growth Mode",
       "TikTok-native creative generation",
       "Cross-platform analytics",
       "AI budget recommendations",
       "Creative testing",
       "3 active campaigns, 8 creative requests a month",
+      // Same reasoning as the Starter card's TikTok line: somebody comparing
+      // the two should learn where posting lives here, not by picking Growth
+      // and hitting an upgrade prompt afterwards.
+      "Ads only — MAIRO posting to your profiles is on Pro",
     ],
   },
   {
@@ -105,6 +108,8 @@ export const PLANS: Plan[] = [
     limits: { campaigns: 10, creativesPerMonth: 20 },
     features: [
       "Everything in Growth",
+      "MAIRO posts to your Instagram and TikTok for you",
+      "Organic posts written and published from your approved creatives",
       "Advanced AI optimization",
       "Mairo Auto Optimize",
       "Automatic budget allocation",

@@ -19,11 +19,24 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 //
 // Ad accounts are unaffected; /me/adaccounts returns business-owned accounts
 // under ads_read alone. Pages are the case that needs it.
+// instagram_basic and instagram_content_publish are what let MAIRO post to the
+// customer's own Instagram on the Pro plan. They are requested for everyone
+// rather than only for Pro accounts, because the alternative is asking a
+// customer to reconnect Meta on the day they upgrade — and a reconnect is the
+// step people abandon. Meta grants a permission; it does not act on it, and
+// nothing in MAIRO calls an Instagram endpoint unless the plan allows it.
+//
+// pages_read_engagement comes with them: reading instagram_business_account off
+// the Page needs it, and without it the lookup returns an empty field rather
+// than an error, which reads as "you have no Instagram" for somebody who does.
 const SCOPES = [
   "ads_management",
   "ads_read",
   "pages_show_list",
+  "pages_read_engagement",
   "business_management",
+  "instagram_basic",
+  "instagram_content_publish",
 ];
 
 function requireEnv(name: string): string {

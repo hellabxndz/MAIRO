@@ -20,7 +20,8 @@
     "check:gtm": "tsx scripts/check-gtm.ts",
     "check:ads": "tsx scripts/check-ads.ts",
     "check:readiness": "tsx scripts/check-readiness.ts",
-    "check:schedule": "tsx scripts/check-schedule.ts"
+    "check:schedule": "tsx scripts/check-schedule.ts",
+    "check:social": "tsx scripts/check-social.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

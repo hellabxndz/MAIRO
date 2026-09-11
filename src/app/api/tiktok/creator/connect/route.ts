@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   // Checked here as well as in the UI. A hidden button is not access control.
-  if (!(await can(organizationId, "tiktok_organic_posting"))) {
+  if (!(await can(organizationId, "social_posting"))) {
     return NextResponse.redirect(
-      new URL("/dashboard/integrations?upgrade=tiktok_organic_posting", req.nextUrl.origin)
+      new URL("/dashboard/integrations?upgrade=social_posting", req.nextUrl.origin)
     );
   }
 
