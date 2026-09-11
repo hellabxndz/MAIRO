@@ -355,6 +355,16 @@ class MainWindow(QMainWindow):
         self.send_button.clicked.connect(self._send_typed)
         layout.addWidget(self.send_button)
 
+        self.speech_button = QPushButton()
+        self.speech_button.setMinimumHeight(44)
+        self.speech_button.setFixedWidth(52)
+        speech_font = self.speech_button.font()
+        speech_font.setPointSize(speech_font.pointSize() + 4)  # the glyph carries the meaning
+        self.speech_button.setFont(speech_font)
+        self.speech_button.clicked.connect(self._toggle_speech)
+        layout.addWidget(self.speech_button)
+        self._refresh_speech_button()
+
         self.mic_button = QPushButton(MIC_IDLE)
         self.mic_button.setProperty("role", "primary")
         self.mic_button.setMinimumHeight(44)
@@ -469,6 +479,7 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+N"), self, activated=self._new_conversation)
         QShortcut(QKeySequence("Ctrl+H"), self, activated=self.history_button.click)
         QShortcut(QKeySequence("Ctrl+,"), self, activated=self.open_settings)
+        QShortcut(QKeySequence("Ctrl+Shift+S"), self, activated=self._toggle_speech)
         QShortcut(QKeySequence("Escape"), self, activated=self._stop_everything)
 
     # -------------------------------------------------------------- clock
@@ -879,6 +890,35 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------ settings
 
+    def _toggle_speech(self) -> None:
+        """Turn spoken replies on or off, and silence one already under way.
+
+        Waiting for a long answer to be read out is the slowest part of a turn,
+        so this is a button rather than something buried in Settings. The
+        choice is saved, so it survives a restart.
+        """
+        self.settings.voice_output_enabled = not self.settings.voice_output_enabled
+        self.settings.save()
+        if not self.settings.voice_output_enabled:
+            self.voice.stop_speaking()
+        self._refresh_speech_button()
+        self.refresh_assistant_panel()
+        self._add_message(
+            tr.SYSTEM,
+            "Replies will be spoken aloud."
+            if self.settings.voice_output_enabled
+            else "Replies will be written only, not spoken.",
+        )
+
+    def _refresh_speech_button(self) -> None:
+        speaking = self.settings.voice_output_enabled
+        self.speech_button.setText("🔊" if speaking else "🔇")
+        self.speech_button.setToolTip(
+            "Replies are spoken aloud. Click to silence them.  (Ctrl+Shift+S)"
+            if speaking
+            else "Replies are written only. Click to hear them.  (Ctrl+Shift+S)"
+        )
+
     def open_settings(self) -> None:
         before = (self.settings.theme, self.settings.save_history)
         dialog = SettingsDialog(self.settings, self.voice, self)
@@ -892,6 +932,7 @@ class MainWindow(QMainWindow):
             self._stop_wake_word()
             self._wake_word_notice_shown = False
             self._start_wake_word()
+            self._refresh_speech_button()
             self.refresh_assistant_panel()
             self._add_message(tr.SYSTEM, "Settings saved.")
 

@@ -164,6 +164,13 @@ date, open Downloads, read notes, take a screenshot, what Mairo remembers, and
 lock the screen. Hover one to see the exact words it sends. The last two go
 through the same confirmation dialog as anything else risky.
 
+The **speaker button** next to the microphone decides whether replies are read
+out loud. Reading a long answer takes far longer than writing it, so when you
+want the answer and not the performance, switch it off — the reply still
+appears in the conversation the moment it is ready, and anything mid-sentence
+stops at once. The choice is remembered, and `Ctrl+Shift+S` does the same
+thing without reaching for the mouse.
+
 Things it understands today:
 
 - "Open Spotify." / "Open VS Code." / "Launch Discord."
@@ -236,6 +243,7 @@ To point it at something on your own machine anyway, set
 | `Ctrl+N` | New conversation |
 | `Ctrl+H` | Show or hide the history panel |
 | `Ctrl+,` | Settings |
+| `Ctrl+Shift+S` | Speak replies aloud, or stop speaking them |
 | `Esc` | Stop listening or speaking |
 
 ## Settings

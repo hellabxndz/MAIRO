@@ -56,6 +56,7 @@ class FakeVoice:
         self.fail = fail
         self.speaks_aloud = speaks_aloud
         self.spoken: list[str] = []
+        self.silenced = 0
         self.armed = False
         self.wake_detector = NullWakeWordDetector()
 
@@ -77,7 +78,7 @@ class FakeVoice:
         pass
 
     def stop_speaking(self):
-        pass
+        self.silenced += 1
 
     def test_microphone(self):
         return True, "Microphone ready"
@@ -156,6 +157,35 @@ class WindowFlowTests(unittest.TestCase):
         self._run_until_idle(window)
         self.assertIn("Quietly done.", self._texts(window))
         self.assertEqual(voice.spoken, [])
+
+    def test_the_speech_button_turns_speaking_off_and_on(self):
+        voice = FakeVoice()
+        window = self._window(ScriptedProvider([]), voice)
+        self.assertTrue(window.settings.voice_output_enabled)
+        self.assertEqual(window.speech_button.text(), "🔊")
+
+        window.speech_button.click()
+        self.assertFalse(window.settings.voice_output_enabled)
+        self.assertEqual(window.speech_button.text(), "🔇")
+        self.assertIn("not spoken", self._texts(window)[-1])
+
+        window.speech_button.click()
+        self.assertTrue(window.settings.voice_output_enabled)
+        self.assertEqual(window.speech_button.text(), "🔊")
+
+    def test_silencing_stops_a_reply_already_being_read_out(self):
+        voice = FakeVoice()
+        window = self._window(ScriptedProvider([]), voice)
+        window.speech_button.click()
+        self.assertEqual(voice.silenced, 1)
+
+    def test_the_choice_survives_a_restart(self):
+        voice = FakeVoice()
+        window = self._window(ScriptedProvider([]), voice)
+        window.speech_button.click()
+        self.assertFalse(Settings.load().voice_output_enabled)
+        window.speech_button.click()
+        self.assertTrue(Settings.load().voice_output_enabled)
 
     def test_the_recorder_is_armed_before_the_worker_starts(self):
         """Guards the race where a stop pressed during startup was swallowed."""
