@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { OwnerGettingStarted } from "./getting-started";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
@@ -13,6 +12,9 @@ import { PlatformIcons } from "@/components/platform-icons";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";
+import { readinessFor } from "@/lib/readiness";
+import { ReadinessPanel } from "@/components/readiness-panel";
+import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -32,6 +34,14 @@ export default async function DashboardOverviewPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
+  // Before anything is read, anything that is ready goes live.
+  //
+  // Here rather than behind a button, because the whole promise of MAIRO is
+  // that a business owner does not have to know which button. It does nothing
+  // at all unless a campaign is built and every setup step is genuinely
+  // finished — see src/lib/campaigns/auto-launch.ts for what it refuses to do.
+  const launched = await maybeGoLive(organizationId);
+
   const [organization, plan, connections, campaigns, creativeCount] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),
     db.monthlyPlan.findUnique({
@@ -48,12 +58,6 @@ export default async function DashboardOverviewPage() {
   const connectedPlatforms = [...connections.values()].filter((c) => c.connected);
   const anyConnected = connectedPlatforms.length > 0;
 
-  // The checklist reads what has already been loaded above, plus the one thing
-  // that had not been — whether setup was ever completed.
-  const intake = await db.onboardingIntake.findUnique({
-    where: { organizationId },
-    select: { id: true },
-  });
 
   // Live figures from every connected network. This runs after the queries
   // above rather than alongside them because it needs what they return, and it
@@ -74,6 +78,23 @@ export default async function DashboardOverviewPage() {
   const billingProblem =
     billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
 
+  // One list of what is outstanding, shared with the campaigns page, the AI
+  // specialists and auto-launch. Two screens disagreeing about what a customer
+  // still owes is worse than neither of them saying anything.
+  //
+  // The billing answer read just above is handed over rather than fetched
+  // again — same question, same render.
+  const [readiness, autoLaunch] = await Promise.all([
+    readinessFor(organizationId, { billing }),
+    autoLaunchIntent(organizationId),
+  ]);
+
+  // When the missing card is the thing holding the account up, the panel says
+  // so and carries the link straight to Meta's payment page. The standalone
+  // billing card below then has nothing to add, so it is not drawn — two
+  // amber boxes repeating each other reads as a product that is shouting.
+  const fundingIsTheBlocker = readiness.next?.id === "funding";
+
   const campaignCount = campaigns.length;
   // Every network any campaign runs on, for the icon row.
   const allPlatformsInUse = [
@@ -87,20 +108,38 @@ export default async function DashboardOverviewPage() {
         description="Here's where things stand this month."
       />
 
-      <OwnerGettingStarted
-        state={{
-          hasSetup: Boolean(intake),
-          hasMeta: anyConnected,
-          hasPlan: Boolean(plan),
-          hasCreative: creativeCount > 0,
-          hasCampaign: campaignCount > 0,
-        }}
+      {/* MAIRO acted on its own, so it says so — before the customer finds a
+          live campaign they did not press anything to start. */}
+      {launched.launched && (
+        <Card className="mb-8 border-emerald-400/25 bg-emerald-400/[0.05]">
+          <p className="font-medium text-emerald-200">
+            {launched.names.length === 1
+              ? `MAIRO put ${launched.names[0]} live`
+              : `MAIRO put ${launched.names.length} campaigns live`}
+          </p>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
+            Everything it needed was done, so it started{" "}
+            {launched.names.length === 1 ? "it" : "them"} rather than waiting for you.
+            Meta will begin charging your ad account as the ads deliver. You can pause
+            {launched.names.length === 1 ? " it" : " them"} any time from Campaigns.
+          </p>
+        </Card>
+      )}
+
+      <ReadinessPanel
+        readiness={readiness}
+        autoLaunch={autoLaunch}
+        action={
+          fundingIsTheBlocker && billingProblem?.actionUrl
+            ? { url: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Open Meta billing" }
+            : null
+        }
       />
 
       {/* Ads that cannot be paid for outrank everything, including an
           optimization: there is no point tuning a budget split on a campaign
           Meta will not run. */}
-      {billingProblem && (
+      {billingProblem && !fundingIsTheBlocker && (
         <div className="mb-6">
           <Card className="border-amber-500/30 bg-amber-500/[0.06]">
             <p className="font-medium text-amber-200">

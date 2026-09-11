@@ -5,6 +5,8 @@ import { Card, PageHeader } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
 import { AutoOptimizeSection } from "./auto-optimize-section";
+import { AutoLaunchSection } from "./auto-launch-section";
+import { autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { activeOrganizationId } from "@/lib/active-org";
 import { entitlementsFor } from "@/lib/entitlements";
 import { planFor, PLANS } from "@/lib/plans";
@@ -14,7 +16,7 @@ export default async function SettingsPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, intake, autoOptimize, entitlements] = await Promise.all([
+  const [organization, intake, autoOptimize, entitlements, autoLaunch] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -30,6 +32,7 @@ export default async function SettingsPage() {
     db.onboardingIntake.findUnique({ where: { organizationId } }),
     db.autoOptimizeSettings.findUnique({ where: { organizationId } }),
     entitlementsFor(organizationId),
+    autoLaunchIntent(organizationId),
   ]);
   if (!organization) redirect("/sign-in");
 
@@ -64,6 +67,16 @@ export default async function SettingsPage() {
           status={organization.subscriptionStatus}
           periodEnd={organization.currentPeriodEnd}
           hasCustomer={Boolean(organization.stripeCustomerId)}
+        />
+      </div>
+
+      {/* Directly under billing, because it is the other thing on this page
+          that lets MAIRO act on its own. */}
+      <div className="mb-8">
+        <AutoLaunchSection
+          held={autoLaunch.held}
+          waitingCount={autoLaunch.waitingCount}
+          lastLaunchedAt={autoLaunch.lastLaunchedAt}
         />
       </div>
 

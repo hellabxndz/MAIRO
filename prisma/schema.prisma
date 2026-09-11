@@ -90,6 +90,17 @@ model Organization {
 
   kind OrganizationKind @default(BUSINESS)
 
+  /// Stops MAIRO putting campaigns live on its own.
+  ///
+  /// Off by default, because running the ads is what the customer is paying
+  /// for and making them press a final button is the thing MAIRO exists to
+  /// remove. On is the escape hatch for somebody who wants to look first —
+  /// and it only ever holds the switch-on, never the building.
+  autoLaunchHeld Boolean @default(false)
+  /// When MAIRO last took a campaign live by itself. A record, and what stops
+  /// the dashboard reporting it as a surprise.
+  autoLaunchedAt DateTime?
+
   // A freelancer's clients hang off their workspace.
   //
   // Deliberately a parent link rather than a User-to-Organization join table.

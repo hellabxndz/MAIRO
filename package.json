@@ -18,7 +18,8 @@
     "check:tiktok": "tsx scripts/check-tiktok-posting.ts",
     "check:tracking": "tsx scripts/check-tracking.ts",
     "check:gtm": "tsx scripts/check-gtm.ts",
-    "check:ads": "tsx scripts/check-ads.ts"
+    "check:ads": "tsx scripts/check-ads.ts",
+    "check:readiness": "tsx scripts/check-readiness.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

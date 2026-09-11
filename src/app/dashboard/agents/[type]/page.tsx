@@ -6,6 +6,9 @@ import type { AgentType } from "@/generated/prisma/enums";
 import { PageHeader } from "@/components/ui";
 import { ChatClient } from "./chat-client";
 import { activeOrganizationId } from "@/lib/active-org";
+import { db } from "@/lib/db";
+import { hasActivePlan } from "@/lib/readiness";
+import { PlanLock } from "@/components/plan-lock";
 
 const CLIENT_AGENT_TYPES: AgentType[] = ["STRATEGIST", "CREATIVE", "SUPPORT"];
 
@@ -23,6 +26,22 @@ export default async function AgentChatPage({
   const { type } = await params;
   const agentType = type.toUpperCase() as AgentType;
   if (!CLIENT_AGENT_TYPES.includes(agentType)) notFound();
+
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { subscriptionTier: true, subscriptionStatus: true },
+  });
+  if (!org || !hasActivePlan(org)) {
+    return (
+      <div>
+        <PageHeader title={`${AGENT_LABELS[agentType]} agent`} />
+        <PlanLock
+          title="This one comes with a plan"
+          body="The specialists read your real account — your budget, your campaigns, what actually sold — rather than answering in general. That needs a plan."
+        />
+      </div>
+    );
+  }
 
   const thread = await findOrCreateThread(
     session.user.id,

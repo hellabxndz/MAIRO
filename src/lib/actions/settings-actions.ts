@@ -115,3 +115,27 @@ export async function updateBriefAction(
   revalidatePath("/dashboard", "layout");
   return { saved: true };
 }
+
+/**
+ * The customer's brake on automatic launches.
+ *
+ * MAIRO puts a finished campaign live on its own — that is the deal, and it is
+ * what stops an account sitting at "ready" for a fortnight because nobody
+ * realised a button was waiting. But it is still their money, so there has to
+ * be a way to say no that does not involve cancelling the plan.
+ *
+ * Held is a pause, not an undo: anything already running stays running.
+ */
+export async function setAutoLaunchHeldAction(held: boolean): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return;
+
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  await db.organization.update({
+    where: { id: organizationId },
+    data: { autoLaunchHeld: held },
+  });
+
+  revalidatePath("/dashboard", "layout");
+}

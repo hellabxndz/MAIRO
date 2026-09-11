@@ -10,6 +10,9 @@ import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { PlatformIcons, PlatformIcon } from "@/components/platform-icons";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
+import { readinessFor } from "@/lib/readiness";
+import { PendingReason } from "@/components/readiness-panel";
+import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
 // Each row's figures are live calls to Meta and TikTok. See the note in
@@ -26,7 +29,11 @@ const statusTone = {
 } as const;
 
 function platformLabel(platform: AdPlatform): string {
-  return platform === "META" ? "Meta" : platform === "TIKTOK" ? "TikTok" : platform;
+  return platform === "META"
+    ? "Meta"
+    : platform === "TIKTOK"
+      ? "TikTok"
+      : platform;
 }
 
 function roas(value: number | null): string {
@@ -41,9 +48,22 @@ export default async function CampaignsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
-  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const organizationId =
+    (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [campaigns, organization, entitlements, connections] = await Promise.all([
+  // Same as the dashboard: anything ready goes live before the page is drawn,
+  // so somebody who finishes their setup and lands here rather than on the
+  // overview gets the same behaviour.
+  await maybeGoLive(organizationId);
+
+  const [
+    campaigns,
+    organization,
+    entitlements,
+    connections,
+    readiness,
+    autoLaunch,
+  ] = await Promise.all([
     db.mairoCampaign.findMany({
       where: { organizationId },
       include: { platformCampaigns: true },
@@ -55,10 +75,14 @@ export default async function CampaignsPage() {
     }),
     entitlementsFor(organizationId),
     connectionSummaries(organizationId),
+    readinessFor(organizationId, { checkFunding: true }),
+    autoLaunchIntent(organizationId),
   ]);
 
   const performance = await fetchOrganizationPerformance(organizationId);
-  const byCampaign = new Map(performance.campaigns.map((c) => [c.mairoCampaignId, c]));
+  const byCampaign = new Map(
+    performance.campaigns.map((c) => [c.mairoCampaignId, c]),
+  );
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   const activeCount = campaigns.filter((c) => c.status !== "ARCHIVED").length;
@@ -79,7 +103,9 @@ export default async function CampaignsPage() {
     currentPlanPrice: plan.priceMonthly,
     upgradePlanName: upgradeTarget.name,
     upgradePlanPrice: upgradeTarget.priceMonthly,
-    connected: [...connections.values()].filter((c) => c.connected).map((c) => c.platform),
+    connected: [...connections.values()]
+      .filter((c) => c.connected)
+      .map((c) => c.platform),
   };
 
   return (
@@ -100,7 +126,8 @@ export default async function CampaignsPage() {
         <div className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-4">
           {performance.problems.map((p) => (
             <p key={p.platform} className="text-xs text-amber-200/90">
-              <span className="font-medium">{platformLabel(p.platform)}:</span> {p.message}
+              <span className="font-medium">{platformLabel(p.platform)}:</span>{" "}
+              {p.message}
             </p>
           ))}
         </div>
@@ -145,13 +172,23 @@ export default async function CampaignsPage() {
                 {/* The combined figures — the number the customer actually
                     cares about, before any per-network detail. */}
                 <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <Figure label="Total spend" value={cents(report?.total.spendCents ?? null)} />
-                  <Figure label="Revenue" value={cents(report?.total.revenueCents ?? null)} />
-                  <Figure label="ROAS" value={roas(report?.total.roas ?? null)} />
+                  <Figure
+                    label="Total spend"
+                    value={cents(report?.total.spendCents ?? null)}
+                  />
+                  <Figure
+                    label="Revenue"
+                    value={cents(report?.total.revenueCents ?? null)}
+                  />
+                  <Figure
+                    label="ROAS"
+                    value={roas(report?.total.roas ?? null)}
+                  />
                   <Figure
                     label="Purchases"
                     value={
-                      report?.total.purchases === null || report?.total.purchases === undefined
+                      report?.total.purchases === null ||
+                      report?.total.purchases === undefined
                         ? NO_VALUE
                         : formatInteger(report.total.purchases)
                     }
@@ -168,11 +205,16 @@ export default async function CampaignsPage() {
                         className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/[0.02] px-4 py-3"
                       >
                         <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-neutral-400">
-                          <PlatformIcon platform={p.platform} className="h-3.5 w-3.5" />
+                          <PlatformIcon
+                            platform={p.platform}
+                            className="h-3.5 w-3.5"
+                          />
                           {platformLabel(p.platform)}
                         </span>
                         {p.unavailable ? (
-                          <span className="text-xs text-amber-200/70">{p.unavailable}</span>
+                          <span className="text-xs text-amber-200/70">
+                            {p.unavailable}
+                          </span>
                         ) : (
                           <span className="flex gap-6 text-xs tabular-nums text-neutral-300">
                             <span>
@@ -194,6 +236,14 @@ export default async function CampaignsPage() {
                   </div>
                 )}
 
+                {/* Why this one isn't running, said where they are looking at
+                    it. A campaign sitting at "pending review" reads as MAIRO
+                    checking it over, when in fact it is waiting on something
+                    only the customer can do. */}
+                {campaign.status === "PENDING_REVIEW" && (
+                  <PendingReason readiness={readiness} held={autoLaunch.held} />
+                )}
+
                 {/* Whether each network can actually serve an impression.
                     A campaign with no ad set and no ad beneath it delivers
                     nothing, and looks identical on this page to one that
@@ -202,8 +252,13 @@ export default async function CampaignsPage() {
                 {campaign.platformCampaigns
                   .filter((c) => c.externalCampaignId && !c.externalAdId)
                   .map((c) => (
-                    <p key={`${c.id}-delivery`} className="mt-3 text-xs text-amber-200/90">
-                      <span className="font-medium">{platformLabel(c.platform)}:</span>{" "}
+                    <p
+                      key={`${c.id}-delivery`}
+                      className="mt-3 text-xs text-amber-200/90"
+                    >
+                      <span className="font-medium">
+                        {platformLabel(c.platform)}:
+                      </span>{" "}
                       {c.externalAdGroupId
                         ? "created, but there is no ad in it yet — so it cannot show to anyone."
                         : "only the campaign was created — it has no audience or ad yet, so it cannot show to anyone."}
@@ -216,7 +271,9 @@ export default async function CampaignsPage() {
                   .filter((c) => c.lastError)
                   .map((c) => (
                     <p key={c.id} className="mt-3 text-xs text-amber-200/80">
-                      <span className="font-medium">{platformLabel(c.platform)}:</span>{" "}
+                      <span className="font-medium">
+                        {platformLabel(c.platform)}:
+                      </span>{" "}
                       {c.lastError}
                     </p>
                   ))}
@@ -232,7 +289,9 @@ export default async function CampaignsPage() {
 function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
+        {label}
+      </p>
       <p className="mt-1 text-lg font-light tabular-nums text-white">{value}</p>
     </div>
   );
