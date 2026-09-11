@@ -23,6 +23,12 @@ people who have never paid — is treated as a Starter customer. Leave it off
 until App Review is through (the submission promises the reviewer full access),
 then switch it on.
 
+This is now the switch that makes two other things real, so nothing else needs
+changing when it flips: the AI specialists are locked behind a paid plan (the
+index, the chat page, and the API, which answers 402), and "choose a plan" is
+the first outstanding step on the dashboard checklist. Both are invisible while
+the variable is off, by design.
+
 **4. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
 changes in the database has never fired with a real event. Worth doing with a
 test-mode card before the first customer.
