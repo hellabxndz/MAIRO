@@ -307,3 +307,88 @@ export async function rescheduleCampaignAction(
 
   return { saved: true };
 }
+
+/**
+ * Stops a campaign everywhere and takes it off the customer's list.
+ *
+ * This exists because of the plan limits. Starter runs one campaign at a time,
+ * so a customer whose first attempt was a dud had no way forward at all: the
+ * create form simply wasn't rendered, with nothing saying why or what to do.
+ * The honest options are "delete this one" or "pay more", and only the second
+ * was on the screen.
+ *
+ * The rule that shapes the whole function: MAIRO never stops showing a
+ * campaign it hasn't stopped spending. Every network is paused first, and if
+ * any of them refuses, nothing is archived and the customer is told. The
+ * alternative — tidying the row away and leaving the ads running on Meta —
+ * turns a campaign into money leaving their account with no screen anywhere
+ * that mentions it.
+ *
+ * Archived rather than erased. The row keeps the network ids, so a campaign
+ * MAIRO created is always one MAIRO can still account for.
+ */
+export async function deleteCampaignAction(
+  mairoCampaignId: string
+): Promise<{ error?: string; deleted?: boolean; name?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not authenticated" };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  const campaign = await db.mairoCampaign.findFirst({
+    // Scoped in the query rather than checked after, so an id from another
+    // account reads as missing rather than as forbidden.
+    where: { id: mairoCampaignId, organizationId },
+    include: { platformCampaigns: true },
+  });
+  if (!campaign) return { error: "Campaign not found" };
+  if (campaign.status === "ARCHIVED") return { deleted: true, name: campaign.name };
+
+  // Stop it everywhere it reached, before anything is written down.
+  const failures: string[] = [];
+  for (const child of campaign.platformCampaigns) {
+    // Never launched, so there is nothing out there to stop.
+    if (!child.externalCampaignId) continue;
+
+    const adapter = getAdapter(child.platform);
+    if (!adapter) {
+      // A campaign on a network MAIRO can no longer talk to is exactly the
+      // case that must not be quietly archived.
+      failures.push(
+        `${platformName(child.platform)}: MAIRO can't reach this network to stop the campaign.`
+      );
+      continue;
+    }
+
+    const paused = await adapter.pauseCampaign({
+      organizationId,
+      externalCampaignId: child.externalCampaignId,
+    });
+    if (!paused.ok) failures.push(`${platformName(child.platform)}: ${paused.error.message}`);
+  }
+
+  if (failures.length > 0) {
+    // Recorded on the row too, so the reason survives the customer navigating
+    // away from the message.
+    await db.platformCampaign.updateMany({
+      where: { mairoCampaignId: campaign.id },
+      data: { lastError: failures.join(" ") },
+    });
+    return {
+      error: `MAIRO couldn't stop the ads, so it hasn't deleted the campaign — deleting it now would leave it running and spending with nothing on this screen to show it. ${failures.join(" ")}`,
+    };
+  }
+
+  await db.platformCampaign.updateMany({
+    where: { mairoCampaignId: campaign.id },
+    data: { status: "ARCHIVED", lastError: null },
+  });
+  await db.mairoCampaign.update({
+    where: { id: campaign.id },
+    data: { status: "ARCHIVED" },
+  });
+
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard");
+
+  return { deleted: true, name: campaign.name };
+}

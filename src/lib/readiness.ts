@@ -111,8 +111,16 @@ export async function readinessFor(
     // An ad, not a campaign. A campaign with no ad under it cannot show to
     // anybody, so counting it as done would mark the account ready while
     // nothing could possibly run.
+    //
+    // A deleted one doesn't count either. Its ad still exists on Meta, paused,
+    // so the row alone would report an account as ready when the customer has
+    // just cleared the decks to start again.
     db.platformCampaign.findFirst({
-      where: { mairoCampaign: { organizationId }, externalAdId: { not: null } },
+      where: {
+        mairoCampaign: { organizationId, status: { not: "ARCHIVED" } },
+        status: { not: "ARCHIVED" },
+        externalAdId: { not: null },
+      },
       select: { id: true },
     }),
   ]);

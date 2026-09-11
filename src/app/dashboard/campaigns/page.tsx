@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -13,6 +14,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { readinessFor } from "@/lib/readiness";
 import { PendingReason } from "@/components/readiness-panel";
 import { ScheduleControl } from "./schedule-control";
+import { DeleteCampaign } from "./delete-campaign";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
@@ -87,7 +89,12 @@ export default async function CampaignsPage() {
   );
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
-  const activeCount = campaigns.filter((c) => c.status !== "ARCHIVED").length;
+  // Deleted campaigns are archived rather than erased, so they have to come
+  // off the main list — otherwise "delete" visibly does nothing and the
+  // customer tries again.
+  const live = campaigns.filter((c) => c.status !== "ARCHIVED");
+  const archived = campaigns.filter((c) => c.status === "ARCHIVED");
+  const activeCount = live.length;
   const atLimit = activeCount >= entitlements.campaign_limit;
 
   // The plan to sell if they reach for something they don't have. Asked for by
@@ -135,20 +142,48 @@ export default async function CampaignsPage() {
         </div>
       )}
 
-      {!atLimit && (
+      {!atLimit ? (
         <Card className="mb-8">
           <NewCampaignForm plan={planContext} />
         </Card>
+      ) : (
+        /* The form used to just not render here, which left a customer on
+           Starter — one campaign — with no create form, no explanation, and
+           no way forward. There are only two honest answers, and both belong
+           on the screen. */
+        <Card className="mb-8 border-sky-400/20 bg-sky-400/[0.04]">
+          <h2 className="text-base text-white">
+            {entitlements.campaign_limit === 1
+              ? `${plan.name} runs one campaign at a time`
+              : `You're using all ${entitlements.campaign_limit} of your campaigns`}
+          </h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
+            {entitlements.campaign_limit === 1
+              ? "To start a different one, delete the campaign below first — that stops its ads and frees the slot. Or move up a plan and run more than one at once."
+              : "Delete one below to free a slot, or move up a plan to run more at once."}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            <Link
+              href="/dashboard/settings#billing"
+              className="rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200"
+            >
+              {upgradeTarget.name} runs {upgradeTarget.limits.campaigns} — ${upgradeTarget.priceMonthly}/mo
+            </Link>
+            <p className="text-xs text-neutral-500">
+              Deleting is free and takes a moment. Nothing you&rsquo;ve already spent is lost.
+            </p>
+          </div>
+        </Card>
       )}
 
-      {campaigns.length === 0 ? (
+      {live.length === 0 ? (
         <EmptyState
           title="No campaigns yet"
           description="Create one above. Tell MAIRO what you want and how much you want to spend, and it takes care of the rest."
         />
       ) : (
         <div className="space-y-4">
-          {campaigns.map((campaign) => {
+          {live.map((campaign) => {
             const report = byCampaign.get(campaign.id);
             const platforms = campaign.platformCampaigns.map((c) => c.platform);
 
@@ -308,10 +343,48 @@ export default async function CampaignsPage() {
                       {c.lastError}
                     </p>
                   ))}
+
+                <DeleteCampaign
+                  campaignId={campaign.id}
+                  name={campaign.name}
+                  running={campaign.status === "ACTIVE"}
+                  freesSlot={atLimit}
+                />
               </Card>
             );
           })}
         </div>
+      )}
+
+      {/* Deleted campaigns, kept rather than erased: MAIRO created them on a
+          real ad account and should always be able to account for what it
+          made. Folded away by default, because the point of deleting one was
+          to stop looking at it. */}
+      {archived.length > 0 && (
+        <details className="mt-8 group">
+          <summary className="cursor-pointer list-none text-xs text-neutral-500 underline decoration-white/15 underline-offset-4 transition hover:text-neutral-300">
+            {archived.length} deleted campaign{archived.length === 1 ? "" : "s"} — show
+          </summary>
+          <div className="mt-4 space-y-3">
+            {archived.map((campaign) => (
+              <div
+                key={campaign.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] px-5 py-4"
+              >
+                <div>
+                  <p className="text-sm text-neutral-400">{campaign.name}</p>
+                  <p className="mt-0.5 text-xs text-neutral-600">
+                    {campaign.objective.toLowerCase().replace("_", " ")} ·{" "}
+                    {formatMoney(campaign.totalDailyBudgetCents / 100)} a day · stopped
+                  </p>
+                </div>
+                <PlatformIcons
+                  platforms={campaign.platformCampaigns.map((c) => c.platform)}
+                />
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );
