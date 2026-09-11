@@ -62,7 +62,7 @@ const capabilities = [
     eyebrow: "Launch",
     title: "Straight into\nyour ad account.",
     body:
-      "Approved campaigns are created in your own Meta ad account through the Marketing API. Always paused. Nothing spends a penny until you switch it on yourself.",
+      "Approved campaigns are created in your own Meta and TikTok ad accounts through their APIs. Always paused. Nothing spends a penny until you switch it on yourself.",
     panel: "Campaigns",
     table: true,
   },
@@ -107,7 +107,7 @@ export default function Home() {
         <div className="mx-auto w-full max-w-[1500px] pt-28">
           <Reveal duration={1.4}>
             <p className="text-[11px] uppercase tracking-[0.42em] text-neutral-500">
-              Meta advertising, run by AI
+              Meta and TikTok advertising, run by AI
             </p>
           </Reveal>
 
@@ -133,7 +133,8 @@ export default function Home() {
           <Reveal delay={0.4} className="mt-14 max-w-xl">
             <p className="text-base leading-relaxed text-neutral-400 sm:text-lg">
               You set the goal and the budget. MAIRO writes the plan, makes the creative
-              from your own photos, and runs the campaigns in your Meta ad account.
+              from your own photos, and runs the campaigns in your own Meta and TikTok
+              ad accounts.
             </p>
           </Reveal>
 
@@ -267,7 +268,7 @@ export default function Home() {
                           <span className="tabular-nums text-neutral-300">$17.00</span>
                         </div>
                         <div className="flex justify-between text-neutral-500">
-                          <span>On Meta</span>
+                          <span>On Meta + TikTok</span>
                           <span className="text-emerald-300/90">Yes</span>
                         </div>
                         <p className="pt-3 text-xs leading-relaxed text-neutral-600">

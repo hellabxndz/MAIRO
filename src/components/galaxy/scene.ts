@@ -715,9 +715,33 @@ export function createScene(opts: SceneOptions): Scene | null {
   const ALBEDO_W = 768, ALBEDO_H = 384;
   const RELIEF_W = 384, RELIEF_H = 192;
 
+  /**
+   * Half-size surface maps on a phone.
+   *
+   * The full atlases are 271KB together and were being sent to every device,
+   * which is a lot of cellular data for a planet that occupies a couple of
+   * hundred pixels on a phone. The half versions are 71KB and, at that size,
+   * indistinguishable — the texture is mip-mapped and minified either way, so
+   * on a small screen the GPU was discarding most of those pixels anyway.
+   *
+   * The threshold matches the one milky-way.tsx already uses for the same
+   * decision, so the two backgrounds switch together rather than one of them
+   * going low-detail on its own.
+   */
+  const halfMaps =
+    typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches;
+  const mapScale = halfMaps ? 0.5 : 1;
+
   let albedoArr: WebGLTexture | null = null;
   let reliefArr: WebGLTexture | null = null;
   let mapsLoaded = 0;
+  // The relief texel size has to match whatever was actually uploaded: it is
+  // the step the shader takes when it differences the height field to get a
+  // surface normal. A texel size that disagrees with the texture makes every
+  // planet's lighting subtly wrong, in a way that looks like a shading bug
+  // rather than a loading one.
+  let reliefW = RELIEF_W * mapScale;
+  let reliefH = RELIEF_H * mapScale;
 
   /**
    * Decodes an image into a 2D texture array, one layer per planet.
@@ -792,10 +816,21 @@ export function createScene(opts: SceneOptions): Scene | null {
    * files they are a fraction of what Earth costs.
    */
   function loadSurfaces() {
-    Promise.all([loadImage("/sky/planets"), loadImage("/sky/planets-relief")])
+    const suffix = halfMaps ? "-half" : "";
+    Promise.all([
+      loadImage(`/sky/planets${suffix}`),
+      loadImage(`/sky/planets-relief${suffix}`),
+    ])
       .then(([albedo, reliefImg]) => {
-        albedoArr = uploadArray(albedo, ALBEDO_W, ALBEDO_H, PLANET_LAYERS);
-        reliefArr = uploadArray(reliefImg, RELIEF_W, RELIEF_H, PLANET_LAYERS);
+        albedoArr = uploadArray(
+          albedo,
+          ALBEDO_W * mapScale,
+          ALBEDO_H * mapScale,
+          PLANET_LAYERS
+        );
+        reliefW = RELIEF_W * mapScale;
+        reliefH = RELIEF_H * mapScale;
+        reliefArr = uploadArray(reliefImg, reliefW, reliefH, PLANET_LAYERS);
         mapsLoaded = 1;
       })
       .catch(() => {
@@ -1161,7 +1196,7 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1f(uPlanet.uReveal, Math.max(0, (revealEase - 0.45) / 0.55));
     gl.uniform1f(uPlanet.uDetail, tier === 0 ? 0 : 1);
     gl.uniform1f(uPlanet.uMapsLoaded, mapsLoaded);
-    gl.uniform2f(uPlanet.uReliefTexel, 1 / RELIEF_W, 1 / RELIEF_H);
+    gl.uniform2f(uPlanet.uReliefTexel, 1 / reliefW, 1 / reliefH);
     gl.activeTexture(gl.TEXTURE4);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, albedoArr ?? blankArr);
     gl.uniform1i(uPlanet.uPlanetAlbedo, 4);
