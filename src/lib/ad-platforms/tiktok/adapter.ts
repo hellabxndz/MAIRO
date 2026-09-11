@@ -167,6 +167,9 @@ async function credentialsOr<T>(
 
 export const tiktokAdapter: AdPlatformAdapter = {
   platform: "TIKTOK",
+  // TikTok expects the ad group to carry the budget unless campaign budget
+  // optimization is switched on, which MAIRO does not do.
+  budgetLevel: "adgroup",
 
   async connectAccount(input: ConnectAccountInput): Promise<PlatformResult<ConnectedAccount>> {
     if (!tiktokConfigured()) {

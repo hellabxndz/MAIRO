@@ -116,6 +116,28 @@ export type CreateAdGroupInput = {
   goal: AdGoal;
   /** Free-form targeting, interpreted per network. */
   targeting?: Record<string, unknown>;
+  /**
+   * True when the campaign above already carries the budget.
+   *
+   * Not a detail. MAIRO sets the budget on the campaign, and Meta rejects an
+   * ad set that also carries one — "you can't set a budget at the ad set level
+   * when campaign budget optimization is on". An adapter that sends both fails
+   * every launch, so the caller says which level owns it and the adapter obeys.
+   */
+  campaignOwnsBudget?: boolean;
+  /**
+   * The conversion to optimize towards, when the business has a pixel.
+   *
+   * Absent means there is nothing to optimize for yet, and the adapter falls
+   * back to something the network can actually deliver — rather than asking
+   * for purchase optimization on an account that has never reported a
+   * purchase, which Meta accepts and then under-delivers indefinitely.
+   */
+  conversion?: {
+    pixelId: string;
+    /** The network's own event name, e.g. Meta's "Purchase". */
+    event: string;
+  } | null;
 };
 
 export type CreateAdInput = {
@@ -128,8 +150,13 @@ export type CreateAdInput = {
     primaryText?: string | null;
     headline?: string | null;
     cta?: string | null;
+    /** An https URL, for networks that fetch the asset themselves. */
     mediaUrl?: string | null;
+    /** The picture itself, as a data URL, for networks that want the bytes. */
+    imageData?: string | null;
   };
+  /** Where the ad sends people. Meta will not build a link ad without it. */
+  destinationUrl?: string | null;
 };
 
 export type CreatedEntity = { externalId: string };
@@ -238,6 +265,16 @@ export interface AdPlatformAdapter {
   getAccounts(organizationId: string): Promise<PlatformResult<PlatformAccount[]>>;
 
   createCampaign(input: CreateCampaignInput): Promise<PlatformResult<CreatedCampaign>>;
+  /**
+   * Which level of the hierarchy carries the budget on this network.
+   *
+   * Not cosmetic. Meta refuses an ad set budget when the campaign has one;
+   * TikTok expects the ad group to carry it unless campaign optimization is
+   * explicitly turned on. Getting it wrong fails every launch, so the adapter
+   * states it and the launcher obeys rather than each guessing about the other.
+   */
+  readonly budgetLevel: "campaign" | "adgroup";
+
   createAdGroup(input: CreateAdGroupInput): Promise<PlatformResult<CreatedEntity>>;
   createAd(input: CreateAdInput): Promise<PlatformResult<CreatedEntity>>;
 

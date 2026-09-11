@@ -292,6 +292,58 @@ There is deliberately no base-URL override in the shipped client: an
 environment variable that redirects where a customer's Google bearer token is
 sent is not worth the testing convenience.
 
+### 5h. What a launch actually creates
+
+Until this, `launchOne` called `createCampaign` and stopped. On both Meta and
+TikTok a campaign with no ad set and no ad **cannot serve a single
+impression** — so every campaign MAIRO had ever launched was an empty shell,
+and the dashboard showed it as created. That is the worst shape a gap can
+take, because it looks finished.
+
+A launch now builds the whole hierarchy: campaign, then ad set, then ad. Three
+things had to be fixed to make that possible, and each would have failed every
+launch on its own:
+
+- **The budget was set twice.** The campaign carries `daily_budget`, and
+  `createAdGroup` set one as well. Meta rejects an ad set budget under a
+  campaign that has one. Each adapter now declares a `budgetLevel` — `campaign`
+  for Meta, `adgroup` for TikTok, which wants it the other way round — and the
+  launcher obeys rather than guessing.
+- **`LEAD_GENERATION` was the wrong optimization goal.** It means one of Meta's
+  instant forms, which lives on Facebook and which MAIRO never creates; asking
+  for it on a campaign that sends people to a website produces an ad set that
+  cannot deliver. A website lead is an offsite conversion, and only when
+  there is a pixel to count it.
+- **No pixel meant no honest conversion goal.** With a pixel, the ad set
+  optimizes for the niche's primary conversion and carries a `promoted_object`
+  naming it. Without one it falls back to `LINK_CLICKS`, because optimizing for
+  purchases on an account that has never reported one is accepted by Meta and
+  then under-delivers indefinitely. This is where the tracking work earns its
+  place: the pixel is what makes "optimize for sales" mean anything.
+
+`PlatformCampaign` gained `externalAdGroupId` and `externalAdId` so the record
+says how far a launch got. The campaigns page reads them and says plainly when
+a campaign cannot show to anyone — a campaign with no ad looks identical on
+that page to one that works.
+
+**The ad itself** is three dependent Meta calls in `src/lib/meta/creatives.ts`:
+`/adimages` with the raw base64 (the `data:` prefix has to go, or Meta accepts
+a file that then renders blank), `/adcreatives` with the hash and the Page, and
+`/ads`. Everything lands PAUSED. Meta's automatic creative variations are
+opted out of: the customer approved one picture and one line, and running
+something else would make that approval meaningless.
+
+The copy comes from the concept the Creative agent wrote, parsed by
+`creative-copy.ts`. That parser never invents — a concept whose headline cannot
+be found returns null and the ad is refused, because the alternative is an ad
+running on the customer's money with a placeholder in it. It is a line scanner
+rather than a regex for a reason worth remembering: the regex version used
+`\z` for end-of-string, which JavaScript does not have (it matches a literal
+"z"), so the last section of every concept silently failed to parse.
+
+TikTok still stops at the ad set — `createAd` needs a video and MAIRO produces
+none. The campaigns page says so rather than leaving it to be discovered.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

@@ -6,6 +6,7 @@ import {
   type CampaignPerformance,
   type ConnectedAccount,
   type CreateAdGroupInput,
+  type CreateAdInput,
   type CreateCampaignInput,
   type CreatedCampaign,
   type CreatedEntity,
@@ -16,6 +17,13 @@ import {
 import { loadCredentials, markConnectionProblem } from "../connections";
 import { MetaApiError, metaGraphRequest } from "@/lib/meta/client";
 import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
+import { loadMetaConnection } from "@/lib/meta/connection";
+import {
+  createAdCreative,
+  createMetaAd,
+  metaCustomEventType,
+  uploadAdImage,
+} from "@/lib/meta/creatives";
 
 // Meta behind the shared interface.
 //
@@ -146,6 +154,8 @@ const PURCHASE_TYPES = ["omni_purchase", "purchase", "offsite_conversion.fb_pixe
 
 export const metaAdapter: AdPlatformAdapter = {
   platform: "META",
+  // The campaign carries daily_budget, so the ad set must not.
+  budgetLevel: "campaign",
 
   async connectAccount(): Promise<PlatformResult<ConnectedAccount>> {
     return fail(
@@ -206,6 +216,11 @@ export const metaAdapter: AdPlatformAdapter = {
     if (!loaded.ok) return loaded.result;
 
     try {
+      // Which conversion this can honestly chase. Without a pixel there is
+      // nothing for Meta to optimize towards, so asking for purchases would be
+      // accepted and then under-deliver forever with no error.
+      const optimization = metaOptimizationGoal(input.goal, Boolean(input.conversion));
+
       const res = await metaGraphRequest<{ id: string }>(
         `/${loaded.creds.externalAccountId}/adsets`,
         {
@@ -214,11 +229,25 @@ export const metaAdapter: AdPlatformAdapter = {
           body: {
             name: input.name,
             campaign_id: input.externalCampaignId,
-            daily_budget: input.dailyBudgetCents,
+            // Omitted when the campaign carries it. Meta rejects an ad set
+            // budget under a campaign that has one, and MAIRO always sets the
+            // budget on the campaign so the optimizer has one place to move it.
+            ...(input.campaignOwnsBudget ? {} : { daily_budget: input.dailyBudgetCents }),
             billing_event: "IMPRESSIONS",
-            optimization_goal: metaOptimizationGoal(input.goal),
+            optimization_goal: optimization,
             status: "PAUSED",
             targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
+            // Required whenever the ad set optimizes for a pixel conversion,
+            // and meaningless otherwise. It is what ties the tracking MAIRO set
+            // up to the thing the campaign is actually trying to cause.
+            ...(input.conversion
+              ? {
+                  promoted_object: JSON.stringify({
+                    pixel_id: input.conversion.pixelId,
+                    custom_event_type: metaCustomEventType(input.conversion.event),
+                  }),
+                }
+              : {}),
           },
         }
       );
@@ -228,16 +257,76 @@ export const metaAdapter: AdPlatformAdapter = {
     }
   },
 
-  async createAd(): Promise<PlatformResult<CreatedEntity>> {
-    // Same honest gap as TikTok's: an ad needs a creative that already exists
-    // in the ad account, which means uploading the image or video to Meta
-    // first and referencing the returned hash. MAIRO has no asset pipeline
-    // yet, so this says so rather than posting an ad with nothing in it.
-    return fail(
-      "not_implemented",
-      "Publishing finished creatives to Meta isn't switched on yet. The campaign and ad set are live; " +
-        "the creative has to be attached in Ads Manager for now."
-    );
+  /**
+   * Uploads the picture, builds the creative and attaches the ad.
+   *
+   * Three dependent calls, each of which can fail on its own, so the failures
+   * are separated: a missing Page is a different problem from an oversized
+   * image and needs a different sentence. Everything lands PAUSED.
+   */
+  async createAd(input: CreateAdInput): Promise<PlatformResult<CreatedEntity>> {
+    const loaded = await credentialsOr<CreatedEntity>(input.organizationId);
+    if (!loaded.ok) return loaded.result;
+
+    const connection = await loadMetaConnection(input.organizationId);
+    // An ad is always published *by* a Page, even one that only ever runs as
+    // an ad. Checked here rather than left to Meta, whose error for this names
+    // object_story_spec and not the Page.
+    if (!connection?.pageId) {
+      return fail(
+        "rejected",
+        "Meta needs a Facebook Page to publish the ad from, and none is picked yet. Choose one on the Meta connection screen."
+      );
+    }
+
+    if (!input.creative.imageData) {
+      return fail("rejected", "This creative has no finished picture to run.");
+    }
+    if (!input.creative.headline || !input.creative.primaryText) {
+      return fail(
+        "rejected",
+        "This creative is missing its headline or its main text, so MAIRO won't build an ad from it."
+      );
+    }
+    if (!input.destinationUrl) {
+      return fail(
+        "rejected",
+        "The ad needs somewhere to send people. Add your website address in Settings."
+      );
+    }
+
+    try {
+      const image = await uploadAdImage(
+        loaded.creds.externalAccountId,
+        loaded.creds.accessToken,
+        input.creative.imageData,
+        input.name
+      );
+
+      const creative = await createAdCreative({
+        adAccountId: loaded.creds.externalAccountId,
+        accessToken: loaded.creds.accessToken,
+        name: input.name,
+        pageId: connection.pageId,
+        imageHash: image.hash,
+        link: input.destinationUrl,
+        message: input.creative.primaryText,
+        headline: input.creative.headline,
+        callToAction: input.creative.cta ?? null,
+      });
+
+      const ad = await createMetaAd({
+        adAccountId: loaded.creds.externalAccountId,
+        accessToken: loaded.creds.accessToken,
+        name: input.name,
+        adSetId: input.externalAdGroupId,
+        creativeId: creative.id,
+      });
+
+      return ok({ externalId: ad.id });
+    } catch (error) {
+      return toFailure(input.organizationId, error, "Couldn't build the ad on Meta.");
+    }
   },
 
   async updateBudget(input): Promise<PlatformResult<void>> {
@@ -375,12 +464,22 @@ function normalizeInsights(row: MetaInsightRow) {
  * objective; a mismatch is rejected at creation with a message that does not
  * name the field.
  */
-function metaOptimizationGoal(goal: Parameters<typeof metaObjectiveFor>[0]): string {
+function metaOptimizationGoal(
+  goal: Parameters<typeof metaObjectiveFor>[0],
+  hasPixel: boolean
+): string {
   switch (goal) {
     case "LEADS":
-      return "LEAD_GENERATION";
+      // OFFSITE_CONVERSIONS, not LEAD_GENERATION. LEAD_GENERATION means one of
+      // Meta's instant forms, which lives on Facebook and which MAIRO does not
+      // create — asking for it on a campaign that sends people to a website
+      // produces an ad set that cannot deliver. With a pixel, a website lead is
+      // an offsite conversion; without one, the best honest target is a click.
+      return hasPixel ? "OFFSITE_CONVERSIONS" : "LINK_CLICKS";
     case "SALES":
-      return "OFFSITE_CONVERSIONS";
+      // Same reasoning. Optimizing for purchases on an account that has never
+      // seen one is accepted by Meta and then under-delivers indefinitely.
+      return hasPixel ? "OFFSITE_CONVERSIONS" : "LINK_CLICKS";
     case "AWARENESS":
       return "REACH";
     case "TRAFFIC":

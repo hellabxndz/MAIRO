@@ -3,6 +3,8 @@ import type { AdGoal, AdPlatform } from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import type { Allocation } from "@/lib/budget/allocation";
+import { nicheById, primaryAction } from "@/lib/tracking/niches";
+import { parseAdCopy } from "@/lib/meta/creative-copy";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -30,8 +32,31 @@ export type LaunchOutcome = {
     externalCampaignId: string | null;
     /** Set when this network refused or was unreachable. Safe to show. */
     error: string | null;
+    /**
+     * How far the launch actually got.
+     *
+     * The distinction that matters: a campaign on its own delivers nothing.
+     * Meta and TikTok both need a campaign, an ad set beneath it and an ad
+     * beneath that before a single impression can be served, and a product
+     * that reports "launched" after the first of those three is lying by
+     * omission — the customer sees a campaign in their dashboard, waits, and
+     * nothing ever happens.
+     */
+    stage: LaunchStage;
+    /** What is still missing, in the customer's words. Null when ready. */
+    blocker: string | null;
   }[];
 };
+
+export type LaunchStage =
+  /** Nothing reached the network. */
+  | "none"
+  /** A campaign exists and cannot deliver. */
+  | "campaign"
+  /** Campaign and ad set exist. Still cannot deliver — there is no ad. */
+  | "ad_set"
+  /** Campaign, ad set and ad. This one can run once it is switched on. */
+  | "ready";
 
 export type CreateMairoCampaignInput = {
   organizationId: string;
@@ -124,7 +149,14 @@ export async function launchOne(input: {
   if (!adapter) {
     const error = `MAIRO can't run campaigns on ${platformName(input.platform)} yet.`;
     await recordFailure(input.platformCampaignId, error);
-    return { platform: input.platform, launched: false, externalCampaignId: null, error };
+    return {
+      platform: input.platform,
+      launched: false,
+      externalCampaignId: null,
+      error,
+      stage: "none",
+      blocker: error,
+    };
   }
 
   const result = await adapter.createCampaign({
@@ -142,6 +174,8 @@ export async function launchOne(input: {
       launched: false,
       externalCampaignId: null,
       error: result.error.message,
+      stage: "none",
+      blocker: result.error.message,
     };
   }
 
@@ -161,11 +195,182 @@ export async function launchOne(input: {
     },
   });
 
+  // The campaign exists. On its own it delivers nothing, so the rest of the
+  // hierarchy is built here rather than left to the customer to finish in an
+  // ads manager they were promised they would never have to open.
+  const finish = await buildDeliverable({
+    organizationId: input.organizationId,
+    platformCampaignId: input.platformCampaignId,
+    platform: input.platform,
+    adapter,
+    name: input.name,
+    objective: input.objective,
+    dailyBudgetCents: input.dailyBudgetCents,
+    externalCampaignId: result.data.externalId,
+  });
+
   return {
     platform: input.platform,
     launched: true,
     externalCampaignId: result.data.externalId,
     error: null,
+    stage: finish.stage,
+    blocker: finish.blocker,
+  };
+}
+
+/**
+ * Builds the ad set and the ad beneath a campaign that already exists.
+ *
+ * Never throws and never undoes the campaign. A campaign that reached the
+ * network exists whether or not the ad set follows, and deleting it to keep
+ * the record tidy would be a worse failure than an incomplete one — the
+ * customer would have a campaign in their ads manager that MAIRO has no memory
+ * of. So each step records what it achieved and the caller reports the truth.
+ */
+async function buildDeliverable(input: {
+  organizationId: string;
+  platformCampaignId: string;
+  platform: AdPlatform;
+  adapter: NonNullable<ReturnType<typeof getAdapter>>;
+  name: string;
+  objective: AdGoal;
+  dailyBudgetCents: number;
+  externalCampaignId: string;
+}): Promise<{ stage: LaunchStage; blocker: string | null }> {
+  // What this business can honestly optimize towards. A pixel is what makes
+  // "optimize for purchases" mean anything; without one the adapter falls back
+  // to clicks and says so here rather than silently under-delivering.
+  const conversion = await conversionTargetFor(input.organizationId, input.platform);
+
+  const adGroup = await input.adapter.createAdGroup({
+    organizationId: input.organizationId,
+    externalCampaignId: input.externalCampaignId,
+    name: `${input.name} — audience`,
+    dailyBudgetCents: input.dailyBudgetCents,
+    goal: input.objective,
+    campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
+    conversion,
+  });
+
+  if (!adGroup.ok) {
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: adGroup.error.message },
+    });
+    return { stage: "campaign", blocker: adGroup.error.message };
+  }
+
+  await db.platformCampaign.update({
+    where: { id: input.platformCampaignId },
+    data: { externalAdGroupId: adGroup.data.externalId, lastError: null },
+  });
+
+  const creative = await approvedCreativeFor(input.organizationId);
+  if (!creative) {
+    const blocker =
+      "There is no approved creative to run yet, so the ad hasn't been built. Approve a picture on the Creatives page and launch again.";
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: blocker },
+    });
+    return { stage: "ad_set", blocker };
+  }
+
+  const ad = await input.adapter.createAd({
+    organizationId: input.organizationId,
+    externalAdGroupId: adGroup.data.externalId,
+    name: input.name,
+    creative: {
+      aspectRatio: "SQUARE_1_1",
+      headline: creative.headline,
+      primaryText: creative.primaryText,
+      cta: creative.cta,
+      imageData: creative.imageData,
+    },
+    destinationUrl: creative.destinationUrl,
+  });
+
+  if (!ad.ok) {
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: ad.error.message },
+    });
+    return { stage: "ad_set", blocker: ad.error.message };
+  }
+
+  await db.platformCampaign.update({
+    where: { id: input.platformCampaignId },
+    data: { externalAdId: ad.data.externalId, lastError: null },
+  });
+
+  return { stage: "ready", blocker: null };
+}
+
+/**
+ * The pixel and event this campaign should be optimized towards.
+ *
+ * Comes from the tracking setup: the niche's primary conversion is the thing
+ * the business actually wants, so it is the thing the campaign chases. Null
+ * when there is no pixel, which is a real answer and not an error.
+ */
+async function conversionTargetFor(
+  organizationId: string,
+  platform: AdPlatform
+): Promise<{ pixelId: string; event: string } | null> {
+  const pixel = await db.trackingPixel.findUnique({
+    where: { organizationId_platform: { organizationId, platform } },
+  });
+  if (!pixel) return null;
+
+  const profile = await db.trackingProfile.findUnique({ where: { organizationId } });
+  const niche = nicheById(profile?.nicheId ?? "general");
+  const action = primaryAction(niche);
+
+  return {
+    pixelId: pixel.externalPixelId,
+    event: platform === "TIKTOK" ? action.tiktokEvent : action.metaEvent,
+  };
+}
+
+/**
+ * The most recent creative the customer actually approved, with its copy.
+ *
+ * Approved is the bar on purpose: a concept that has not been through the
+ * safety review, or a picture the customer never chose, is not something to
+ * spend their money showing to strangers. Returns null rather than falling
+ * back to anything.
+ */
+async function approvedCreativeFor(organizationId: string): Promise<{
+  headline: string | null;
+  primaryText: string | null;
+  cta: string | null;
+  imageData: string;
+  destinationUrl: string | null;
+} | null> {
+  const request = await db.creativeRequest.findFirst({
+    where: {
+      organizationId,
+      status: { in: ["APPROVED", "DELIVERED"] },
+      images: { some: { isFinal: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+    include: {
+      images: { where: { isFinal: true }, orderBy: { version: "desc" }, take: 1 },
+      organization: { select: { website: true } },
+    },
+  });
+
+  const image = request?.images[0];
+  if (!request || !image) return null;
+
+  const copy = parseAdCopy(request.aiConcept);
+  return {
+    headline: copy.headline,
+    primaryText: copy.primaryText,
+    cta: copy.callToAction,
+    imageData: image.imageData,
+    destinationUrl: request.organization.website ?? null,
   };
 }
 

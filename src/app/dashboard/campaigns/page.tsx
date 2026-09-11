@@ -194,6 +194,22 @@ export default async function CampaignsPage() {
                   </div>
                 )}
 
+                {/* Whether each network can actually serve an impression.
+                    A campaign with no ad set and no ad beneath it delivers
+                    nothing, and looks identical on this page to one that
+                    works — so the difference is stated rather than left for
+                    the customer to discover from a dashboard of zeroes. */}
+                {campaign.platformCampaigns
+                  .filter((c) => c.externalCampaignId && !c.externalAdId)
+                  .map((c) => (
+                    <p key={`${c.id}-delivery`} className="mt-3 text-xs text-amber-200/90">
+                      <span className="font-medium">{platformLabel(c.platform)}:</span>{" "}
+                      {c.externalAdGroupId
+                        ? "created, but there is no ad in it yet — so it cannot show to anyone."
+                        : "only the campaign was created — it has no audience or ad yet, so it cannot show to anyone."}
+                    </p>
+                  ))}
+
                 {/* A network that refused the campaign says so on its own row,
                     rather than the whole campaign reading as broken. */}
                 {campaign.platformCampaigns

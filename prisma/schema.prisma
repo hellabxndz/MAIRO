@@ -502,6 +502,16 @@ model PlatformCampaign {
   /// budget, a status of DRAFT and no external id is one that failed to push
   /// and is waiting to be retried — not one that is quietly running.
   externalCampaignId String?
+  /// The ad set (Meta) or ad group (TikTok) beneath the campaign.
+  ///
+  /// Recorded because a campaign is not a deliverable thing on its own: with
+  /// no ad set and no ad it cannot serve a single impression. These two
+  /// columns are what let the dashboard tell a customer how far a launch
+  /// actually got, and what let a retry finish the job instead of creating a
+  /// second campaign beside the first.
+  externalAdGroupId  String?
+  /// The ad itself. Until this exists, nothing delivers.
+  externalAdId       String?
 
   /// Whole per cent of the parent's budget. Siblings always sum to 100; that
   /// is enforced in src/lib/budget/allocation.ts rather than by the database,
