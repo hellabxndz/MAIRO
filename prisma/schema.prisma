@@ -127,6 +127,9 @@ model Organization {
   managedSetups        ManagedAccountSetup[]
   tiktokPosts          TikTokPost[]
   tiktokCreator        TikTokCreatorConnection?
+  trackingPixels       TrackingPixel[]
+  conversionEvents     ConversionEvent[]
+  storeIngest          StoreIngest?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -857,4 +860,181 @@ model TikTokCreatorConnection {
 
   connectedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// Whether a pixel is actually doing anything.
+///
+/// The distinction that matters is PENDING versus NO_EVENTS. A pixel that
+/// exists but has never fired looks identical to a working one in every
+/// dashboard — same id, same name, same green tick — and the customer finds
+/// out months later that none of their ROAS was ever real. So "created" and
+/// "receiving events" are different states here and are shown differently.
+enum PixelStatus {
+  /// Created on the network. Nothing has been installed yet.
+  PENDING
+  /// The network has seen events from it. This is the only good state.
+  ACTIVE
+  /// Installed, or claimed to be, but the network has seen nothing.
+  NO_EVENTS
+  /// The network refused to talk about it. Never guessed at.
+  ERROR
+}
+
+/// How the pixel came to exist.
+enum PixelOrigin {
+  /// MAIRO created it through the network's API.
+  CREATED_BY_MAIRO
+  /// The customer already had one and told us its id.
+  EXISTING
+}
+
+/// One network's conversion tracking for one business.
+///
+/// A pixel is the thing that makes ROAS possible at all: without one, the ad
+/// network has no idea that anybody bought anything, reports no revenue, and
+/// every ROAS figure on the dashboard is null. That is the current state of
+/// MAIRO for every customer, and nothing in the product said so.
+model TrackingPixel {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  platform       AdPlatform
+
+  /// The network's own id, which is what goes in the snippet.
+  externalPixelId String
+  name            String
+  origin          PixelOrigin @default(CREATED_BY_MAIRO)
+
+  status PixelStatus @default(PENDING)
+  /// When the network last saw an event. The only honest proof it works.
+  lastFiredAt  DateTime?
+  lastCheckedAt DateTime?
+  lastError    String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, platform])
+  @@index([organizationId])
+}
+
+/// Where an order came from.
+enum OrderSource {
+  SHOPIFY
+  WOOCOMMERCE
+  STRIPE
+  /// Posted to MAIRO's endpoint by something else, in MAIRO's own shape.
+  CUSTOM
+  /// Typed in by hand, for a business that takes orders off the internet.
+  MANUAL
+}
+
+/// An order the business actually took.
+///
+/// This is the half of measurement a pixel cannot give you. A browser pixel is
+/// lossy by design — ad blockers, iOS tracking prompts and Safari's cookie
+/// policy between them lose a serious fraction of conversions, and the network
+/// only ever reports what reached it. The store, by contrast, knows exactly
+/// what was sold.
+///
+/// So MAIRO takes orders straight from the store and does two things with
+/// them: forwards them server-side to each network's conversions API, which
+/// recovers most of what the browser lost, and keeps them here as the record
+/// against which the networks' own claims can be checked.
+model ConversionEvent {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  source OrderSource
+  /// The store's own order id. Unique per organization, so a webhook that
+  /// arrives twice — which Shopify's retries guarantee — is recorded once.
+  externalOrderId String
+  /// Meta and TikTok both dedupe browser and server copies of the same
+  /// conversion on this. It has to be the same string in both places, so it
+  /// is derived from the order id rather than generated.
+  eventId         String
+  eventName       String @default("Purchase")
+
+  valueCents Int
+  currency   String @default("USD")
+  occurredAt DateTime
+
+  /// Hashed before it is ever written — see src/lib/tracking/hash.ts. MAIRO
+  /// never stores a customer's email or phone in the clear for this purpose.
+  hashedEmail String?
+  hashedPhone String?
+  /// Kept in the clear because they are not identifying on their own and the
+  /// networks match noticeably better with them.
+  country     String?
+  /// The visitor's own browser identifiers, when the store passes them on.
+  /// They are what lifts match quality from poor to good.
+  clientIp    String?
+  userAgent   String? @db.Text
+  fbclid      String?
+  ttclid      String?
+
+  forwards ConversionForward[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, externalOrderId])
+  @@index([organizationId, occurredAt])
+}
+
+enum ForwardStatus {
+  PENDING
+  SENT
+  /// The network took it but said something about it worth keeping.
+  ACCEPTED_WITH_WARNINGS
+  FAILED
+  /// No pixel, or no connection, on that network. Not a failure.
+  SKIPPED
+}
+
+/// What happened when MAIRO sent one order to one network.
+///
+/// Per network and per order rather than a status column, because the answer
+/// genuinely differs: the same order can reach Meta and be refused by TikTok,
+/// and a customer asking why their TikTok ROAS is low deserves to see that
+/// rather than a single green tick covering both.
+model ConversionForward {
+  id      String          @id @default(cuid())
+  event   ConversionEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  platform AdPlatform
+
+  status ForwardStatus @default(PENDING)
+  /// The network's own words when it refused or complained.
+  message String? @db.Text
+  /// How many of the identifiers the network could match on, out of what was
+  /// sent. Low numbers are the usual reason attribution looks worse than it is.
+  matchedFields Int?
+  sentAt DateTime?
+
+  @@unique([eventId, platform])
+  @@index([platform, status])
+}
+
+/// The secret that lets a store post orders to MAIRO.
+///
+/// A token in the URL rather than an API key in a header, because the thing on
+/// the other end is very often a Shopify webhook field or a WooCommerce plugin
+/// box that accepts a URL and nothing else. Shopify's HMAC signature is
+/// verified on top of it where the store sends one.
+model StoreIngest {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// Random, in the URL path. Rotatable — rotating invalidates the old URL.
+  token String @unique
+  /// Shopify's webhook signing secret, when they are on Shopify. Encrypted.
+  shopifySecret String? @db.Text
+
+  lastReceivedAt DateTime?
+  receivedCount  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

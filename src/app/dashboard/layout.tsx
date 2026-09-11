@@ -21,6 +21,10 @@ const NAV = [
   // here, because it does more than connect — it picks a Page and explains
   // Meta's own failure modes.
   { href: "/dashboard/integrations", label: "Where you advertise" },
+  // Sits next to "where you advertise" because it is the other half of the
+  // same setup: one says where the ads run, this says how you find out whether
+  // they worked.
+  { href: "/dashboard/tracking", label: "Measuring sales" },
   { href: "/dashboard/agents", label: "AI specialists" },
   { href: "/dashboard/settings", label: "Settings" },
   { href: "/dashboard/guide", label: "How it works" },

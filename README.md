@@ -150,6 +150,55 @@ There is no password field on that screen and there should never be one. The
 account belongs to the customer, and the Terms say MAIRO never stores a
 platform login.
 
+### 5e. Measuring sales (pixels and orders)
+
+ROAS was a dash on every dashboard before this, and the reason was never said
+out loud: without a pixel the ad networks do not know anybody bought anything,
+so they report no revenue and there is nothing to divide by. `/dashboard/tracking`
+is where a customer fixes that, and it has two halves that do different jobs.
+
+**The pixel** tells Meta or TikTok that a sale happened. MAIRO creates it on
+the customer's own ad account through the Marketing API, adopting one that is
+already there in preference to making a second — a business that has advertised
+before usually has a pixel with months of history, and splitting that in two
+makes both halves look worse. The status shown is never "we created it": it is
+read back from the network's own record of when it last saw an event, because
+a pixel that exists and has never fired looks identical to a working one and
+the difference is months of fictional reporting.
+
+Nothing here needs configuring on the deployment. It uses the advertising
+connection the customer already made.
+
+**The order feed** tells MAIRO what was actually sold. Each organization gets
+a URL at `/api/orders/<token>` that their shop posts to — Shopify's order
+webhook, a WooCommerce webhook, or anything that can POST JSON. Those orders
+are relayed server-side to Meta's Conversions API and TikTok's Events API,
+which recovers most of the conversions the browser loses to ad blockers and
+iOS privacy settings, and they are kept as the record the networks' own claims
+are checked against.
+
+Two details in there are load-bearing:
+
+- The event id is derived from the order id by a rule a browser can reproduce
+  in one line (`'mairo_' + orderId` with unsafe characters stripped). It is not
+  a hash for exactly that reason. If the snippet on the thank-you page and the
+  relay from here cannot arrive at the same string, neither network dedupes,
+  every online sale counts twice and ROAS doubles — which is the kind of wrong
+  number a customer increases their budget on.
+- Customer emails and phone numbers are hashed at the boundary and the
+  originals are never written down. `src/lib/tracking/hash.ts` carries the
+  normalization rules both networks publish; getting one wrong does not match
+  worse, it matches nobody, and neither end raises an error.
+
+Where the customer gives MAIRO their Shopify signing secret it is stored
+encrypted and every delivery must carry a valid signature. A store that sends
+one and fails it is rejected rather than falling back to the token — a
+signature going bad means something is wrong.
+
+`npm run check:tracking` covers the money conversion, the hashing, the event-id
+agreement between browser and server, and the ROAS comparison, including the
+division-by-zero cases that would otherwise show a customer "Infinity".
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get
