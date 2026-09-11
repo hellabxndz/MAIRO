@@ -10,7 +10,8 @@ import { AmbientSky } from "@/components/ambient-sky";
 import { Welcome } from "./welcome";
 import { GettingStarted } from "./getting-started";
 import { Tour, StartTourLink } from "@/components/tour";
-import { FREELANCER_TOUR, FREELANCER_TOUR_KEY } from "./tour-steps";
+import { FREELANCER_TOUR } from "./tour-steps";
+import { hasSeenTour } from "@/lib/actions/tour-actions";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -31,6 +32,8 @@ export default async function ClientsPage({
   if (session.user.role !== "FREELANCER") redirect("/dashboard");
 
   const workspaceId = session.user.organizationId;
+  const seenTour = await hasSeenTour();
+
   const [workspace, clients] = await Promise.all([
     db.organization.findUnique({
       where: { id: workspaceId },
@@ -70,7 +73,7 @@ export default async function ClientsPage({
         <Welcome planName={plan.name} clientLimit={limitsFor(workspace.subscriptionTier).clients ?? 0} />
       )}
       {/* Offers itself once, right after paying. Available on demand after that. */}
-      <Tour steps={FREELANCER_TOUR} storageKey={FREELANCER_TOUR_KEY} autoStart={justSubscribed} />
+      <Tour steps={FREELANCER_TOUR} autoStart={justSubscribed} alreadySeen={seenTour} />
       <header className="border-b border-white/[0.07] bg-black/50">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>

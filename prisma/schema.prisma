@@ -24,6 +24,14 @@ model User {
   passwordHash   String
   name           String?
   role           UserRole      @default(CLIENT)
+  /// When this person finished — or skipped — the walkthrough.
+  ///
+  /// On the account rather than in the browser, which is the whole point. It
+  /// used to live in localStorage, so the tour came back every time somebody
+  /// signed in from a different device, a private window, or after clearing
+  /// site data — and it was shared between two accounts used on one browser,
+  /// so the second person to sign in never got shown it at all.
+  tourCompletedAt DateTime?
   organization   Organization? @relation(fields: [organizationId], references: [id])
   organizationId String?
   agentThreads   AgentThread[]

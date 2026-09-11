@@ -3,7 +3,6 @@ import type { Step } from "@/components/tour";
 // The freelancer walkthrough. Kept next to the screens it points at, so
 // renaming a target and forgetting the step is hard to do.
 
-export const FREELANCER_TOUR_KEY = "mairo.tour.freelancer";
 
 export const FREELANCER_TOUR: Step[] = [
   {

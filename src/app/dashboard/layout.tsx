@@ -6,7 +6,8 @@ import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Tour } from "@/components/tour";
-import { OWNER_TOUR, OWNER_TOUR_KEY } from "./tour-steps";
+import { hasSeenTour } from "@/lib/actions/tour-actions";
+import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 
@@ -64,10 +65,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
-  const [organization, intake, metaAccount] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
+    hasSeenTour(),
   ]);
 
   // Enforce the intended funnel: sign up -> onboarding -> connect Meta ->
@@ -100,9 +102,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           Gated on having finished onboarding rather than on a query
           parameter, because a layout cannot read one, and because being
           shown around before you have told MAIRO what your business is would
-          be a tour of screens that have nothing in them yet. The tour itself
-          remembers it has run, so this offers it exactly once. */}
-      <Tour steps={OWNER_TOUR} storageKey={OWNER_TOUR_KEY} autoStart={Boolean(intake)} />
+          be a tour of screens that have nothing in them yet.
+
+          Whether they have seen it comes from their user row, not from the
+          browser — so signing in on a phone, in a private window, or after
+          clearing site data does not start it again. */}
+      <Tour steps={OWNER_TOUR} autoStart={Boolean(intake)} alreadySeen={seenTour} />
 
       {/* Whose account you are in, and the way back out. A freelancer moving
           between clients needs this on every screen — editing the wrong

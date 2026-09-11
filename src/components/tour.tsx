@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { completeTourAction } from "@/lib/actions/tour-actions";
 
 // A walk through a part of the app, one element at a time.
 //
@@ -33,44 +34,53 @@ const PAD = 10;
 
 export function Tour({
   steps,
-  storageKey,
   autoStart,
+  alreadySeen,
 }: {
   steps: Step[];
-  /** Where "they have seen this" is remembered. One per tour. */
-  storageKey: string;
+  /** Whether this screen is one where the tour makes sense to offer at all. */
   autoStart: boolean;
+  /**
+   * Whether this person has been shown around before, read from their account.
+   *
+   * Used to live in localStorage, which is the wrong place for it twice over:
+   * the tour came back for the same person on a new device, in a private
+   * window, or after clearing site data, and on a shared browser the second
+   * account to sign in inherited the first one's flag and never saw it. The
+   * server knows who is signed in; the browser does not.
+   */
+  alreadySeen: boolean;
 }) {
   const [step, setStep] = useState<number | null>(null);
+  // Stops a second automatic offer inside the same page session, before the
+  // server round-trip has landed and the layout has re-rendered.
+  const offered = useRef(false);
   const holeRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const start = useCallback(() => setStep(0), []);
 
   const finish = useCallback(() => {
-    try {
-      localStorage.setItem(storageKey, "done");
-    } catch {
-      /* it will offer itself again; harmless */
-    }
     setStep(null);
-  }, [storageKey]);
+    // Fire and forget. The tour closing is the customer's business; recording
+    // it is MAIRO's, and a slow write should not hold the screen.
+    void completeTourAction();
+  }, []);
 
-  // Offered automatically only right after subscribing, and only once.
+  // Offered automatically on the first visit that qualifies, and never again.
   useEffect(() => {
-    if (!autoStart) return;
-    let seen = false;
-    try {
-      seen = localStorage.getItem(storageKey) !== null;
-    } catch {
-      /* treat as unseen */
-    }
-    if (!seen) {
-      // A beat, so it doesn't collide with the page settling.
-      const t = window.setTimeout(start, 450);
-      return () => window.clearTimeout(t);
-    }
-  }, [autoStart, start, storageKey]);
+    if (!autoStart || alreadySeen || offered.current) return;
+    // The flag is set when the timer fires, not before it. Setting it up here
+    // looks equivalent and is not: React runs effects twice in development,
+    // the first pass's cleanup cancels its own timer, and a flag set before
+    // the timer would make the second pass return early — so the tour would
+    // never open at all, in development only.
+    const t = window.setTimeout(() => {
+      offered.current = true;
+      start();
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [autoStart, alreadySeen, start]);
 
   // Anyone can ask for it again.
   useEffect(() => {

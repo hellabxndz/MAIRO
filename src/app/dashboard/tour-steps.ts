@@ -11,7 +11,6 @@ import type { Step } from "@/components/tour";
 // in their terms, not in advertising terms: "what to spend and where", not
 // "budget allocation across placements".
 
-export const OWNER_TOUR_KEY = "mairo.tour.business";
 
 export const OWNER_TOUR: Step[] = [
   {
