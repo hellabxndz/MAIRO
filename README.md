@@ -199,6 +199,54 @@ signature going bad means something is wrong.
 agreement between browser and server, and the ROAS comparison, including the
 division-by-zero cases that would otherwise show a customer "Infinity".
 
+### 5f. Tag Manager, and what counts as a conversion
+
+Two problems sit between "here is your pixel code" and a business measuring
+anything, and `/dashboard/tracking` now solves both.
+
+**Installing it.** Done properly, a pixel means a base tag on every page, a
+purchase tag on the confirmation page only, a click trigger on the phone
+number, a form trigger, and each pointed at the right standard event. That is
+an afternoon for somebody who knows Google Tag Manager and impossible for
+somebody who does not — which is every customer MAIRO has. So MAIRO generates a
+GTM container file wired to their own pixel ids, and GTM's Import Container
+creates the lot in one screen. Nothing to configure on the deployment; it uses
+the pixels the account already has.
+
+The importer is stricter than it looks in one way and looser in another. It
+validates structure but not sense: a tag whose `firingTriggerId` names a
+trigger absent from the file imports cleanly and then never fires, with no
+error anywhere. `npm run check:gtm` asserts there are no dangling references,
+that ids are unique, and that every `{{variable}}` a tag uses is declared.
+
+The tags are Custom HTML rather than GTM's built-in Meta template, because the
+built-in one cannot set an event id — and without one, the browser's copy of a
+sale and the copy MAIRO relays server-side are counted as two sales. The
+generated expression is asserted to produce the same string as `deriveEventId`.
+
+**Knowing what to install.** "Track Purchase" is wrong advice for a plumber:
+there is no checkout and never will be, so the container would fire nothing
+while looking installed. `src/lib/tracking/niches.ts` is a catalogue of what
+each kind of business actually converts on — a table booking for a restaurant,
+a tap on the phone number for a trade, a free trial for a gym — with the Meta
+and TikTok standard event each maps to. The two networks disagree about the
+vocabulary and the gaps are real: TikTok has no Lead and no Schedule, so both
+land on SubmitForm. An event outside a network's standard list cannot be
+optimized towards and never appears in the conversion column, so the check
+script validates every one against the published lists.
+
+The niche is guessed from the industry text typed at signup, shown to the
+customer *as a guess*, and stored on `TrackingProfile` once they confirm or
+change it. Matching is word-boundary-aware with a short suffix list — plain
+substring matching put "hair salon and barber" in the restaurant niche because
+"barber" starts with "bar", which would have given a barber shop a
+table-reservation trigger and no booking event, with nothing in the product
+looking wrong. Both that and the "coffee shop" collision are regression cases.
+
+Exactly one action per niche is marked primary: it is what the campaign
+optimizes towards, so two would leave the product unable to answer "which one"
+and none would make it silently pick the first.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

@@ -214,3 +214,79 @@ export async function recordManualOrderAction(input: {
     };
   }
 }
+
+// --- Google Tag Manager -----------------------------------------------------
+
+/**
+ * The tracking profile, created on first look with MAIRO's best guess.
+ *
+ * The guess is made from what they typed as their industry at signup and is
+ * shown to them as a guess, not as a fact. Storing it unconfirmed means the
+ * page can tell the difference between "MAIRO thinks you are a restaurant" and
+ * "you told MAIRO you are a restaurant", which are different things to say.
+ */
+export async function ensureTrackingProfile(organizationId: string) {
+  const existing = await db.trackingProfile.findUnique({ where: { organizationId } });
+  if (existing) return existing;
+
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { industry: true, intake: { select: { primaryGoal: true } } },
+  });
+
+  const { classifyNiche } = await import("@/lib/tracking/niches");
+  const guess = classifyNiche(org?.industry, org?.intake?.primaryGoal ?? null);
+
+  return db.trackingProfile.create({
+    data: { organizationId, nicheId: guess.id, nicheConfirmed: false },
+  });
+}
+
+export async function setNicheAction(nicheId: string): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const { nicheById } = await import("@/lib/tracking/niches");
+  const niche = nicheById(nicheId);
+
+  await ensureTrackingProfile(ctx.organizationId);
+  await db.trackingProfile.update({
+    where: { organizationId: ctx.organizationId },
+    // Confirmed, because they chose it. Even choosing the same value MAIRO
+    // guessed is information: it means somebody looked and agreed.
+    data: { nicheId: niche.id, nicheConfirmed: true },
+  });
+
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: `Tracking the conversions that matter for a ${niche.label.toLowerCase()}.` };
+}
+
+export async function setGtmContainerAction(containerId: string): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const value = containerId.trim().toUpperCase();
+  await ensureTrackingProfile(ctx.organizationId);
+
+  if (value.length === 0) {
+    await db.trackingProfile.update({
+      where: { organizationId: ctx.organizationId },
+      data: { gtmContainerId: null },
+    });
+    revalidatePath("/dashboard/tracking");
+    return { ok: true, message: "Container removed." };
+  }
+
+  const { isGtmContainerId } = await import("@/lib/tracking/gtm");
+  if (!isGtmContainerId(value)) {
+    return { ok: false, error: "That should look like GTM-ABC1234 — you'll find it at the top of your Tag Manager screen." };
+  }
+
+  await db.trackingProfile.update({
+    where: { organizationId: ctx.organizationId },
+    data: { gtmContainerId: value },
+  });
+
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: `Saved ${value}.` };
+}

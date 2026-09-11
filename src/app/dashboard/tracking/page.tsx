@@ -20,6 +20,10 @@ import { NO_VALUE } from "@/components/metrics";
 import { PlatformIcon } from "@/components/platform-icons";
 import { PixelCard } from "./pixel-card";
 import { ManualOrderForm, StoreCard } from "./store-card";
+import { GtmCard } from "./gtm-card";
+import { allNiches, nicheById } from "@/lib/tracking/niches";
+import { dataLayerSnippet, gtmSnippet } from "@/lib/tracking/gtm";
+import { ensureTrackingProfile } from "@/lib/actions/tracking-actions";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
 // "Is the advertising actually making me money?"
@@ -63,7 +67,7 @@ export default async function TrackingPage() {
   const until = new Date();
   const since = new Date(until.getTime() - PERIOD_DAYS * 864e5);
 
-  const [pixels, entitlements, organization, connections, ingest, measured, orders, report] =
+  const [pixels, entitlements, organization, connections, ingest, measured, orders, report, profile] =
     await Promise.all([
       pixelsFor(organizationId),
       entitlementsFor(organizationId),
@@ -76,7 +80,10 @@ export default async function TrackingPage() {
       measuredSales(organizationId, { since, until }),
       recentOrders(organizationId),
       fetchOrganizationPerformance(organizationId),
+      ensureTrackingProfile(organizationId),
     ]);
+
+  const niche = nicheById(profile.nicheId);
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   const upgradeTarget =
@@ -214,7 +221,43 @@ export default async function TrackingPage() {
       </div>
 
       <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">
-        2. Tell MAIRO what you actually sold
+        2. Put it on your website, without touching code
+      </h2>
+      <p className="mb-4 max-w-3xl text-sm leading-relaxed text-neutral-400">
+        Google Tag Manager does the installing. MAIRO writes a file with every tag already
+        built — the pixels, and the specific things a{" "}
+        {niche.label.toLowerCase()} converts on — and Tag Manager imports the lot in one go.
+        It&rsquo;s free, and it means you never paste code into your site again.
+      </p>
+
+      <Card>
+        <GtmCard
+          niches={allNiches().map((n) => ({ id: n.id, label: n.label }))}
+          currentNicheId={niche.id}
+          nicheConfirmed={profile.nicheConfirmed}
+          nicheSummary={niche.summary}
+          actions={niche.actions.map((a) => ({
+            id: a.id,
+            label: a.label,
+            why: a.why,
+            metaEvent: a.metaEvent,
+            tiktokEvent: a.tiktokEvent,
+            hasValue: a.hasValue,
+            primary: Boolean(a.primary),
+            detection: a.detection,
+            match: a.match ?? null,
+          }))}
+          gtmContainerId={profile.gtmContainerId}
+          hasAnyPixel={pixels.length > 0}
+          dataLayer={dataLayerSnippet(niche)}
+          gtmSnippetForContainer={
+            profile.gtmContainerId ? gtmSnippet(profile.gtmContainerId) : null
+          }
+        />
+      </Card>
+
+      <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">
+        3. Tell MAIRO what you actually sold
       </h2>
       <p className="mb-4 max-w-3xl text-sm leading-relaxed text-neutral-400">
         Worth doing even with the pixel working. Ad blockers and iPhone privacy settings stop

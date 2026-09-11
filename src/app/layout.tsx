@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import "./globals.css";
@@ -46,14 +46,17 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   alternates: { canonical: "/" },
-  // The page is dark end to end. Telling the browser so means the scrollbar,
-  // the form controls and the space above a bounced scroll are dark too,
-  // rather than flashing white on the way in.
-  colorScheme: "dark",
 };
 
-export const viewport = {
+// Separate from metadata on purpose — Next moved both of these out of it, and
+// leaving colorScheme behind logs a deprecation on every render.
+//
+// The page is dark end to end. Telling the browser so means the scrollbar, the
+// form controls and the space above a bounced scroll are dark too, rather than
+// flashing white on the way in.
+export const viewport: Viewport = {
   themeColor: "#07070a",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

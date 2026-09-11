@@ -130,6 +130,7 @@ model Organization {
   trackingPixels       TrackingPixel[]
   conversionEvents     ConversionEvent[]
   storeIngest          StoreIngest?
+  trackingProfile      TrackingProfile?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1034,6 +1035,40 @@ model StoreIngest {
 
   lastReceivedAt DateTime?
   receivedCount  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// How one business measures conversions, above the per-network pixels.
+///
+/// Separate from TrackingPixel because it is a different question. A pixel is
+/// per network and answers "can Meta see anything". This answers "what counts
+/// as a conversion for this business at all" — which is one decision, made
+/// once, and applies to every network they advertise on.
+///
+/// The niche is stored rather than recomputed from the industry text because
+/// the customer can correct it. MAIRO guesses from what they typed at signup,
+/// shows the guess, and lets them change it — and a correction that does not
+/// survive a page reload is not a correction.
+model TrackingProfile {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// An id from src/lib/tracking/niches.ts. Text rather than an enum so the
+  /// catalogue can grow without a migration — a niche that no longer exists
+  /// falls back to the general one rather than breaking the page.
+  nicheId String @default("general")
+  /// True once the customer has picked, so MAIRO stops presenting its guess
+  /// as a question they have already answered.
+  nicheConfirmed Boolean @default(false)
+
+  /// Their Google Tag Manager container, e.g. GTM-ABC1234.
+  gtmContainerId String?
+  /// When they last took the container file. Not proof it was imported —
+  /// only that they got as far as downloading it.
+  containerBuiltAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
