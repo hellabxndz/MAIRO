@@ -116,23 +116,6 @@ drawn as a dash, never a made-up number.
 Across the top: the wordmark, a strip of every day in the current month with
 today highlighted, and the History and Settings buttons.
 
-### Reading web pages
-
-Give Mairo a link and ask what is on it — "read this and summarise it" — and it
-fetches the page and answers from the text. Public pages only; anything behind
-a login comes back as an error.
-
-Two things are deliberate. The address is checked before anything is opened:
-only `http` and `https`, and never an address on your own machine or local
-network, which is how an assistant gets talked into reading a router's admin
-page or a cloud metadata endpoint. And the text that comes back is handed to
-the model explicitly labelled as untrusted content, because a page can try to
-issue instructions to an assistant that holds tools. Mairo is told to report
-what a page says and never to act on it.
-
-To point it at something on your own machine anyway, set
-`MAIRO_ALLOW_LOCAL_FETCH=1` in `.env`.
-
 **Left — what the computer is doing.**
 
 | Panel | Shows |
@@ -190,6 +173,7 @@ Things it understands today:
 - "Take a screenshot."
 - "What's on my clipboard?"
 - "Turn my volume down." / "Set the volume to 20." / "Mute."
+- "What's playing?" / "Skip this song." / "Play Redbone by Childish Gambino."
 - "Create a note that says call Ivan tomorrow." / "Read my notes."
 - "Remember that I always use Chrome." / "What do you remember about me?" /
   "Forget that preference."
@@ -200,6 +184,49 @@ Things it understands today:
 Anything that captures your screen, reads your clipboard, locks the machine or
 deletes a memory asks you to confirm in a dialog first. Declining is final —
 Mairo acknowledges and moves on rather than trying another way.
+
+### Music
+
+Mairo can see and steer whatever is playing — Apple Music, Spotify, a browser
+tab — and can pull something out of the Apple Music catalogue to play.
+
+- "What's playing?" / "Who sings this?"
+- "Play." / "Pause." / "Skip this song." / "Go back."
+- "Shuffle my music." / "Repeat this track."
+- "Play Redbone by Childish Gambino." / "Play the album Blonde."
+- "Open Apple Music."
+
+On Windows this goes through the system's media transport controls — the same
+thing your keyboard's play button talks to. It reaches only apps you already
+have open and signed in, and it never sees your account, your password or your
+library. Asking for a specific song looks the name up in Apple's public
+catalogue (only the words you said are sent), opens the result in the Apple
+Music app, and presses play only once the app is actually showing what you
+asked for, so it can never start the wrong thing.
+
+Reading what is playing needs the `winrt-*` packages in `requirements.txt`,
+which install automatically on Windows. Without them Mairo falls back to the
+media keys: play, pause and skip still work, but it cannot tell you what is on.
+
+macOS is not wired up for this yet — there Mairo can open the Music app, and
+nothing more.
+
+### Reading web pages
+
+Give Mairo a link and ask what is on it — "read this and summarise it" — and it
+fetches the page and answers from the text. Public pages only; anything behind
+a login comes back as an error.
+
+Two things are deliberate. The address is checked before anything is opened:
+only `http` and `https`, and never an address on your own machine or local
+network, which is how an assistant gets talked into reading a router's admin
+page or a cloud metadata endpoint. And the text that comes back is handed to
+the model explicitly labelled as untrusted content, because a page can try to
+issue instructions to an assistant that holds tools. Mairo is told to report
+what a page says and never to act on it.
+
+To point it at something on your own machine anyway, set
+`MAIRO_ALLOW_LOCAL_FETCH=1` in `.env`.
 
 ### Keyboard shortcuts
 

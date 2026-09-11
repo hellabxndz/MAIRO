@@ -53,7 +53,7 @@ class ToolRegistry:
 
 def build_default_registry(context: ToolContext) -> ToolRegistry:
     """Every tool shipped with the MVP."""
-    from app.tools import apps, files, notes, system, time_tools, web, web_fetch
+    from app.tools import apps, files, music, notes, system, time_tools, web, web_fetch
     from app.tools import memory_tools
 
     registry = ToolRegistry(context)
@@ -64,6 +64,7 @@ def build_default_registry(context: ToolContext) -> ToolRegistry:
             apps.LaunchDiscordTool,
             apps.LaunchChromeTool,
             apps.LaunchVSCodeTool,
+            apps.LaunchAppleMusicTool,
             web.OpenWebsiteTool,
             web.SearchGoogleTool,
             web.SearchYouTubeTool,
@@ -72,6 +73,9 @@ def build_default_registry(context: ToolContext) -> ToolRegistry:
             time_tools.CurrentDateTimeTool,
             notes.CreateNoteTool,
             notes.ReadNotesTool,
+            music.NowPlayingTool,
+            music.ControlMusicTool,
+            music.PlayAppleMusicTool,
             system.SetVolumeTool,
             system.AdjustVolumeTool,
             system.MuteTool,

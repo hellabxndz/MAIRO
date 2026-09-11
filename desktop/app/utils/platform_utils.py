@@ -76,6 +76,64 @@ def known_folder(name: str) -> Path | None:
     return folders.get(cleaned)
 
 
+def tap_virtual_key(code: int, times: int = 1) -> bool:
+    """Press and release a Windows virtual key, e.g. a volume or media key."""
+    if not is_windows():
+        return False
+    try:
+        import ctypes
+
+        for _ in range(times):
+            ctypes.windll.user32.keybd_event(code, 0, 0, 0)  # type: ignore[attr-defined]
+            ctypes.windll.user32.keybd_event(code, 0, 2, 0)  # type: ignore[attr-defined]
+        return True
+    except Exception as exc:
+        log.warning("Key press failed: %s", exc)
+        return False
+
+
+def open_windows_store_app(display_name: str) -> bool:
+    """Start a Microsoft Store app by the name shown in the Start menu.
+
+    Store apps have no executable to point at, so the Start menu is asked for
+    the app's id and the shell is told to launch that. The name comes from
+    Mairo's own table of known applications, never from the model, and is
+    checked here anyway because it is interpolated into a PowerShell filter.
+    """
+    if not is_windows():
+        return False
+    cleaned = display_name.strip()
+    if not cleaned or not all(ch.isalnum() or ch in " .-+" for ch in cleaned):
+        log.warning("Refusing to look up an odd Store app name: %r", display_name)
+        return False
+    script = (
+        "(Get-StartApps | Where-Object { $_.Name -like '*" + cleaned + "*' } "
+        "| Select-Object -First 1).AppID"
+    )
+    try:
+        found = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=25,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.warning("Looking up %s in the Start menu failed: %s", cleaned, exc)
+        return False
+    app_id = (found.stdout or "").strip().splitlines()
+    app_id = app_id[0].strip() if app_id else ""
+    if not app_id:
+        log.info("%s is not in the Start menu", cleaned)
+        return False
+    try:
+        launch_detached(["explorer.exe", f"shell:AppsFolder\\{app_id}"])
+        return True
+    except OSError as exc:
+        log.warning("Launching Store app %s failed: %s", app_id, exc)
+        return False
+
+
 def open_macos_app(app_name: str) -> bool:
     """Launch a Mac application by its display name, e.g. "Google Chrome"."""
     try:

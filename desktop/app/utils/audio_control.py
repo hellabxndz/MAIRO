@@ -11,7 +11,7 @@ import subprocess
 from typing import Optional
 
 from app.utils.logging_setup import get_logger
-from app.utils.platform_utils import is_macos, is_windows, which
+from app.utils.platform_utils import is_macos, is_windows, tap_virtual_key, which
 
 log = get_logger("audio")
 
@@ -38,17 +38,8 @@ def _windows_endpoint():
         return None
 
 
-def _tap_key(code: int, times: int = 1) -> bool:
-    try:
-        import ctypes
-
-        for _ in range(times):
-            ctypes.windll.user32.keybd_event(code, 0, 0, 0)  # type: ignore[attr-defined]
-            ctypes.windll.user32.keybd_event(code, 0, 2, 0)  # type: ignore[attr-defined]
-        return True
-    except Exception as exc:
-        log.warning("Media key press failed: %s", exc)
-        return False
+# The volume keys and the media keys are tapped the same way.
+_tap_key = tap_virtual_key
 
 
 def get_volume() -> Optional[int]:

@@ -14,6 +14,7 @@ from app.utils.platform_utils import (
     is_windows,
     launch_detached,
     open_macos_app,
+    open_windows_store_app,
     open_path,
     which,
 )
@@ -33,6 +34,13 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
         ],
         "uri": ["spotify:"],
         "web": ["https://open.spotify.com"],
+    },
+    "apple music": {
+        "macos": ["Music"],
+        "store": ["Apple Music"],
+        "commands": [],
+        "windows": [r"%PROGRAMFILES%\iTunes\iTunes.exe"],
+        "web": ["https://music.apple.com"],
     },
     "discord": {
         "macos": ["Discord"],
@@ -97,6 +105,8 @@ KNOWN_APPS: dict[str, dict[str, list[str]]] = {
 }
 
 ALIASES = {
+    "music": "apple music",
+    "itunes": "apple music",
     "vscode": "vs code",
     "visual studio code": "vs code",
     "code": "vs code",
@@ -164,7 +174,13 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
 
     spec = KNOWN_APPS.get(key, {})
 
-    # 2. A known install location on this machine.
+    # 2. A Microsoft Store app, which has no executable to point at.
+    if is_windows():
+        for store_name in spec.get("store", []):
+            if open_windows_store_app(store_name):
+                return ToolResult.success(f"Opened {name}.")
+
+    # 3. A known install location on this machine.
     if is_windows():
         found = _first_existing(spec.get("windows", []))
         if found:
@@ -175,13 +191,13 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
             except OSError as exc:
                 log.warning("Launching %s failed: %s", found, exc)
 
-    # 2b. On a Mac, applications are bundles rather than executables on PATH.
+    # 4. On a Mac, applications are bundles rather than executables on PATH.
     if is_macos():
         for app_name in list(spec.get("macos", [])) + [name.strip().title(), name.strip()]:
             if app_name and open_macos_app(app_name):
                 return ToolResult.success(f"Opened {name}.")
 
-    # 3. Anything on PATH, including the raw name the user said.
+    # 5. Anything on PATH, including the raw name the user said.
     for command in list(spec.get("commands", [])) + [key, name.strip()]:
         if not command:
             continue
@@ -193,7 +209,7 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
             except OSError as exc:
                 log.warning("Launching %s failed: %s", resolved, exc)
 
-    # 4. A protocol handler (Spotify and Windows Settings register these).
+    # 6. A protocol handler (Spotify and Windows Settings register these).
     for uri in spec.get("uri", []):
         try:
             open_path(uri)
@@ -201,7 +217,7 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
         except OSError:
             pass
 
-    # 5. On Windows, let the shell try the bare name (covers Store apps).
+    # 7. On Windows, let the shell try the bare name (covers other Store apps).
     if is_windows():
         try:
             os.startfile(key)  # type: ignore[attr-defined]
@@ -209,7 +225,7 @@ def launch_named_app(name: str, memory: Any = None) -> ToolResult:
         except OSError:
             pass
 
-    # 6. Last resort: the web version, if the app has one.
+    # 8. Last resort: the web version, if the app has one.
     for url in spec.get("web", []):
         try:
             open_path(url)
@@ -278,3 +294,8 @@ class LaunchVSCodeTool(_FixedAppTool):
     name = "launch_vscode"
     description = "Open Visual Studio Code."
     app_key = "vs code"
+
+class LaunchAppleMusicTool(_FixedAppTool):
+    name = "launch_apple_music"
+    description = "Open the Apple Music app."
+    app_key = "apple music"

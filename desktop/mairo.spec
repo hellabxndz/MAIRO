@@ -37,6 +37,11 @@ if sys.platform == "win32":
         "comtypes",
         "pycaw",
         "pycaw.pycaw",
+        # Media transport controls: reading and steering what is playing.
+        "winrt.runtime",
+        "winrt.windows.media",
+        "winrt.windows.media.control",
+        "winrt.windows.foundation",
     ]
 elif sys.platform == "darwin":
     hidden += ["pyttsx3.drivers.nsss"]
