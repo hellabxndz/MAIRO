@@ -51,12 +51,24 @@ console.log("\n— the pricing cards say the same thing the code does —");
   const growth = PLANS.find((p) => p.tier === "GROWTH")!;
   const pro = PLANS.find((p) => p.tier === "SCALE")!;
 
-  ok("Growth is $129", growth.priceMonthly === 129, `$${growth.priceMonthly}`);
-  ok("Pro is dearer than Growth", pro.priceMonthly > growth.priceMonthly);
-  ok(
-    "Starter is cheaper than Growth",
-    PLANS.find((p) => p.tier === "STARTER")!.priceMonthly < growth.priceMonthly
-  );
+  const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
+  ok("Starter is $39.99", starterPlan.priceMonthly === 39.99, `$${starterPlan.priceMonthly}`);
+  ok("Growth is $129.99", growth.priceMonthly === 129.99, `$${growth.priceMonthly}`);
+  ok("Pro is $249.99", pro.priceMonthly === 249.99, `$${pro.priceMonthly}`);
+  // The ladder has to climb, whatever the numbers are changed to next.
+  ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
+
+  // Prices here are what the customer is SHOWN; what they are charged is the
+  // Stripe Price behind STRIPE_PRICE_*. Nothing in this repo can check that
+  // they agree, so this asserts the shape a price is allowed to take and
+  // NEXT.md carries the reminder to move Stripe.
+  for (const plan of PLANS) {
+    ok(
+      `${plan.name}'s price has at most two decimal places`,
+      Math.round(plan.priceMonthly * 100) === plan.priceMonthly * 100,
+      `$${plan.priceMonthly}`
+    );
+  }
 
   // The cards are what somebody decides on. A feature list still promising
   // Growth customers something the code no longer grants them is the kind of

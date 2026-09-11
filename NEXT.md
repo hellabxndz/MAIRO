@@ -41,13 +41,16 @@ the granularity is the cron's, not the customer's: the start time is a floor
 that Meta also enforces through the ad set's own `start_time`, so a campaign
 never begins early — it can begin up to one cron interval late.
 
-**5. Create a $129 Growth price in Stripe.** The pricing page now says $129,
-and `priceMonthly` in src/lib/plans.ts is only what the customer is *shown* —
-what they are charged is the Stripe Price behind `STRIPE_PRICE_GROWTH`, which
-is still the old one. Until a new Price exists and that variable points at it,
-the site advertises $129 and the card is charged $99. Existing Growth
-subscribers stay on the price they signed up at unless their subscription is
-migrated, which is a separate decision.
+**5. Create all three new prices in Stripe.** The pricing page now says
+$39.99 / $129.99 / $249.99, and `priceMonthly` in src/lib/plans.ts is only what
+the customer is *shown* — what they are charged is the Stripe Price behind
+`STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH` and `STRIPE_PRICE_SCALE`, all of
+which still point at the old ones ($49 / $99 / $199). Until new Prices exist
+and those three variables point at them, the site advertises one number and
+the card is charged another — on every plan, not just one.
+
+Existing subscribers stay on the price they signed up at unless their
+subscriptions are migrated, which is a separate decision and a deliberate one.
 
 **6. Meta App Review needs two more permissions.** `instagram_basic` and
 `instagram_content_publish` were added to the OAuth scopes for Pro-plan

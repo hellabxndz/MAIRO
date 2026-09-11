@@ -74,7 +74,7 @@ export const PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 49,
+    priceMonthly: 39.99,
     tagline: "Get your first campaign live on Meta.",
     spendGuidance: "Best for $100–500/mo in ad spend",
     limits: { campaigns: 1, creativesPerMonth: 2 },
@@ -89,7 +89,7 @@ export const PLANS: Plan[] = [
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 129,
+    priceMonthly: 129.99,
     tagline: "Meta and TikTok, from one place.",
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
@@ -113,7 +113,7 @@ export const PLANS: Plan[] = [
     // read that as having no plan at all.
     tier: "SCALE",
     name: "Pro",
-    priceMonthly: 199,
+    priceMonthly: 249.99,
     tagline: "Let MAIRO run the budget.",
     spendGuidance: "Best for $2,000+/mo in ad spend",
     limits: { campaigns: 10, creativesPerMonth: 20 },
