@@ -47,6 +47,26 @@ export type Plan = {
   spendGuidance: string;
   featured?: boolean;
   limits: PlanLimits;
+  /**
+   * The one thing this plan adds over the one below it, in three or four
+   * words.
+   *
+   * The pricing grid used to be three columns of identically-shaped dashes,
+   * and telling Starter from Growth meant reading fourteen bullets and
+   * diffing them in your head. Nobody does that; they pick the middle one or
+   * they leave. This is the line that answers "why would I pay more" before
+   * any list is read.
+   */
+  headline: string;
+  /**
+   * The plan this one contains, when it builds on another.
+   *
+   * With this set, `features` lists only what is genuinely NEW — so the
+   * length of the list is the size of the upgrade rather than an artefact of
+   * how much got restated.
+   */
+  inherits?: string;
+  /** Only what this plan adds. Everything below it comes via `inherits`. */
   features: string[];
 };
 
@@ -58,17 +78,12 @@ export const PLANS: Plan[] = [
     tagline: "Get your first campaign live on Meta.",
     spendGuidance: "Best for $100–500/mo in ad spend",
     limits: { campaigns: 1, creativesPerMonth: 2 },
+    headline: "Facebook and Instagram",
     features: [
-      "Meta advertising — Facebook + Instagram",
       "AI campaign builder",
       "AI-written ad copy, unlimited rewrites",
       "Creative generation",
       "Performance dashboard",
-      "1 active campaign, 2 creative requests a month",
-      // Said out loud rather than left as an absence. Somebody comparing the
-      // cards should learn where TikTok lives from the Starter card, not by
-      // picking it and hitting an upgrade prompt later.
-      "Meta only — TikTok is on Growth",
     ],
   },
   {
@@ -79,20 +94,16 @@ export const PLANS: Plan[] = [
     spendGuidance: "Best for $500–2,000/mo in ad spend",
     featured: true,
     limits: { campaigns: 3, creativesPerMonth: 8 },
+    headline: "Adds TikTok",
+    inherits: "Starter",
     features: [
-      "Everything in Starter",
-      "Meta + TikTok advertising",
+      "TikTok ads alongside Meta, from one campaign",
       "MAIRO sets up your TikTok account for you",
       "TikTok Growth Mode",
       "TikTok-native creative generation",
-      "Cross-platform analytics",
+      "One dashboard covering both networks",
       "AI budget recommendations",
       "Creative testing",
-      "3 active campaigns, 8 creative requests a month",
-      // Same reasoning as the Starter card's TikTok line: somebody comparing
-      // the two should learn where posting lives here, not by picking Growth
-      // and hitting an upgrade prompt afterwards.
-      "Ads only — MAIRO posting to your profiles is on Pro",
     ],
   },
   {
@@ -106,18 +117,15 @@ export const PLANS: Plan[] = [
     tagline: "Let MAIRO run the budget.",
     spendGuidance: "Best for $2,000+/mo in ad spend",
     limits: { campaigns: 10, creativesPerMonth: 20 },
+    headline: "Adds your own feed",
+    inherits: "Growth",
     features: [
-      "Everything in Growth",
       "MAIRO posts to your Instagram and TikTok for you",
-      "Organic posts written and published from your approved creatives",
-      "Advanced AI optimization",
-      "Mairo Auto Optimize",
-      "Automatic budget allocation",
+      "Organic posts written from your approved creatives",
+      "Mairo Auto Optimize — MAIRO moves the budget itself",
       "Advanced creative testing",
-      "Advanced analytics",
       "Priority campaign processing",
       "Future advertising platforms as they land",
-      "10 active campaigns, 20 creative requests a month",
     ],
   },
 ];
@@ -145,8 +153,8 @@ export const FREELANCER_PLANS: Plan[] = [
     tagline: "For a freelancer with a handful of clients.",
     spendGuidance: "Up to 5 client businesses",
     limits: { campaigns: 3, creativesPerMonth: 6, clients: 5 },
+    headline: "Up to 5 clients",
     features: [
-      "Up to 5 client businesses",
       "3 active campaigns per client",
       "6 creative requests a month per client",
       "Switch between clients from one login",
@@ -162,9 +170,9 @@ export const FREELANCER_PLANS: Plan[] = [
     spendGuidance: "Up to 20 client businesses",
     featured: true,
     limits: { campaigns: 10, creativesPerMonth: 20, clients: 20 },
+    headline: "Up to 20 clients",
+    inherits: "Studio",
     features: [
-      "Everything in Studio",
-      "Up to 20 client businesses",
       "10 active campaigns per client",
       "20 creative requests a month per client",
       "Video creative included",
@@ -209,6 +217,7 @@ const UNSUBSCRIBED: Plan = {
   tagline: "Pick a plan to start running ads.",
   spendGuidance: "",
   limits: { campaigns: 0, creativesPerMonth: 0 },
+  headline: "Nothing runs yet",
   features: [
     "Look around the dashboard",
     "Talk to the AI specialists",

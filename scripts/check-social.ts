@@ -14,7 +14,7 @@
 // whole of its security, and "it serves images" is not a property you can
 // confirm by reading it.
 
-import { DEFAULT_ENTITLEMENTS, FLAG_LABELS } from "@/lib/entitlements";
+import { DEFAULT_ENTITLEMENTS, FLAG_LABELS, planComparison } from "@/lib/entitlements";
 import { CAPTION_MAX, POSTS_PER_DAY } from "@/lib/instagram/constants";
 import { PLANS } from "@/lib/plans";
 
@@ -64,13 +64,14 @@ console.log("\n— the pricing cards say the same thing the code does —");
   const growthPromises = growth.features.some((f) => /MAIRO posts to your/i.test(f));
   ok("Growth no longer promises posting", !growthPromises);
   ok(
-    "Growth says where it went instead of going quiet",
-    growth.features.some((f) => /posting to your profiles is on Pro/i.test(f))
-  );
-  ok(
     "Pro's card promises it",
     pro.features.some((f) => /posts to your Instagram and TikTok/i.test(f))
   );
+  // Growth used to carry a bullet saying posting lived on Pro. That is now a
+  // comparison row on every card — "Posts to your own feed: No" against Pro's
+  // "Instagram + TikTok" — which says it in the one place a reader is already
+  // comparing, and is derived from the entitlement rather than written by
+  // hand. Asserted in the comparison block below, not here.
 
   // TikTok account setup is a different feature and stays on Growth. Easy to
   // sweep along with posting by accident — they were adjacent bullets.
@@ -79,6 +80,89 @@ console.log("\n— the pricing cards say the same thing the code does —");
     DEFAULT_ENTITLEMENTS.GROWTH.tiktok_account_setup &&
       growth.features.some((f) => /sets up your TikTok/i.test(f))
   );
+}
+
+console.log("\n— Starter and Growth are told apart at a glance —");
+{
+  // The pricing grid was three columns of identically-shaped dashes, and
+  // telling Starter from Growth meant diffing fourteen bullets by eye. These
+  // assert the things that make the difference legible, because they are copy
+  // and copy rots.
+  const starter = PLANS.find((p) => p.tier === "STARTER")!;
+  const growth = PLANS.find((p) => p.tier === "GROWTH")!;
+  const pro = PLANS.find((p) => p.tier === "SCALE")!;
+
+  for (const plan of [starter, growth, pro]) {
+    ok(`${plan.name} has a headline`, Boolean(plan.headline?.trim()));
+    // Long enough to mean something, short enough to read as a headline.
+    ok(`${plan.name}'s headline is short`, plan.headline.length <= 32, plan.headline);
+  }
+  ok("the three headlines are all different", new Set([starter.headline, growth.headline, pro.headline]).size === 3);
+
+  // Each upper plan names what it contains rather than restating it, so the
+  // length of its list is the size of the upgrade.
+  ok("Starter inherits nothing", !starter.inherits);
+  ok("Growth builds on Starter", growth.inherits === "Starter", growth.inherits);
+  ok("Pro builds on Growth", pro.inherits === "Growth", pro.inherits);
+
+  // A restated bullet is the bug this replaced: "Everything in Starter" as a
+  // feature, followed by things Starter already had.
+  for (const plan of [growth, pro]) {
+    ok(
+      `${plan.name} lists only what it adds`,
+      !plan.features.some((f) => /^Everything in/i.test(f))
+    );
+  }
+  // And nothing inherited should reappear further up the ladder.
+  const repeated = growth.features.filter((f) => starter.features.includes(f));
+  ok("Growth repeats nothing from Starter", repeated.length === 0, repeated.join(","));
+  const repeatedPro = pro.features.filter((f) => growth.features.includes(f));
+  ok("Pro repeats nothing from Growth", repeatedPro.length === 0, repeatedPro.join(","));
+}
+
+console.log("\n— the comparison rows come from the entitlements, not from copy —");
+{
+  const rows = (tier: "STARTER" | "GROWTH" | "SCALE") =>
+    Object.fromEntries(planComparison(tier).map((r) => [r.label, r.value]));
+
+  const starter = rows("STARTER");
+  const growth = rows("GROWTH");
+  const pro = rows("SCALE");
+
+  // Every card shows the same rows in the same order, which is what makes the
+  // comparison a glance down a column instead of a hunt.
+  const labels = planComparison("STARTER").map((r) => r.label);
+  for (const tier of ["GROWTH", "SCALE"] as const) {
+    ok(
+      `${tier} shows the same rows in the same order`,
+      planComparison(tier).map((r) => r.label).join("|") === labels.join("|")
+    );
+  }
+
+  // The one row that separates Starter from Growth.
+  ok("Starter runs ads on Meta only", starter["Runs ads on"] === "Meta", starter["Runs ads on"]);
+  ok("Growth adds TikTok", growth["Runs ads on"] === "Meta + TikTok", growth["Runs ads on"]);
+  ok("and they differ", starter["Runs ads on"] !== growth["Runs ads on"]);
+
+  // The one that separates Growth from Pro.
+  ok("Growth does not post for you", growth["Posts to your own feed"] === "No");
+  ok(
+    "Pro does",
+    pro["Posts to your own feed"] === "Instagram + TikTok",
+    pro["Posts to your own feed"]
+  );
+
+  // The numbers must come from the limits, not be typed twice.
+  ok("campaign counts climb", Number(starter["Campaigns at once"]) < Number(growth["Campaigns at once"]) && Number(growth["Campaigns at once"]) < Number(pro["Campaigns at once"]));
+  ok("creative counts climb", Number(starter["New ads a month"]) < Number(growth["New ads a month"]) && Number(growth["New ads a month"]) < Number(pro["New ads a month"]));
+  ok("and they match the limits", Number(growth["Campaigns at once"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.campaigns);
+
+  // Every adjacent pair must differ in at least one row, or a card gives a
+  // reader no reason to choose it.
+  const differs = (a: Record<string, string>, c: Record<string, string>) =>
+    labels.some((l) => a[l] !== c[l]);
+  ok("Starter and Growth differ on the rows shown", differs(starter, growth));
+  ok("Growth and Pro differ on the rows shown", differs(growth, pro));
 }
 
 console.log("\n— the upgrade prompt has wording for the flag —");

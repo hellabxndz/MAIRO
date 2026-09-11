@@ -295,3 +295,38 @@ export async function planWithOverrides(tier: SubscriptionTier): Promise<Plan> {
     features,
   };
 }
+
+/**
+ * The handful of facts people actually compare between plans.
+ *
+ * Derived from the entitlements and the limits rather than written out as
+ * marketing copy, which is the point: the pricing grid then cannot promise
+ * something the code does not grant. When TikTok moved to Growth and posting
+ * moved to Pro, the cards had to be edited by hand to keep up, and the Growth
+ * card went on promising posting for a while after the flag had gone. This
+ * makes that class of mistake impossible.
+ *
+ * Same rows in the same order on every card, so a reader can run their eye
+ * down one column and straight across to the next.
+ */
+export function planComparison(
+  tier: SubscriptionTier
+): { label: string; value: string; muted?: boolean }[] {
+  const e = DEFAULT_ENTITLEMENTS[tier];
+  const limits = planFor(tier).limits;
+
+  const networks = [e.meta_ads && "Meta", e.tiktok_ads && "TikTok"]
+    .filter(Boolean)
+    .join(" + ");
+
+  return [
+    { label: "Runs ads on", value: networks || "Nothing yet", muted: !networks },
+    { label: "Campaigns at once", value: String(limits.campaigns) },
+    { label: "New ads a month", value: String(limits.creativesPerMonth) },
+    {
+      label: "Posts to your own feed",
+      value: e.social_posting ? "Instagram + TikTok" : "No",
+      muted: !e.social_posting,
+    },
+  ];
+}

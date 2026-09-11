@@ -120,6 +120,15 @@ export default async function FreelancerBillingPage() {
                 </p>
                 <p className="mt-3 text-xs text-neutral-500">{plan.spendGuidance}</p>
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm text-neutral-400">
+                  {/* features lists only what this plan adds, so the plan it
+                      builds on has to be named — otherwise the dearer card
+                      reads as the smaller one. */}
+                  {plan.inherits && (
+                    <li className="flex gap-3 text-neutral-300">
+                      <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-600" />
+                      Everything in {plan.inherits}, plus:
+                    </li>
+                  )}
                   {plan.features.map((f) => (
                     <li key={f} className="flex gap-3">
                       <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />

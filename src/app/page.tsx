@@ -10,6 +10,7 @@ import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ConceptDemo } from "@/components/concept-demo";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
+import { planComparison } from "@/lib/entitlements";
 
 // The marketing page.
 //
@@ -293,17 +294,29 @@ export default function Home() {
           >
             <TextReveal>Pick a scale.</TextReveal>
           </h2>
-          <Reveal delay={0.2} className="mt-8 max-w-lg">
+          <Reveal delay={0.2} className="mt-8 max-w-xl">
             <p className="leading-relaxed text-neutral-400">
-              The same intelligence on every plan. What changes is how much of it runs for
-              you each month. Cancel whenever.
+              Starter runs your ads on Facebook and Instagram. Growth adds TikTok. Pro
+              posts to your own feed as well as running the ads. Cancel whenever.
             </p>
           </Reveal>
 
           <div className="mt-24 grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] lg:grid-cols-3">
             {PLANS.map((plan, i) => (
               <Reveal key={plan.tier} delay={i * 0.1}>
-                <div className="flex h-full flex-col bg-black/60 p-10">
+                {/* The featured column is marked, not badged. A "most popular"
+                    label would be a claim about other customers and there
+                    aren't any yet.
+                    Solid rather than lighter: this sits over an animated
+                    starfield, and a translucent panel let it through and cost
+                    the middle card its contrast — the one column that most
+                    needs to be readable. More opaque reads as forward and
+                    fixes the legibility at the same time. */}
+                <div
+                  className={`flex h-full flex-col p-10 ${
+                    plan.featured ? "bg-black/85" : "bg-black/60"
+                  }`}
+                >
                   <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-500">
                     {plan.name}
                   </p>
@@ -311,10 +324,49 @@ export default function Home() {
                     ${plan.priceMonthly}
                     <span className="ml-1 text-sm text-neutral-600">/mo</span>
                   </p>
-                  <p className="mt-5 text-sm leading-relaxed text-neutral-500">
+
+                  {/* The answer to "why would I pay more", before any list.
+                      Set in white against everything else on the card so it is
+                      the thing the eye lands on after the price. */}
+                  <p className="mt-6 text-lg font-light leading-snug tracking-tight text-white">
+                    {plan.headline}
+                  </p>
+                  <p className="mt-2.5 text-sm leading-relaxed text-neutral-500">
                     {plan.tagline}
                   </p>
-                  <ul className="mt-10 flex-1 space-y-3.5 text-sm text-neutral-400">
+
+                  {/* The same four rows in the same order on every card, so the
+                      comparison is a glance down a column rather than a diff of
+                      two bullet lists. Built from the entitlements, so it can't
+                      promise something the product doesn't grant. */}
+                  <dl className="mt-9 border-y border-white/[0.08] py-1">
+                    {planComparison(plan.tier).map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-baseline justify-between gap-4 border-b border-white/[0.05] py-3 last:border-b-0"
+                      >
+                        <dt className="text-xs text-neutral-500">{row.label}</dt>
+                        <dd
+                          className={`text-right text-sm tabular-nums ${
+                            row.muted ? "text-neutral-600" : "text-white"
+                          }`}
+                        >
+                          {row.value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <ul className="mt-9 flex-1 space-y-3.5 text-sm text-neutral-400">
+                    {/* Named rather than restated. The length of the list below
+                        is then the size of the upgrade, not an artefact of how
+                        much got copied down from the plan before it. */}
+                    {plan.inherits && (
+                      <li className="flex gap-3 text-neutral-300">
+                        <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-600" />
+                        Everything in {plan.inherits}, plus:
+                      </li>
+                    )}
                     {plan.features.map((f) => (
                       <li key={f} className="flex gap-3">
                         <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
@@ -322,9 +374,14 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
+
                   <Link
                     href="/sign-up"
-                    className="mt-12 inline-flex justify-center rounded-full border border-white/20 px-6 py-3.5 text-xs uppercase tracking-[0.16em] text-neutral-300 transition hover:border-white hover:bg-white hover:text-black"
+                    className={`mt-12 inline-flex justify-center rounded-full px-6 py-3.5 text-xs uppercase tracking-[0.16em] transition ${
+                      plan.featured
+                        ? "bg-white text-black hover:bg-neutral-200"
+                        : "border border-white/20 text-neutral-300 hover:border-white hover:bg-white hover:text-black"
+                    }`}
                   >
                     Start with {plan.name}
                   </Link>
@@ -392,6 +449,12 @@ export default function Home() {
                       {plan.spendGuidance}
                     </p>
                     <ul className="mt-8 flex-1 space-y-3 text-sm text-neutral-400">
+                      {plan.inherits && (
+                        <li className="flex gap-3 text-neutral-300">
+                          <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-600" />
+                          Everything in {plan.inherits}, plus:
+                        </li>
+                      )}
                       {plan.features.slice(0, 4).map((f) => (
                         <li key={f} className="flex gap-3">
                           <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
