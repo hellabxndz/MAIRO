@@ -24,6 +24,8 @@ import { GtmCard } from "./gtm-card";
 import { allNiches, nicheById } from "@/lib/tracking/niches";
 import { dataLayerSnippet, gtmSnippet } from "@/lib/tracking/gtm";
 import { ensureTrackingProfile } from "@/lib/actions/tracking-actions";
+import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
+import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
 // "Is the advertising actually making me money?"
@@ -67,7 +69,7 @@ export default async function TrackingPage() {
   const until = new Date();
   const since = new Date(until.getTime() - PERIOD_DAYS * 864e5);
 
-  const [pixels, entitlements, organization, connections, ingest, measured, orders, report, profile] =
+  const [pixels, entitlements, organization, connections, ingest, measured, orders, report, profile, gtm] =
     await Promise.all([
       pixelsFor(organizationId),
       entitlementsFor(organizationId),
@@ -81,6 +83,7 @@ export default async function TrackingPage() {
       recentOrders(organizationId),
       fetchOrganizationPerformance(organizationId),
       ensureTrackingProfile(organizationId),
+      gtmConnectionSummary(organizationId),
     ]);
 
   const niche = nicheById(profile.nicheId);
@@ -253,6 +256,17 @@ export default async function TrackingPage() {
           gtmSnippetForContainer={
             profile.gtmContainerId ? gtmSnippet(profile.gtmContainerId) : null
           }
+          gtmApiConfigured={gtmApiConfigured()}
+          connection={{
+            connected: gtm.connected,
+            googleEmail: gtm.googleEmail,
+            containerPublic: gtm.containerPublic,
+            containerName: gtm.containerName,
+            canPublish: gtm.canPublish,
+            lastPublishedAt: gtm.lastPublishedAt?.toISOString() ?? null,
+            publishedTagCount: gtm.publishedTagCount,
+            problem: gtm.problem,
+          }}
         />
       </Card>
 

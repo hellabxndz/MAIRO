@@ -247,6 +247,51 @@ Exactly one action per niche is marked primary: it is what the campaign
 optimizes towards, so two would leave the product unable to answer "which one"
 and none would make it silently pick the first.
 
+### 5g. Letting MAIRO install the tags itself
+
+The container file is one import away from done. `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET` remove that step: MAIRO connects to the customer's
+Google account, writes the tags into their container over the Tag Manager API
+and publishes them. Leave the variables blank and the card says it is not
+switched on and points at the download, which is not a degraded path — it
+produces the identical container from the same `buildContainer()`.
+
+Setting it up needs a Google Cloud project with the Tag Manager API enabled and
+a Web application OAuth client. The scopes are sensitive, so Google verifies the
+consent screen before anyone outside the project's test users can connect.
+
+Five things in `provision.ts` are load-bearing and none of them are obvious:
+
+- **Triggers before tags.** A tag references its trigger by the id Google
+  assigns on creation, which is unknowable in advance, so the ids in the
+  blueprint are remapped as the real ones come back. Creating tags first would
+  need a second patching pass, and a failure between the two would leave tags
+  firing on nothing.
+- **Built-in variables before triggers.** A trigger on `{{Click URL}}` in a
+  container where that built-in is off resolves to nothing, never matches and
+  never fires — with no error at any point. This is the likeliest way for a
+  "successful" provision to do absolutely nothing.
+- **MAIRO's own workspace, never the default.** Publishing a workspace
+  publishes everything in it, so writing into one somebody is halfway through
+  editing would push their unfinished work live too.
+- **Replace, don't append.** Running it twice must not leave two Purchase tags
+  double-counting every sale, so MAIRO deletes its own entities first —
+  identified by the `MAIRO - ` name prefix, and nothing without it is ever
+  touched. Tags are deleted before triggers, because Tag Manager refuses to
+  delete a trigger a tag still fires on.
+- **Edit and publish are separate grants.** A customer can approve one and not
+  the other, and Google returns 200 either way. Without publish the tags are
+  created and change nothing, so the product says exactly that rather than
+  reporting success.
+
+The provisioning order was verified end to end against a mock Tag Manager API,
+asserting that built-ins precede triggers, that every trigger precedes every
+tag, that the created tags reference server-assigned ids rather than the
+blueprint's local ones, and that a second run deletes before it recreates.
+There is deliberately no base-URL override in the shipped client: an
+environment variable that redirects where a customer's Google bearer token is
+sent is not worth the testing convenience.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { setGtmContainerAction, setNicheAction } from "@/lib/actions/tracking-actions";
 import { inputClass, primaryButtonClass } from "@/components/ui";
+import { GtmConnect } from "./gtm-connect";
 
 // Tag Manager, as a one-import job.
 //
@@ -50,6 +51,8 @@ export function GtmCard({
   hasAnyPixel,
   dataLayer,
   gtmSnippetForContainer,
+  gtmApiConfigured,
+  connection,
 }: {
   niches: NicheOption[];
   currentNicheId: string;
@@ -60,6 +63,17 @@ export function GtmCard({
   hasAnyPixel: boolean;
   dataLayer: string | null;
   gtmSnippetForContainer: string | null;
+  gtmApiConfigured: boolean;
+  connection: {
+    connected: boolean;
+    googleEmail: string | null;
+    containerPublic: string | null;
+    containerName: string | null;
+    canPublish: boolean;
+    lastPublishedAt: string | null;
+    publishedTagCount: number | null;
+    problem: string | null;
+  };
 }) {
   const [niche, setNiche] = useState(currentNicheId);
   const [container, setContainer] = useState(gtmContainerId ?? "");
@@ -174,6 +188,18 @@ export function GtmCard({
       {result && (
         <p className={`text-xs ${result.ok ? "text-emerald-300" : "text-red-400"}`}>
           {result.message}
+        </p>
+      )}
+
+      <GtmConnect
+        configured={gtmApiConfigured}
+        summary={connection}
+        hasAnyPixel={hasAnyPixel}
+      />
+
+      {connection.connected && connection.containerPublic && (
+        <p className="text-xs leading-relaxed text-neutral-500">
+          Connected — so the steps below are only needed if you would rather do it by hand.
         </p>
       )}
 

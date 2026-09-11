@@ -290,3 +290,125 @@ export async function setGtmContainerAction(containerId: string): Promise<Tracki
   revalidatePath("/dashboard/tracking");
   return { ok: true, message: `Saved ${value}.` };
 }
+
+// --- Tag Manager provisioning (Google API) ----------------------------------
+
+export type ContainerChoice = {
+  accountId: string;
+  accountName: string;
+  containerId: string;
+  publicId: string;
+  name: string;
+};
+
+/**
+ * Every web container this Google account can reach, so the customer picks one.
+ *
+ * Deliberately not auto-selected even when there is exactly one. Publishing
+ * writes to a live website, and "MAIRO picked the only container it could see"
+ * is not consent — a person who administers one container today may administer
+ * their client's tomorrow.
+ */
+export async function listGtmContainersAction(): Promise<
+  { ok: true; containers: ContainerChoice[] } | { ok: false; error: string }
+> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const { loadGtmCredentials } = await import("@/lib/tracking/gtm-connection");
+  const creds = await loadGtmCredentials(ctx.organizationId);
+  if (!creds) return { ok: false, error: "Connect Tag Manager first." };
+
+  const { listAccounts, listContainers, explainGtmApiError } = await import(
+    "@/lib/tracking/gtm-api/client"
+  );
+
+  try {
+    const accounts = await listAccounts(creds.accessToken);
+    const out: ContainerChoice[] = [];
+    for (const account of accounts) {
+      const containers = await listContainers(creds.accessToken, account.accountId);
+      for (const c of containers) {
+        out.push({
+          accountId: account.accountId,
+          accountName: account.name,
+          containerId: c.containerId,
+          publicId: c.publicId,
+          name: c.name,
+        });
+      }
+    }
+    return { ok: true, containers: out };
+  } catch (error) {
+    return { ok: false, error: explainGtmApiError(error) };
+  }
+}
+
+export async function chooseGtmContainerAction(
+  choice: ContainerChoice
+): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const { loadGtmCredentials, setGtmContainer } = await import("@/lib/tracking/gtm-connection");
+  const creds = await loadGtmCredentials(ctx.organizationId);
+  if (!creds) return { ok: false, error: "Connect Tag Manager first." };
+
+  // The choice comes from the browser, so it is checked against what this
+  // token can actually reach rather than trusted — otherwise a crafted request
+  // could point MAIRO at a container id belonging to someone else.
+  const { listContainers } = await import("@/lib/tracking/gtm-api/client");
+  const reachable = await listContainers(creds.accessToken, choice.accountId).catch(() => []);
+  const match = reachable.find((c) => c.containerId === choice.containerId);
+  if (!match) {
+    return { ok: false, error: "That container isn't one this Google account can edit." };
+  }
+
+  await setGtmContainer(ctx.organizationId, {
+    accountId: choice.accountId,
+    containerId: match.containerId,
+    publicId: match.publicId,
+    name: match.name,
+  });
+
+  // Also record it on the tracking profile, so the page can show the install
+  // snippet whether the customer connected Google or typed the id by hand.
+  await ensureTrackingProfile(ctx.organizationId);
+  await db.trackingProfile.update({
+    where: { organizationId: ctx.organizationId },
+    data: { gtmContainerId: match.publicId },
+  });
+
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: `Using ${match.publicId} — ${match.name}.` };
+}
+
+/**
+ * Builds and publishes the tags into the customer's container.
+ *
+ * The one action in the product that changes something on a website MAIRO does
+ * not own, so it is never automatic: it happens when somebody presses the
+ * button, and it says exactly what it did.
+ */
+export async function provisionGtmAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const { provisionContainer } = await import("@/lib/tracking/gtm-api/provision");
+  const result = await provisionContainer(ctx.organizationId);
+
+  revalidatePath("/dashboard/tracking");
+  if (!result.ok) return { ok: false, error: result.error.message };
+  return { ok: true, message: result.data.message };
+}
+
+export async function disconnectGtmAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+
+  const { disconnectGtm } = await import("@/lib/tracking/gtm-connection");
+  await disconnectGtm(ctx.organizationId);
+
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: "Disconnected. Tags MAIRO already published stay live in your container." };
+}

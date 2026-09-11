@@ -131,6 +131,7 @@ model Organization {
   conversionEvents     ConversionEvent[]
   storeIngest          StoreIngest?
   trackingProfile      TrackingProfile?
+  gtmConnection        GtmConnection?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1072,4 +1073,56 @@ model TrackingProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// A customer's authorization for MAIRO to write tags into their Tag Manager.
+///
+/// Separate from every other connection in here because it is a third kind of
+/// credential: Google's, not an ad network's. It grants nothing on Meta or
+/// TikTok and buys no advertising — it lets MAIRO create and publish tags in a
+/// container the customer owns, which is a narrow and unusually powerful
+/// permission. A mistake here edits the tracking on their live website.
+///
+/// So the scopes are the minimum that can do the job and are stored as granted
+/// rather than as requested: Google will happily issue a token with a subset if
+/// the user unticks a box, and publishing without the publish scope fails at
+/// the last step, after the tags are already created.
+model GtmConnection {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// Google's stable id for the person who authorized. Not an email.
+  googleUserId String?
+  /// Shown so the customer can tell which Google account is connected.
+  googleEmail  String?
+
+  accessToken      String    @db.Text
+  refreshToken     String?   @db.Text
+  tokenExpiresAt   DateTime?
+  /// Space-separated, as granted. Checked before publishing rather than after.
+  scopes           String?
+
+  /// Which container MAIRO writes to. Null until the customer picks one —
+  /// a Google account can administer dozens and guessing would edit the
+  /// tracking on somebody's live website.
+  gtmAccountId       String?
+  gtmContainerId     String?
+  /// The GTM-XXXXXXX the customer recognises.
+  gtmContainerPublic String?
+  gtmContainerName   String?
+  /// MAIRO's own workspace, so its changes never sit in a draft somebody else
+  /// is halfway through.
+  gtmWorkspaceId     String?
+
+  status    PlatformConnectionStatus @default(CONNECTED)
+  lastError String?                  @db.Text
+  /// When MAIRO last successfully published tags into the container.
+  lastPublishedAt DateTime?
+  /// What was published, so the page can say what is live without asking
+  /// Google on every load.
+  publishedTagCount Int?
+
+  connectedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
