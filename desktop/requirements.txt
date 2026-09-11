@@ -1,0 +1,45 @@
+# Mairo desktop assistant — Python 3.10 or newer
+
+# Interface
+PySide6>=6.6,<7
+
+# AI
+openai>=1.40
+python-dotenv>=1.0
+
+# Voice
+sounddevice>=0.4.6      # microphone capture (bundles PortAudio on Windows)
+soundfile>=0.12         # decoding the audio returned by the OpenAI voice
+numpy>=1.24             # level metering
+# Offline system voice on Windows and Linux. Excluded on macOS: Mairo speaks
+# there through the built-in `say` command, and pyttsx3 would drag in the whole
+# of pyobjc (a hundred-odd packages) for a driver that is never used.
+pyttsx3>=2.90; sys_platform != "darwin"
+SpeechRecognition>=3.10 # optional no-key speech recognition fallback
+
+# Machine readings for the HUD panels (processor, memory, uptime, network).
+# Without it the app still runs; those panels say so instead of guessing.
+psutil>=5.9
+
+# Optional: offline wake-word detection ("Hey Mairo"). Needs a free Picovoice
+# access key in .env. Mairo runs fine without it; the microphone button is
+# always available.
+# pvporcupine>=3.0
+
+# Computer actions
+mss>=9.0                # screenshots
+pyperclip>=1.8          # clipboard
+
+# Windows-only extras (installed automatically on Windows, skipped elsewhere)
+pycaw>=20240210; sys_platform == "win32"        # precise volume control
+comtypes>=1.2; sys_platform == "win32"          # required by pycaw
+pywin32>=306; sys_platform == "win32"           # used by pyttsx3's SAPI5 driver
+
+# Optional on Windows: reading and controlling whatever is playing (Apple
+# Music, Spotify, a browser tab) through the system's media transport
+# controls. Without these Mairo falls back to the media keys, which can play,
+# pause and skip but cannot say what is playing.
+winrt-runtime>=3.2; sys_platform == "win32"
+winrt-Windows.Media>=3.2; sys_platform == "win32"
+winrt-Windows.Media.Control>=3.2; sys_platform == "win32"
+winrt-Windows.Foundation>=3.2; sys_platform == "win32"
