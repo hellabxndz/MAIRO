@@ -107,12 +107,15 @@ export const PLANS: Plan[] = [
     ],
   },
   {
-    // Shown as "Pro". The tier value stays SCALE because Stripe price ids are
-    // keyed off it in the environment — renaming it would leave every existing
-    // subscriber matching no STRIPE_PRICE_* variable, and the webhook would
-    // read that as having no plan at all.
+    // The tier value stays SCALE whatever this plan is called. Stripe price ids
+    // are keyed off it in the environment, so renaming the enum would leave
+    // every existing subscriber matching no STRIPE_PRICE_* variable and the
+    // webhook would read that as having no plan at all. `name` is the only
+    // customer-facing part and is safe to change — everything that says it out
+    // loud reads it from here rather than hard-coding it, so this line is the
+    // single place the plan is named.
     tier: "SCALE",
-    name: "Pro",
+    name: "Scale",
     priceMonthly: 249.99,
     tagline: "Let MAIRO run the budget.",
     spendGuidance: "Best for $2,000+/mo in ad spend",

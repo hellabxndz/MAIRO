@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { can } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
 import { absoluteUrl } from "@/lib/site";
 import { CAPTION_MAX, POSTS_PER_DAY, postsInLastDay, publishToInstagram } from "@/lib/instagram/publish";
 
@@ -45,7 +46,7 @@ export async function postToInstagramAction(
 
   if (!(await can(organizationId, "social_posting"))) {
     return {
-      error: "MAIRO posting to your profiles comes with Pro. Choose it in Settings and it opens up straight away.",
+      error: `MAIRO posting to your profiles comes with ${planFor("SCALE").name}. Choose it in Settings and it opens up straight away.`,
     };
   }
 

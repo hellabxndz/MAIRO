@@ -109,7 +109,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
   // deliberate: Stripe price ids are keyed off the tier name in the
   // environment, and renaming the value would leave every existing subscriber
   // matching no STRIPE_PRICE_* variable, which the webhook would read as
-  // "no plan". The customer-facing name is Pro; the identifier is internal.
+  // "no plan". The customer-facing name lives in plans.ts; this is internal.
   SCALE: {
     meta_ads: true,
     tiktok_ads: true,
@@ -302,7 +302,7 @@ export async function planWithOverrides(tier: SubscriptionTier): Promise<Plan> {
  * Derived from the entitlements and the limits rather than written out as
  * marketing copy, which is the point: the pricing grid then cannot promise
  * something the code does not grant. When TikTok moved to Growth and posting
- * moved to Pro, the cards had to be edited by hand to keep up, and the Growth
+ * moved to the top plan, the cards had to be edited by hand to keep up, and Growth
  * card went on promising posting for a while after the flag had gone. This
  * makes that class of mistake impossible.
  *

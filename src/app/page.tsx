@@ -295,9 +295,13 @@ export default function Home() {
             <TextReveal>Pick a scale.</TextReveal>
           </h2>
           <Reveal delay={0.2} className="mt-8 max-w-xl">
+            {/* Built from the plan names rather than typed out, so renaming a
+                plan in plans.ts cannot leave this paragraph calling it
+                something else. */}
             <p className="leading-relaxed text-neutral-400">
-              Starter runs your ads on Facebook and Instagram. Growth adds TikTok. Pro
-              posts to your own feed as well as running the ads. Cancel whenever.
+              {PLANS[0].name} runs your ads on Facebook and Instagram. {PLANS[1].name} adds
+              TikTok. {PLANS[2].name} posts to your own feed as well as running the ads.
+              Cancel whenever.
             </p>
           </Reveal>
 

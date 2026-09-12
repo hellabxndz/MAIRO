@@ -25,6 +25,12 @@ import {
 import { chooseMode, resolvePrivacy, validateCaption } from "@/lib/tiktok/publish";
 import { handleProblem, normalizeHandle } from "@/lib/tiktok/managed-setup";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
+
+// The top plan, named from plans.ts. These labels used to say "Pro"; the
+// plan was renamed to Scale and every hard-coded mention had to be hunted
+// down, which is the thing this avoids next time.
+const TOP = planFor("SCALE");
 
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
@@ -152,10 +158,10 @@ console.log("\n— which plans get which TikTok extra —");
 
   const growth = DEFAULT_ENTITLEMENTS.GROWTH;
   ok("Growth: setup yes", growth.tiktok_account_setup);
-  ok("Growth: posting NO — it moved to Pro", !growth.social_posting);
+  ok(`Growth: posting NO — it moved to ${TOP.name}`, !growth.social_posting);
 
-  ok("Pro: setup yes", DEFAULT_ENTITLEMENTS.SCALE.tiktok_account_setup);
-  ok("Pro: posting yes", DEFAULT_ENTITLEMENTS.SCALE.social_posting);
+  ok(`${TOP.name}: setup yes`, DEFAULT_ENTITLEMENTS.SCALE.tiktok_account_setup);
+  ok(`${TOP.name}: posting yes`, DEFAULT_ENTITLEMENTS.SCALE.social_posting);
 
   // Posting is the top-tier feature on both ladders, so the freelancer plans
   // have to agree: Studio mirrors Growth, Agency mirrors Pro.

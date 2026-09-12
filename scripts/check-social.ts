@@ -18,6 +18,11 @@ import { DEFAULT_ENTITLEMENTS, FLAG_LABELS, planComparison } from "@/lib/entitle
 import { CAPTION_MAX, POSTS_PER_DAY } from "@/lib/instagram/constants";
 import { PLANS } from "@/lib/plans";
 
+// The top plan, named from plans.ts. These labels used to say "Pro"; the
+// plan was renamed to Scale and every hard-coded mention had to be hunted
+// down, which is the thing this avoids next time.
+const TOP = PLANS.find((p) => p.tier === "SCALE")!;
+
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
   if (!c) {
@@ -31,12 +36,12 @@ console.log("\n— posting is Pro only —");
   ok("no plan: no", !DEFAULT_ENTITLEMENTS.NONE.social_posting);
   ok("Starter: no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
   ok("Growth: no", !DEFAULT_ENTITLEMENTS.GROWTH.social_posting);
-  ok("Pro: yes", DEFAULT_ENTITLEMENTS.SCALE.social_posting);
+  ok(`${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.SCALE.social_posting);
 
   // The freelancer ladder has to agree with the business one, or the same
   // feature costs a different amount depending on which page you bought from.
   ok("Studio mirrors Growth: no", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
-  ok("Agency mirrors Pro: yes", DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
+  ok(`Agency mirrors ${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
 
   // Exactly one business plan has it. A second would make "comes with Pro"
   // false everywhere it is written.
@@ -51,10 +56,18 @@ console.log("\n— the pricing cards say the same thing the code does —");
   const growth = PLANS.find((p) => p.tier === "GROWTH")!;
   const pro = PLANS.find((p) => p.tier === "SCALE")!;
 
+  // The plan is called Scale. Pinned because it was called Pro until the name
+  // was hard-coded into a landing-page paragraph, two upsell screens, an error
+  // message and a handful of check labels — all of which now read it from
+  // plans.ts, and this is what catches the next one that doesn't.
+  ok("the top plan is called Scale", pro.name === "Scale", pro.name);
+  ok("Starter is called Starter", PLANS[0].name === "Starter", PLANS[0].name);
+  ok("Growth is called Growth", growth.name === "Growth", growth.name);
+
   const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
   ok("Starter is $39.99", starterPlan.priceMonthly === 39.99, `$${starterPlan.priceMonthly}`);
   ok("Growth is $129.99", growth.priceMonthly === 129.99, `$${growth.priceMonthly}`);
-  ok("Pro is $249.99", pro.priceMonthly === 249.99, `$${pro.priceMonthly}`);
+  ok(`${TOP.name} is $249.99`, pro.priceMonthly === 249.99, `$${pro.priceMonthly}`);
   // The ladder has to climb, whatever the numbers are changed to next.
   ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
 
@@ -76,7 +89,7 @@ console.log("\n— the pricing cards say the same thing the code does —");
   const growthPromises = growth.features.some((f) => /MAIRO posts to your/i.test(f));
   ok("Growth no longer promises posting", !growthPromises);
   ok(
-    "Pro's card promises it",
+    `${TOP.name}'s card promises it`,
     pro.features.some((f) => /posts to your Instagram and TikTok/i.test(f))
   );
   // Growth used to carry a bullet saying posting lived on Pro. That is now a
@@ -115,7 +128,7 @@ console.log("\n— Starter and Growth are told apart at a glance —");
   // length of its list is the size of the upgrade.
   ok("Starter inherits nothing", !starter.inherits);
   ok("Growth builds on Starter", growth.inherits === "Starter", growth.inherits);
-  ok("Pro builds on Growth", pro.inherits === "Growth", pro.inherits);
+  ok(`${TOP.name} builds on Growth`, pro.inherits === "Growth", pro.inherits);
 
   // A restated bullet is the bug this replaced: "Everything in Starter" as a
   // feature, followed by things Starter already had.
@@ -129,7 +142,7 @@ console.log("\n— Starter and Growth are told apart at a glance —");
   const repeated = growth.features.filter((f) => starter.features.includes(f));
   ok("Growth repeats nothing from Starter", repeated.length === 0, repeated.join(","));
   const repeatedPro = pro.features.filter((f) => growth.features.includes(f));
-  ok("Pro repeats nothing from Growth", repeatedPro.length === 0, repeatedPro.join(","));
+  ok(`${TOP.name} repeats nothing from Growth`, repeatedPro.length === 0, repeatedPro.join(","));
 }
 
 console.log("\n— the comparison rows come from the entitlements, not from copy —");
@@ -159,7 +172,7 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
   // The one that separates Growth from Pro.
   ok("Growth does not post for you", growth["Posts to your own feed"] === "No");
   ok(
-    "Pro does",
+    `${TOP.name} does`,
     pro["Posts to your own feed"] === "Instagram + TikTok",
     pro["Posts to your own feed"]
   );

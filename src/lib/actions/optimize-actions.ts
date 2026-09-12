@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { can, entitlementsFor } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
 import { splitBudget } from "@/lib/budget/allocation";
 import {
   checkGuardrails,
@@ -249,7 +250,7 @@ export async function saveAutoOptimizeAction(
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   if (!(await can(organizationId, "auto_optimize"))) {
-    return { error: "Auto Optimize is part of the Pro plan." };
+    return { error: `Auto Optimize is part of the ${planFor("SCALE").name} plan.` };
   }
 
   const parsed = autoOptimizeSchema.safeParse({

@@ -11,6 +11,12 @@
 import { db } from "@/lib/db";
 import { seedPlanConfig } from "@/lib/plan-config";
 import { entitlementsForTier, checkPlatformSelection, entitlementsFor } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
+
+// The top plan, named from plans.ts. These labels used to say "Pro"; the
+// plan was renamed to Scale and every hard-coded mention had to be hunted
+// down, which is the thing this avoids next time.
+const TOP = planFor("SCALE");
 
 let bad = 0;
 async function main() {
@@ -36,8 +42,8 @@ async function main() {
   ok("Growth: auto optimize NO", !growth.auto_optimize);
 
   const pro = await entitlementsForTier("SCALE");
-  ok("Pro: auto optimize yes", pro.auto_optimize);
-  ok("Pro: 10 campaigns", pro.campaign_limit === 10);
+  ok(`${TOP.name}: auto optimize yes`, pro.auto_optimize);
+  ok(`${TOP.name}: 10 campaigns`, pro.campaign_limit === 10);
 
   console.log("\n— a database edit overrides the code —");
   await db.planConfig.update({

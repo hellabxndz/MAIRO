@@ -9,10 +9,11 @@ import { PlanLock } from "@/components/plan-lock";
 import { PostForm, type PostableImage } from "./post-form";
 import { findInstagramAccount, POSTS_PER_DAY, postsInLastDay } from "@/lib/instagram/publish";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
+import { planFor } from "@/lib/plans";
 
 // MAIRO posting on the customer's own profiles.
 //
-// This is the Pro plan's distinguishing feature, and it is a different promise
+// This is the top plan's distinguishing feature, and it is a different promise
 // from the rest of the product: everything else spends the customer's money on
 // their behalf, and this writes on their public profile under their own name.
 // So the page is built to make that obvious rather than smooth — you see the
@@ -28,6 +29,10 @@ export default async function SocialPage() {
 
   const entitlements = await entitlementsFor(organizationId);
 
+  // Named from plans.ts rather than written into the copy, so renaming the
+  // plan doesn't leave the upsell advertising a plan that no longer exists.
+  const topPlan = planFor("SCALE");
+
   if (!entitlements.social_posting) {
     return (
       <div>
@@ -36,8 +41,8 @@ export default async function SocialPage() {
           description="MAIRO writes and publishes to your own Instagram and TikTok."
         />
         <PlanLock
-          title="MAIRO posting for you comes with Pro"
-          body="Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On Pro, MAIRO posts your approved creatives to your Instagram and TikTok for you."
+          title={`MAIRO posting for you comes with ${topPlan.name}`}
+          body={`Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On ${topPlan.name}, MAIRO posts your approved creatives to your Instagram and TikTok for you.`}
         />
       </div>
     );

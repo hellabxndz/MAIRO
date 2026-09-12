@@ -19,7 +19,7 @@ const NAV = [
   { href: "/dashboard/creatives", label: "Creatives" },
   // Next to Creatives because it is what happens to one afterwards: the ads
   // are the paid half, this is the customer's own feed. Shown on every plan
-  // rather than hidden below Pro — the page itself sells the upgrade, and a
+  // rather than hidden below the top plan — the page itself sells the upgrade, and a
   // feature nobody can see is a feature nobody buys.
   { href: "/dashboard/social", label: "Your social posts" },
   // Was "Meta connection" when Meta was the only place to advertise. The
