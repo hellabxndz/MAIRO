@@ -31,7 +31,17 @@ const OBJECTIVE_MAP: Record<AdGoal, string> = {
  * campaign that runs is worth more than a sales campaign that cannot be built,
  * and the moment tracking exists the next campaign asks for sales properly.
  */
-export function metaObjectiveFor(goal: AdGoal, hasConversionTracking = true): string {
+export function metaObjectiveFor(
+  goal: AdGoal,
+  hasConversionTracking = true,
+  usesInstantForm = false
+): string {
+  // An instant form collects the lead inside the ad. That is OUTCOME_LEADS
+  // whatever the customer picked from MAIRO's own list and whether or not a
+  // pixel exists — there is nothing offsite to track, so the degrade below
+  // does not apply and would break the ad set if it did.
+  if (usesInstantForm) return OBJECTIVE_MAP.LEADS;
+
   if (!hasConversionTracking && (goal === "SALES" || goal === "LEADS")) {
     return OBJECTIVE_MAP.TRAFFIC;
   }
@@ -47,6 +57,8 @@ export type CreateMetaCampaignInput = {
   status?: "PAUSED" | "ACTIVE";
   /** Whether a pixel exists to optimize towards. See metaObjectiveFor. */
   hasConversionTracking?: boolean;
+  /** Whether the ad carries Meta's own instant form. */
+  usesInstantForm?: boolean;
 };
 
 export type MetaCampaign = {
@@ -73,10 +85,15 @@ export function metaCampaignBody(input: {
   dailyBudgetCents: number;
   status?: "PAUSED" | "ACTIVE";
   hasConversionTracking?: boolean;
+  usesInstantForm?: boolean;
 }): Record<string, unknown> {
   return {
     name: input.name,
-    objective: metaObjectiveFor(input.goal, input.hasConversionTracking ?? true),
+    objective: metaObjectiveFor(
+      input.goal,
+      input.hasConversionTracking ?? true,
+      input.usesInstantForm ?? false
+    ),
     status: input.status ?? "PAUSED",
     special_ad_categories: [],
     daily_budget: input.dailyBudgetCents,

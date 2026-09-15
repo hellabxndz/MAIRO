@@ -99,6 +99,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   // Which inbox a message ad opens. Messenger needs nothing; the other two
   // depend on the Page having Instagram or WhatsApp attached to it.
   const [channel, setChannel] = useState<"MESSENGER" | "INSTAGRAM" | "WHATSAPP">("MESSENGER");
+  // Where the form opens. The hosted page works today; Meta's own converts
+  // better and is gated behind App Review.
+  const [delivery, setDelivery] = useState<"HOSTED_PAGE" | "META_NATIVE">("HOSTED_PAGE");
   const [growthMode, setGrowthMode] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeCopy | null>(null);
 
@@ -275,6 +278,47 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
           <input type="hidden" name="destinationType" value={destinationType} />
           {destinationType === "LEAD_FORM" ? (
             <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <input type="hidden" name="leadFormDelivery" value={delivery} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    {
+                      key: "HOSTED_PAGE" as const,
+                      label: "A page MAIRO hosts",
+                      sub: "Works today. One tap and a page load.",
+                    },
+                    {
+                      key: "META_NATIVE" as const,
+                      label: "Meta's own instant form",
+                      sub: "Opens in the app, details already filled in",
+                    },
+                  ]
+                ).map((d) => (
+                  <button
+                    key={d.key}
+                    type="button"
+                    aria-pressed={delivery === d.key}
+                    onClick={() => setDelivery(d.key)}
+                    className={`rounded-lg border p-3 text-left transition ${
+                      delivery === d.key
+                        ? "border-white/30 bg-white/[0.06]"
+                        : "border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <p className="text-sm text-white">{d.label}</p>
+                    <p className="mt-0.5 text-xs text-neutral-500">{d.sub}</p>
+                  </button>
+                ))}
+              </div>
+              {delivery === "META_NATIVE" && (
+                <p className="text-xs leading-relaxed text-amber-200/70">
+                  Meta fills in their name, email and phone, so far more people finish it — but
+                  it needs two permissions still in App Review. MAIRO tries when you create this
+                  campaign and tells you straight away if Meta says no; the hosted page keeps
+                  working either way.
+                </p>
+              )}
+
               {plan.destination.formUrl ? (
                 <>
                   <p className="text-sm text-neutral-300">

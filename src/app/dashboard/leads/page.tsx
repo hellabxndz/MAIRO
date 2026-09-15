@@ -68,6 +68,18 @@ export default async function LeadsPage() {
           {form.description}
         </p>
 
+        {form.metaFormId ? (
+          <p className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] px-3 py-2 text-xs text-emerald-200/80">
+            This form is also on your Facebook Page, so ads can open it inside the app with
+            people&apos;s details already filled in. Those answers are pulled in once a day and
+            appear below with the rest.
+          </p>
+        ) : form.metaError ? (
+          <p className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-amber-200/80">
+            {form.metaError}
+          </p>
+        ) : null}
+
         <div className="mt-5">
           <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-500">
             Where the ad sends people
@@ -122,11 +134,18 @@ export default async function LeadsPage() {
                       minute: "2-digit",
                     })}
                   </p>
-                  {lead.clickId && (
-                    <span className="text-[11px] uppercase tracking-[0.12em] text-emerald-300/70">
-                      came from an ad
-                    </span>
-                  )}
+                  <span className="flex items-center gap-2">
+                    {lead.source === "META_INSTANT" && (
+                      <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                        instant form
+                      </span>
+                    )}
+                    {lead.clickId && (
+                      <span className="text-[11px] uppercase tracking-[0.12em] text-emerald-300/70">
+                        came from an ad
+                      </span>
+                    )}
+                  </span>
                 </div>
 
                 <dl className="mt-3 space-y-2">

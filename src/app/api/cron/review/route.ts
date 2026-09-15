@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { retryStuckReviews } from "@/lib/creatives/review-run";
+import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -41,7 +42,13 @@ export async function GET(req: Request) {
   // made in sequence, and the run has to finish inside maxDuration — a backlog
   // that takes three nights to clear is better than a run that times out every
   // night and clears nothing.
-  const result = await retryStuckReviews({ limit: 8 });
+  const reviews = await retryStuckReviews({ limit: 8 });
 
-  return NextResponse.json(result);
+  // Pulled on the same schedule rather than its own, because Hobby allows two
+  // crons in total and both of these are "go and fetch what the networks did
+  // not tell us about". A native instant form holds its leads on Meta until
+  // somebody asks, and nobody would.
+  const leads = await syncAllMetaLeads();
+
+  return NextResponse.json({ reviews, leads });
 }

@@ -205,6 +205,7 @@ export const metaAdapter: AdPlatformAdapter = {
         dailyBudgetCents: input.dailyBudgetCents,
         status: input.activate ? "ACTIVE" : "PAUSED",
         hasConversionTracking: input.hasConversionTracking ?? false,
+        usesInstantForm: input.destination?.type === "INSTANT_FORM",
       });
       return ok({
         externalId: campaign.id,
@@ -239,54 +240,12 @@ export const metaAdapter: AdPlatformAdapter = {
     }
 
     try {
-      // Which conversion this can honestly chase. Without a pixel there is
-      // nothing for Meta to optimize towards, so asking for purchases would be
-      // accepted and then under-deliver forever with no error.
-      const optimization = metaOptimizationGoal(input.goal, Boolean(input.conversion));
-
       const res = await metaGraphRequest<{ id: string }>(
         `/${loaded.creds.externalAccountId}/adsets`,
         {
           method: "POST",
           accessToken: loaded.creds.accessToken,
-          body: {
-            name: input.name,
-            campaign_id: input.externalCampaignId,
-            // Omitted when the campaign carries it. Meta rejects an ad set
-            // budget under a campaign that has one, and MAIRO always sets the
-            // budget on the campaign so the optimizer has one place to move it.
-            ...(input.campaignOwnsBudget ? {} : { daily_budget: input.dailyBudgetCents }),
-            billing_event: "IMPRESSIONS",
-            optimization_goal: optimization,
-            status: "PAUSED",
-            // Where a click lands, at the ad set level. Meta needs this to
-            // deliver a message ad into the inbox rather than treating it as
-            // an ordinary link ad with an unusual button.
-            ...(input.destination?.type === "DIRECT_MESSAGE"
-              ? { destination_type: CHANNEL_META[input.destination.channel].destinationType }
-              : {}),
-            // When the customer booked a start. Sent as ISO 8601 in UTC, which
-            // Meta converts into the ad account's own timezone — safer than
-            // MAIRO guessing that timezone, where being wrong means every
-            // scheduled campaign starts hours out.
-            //
-            // Omitted when the time has already arrived, or is about to: Meta
-            // rejects a start_time in the past outright, and failing a whole
-            // launch over a customer who meant "now" would be absurd.
-            ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
-            targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
-            // Required whenever the ad set optimizes for a pixel conversion,
-            // and meaningless otherwise. It is what ties the tracking MAIRO set
-            // up to the thing the campaign is actually trying to cause.
-            ...(input.conversion
-              ? {
-                  promoted_object: JSON.stringify({
-                    pixel_id: input.conversion.pixelId,
-                    custom_event_type: metaCustomEventType(input.conversion.event),
-                  }),
-                }
-              : {}),
-          },
+          body: metaAdSetBody(input),
         }
       );
       return ok({ externalId: res.id });
@@ -520,6 +479,84 @@ function normalizeInsights(row: MetaInsightRow) {
       (revenueCents !== null && spendCents !== null && spendCents > 0
         ? revenueCents / spendCents
         : null),
+  };
+}
+
+/**
+ * The ad set exactly as Meta will receive it.
+ *
+ * Pulled out of the Graph call so it can be asserted without one. Every field
+ * here is a rule Meta enforces silently — a wrong optimization goal is
+ * accepted and under-delivers, a missing promoted_object is refused with a
+ * message that names no field — and a check that has to reach the network to
+ * see them is a check nobody runs.
+ */
+export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown> {
+  // Which conversion this can honestly chase. Without a pixel there is nothing
+  // for Meta to optimize towards, so asking for purchases would be accepted
+  // and then under-deliver forever with no error.
+  // An instant form collects the lead inside the ad, so there is nothing
+  // offsite to optimize towards and no pixel involved. LEAD_GENERATION is the
+  // goal that actually means "get me these forms filled in" — the one case
+  // where it is right, since MAIRO now does create the form.
+  const instantForm = input.destination?.type === "INSTANT_FORM";
+  const optimization = instantForm
+    ? "LEAD_GENERATION"
+    : metaOptimizationGoal(input.goal, Boolean(input.conversion));
+
+  return {
+    name: input.name,
+    campaign_id: input.externalCampaignId,
+    // Omitted when the campaign carries it. Meta rejects an ad set budget
+    // under a campaign that has one, and MAIRO always sets the budget on the
+    // campaign so the optimizer has one place to move it.
+    ...(input.campaignOwnsBudget ? {} : { daily_budget: input.dailyBudgetCents }),
+    billing_event: "IMPRESSIONS",
+    optimization_goal: optimization,
+    status: "PAUSED",
+    // Where a click lands, at the ad set level. Meta needs this to deliver a
+    // message ad into the inbox rather than treating it as an ordinary link ad
+    // with an unusual button.
+    ...(input.destination?.type === "DIRECT_MESSAGE"
+      ? { destination_type: CHANNEL_META[input.destination.channel].destinationType }
+      : {}),
+    // An instant form lives on the ad, so the ad set says so and names the
+    // Page the form belongs to. Without the promoted_object Meta refuses the
+    // ad set; without ON_AD it builds a link ad whose button happens to carry
+    // a form id and never opens it.
+    ...(instantForm && input.pageId
+      ? {
+          destination_type: "ON_AD",
+          promoted_object: JSON.stringify({ page_id: input.pageId }),
+        }
+      : {}),
+    // When the customer booked a start. Sent as ISO 8601 in UTC, which Meta
+    // converts into the ad account's own timezone — safer than MAIRO guessing
+    // that timezone, where being wrong means every scheduled campaign starts
+    // hours out.
+    //
+    // Omitted when the time has already arrived, or is about to: Meta rejects
+    // a start_time in the past outright, and failing a whole launch over a
+    // customer who meant "now" would be absurd.
+    ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
+    targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
+    // Required whenever the ad set optimizes for a pixel conversion, and
+    // meaningless otherwise. It is what ties the tracking MAIRO set up to the
+    // thing the campaign is actually trying to cause.
+    //
+    // Never for an instant form, even when the business has a pixel. There is
+    // one promoted_object and the form's Page has already claimed it — writing
+    // the pixel over it leaves an ON_AD ad set that names no Page, which Meta
+    // refuses. A form filled in inside the ad is not a pixel event anyway; the
+    // lead is the conversion.
+    ...(input.conversion && !instantForm
+      ? {
+          promoted_object: JSON.stringify({
+            pixel_id: input.conversion.pixelId,
+            custom_event_type: metaCustomEventType(input.conversion.event),
+          }),
+        }
+      : {}),
   };
 }
 

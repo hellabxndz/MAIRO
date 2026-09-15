@@ -1,5 +1,11 @@
 import { db } from "@/lib/db";
-import type { AdDestination, AdGoal, AdPlatform, MessageChannel } from "@/generated/prisma/enums";
+import type {
+  AdDestination,
+  AdGoal,
+  AdPlatform,
+  LeadFormDelivery,
+  MessageChannel,
+} from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import type { Allocation } from "@/lib/budget/allocation";
@@ -89,6 +95,7 @@ export type CreateMairoCampaignInput = {
     url?: string | null;
     phone?: string | null;
     channel?: MessageChannel | null;
+    delivery?: LeadFormDelivery | null;
   };
 };
 
@@ -119,6 +126,7 @@ export async function createMairoCampaign(
       destinationUrl: input.destination?.url ?? null,
       destinationPhone: input.destination?.phone ?? null,
       messageChannel: input.destination?.channel ?? "MESSENGER",
+      leadFormDelivery: input.destination?.delivery ?? "HOSTED_PAGE",
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
@@ -199,6 +207,14 @@ export async function launchOne(input: {
   // an objective cannot be changed once the campaign exists.
   const conversion = await conversionTargetFor(input.organizationId, input.platform);
 
+  // Resolved before the campaign, not only before the ad set. An instant form
+  // is a lead objective whatever the customer's goal said, and an objective
+  // cannot be changed once the campaign exists on the network.
+  const campaignDestination = await destinationFor(
+    input.organizationId,
+    input.mairoCampaignId
+  );
+
   const result = await adapter.createCampaign({
     organizationId: input.organizationId,
     name: input.name,
@@ -206,6 +222,7 @@ export async function launchOne(input: {
     dailyBudgetCents: input.dailyBudgetCents,
     activate: input.activate,
     hasConversionTracking: Boolean(conversion),
+    destination: campaignDestination ?? undefined,
   });
 
   if (!result.ok) {
@@ -404,6 +421,7 @@ async function buildDeliverable(input: {
       campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
       conversion,
       destination: destination ?? undefined,
+      pageId: await pageIdFor(input.organizationId, input.platform),
       // The booked start, which becomes the network's own start_time. MAIRO
       // also holds the campaign paused until then, but only while it is
       // running — this is what keeps the schedule when it is not.
@@ -568,6 +586,7 @@ async function destinationFor(
         destinationUrl: true,
         destinationPhone: true,
         messageChannel: true,
+        leadFormDelivery: true,
       },
     }),
     db.organization.findUnique({
@@ -583,6 +602,16 @@ async function destinationFor(
       url: campaign.destinationUrl,
       phone: campaign.destinationPhone,
       channel: campaign.messageChannel,
+      // Only when the campaign asked for the native form. A business with a
+      // form pushed to Meta for one campaign should not have another campaign
+      // silently switch to it.
+      metaFormId:
+        campaign.leadFormDelivery === "META_NATIVE"
+          ? ((await db.leadForm.findFirst({
+              where: { organizationId, metaFormId: { not: null } },
+              select: { metaFormId: true },
+            }))?.metaFormId ?? null)
+          : null,
     },
     { type: organization.defaultDestination, url: organization.website, phone: organization.phone }
   );
@@ -666,4 +695,19 @@ export async function applyAllocation(input: {
   }
 
   return { applied, failed };
+}
+
+/**
+ * The Page an ad publishes as, for the networks that have one.
+ *
+ * The ad already looked this up for itself; the ad set needs it too now that an
+ * instant form has to name the Page its form belongs to.
+ */
+async function pageIdFor(organizationId: string, platform: AdPlatform): Promise<string | null> {
+  if (platform !== "META") return null;
+  const connection = await db.metaAdAccount.findUnique({
+    where: { organizationId },
+    select: { pageId: true },
+  });
+  return connection?.pageId ?? null;
 }

@@ -109,6 +109,13 @@ export type CreateCampaignInput = {
    * the campaign already exists.
    */
   hasConversionTracking?: boolean;
+  /**
+   * What a click does, when it changes how the campaign itself must be made.
+   *
+   * An instant form is OUTCOME_LEADS whatever the customer's goal says, and an
+   * objective cannot be changed once the campaign exists.
+   */
+  destination?: Destination;
 };
 
 export type CreatedCampaign = {
@@ -142,6 +149,13 @@ export type CreateAdGroupInput = {
    * not say so delivers as an ordinary link ad however the creative is built.
    */
   destination?: Destination;
+  /**
+   * The Page the ad publishes as.
+   *
+   * Only the ad needed this before. An instant form belongs to a Page, and the
+   * ad set has to name it in promoted_object, so it is passed down too.
+   */
+  pageId?: string | null;
   /**
    * The conversion to optimize towards, when the business has a pixel.
    *

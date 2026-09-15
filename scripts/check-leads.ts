@@ -21,6 +21,8 @@ import {
 import type { LeadField } from "@/lib/leads/fields";
 import { templateFor, templatedNiches } from "@/lib/leads/templates";
 import { allNiches } from "@/lib/tracking/niches";
+import { answersFrom } from "@/lib/leads/meta-form";
+import { metaObjectiveFor } from "@/lib/meta/campaigns";
 
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
@@ -266,6 +268,70 @@ console.log("\n— a form somebody built themselves still has to work —");
   ok(
     "keyFor does not collide with one already taken",
     keyFor("Phone", new Set(["phone"])) === "phone_2"
+  );
+}
+
+console.log("\n— answers come back from Meta onto the right questions —");
+{
+  // Meta returns a prefilled answer under its own name, not a key MAIRO chose,
+  // because toMetaQuestion deliberately sends only the type for those so Meta
+  // can fill them in. Getting this mapping wrong loses the contact details on
+  // every native lead while the rest of the form looks fine.
+  const fields: LeadField[] = [
+    { key: "name", type: "FULL_NAME", label: "Your name", required: true },
+    { key: "email", type: "EMAIL", label: "Email", required: true },
+    { key: "phone", type: "PHONE", label: "Phone", required: false },
+    { key: "timing", type: "CHOICE", label: "How soon?", required: true, options: ["Now", "Later"] },
+  ];
+
+  const answers = answersFrom(
+    {
+      id: "L1",
+      field_data: [
+        { name: "full_name", values: ["Sam Tester"] },
+        { name: "email", values: ["sam@example.com"] },
+        { name: "phone_number", values: ["+15551234567"] },
+        { name: "timing", values: ["Now"] },
+      ],
+    },
+    fields
+  );
+
+  ok("a prefilled name lands on MAIRO's key", answers.name === "Sam Tester");
+  ok("so does the email", answers.email === "sam@example.com");
+  ok("phone_number is understood as the phone", answers.phone === "+15551234567");
+  ok("and a question of MAIRO's own comes back under its own key", answers.timing === "Now");
+
+  // The contact lookup has to keep working on answers that arrived this way.
+  const contact = contactFrom(fields, answers);
+  ok("the email is still findable for attribution", contact.email === "sam@example.com");
+  ok("and the phone", contact.phone === "+15551234567");
+
+  const partial = answersFrom({ id: "L2", field_data: [{ name: "email", values: ["a@b.co"] }] }, fields);
+  ok("a form Meta only partly filled keeps what it had", partial.email === "a@b.co");
+  ok("and invents nothing for the rest", Object.keys(partial).length === 1);
+
+  ok(
+    "an empty submission maps to nothing rather than blank answers",
+    Object.keys(answersFrom({ id: "L3" }, fields)).length === 0
+  );
+}
+
+console.log("\n— an instant form changes the campaign, not only the button —");
+{
+  // Three things have to agree or Meta builds something that cannot collect a
+  // lead: the objective, the ad set's optimization goal, and the button.
+  ok(
+    "it is a leads objective whatever the customer picked",
+    metaObjectiveFor("SALES", false, true) === "OUTCOME_LEADS"
+  );
+  ok(
+    "and the no-pixel degrade does not apply to it",
+    metaObjectiveFor("LEADS", false, true) === "OUTCOME_LEADS"
+  );
+  ok(
+    "while a normal campaign is untouched by the flag",
+    metaObjectiveFor("SALES", true, false) === "OUTCOME_SALES"
   );
 }
 

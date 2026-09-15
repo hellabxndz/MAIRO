@@ -25,7 +25,16 @@ export type Destination =
    * to it, and Meta refuses the ad set outright when either is missing. So the
    * channel is asked rather than assumed, and checked before anything is built.
    */
-  | { type: "DIRECT_MESSAGE"; channel: MessageChannel };
+  | { type: "DIRECT_MESSAGE"; channel: MessageChannel }
+  /**
+   * Meta's own instant form, opening inside Facebook or Instagram.
+   *
+   * Carries the form's id on Meta rather than a URL, because nothing is being
+   * linked to — the form is part of the ad. Everything below has to know: the
+   * campaign objective, the ad set's promoted object and destination, and the
+   * button all differ from a link ad.
+   */
+  | { type: "INSTANT_FORM"; metaFormId: string };
 
 // LEAD_FORM is not a third shape here on purpose. A form MAIRO hosts is a page
 // with an address, so by the time an ad is built it IS a website destination —
@@ -40,6 +49,8 @@ export type DestinationSource = {
   formUrl?: string | null;
   /** Which inbox, for DIRECT_MESSAGE. Messenger when unsaid. */
   channel?: MessageChannel | null;
+  /** The form's id on Meta, when the campaign uses the native one. */
+  metaFormId?: string | null;
 };
 
 /**
@@ -65,6 +76,13 @@ export function resolveDestination(
   }
 
   if (type === "LEAD_FORM") {
+    // A native form is not a link, so it resolves to its own shape. Falling
+    // back to the hosted page when there is no Meta form id would be worse
+    // than failing: the customer asked for the in-app form and would get a
+    // landing page without being told.
+    if (campaign.metaFormId) {
+      return { type: "INSTANT_FORM", metaFormId: campaign.metaFormId };
+    }
     const url = campaign.formUrl ?? organization.formUrl ?? null;
     return url ? { type: "WEBSITE", url } : null;
   }

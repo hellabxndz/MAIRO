@@ -31,6 +31,7 @@ import {
   resolveDestination,
 } from "@/lib/campaigns/destination";
 import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
+import { pushFormToMeta } from "@/lib/leads/meta-form";
 import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
@@ -63,6 +64,8 @@ const createCampaignSchema = z.object({
   formAuthor: z.enum(["MAIRO", "OWN"]).nullish(),
   /** Which inbox a message ad opens. */
   messageChannel: z.enum(["MESSENGER", "INSTAGRAM", "WHATSAPP"]).nullish(),
+  /** Where the lead form lives: a page MAIRO hosts, or Meta's own. */
+  leadFormDelivery: z.enum(["HOSTED_PAGE", "META_NATIVE"]).nullish(),
 });
 
 export type CampaignActionState =
@@ -110,6 +113,7 @@ export async function createCampaignAction(
     destinationValue: formData.get("destinationValue"),
     formAuthor: formData.get("formAuthor"),
     messageChannel: formData.get("messageChannel"),
+    leadFormDelivery: formData.get("leadFormDelivery"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -211,6 +215,14 @@ export async function createCampaignAction(
       return { error: "MAIRO couldn't write your form just now. Try again in a moment." };
     }
     destinationUrl = leadFormUrl(form.slug, siteUrl());
+
+    // Meta's own form is created now rather than at launch, so a permission
+    // MAIRO does not have yet is refused here — where the customer is looking
+    // at the choice — instead of leaving a campaign half-built on the network.
+    if (parsed.data.leadFormDelivery === "META_NATIVE") {
+      const pushed = await pushFormToMeta(form.id);
+      if (!pushed.ok) return { error: pushed.error };
+    }
   } else if (rawDestination.length > 0) {
     if (destinationType === "PHONE_CALL") {
       destinationPhone = normalizePhone(rawDestination);
@@ -260,6 +272,7 @@ export async function createCampaignAction(
       url: destinationUrl,
       phone: destinationPhone,
       channel: parsed.data.messageChannel ?? "MESSENGER",
+      delivery: parsed.data.leadFormDelivery ?? "HOSTED_PAGE",
     },
   });
 

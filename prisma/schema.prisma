@@ -234,6 +234,19 @@ model MetaAdAccount {
   updatedAt   DateTime @updatedAt
 }
 
+/// Where a lead form actually lives.
+///
+/// HOSTED_PAGE is the page MAIRO writes and serves: it works today, needs no
+/// permission from anybody, and costs a tap and a page load. META_NATIVE is
+/// Meta's instant form, which opens inside Facebook or Instagram with the
+/// person's name and contact details already filled in — materially better
+/// conversion, and gated behind two App Review permissions this app does not
+/// have yet.
+enum LeadFormDelivery {
+  HOSTED_PAGE
+  META_NATIVE
+}
+
 /// Which inbox a click-to-message ad opens.
 ///
 /// Three different products wearing one word. Messenger needs only the Page,
@@ -546,6 +559,8 @@ model MairoCampaign {
   destinationPhone String?
   /// Which inbox, when destinationType is DIRECT_MESSAGE. Ignored otherwise.
   messageChannel   MessageChannel @default(MESSENGER)
+  /// Where the form lives, when destinationType is LEAD_FORM.
+  leadFormDelivery LeadFormDelivery @default(HOSTED_PAGE)
 
   /// The one number the customer entered. The children's budgets are derived
   /// from this and their allocation percentages, and are kept summing to it.
@@ -1060,9 +1075,13 @@ model LeadForm {
   /// LeadField[] as written by the template, then edited by the customer.
   fieldsJson  String @db.Text
 
-  /// Set once the same questions are pushed to a Facebook Page. Null until
-  /// then, which is every form today.
-  metaFormId String?
+  /// Set once the same questions are pushed to a Facebook Page.
+  metaFormId   String?
+  /// When submissions were last pulled off Meta, so a sync asks only for what
+  /// is new rather than re-reading the whole history each time.
+  metaSyncedAt DateTime?
+  /// Why the last push or sync failed, kept so the customer can be told.
+  metaError    String?   @db.Text
 
   leads Lead[]
 
@@ -1104,6 +1123,12 @@ model Lead {
 
   /// Meta's click id, if the ad carried one. The strongest match there is.
   clickId String?
+
+  /// Meta's own id for a submission on a native form.
+  ///
+  /// Unique, because a sync that runs twice must not store the same person
+  /// twice — and a sync will run twice, on every schedule and every retry.
+  externalLeadId String? @unique
 
   createdAt DateTime @default(now())
 

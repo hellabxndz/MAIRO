@@ -100,8 +100,10 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
   const cta =
     input.destination.type === "PHONE_CALL"
       ? "CALL_NOW"
-      : input.destination.type === "DIRECT_MESSAGE"
-        ? CHANNEL_META[input.destination.channel].cta
+      : input.destination.type === "INSTANT_FORM"
+        ? "SIGN_UP"
+        : input.destination.type === "DIRECT_MESSAGE"
+          ? CHANNEL_META[input.destination.channel].cta
         : input.callToAction && META_CTA_TYPES.has(input.callToAction)
           ? input.callToAction
           : "LEARN_MORE";
@@ -117,7 +119,11 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
   const buttonValue: Record<string, unknown> =
     input.destination.type === "PHONE_CALL"
       ? { link: `tel:${input.destination.phone}` }
-      : input.destination.type === "DIRECT_MESSAGE"
+      : input.destination.type === "INSTANT_FORM"
+        ? // The form itself, attached to the button. Nothing is linked to — the
+          // form opens inside the app, which is the whole point of it.
+          { lead_gen_form_id: input.destination.metaFormId }
+        : input.destination.type === "DIRECT_MESSAGE"
         ? // A thread rather than a link. app_destination is what turns this
           // from a button that opens the Page into one that opens the inbox,
           // and it has to name the same inbox the ad set does.

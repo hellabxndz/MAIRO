@@ -24,7 +24,7 @@ import {
   resolveDestination,
 } from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
-import { metaAdapter } from "@/lib/ad-platforms/meta/adapter";
+import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
 
@@ -271,6 +271,86 @@ console.log("\n— the campaign names its own bid strategy —");
     String(body.bid_strategy)
   );
   ok("no bid_amount is sent with it", body.bid_amount === undefined);
+}
+
+console.log("\n— the ad set Meta is actually sent —");
+{
+  const base = {
+    organizationId: "org",
+    externalCampaignId: "c1",
+    name: "n",
+    dailyBudgetCents: 2000,
+    goal: "LEADS" as const,
+    campaignOwnsBudget: true,
+    pageId: "PAGE1",
+  };
+
+  const website = metaAdSetBody({ ...base, destination: { type: "WEBSITE", url: "https://x.test" } });
+  ok("a website ad set names no destination type", website.destination_type === undefined);
+  ok(
+    "and optimizes for clicks with no pixel",
+    website.optimization_goal === "LINK_CLICKS",
+    String(website.optimization_goal)
+  );
+
+  const form = metaAdSetBody({
+    ...base,
+    destination: { type: "INSTANT_FORM", metaFormId: "FORM1" },
+  });
+  ok("an instant form keeps people on the ad", form.destination_type === "ON_AD", String(form.destination_type));
+  ok(
+    "and optimizes for the form being filled in",
+    form.optimization_goal === "LEAD_GENERATION",
+    String(form.optimization_goal)
+  );
+  ok(
+    "and names the Page the form belongs to",
+    form.promoted_object === JSON.stringify({ page_id: "PAGE1" }),
+    String(form.promoted_object)
+  );
+
+  // The one that shipped broken: promoted_object is a single field, and the
+  // pixel branch came second, so a business that had tracking set up lost the
+  // Page off its own lead ad — an ON_AD ad set naming no Page, which Meta
+  // refuses outright.
+  const formWithPixel = metaAdSetBody({
+    ...base,
+    destination: { type: "INSTANT_FORM", metaFormId: "FORM1" },
+    conversion: { pixelId: "PIX1", event: "Lead" },
+  });
+  ok(
+    "a pixel does not take the Page's place on an instant form",
+    formWithPixel.promoted_object === JSON.stringify({ page_id: "PAGE1" }),
+    String(formWithPixel.promoted_object)
+  );
+  ok(
+    "and the form still optimizes for leads, not offsite conversions",
+    formWithPixel.optimization_goal === "LEAD_GENERATION",
+    String(formWithPixel.optimization_goal)
+  );
+
+  // The pixel is still the right promoted_object everywhere else.
+  const sale = metaAdSetBody({
+    ...base,
+    goal: "SALES",
+    destination: { type: "WEBSITE", url: "https://x.test" },
+    conversion: { pixelId: "PIX1", event: "Purchase" },
+  });
+  ok(
+    "a website sale still promotes the pixel",
+    String(sale.promoted_object).includes("PIX1"),
+    String(sale.promoted_object)
+  );
+
+  const dm = metaAdSetBody({
+    ...base,
+    destination: { type: "DIRECT_MESSAGE", channel: "WHATSAPP" },
+  });
+  ok(
+    "a WhatsApp ad set says where the thread opens",
+    dm.destination_type === CHANNEL_META.WHATSAPP.destinationType,
+    String(dm.destination_type)
+  );
 }
 
 console.log("\n— a Graph error says something a person can act on —");
