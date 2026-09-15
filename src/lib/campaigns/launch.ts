@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { AdDestination, AdGoal, AdPlatform } from "@/generated/prisma/enums";
+import type { AdDestination, AdGoal, AdPlatform, MessageChannel } from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import type { Allocation } from "@/lib/budget/allocation";
@@ -88,6 +88,7 @@ export type CreateMairoCampaignInput = {
     type: AdDestination;
     url?: string | null;
     phone?: string | null;
+    channel?: MessageChannel | null;
   };
 };
 
@@ -117,6 +118,7 @@ export async function createMairoCampaign(
       destinationType: input.destination?.type ?? "WEBSITE",
       destinationUrl: input.destination?.url ?? null,
       destinationPhone: input.destination?.phone ?? null,
+      messageChannel: input.destination?.channel ?? "MESSENGER",
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
@@ -561,7 +563,12 @@ async function destinationFor(
   const [campaign, organization] = await Promise.all([
     db.mairoCampaign.findUnique({
       where: { id: mairoCampaignId },
-      select: { destinationType: true, destinationUrl: true, destinationPhone: true },
+      select: {
+        destinationType: true,
+        destinationUrl: true,
+        destinationPhone: true,
+        messageChannel: true,
+      },
     }),
     db.organization.findUnique({
       where: { id: organizationId },
@@ -571,7 +578,12 @@ async function destinationFor(
   if (!campaign || !organization) return null;
 
   return resolveDestination(
-    { type: campaign.destinationType, url: campaign.destinationUrl, phone: campaign.destinationPhone },
+    {
+      type: campaign.destinationType,
+      url: campaign.destinationUrl,
+      phone: campaign.destinationPhone,
+      channel: campaign.messageChannel,
+    },
     { type: organization.defaultDestination, url: organization.website, phone: organization.phone }
   );
 }

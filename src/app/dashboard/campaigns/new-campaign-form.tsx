@@ -96,6 +96,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   // Only asked when they pick a form, and only when they do not already have
   // one — once a form exists, the campaign uses it and this question is noise.
   const [formAuthor, setFormAuthor] = useState<"MAIRO" | "OWN">("MAIRO");
+  // Which inbox a message ad opens. Messenger needs nothing; the other two
+  // depend on the Page having Instagram or WhatsApp attached to it.
+  const [channel, setChannel] = useState<"MESSENGER" | "INSTAGRAM" | "WHATSAPP">("MESSENGER");
   const [growthMode, setGrowthMode] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeCopy | null>(null);
 
@@ -348,13 +351,51 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
               )}
             </div>
           ) : destinationType === "DIRECT_MESSAGE" ? (
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-              <p className="text-sm text-neutral-300">
-                The ad opens a Messenger chat with your Facebook Page — the one MAIRO is already
-                posting the ad as. Nothing to set up, and nothing for you to type here.
-              </p>
-              <p className="mt-2 text-xs text-neutral-600">
-                Replies land in your Page inbox, not in MAIRO.
+            <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <p className="text-sm text-neutral-300">Which inbox should it open?</p>
+              <input type="hidden" name="messageChannel" value={channel} />
+              <div className="grid gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    {
+                      key: "MESSENGER" as const,
+                      label: "Messenger",
+                      sub: "Nothing to set up",
+                    },
+                    {
+                      key: "INSTAGRAM" as const,
+                      label: "Instagram",
+                      sub: "Needs Instagram linked to your Page",
+                    },
+                    {
+                      key: "WHATSAPP" as const,
+                      label: "WhatsApp",
+                      sub: "Needs a number connected to your Page",
+                    },
+                  ]
+                ).map((c) => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    aria-pressed={channel === c.key}
+                    onClick={() => setChannel(c.key)}
+                    className={`rounded-lg border p-3 text-left transition ${
+                      channel === c.key
+                        ? "border-white/30 bg-white/[0.06]"
+                        : "border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <p className="text-sm text-white">{c.label}</p>
+                    <p className="mt-0.5 text-xs text-neutral-500">{c.sub}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs leading-relaxed text-neutral-600">
+                {channel === "MESSENGER"
+                  ? "Opens a chat with the Facebook Page MAIRO already posts your ads as. Replies land in your Page inbox, not in MAIRO."
+                  : channel === "INSTAGRAM"
+                    ? "MAIRO checks your Page has an Instagram account before it builds this, and tells you if it doesn't. Replies land in your Instagram inbox."
+                    : "Your Page needs a WhatsApp number connected to it in Meta Business settings. MAIRO can't check that in advance — if it's missing, Meta refuses the ad and the reason appears on the campaign."}
               </p>
             </div>
           ) : (

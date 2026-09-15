@@ -17,6 +17,8 @@ import {
 import { metaCustomEventType } from "@/lib/meta/creatives";
 import { metaObjectiveFor, metaCampaignBody } from "@/lib/meta/campaigns";
 import {
+  CHANNEL_LABELS,
+  CHANNEL_META,
   normalizePhone,
   normalizeUrl,
   resolveDestination,
@@ -196,9 +198,9 @@ console.log("\n— a conversation is a destination that asks for nothing —");
   // one destination MAIRO can offer without asking the business for anything.
   const dm = { type: "DIRECT_MESSAGE" as const };
   ok(
-    "it resolves with no value stored anywhere",
+    "it resolves with no value beyond which inbox",
     JSON.stringify(resolveDestination(dm, { type: "WEBSITE" })) ===
-      JSON.stringify({ type: "DIRECT_MESSAGE" })
+      JSON.stringify({ type: "DIRECT_MESSAGE", channel: "MESSENGER" })
   );
   ok(
     "the campaign's type decides, never the business's",
@@ -208,6 +210,45 @@ console.log("\n— a conversation is a destination that asks for nothing —");
   ok(
     "and it never falls through to needing a website",
     resolveDestination(dm, { type: "WEBSITE", url: "" }) !== null
+  );
+}
+
+console.log("\n— every inbox is named the same way in all three places —");
+{
+  // An ad set saying MESSENGER under a creative whose button opens Instagram
+  // is accepted by Meta and then delivers to neither properly. The three names
+  // live together in CHANNEL_META so they cannot drift; this is the check that
+  // they were all filled in.
+  for (const channel of ["MESSENGER", "INSTAGRAM", "WHATSAPP"] as const) {
+    const m = CHANNEL_META[channel];
+    ok(`${channel}: the ad set has a destination type`, m.destinationType.length > 0);
+    ok(`${channel}: the button has a call to action`, m.cta.length > 0);
+    ok(`${channel}: the button names an app destination`, m.appDestination.length > 0);
+    ok(`${channel}: it has a name a person would recognise`, CHANNEL_LABELS[channel].length > 0);
+  }
+
+  // Each one has to be distinct, or two channels quietly become the same ad.
+  const types = (["MESSENGER", "INSTAGRAM", "WHATSAPP"] as const).map(
+    (c) => CHANNEL_META[c].destinationType
+  );
+  ok("no two inboxes share a destination type", new Set(types).size === 3, types.join(", "));
+
+  const ctas = (["MESSENGER", "INSTAGRAM", "WHATSAPP"] as const).map((c) => CHANNEL_META[c].cta);
+  ok("no two inboxes share a button", new Set(ctas).size === 3, ctas.join(", "));
+
+  // The channel travels with the destination, defaulted rather than undefined.
+  const resolved = resolveDestination(
+    { type: "DIRECT_MESSAGE", channel: "WHATSAPP" },
+    { type: "WEBSITE" }
+  );
+  ok(
+    "the chosen inbox survives resolution",
+    JSON.stringify(resolved) === JSON.stringify({ type: "DIRECT_MESSAGE", channel: "WHATSAPP" })
+  );
+  ok(
+    "and an unsaid one falls back to Messenger rather than nothing",
+    JSON.stringify(resolveDestination({ type: "DIRECT_MESSAGE" }, { type: "WEBSITE" })) ===
+      JSON.stringify({ type: "DIRECT_MESSAGE", channel: "MESSENGER" })
   );
 }
 

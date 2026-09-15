@@ -234,6 +234,19 @@ model MetaAdAccount {
   updatedAt   DateTime @updatedAt
 }
 
+/// Which inbox a click-to-message ad opens.
+///
+/// Three different products wearing one word. Messenger needs only the Page,
+/// which MAIRO already has. Instagram needs an Instagram account linked to that
+/// Page. WhatsApp needs a WhatsApp number connected to it. A business picking
+/// the wrong one gets a refusal from Meta rather than a broken ad, which is why
+/// this is asked rather than guessed.
+enum MessageChannel {
+  MESSENGER
+  INSTAGRAM
+  WHATSAPP
+}
+
 /// Where an ad sends the person who clicks it.
 ///
 /// Not a style choice — Meta builds a different creative for each, and asking
@@ -531,6 +544,8 @@ model MairoCampaign {
   destinationType  AdDestination @default(WEBSITE)
   destinationUrl   String?
   destinationPhone String?
+  /// Which inbox, when destinationType is DIRECT_MESSAGE. Ignored otherwise.
+  messageChannel   MessageChannel @default(MESSENGER)
 
   /// The one number the customer entered. The children's budgets are derived
   /// from this and their allocation percentages, and are kept summing to it.

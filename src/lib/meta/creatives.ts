@@ -1,6 +1,6 @@
 import { metaGraphRequest } from "@/lib/meta/client";
 import { META_CTA_TYPES } from "@/lib/meta/creative-copy";
-import type { Destination } from "@/lib/campaigns/destination";
+import { CHANNEL_META, type Destination } from "@/lib/campaigns/destination";
 
 // Turning a picture and some copy into an ad that can actually run.
 //
@@ -101,7 +101,7 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
     input.destination.type === "PHONE_CALL"
       ? "CALL_NOW"
       : input.destination.type === "DIRECT_MESSAGE"
-        ? "MESSAGE_PAGE"
+        ? CHANNEL_META[input.destination.channel].cta
         : input.callToAction && META_CTA_TYPES.has(input.callToAction)
           ? input.callToAction
           : "LEARN_MORE";
@@ -118,9 +118,10 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
     input.destination.type === "PHONE_CALL"
       ? { link: `tel:${input.destination.phone}` }
       : input.destination.type === "DIRECT_MESSAGE"
-        ? // Messenger rather than a link. app_destination is what turns this
-          // from a button that opens the Page into one that opens a thread.
-          { app_destination: "MESSENGER", link: `https://m.me/${input.pageId}` }
+        ? // A thread rather than a link. app_destination is what turns this
+          // from a button that opens the Page into one that opens the inbox,
+          // and it has to name the same inbox the ad set does.
+          { app_destination: CHANNEL_META[input.destination.channel].appDestination }
         : { link: input.destination.url };
 
   return metaGraphRequest<{ id: string }>(`/${input.adAccountId}/adcreatives`, {

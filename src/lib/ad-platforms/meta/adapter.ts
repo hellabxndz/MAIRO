@@ -19,6 +19,8 @@ import { MetaApiError, metaGraphRequest } from "@/lib/meta/client";
 import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { isSchedulable, metaStartTime } from "@/lib/campaigns/schedule";
+import { CHANNEL_META } from "@/lib/campaigns/destination";
+import { findInstagramAccount } from "@/lib/instagram/publish";
 import {
   createAdCreative,
   createMetaAd,
@@ -217,6 +219,25 @@ export const metaAdapter: AdPlatformAdapter = {
     const loaded = await credentialsOr<CreatedEntity>(input.organizationId);
     if (!loaded.ok) return loaded.result;
 
+    // An Instagram thread needs an Instagram account on the Page. Checked here
+    // because Meta's refusal for this names destination_type and not Instagram,
+    // and because the answer is one Graph call MAIRO already knows how to make
+    // — far better than a customer reading "Invalid parameter" and having no
+    // idea their Page was never linked.
+    if (
+      input.destination?.type === "DIRECT_MESSAGE" &&
+      input.destination.channel === "INSTAGRAM"
+    ) {
+      const account = await findInstagramAccount(input.organizationId);
+      if (!account.ok) return fail("rejected", account.error.message);
+      if (!account.data) {
+        return fail(
+          "rejected",
+          "This ad opens Instagram messages, but no Instagram account is linked to your Facebook Page. Link one in Meta Business settings, then launch again."
+        );
+      }
+    }
+
     try {
       // Which conversion this can honestly chase. Without a pixel there is
       // nothing for Meta to optimize towards, so asking for purchases would be
@@ -242,7 +263,7 @@ export const metaAdapter: AdPlatformAdapter = {
             // deliver a message ad into the inbox rather than treating it as
             // an ordinary link ad with an unusual button.
             ...(input.destination?.type === "DIRECT_MESSAGE"
-              ? { destination_type: "MESSENGER" }
+              ? { destination_type: CHANNEL_META[input.destination.channel].destinationType }
               : {}),
             // When the customer booked a start. Sent as ISO 8601 in UTC, which
             // Meta converts into the ad account's own timezone — safer than

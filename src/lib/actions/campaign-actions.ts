@@ -61,6 +61,8 @@ const createCampaignSchema = z.object({
   destinationValue: z.string().trim().max(2000).nullish(),
   /** Who writes the lead form, when one is being made now. */
   formAuthor: z.enum(["MAIRO", "OWN"]).nullish(),
+  /** Which inbox a message ad opens. */
+  messageChannel: z.enum(["MESSENGER", "INSTAGRAM", "WHATSAPP"]).nullish(),
 });
 
 export type CampaignActionState =
@@ -107,6 +109,7 @@ export async function createCampaignAction(
     destinationType: formData.get("destinationType"),
     destinationValue: formData.get("destinationValue"),
     formAuthor: formData.get("formAuthor"),
+    messageChannel: formData.get("messageChannel"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -252,7 +255,12 @@ export async function createCampaignAction(
     tiktokGrowthMode,
     startAt,
     startTimeZone: startAt ? startTimeZone : null,
-    destination: { type: destinationType, url: destinationUrl, phone: destinationPhone },
+    destination: {
+      type: destinationType,
+      url: destinationUrl,
+      phone: destinationPhone,
+      channel: parsed.data.messageChannel ?? "MESSENGER",
+    },
   });
 
   revalidatePath("/dashboard/campaigns");

@@ -1,4 +1,4 @@
-import type { AdDestination } from "@/generated/prisma/enums";
+import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
 
 // Where a click goes, and whether MAIRO has what it needs to send it there.
 //
@@ -17,13 +17,15 @@ export type Destination =
   | { type: "WEBSITE"; url: string }
   | { type: "PHONE_CALL"; phone: string }
   /**
-   * A conversation in Messenger with the Page that publishes the ad.
+   * A conversation, in one of three inboxes.
    *
-   * Carries no value of its own, and that is the point: the Page is already
-   * chosen on the Meta connection screen, so this is the one destination
-   * MAIRO can offer without asking the business for anything at all.
+   * Messenger asks the business for nothing — the Page is already chosen on
+   * the Meta connection screen. The other two are not free: Instagram needs an
+   * Instagram account linked to that Page, WhatsApp needs a number connected
+   * to it, and Meta refuses the ad set outright when either is missing. So the
+   * channel is asked rather than assumed, and checked before anything is built.
    */
-  | { type: "DIRECT_MESSAGE" };
+  | { type: "DIRECT_MESSAGE"; channel: MessageChannel };
 
 // LEAD_FORM is not a third shape here on purpose. A form MAIRO hosts is a page
 // with an address, so by the time an ad is built it IS a website destination —
@@ -36,6 +38,8 @@ export type DestinationSource = {
   phone?: string | null;
   /** The public address of the MAIRO-hosted form, when there is one. */
   formUrl?: string | null;
+  /** Which inbox, for DIRECT_MESSAGE. Messenger when unsaid. */
+  channel?: MessageChannel | null;
 };
 
 /**
@@ -56,7 +60,9 @@ export function resolveDestination(
   // default really applies is the campaign form, which pre-fills from it.
   const type = campaign.type;
 
-  if (type === "DIRECT_MESSAGE") return { type: "DIRECT_MESSAGE" };
+  if (type === "DIRECT_MESSAGE") {
+    return { type: "DIRECT_MESSAGE", channel: campaign.channel ?? "MESSENGER" };
+  }
 
   if (type === "LEAD_FORM") {
     const url = campaign.formUrl ?? organization.formUrl ?? null;
@@ -140,3 +146,38 @@ export function describeMissing(type: AdDestination): string {
   }
   return "This campaign sends people to your website, but there's no address on it yet. Add the page you want them to land on.";
 }
+
+/** What each inbox is called where somebody picks one. */
+export const CHANNEL_LABELS: Record<MessageChannel, string> = {
+  MESSENGER: "Messenger",
+  INSTAGRAM: "Instagram",
+  WHATSAPP: "WhatsApp",
+};
+
+/**
+ * What Meta calls this inbox at the ad set level, and on the button.
+ *
+ * Three names for one idea, and all three have to agree: an ad set saying
+ * MESSENGER under a creative whose button opens Instagram is accepted and then
+ * delivers to neither properly. Kept together here so they cannot drift.
+ */
+export const CHANNEL_META: Record<
+  MessageChannel,
+  { destinationType: string; cta: string; appDestination: string }
+> = {
+  MESSENGER: {
+    destinationType: "MESSENGER",
+    cta: "MESSAGE_PAGE",
+    appDestination: "MESSENGER",
+  },
+  INSTAGRAM: {
+    destinationType: "INSTAGRAM_DIRECT",
+    cta: "INSTAGRAM_MESSAGE",
+    appDestination: "INSTAGRAM_DIRECT",
+  },
+  WHATSAPP: {
+    destinationType: "WHATSAPP",
+    cta: "WHATSAPP_MESSAGE",
+    appDestination: "WHATSAPP",
+  },
+};
