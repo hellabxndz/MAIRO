@@ -34,6 +34,22 @@ import {
 /** How long without an event before a pixel is treated as not working. */
 const STALE_AFTER_HOURS = 48;
 
+/**
+ * Whether a campaign should optimize towards this pixel.
+ *
+ * Only ACTIVE, which PixelStatus documents as "the only good state" — the
+ * network has actually seen an event from it. A pixel that exists but has
+ * never fired is a pixel nobody installed, and asking an ad network to find
+ * people likely to trigger an event it has no examples of is accepted and then
+ * quietly under-delivers.
+ *
+ * Its own function so the launch path and this file cannot drift on what
+ * "has tracking" means.
+ */
+export function canOptimizeTowards(status: PixelStatus): boolean {
+  return status === "ACTIVE";
+}
+
 export type PixelSnapshot = {
   platform: AdPlatform;
   pixelId: string;

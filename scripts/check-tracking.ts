@@ -28,6 +28,7 @@ import {
   countMatchFields,
 } from "@/lib/tracking/hash";
 import { compareRoas, explainReading, type MeasuredSales } from "@/lib/tracking/roas";
+import { canOptimizeTowards } from "@/lib/tracking/pixels";
 
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
@@ -209,6 +210,18 @@ console.log("\n— money conversion —");
   ok("19.99 is 1999 cents, not 1998", toCents(19.99) === 1999);
   ok("0.07 is 7 cents", toCents(0.07) === 7);
   ok("a big order survives the round trip", toUnits(toCents(12345.67)) === 12345.67);
+}
+
+console.log("\n— only a pixel that has fired is worth optimizing towards —");
+{
+  // The row existing was being read as "this business has tracking", which is
+  // a different claim. A pixel MAIRO created and nobody installed sends the
+  // campaign after conversions the network has never once observed; it is
+  // accepted, it does not deliver, and the customer sees an ad that never ran.
+  ok("a pixel the network has seen events from counts", canOptimizeTowards("ACTIVE"));
+  ok("created but never installed does not", !canOptimizeTowards("PENDING"));
+  ok("installed but silent does not", !canOptimizeTowards("NO_EVENTS"));
+  ok("and a pixel the network refused to discuss does not", !canOptimizeTowards("ERROR"));
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

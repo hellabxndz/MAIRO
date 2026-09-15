@@ -4,6 +4,7 @@ import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import type { Allocation } from "@/lib/budget/allocation";
 import { nicheById, primaryAction } from "@/lib/tracking/niches";
+import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
 
 // Turning one Mairo campaign into real campaigns on real networks.
@@ -347,6 +348,23 @@ async function conversionTargetFor(
     where: { organizationId_platform: { organizationId, platform } },
   });
   if (!pixel) return null;
+
+  // Existing is not the same as working, and the difference decides whether
+  // the campaign delivers. A pixel row means MAIRO created one on the ad
+  // account; it says nothing about whether the code ever reached a website.
+  // PixelStatus spells this out — ACTIVE is documented as "the only good
+  // state" — and the tracking page shows "Not seeing anything" for the rest.
+  //
+  // Optimizing towards an event the network has never once observed is
+  // accepted without complaint and then under-delivers indefinitely: Meta
+  // hunts for people likely to do a thing it has no examples of. On a small
+  // daily budget that is the difference between an ad that serves and an ad
+  // that does not, and the customer sees only the second one.
+  //
+  // So an unfired pixel is treated as no pixel. The campaign asks for traffic,
+  // which is honest and which runs. The moment the pixel reports its first
+  // event, the next campaign asks for conversions properly.
+  if (!canOptimizeTowards(pixel.status)) return null;
 
   const profile = await db.trackingProfile.findUnique({ where: { organizationId } });
   const niche = nicheById(profile?.nicheId ?? "general");
