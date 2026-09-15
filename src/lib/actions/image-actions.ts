@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createAdImage, editAdImage, imageGenerationConfigured } from "@/lib/ai/image";
 import { reviewAdImage } from "@/lib/ai/review";
-import { MAX_FINAL_IMAGES, MAX_REVISIONS } from "@/lib/creative-limits";
+import { MAX_FINAL_IMAGES, MAX_REVISIONS, OWN_PHOTO_LABEL } from "@/lib/creative-limits";
 import { activeOrganizationId } from "@/lib/active-org";
 
 export type ImageActionState = { error?: string } | undefined;
@@ -120,6 +120,67 @@ export async function generateAdImageAction(
           : "The AI couldn't make that picture. Try describing it differently.",
     };
   }
+}
+
+/**
+ * Runs the customer's own photo as the ad, with nothing generated.
+ *
+ * The studio treats an uploaded photo purely as raw material: it is the
+ * sourceImage the first pass is built from, and there was no way to say "the
+ * photo is the ad". That is a real thing to want. A bakery with a good picture
+ * of its own cake does not need it reimagined, and a business with a design
+ * they already paid for should not have to get an approximation of it back.
+ *
+ * It becomes an image row like any other so everything downstream — choosing,
+ * removing, the Meta upload — works unchanged, and it goes through exactly the
+ * same safety review, because what matters is that an advertisement was
+ * checked, not who drew it.
+ */
+export async function runOwnPhotoAsAdAction(
+  creativeRequestId: string
+): Promise<ImageActionState> {
+  const request = await loadOwnedRequest(creativeRequestId);
+  if (!request) return { error: "Not found" };
+
+  if (request.status === "BLOCKED") {
+    return { error: "This request was blocked, so it can't be turned into an ad." };
+  }
+  if (!request.referenceImage) {
+    return { error: "There's no photo on this request to use." };
+  }
+
+  const alreadyChosen = request.images.filter((i) => i.isFinal).length;
+  if (alreadyChosen >= MAX_FINAL_IMAGES) {
+    return {
+      error: `You've already chosen ${MAX_FINAL_IMAGES} pictures for this campaign. Remove one to swap this in.`,
+    };
+  }
+
+  // Already sitting in the studio — choose that row rather than making a
+  // second copy of the same bytes.
+  const existing = request.images.find((i) => i.instruction === OWN_PHOTO_LABEL);
+  if (existing) return chooseImageAction(existing.id);
+
+  const created = await db.creativeImage.create({
+    data: {
+      creativeRequestId,
+      version: (request.images[0]?.version ?? 0) + 1,
+      imageData: request.referenceImage,
+      instruction: OWN_PHOTO_LABEL,
+    },
+  });
+
+  const result = await chooseImageAction(created.id);
+
+  // Blocked or unreviewable, so it is not running. Drop the row rather than
+  // leaving a second copy of the photo in the database looking like a draft
+  // the customer asked for.
+  if (result?.error) {
+    await db.creativeImage.delete({ where: { id: created.id } }).catch(() => {});
+    revalidatePath("/dashboard/creatives");
+  }
+
+  return result;
 }
 
 /**

@@ -7,8 +7,9 @@ import {
   generateAdImageAction,
   chooseImageAction,
   unchooseImageAction,
+  runOwnPhotoAsAdAction,
 } from "@/lib/actions/image-actions";
-import { MAX_FINAL_IMAGES } from "@/lib/creative-limits";
+import { MAX_FINAL_IMAGES, OWN_PHOTO_LABEL } from "@/lib/creative-limits";
 import { inputClass, primaryButtonClass } from "@/components/ui";
 
 export type StudioImage = {
@@ -39,12 +40,21 @@ export function ImageStudio({
   const finals = images.filter((i) => i.isFinal);
   const draft = images.find((i) => !i.isFinal);
   const current = draft ?? finals[finals.length - 1];
+  const ownPhotoChosen = finals.some((i) => i.instruction === OWN_PHOTO_LABEL);
   const busy = generating || choosing;
 
   function choose(id: string) {
     startChoosing(async () => {
       setChooseError(null);
       const result = await chooseImageAction(id);
+      if (result?.error) setChooseError(result.error);
+    });
+  }
+
+  function runOwnPhoto() {
+    startChoosing(async () => {
+      setChooseError(null);
+      const result = await runOwnPhotoAsAdAction(creativeRequestId);
       if (result?.error) setChooseError(result.error);
     });
   }
@@ -129,7 +139,7 @@ export function ImageStudio({
       ) : (
         <p className="text-sm text-neutral-400">
           No picture yet. Make the first one from the photo you uploaded and the concept
-          above.
+          above — or run your photo as it is.
         </p>
       )}
 
@@ -150,6 +160,19 @@ export function ImageStudio({
                 ? "Make the change"
                 : "Make the first picture"}
           </button>
+          {/* Not everyone wants their photo reimagined. A business with a
+              picture it is happy with — or a design it already paid for —
+              should be able to run that, rather than an approximation of it. */}
+          {hasReference && !ownPhotoChosen && finals.length < MAX_FINAL_IMAGES && (
+            <button
+              type="button"
+              onClick={runOwnPhoto}
+              disabled={busy}
+              className="rounded-lg border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.1em] text-neutral-300 transition hover:border-white hover:bg-white hover:text-black disabled:opacity-40"
+            >
+              {choosing ? "Checking…" : "Use my photo as the ad"}
+            </button>
+          )}
           {generating && (
             <span className="text-xs text-neutral-500">
               Editing a picture takes a few seconds.

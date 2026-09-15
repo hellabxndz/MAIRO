@@ -18,3 +18,15 @@ export const MAX_FINAL_IMAGES = 2;
  * clicker shouldn't be able to spend without bound.
  */
 export const MAX_REVISIONS = 25;
+
+/**
+ * Marks an image row as the customer's own photo rather than a generated pass.
+ *
+ * Stored in a CreativeImage's `instruction`, because that column already means
+ * "how this version came about" and the studio prints it back to them. It is
+ * also what stops a second click making a duplicate row of identical bytes.
+ *
+ * Here rather than beside the action that writes it for the reason at the top
+ * of this file: a "use server" module cannot export a constant.
+ */
+export const OWN_PHOTO_LABEL = "your own photo, used as the ad";
