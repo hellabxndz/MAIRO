@@ -298,3 +298,26 @@ export function validateFields(raw: LeadField[]): FieldsCheck {
 
   return { ok: true, fields };
 }
+
+/**
+ * Whether a business is shown the Enquiries screen at all.
+ *
+ * Most businesses never collect an enquiry — a shop sending people to its
+ * website has no form and no use for the page — so it is not a permanent
+ * sidebar item. It appears when it starts being true, which for almost
+ * everyone is the moment a campaign picks "fill in a form" and MAIRO writes
+ * one.
+ *
+ * Deliberately any form, not Meta's instant form. A business on the page MAIRO
+ * hosts collects exactly the same enquiries onto exactly this screen, and
+ * narrowing this to the native form would hide real leads from the people they
+ * belong to.
+ *
+ * Having a form is the whole condition, and the schema is why: Lead.leadFormId
+ * is required and cascades, so a form cannot be deleted while leaving its
+ * enquiries behind — they go with it. There is no state where a business has
+ * enquiries and no form, so there is nothing else to check for.
+ */
+export function showsEnquiries(input: { hasForm: boolean }): boolean {
+  return input.hasForm;
+}

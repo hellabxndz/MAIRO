@@ -10,6 +10,7 @@ import { hasSeenTour } from "@/lib/actions/tour-actions";
 import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
+import { showsEnquiries } from "@/lib/leads/fields";
 
 const NAV = [
   { href: "/dashboard", label: "Overview" },
@@ -28,7 +29,9 @@ const NAV = [
   // Meta's own failure modes.
   // Next to Creatives and before "where you advertise": the enquiries an ad
   // produced matter more day to day than the plumbing that produced them.
-  { href: "/dashboard/leads", label: "Enquiries" },
+  //
+  // Only for businesses that actually collect them — see collectsLeads below.
+  { href: "/dashboard/leads", label: "Enquiries", whenCollectingLeads: true },
   { href: "/dashboard/integrations", label: "Where you advertise" },
   // Sits next to "where you advertise" because it is the other half of the
   // same setup: one says where the ads run, this says how you find out whether
@@ -73,12 +76,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
-  const [organization, intake, metaAccount, seenTour] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour, leadForm] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
+    db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
   ]);
+
+  // Whether this business collects enquiries at all. The rule itself, and why
+  // it is wider than "uses Meta's instant form", is in showsEnquiries.
+  const collectsLeads = showsEnquiries({ hasForm: Boolean(leadForm) });
 
   // Enforce the intended funnel: sign up -> onboarding -> connect Meta ->
   // rest of the dashboard. /dashboard/meta itself is exempt from the second
@@ -97,7 +105,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardShell
-      navItems={NAV}
+      navItems={NAV.filter((item) => !item.whenCollectingLeads || collectsLeads)}
       brandLabel="MAIRO"
       subtitle={organization?.name}
       onSignOut={signOutAction}

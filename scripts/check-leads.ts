@@ -14,6 +14,7 @@ import {
   MAX_FIELDS,
   contactFrom,
   keyFor,
+  showsEnquiries,
   toMetaQuestion,
   validateAnswer,
   validateFields,
@@ -333,6 +334,16 @@ console.log("\n— an instant form changes the campaign, not only the button —
     "while a normal campaign is untouched by the flag",
     metaObjectiveFor("SALES", true, false) === "OUTCOME_SALES"
   );
+}
+
+console.log("\n— who is shown the Enquiries screen —");
+{
+  ok("a business with no form is not", !showsEnquiries({ hasForm: false }));
+  // Any form, which is the point: hasForm does not distinguish the page MAIRO
+  // hosts from Meta's own, so narrowing this to the instant form would mean
+  // changing the query in the layout — and hiding the hosted form's enquiries
+  // from the businesses collecting them.
+  ok("a business with one is, the moment it has it", showsEnquiries({ hasForm: true }));
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
