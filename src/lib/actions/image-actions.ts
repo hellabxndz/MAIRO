@@ -166,7 +166,10 @@ export async function chooseImageAction(imageId: string): Promise<ImageActionSta
     if (review.verdict === "BLOCK") {
       await db.creativeImage.update({
         where: { id: imageId },
-        data: { reviewedAt: new Date(), reviewNotes: review.reason },
+        data: {
+          reviewedAt: new Date(),
+          reviewNotes: review.reason || "That picture can't run as an ad.",
+        },
       });
       revalidatePath("/dashboard/creatives");
       return {

@@ -11,7 +11,7 @@
 // jumps is the case a single-pass offset conversion gets wrong, and it only
 // happens twice a year — which means it ships.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import {
   describeStart,
   instantFromLocal,
@@ -254,6 +254,17 @@ console.log("\n— the cron that fires a booked start —");
   };
   const crons = config.crons ?? [];
   ok("vercel.json declares the launch cron", crons.some((c) => c.path === "/api/cron/launch"));
+  ok("vercel.json declares the review-retry cron", crons.some((c) => c.path === "/api/cron/review"));
+
+  // The other Hobby limit, and it fails the same silent way: two cron jobs, no
+  // more. A third entry here would stop every deployment dead exactly like the
+  // hourly schedule did.
+  ok("at most two crons (Hobby's limit)", crons.length <= 2, `${crons.length} declared`);
+
+  // Each route has to exist, or the cron is a daily 404 nobody sees.
+  for (const cron of crons) {
+    ok(`${cron.path} has a route`, existsSync(`src/app${cron.path}/route.ts`));
+  }
 
   for (const cron of crons) {
     const [minute, hour] = cron.schedule.trim().split(/\s+/);

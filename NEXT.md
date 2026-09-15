@@ -29,11 +29,20 @@ index, the chat page, and the API, which answers 402), and "choose a plan" is
 the first outstanding step on the dashboard checklist. Both are invisible while
 the variable is off, by design.
 
-**4. Set CRON_SECRET in Vercel.** Scheduled campaign starts depend on the
-hourly cron in `vercel.json` hitting `/api/cron/launch`, and that route refuses
-every request without the secret — including Vercel's, if the variable is
-missing. Until it is set, a campaign booked for Friday 6am starts whenever the
-customer next opens the dashboard instead. Mark it **Secret**, not Config.
+**4. Set CRON_SECRET in Vercel.** Both crons in `vercel.json` refuse every
+request without it — including Vercel's own, if the variable is missing. Mark
+it **Secret**, not Config.
+
+`/api/cron/launch` fires scheduled campaign starts; until the secret is set, a
+campaign booked for Friday 6am starts whenever the customer next opens the
+dashboard instead. `/api/cron/review` re-runs safety checks that could not run
+at all, which is the only way a creative ever ends up at IN_REVIEW; without the
+secret those retry only when the customer opens their creatives page, or when
+you press the button on `/aios/creatives`.
+
+Hobby allows **two** crons and no more, so there is no room for a third without
+upgrading — and a third would fail the deployment the same silent way an
+over-frequent schedule does.
 
 Two things worth knowing about the schedule itself. **Hobby refuses to deploy
 a cron that runs more than once a day** — it does not quietly run it less

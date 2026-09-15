@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { StatusSelect } from "@/components/status-select";
+import { ReviewVerdict } from "@/components/review-verdict";
+import { RerunReviewButton } from "@/components/rerun-review-button";
 import {
   updateCreativeStatusAction,
   updatePlanStatusAction,
@@ -11,7 +13,9 @@ import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
 import { planFor } from "@/lib/plans";
 
 const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
-const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "IN_REVIEW", "APPROVED", "DELIVERED"];
+// Approve and block belong to the safety check, not to a dropdown — see
+// MANUAL_STATUSES in aios-actions.ts.
+const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "DELIVERED"];
 const TIERS = ["NONE", "STARTER", "GROWTH", "SCALE"];
 
 export default async function OrganizationDetailPage({
@@ -154,16 +158,37 @@ export default async function OrganizationDetailPage({
         ) : (
           <div className="space-y-2">
             {org.creativeRequests.map((r) => (
-              <Card key={r.id} className="flex items-center justify-between py-3">
-                <div>
+              <Card key={r.id} className="flex items-start justify-between gap-4 py-3">
+                <div className="min-w-0">
                   <p className="text-sm text-neutral-500">
                     {r.type} · {r.month}
                   </p>
                   <p>{r.brief}</p>
+                  <ReviewVerdict
+                    status={r.status}
+                    reviewedAt={r.reviewedAt}
+                    reviewCategory={r.reviewCategory}
+                    reviewNotes={r.reviewNotes}
+                  />
                 </div>
-                <form action={updateCreativeStatusAction.bind(null, r.id, org.id)}>
-                  <StatusSelect defaultValue={r.status} options={CREATIVE_STATUSES} />
-                </form>
+                {r.status === "IN_REVIEW" || r.status === "BLOCKED" ? (
+                  <RerunReviewButton
+                    requestId={r.id}
+                    organizationId={org.id}
+                    label={r.status === "BLOCKED" ? "Check it again" : "Run the check again"}
+                  />
+                ) : (
+                  <form action={updateCreativeStatusAction.bind(null, r.id, org.id)}>
+                    <StatusSelect
+                      defaultValue={r.status}
+                      options={
+                        CREATIVE_STATUSES.includes(r.status)
+                          ? CREATIVE_STATUSES
+                          : [r.status, ...CREATIVE_STATUSES]
+                      }
+                    />
+                  </form>
+                )}
               </Card>
             ))}
           </div>

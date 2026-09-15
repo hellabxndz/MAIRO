@@ -19,13 +19,19 @@ const verdictSchema = z.object({
   verdict: z
     .enum(["APPROVE", "BLOCK"])
     .describe("APPROVE if this ad is safe and policy-compliant, BLOCK if not."),
+  // Nullish rather than required, and every caller supplies its own fallback.
+  // A model that answers BLOCK but writes null for the category is still a
+  // usable verdict; rejecting the whole response over it would throw away the
+  // decision and park the request in a queue nobody should have to work.
   category: z
     .string()
+    .nullish()
     .describe(
       "If BLOCK, the short category of the problem (e.g. 'weapons', 'health claims', 'threats'). If APPROVE, the empty string."
     ),
   reason: z
     .string()
+    .nullish()
     .describe(
       "If BLOCK, one or two plain sentences the business owner will read, saying what the problem is and what would make it acceptable. Do not lecture. If APPROVE, the empty string."
     ),

@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -10,6 +11,7 @@ import { ConceptText } from "@/components/concept-text";
 import { ImageStudio } from "./image-studio";
 import { ConceptReply } from "./concept-reply";
 import { activeOrganizationId } from "@/lib/active-org";
+import { retryStuckReviews } from "@/lib/creatives/review-run";
 
 // A concept is generated inside the request action, and a vision call takes
 // longer than the platform default allows.
@@ -50,6 +52,24 @@ export default async function CreativesPage() {
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   const remaining = Math.max(0, plan.limits.creativesPerMonth - usedThisMonth);
+
+  // A request sitting at IN_REVIEW is one whose safety check couldn't run. It
+  // is not waiting on anybody's opinion, so it should not need anybody to come
+  // and press something — asking again is the whole fix.
+  //
+  // after() means this happens once the page has already been sent, so the
+  // customer never waits on a model call to see their creatives. The verdict
+  // lands on their next load, and the nightly cron catches whatever nobody
+  // opens. Small limit because this runs on every visit.
+  if (requests.some((r) => r.status === "IN_REVIEW" && r.aiConcept)) {
+    after(async () => {
+      try {
+        await retryStuckReviews({ organizationId, limit: 3 });
+      } catch (error) {
+        console.error("Background safety-review retry failed:", error);
+      }
+    });
+  }
 
   return (
     <div>
@@ -143,8 +163,9 @@ export default async function CreativesPage() {
                           )}
                           {r.status === "IN_REVIEW" && (
                             <p className="mt-4 border-t border-white/10 pt-3 text-xs text-amber-300/80">
-                              The automatic policy check couldn&apos;t run on this one, so a
-                              person is looking at it before it&apos;s approved.
+                              The automatic policy check couldn&apos;t run on this one, so it
+                              wasn&apos;t approved unchecked. We&apos;re asking again in the
+                              background — reload in a moment to see the answer.
                             </p>
                           )}
 
