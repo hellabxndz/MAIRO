@@ -264,14 +264,32 @@ export function answersFrom(lead: MetaLead, fields: LeadField[]): Record<string,
  *
  * Bounded and sequential, like the other sweeps: each form is a Graph call,
  * and a hundred of them at once is how a nightly job turns into a rate limit.
+ *
+ * organizationId narrows it to one business, which is what the button on the
+ * Enquiries page calls. Same work either way — a customer pressing it must not
+ * set off a sweep of everybody else's forms.
  */
-export async function syncAllMetaLeads(limit = 25): Promise<{
+export async function syncAllMetaLeads({
+  limit = 25,
+  organizationId,
+}: { limit?: number; organizationId?: string } = {}): Promise<{
   forms: number;
   added: number;
   failed: number;
+  /**
+   * Why the first failure failed.
+   *
+   * The counts alone are no use to somebody looking at the screen: "0 added, 1
+   * failed" reads as "there is nothing", when the truth may be that Meta has
+   * not approved the permission. The sentence is the part worth showing.
+   */
+  error?: string;
 }> {
   const forms = await db.leadForm.findMany({
-    where: { metaFormId: { not: null } },
+    where: {
+      metaFormId: { not: null },
+      ...(organizationId ? { organizationId } : {}),
+    },
     orderBy: { metaSyncedAt: { sort: "asc", nulls: "first" } },
     take: limit,
     select: { id: true },
@@ -279,12 +297,16 @@ export async function syncAllMetaLeads(limit = 25): Promise<{
 
   let added = 0;
   let failed = 0;
+  let error: string | undefined;
 
   for (const form of forms) {
     const result = await syncMetaLeads(form.id);
     if (result.ok) added += result.added;
-    else failed++;
+    else {
+      failed++;
+      error ??= result.error;
+    }
   }
 
-  return { forms: forms.length, added, failed };
+  return { forms: forms.length, added, failed, ...(error ? { error } : {}) };
 }

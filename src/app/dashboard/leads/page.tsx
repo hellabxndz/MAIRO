@@ -7,6 +7,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { existingLeadForm, leadFormUrl, parseFields, previewLeadForm } from "@/lib/leads/forms";
 import { ChooseForm } from "./choose-form";
 import { FormBuilder } from "./form-builder";
+import { SyncLeads } from "./sync-leads";
 import { siteUrl } from "@/lib/site";
 
 // What came back from the ads, and the form that collected it.
@@ -69,11 +70,16 @@ export default async function LeadsPage() {
         </p>
 
         {form.metaFormId ? (
-          <p className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] px-3 py-2 text-xs text-emerald-200/80">
-            This form is also on your Facebook Page, so ads can open it inside the app with
-            people&apos;s details already filled in. Those answers are pulled in once a day and
-            appear below with the rest.
-          </p>
+          <div className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] px-3 py-3">
+            <p className="text-xs leading-relaxed text-emerald-200/80">
+              This form is also on your Facebook Page, so ads can open it inside the app with
+              people&apos;s details already filled in. Facebook holds those answers until MAIRO
+              asks for them, which happens overnight — or now, if you&apos;re waiting on one.
+            </p>
+            <div className="mt-3">
+              <SyncLeads />
+            </div>
+          </div>
         ) : form.metaError ? (
           <p className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-amber-200/80">
             {form.metaError}
