@@ -29,6 +29,10 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 // pages_read_engagement comes with them: reading instagram_business_account off
 // the Page needs it, and without it the lookup returns an empty field rather
 // than an error, which reads as "you have no Instagram" for somebody who does.
+//
+// This is the full set MAIRO needs once Meta has approved them. Which of them
+// a given deployment actually asks for is metaScopes() below — see there for
+// why that is settable.
 const SCOPES = [
   "ads_management",
   "ads_read",
@@ -38,6 +42,60 @@ const SCOPES = [
   "instagram_basic",
   "instagram_content_publish",
 ];
+
+/**
+ * Every scope name Meta knows about here, so a typo cannot reach the dialog.
+ *
+ * An unrecognised scope is not rejected quietly by Facebook — it fails the
+ * whole login with a generic error, after the redirect, where the customer
+ * sees it and MAIRO does not. Since the set is now settable from the
+ * environment, the realistic mistake is a mistyped name pasted into a hosting
+ * dashboard, and this is what turns that into a refusal at build-the-URL time
+ * naming the bad value.
+ */
+const KNOWN_SCOPES = new Set(SCOPES);
+
+/**
+ * The permissions the login dialog asks for.
+ *
+ * Normally all of SCOPES. META_SCOPES narrows it, and exists for App Review:
+ * Meta rejects a submission whose screencast does not match the permissions
+ * being requested, and a dialog listing seven permissions while the submission
+ * covers four is exactly that mismatch. Setting META_SCOPES to the round being
+ * submitted makes the recorded dialog show precisely those, and clearing it
+ * afterwards restores the full set.
+ *
+ * Deliberately not clamped to a required minimum. Narrowing this is how a
+ * submission round is recorded, and a round may legitimately cover only the
+ * Page permissions — so the override is trusted, and only the names are
+ * checked. What it cannot do is silently ask for something Meta has never
+ * heard of.
+ */
+export function metaScopes(): string[] {
+  const override = process.env.META_SCOPES?.trim();
+  // An env var set to an empty string is how a hosting dashboard spells
+  // "unset", and it must not produce a login dialog asking for nothing.
+  if (!override) return SCOPES;
+
+  const requested = override
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (requested.length === 0) return SCOPES;
+
+  const unknown = requested.filter((s) => !KNOWN_SCOPES.has(s));
+  if (unknown.length > 0) {
+    throw new Error(
+      `META_SCOPES contains ${unknown.join(", ")}, which ${
+        unknown.length === 1 ? "is not a permission" : "are not permissions"
+      } MAIRO uses. Valid values are ${SCOPES.join(", ")} — or unset META_SCOPES to ask for all of them.`
+    );
+  }
+
+  // Order follows SCOPES rather than the env var, so the dialog reads the same
+  // way whoever typed the list, and duplicates collapse.
+  return SCOPES.filter((s) => requested.includes(s));
+}
 
 function requireEnv(name: string): string {
   // Trimmed, because these are pasted by hand into a hosting dashboard and a
@@ -94,7 +152,7 @@ export function buildMetaAuthUrl(state: string): string {
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  url.searchParams.set("scope", SCOPES.join(","));
+  url.searchParams.set("scope", metaScopes().join(","));
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

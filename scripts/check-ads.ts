@@ -24,6 +24,7 @@ import {
   resolveDestination,
 } from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
+import { metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
@@ -382,6 +383,52 @@ console.log("\n— a Graph error says something a person can act on —");
     "a body with no error at all still says something",
     describeGraphError(null, 500).includes("500")
   );
+}
+
+console.log("\n— the permissions the login dialog asks for —");
+{
+  const full = (() => {
+    delete process.env.META_SCOPES;
+    return metaScopes();
+  })();
+  ok("everything MAIRO needs is asked for by default", full.includes("ads_management"));
+  ok("including the one that makes business-owned Pages visible", full.includes("business_management"));
+  ok("and the one that lists them", full.includes("pages_show_list"));
+
+  // The App Review case: a dialog listing seven permissions while the
+  // submission covers four is the mismatch Meta rejects for.
+  process.env.META_SCOPES = "ads_management,ads_read,pages_show_list,business_management";
+  const round = metaScopes();
+  ok("a submission round asks for only its own permissions", round.length === 4, round.join(","));
+  ok("and leaves Instagram out of the dialog", !round.includes("instagram_content_publish"));
+
+  process.env.META_SCOPES = " pages_show_list , ads_read , ads_read ";
+  const messy = metaScopes();
+  ok("pasted whitespace and repeats are tolerated", messy.length === 2, messy.join(","));
+  ok(
+    "and the order is MAIRO's, not the env var's",
+    messy[0] === "ads_read",
+    messy.join(",")
+  );
+
+  // An empty value is how a hosting dashboard spells "unset". Asking Facebook
+  // for no permissions at all would be a login that grants nothing.
+  process.env.META_SCOPES = "   ";
+  ok("an empty override falls back to everything", metaScopes().length === full.length);
+
+  // A mistyped name fails the whole login *after* the redirect, where the
+  // customer sees it and MAIRO does not. Better to refuse building the URL.
+  process.env.META_SCOPES = "ads_management,pages_show_lists";
+  let refused = "";
+  try {
+    metaScopes();
+  } catch (error) {
+    refused = error instanceof Error ? error.message : String(error);
+  }
+  ok("a mistyped permission is refused", refused.length > 0);
+  ok("and the refusal names the bad one", refused.includes("pages_show_lists"), refused);
+
+  delete process.env.META_SCOPES;
 }
 
 console.log("\n— a click has somewhere to go —");
