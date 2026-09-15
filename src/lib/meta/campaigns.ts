@@ -11,7 +11,30 @@ const OBJECTIVE_MAP: Record<AdGoal, string> = {
   APP_PROMOTION: "OUTCOME_APP_PROMOTION",
 };
 
-export function metaObjectiveFor(goal: AdGoal): string {
+/**
+ * The objective to create the campaign with.
+ *
+ * `hasConversionTracking` is not a refinement, it is the difference between a
+ * campaign that builds and one that does not. A sales or leads objective is a
+ * promise to optimize towards a conversion, and Meta holds the ad set to it:
+ * the ad set has to carry a promoted_object naming the pixel and the event.
+ *
+ * Without a pixel there is no promoted_object to send, and metaOptimizationGoal
+ * has always known that — it quietly falls back to LINK_CLICKS. The objective
+ * did not, so the campaign said "sales" while the ad set beneath it said
+ * "clicks" and carried no pixel. Meta rejects that pair, and the word it uses
+ * is "Invalid parameter", which names neither field. The campaign was created,
+ * the ad set was refused, and the customer was left with something that could
+ * never show an ad and no way to find out why.
+ *
+ * So the objective degrades in step with the goal beneath it. A traffic
+ * campaign that runs is worth more than a sales campaign that cannot be built,
+ * and the moment tracking exists the next campaign asks for sales properly.
+ */
+export function metaObjectiveFor(goal: AdGoal, hasConversionTracking = true): string {
+  if (!hasConversionTracking && (goal === "SALES" || goal === "LEADS")) {
+    return OBJECTIVE_MAP.TRAFFIC;
+  }
   return OBJECTIVE_MAP[goal];
 }
 
@@ -22,6 +45,8 @@ export type CreateMetaCampaignInput = {
   goal: AdGoal;
   dailyBudgetCents: number;
   status?: "PAUSED" | "ACTIVE";
+  /** Whether a pixel exists to optimize towards. See metaObjectiveFor. */
+  hasConversionTracking?: boolean;
 };
 
 export type MetaCampaign = {
@@ -42,7 +67,7 @@ export async function createMetaCampaign(
     accessToken: input.accessToken,
     body: {
       name: input.name,
-      objective: metaObjectiveFor(input.goal),
+      objective: metaObjectiveFor(input.goal, input.hasConversionTracking ?? true),
       status: input.status ?? "PAUSED",
       special_ad_categories: [],
       daily_budget: input.dailyBudgetCents,

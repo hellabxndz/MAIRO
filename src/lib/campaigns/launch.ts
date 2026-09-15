@@ -172,12 +172,18 @@ export async function launchOne(input: {
     };
   }
 
+  // Looked up before the campaign is created, not after. The objective sent to
+  // the network depends on whether there is anything to optimize towards, and
+  // an objective cannot be changed once the campaign exists.
+  const conversion = await conversionTargetFor(input.organizationId, input.platform);
+
   const result = await adapter.createCampaign({
     organizationId: input.organizationId,
     name: input.name,
     goal: input.objective,
     dailyBudgetCents: input.dailyBudgetCents,
     activate: input.activate,
+    hasConversionTracking: Boolean(conversion),
   });
 
   if (!result.ok) {

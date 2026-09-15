@@ -202,6 +202,7 @@ export const metaAdapter: AdPlatformAdapter = {
         goal: input.goal,
         dailyBudgetCents: input.dailyBudgetCents,
         status: input.activate ? "ACTIVE" : "PAUSED",
+        hasConversionTracking: input.hasConversionTracking ?? false,
       });
       return ok({
         externalId: campaign.id,

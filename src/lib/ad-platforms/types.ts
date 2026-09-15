@@ -100,6 +100,14 @@ export type CreateCampaignInput = {
    * spends someone's money by accident.
    */
   activate?: boolean;
+  /**
+   * Whether a conversion pixel exists for this organization.
+   *
+   * Networks refuse a conversion objective with nothing to optimize towards,
+   * so the objective has to be chosen knowing this rather than corrected after
+   * the campaign already exists.
+   */
+  hasConversionTracking?: boolean;
 };
 
 export type CreatedCampaign = {

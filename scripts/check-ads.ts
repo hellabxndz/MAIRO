@@ -15,6 +15,8 @@ import {
   parseAdCopy,
 } from "@/lib/meta/creative-copy";
 import { metaCustomEventType } from "@/lib/meta/creatives";
+import { metaObjectiveFor } from "@/lib/meta/campaigns";
+import { describeGraphError } from "@/lib/meta/client";
 import { metaAdapter } from "@/lib/ad-platforms/meta/adapter";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
@@ -143,6 +145,75 @@ console.log("\n— every adapter still answers the whole interface —");
       );
     }
   }
+}
+
+console.log("\n— the objective and the ad set have to want the same thing —");
+{
+  // This pair drifting apart cost a real customer a campaign. The ad set has
+  // always fallen back to LINK_CLICKS with no pixel; the objective kept asking
+  // for OUTCOME_SALES, which obliges the ad set to carry a promoted_object it
+  // had none to send. Meta calls that "Invalid parameter" and names no field,
+  // so the campaign existed, the ad set did not, and nothing said why.
+  const conversionGoals = ["SALES", "LEADS"] as const;
+
+  for (const goal of conversionGoals) {
+    ok(
+      `${goal} without a pixel does not ask Meta for a conversion objective`,
+      metaObjectiveFor(goal, false) === "OUTCOME_TRAFFIC",
+      metaObjectiveFor(goal, false)
+    );
+    ok(
+      `${goal} with a pixel still asks for the real thing`,
+      metaObjectiveFor(goal, true) === (goal === "SALES" ? "OUTCOME_SALES" : "OUTCOME_LEADS"),
+      metaObjectiveFor(goal, true)
+    );
+  }
+
+  // The goals that never needed a pixel must not have been dragged along.
+  for (const goal of ["AWARENESS", "TRAFFIC", "APP_PROMOTION"] as const) {
+    ok(
+      `${goal} is unaffected by whether a pixel exists`,
+      metaObjectiveFor(goal, false) === metaObjectiveFor(goal, true)
+    );
+  }
+
+  // The default matters: a caller that forgets the flag should ask for the
+  // truthful objective, not silently downgrade everybody to traffic.
+  ok(
+    "the flag defaults to assuming tracking exists",
+    metaObjectiveFor("SALES") === "OUTCOME_SALES"
+  );
+}
+
+console.log("\n— a Graph error says something a person can act on —");
+{
+  // "Invalid parameter" on its own is unsearchable and unactionable, and it is
+  // what Meta returns for most rejections. The fields that explain it were
+  // being thrown away.
+  const withUserMsg = describeGraphError(
+    {
+      error: {
+        message: "Invalid parameter",
+        error_user_title: "Ad set needs a conversion location",
+        error_user_msg: "Choose where you want the conversions to happen.",
+        code: 100,
+        error_subcode: 2446404,
+      },
+    },
+    400
+  );
+  ok("keeps the sentence Meta wrote for a human", withUserMsg.includes("Choose where"));
+  ok("keeps the generic message too", withUserMsg.includes("Invalid parameter"));
+  ok("keeps the subcode, which is what makes it searchable", withUserMsg.includes("2446404"));
+
+  const bare = describeGraphError({ error: { message: "Invalid parameter", code: 100 } }, 400);
+  ok("falls back to the generic message", bare.includes("Invalid parameter"));
+  ok("still reports the code", bare.includes("code 100"));
+
+  ok(
+    "a body with no error at all still says something",
+    describeGraphError(null, 500).includes("500")
+  );
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
