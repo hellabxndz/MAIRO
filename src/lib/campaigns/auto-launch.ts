@@ -3,6 +3,7 @@ import { getAdapter } from "@/lib/ad-platforms/registry";
 import { readinessFor } from "@/lib/readiness";
 import { planFor } from "@/lib/plans";
 import { describeStart, isDue } from "@/lib/campaigns/schedule";
+import { finishHalfBuilt } from "@/lib/campaigns/launch";
 
 // Putting the ads live without asking.
 //
@@ -64,6 +65,15 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
   if (org.autoLaunchHeld) {
     return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
   }
+
+  // Finish anything that reached the network but never got an ad, before
+  // looking for what to switch on. The two belong together: a campaign with no
+  // ad is invisible to the query below — it can never be "ready" — so without
+  // this, one that stalled for a reason the customer has since fixed stays
+  // stalled forever and the checklist keeps asking for a step nothing performs.
+  //
+  // Cheap when there is nothing to do: one indexed read that returns no rows.
+  await finishHalfBuilt(organizationId);
 
   // Is there anything to do at all? Asked before the funding check, which is a
   // network round trip to Meta and not worth spending on an account with

@@ -241,6 +241,83 @@ export async function launchOne(input: {
 }
 
 /**
+ * Finishes campaigns that reached the network but never got an ad.
+ *
+ * The dashboard has always promised this step "happens on its own once the
+ * steps above are done". It did not. A campaign stopped for a reason that was
+ * true at the time — no approved picture yet, no website to send people to,
+ * the network refusing the ad set — and then nothing ever tried again. Fixing
+ * the reason changed nothing, because the only code that builds an ad runs
+ * when a campaign is created, and the campaign already existed.
+ *
+ * So a customer who added the missing piece watched the same message sit
+ * there, and the only way forward anyone could find was to delete a campaign
+ * that was most of the way built and start again. Three times over, in one
+ * afternoon, for three different missing pieces.
+ *
+ * This is the other half. It is safe to call on every render: a campaign with
+ * an ad is skipped without a single network call, and one without an ad is
+ * resumed from exactly where it stopped — an ad set that already exists is
+ * reused rather than duplicated, so a retry cannot split the budget across two
+ * of them.
+ */
+export async function finishHalfBuilt(organizationId: string): Promise<number> {
+  const halfBuilt = await db.platformCampaign.findMany({
+    where: {
+      mairoCampaign: { organizationId, status: { not: "ARCHIVED" } },
+      status: { not: "ARCHIVED" },
+      externalCampaignId: { not: null },
+      // The definition of half-built: it reached the network, and nothing can
+      // be shown from it.
+      externalAdId: null,
+      // A short breather after a failure, so this stays safe on a render path.
+      //
+      // Most reasons an ad cannot be built are checked locally and cost
+      // nothing to re-check — no approved picture, no website, no Page. But a
+      // network that refuses the ad set costs a real call each time, and a
+      // dashboard can render several times in a few seconds. One minute is
+      // long enough to stop that and short enough that somebody who has just
+      // fixed the problem does not notice it.
+      OR: [{ lastError: null }, { updatedAt: { lt: new Date(Date.now() - 60_000) } }],
+    },
+    include: {
+      mairoCampaign: {
+        select: { name: true, objective: true, startDate: true },
+      },
+    },
+  });
+
+  if (halfBuilt.length === 0) return 0;
+
+  let finished = 0;
+
+  // Sequential: each one is several calls that create things on a real ad
+  // account, and a burst of those is how you get rate-limited into failing the
+  // retry that was meant to fix things.
+  for (const child of halfBuilt) {
+    const adapter = getAdapter(child.platform);
+    if (!adapter) continue;
+
+    const outcome = await buildDeliverable({
+      organizationId,
+      platformCampaignId: child.id,
+      platform: child.platform,
+      adapter,
+      name: child.mairoCampaign.name,
+      objective: child.mairoCampaign.objective,
+      dailyBudgetCents: child.dailyBudgetCents,
+      externalCampaignId: child.externalCampaignId!,
+      startAt: child.mairoCampaign.startDate,
+      existingAdGroupId: child.externalAdGroupId,
+    });
+
+    if (outcome.stage === "ready") finished++;
+  }
+
+  return finished;
+}
+
+/**
  * Builds the ad set and the ad beneath a campaign that already exists.
  *
  * Never throws and never undoes the campaign. A campaign that reached the
@@ -259,38 +336,52 @@ async function buildDeliverable(input: {
   dailyBudgetCents: number;
   externalCampaignId: string;
   startAt?: Date | null;
+  /**
+   * An ad set that already reached the network on an earlier attempt.
+   *
+   * Passed when finishing a half-built campaign. Without it a retry would
+   * create a second ad set beside the first and split the budget between one
+   * that has an ad and one that never will.
+   */
+  existingAdGroupId?: string | null;
 }): Promise<{ stage: LaunchStage; blocker: string | null }> {
   // What this business can honestly optimize towards. A pixel is what makes
   // "optimize for purchases" mean anything; without one the adapter falls back
   // to clicks and says so here rather than silently under-delivering.
   const conversion = await conversionTargetFor(input.organizationId, input.platform);
 
-  const adGroup = await input.adapter.createAdGroup({
-    organizationId: input.organizationId,
-    externalCampaignId: input.externalCampaignId,
-    name: `${input.name} — audience`,
-    dailyBudgetCents: input.dailyBudgetCents,
-    goal: input.objective,
-    campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
-    conversion,
-    // The booked start, which becomes the network's own start_time. MAIRO
-    // also holds the campaign paused until then, but only while it is
-    // running — this is what keeps the schedule when it is not.
-    startAt: input.startAt ?? null,
-  });
+  let adGroupId = input.existingAdGroupId ?? null;
 
-  if (!adGroup.ok) {
+  if (!adGroupId) {
+    const adGroup = await input.adapter.createAdGroup({
+      organizationId: input.organizationId,
+      externalCampaignId: input.externalCampaignId,
+      name: `${input.name} — audience`,
+      dailyBudgetCents: input.dailyBudgetCents,
+      goal: input.objective,
+      campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
+      conversion,
+      // The booked start, which becomes the network's own start_time. MAIRO
+      // also holds the campaign paused until then, but only while it is
+      // running — this is what keeps the schedule when it is not.
+      startAt: input.startAt ?? null,
+    });
+
+    if (!adGroup.ok) {
+      await db.platformCampaign.update({
+        where: { id: input.platformCampaignId },
+        data: { lastError: adGroup.error.message },
+      });
+      return { stage: "campaign", blocker: adGroup.error.message };
+    }
+
+    adGroupId = adGroup.data.externalId;
+
     await db.platformCampaign.update({
       where: { id: input.platformCampaignId },
-      data: { lastError: adGroup.error.message },
+      data: { externalAdGroupId: adGroupId, lastError: null },
     });
-    return { stage: "campaign", blocker: adGroup.error.message };
   }
-
-  await db.platformCampaign.update({
-    where: { id: input.platformCampaignId },
-    data: { externalAdGroupId: adGroup.data.externalId, lastError: null },
-  });
 
   const creative = await approvedCreativeFor(input.organizationId);
   if (!creative) {
@@ -305,7 +396,7 @@ async function buildDeliverable(input: {
 
   const ad = await input.adapter.createAd({
     organizationId: input.organizationId,
-    externalAdGroupId: adGroup.data.externalId,
+    externalAdGroupId: adGroupId,
     name: input.name,
     creative: {
       aspectRatio: "SQUARE_1_1",
