@@ -15,7 +15,7 @@ import {
   parseAdCopy,
 } from "@/lib/meta/creative-copy";
 import { metaCustomEventType } from "@/lib/meta/creatives";
-import { metaObjectiveFor } from "@/lib/meta/campaigns";
+import { metaObjectiveFor, metaCampaignBody } from "@/lib/meta/campaigns";
 import { describeGraphError } from "@/lib/meta/client";
 import { metaAdapter } from "@/lib/ad-platforms/meta/adapter";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
@@ -183,6 +183,27 @@ console.log("\n— the objective and the ad set have to want the same thing —"
     "the flag defaults to assuming tracking exists",
     metaObjectiveFor("SALES") === "OUTCOME_SALES"
   );
+}
+
+console.log("\n— the campaign names its own bid strategy —");
+{
+  // Inherited from the ad account, this is a coin flip. An account defaulting
+  // to a capped strategy refuses every ad set MAIRO builds, because a cap needs
+  // a bid_amount nobody here can choose for the customer — and the same code
+  // worked fine for whoever's account happened to default the other way.
+  const body = metaCampaignBody({
+    name: "n",
+    goal: "SALES",
+    dailyBudgetCents: 100,
+    hasConversionTracking: false,
+  });
+  ok("a bid strategy is sent at all", typeof body.bid_strategy === "string");
+  ok(
+    "it is the one that needs no bid amount",
+    body.bid_strategy === "LOWEST_COST_WITHOUT_CAP",
+    String(body.bid_strategy)
+  );
+  ok("no bid_amount is sent with it", body.bid_amount === undefined);
 }
 
 console.log("\n— a Graph error says something a person can act on —");

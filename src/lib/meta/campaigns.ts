@@ -59,19 +59,56 @@ export type MetaCampaign = {
 // Creates a campaign on Meta. Ad sets, creatives, and ads are a separate step
 // (they need audience targeting and creative assets), so campaigns are created
 // PAUSED by default until the rest of the structure is built.
+/**
+ * The exact fields a campaign is created with.
+ *
+ * Split out from the request so a check can read it without a network call.
+ * Two of these fields have each cost a customer a campaign that could never be
+ * built, and both failures were invisible until Meta refused the ad set
+ * underneath — so they are worth asserting on rather than trusting.
+ */
+export function metaCampaignBody(input: {
+  name: string;
+  goal: AdGoal;
+  dailyBudgetCents: number;
+  status?: "PAUSED" | "ACTIVE";
+  hasConversionTracking?: boolean;
+}): Record<string, unknown> {
+  return {
+    name: input.name,
+    objective: metaObjectiveFor(input.goal, input.hasConversionTracking ?? true),
+    status: input.status ?? "PAUSED",
+    special_ad_categories: [],
+    daily_budget: input.dailyBudgetCents,
+    // Stated rather than inherited, and that is the whole point of the line.
+    //
+    // Left unset, Meta falls back to whatever bid strategy the ad account
+    // happens to default to. Plenty of accounts default to a capped one —
+    // LOWEST_COST_WITH_BID_CAP or COST_CAP — and those require a bid_amount
+    // that MAIRO has no way to choose on the customer's behalf. The ad set is
+    // then refused with "Bid Amount Required For The Bid Strategy Provided"
+    // (subcode 1815857), which is a property of the account rather than of
+    // anything the customer did: the same campaign built fine for one person
+    // and never for another.
+    //
+    // LOWEST_COST_WITHOUT_CAP is Meta's "highest volume": spend the budget, get
+    // the most results it can, no cap to name. It is the only strategy that is
+    // correct without asking a small business owner to pick a bid, which is
+    // exactly the question this product exists not to ask.
+    bid_strategy: "LOWEST_COST_WITHOUT_CAP",
+  };
+}
+
+// Creates a campaign on Meta. Ad sets, creatives, and ads are a separate step
+// (they need audience targeting and creative assets), so campaigns are created
+// PAUSED by default until the rest of the structure is built.
 export async function createMetaCampaign(
   input: CreateMetaCampaignInput
 ): Promise<MetaCampaign> {
   return metaGraphRequest<MetaCampaign>(`/${input.adAccountId}/campaigns`, {
     method: "POST",
     accessToken: input.accessToken,
-    body: {
-      name: input.name,
-      objective: metaObjectiveFor(input.goal, input.hasConversionTracking ?? true),
-      status: input.status ?? "PAUSED",
-      special_ad_categories: [],
-      daily_budget: input.dailyBudgetCents,
-    },
+    body: metaCampaignBody(input),
   });
 }
 
