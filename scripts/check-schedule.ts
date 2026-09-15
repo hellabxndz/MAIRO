@@ -11,6 +11,7 @@
 // jumps is the case a single-pass offset conversion gets wrong, and it only
 // happens twice a year — which means it ships.
 
+import { readFileSync } from "node:fs";
 import {
   describeStart,
   instantFromLocal,
@@ -238,6 +239,33 @@ console.log("\n— the offset helper on its own —");
     "sub-second precision does not skew it",
     zoneOffsetMs(new Date("2026-07-15T15:00:00.750Z"), "America/Chicago") === -5 * HOUR
   );
+}
+
+console.log("\n— the cron that fires a booked start —");
+{
+  // This one is here because getting it wrong cost several days of deployments
+  // and looked like nothing at all. vercel.json asked for an hourly cron;
+  // Vercel's Hobby plan does not run such a cron less often, it REFUSES THE
+  // DEPLOYMENT — so every build failed, the last good build kept serving, and
+  // the site simply appeared frozen with no error on any screen anybody looks
+  // at. Nothing in this repo would have caught it.
+  const config = JSON.parse(readFileSync("vercel.json", "utf8")) as {
+    crons?: { path: string; schedule: string }[];
+  };
+  const crons = config.crons ?? [];
+  ok("vercel.json declares the launch cron", crons.some((c) => c.path === "/api/cron/launch"));
+
+  for (const cron of crons) {
+    const [minute, hour] = cron.schedule.trim().split(/\s+/);
+    // Once a day means a fixed minute AND a fixed hour. Anything else — *, a
+    // step like */30, a list, a range — fires more often than that.
+    const fixed = (field: string) => /^\d+$/.test(field ?? "");
+    ok(
+      `${cron.path} runs at most once a day (Hobby refuses anything more)`,
+      fixed(minute) && fixed(hour),
+      cron.schedule
+    );
+  }
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

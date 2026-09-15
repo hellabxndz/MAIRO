@@ -13,6 +13,18 @@ import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 //
 // Vercel calls it on the schedule in vercel.json. Anything else has to present
 // CRON_SECRET.
+//
+// That schedule is DAILY, and it has to be. Vercel's Hobby plan does not merely
+// run a more frequent cron less often — it refuses the deployment, with "Hobby
+// accounts are limited to daily cron jobs". An hourly entry here was silently
+// failing every build for days while the last good deployment kept serving, so
+// the site looked frozen with no error anywhere obvious.
+//
+// The practical consequence, on Hobby: a campaign booked for a specific time
+// starts when the customer next opens the dashboard or campaigns page, because
+// those call maybeGoLive() on render. This cron is the backstop for the
+// customer who books a launch and then doesn't visit. On Pro the schedule can
+// go back to hourly and the backstop becomes timely.
 
 export const dynamic = "force-dynamic";
 // Several organizations, each doing a Graph call or two. The default budget is

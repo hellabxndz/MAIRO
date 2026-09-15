@@ -35,11 +35,19 @@ every request without the secret — including Vercel's, if the variable is
 missing. Until it is set, a campaign booked for Friday 6am starts whenever the
 customer next opens the dashboard instead. Mark it **Secret**, not Config.
 
-Two things worth knowing about the schedule itself. On the Hobby plan Vercel
-only runs crons once a day, so the hourly entry needs Pro to mean an hour. And
-the granularity is the cron's, not the customer's: the start time is a floor
-that Meta also enforces through the ad set's own `start_time`, so a campaign
-never begins early — it can begin up to one cron interval late.
+Two things worth knowing about the schedule itself. **Hobby refuses to deploy
+a cron that runs more than once a day** — it does not quietly run it less
+often, it fails the build with "Hobby accounts are limited to daily cron jobs".
+An hourly entry blocked every deployment for days while the last good build
+kept serving, which looks exactly like a frozen site with nothing broken. The
+schedule is daily for that reason; on Pro it can go back to hourly.
+
+And the granularity is the cron's, not the customer's: the start time is a
+floor that Meta also enforces through the ad set's own `start_time`, so a
+campaign never begins early — it can begin up to one cron interval late. On
+Hobby that interval is a day, so timeliness comes from the dashboard render
+path instead, and the cron is only the backstop for someone who books a launch
+and then doesn't visit.
 
 **5. Create all three new prices in Stripe.** The pricing page now says
 $39.99 / $129.99 / $249.99, and `priceMonthly` in src/lib/plans.ts is only what
