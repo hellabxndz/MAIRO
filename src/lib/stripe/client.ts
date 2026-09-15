@@ -62,6 +62,19 @@ const PRICE_ENV: Record<Exclude<SubscriptionTier, "NONE">, string> = {
   AGENCY: "STRIPE_PRICE_AGENCY",
 };
 
+/**
+ * The environment variables that name a Stripe price.
+ *
+ * Exported for check:env, which cannot see these any other way. They are read
+ * through PRICE_ENV rather than written out as process.env.STRIPE_PRICE_SCALE,
+ * so a scan for literal process.env access finds none of them — which is how
+ * STRIPE_PRICE_STUDIO and STRIPE_PRICE_AGENCY went undocumented long enough
+ * for the freelancer plans to be unbuyable without anybody noticing.
+ */
+export function priceEnvNames(): string[] {
+  return Object.values(PRICE_ENV);
+}
+
 export function priceIdFor(tier: Exclude<SubscriptionTier, "NONE">): string {
   const value = process.env[PRICE_ENV[tier]]?.trim();
   if (!value) {
