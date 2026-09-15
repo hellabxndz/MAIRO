@@ -21,7 +21,8 @@
     "check:ads": "tsx scripts/check-ads.ts",
     "check:readiness": "tsx scripts/check-readiness.ts",
     "check:schedule": "tsx scripts/check-schedule.ts",
-    "check:social": "tsx scripts/check-social.ts"
+    "check:social": "tsx scripts/check-social.ts",
+    "plans:sync": "tsx scripts/sync-plan-config.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

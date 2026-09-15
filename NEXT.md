@@ -52,13 +52,26 @@ the card is charged another — on every plan, not just one.
 Existing subscribers stay on the price they signed up at unless their
 subscriptions are migrated, which is a separate decision and a deliberate one.
 
-**6. Meta App Review needs two more permissions.** `instagram_basic` and
+**6. Run `npm run plans:sync` against production once.** PlanConfig exists so
+pricing can be changed without a deploy, and every in-app billing screen
+prefers a row in it over the compiled plan. `seedPlanConfig()` only ever
+inserts — deliberately, so re-running it can't stamp on a price someone edited
+— which means a deployment seeded when the top plan was "Pro" at $199 goes on
+serving Pro and $199 on those screens no matter how many times the code is
+fixed and redeployed. The landing page renders the compiled plans and is
+unaffected, so the symptom is the marketing page and the billing page
+disagreeing with each other.
+
+`npm run plans:sync` prints a diff and changes nothing; `-- --write` applies
+it. Run it after any pricing or naming change.
+
+**7. Meta App Review needs two more permissions.** `instagram_basic` and
 `instagram_content_publish` were added to the OAuth scopes for Pro-plan
 Instagram posting. Both are review-gated, so until they clear, only accounts
 added as testers can post — the rest get a permission error from Meta. Worth
 submitting in the same round as the ads permissions rather than after.
 
-**7. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
+**8. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
 changes in the database has never fired with a real event. Worth doing with a
 test-mode card before the first customer.
 
