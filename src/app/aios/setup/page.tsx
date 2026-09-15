@@ -2,6 +2,7 @@ import { Card, PageHeader, Badge } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { metaRedirectUri } from "@/lib/meta/oauth";
 import { checkPrices, type PriceCheck } from "@/lib/stripe/price-check";
+import { checkAnthropicKey, type KeyCheck } from "@/lib/ai/key-check";
 import { stripeMode } from "@/lib/stripe/client";
 
 // Owner-only configuration check. This exists because the failure mode when a
@@ -78,6 +79,11 @@ export default async function SetupPage() {
   const prices = await checkPrices();
   const priceProblems = prices.filter((p) => p.state !== "ok" && p.state !== "not_set");
 
+  // Whether the AI key works, not whether it is typed in. These are different
+  // questions and only one of them explains a queue of creative requests that
+  // never got checked.
+  const aiKey = await checkAnthropicKey();
+
   return (
     <div>
       <PageHeader
@@ -99,6 +105,32 @@ export default async function SetupPage() {
             <p className="text-sm text-red-300">{redirectError}</p>
           )}
         </div>
+      </Card>
+
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-sm font-medium text-white">Whether the AI key works</h2>
+          <span
+            className={`text-[11px] uppercase tracking-[0.16em] ${
+              aiKey.state === "ok"
+                ? "text-emerald-300"
+                : aiKey.state === "rate_limited"
+                  ? "text-amber-300"
+                  : "text-red-300"
+            }`}
+          >
+            {AI_KEY_LABEL[aiKey.state]}
+          </span>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
+          Not whether the variable is filled in — whether Anthropic accepts it. A revoked key, a
+          typo, or an account out of credit all look identical to a present one, and the symptom
+          is creative requests piling up unchecked rather than an error anybody sees.
+        </p>
+        <p className="mt-4 text-sm leading-relaxed text-neutral-300">{AI_KEY_ADVICE[aiKey.state]}</p>
+        {"detail" in aiKey && aiKey.detail && (
+          <p className="mt-2 font-mono text-xs leading-relaxed text-neutral-500">{aiKey.detail}</p>
+        )}
       </Card>
 
       <Card className="mb-6">
@@ -175,6 +207,32 @@ const PRICE_TONE: Record<PriceCheck["state"], "green" | "red" | "yellow" | "neut
   wrong_interval: "red",
   not_found: "red",
   unreadable: "yellow",
+};
+
+const AI_KEY_LABEL: Record<KeyCheck["state"], string> = {
+  ok: "WORKING",
+  not_set: "NOT SET",
+  unauthorized: "REJECTED",
+  no_credit: "OUT OF CREDIT",
+  rate_limited: "THROTTLED",
+  no_such_model: "WRONG MODEL",
+  unreachable: "NO ANSWER",
+};
+
+const AI_KEY_ADVICE: Record<KeyCheck["state"], string> = {
+  ok: "Anthropic accepted a live call. Concepts get written and every creative gets checked and approved or blocked on its own.",
+  not_set:
+    "ANTHROPIC_API_KEY is empty on this deployment. Nothing that needs a model works: no concepts, and no safety check — so every creative request stops at IN_REVIEW instead of being approved.",
+  unauthorized:
+    "The key was rejected. It is mistyped, revoked, or from a different account. Issue a new one at console.anthropic.com and replace the variable in Vercel — then redeploy, because a changed variable does not reach a running build.",
+  no_credit:
+    "The key is valid but the account cannot pay for the call. Add credit at console.anthropic.com; nothing else needs changing and no redeploy is required.",
+  rate_limited:
+    "Anthropic is throttling right now. Not a configuration problem — the key is fine and calls will go through again shortly.",
+  no_such_model:
+    "The key works but the model name does not. Check the model in src/lib/ai/model.ts against the ids your account can reach.",
+  unreachable:
+    "No answer from the API at all. Usually a network or outbound-traffic problem on this deployment rather than anything to do with the key.",
 };
 
 const PRICE_LABEL: Record<PriceCheck["state"], string> = {
