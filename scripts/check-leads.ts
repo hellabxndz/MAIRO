@@ -9,7 +9,15 @@
 // throws, and none of it is visible until a business wonders why the ads
 // produced nothing.
 
-import { FIELD_KINDS, contactFrom, toMetaQuestion, validateAnswer } from "@/lib/leads/fields";
+import {
+  FIELD_KINDS,
+  MAX_FIELDS,
+  contactFrom,
+  keyFor,
+  toMetaQuestion,
+  validateAnswer,
+  validateFields,
+} from "@/lib/leads/fields";
 import type { LeadField } from "@/lib/leads/fields";
 import { templateFor, templatedNiches } from "@/lib/leads/templates";
 import { allNiches } from "@/lib/tracking/niches";
@@ -172,6 +180,93 @@ console.log("\n— the same questions can be handed to Meta later —");
   for (const [type, kind] of Object.entries(FIELD_KINDS)) {
     ok(`${type} maps to a Meta question type`, kind.metaType.length > 0);
   }
+}
+
+console.log("\n— a form somebody built themselves still has to work —");
+{
+  const name: LeadField = { key: "name", type: "FULL_NAME", label: "Name", required: true };
+  const phone: LeadField = { key: "phone", type: "PHONE", label: "Phone", required: true };
+
+  const good = validateFields([name, phone]);
+  ok("a name and a phone number is a working form", good.ok);
+
+  ok("an empty form is refused", validateFields([]).ok === false);
+  ok(
+    "so is one with no wording",
+    validateFields([{ ...name, label: "  " }, phone]).ok === false
+  );
+
+  // The two failures that are invisible until the enquiries do not arrive.
+  const noContact = validateFields([
+    name,
+    { key: "q", type: "SHORT_TEXT", label: "What do you need?", required: true },
+  ]);
+  ok("a form with no way to reply is refused", noContact.ok === false);
+  ok(
+    "and says why in words a business owner would use",
+    !noContact.ok && /reply/i.test(noContact.error),
+    !noContact.ok ? noContact.error : ""
+  );
+
+  const nothingRequired = validateFields([
+    { ...name, required: false },
+    { ...phone, required: false },
+  ]);
+  ok("a form where nothing is required is refused", nothingRequired.ok === false);
+
+  ok(
+    "a pick-one with a single option is refused",
+    validateFields([name, phone, { key: "c", type: "CHOICE", label: "When?", required: false, options: ["Now"] }])
+      .ok === false
+  );
+  ok(
+    "a pick-one with two is fine",
+    validateFields([
+      name,
+      phone,
+      { key: "c", type: "CHOICE", label: "When?", required: false, options: ["Now", "Later"] },
+    ]).ok
+  );
+  ok(
+    "duplicate options are refused",
+    validateFields([
+      name,
+      phone,
+      { key: "c", type: "CHOICE", label: "When?", required: false, options: ["Now", "Now"] },
+    ]).ok === false
+  );
+
+  ok(
+    "two questions cannot share a key",
+    validateFields([name, { ...phone, key: "name" }]).ok === false
+  );
+
+  const tooMany = Array.from({ length: MAX_FIELDS + 1 }, (_, i) => ({
+    key: `k${i}`,
+    type: "SHORT_TEXT" as const,
+    label: `Q${i}`,
+    required: true,
+  }));
+  ok("more than the ceiling is refused", validateFields([...tooMany, phone]).ok === false);
+
+  // A new question arrives with no key and gets one from its wording.
+  const keyed = validateFields([
+    { key: "", type: "FULL_NAME", label: "Your full name", required: true },
+    phone,
+  ]);
+  ok("a new question is given a key from its wording", keyed.ok && keyed.fields[0].key === "your_full_name");
+
+  // And an existing one keeps the key its answers are stored against.
+  const renamed = validateFields([{ ...name, label: "What should we call you?" }, phone]);
+  ok(
+    "renaming a question does not orphan its answers",
+    renamed.ok && renamed.fields[0].key === "name"
+  );
+
+  ok(
+    "keyFor does not collide with one already taken",
+    keyFor("Phone", new Set(["phone"])) === "phone_2"
+  );
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

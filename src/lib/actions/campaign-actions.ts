@@ -30,7 +30,7 @@ import {
   normalizeUrl,
   resolveDestination,
 } from "@/lib/campaigns/destination";
-import { ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
+import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
@@ -59,6 +59,8 @@ const createCampaignSchema = z.object({
    */
   destinationType: z.enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE"]).nullish(),
   destinationValue: z.string().trim().max(2000).nullish(),
+  /** Who writes the lead form, when one is being made now. */
+  formAuthor: z.enum(["MAIRO", "OWN"]).nullish(),
 });
 
 export type CampaignActionState =
@@ -104,6 +106,7 @@ export async function createCampaignAction(
     startTimeZone: formData.get("startTimeZone"),
     destinationType: formData.get("destinationType"),
     destinationValue: formData.get("destinationValue"),
+    formAuthor: formData.get("formAuthor"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -195,7 +198,12 @@ export async function createCampaignAction(
     // open a page and look. A form is a public URL with this business's name
     // on it, and creating one for everybody who glanced at the option would
     // leave most of them with a page they never asked for.
-    const form = await ensureLeadForm(organizationId);
+    // Their choice of author, and it only matters the first time — after that
+    // the business has a form and the campaign simply points at it.
+    const form =
+      parsed.data.formAuthor === "OWN"
+        ? await blankLeadForm(organizationId)
+        : await ensureLeadForm(organizationId);
     if (!form) {
       return { error: "MAIRO couldn't write your form just now. Try again in a moment." };
     }

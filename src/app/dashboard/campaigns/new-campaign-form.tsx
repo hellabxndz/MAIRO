@@ -93,6 +93,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
       ? (plan.destination.phone ?? "")
       : (plan.destination.website ?? "")
   );
+  // Only asked when they pick a form, and only when they do not already have
+  // one — once a form exists, the campaign uses it and this question is noise.
+  const [formAuthor, setFormAuthor] = useState<"MAIRO" | "OWN">("MAIRO");
   const [growthMode, setGrowthMode] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeCopy | null>(null);
 
@@ -268,30 +271,80 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
 
           <input type="hidden" name="destinationType" value={destinationType} />
           {destinationType === "LEAD_FORM" ? (
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-              <p className="text-sm text-neutral-300">
-                {plan.destination.formUrl
-                  ? "People who tap the ad land on the form MAIRO wrote for you. Answers appear under Enquiries."
-                  : "MAIRO writes the form when you create this campaign, and answers appear under Enquiries. Nothing to build, and you don't need a website."}
-              </p>
-              {plan.destination.formQuestions.length > 0 && (
+            <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              {plan.destination.formUrl ? (
                 <>
-                  <p className="mt-3 text-xs uppercase tracking-[0.12em] text-neutral-500">
-                    What it asks
+                  <p className="text-sm text-neutral-300">
+                    People who tap the ad land on your form. Answers appear under Enquiries.
                   </p>
-                  <ol className="mt-1.5 space-y-1">
-                    {plan.destination.formQuestions.map((q, i) => (
-                      <li key={q} className="text-sm text-neutral-400">
-                        {i + 1}. {q}
-                      </li>
-                    ))}
-                  </ol>
+                  {plan.destination.formQuestions.length > 0 && (
+                    <ol className="space-y-1">
+                      {plan.destination.formQuestions.map((q, i) => (
+                        <li key={q} className="text-sm text-neutral-500">
+                          {i + 1}. {q}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  <p className="break-all font-mono text-xs text-neutral-600">
+                    {plan.destination.formUrl}
+                  </p>
                 </>
-              )}
-              {plan.destination.formUrl && (
-                <p className="mt-3 break-all font-mono text-xs text-neutral-600">
-                  {plan.destination.formUrl}
-                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-neutral-300">
+                    You don&apos;t have a form yet. Who should write it?
+                  </p>
+                  <input type="hidden" name="formAuthor" value={formAuthor} />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        {
+                          key: "MAIRO" as const,
+                          label: "MAIRO writes it",
+                          sub: "Questions for your trade, ready when this campaign is",
+                        },
+                        {
+                          key: "OWN" as const,
+                          label: "I'll write my own",
+                          sub: "Pick your own questions on the Enquiries page",
+                        },
+                      ]
+                    ).map((a) => (
+                      <button
+                        key={a.key}
+                        type="button"
+                        aria-pressed={formAuthor === a.key}
+                        onClick={() => setFormAuthor(a.key)}
+                        className={`rounded-lg border p-3 text-left transition ${
+                          formAuthor === a.key
+                            ? "border-white/30 bg-white/[0.06]"
+                            : "border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <p className="text-sm text-white">{a.label}</p>
+                        <p className="mt-0.5 text-xs text-neutral-500">{a.sub}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {formAuthor === "MAIRO" && plan.destination.formQuestions.length > 0 && (
+                    <ol className="space-y-1 pt-1">
+                      {plan.destination.formQuestions.map((q, i) => (
+                        <li key={q} className="text-sm text-neutral-500">
+                          {i + 1}. {q}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {formAuthor === "OWN" && (
+                    <p className="text-xs leading-relaxed text-neutral-500">
+                      MAIRO starts you off with a name and a phone number — every form needs a way
+                      to reply — and you change the rest under Enquiries. The ad points at it
+                      either way, so you can edit it after this campaign is running.
+                    </p>
+                  )}
+                </>
               )}
             </div>
           ) : destinationType === "DIRECT_MESSAGE" ? (

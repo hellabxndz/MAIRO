@@ -114,6 +114,36 @@ export async function ensureLeadForm(organizationId: string) {
   });
 }
 
+/**
+ * A form the business will write itself, started with the two questions every
+ * working form has: who they are, and how to reach them.
+ *
+ * Not empty, because an empty form fails validation the moment it is saved and
+ * "add a contact field" is a worse first experience than having one already.
+ */
+export async function blankLeadForm(organizationId: string) {
+  const existing = await existingLeadForm(organizationId);
+  if (existing) return existing;
+
+  const chosen = await nicheAndName(organizationId);
+  if (!chosen) return null;
+
+  return db.leadForm.create({
+    data: {
+      organizationId,
+      slug: newSlug(),
+      name: `${chosen.name} enquiries`,
+      headline: `Get in touch with ${chosen.name}`,
+      description: "Leave your details and we'll come back to you.",
+      thankYou: "Thanks — we'll be in touch shortly.",
+      fieldsJson: JSON.stringify([
+        { key: "name", type: "FULL_NAME", label: "Your name", required: true },
+        { key: "phone", type: "PHONE", label: "Phone", required: true },
+      ]),
+    },
+  });
+}
+
 /** The public URL an ad should point at. */
 export function leadFormUrl(slug: string, appUrl: string): string {
   return `${appUrl.replace(/\/+$/, "")}/f/${slug}`;

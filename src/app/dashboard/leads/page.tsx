@@ -5,9 +5,9 @@ import { Card, PageHeader, EmptyState } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { activeOrganizationId } from "@/lib/active-org";
 import { existingLeadForm, leadFormUrl, parseFields, previewLeadForm } from "@/lib/leads/forms";
-import { WriteLeadForm } from "./write-lead-form";
+import { ChooseForm } from "./choose-form";
+import { FormBuilder } from "./form-builder";
 import { siteUrl } from "@/lib/site";
-import { FIELD_KINDS } from "@/lib/leads/fields";
 
 // What came back from the ads, and the form that collected it.
 //
@@ -53,28 +53,11 @@ export default async function LeadsPage() {
       {!form && (
         <Card className="mb-8">
           <h2 className="text-base text-white">You don&apos;t have a form yet</h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
-            Pick &ldquo;Fill in a form&rdquo; when you create a campaign and MAIRO writes one
-            then — you don&apos;t have to do anything here. This button is only if you want to
-            see it first.
+          <p className="mb-5 mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
+            You don&apos;t have to do anything here — picking &ldquo;Fill in a form&rdquo; on a
+            campaign writes one. This is if you&apos;d rather see it first, or write your own.
           </p>
-          {preview.length > 0 && (
-            <>
-              <p className="mt-5 text-xs uppercase tracking-[0.12em] text-neutral-500">
-                What it would ask
-              </p>
-              <ol className="mt-1.5 space-y-1">
-                {preview.map((q, i) => (
-                  <li key={q} className="text-sm text-neutral-400">
-                    {i + 1}. {q}
-                  </li>
-                ))}
-              </ol>
-            </>
-          )}
-          <div className="mt-5">
-            <WriteLeadForm />
-          </div>
+          <ChooseForm preview={preview} />
         </Card>
       )}
 
@@ -97,26 +80,15 @@ export default async function LeadsPage() {
         </div>
 
         <div className="mt-6 border-t border-white/10 pt-5">
-          <p className="mb-3 text-xs uppercase tracking-[0.12em] text-neutral-500">
-            What it asks — written for your trade
+          <p className="mb-1 text-xs uppercase tracking-[0.12em] text-neutral-500">
+            What it asks
           </p>
-          <ol className="space-y-2">
-            {fields.map((f, i) => (
-              <li key={f.key} className="flex flex-wrap items-baseline gap-x-2 text-sm">
-                <span className="text-neutral-600">{i + 1}.</span>
-                <span className="text-neutral-200">{f.label}</span>
-                <span className="text-xs text-neutral-600">
-                  {FIELD_KINDS[f.type].prefilled ? "contact detail" : "answer"}
-                  {f.required ? "" : " · optional"}
-                  {f.options?.length ? ` · ${f.options.length} choices` : ""}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-4 text-xs leading-relaxed text-neutral-600">
-            Short on purpose. Every question after the third costs you completed enquiries, and a
-            lead you can phone is worth more than a detailed answer nobody sends.
+          <p className="mb-4 max-w-2xl text-xs leading-relaxed text-neutral-600">
+            Change any of it. Short is on purpose though — every question after the third costs
+            you completed enquiries, and a lead you can phone beats a detailed answer nobody
+            sends.
           </p>
+          <FormBuilder leadFormId={form.id} initial={fields} />
         </div>
       </Card>
       )}

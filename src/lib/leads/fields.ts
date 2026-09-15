@@ -172,3 +172,129 @@ export function contactFrom(
   };
   return { email: find("EMAIL"), phone: find("PHONE") };
 }
+
+/** What each question type is called where a person picks one. */
+export const FIELD_TYPE_LABELS: Record<LeadFieldType, string> = {
+  FULL_NAME: "Their name",
+  EMAIL: "Email address",
+  PHONE: "Phone number",
+  CITY: "Town or city",
+  ZIP: "Postcode",
+  SHORT_TEXT: "Short answer",
+  LONG_TEXT: "Long answer",
+  NUMBER: "A number",
+  CHOICE: "Pick one of my options",
+  YES_NO: "Yes or no",
+};
+
+/** Ceilings, and the reasons for them rather than round numbers. */
+export const MAX_FIELDS = 10;
+export const MAX_LABEL = 120;
+export const MAX_OPTIONS = 12;
+
+/**
+ * Turns a question's wording into a stable key.
+ *
+ * Answers are stored against the key, so it must not change when somebody
+ * fixes a typo in the label. Generated once when a question is added and kept
+ * from then on; this only runs for new ones.
+ */
+export function keyFor(label: string, taken: Set<string>): string {
+  const base =
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 30) || "question";
+
+  if (!taken.has(base)) return base;
+  for (let n = 2; n < 100; n++) {
+    const candidate = `${base}_${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${base}_${Date.now()}`;
+}
+
+export type FieldsCheck = { ok: true; fields: LeadField[] } | { ok: false; error: string };
+
+/**
+ * Checks a whole form somebody built themselves.
+ *
+ * The rules that are refusals rather than suggestions are the ones where the
+ * form would otherwise be broken in a way nobody notices until the enquiries
+ * do not arrive: a question with no wording, a "pick one" with nothing to pick,
+ * two questions sharing a key so one silently overwrites the other — and, the
+ * one that matters most, a form with no way to contact the person who filled it
+ * in. That last one collects enquiries the business can never answer, and it
+ * looks like it is working the entire time.
+ */
+export function validateFields(raw: LeadField[]): FieldsCheck {
+  if (raw.length === 0) return { ok: false, error: "A form needs at least one question." };
+  if (raw.length > MAX_FIELDS) {
+    return {
+      ok: false,
+      error: `That's more than ${MAX_FIELDS} questions. Long forms get abandoned — cut it down and ask the rest when you reply.`,
+    };
+  }
+
+  const seen = new Set<string>();
+  const fields: LeadField[] = [];
+
+  for (const field of raw) {
+    const label = field.label?.trim() ?? "";
+    if (label.length === 0) return { ok: false, error: "Every question needs wording." };
+    if (label.length > MAX_LABEL) {
+      return { ok: false, error: `"${label.slice(0, 30)}…" is too long for a question.` };
+    }
+
+    if (!(field.type in FIELD_KINDS)) {
+      return { ok: false, error: `"${label}" has no answer type.` };
+    }
+
+    const key = field.key?.trim() || keyFor(label, seen);
+    if (seen.has(key)) {
+      return { ok: false, error: `Two questions are stored under the same name ("${label}").` };
+    }
+    seen.add(key);
+
+    let options: string[] | undefined;
+    if (field.type === "CHOICE") {
+      options = (field.options ?? []).map((o) => o.trim()).filter(Boolean);
+      if (options.length < 2) {
+        return { ok: false, error: `"${label}" needs at least two options to pick between.` };
+      }
+      if (options.length > MAX_OPTIONS) {
+        return { ok: false, error: `"${label}" has too many options to choose from.` };
+      }
+      if (new Set(options).size !== options.length) {
+        return { ok: false, error: `"${label}" lists the same option twice.` };
+      }
+    }
+
+    fields.push({
+      key,
+      type: field.type,
+      label,
+      required: Boolean(field.required),
+      ...(options ? { options } : {}),
+      ...(field.placeholder?.trim() ? { placeholder: field.placeholder.trim() } : {}),
+    });
+  }
+
+  if (!fields.some((f) => f.type === "EMAIL" || f.type === "PHONE")) {
+    return {
+      ok: false,
+      error:
+        "Add an email address or a phone number. Without one you'll collect enquiries you can't reply to.",
+    };
+  }
+
+  if (!fields.some((f) => f.required)) {
+    return {
+      ok: false,
+      error: "Make at least one question required, or people can send you an empty form.",
+    };
+  }
+
+  return { ok: true, fields };
+}
