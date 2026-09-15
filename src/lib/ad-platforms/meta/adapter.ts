@@ -299,12 +299,6 @@ export const metaAdapter: AdPlatformAdapter = {
         "This creative is missing its headline or its main text, so MAIRO won't build an ad from it."
       );
     }
-    if (!input.destinationUrl) {
-      return fail(
-        "rejected",
-        "The ad needs somewhere to send people. Add your website address in Settings."
-      );
-    }
 
     try {
       const image = await uploadAdImage(
@@ -320,7 +314,7 @@ export const metaAdapter: AdPlatformAdapter = {
         name: input.name,
         pageId: connection.pageId,
         imageHash: image.hash,
-        link: input.destinationUrl,
+        destination: input.destination,
         message: input.creative.primaryText,
         headline: input.creative.headline,
         callToAction: input.creative.cta ?? null,

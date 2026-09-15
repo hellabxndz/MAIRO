@@ -1,11 +1,12 @@
 import { db } from "@/lib/db";
-import type { AdGoal, AdPlatform } from "@/generated/prisma/enums";
+import type { AdDestination, AdGoal, AdPlatform } from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import type { Allocation } from "@/lib/budget/allocation";
 import { nicheById, primaryAction } from "@/lib/tracking/niches";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
+import { describeMissing, resolveDestination, type Destination } from "@/lib/campaigns/destination";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -77,6 +78,17 @@ export type CreateMairoCampaignInput = {
   startAt?: Date | null;
   /** The zone they picked that time in, kept so every screen echoes it back. */
   startTimeZone?: string | null;
+  /**
+   * Where this campaign's clicks should go.
+   *
+   * Optional because a business that answered at signup does not have to
+   * answer again; omitted means "whatever this business normally does".
+   */
+  destination?: {
+    type: AdDestination;
+    url?: string | null;
+    phone?: string | null;
+  };
 };
 
 /**
@@ -102,6 +114,9 @@ export async function createMairoCampaign(
       tiktokGrowthMode: input.tiktokGrowthMode ?? false,
       startDate: input.startAt ?? null,
       startTimeZone: input.startTimeZone ?? null,
+      destinationType: input.destination?.type ?? "WEBSITE",
+      destinationUrl: input.destination?.url ?? null,
+      destinationPhone: input.destination?.phone ?? null,
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
@@ -120,9 +135,11 @@ export async function createMairoCampaign(
       launchOne({
         organizationId: input.organizationId,
         platformCampaignId: child.id,
+        mairoCampaignId: campaign.id,
         platform: child.platform,
         name: input.name,
         objective: input.objective,
+        destinationType: campaign.destinationType,
         dailyBudgetCents: child.dailyBudgetCents,
         activate: input.activate ?? false,
         startAt: input.startAt ?? null,
@@ -151,9 +168,11 @@ export async function createMairoCampaign(
 export async function launchOne(input: {
   organizationId: string;
   platformCampaignId: string;
+  mairoCampaignId: string;
   platform: AdPlatform;
   name: string;
   objective: AdGoal;
+  destinationType: AdDestination;
   dailyBudgetCents: number;
   activate: boolean;
   startAt?: Date | null;
@@ -227,6 +246,8 @@ export async function launchOne(input: {
     objective: input.objective,
     dailyBudgetCents: input.dailyBudgetCents,
     externalCampaignId: result.data.externalId,
+    mairoCampaignId: input.mairoCampaignId,
+    destinationType: input.destinationType,
     startAt: input.startAt ?? null,
   });
 
@@ -282,7 +303,7 @@ export async function finishHalfBuilt(organizationId: string): Promise<number> {
     },
     include: {
       mairoCampaign: {
-        select: { name: true, objective: true, startDate: true },
+        select: { name: true, objective: true, startDate: true, destinationType: true },
       },
     },
   });
@@ -307,6 +328,8 @@ export async function finishHalfBuilt(organizationId: string): Promise<number> {
       objective: child.mairoCampaign.objective,
       dailyBudgetCents: child.dailyBudgetCents,
       externalCampaignId: child.externalCampaignId!,
+      mairoCampaignId: child.mairoCampaignId,
+      destinationType: child.mairoCampaign.destinationType,
       startAt: child.mairoCampaign.startDate,
       existingAdGroupId: child.externalAdGroupId,
     });
@@ -335,6 +358,9 @@ async function buildDeliverable(input: {
   objective: AdGoal;
   dailyBudgetCents: number;
   externalCampaignId: string;
+  mairoCampaignId: string;
+  /** What the campaign says it wants, so a missing value can be named. */
+  destinationType: AdDestination;
   startAt?: Date | null;
   /**
    * An ad set that already reached the network on an earlier attempt.
@@ -394,6 +420,19 @@ async function buildDeliverable(input: {
     return { stage: "ad_set", blocker };
   }
 
+  // Asked for, not inferred. A campaign with no answer is stopped here with a
+  // sentence naming the missing thing, rather than at Meta with one that does
+  // not.
+  const destination = await destinationFor(input.organizationId, input.mairoCampaignId);
+  if (!destination) {
+    const blocker = describeMissing(input.destinationType);
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: blocker },
+    });
+    return { stage: "ad_set", blocker };
+  }
+
   const ad = await input.adapter.createAd({
     organizationId: input.organizationId,
     externalAdGroupId: adGroupId,
@@ -405,7 +444,7 @@ async function buildDeliverable(input: {
       cta: creative.cta,
       imageData: creative.imageData,
     },
-    destinationUrl: creative.destinationUrl,
+    destination,
   });
 
   if (!ad.ok) {
@@ -480,7 +519,6 @@ async function approvedCreativeFor(organizationId: string): Promise<{
   primaryText: string | null;
   cta: string | null;
   imageData: string;
-  destinationUrl: string | null;
 } | null> {
   const request = await db.creativeRequest.findFirst({
     where: {
@@ -491,7 +529,6 @@ async function approvedCreativeFor(organizationId: string): Promise<{
     orderBy: { updatedAt: "desc" },
     include: {
       images: { where: { isFinal: true }, orderBy: { version: "desc" }, take: 1 },
-      organization: { select: { website: true } },
     },
   });
 
@@ -504,8 +541,37 @@ async function approvedCreativeFor(organizationId: string): Promise<{
     primaryText: copy.primaryText,
     cta: copy.callToAction,
     imageData: image.imageData,
-    destinationUrl: request.organization.website ?? null,
   };
+}
+
+/**
+ * Where this campaign's clicks go.
+ *
+ * The campaign's own answer, falling back to the business's. Resolved here
+ * rather than read off the organization, which is what the launch path used to
+ * do — that is how a plumber whose customers want to phone him got an ad
+ * pointing at a homepage, and how a business with no website got no ad at all.
+ */
+async function destinationFor(
+  organizationId: string,
+  mairoCampaignId: string
+): Promise<Destination | null> {
+  const [campaign, organization] = await Promise.all([
+    db.mairoCampaign.findUnique({
+      where: { id: mairoCampaignId },
+      select: { destinationType: true, destinationUrl: true, destinationPhone: true },
+    }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { defaultDestination: true, website: true, phone: true },
+    }),
+  ]);
+  if (!campaign || !organization) return null;
+
+  return resolveDestination(
+    { type: campaign.destinationType, url: campaign.destinationUrl, phone: campaign.destinationPhone },
+    { type: organization.defaultDestination, url: organization.website, phone: organization.phone }
+  );
 }
 
 async function recordFailure(platformCampaignId: string, message: string): Promise<void> {

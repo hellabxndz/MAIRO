@@ -7,12 +7,19 @@ import { db } from "@/lib/db";
 import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
 import { activeOrganizationId } from "@/lib/active-org";
+import { normalizePhone, normalizeUrl } from "@/lib/campaigns/destination";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
   monthlyBudget: z.coerce.number().min(100, "Budget must be at least $100/mo"),
   industry: z.string().optional(),
   website: z.string().optional(),
+  /**
+   * What the business wants a tap on its ads to do. Asked here so no campaign
+   * has to guess, and so the campaign form can pre-fill it.
+   */
+  destinationType: z.enum(["WEBSITE", "PHONE_CALL"]).default("WEBSITE"),
+  phone: z.string().optional(),
   targetAudience: z.string().optional(),
   brandVoice: z.string().optional(),
   competitors: z.string().optional(),
@@ -35,6 +42,8 @@ export async function completeOnboardingAction(
     monthlyBudget: formData.get("monthlyBudget"),
     industry: formData.get("industry") || undefined,
     website: formData.get("website") || undefined,
+    destinationType: formData.get("destinationType") || "WEBSITE",
+    phone: formData.get("phone") || undefined,
     targetAudience: formData.get("targetAudience") || undefined,
     brandVoice: formData.get("brandVoice") || undefined,
     competitors: formData.get("competitors") || undefined,
@@ -49,11 +58,37 @@ export async function completeOnboardingAction(
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const monthlyBudgetCents = Math.round(data.monthlyBudget * 100);
 
+  // Normalized on the way in, so nothing downstream has to wonder whether a
+  // stored value is usable. A number that cannot be dialled or an address that
+  // is not a URL is refused here, where the person can see the field they got
+  // wrong, rather than weeks later when an ad fails to build.
+  const website = data.website?.trim() ? normalizeUrl(data.website) : null;
+  if (data.website?.trim() && !website) {
+    return { error: "That doesn't look like a web address. Something like yourbusiness.com." };
+  }
+
+  const phone = data.phone?.trim() ? normalizePhone(data.phone) : null;
+  if (data.phone?.trim() && !phone) {
+    return {
+      error:
+        "That doesn't look like a phone number MAIRO can dial. Include the area code — for example (555) 123-4567.",
+    };
+  }
+
+  if (data.destinationType === "PHONE_CALL" && !phone) {
+    return { error: "Add the number you want your ads to ring." };
+  }
+  if (data.destinationType === "WEBSITE" && !website) {
+    return { error: "Add the web address you want people sent to when they tap your ad." };
+  }
+
   const organization = await db.organization.update({
     where: { id: organizationId },
     data: {
       industry: data.industry,
-      website: data.website,
+      website,
+      phone,
+      defaultDestination: data.destinationType,
     },
   });
 

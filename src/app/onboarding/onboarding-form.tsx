@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { completeOnboardingAction } from "@/lib/actions/onboarding-actions";
 
 const inputClass =
@@ -16,6 +16,9 @@ const GOALS = [
 
 export function OnboardingForm() {
   const [state, formAction, pending] = useActionState(completeOnboardingAction, undefined);
+  // What a tap on their ads should do. Asked at signup so no campaign has to
+  // guess, and so the campaign form has something to pre-fill.
+  const [destination, setDestination] = useState<"WEBSITE" | "PHONE_CALL">("WEBSITE");
 
   return (
     <form action={formAction} className="space-y-8">
@@ -52,15 +55,64 @@ export function OnboardingForm() {
         />
       </div>
 
+      <fieldset className="space-y-3">
+        <legend className="mb-1 text-sm font-medium">
+          When someone taps your ad, what should happen?
+        </legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {(
+            [
+              { key: "WEBSITE" as const, label: "They go to my website", sub: "A shop, a booking page, anything online" },
+              { key: "PHONE_CALL" as const, label: "They call me", sub: "A tap-to-call button on the ad" },
+            ]
+          ).map((d) => (
+            <button
+              key={d.key}
+              type="button"
+              aria-pressed={destination === d.key}
+              onClick={() => setDestination(d.key)}
+              className={`rounded-lg border p-4 text-left transition ${
+                destination === d.key
+                  ? "border-white/40 bg-white/[0.06]"
+                  : "border-white/10 bg-white/5 hover:border-white/25"
+              }`}
+            >
+              <p className="text-sm text-white">{d.label}</p>
+              <p className="mt-0.5 text-xs text-neutral-500">{d.sub}</p>
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="destinationType" value={destination} />
+      </fieldset>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-sm font-medium">Industry</label>
           <input name="industry" className={inputClass} placeholder="e.g. Dental practice" />
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Website</label>
-          <input name="website" className={inputClass} placeholder="https://yourbusiness.com" />
-        </div>
+        {destination === "PHONE_CALL" ? (
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Phone number</label>
+            <input
+              name="phone"
+              inputMode="tel"
+              className={inputClass}
+              placeholder="(555) 123-4567"
+            />
+            <p className="text-xs text-neutral-500">
+              The number your ads will ring. Nobody sees it until they tap the button.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Website</label>
+            <input name="website" className={inputClass} placeholder="yourbusiness.com" />
+            <p className="text-xs text-neutral-500">
+              Where people land when they tap your ad. You can point a single campaign somewhere
+              else later.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1">

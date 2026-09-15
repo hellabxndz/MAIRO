@@ -75,7 +75,12 @@ export default async function CampaignsPage() {
     }),
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { subscriptionTier: true },
+      select: {
+      subscriptionTier: true,
+      defaultDestination: true,
+      website: true,
+      phone: true,
+    },
     }),
     entitlementsFor(organizationId),
     connectionSummaries(organizationId),
@@ -112,6 +117,11 @@ export default async function CampaignsPage() {
     currentPlanPrice: plan.priceMonthly,
     upgradePlanName: upgradeTarget.name,
     upgradePlanPrice: upgradeTarget.priceMonthly,
+    destination: {
+      type: organization?.defaultDestination ?? "WEBSITE",
+      website: organization?.website ?? null,
+      phone: organization?.phone ?? null,
+    },
     connected: [...connections.values()]
       .filter((c) => c.connected)
       .map((c) => c.platform),

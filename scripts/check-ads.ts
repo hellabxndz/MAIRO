@@ -16,6 +16,11 @@ import {
 } from "@/lib/meta/creative-copy";
 import { metaCustomEventType } from "@/lib/meta/creatives";
 import { metaObjectiveFor, metaCampaignBody } from "@/lib/meta/campaigns";
+import {
+  normalizePhone,
+  normalizeUrl,
+  resolveDestination,
+} from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
 import { metaAdapter } from "@/lib/ad-platforms/meta/adapter";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
@@ -235,6 +240,53 @@ console.log("\n— a Graph error says something a person can act on —");
     "a body with no error at all still says something",
     describeGraphError(null, 500).includes("500")
   );
+}
+
+console.log("\n— a click has somewhere to go —");
+{
+  // The website used to be read off the organization without anybody being
+  // asked for it, which gave a plumber's customers a homepage when they wanted
+  // to ring him, and gave a business with no website no ad at all.
+  const web = { type: "WEBSITE" as const };
+  const call = { type: "PHONE_CALL" as const };
+
+  ok(
+    "a campaign's own answer wins over the business's",
+    JSON.stringify(
+      resolveDestination({ type: "WEBSITE", url: "shop.com/sale" }, { type: "WEBSITE", url: "shop.com" })
+    ) === JSON.stringify({ type: "WEBSITE", url: "https://shop.com/sale" })
+  );
+  ok(
+    "and falls back to the business when the campaign says nothing",
+    JSON.stringify(resolveDestination(web, { type: "WEBSITE", url: "shop.com" })) ===
+      JSON.stringify({ type: "WEBSITE", url: "https://shop.com/" })
+  );
+  ok("nothing anywhere is null, not a guess", resolveDestination(web, web) === null);
+  ok(
+    "a call campaign with no number is null even when a website exists",
+    resolveDestination(call, { type: "WEBSITE", url: "shop.com" }) === null
+  );
+  ok(
+    "a call campaign takes the business's number",
+    JSON.stringify(resolveDestination(call, { type: "PHONE_CALL", phone: "(555) 123-4567" })) ===
+      JSON.stringify({ type: "PHONE_CALL", phone: "+15551234567" })
+  );
+
+  // URLs people actually type.
+  ok("a bare domain is accepted", normalizeUrl("myshop.com") === "https://myshop.com/");
+  ok("a path is kept", normalizeUrl("myshop.com/sale") === "https://myshop.com/sale");
+  ok("http is left alone", normalizeUrl("http://myshop.com/") === "http://myshop.com/");
+  ok("a hostname with no dot is refused", normalizeUrl("localhost") === null);
+  ok("so is empty", normalizeUrl("   ") === null);
+  ok("and javascript: is not a destination", normalizeUrl("javascript:alert(1)") === null);
+
+  // Numbers people actually type.
+  ok("US ten digits gets a country code", normalizePhone("(555) 123-4567") === "+15551234567");
+  ok("dashes and spaces are stripped", normalizePhone("555-123 4567") === "+15551234567");
+  ok("a leading 1 is understood", normalizePhone("1 555 123 4567") === "+15551234567");
+  ok("an international number is kept", normalizePhone("+44 20 7946 0000") === "+442079460000");
+  ok("something too short is refused", normalizePhone("12345") === null);
+  ok("and letters are not a number", normalizePhone("call me") === null);
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

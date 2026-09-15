@@ -24,6 +24,12 @@ import {
 } from "@/lib/campaigns/schedule";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import type { AdPlatform } from "@/generated/prisma/enums";
+import {
+  describeMissing,
+  normalizePhone,
+  normalizeUrl,
+  resolveDestination,
+} from "@/lib/campaigns/destination";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
 
@@ -45,6 +51,12 @@ const createCampaignSchema = z.object({
   // campaign created without a schedule — which is most of them.
   startLocal: z.string().trim().nullish(),
   startTimeZone: z.string().trim().max(64).nullish(),
+  /**
+   * What a click does, and the value it needs. Both nullish for the same
+   * reason as the schedule: a form that omits the field sends null.
+   */
+  destinationType: z.enum(["WEBSITE", "PHONE_CALL"]).nullish(),
+  destinationValue: z.string().trim().max(2000).nullish(),
 });
 
 export type CampaignActionState =
@@ -88,6 +100,8 @@ export async function createCampaignAction(
     tiktokGrowthMode: formData.get("tiktokGrowthMode") === "on",
     startLocal: formData.get("startLocal"),
     startTimeZone: formData.get("startTimeZone"),
+    destinationType: formData.get("destinationType"),
+    destinationValue: formData.get("destinationValue"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -161,6 +175,50 @@ export async function createCampaignAction(
     return { error: problems[0].message };
   }
 
+  // Where the click goes. Checked before anything is created, because the
+  // alternative is a campaign built on Meta that can never carry an ad — which
+  // is precisely what used to happen to a business with no website on file.
+  const destinationType = parsed.data.destinationType ?? "WEBSITE";
+  const rawDestination = parsed.data.destinationValue?.trim() ?? "";
+
+  let destinationUrl: string | null = null;
+  let destinationPhone: string | null = null;
+
+  if (rawDestination.length > 0) {
+    if (destinationType === "PHONE_CALL") {
+      destinationPhone = normalizePhone(rawDestination);
+      if (!destinationPhone) {
+        return {
+          error:
+            "That doesn't look like a phone number MAIRO can dial. Include the area code — for example (555) 123-4567.",
+        };
+      }
+    } else {
+      destinationUrl = normalizeUrl(rawDestination);
+      if (!destinationUrl) {
+        return {
+          error: "That doesn't look like a web address. Something like yourshop.com/offer.",
+        };
+      }
+    }
+  } else {
+    // Nothing typed means "use whatever this business normally does", which
+    // only works if the business has said. Caught here rather than at launch.
+    const fallback = await db.organization.findUnique({
+      where: { id: organizationId },
+      select: { defaultDestination: true, website: true, phone: true },
+    });
+    const resolved = resolveDestination(
+      { type: destinationType },
+      {
+        type: fallback?.defaultDestination ?? "WEBSITE",
+        url: fallback?.website,
+        phone: fallback?.phone,
+      }
+    );
+    if (!resolved) return { error: describeMissing(destinationType) };
+  }
+
   const outcome = await createMairoCampaign({
     organizationId,
     name,
@@ -170,6 +228,7 @@ export async function createCampaignAction(
     tiktokGrowthMode,
     startAt,
     startTimeZone: startAt ? startTimeZone : null,
+    destination: { type: destinationType, url: destinationUrl, phone: destinationPhone },
   });
 
   revalidatePath("/dashboard/campaigns");

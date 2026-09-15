@@ -1,4 +1,5 @@
 import type { AdGoal, AdPlatform, CreativeAspect } from "@/generated/prisma/enums";
+import type { Destination } from "@/lib/campaigns/destination";
 
 // The one interface every advertising network is reached through.
 //
@@ -177,8 +178,11 @@ export type CreateAdInput = {
     /** The picture itself, as a data URL, for networks that want the bytes. */
     imageData?: string | null;
   };
-  /** Where the ad sends people. Meta will not build a link ad without it. */
-  destinationUrl?: string | null;
+  /**
+   * What a click does. Networks build a different creative for each, so this
+   * is required — an ad with nowhere to go is not an ad.
+   */
+  destination: Destination;
 };
 
 export type CreatedEntity = { externalId: string };

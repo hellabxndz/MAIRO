@@ -57,6 +57,12 @@ export type PlanContext = {
   upgradePlanPrice: number;
   /** Which networks actually have a connected account right now. */
   connected: AdPlatform[];
+  /** What this business said at signup, pre-filled so they answer once. */
+  destination: {
+    type: "WEBSITE" | "PHONE_CALL";
+    website: string | null;
+    phone: string | null;
+  };
 };
 
 function money(cents: number): string {
@@ -73,6 +79,14 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   const [choice, setChoice] = useState<string>(plan.tiktokAllowed ? "BOTH" : "META");
   const [objective, setObjective] = useState<AdGoal>("SALES");
   const [budget, setBudget] = useState<number>(50);
+  const [destinationType, setDestinationType] = useState<"WEBSITE" | "PHONE_CALL">(
+    plan.destination.type
+  );
+  const [destinationValue, setDestinationValue] = useState<string>(
+    plan.destination.type === "PHONE_CALL"
+      ? (plan.destination.phone ?? "")
+      : (plan.destination.website ?? "")
+  );
   const [growthMode, setGrowthMode] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeCopy | null>(null);
 
@@ -182,6 +196,85 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
             </div>
           </div>
         </div>
+
+        {/* ---- what the click does ---- */}
+        {/* Asked, because it cannot be guessed. MAIRO used to take the
+            business's website without mentioning it, which sent a plumber's
+            customers to a homepage when they wanted to ring him, and gave a
+            business with no website no ad at all. */}
+        <fieldset className="space-y-3">
+          <legend className="text-sm text-white">
+            What should happen when someone taps the ad?
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  key: "WEBSITE" as const,
+                  label: "Go to my website",
+                  sub: "The exact page you want them to land on",
+                },
+                {
+                  key: "PHONE_CALL" as const,
+                  label: "Call me",
+                  sub: "A tap-to-call button, straight to your phone",
+                },
+              ]
+            ).map((d) => {
+              const selected = destinationType === d.key;
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    setDestinationType(d.key);
+                    setDestinationValue(
+                      d.key === "PHONE_CALL"
+                        ? (plan.destination.phone ?? "")
+                        : (plan.destination.website ?? "")
+                    );
+                  }}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    selected
+                      ? "border-white/30 bg-white/[0.06]"
+                      : "border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <p className="text-sm text-white">{d.label}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">{d.sub}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <input type="hidden" name="destinationType" value={destinationType} />
+          <div className="space-y-1.5">
+            <label htmlFor="destinationValue" className="text-xs font-medium text-neutral-400">
+              {destinationType === "PHONE_CALL"
+                ? "The number it should ring"
+                : "The page it should open"}
+            </label>
+            <input
+              id="destinationValue"
+              name="destinationValue"
+              inputMode={destinationType === "PHONE_CALL" ? "tel" : "url"}
+              value={destinationValue}
+              onChange={(e) => setDestinationValue(e.target.value)}
+              placeholder={
+                destinationType === "PHONE_CALL"
+                  ? "(555) 123-4567"
+                  : "yourshop.com/the-thing-you-are-advertising"
+              }
+              className={inputClass}
+            />
+            <p className="text-xs text-neutral-600">
+              {destinationType === "PHONE_CALL"
+                ? "Meta shows a call button. Nobody sees your number until they tap it."
+                : "Send them to the thing in the ad, not your homepage — people don't go looking."}
+            </p>
+          </div>
+        </fieldset>
 
         {/* ---- where ---- */}
         <fieldset className="space-y-3">

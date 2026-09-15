@@ -1,5 +1,6 @@
 import { metaGraphRequest } from "@/lib/meta/client";
 import { META_CTA_TYPES } from "@/lib/meta/creative-copy";
+import type { Destination } from "@/lib/campaigns/destination";
 
 // Turning a picture and some copy into an ad that can actually run.
 //
@@ -72,8 +73,8 @@ export type AdCreativeInput = {
   /** The Facebook Page the ad is published by. Meta requires one. */
   pageId: string;
   imageHash: string;
-  /** Where the ad sends people. Must be a real, reachable URL. */
-  link: string;
+  /** What a click does: open a link, or ring the business. */
+  destination: Destination;
   /** The text above the ad. */
   message: string;
   /** The bold line under the image. */
@@ -91,10 +92,31 @@ export type AdCreativeInput = {
  * called rather than discovered here.
  */
 export async function createAdCreative(input: AdCreativeInput): Promise<{ id: string }> {
+  // A tap-to-call ad has one button and it is CALL_NOW. The concept's suggested
+  // call to action ("Shop Now", "Learn More") is about a page that this ad does
+  // not have, so it is overridden rather than argued with.
   const cta =
-    input.callToAction && META_CTA_TYPES.has(input.callToAction)
-      ? input.callToAction
-      : "LEARN_MORE";
+    input.destination.type === "PHONE_CALL"
+      ? "CALL_NOW"
+      : input.callToAction && META_CTA_TYPES.has(input.callToAction)
+        ? input.callToAction
+        : "LEARN_MORE";
+
+  // What the button does. For a link ad both the story and the button point at
+  // the page; for a call ad the button carries a tel: URI.
+  const buttonLink =
+    input.destination.type === "PHONE_CALL"
+      ? `tel:${input.destination.phone}`
+      : input.destination.url;
+
+  // link_data.link is required by Meta whatever the button does, and it must be
+  // a web address — a tel: URI is refused there. A call ad therefore points its
+  // story at the Page that publishes it, which is where somebody who taps the
+  // image rather than the button should land anyway.
+  const storyLink =
+    input.destination.type === "PHONE_CALL"
+      ? `https://www.facebook.com/${input.pageId}`
+      : input.destination.url;
 
   return metaGraphRequest<{ id: string }>(`/${input.adAccountId}/adcreatives`, {
     method: "POST",
@@ -105,14 +127,14 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
         page_id: input.pageId,
         link_data: {
           image_hash: input.imageHash,
-          link: input.link,
+          link: storyLink,
           message: input.message,
           name: input.headline,
           call_to_action: {
             type: cta,
             // The button needs its own destination even when it matches the
             // link; omitting it makes the button inert on some placements.
-            value: { link: input.link },
+            value: { link: buttonLink },
           },
         },
       }),

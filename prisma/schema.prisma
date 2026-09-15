@@ -90,6 +90,14 @@ model Organization {
 
   kind OrganizationKind @default(BUSINESS)
 
+  /// What this business wants a click to do, answered at signup.
+  ///
+  /// The default every campaign starts from, not a rule — a campaign can send
+  /// people somewhere else without changing what the business normally does.
+  defaultDestination AdDestination @default(WEBSITE)
+  /// The number a tap-to-call ad rings, in E.164 (+15551234567).
+  phone              String?
+
   /// Stops MAIRO putting campaigns live on its own.
   ///
   /// Off by default, because running the ads is what the customer is paying
@@ -222,6 +230,20 @@ model MetaAdAccount {
 
   connectedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// Where an ad sends the person who clicks it.
+///
+/// Not a style choice — Meta builds a different creative for each, and asking
+/// the customer is the only way to know. A plumber wants the phone to ring; a
+/// shop wants people on a product page. Guessing produced ads that sent buyers
+/// to a homepage that does not sell anything, or no ad at all when the
+/// business had no website to guess from.
+enum AdDestination {
+  /// A link. The business supplies the exact URL the click should land on.
+  WEBSITE
+  /// A tap-to-call button, wired to the business's own number through Meta.
+  PHONE_CALL
 }
 
 enum CampaignStatus {
@@ -492,6 +514,17 @@ model MairoCampaign {
   name      String
   objective AdGoal
   status    CampaignStatus @default(DRAFT)
+
+  /// Where this campaign's ad sends people, and the value it needs.
+  ///
+  /// Held per campaign rather than only on the organization because one
+  /// business runs different ads for different things — a booking page this
+  /// month, a sale page the next — and making them edit their business
+  /// profile to change one ad would be absurd. Null falls back to the
+  /// organization's own answer.
+  destinationType  AdDestination @default(WEBSITE)
+  destinationUrl   String?
+  destinationPhone String?
 
   /// The one number the customer entered. The children's budgets are derived
   /// from this and their allocation percentages, and are kept summing to it.
