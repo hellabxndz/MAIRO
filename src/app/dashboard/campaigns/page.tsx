@@ -163,9 +163,13 @@ export default async function CampaignsPage() {
               : "Delete one below to free a slot, or move up a plan to run more at once."}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-4">
+            {/* The way out that is not destructive, so it is the one that
+                looks like the answer. Deleting is right there below in red;
+                this is the other half of the same decision and should not be
+                the quieter of the two. */}
             <Link
               href="/dashboard/settings#billing"
-              className="rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200"
+              className="rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-black shadow-[0_0_32px_-8px_rgba(52,211,153,0.7)] transition hover:bg-emerald-300"
             >
               {upgradeTarget.name} runs {upgradeTarget.limits.campaigns} — ${upgradeTarget.priceMonthly}/mo
             </Link>
@@ -349,6 +353,15 @@ export default async function CampaignsPage() {
                   name={campaign.name}
                   running={campaign.status === "ACTIVE"}
                   freesSlot={atLimit}
+                  upgrade={
+                    upgradeTarget.limits.campaigns > entitlements.campaign_limit
+                      ? {
+                          name: upgradeTarget.name,
+                          price: upgradeTarget.priceMonthly,
+                          campaigns: upgradeTarget.limits.campaigns,
+                        }
+                      : null
+                  }
                 />
               </Card>
             );

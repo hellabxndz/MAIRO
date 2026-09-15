@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteCampaignAction } from "@/lib/actions/campaign-actions";
 
@@ -22,11 +23,14 @@ export function DeleteCampaign({
   running,
   /** True when this is the only thing standing between them and a new one. */
   freesSlot,
+  /** The next plan up, offered instead of deleting when the limit is the reason. */
+  upgrade,
 }: {
   campaignId: string;
   name: string;
   running: boolean;
   freesSlot: boolean;
+  upgrade?: { name: string; price: number; campaigns: number } | null;
 }) {
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +55,7 @@ export function DeleteCampaign({
       <button
         type="button"
         onClick={() => setAsking(true)}
-        className="mt-3 text-xs text-neutral-500 underline decoration-white/15 underline-offset-4 transition hover:text-red-300 hover:decoration-red-300/40"
+        className="mt-4 inline-flex items-center rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-400 transition hover:border-red-400 hover:bg-red-500 hover:text-white"
       >
         Delete campaign
       </button>
@@ -89,6 +93,23 @@ export function DeleteCampaign({
           Keep it
         </button>
       </div>
+
+      {/* Offered here because this is the moment it is actually relevant: they
+          are deleting a campaign that works, purely to get the slot back. The
+          plan that removes the choice belongs in front of them at the point
+          they are about to pay for it with a working campaign — not buried on
+          a billing page they had no reason to open. */}
+      {freesSlot && upgrade && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="text-xs text-neutral-400">Or don&apos;t choose between them:</p>
+          <Link
+            href="/dashboard/settings#billing"
+            className="mt-2 inline-flex items-center rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_0_28px_-8px_rgba(52,211,153,0.7)] transition hover:bg-emerald-300"
+          >
+            Keep this one and run {upgrade.campaigns} — {upgrade.name}, ${upgrade.price}/mo
+          </Link>
+        </div>
+      )}
 
       {/* A failure here means the campaign is still live. Said at full length
           rather than as a red one-liner, because the customer needs to know
