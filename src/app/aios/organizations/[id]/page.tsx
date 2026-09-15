@@ -4,6 +4,7 @@ import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { StatusSelect } from "@/components/status-select";
 import { ReviewVerdict } from "@/components/review-verdict";
 import { RerunReviewButton } from "@/components/rerun-review-button";
+import { DeleteOrganization } from "@/components/delete-organization";
 import {
   updateCreativeStatusAction,
   updatePlanStatusAction,
@@ -32,6 +33,10 @@ export default async function OrganizationDetailPage({
       metaAdAccount: true,
       monthlyPlans: { orderBy: { month: "desc" } },
       campaigns: { orderBy: { createdAt: "desc" } },
+      // Counted separately from `campaigns` for the delete summary: that table
+      // is the pre-multi-platform one, so an org can have live campaigns and
+      // still show zero there.
+      mairoCampaigns: { select: { id: true } },
       creativeRequests: { orderBy: { createdAt: "desc" } },
       users: true,
     },
@@ -43,6 +48,9 @@ export default async function OrganizationDetailPage({
   const month = currentMonthKey();
   const creativesThisMonth = org.creativeRequests.filter((r) => r.month === month).length;
   const activeCampaigns = org.campaigns.filter((c) => c.status !== "ARCHIVED").length;
+  // The legacy table was backfilled into mairoCampaigns, so the two overlap;
+  // whichever is larger is the honest count of campaigns this account owns.
+  const campaignCount = Math.max(org.campaigns.length, org.mairoCampaigns.length);
 
   return (
     <div>
@@ -193,6 +201,28 @@ export default async function OrganizationDetailPage({
             ))}
           </div>
         )}
+      </div>
+
+      <div>
+        <h2 className="mb-3 font-medium text-red-300/80">Danger zone</h2>
+        <Card className="border-red-500/20">
+          <DeleteOrganization
+            organizationId={org.id}
+            name={org.name}
+            summary={[
+              `${org.users.length} sign-in${org.users.length === 1 ? "" : "s"}`,
+              `${campaignCount} campaign${campaignCount === 1 ? "" : "s"}`,
+              `${org.creativeRequests.length} creative request${org.creativeRequests.length === 1 ? "" : "s"}`,
+              `${org.monthlyPlans.length} monthly plan${org.monthlyPlans.length === 1 ? "" : "s"}`,
+              "any connected ad accounts, tracking and conversion history",
+            ]}
+          />
+          <p className="mt-4 border-t border-white/10 pt-3 text-xs text-neutral-600">
+            Nothing here is sent to Meta or TikTok. A campaign still running on a
+            network is refused rather than deleted — stop it there first, or it keeps
+            spending with nothing left able to stop it.
+          </p>
+        </Card>
       </div>
     </div>
   );
