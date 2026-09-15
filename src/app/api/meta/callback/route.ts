@@ -92,7 +92,13 @@ export async function GET(req: NextRequest) {
     await saveMetaConnection({
       organizationId,
       metaAdAccountId: chosen.id,
+      // First Page as a starting point, not a decision. A business with more
+      // than one Page gets whichever Meta returns first, which is why the Meta
+      // page shows which one was picked and lets it be changed — an ad going
+      // out under the wrong brand is not something to discover from a comment
+      // notification.
       pageId: pages[0]?.id ?? null,
+      pageName: pages[0]?.name ?? null,
       accessToken: longLived.access_token,
       tokenExpiresAt,
     });

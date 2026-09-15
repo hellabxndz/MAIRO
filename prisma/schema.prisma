@@ -206,6 +206,14 @@ model MetaAdAccount {
   metaAdAccountId String // act_xxxxxxxx
   metaBusinessId  String?
   pageId          String?
+  /// The Page's name at the time it was chosen, so the dashboard can say which
+  /// Page ads go out as without a Graph call on every render.
+  ///
+  /// A cached label, not a source of truth: a Page renamed on Facebook shows
+  /// the old name here until the customer reopens the picker. That is the right
+  /// trade — the id is what actually matters, and a stale word beats making
+  /// every page load wait on Meta.
+  pageName        String?
   accessToken     String               @db.Text // long-lived user/system token
   tokenExpiresAt  DateTime?
   status          MetaConnectionStatus @default(CONNECTED)

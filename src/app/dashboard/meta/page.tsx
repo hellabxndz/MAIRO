@@ -7,6 +7,7 @@ import { disconnectMetaAction, exploreWithoutMetaAction } from "@/lib/actions/me
 import { activeOrganizationId } from "@/lib/active-org";
 import { fetchMetaBillingStatus, fetchMonthToDateSpendCents } from "@/lib/meta/billing";
 import { AdSpendCard } from "@/components/ad-spend-card";
+import { MetaPagePicker } from "@/components/meta-page-picker";
 
 // The billing figures are live Graph calls. Same budget as the other pages that
 // read from Meta, for the same reason.
@@ -35,7 +36,13 @@ export default async function MetaConnectionPage({
   // stored access token into a rendered component at all.
   const metaAccount = await db.metaAdAccount.findUnique({
     where: { organizationId: organizationId },
-    select: { status: true, metaAdAccountId: true, connectedAt: true },
+    select: {
+      status: true,
+      metaAdAccountId: true,
+      connectedAt: true,
+      pageId: true,
+      pageName: true,
+    },
   });
 
   // Only worth asking Meta about money once there is a connection to ask
@@ -111,6 +118,14 @@ export default async function MetaConnectionPage({
             <p className="text-sm text-neutral-500">
               Connected {metaAccount.connectedAt.toLocaleDateString()}
             </p>
+
+            {/* An ad is published by a Page, always. Showing which one — and
+                letting it be changed — is the difference between a business
+                with two brands running ads under the right name and finding
+                out from a comment notification. */}
+            <div className="border-t border-white/10 pt-4">
+              <MetaPagePicker pageId={metaAccount.pageId} pageName={metaAccount.pageName} />
+            </div>
             <div className="flex flex-wrap gap-3">
               {required && (
                 <Link href="/dashboard" className={primaryButtonClass}>

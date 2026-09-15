@@ -15,6 +15,7 @@ export type MetaConnection = {
   id: string;
   metaAdAccountId: string;
   pageId: string | null;
+  pageName: string | null;
   status: MetaConnectionStatus;
   /** Decrypted and ready to send to Meta. Never write this back to the database. */
   accessToken: string;
@@ -38,6 +39,7 @@ export async function loadMetaConnection(
       id: true,
       metaAdAccountId: true,
       pageId: true,
+      pageName: true,
       status: true,
       accessToken: true,
       tokenExpiresAt: true,
@@ -68,12 +70,14 @@ export async function saveMetaConnection(input: {
   organizationId: string;
   metaAdAccountId: string;
   pageId?: string | null;
+  pageName?: string | null;
   accessToken: string;
   tokenExpiresAt: Date | null;
 }): Promise<void> {
   const stored = {
     metaAdAccountId: input.metaAdAccountId,
     pageId: input.pageId ?? null,
+    pageName: input.pageName ?? null,
     accessToken: encryptSecret(input.accessToken),
     tokenExpiresAt: input.tokenExpiresAt,
     status: "CONNECTED" as const,
