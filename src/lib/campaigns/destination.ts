@@ -15,7 +15,15 @@ import type { AdDestination } from "@/generated/prisma/enums";
 
 export type Destination =
   | { type: "WEBSITE"; url: string }
-  | { type: "PHONE_CALL"; phone: string };
+  | { type: "PHONE_CALL"; phone: string }
+  /**
+   * A conversation in Messenger with the Page that publishes the ad.
+   *
+   * Carries no value of its own, and that is the point: the Page is already
+   * chosen on the Meta connection screen, so this is the one destination
+   * MAIRO can offer without asking the business for anything at all.
+   */
+  | { type: "DIRECT_MESSAGE" };
 
 // LEAD_FORM is not a third shape here on purpose. A form MAIRO hosts is a page
 // with an address, so by the time an ad is built it IS a website destination —
@@ -41,7 +49,14 @@ export function resolveDestination(
   campaign: DestinationSource,
   organization: DestinationSource
 ): Destination | null {
-  const type = campaign.type ?? organization.type;
+  // The campaign's type decides, always. The business's answer is a default
+  // for the *values* below — its website, its number — not a type that can
+  // override the campaign's, because a campaign row always carries one and a
+  // fallback here would be dead code pretending otherwise. Where the business
+  // default really applies is the campaign form, which pre-fills from it.
+  const type = campaign.type;
+
+  if (type === "DIRECT_MESSAGE") return { type: "DIRECT_MESSAGE" };
 
   if (type === "LEAD_FORM") {
     const url = campaign.formUrl ?? organization.formUrl ?? null;
@@ -121,7 +136,7 @@ export function describeMissing(type: AdDestination): string {
     return "This campaign rings your phone, but there's no number on it yet. Add one and MAIRO can build the ad.";
   }
   if (type === "LEAD_FORM") {
-    return "This campaign sends people to an enquiry form, but MAIRO hasn't built one for you yet. Open the Leads page and it will.";
+    return "This campaign opens an enquiry form, but MAIRO hasn't written one for this business yet.";
   }
   return "This campaign sends people to your website, but there's no address on it yet. Add the page you want them to land on.";
 }

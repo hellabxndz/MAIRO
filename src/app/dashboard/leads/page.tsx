@@ -4,16 +4,17 @@ import { db } from "@/lib/db";
 import { Card, PageHeader, EmptyState } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { activeOrganizationId } from "@/lib/active-org";
-import { ensureLeadForm, leadFormUrl, parseFields } from "@/lib/leads/forms";
+import { existingLeadForm, leadFormUrl, parseFields, previewLeadForm } from "@/lib/leads/forms";
+import { WriteLeadForm } from "./write-lead-form";
 import { siteUrl } from "@/lib/site";
 import { FIELD_KINDS } from "@/lib/leads/fields";
 
 // What came back from the ads, and the form that collected it.
 //
-// The form is written and hosted before anybody asks for it, so this page
-// always has something on it — the questions MAIRO chose for this trade, the
-// address to point an ad at, and every answer since. A business with no
-// website can run lead ads from the day they sign up, which is the point.
+// Nothing is written by opening this page. The form appears the moment somebody
+// picks "fill in a form" on a campaign — or presses the button here, for anyone
+// who wants to read the questions first. Until then this shows what MAIRO would
+// ask, which costs nothing and leaves no public page behind.
 
 export const dynamic = "force-dynamic";
 
@@ -23,20 +24,24 @@ export default async function LeadsPage() {
 
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const form = await ensureLeadForm(organizationId);
-  if (!form) redirect("/dashboard");
+  // Reads, never writes. A form is a public page carrying this business's
+  // name; opening a screen to see whether you have one is not a request to be
+  // given one. It is created when somebody picks "fill in a form" on a
+  // campaign, or presses the button below.
+  const form = await existingLeadForm(organizationId);
 
-  const [leads, total] = await Promise.all([
+  const [leads, total, preview] = await Promise.all([
     db.lead.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
     db.lead.count({ where: { organizationId } }),
+    form ? Promise.resolve<string[]>([]) : previewLeadForm(organizationId),
   ]);
 
-  const fields = parseFields(form.fieldsJson);
-  const url = leadFormUrl(form.slug, siteUrl());
+  const fields = form ? parseFields(form.fieldsJson) : [];
+  const url = form ? leadFormUrl(form.slug, siteUrl()) : null;
 
   return (
     <div>
@@ -45,6 +50,35 @@ export default async function LeadsPage() {
         description="People who filled in your form after tapping an ad."
       />
 
+      {!form && (
+        <Card className="mb-8">
+          <h2 className="text-base text-white">You don&apos;t have a form yet</h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
+            Pick &ldquo;Fill in a form&rdquo; when you create a campaign and MAIRO writes one
+            then — you don&apos;t have to do anything here. This button is only if you want to
+            see it first.
+          </p>
+          {preview.length > 0 && (
+            <>
+              <p className="mt-5 text-xs uppercase tracking-[0.12em] text-neutral-500">
+                What it would ask
+              </p>
+              <ol className="mt-1.5 space-y-1">
+                {preview.map((q, i) => (
+                  <li key={q} className="text-sm text-neutral-400">
+                    {i + 1}. {q}
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+          <div className="mt-5">
+            <WriteLeadForm />
+          </div>
+        </Card>
+      )}
+
+      {form && (
       <Card className="mb-8">
         <h2 className="text-base text-white">{form.headline}</h2>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
@@ -55,7 +89,7 @@ export default async function LeadsPage() {
           <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-500">
             Where the ad sends people
           </p>
-          <CopyField value={url} />
+          <CopyField value={url ?? ""} />
           <p className="mt-2 text-xs text-neutral-600">
             Pick &ldquo;Fill in a form&rdquo; when you create a campaign and MAIRO points the ad
             here for you. You never have to paste this anywhere.
@@ -85,6 +119,7 @@ export default async function LeadsPage() {
           </p>
         </div>
       </Card>
+      )}
 
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-neutral-300">

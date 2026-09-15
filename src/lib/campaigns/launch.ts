@@ -376,6 +376,20 @@ async function buildDeliverable(input: {
   // to clicks and says so here rather than silently under-delivering.
   const conversion = await conversionTargetFor(input.organizationId, input.platform);
 
+  // Asked for, not inferred — and resolved before the ad set rather than just
+  // before the ad, because a click-to-message ad is a property of the ad set
+  // too. One built without knowing that delivers as an ordinary link ad
+  // whatever button the creative carries.
+  const destination = await destinationFor(input.organizationId, input.mairoCampaignId);
+  if (!destination) {
+    const blocker = describeMissing(input.destinationType);
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: blocker },
+    });
+    return { stage: "campaign", blocker };
+  }
+
   let adGroupId = input.existingAdGroupId ?? null;
 
   if (!adGroupId) {
@@ -387,6 +401,7 @@ async function buildDeliverable(input: {
       goal: input.objective,
       campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
       conversion,
+      destination: destination ?? undefined,
       // The booked start, which becomes the network's own start_time. MAIRO
       // also holds the campaign paused until then, but only while it is
       // running — this is what keeps the schedule when it is not.
@@ -413,19 +428,6 @@ async function buildDeliverable(input: {
   if (!creative) {
     const blocker =
       "There is no approved creative to run yet, so the ad hasn't been built. Approve a picture on the Creatives page and launch again.";
-    await db.platformCampaign.update({
-      where: { id: input.platformCampaignId },
-      data: { lastError: blocker },
-    });
-    return { stage: "ad_set", blocker };
-  }
-
-  // Asked for, not inferred. A campaign with no answer is stopped here with a
-  // sentence naming the missing thing, rather than at Meta with one that does
-  // not.
-  const destination = await destinationFor(input.organizationId, input.mairoCampaignId);
-  if (!destination) {
-    const blocker = describeMissing(input.destinationType);
     await db.platformCampaign.update({
       where: { id: input.platformCampaignId },
       data: { lastError: blocker },

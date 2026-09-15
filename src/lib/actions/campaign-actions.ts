@@ -30,6 +30,8 @@ import {
   normalizeUrl,
   resolveDestination,
 } from "@/lib/campaigns/destination";
+import { ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
+import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
 
@@ -55,7 +57,7 @@ const createCampaignSchema = z.object({
    * What a click does, and the value it needs. Both nullish for the same
    * reason as the schedule: a form that omits the field sends null.
    */
-  destinationType: z.enum(["WEBSITE", "PHONE_CALL"]).nullish(),
+  destinationType: z.enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE"]).nullish(),
   destinationValue: z.string().trim().max(2000).nullish(),
 });
 
@@ -184,7 +186,21 @@ export async function createCampaignAction(
   let destinationUrl: string | null = null;
   let destinationPhone: string | null = null;
 
-  if (rawDestination.length > 0) {
+  // A conversation needs nothing from anybody: the Page is already chosen on
+  // the Meta connection screen, and that is what the ad opens a thread with.
+  if (destinationType === "DIRECT_MESSAGE") {
+    // Nothing to validate and nothing to store.
+  } else if (destinationType === "LEAD_FORM") {
+    // Written here, at the moment somebody actually chooses it — not when they
+    // open a page and look. A form is a public URL with this business's name
+    // on it, and creating one for everybody who glanced at the option would
+    // leave most of them with a page they never asked for.
+    const form = await ensureLeadForm(organizationId);
+    if (!form) {
+      return { error: "MAIRO couldn't write your form just now. Try again in a moment." };
+    }
+    destinationUrl = leadFormUrl(form.slug, siteUrl());
+  } else if (rawDestination.length > 0) {
     if (destinationType === "PHONE_CALL") {
       destinationPhone = normalizePhone(rawDestination);
       if (!destinationPhone) {

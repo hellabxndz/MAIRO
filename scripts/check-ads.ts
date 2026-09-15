@@ -190,6 +190,27 @@ console.log("\n— the objective and the ad set have to want the same thing —"
   );
 }
 
+console.log("\n— a conversation is a destination that asks for nothing —");
+{
+  // The Page is already chosen on the Meta connection screen, so this is the
+  // one destination MAIRO can offer without asking the business for anything.
+  const dm = { type: "DIRECT_MESSAGE" as const };
+  ok(
+    "it resolves with no value stored anywhere",
+    JSON.stringify(resolveDestination(dm, { type: "WEBSITE" })) ===
+      JSON.stringify({ type: "DIRECT_MESSAGE" })
+  );
+  ok(
+    "the campaign's type decides, never the business's",
+    resolveDestination({ type: "WEBSITE" }, dm) === null,
+    "a campaign asking for a website with no URL anywhere is unbuildable, not a DM"
+  );
+  ok(
+    "and it never falls through to needing a website",
+    resolveDestination(dm, { type: "WEBSITE", url: "" }) !== null
+  );
+}
+
 console.log("\n— the campaign names its own bid strategy —");
 {
   // Inherited from the ad account, this is a coin flip. An account defaulting

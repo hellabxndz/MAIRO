@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { submitLead, type SubmitOutcome } from "@/lib/leads/forms";
+import { ensureLeadForm, submitLead, type SubmitOutcome } from "@/lib/leads/forms";
 
 /**
  * Takes a submission from the public form.
@@ -53,6 +53,25 @@ export async function saveLeadFormAction(
     where: { id: leadFormId },
     data: { headline, description, thankYou },
   });
+
+  revalidatePath("/dashboard/leads");
+  return {};
+}
+
+/**
+ * Writes this business's form, on request.
+ *
+ * Separate from the campaign path so somebody can look at the questions before
+ * committing to a campaign — but still a deliberate act, because the result is
+ * a public page carrying their business's name.
+ */
+export async function writeLeadFormAction(): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  const form = await ensureLeadForm(organizationId);
+  if (!form) return { error: "MAIRO couldn't write your form just now." };
 
   revalidatePath("/dashboard/leads");
   return {};

@@ -238,6 +238,12 @@ export const metaAdapter: AdPlatformAdapter = {
             billing_event: "IMPRESSIONS",
             optimization_goal: optimization,
             status: "PAUSED",
+            // Where a click lands, at the ad set level. Meta needs this to
+            // deliver a message ad into the inbox rather than treating it as
+            // an ordinary link ad with an unusual button.
+            ...(input.destination?.type === "DIRECT_MESSAGE"
+              ? { destination_type: "MESSENGER" }
+              : {}),
             // When the customer booked a start. Sent as ISO 8601 in UTC, which
             // Meta converts into the ad account's own timezone — safer than
             // MAIRO guessing that timezone, where being wrong means every

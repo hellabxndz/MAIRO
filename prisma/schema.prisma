@@ -248,6 +248,8 @@ enum AdDestination {
   PHONE_CALL
   /// A form MAIRO hosts and wrote the questions for. The ad links to it.
   LEAD_FORM
+  /// A conversation. The ad opens Messenger with the business's Page.
+  DIRECT_MESSAGE
 }
 
 enum CampaignStatus {

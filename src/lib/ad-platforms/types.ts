@@ -135,6 +135,14 @@ export type CreateAdGroupInput = {
    */
   campaignOwnsBudget?: boolean;
   /**
+   * What the ad is for, when that changes how the ad set must be built.
+   *
+   * A click-to-message ad is not only a different button: Meta needs the ad
+   * set to name the inbox it is optimizing towards, and an ad set that does
+   * not say so delivers as an ordinary link ad however the creative is built.
+   */
+  destination?: Destination;
+  /**
    * The conversion to optimize towards, when the business has a pixel.
    *
    * Absent means there is nothing to optimize for yet, and the adapter falls

@@ -92,31 +92,36 @@ export type AdCreativeInput = {
  * called rather than discovered here.
  */
 export async function createAdCreative(input: AdCreativeInput): Promise<{ id: string }> {
-  // A tap-to-call ad has one button and it is CALL_NOW. The concept's suggested
-  // call to action ("Shop Now", "Learn More") is about a page that this ad does
-  // not have, so it is overridden rather than argued with.
+  // The button is decided by what the ad is for, not by the concept. A
+  // tap-to-call ad has one button and it is CALL_NOW; a message ad has
+  // MESSAGE_PAGE. The concept's suggestion ("Shop Now", "Learn More") is about
+  // a page neither of those ads has, so it is overridden rather than argued
+  // with — and only a link ad gets to use it.
   const cta =
     input.destination.type === "PHONE_CALL"
       ? "CALL_NOW"
-      : input.callToAction && META_CTA_TYPES.has(input.callToAction)
-        ? input.callToAction
-        : "LEARN_MORE";
-
-  // What the button does. For a link ad both the story and the button point at
-  // the page; for a call ad the button carries a tel: URI.
-  const buttonLink =
-    input.destination.type === "PHONE_CALL"
-      ? `tel:${input.destination.phone}`
-      : input.destination.url;
+      : input.destination.type === "DIRECT_MESSAGE"
+        ? "MESSAGE_PAGE"
+        : input.callToAction && META_CTA_TYPES.has(input.callToAction)
+          ? input.callToAction
+          : "LEARN_MORE";
 
   // link_data.link is required by Meta whatever the button does, and it must be
-  // a web address — a tel: URI is refused there. A call ad therefore points its
-  // story at the Page that publishes it, which is where somebody who taps the
-  // image rather than the button should land anyway.
-  const storyLink =
+  // a web address — a tel: URI is refused there. A call or message ad therefore
+  // points its story at the Page that publishes it, which is where somebody who
+  // taps the image rather than the button should land anyway.
+  const pageUrl = `https://www.facebook.com/${input.pageId}`;
+  const storyLink = input.destination.type === "WEBSITE" ? input.destination.url : pageUrl;
+
+  // What the button itself does.
+  const buttonValue: Record<string, unknown> =
     input.destination.type === "PHONE_CALL"
-      ? `https://www.facebook.com/${input.pageId}`
-      : input.destination.url;
+      ? { link: `tel:${input.destination.phone}` }
+      : input.destination.type === "DIRECT_MESSAGE"
+        ? // Messenger rather than a link. app_destination is what turns this
+          // from a button that opens the Page into one that opens a thread.
+          { app_destination: "MESSENGER", link: `https://m.me/${input.pageId}` }
+        : { link: input.destination.url };
 
   return metaGraphRequest<{ id: string }>(`/${input.adAccountId}/adcreatives`, {
     method: "POST",
@@ -134,7 +139,7 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
             type: cta,
             // The button needs its own destination even when it matches the
             // link; omitting it makes the button inert on some placements.
-            value: { link: buttonLink },
+            value: buttonValue,
           },
         },
       }),

@@ -18,7 +18,7 @@ import { DeleteCampaign } from "./delete-campaign";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
-import { ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
+import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
 
 // Each row's figures are live calls to Meta and TikTok. See the note in
@@ -95,9 +95,15 @@ export default async function CampaignsPage() {
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
   );
 
-  // Written on first sight of this page rather than behind a button: a form
-  // nobody has to create is the entire promise, and it costs one row.
-  const leadForm = await ensureLeadForm(organizationId);
+  // Deliberately not created here. Opening the campaigns page is not asking
+  // for a lead form, and writing one for everybody who looks would leave most
+  // businesses with a public page they never wanted. What this reads is the
+  // form if they already have one, and the questions MAIRO *would* ask if they
+  // pick it — a preview costs nothing and persists nothing.
+  const [leadForm, formPreview] = await Promise.all([
+    existingLeadForm(organizationId),
+    previewLeadForm(organizationId),
+  ]);
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   // Deleted campaigns are archived rather than erased, so they have to come
@@ -128,6 +134,7 @@ export default async function CampaignsPage() {
       website: organization?.website ?? null,
       phone: organization?.phone ?? null,
       formUrl: leadForm ? leadFormUrl(leadForm.slug, siteUrl()) : null,
+      formQuestions: formPreview,
     },
     connected: [...connections.values()]
       .filter((c) => c.connected)

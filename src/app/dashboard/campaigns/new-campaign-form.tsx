@@ -59,11 +59,13 @@ export type PlanContext = {
   connected: AdPlatform[];
   /** What this business said at signup, pre-filled so they answer once. */
   destination: {
-    type: "WEBSITE" | "PHONE_CALL" | "LEAD_FORM";
+    type: "WEBSITE" | "PHONE_CALL" | "LEAD_FORM" | "DIRECT_MESSAGE";
     website: string | null;
     phone: string | null;
-    /** The MAIRO-hosted form, so the option can name it. */
+    /** The MAIRO-hosted form, if they already chose one before. */
     formUrl: string | null;
+    /** What MAIRO would ask, shown before anything is created. */
+    formQuestions: string[];
   };
 };
 
@@ -81,7 +83,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   const [choice, setChoice] = useState<string>(plan.tiktokAllowed ? "BOTH" : "META");
   const [objective, setObjective] = useState<AdGoal>("SALES");
   const [budget, setBudget] = useState<number>(50);
-  const [destinationType, setDestinationType] = useState<"WEBSITE" | "PHONE_CALL" | "LEAD_FORM">(
+  const [destinationType, setDestinationType] = useState<
+    "WEBSITE" | "PHONE_CALL" | "LEAD_FORM" | "DIRECT_MESSAGE"
+  >(
     plan.destination.type
   );
   const [destinationValue, setDestinationValue] = useState<string>(
@@ -208,7 +212,7 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
           <legend className="text-sm text-white">
             What should happen when someone taps the ad?
           </legend>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {(
               [
                 {
@@ -224,7 +228,12 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
                 {
                   key: "LEAD_FORM" as const,
                   label: "Fill in a form",
-                  sub: "MAIRO wrote one for your trade. No website needed.",
+                  sub: "MAIRO writes one for your trade. No website needed.",
+                },
+                {
+                  key: "DIRECT_MESSAGE" as const,
+                  label: "Message me",
+                  sub: "Opens a chat with your Facebook Page",
                 },
               ]
             ).map((d) => {
@@ -261,15 +270,39 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
           {destinationType === "LEAD_FORM" ? (
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <p className="text-sm text-neutral-300">
-                People who tap the ad land on a form MAIRO already wrote for your trade — their
-                name, how to reach them, and the two or three things you need to know before
-                calling back. Answers appear on your Leads page.
+                {plan.destination.formUrl
+                  ? "People who tap the ad land on the form MAIRO wrote for you. Answers appear under Enquiries."
+                  : "MAIRO writes the form when you create this campaign, and answers appear under Enquiries. Nothing to build, and you don't need a website."}
               </p>
+              {plan.destination.formQuestions.length > 0 && (
+                <>
+                  <p className="mt-3 text-xs uppercase tracking-[0.12em] text-neutral-500">
+                    What it asks
+                  </p>
+                  <ol className="mt-1.5 space-y-1">
+                    {plan.destination.formQuestions.map((q, i) => (
+                      <li key={q} className="text-sm text-neutral-400">
+                        {i + 1}. {q}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
               {plan.destination.formUrl && (
-                <p className="mt-2 break-all font-mono text-xs text-neutral-500">
+                <p className="mt-3 break-all font-mono text-xs text-neutral-600">
                   {plan.destination.formUrl}
                 </p>
               )}
+            </div>
+          ) : destinationType === "DIRECT_MESSAGE" ? (
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <p className="text-sm text-neutral-300">
+                The ad opens a Messenger chat with your Facebook Page — the one MAIRO is already
+                posting the ad as. Nothing to set up, and nothing for you to type here.
+              </p>
+              <p className="mt-2 text-xs text-neutral-600">
+                Replies land in your Page inbox, not in MAIRO.
+              </p>
             </div>
           ) : (
           <div className="space-y-1.5">

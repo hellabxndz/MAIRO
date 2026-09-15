@@ -36,19 +36,31 @@ function newSlug(): string {
   return randomBytes(6).toString("hex");
 }
 
-/**
- * The organization's form, written from its trade if it does not have one yet.
- *
- * Idempotent, so it is safe to call from a page render: the second call
- * returns the first call's form rather than making another.
- */
-export async function ensureLeadForm(organizationId: string) {
-  const existing = await db.leadForm.findFirst({
+/** The form this business already has, if any. Writes nothing. */
+export async function existingLeadForm(organizationId: string) {
+  return db.leadForm.findFirst({
     where: { organizationId },
     orderBy: { createdAt: "asc" },
   });
-  if (existing) return existing;
+}
 
+/**
+ * The questions MAIRO would ask, without creating anything.
+ *
+ * So the campaign form can show what picking "fill in a form" actually gets
+ * you before you pick it. Looking at a screen is not a request for a public
+ * page, and writing one for everybody who looks would leave most businesses
+ * with a form they never wanted and a URL they cannot explain.
+ */
+export async function previewLeadForm(organizationId: string): Promise<string[]> {
+  const chosen = await nicheAndName(organizationId);
+  if (!chosen) return [];
+  return templateFor(chosen.nicheId, chosen.name).fields.map((f) => f.label);
+}
+
+async function nicheAndName(
+  organizationId: string
+): Promise<{ nicheId: string; name: string } | null> {
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
     select: { name: true, industry: true },
@@ -62,8 +74,32 @@ export async function ensureLeadForm(organizationId: string) {
 
   // The niche the business was already classified into, so the questions match
   // the trade without asking them anything they have not been asked before.
-  const nicheId = profile?.nicheId ?? classifyNiche(organization.industry).id;
-  const template = templateFor(nicheId, organization.name);
+  return {
+    nicheId: profile?.nicheId ?? classifyNiche(organization.industry).id,
+    name: organization.name,
+  };
+}
+
+/**
+ * The organization's form, written from its trade if it does not have one yet.
+ *
+ * Called when somebody actually chooses to collect enquiries this way — not on
+ * a page render. Idempotent, so choosing it twice reuses the first form rather
+ * than making a second with a different address.
+ */
+export async function ensureLeadForm(organizationId: string) {
+  const existing = await existingLeadForm(organizationId);
+  if (existing) return existing;
+
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true, industry: true },
+  });
+  if (!organization) return null;
+
+  const chosen = await nicheAndName(organizationId);
+  if (!chosen) return null;
+  const template = templateFor(chosen.nicheId, chosen.name);
 
   return db.leadForm.create({
     data: {
