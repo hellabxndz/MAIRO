@@ -59,9 +59,11 @@ export type PlanContext = {
   connected: AdPlatform[];
   /** What this business said at signup, pre-filled so they answer once. */
   destination: {
-    type: "WEBSITE" | "PHONE_CALL";
+    type: "WEBSITE" | "PHONE_CALL" | "LEAD_FORM";
     website: string | null;
     phone: string | null;
+    /** The MAIRO-hosted form, so the option can name it. */
+    formUrl: string | null;
   };
 };
 
@@ -79,7 +81,7 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   const [choice, setChoice] = useState<string>(plan.tiktokAllowed ? "BOTH" : "META");
   const [objective, setObjective] = useState<AdGoal>("SALES");
   const [budget, setBudget] = useState<number>(50);
-  const [destinationType, setDestinationType] = useState<"WEBSITE" | "PHONE_CALL">(
+  const [destinationType, setDestinationType] = useState<"WEBSITE" | "PHONE_CALL" | "LEAD_FORM">(
     plan.destination.type
   );
   const [destinationValue, setDestinationValue] = useState<string>(
@@ -206,7 +208,7 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
           <legend className="text-sm text-white">
             What should happen when someone taps the ad?
           </legend>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             {(
               [
                 {
@@ -218,6 +220,11 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
                   key: "PHONE_CALL" as const,
                   label: "Call me",
                   sub: "A tap-to-call button, straight to your phone",
+                },
+                {
+                  key: "LEAD_FORM" as const,
+                  label: "Fill in a form",
+                  sub: "MAIRO wrote one for your trade. No website needed.",
                 },
               ]
             ).map((d) => {
@@ -232,7 +239,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
                     setDestinationValue(
                       d.key === "PHONE_CALL"
                         ? (plan.destination.phone ?? "")
-                        : (plan.destination.website ?? "")
+                        : d.key === "LEAD_FORM"
+                          ? ""
+                          : (plan.destination.website ?? "")
                     );
                   }}
                   className={`rounded-2xl border p-4 text-left transition ${
@@ -249,6 +258,20 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
           </div>
 
           <input type="hidden" name="destinationType" value={destinationType} />
+          {destinationType === "LEAD_FORM" ? (
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+              <p className="text-sm text-neutral-300">
+                People who tap the ad land on a form MAIRO already wrote for your trade — their
+                name, how to reach them, and the two or three things you need to know before
+                calling back. Answers appear on your Leads page.
+              </p>
+              {plan.destination.formUrl && (
+                <p className="mt-2 break-all font-mono text-xs text-neutral-500">
+                  {plan.destination.formUrl}
+                </p>
+              )}
+            </div>
+          ) : (
           <div className="space-y-1.5">
             <label htmlFor="destinationValue" className="text-xs font-medium text-neutral-400">
               {destinationType === "PHONE_CALL"
@@ -274,6 +297,7 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
                 : "Send them to the thing in the ad, not your homepage — people don't go looking."}
             </p>
           </div>
+          )}
         </fieldset>
 
         {/* ---- where ---- */}

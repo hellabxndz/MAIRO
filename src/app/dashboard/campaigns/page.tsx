@@ -18,6 +18,8 @@ import { DeleteCampaign } from "./delete-campaign";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
+import { ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
+import { siteUrl } from "@/lib/site";
 
 // Each row's figures are live calls to Meta and TikTok. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget, now doubled because
@@ -93,6 +95,10 @@ export default async function CampaignsPage() {
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
   );
 
+  // Written on first sight of this page rather than behind a button: a form
+  // nobody has to create is the entire promise, and it costs one row.
+  const leadForm = await ensureLeadForm(organizationId);
+
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   // Deleted campaigns are archived rather than erased, so they have to come
   // off the main list — otherwise "delete" visibly does nothing and the
@@ -121,6 +127,7 @@ export default async function CampaignsPage() {
       type: organization?.defaultDestination ?? "WEBSITE",
       website: organization?.website ?? null,
       phone: organization?.phone ?? null,
+      formUrl: leadForm ? leadFormUrl(leadForm.slug, siteUrl()) : null,
     },
     connected: [...connections.values()]
       .filter((c) => c.connected)

@@ -160,6 +160,8 @@ model Organization {
   storeIngest          StoreIngest?
   trackingProfile      TrackingProfile?
   gtmConnection        GtmConnection?
+  leadForms            LeadForm[]
+  leads                Lead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -244,6 +246,8 @@ enum AdDestination {
   WEBSITE
   /// A tap-to-call button, wired to the business's own number through Meta.
   PHONE_CALL
+  /// A form MAIRO hosts and wrote the questions for. The ad links to it.
+  LEAD_FORM
 }
 
 enum CampaignStatus {
@@ -1009,6 +1013,85 @@ model TrackingPixel {
 
   @@unique([organizationId, platform])
   @@index([organizationId])
+}
+
+/// A form MAIRO wrote and hosts, so nobody has to build one.
+///
+/// The questions are authored per trade in src/lib/leads/templates.ts rather
+/// than left to the business, because a business owner asked to design a form
+/// produces three fields that tell them nothing or fifteen nobody finishes —
+/// and asked to build one inside Facebook's form builder, mostly does not.
+///
+/// Deliberately hosted by MAIRO rather than created on a Facebook Page. Meta's
+/// native instant form converts better, but creating one needs permissions
+/// this app does not have yet; the fields are modelled on Meta's own question
+/// list so the same form can be pushed there later without being redesigned.
+model LeadForm {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// The public path the ad links to: /f/<slug>. Random rather than derived
+  /// from the business name, so one customer's form cannot be guessed from
+  /// another's and a rename never breaks a live ad.
+  slug String @unique
+
+  name        String
+  headline    String
+  description String @db.Text
+  thankYou    String @db.Text
+  /// LeadField[] as written by the template, then edited by the customer.
+  fieldsJson  String @db.Text
+
+  /// Set once the same questions are pushed to a Facebook Page. Null until
+  /// then, which is every form today.
+  metaFormId String?
+
+  leads Lead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+/// Where a lead came from. The hosted form today, Meta's own form later.
+enum LeadSource {
+  MAIRO_FORM
+  META_INSTANT
+}
+
+/// One person who filled the form in.
+model Lead {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  leadForm       LeadForm     @relation(fields: [leadFormId], references: [id], onDelete: Cascade)
+  leadFormId     String
+
+  source LeadSource @default(MAIRO_FORM)
+
+  /// Answers keyed by LeadField.key. Stored whole rather than in columns
+  /// because the questions differ per business and change over time — a
+  /// column per question would need a migration every time somebody edits
+  /// their form.
+  answersJson String @db.Text
+
+  /// For matching this person back to the ad they saw.
+  ///
+  /// Hashed on arrival and never stored in the clear, which is the same rule
+  /// the order ingest follows: MAIRO does not keep customers' contact details,
+  /// it keeps the fingerprint the networks need to attribute a conversion.
+  hashedEmail String?
+  hashedPhone String?
+
+  /// Meta's click id, if the ad carried one. The strongest match there is.
+  clickId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([leadFormId])
 }
 
 /// Where an order came from.

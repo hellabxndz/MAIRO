@@ -26,6 +26,9 @@ const NAV = [
   // Meta-specific screen still exists at /dashboard/meta and is linked from
   // here, because it does more than connect — it picks a Page and explains
   // Meta's own failure modes.
+  // Next to Creatives and before "where you advertise": the enquiries an ad
+  // produced matter more day to day than the plumbing that produced them.
+  { href: "/dashboard/leads", label: "Enquiries" },
   { href: "/dashboard/integrations", label: "Where you advertise" },
   // Sits next to "where you advertise" because it is the other half of the
   // same setup: one says where the ads run, this says how you find out whether

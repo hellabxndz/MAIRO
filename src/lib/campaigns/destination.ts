@@ -17,10 +17,17 @@ export type Destination =
   | { type: "WEBSITE"; url: string }
   | { type: "PHONE_CALL"; phone: string };
 
+// LEAD_FORM is not a third shape here on purpose. A form MAIRO hosts is a page
+// with an address, so by the time an ad is built it IS a website destination —
+// the difference is only who wrote the page. Resolving it to WEBSITE means the
+// creative builder, the checks and Meta all stay unaware of it.
+
 export type DestinationSource = {
   type: AdDestination;
   url?: string | null;
   phone?: string | null;
+  /** The public address of the MAIRO-hosted form, when there is one. */
+  formUrl?: string | null;
 };
 
 /**
@@ -35,6 +42,11 @@ export function resolveDestination(
   organization: DestinationSource
 ): Destination | null {
   const type = campaign.type ?? organization.type;
+
+  if (type === "LEAD_FORM") {
+    const url = campaign.formUrl ?? organization.formUrl ?? null;
+    return url ? { type: "WEBSITE", url } : null;
+  }
 
   if (type === "PHONE_CALL") {
     const phone = normalizePhone(campaign.phone ?? organization.phone ?? "");
@@ -105,7 +117,11 @@ export function normalizePhone(raw: string): string | null {
 
 /** What to tell somebody who has not given MAIRO anywhere to send a click. */
 export function describeMissing(type: AdDestination): string {
-  return type === "PHONE_CALL"
-    ? "This campaign rings your phone, but there's no number on it yet. Add one and MAIRO can build the ad."
-    : "This campaign sends people to your website, but there's no address on it yet. Add the page you want them to land on.";
+  if (type === "PHONE_CALL") {
+    return "This campaign rings your phone, but there's no number on it yet. Add one and MAIRO can build the ad.";
+  }
+  if (type === "LEAD_FORM") {
+    return "This campaign sends people to an enquiry form, but MAIRO hasn't built one for you yet. Open the Leads page and it will.";
+  }
+  return "This campaign sends people to your website, but there's no address on it yet. Add the page you want them to land on.";
 }
