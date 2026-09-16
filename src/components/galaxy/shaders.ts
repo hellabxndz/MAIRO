@@ -557,7 +557,14 @@ void main() {
   // A little noise, dithering the darkest values. Without it the near-black
   // areas quantise into visible contour rings on an 8-bit display, which after
   // all this work is a shame.
-  float g = fract(sin(dot(gl_FragCoord.xy + uTime, vec2(12.9898, 78.233))) * 43758.5453);
+  //
+  // Fixed per pixel, NOT per frame. uTime used to be inside this hash, which
+  // re-rolled every pixel sixty times a second — full-screen crawling static
+  // over a near-black page, and the single most reported thing about the site:
+  // "a bunch of black static floating on the screen". Dither only has to break
+  // the quantisation, and a stationary pattern does that exactly as well. The
+  // raymarch jitter above is stationary for the same reason.
+  float g = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
   c += (g - 0.5) * 0.0035;
 
   outColor = vec4(max(c, 0.0), 1.0);
