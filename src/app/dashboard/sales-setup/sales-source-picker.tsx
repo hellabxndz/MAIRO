@@ -3,12 +3,23 @@
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import {
-  loadCatalogsAction,
   loadPagePostsAction,
   saveSalesSourceAction,
+  scanShopAction,
 } from "@/lib/actions/sales-setup-actions";
-import { describePost, type PagePost, type ProductCatalog } from "@/lib/campaigns/sales-source";
-import { primaryButtonClass } from "@/components/ui";
+import { describePost, type PagePost } from "@/lib/campaigns/sales-source";
+import { primaryButtonClass, secondaryButtonClass } from "@/components/ui";
+
+type Found = {
+  found: number;
+  how: string;
+  sample: { title: string; priceCents: number | null; currency: string; imageUrl: string | null }[];
+};
+
+const money = (cents: number | null, currency: string) =>
+  cents === null
+    ? null
+    : new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 
 type Source = "MAIRO_CREATES" | "EXISTING_POST" | "CATALOG";
 
@@ -26,7 +37,7 @@ const OPTIONS: { key: Source; label: string; sub: string }[] = [
   {
     key: "CATALOG",
     label: "Sell from my product catalogue",
-    sub: "Meta shows each person the product they're most likely to buy",
+    sub: "MAIRO reads your website and advertises what you sell",
   },
 ];
 
@@ -39,18 +50,20 @@ const OPTIONS: { key: Source; label: string; sub: string }[] = [
 export function SalesSourcePicker({
   initialSource,
   initialPostId,
-  initialCatalogId,
+  initialWebsite,
+  initialProductCount,
 }: {
   initialSource: Source;
   initialPostId: string | null;
-  initialCatalogId: string | null;
+  initialWebsite: string | null;
+  initialProductCount: number;
 }) {
   const [source, setSource] = useState<Source>(initialSource);
   const [postId, setPostId] = useState<string | null>(initialPostId);
-  const [catalogId, setCatalogId] = useState<string | null>(initialCatalogId);
+  const [shopUrl, setShopUrl] = useState(initialWebsite ?? "");
+  const [found, setFound] = useState<Found | null>(null);
 
   const [posts, setPosts] = useState<PagePost[] | null>(null);
-  const [catalogs, setCatalogs] = useState<ProductCatalog[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -70,19 +83,22 @@ export function SalesSourcePicker({
         else setLoadError(result.error);
       });
     }
-    if (next === "CATALOG" && catalogs === null) {
-      start(async () => {
-        const result = await loadCatalogsAction();
-        if (result.ok) setCatalogs(result.catalogs);
-        else setLoadError(result.error);
-      });
-    }
+  }
+
+  function scan() {
+    start(async () => {
+      setLoadError(null);
+      setFound(null);
+      const result = await scanShopAction(shopUrl);
+      if (result.ok) setFound(result);
+      else setLoadError(result.error);
+    });
   }
 
   function save() {
     start(async () => {
       setSaveError(null);
-      const result = await saveSalesSourceAction({ source, postId, catalogId });
+      const result = await saveSalesSourceAction({ source, postId });
       if (result?.error) setSaveError(result.error);
       else setSaved(true);
     });
@@ -109,7 +125,7 @@ export function SalesSourcePicker({
         ))}
       </div>
 
-      {pending && !posts && !catalogs && (
+      {pending && !posts && (
         <p className="text-sm text-neutral-500">Asking Meta…</p>
       )}
 
@@ -180,43 +196,94 @@ export function SalesSourcePicker({
         </div>
       )}
 
-      {source === "CATALOG" && catalogs && catalogs.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-500">
-            Which catalogue?
-          </p>
-          <ul className="max-w-md divide-y divide-white/5 overflow-hidden rounded-xl border border-white/10">
-            {catalogs.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  aria-pressed={catalogId === c.id}
-                  onClick={() => {
-                    setCatalogId(c.id);
-                    setSaved(false);
-                  }}
-                  className={`flex w-full items-baseline justify-between gap-3 px-4 py-3 text-left text-sm transition ${
-                    catalogId === c.id ? "bg-white/[0.06] text-white" : "text-neutral-300 hover:bg-white/[0.03]"
-                  }`}
-                >
-                  <span>{c.name}</span>
-                  {c.productCount !== null && (
-                    <span className="text-xs text-neutral-500">{c.productCount} products</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {source === "CATALOG" && (
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="shop-url" className="text-sm font-medium text-white">
+              Where do you sell?
+            </label>
+            <p className="mb-2 mt-1 max-w-xl text-xs leading-relaxed text-neutral-500">
+              The page that lists what you sell. MAIRO reads it and advertises the products it
+              finds — you don&apos;t have to set anything up in Facebook.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <input
+                id="shop-url"
+                value={shopUrl}
+                onChange={(e) => {
+                  setShopUrl(e.target.value);
+                  setSaved(false);
+                }}
+                placeholder="yourshop.com/collections/all"
+                className="w-full max-w-md rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30"
+              />
+              <button
+                type="button"
+                onClick={scan}
+                disabled={pending || shopUrl.trim().length === 0}
+                className={secondaryButtonClass}
+              >
+                {pending ? "Reading…" : "Read my shop"}
+              </button>
+            </div>
+          </div>
 
-      {/* Only when Meta has not already said something. Two amber paragraphs
-          making the same point, one under the other, reads as a fault. */}
-      {source === "CATALOG" && !loadError && (
-        <p className="rounded-lg border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-amber-200/80">
-          Catalogue ads aren&apos;t running yet — MAIRO is still applying to Meta for them. Your
-          answer is saved and MAIRO will write the ads the usual way until they are.
-        </p>
+          {/* What it found, shown as the products rather than as a number.
+              Somebody checking MAIRO read the right page recognises their own
+              items and prices; "47 products" proves nothing. */}
+          {found && (
+            <div>
+              <p className="mb-2 text-sm text-emerald-300">
+                Found {found.found} {found.found === 1 ? "product" : "products"}.
+              </p>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {found.sample.map((p) => (
+                  <li
+                    key={p.title}
+                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-2"
+                  >
+                    {p.imageUrl && (
+                      <Image
+                        src={p.imageUrl}
+                        alt=""
+                        width={40}
+                        height={40}
+                        unoptimized
+                        className="h-10 w-10 flex-none rounded object-cover"
+                      />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-white">{p.title}</span>
+                      {money(p.priceCents, p.currency) && (
+                        <span className="block text-xs text-neutral-500">
+                          {money(p.priceCents, p.currency)}
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {found.found > found.sample.length && (
+                <p className="mt-2 text-xs text-neutral-600">
+                  and {found.found - found.sample.length} more
+                </p>
+              )}
+            </div>
+          )}
+
+          {!found && initialProductCount > 0 && (
+            <p className="text-xs text-neutral-500">
+              MAIRO already has {initialProductCount}{" "}
+              {initialProductCount === 1 ? "product" : "products"} from your shop. Read it again to
+              pick up new ones or new prices.
+            </p>
+          )}
+
+          <p className="rounded-lg border border-amber-400/20 bg-amber-400/[0.04] px-3 py-2 text-xs leading-relaxed text-amber-200/80">
+            Catalogue ads aren&apos;t running yet — MAIRO is still applying to Meta for them. Your
+            products are saved and MAIRO will write the ads the usual way until they are.
+          </p>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">

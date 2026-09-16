@@ -17,12 +17,6 @@ export type PagePost = {
   createdAt: string | null;
 };
 
-export type ProductCatalog = {
-  id: string;
-  name: string;
-  productCount: number | null;
-};
-
 /**
  * A short, readable name for a post, for the place it is echoed back.
  *

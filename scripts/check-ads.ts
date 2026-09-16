@@ -30,6 +30,13 @@ import { metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
 import { describePost, postToBoost } from "@/lib/campaigns/sales-source";
 import { metaAdCreativeParams } from "@/lib/meta/creatives";
+import {
+  absolutize,
+  dedupe,
+  parseShopifyProducts,
+  parseStructuredProducts,
+  priceToCents,
+} from "@/lib/catalog/scan";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
 
@@ -475,6 +482,73 @@ console.log("\n— running a post the business already published —");
     describePost({ id: "1", message: "\n\n  Real line", imageUrl: null, permalink: null, createdAt: null }) ===
       "Real line"
   );
+}
+
+console.log("\n— reading what a shop sells off its own website —");
+{
+  // Money, and the reason this is not a parseFloat. A European price read as
+  // an American one is wrong by a factor of a hundred, in a live ad.
+  ok("a plain price", priceToCents("129.00") === 12900);
+  ok("no decimals", priceToCents("129") === 12900);
+  ok("a number, not a string", priceToCents(24.5) === 2450);
+  ok("a currency symbol is ignored", priceToCents("$1,299.00") === 129900);
+  ok("a thousands comma is not a decimal point", priceToCents("1,299") === 129900);
+  ok("a European decimal comma is", priceToCents("1.299,00") === 129900);
+  ok("and so is a bare one", priceToCents("24,50") === 2450);
+  ok("nothing is null, not zero", priceToCents("") === null);
+  ok("and so is a word", priceToCents("call us") === null);
+
+  ok("a relative link is made absolute", absolutize("/a/b", "https://shop.test/") === "https://shop.test/a/b");
+  ok("an absolute one is left alone", absolutize("https://cdn.test/x.jpg", "https://shop.test") === "https://cdn.test/x.jpg");
+  ok("and nothing stays nothing", absolutize(null, "https://shop.test") === null);
+
+  const shopify = parseShopifyProducts(
+    {
+      products: [
+        {
+          id: 77,
+          title: "Trail Runner",
+          handle: "trail-runner",
+          body_html: "<p>Built for <b>mud</b>.</p>",
+          variants: [{ price: "129.00", available: false }, { price: "129.00", available: true }],
+          images: [{ src: "//cdn.test/shoe.jpg" }],
+        },
+        { title: "No handle, cannot be linked to" },
+      ],
+    },
+    "https://shop.test"
+  );
+  ok("a Shopify product is read", shopify.length === 1, String(shopify.length));
+  ok("with its price in cents", shopify[0].priceCents === 12900);
+  ok("its link built from the handle", shopify[0].url === "https://shop.test/products/trail-runner");
+  ok("its markup stripped out of the description", shopify[0].description === "Built for mud.");
+  ok("a protocol-relative image resolved", shopify[0].imageUrl === "https://cdn.test/shoe.jpg");
+  // One size sold out is not the shirt sold out.
+  ok("available when any variant is", shopify[0].available === true);
+
+  const html = `
+    <script type="application/ld+json">{"@type":"Product","name":"Wool Socks","sku":"WS-1",
+      "description":"Warm","image":"/img/socks.jpg","url":"/shop/socks",
+      "offers":{"price":"24.00","priceCurrency":"gbp","availability":"https://schema.org/InStock"}}</script>
+    <script type="application/ld+json">{ this is not json }</script>
+    <script type="application/ld+json">{"@graph":[
+      {"@type":"Organization","name":"Shop"},
+      {"@type":"Product","name":"Sold Out Hat","sku":"H-1","url":"/shop/hat",
+       "offers":{"price":"15.00","availability":"https://schema.org/OutOfStock"}}]}</script>`;
+  const structured = parseStructuredProducts(html, "https://shop.test/shop");
+  ok("structured data is read", structured.length === 2, String(structured.length));
+  // One shop's broken script tag must not cost the other products.
+  ok("a broken block is skipped, not fatal", structured[0].title === "Wool Socks");
+  ok("an @graph is flattened", structured[1].title === "Sold Out Hat");
+  ok("a non-product in the graph is ignored", !structured.some((p) => p.title === "Shop"));
+  ok("the currency is taken from the offer", structured[0].currency === "GBP");
+  ok("relative links are resolved against the page", structured[0].url === "https://shop.test/shop/socks");
+  ok("in stock is available", structured[0].available === true);
+  ok("out of stock is not", structured[1].available === false);
+
+  // A page carrying both a list and a detail block lists the same thing twice.
+  const twice = dedupe([...structured, ...structured]);
+  ok("repeats are dropped", twice.length === 2, String(twice.length));
 }
 
 console.log("\n— the permissions the login dialog asks for —");

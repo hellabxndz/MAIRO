@@ -26,15 +26,16 @@ export default async function SalesSetupPage() {
 
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, intake] = await Promise.all([
+  const [organization, intake, productCount] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { salesAdSource: true, boostPostId: true, productCatalogId: true },
+      select: { salesAdSource: true, boostPostId: true, website: true },
     }),
     db.onboardingIntake.findUnique({
       where: { organizationId },
       select: { primaryGoal: true },
     }),
+    db.product.count({ where: { organizationId } }),
   ]);
 
   // Somebody who is not selling online has no business on this screen, and
@@ -53,7 +54,8 @@ export default async function SalesSetupPage() {
         <SalesSourcePicker
           initialSource={organization?.salesAdSource ?? "MAIRO_CREATES"}
           initialPostId={organization?.boostPostId ?? null}
-          initialCatalogId={organization?.productCatalogId ?? null}
+          initialWebsite={organization?.website ?? null}
+          initialProductCount={productCount}
         />
       </Card>
 

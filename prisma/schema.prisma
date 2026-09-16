@@ -107,8 +107,10 @@ model Organization {
   salesAdSource    SalesAdSource @default(MAIRO_CREATES)
   /// The Page post to run as an ad, as Meta's own {page-id}_{post-id}.
   boostPostId      String?
-  /// The Meta product catalogue to sell from, once one is chosen.
+  /// The Meta product catalogue MAIRO fills from their website, once made.
   productCatalogId String?
+  /// When MAIRO last read their shop and rebuilt the product list.
+  catalogScannedAt DateTime?
 
   /// Stops MAIRO putting campaigns live on its own.
   ///
@@ -174,6 +176,7 @@ model Organization {
   gtmConnection        GtmConnection?
   leadForms            LeadForm[]
   leads                Lead[]
+  products             Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -288,6 +291,39 @@ enum AdDestination {
   LEAD_FORM
   /// A conversation. The ad opens Messenger with the business's Page.
   DIRECT_MESSAGE
+}
+
+/// One thing a business sells, read off its own website.
+///
+/// MAIRO builds this list rather than asking the business to build a catalogue
+/// in Meta Business Manager, because almost none of them have one and the ones
+/// who do had it set up by somebody else. The shop already lists what it sells,
+/// on a page it maintains; that is the catalogue.
+model Product {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// The shop's own id for it where the site gives one, else the product URL.
+  /// The dedup key, so re-reading a shop updates rather than duplicates.
+  externalId String
+
+  title       String
+  description String?
+  /// Integer cents, like every other amount in this schema. Null when the page
+  /// showed no price — a real state for "call for a quote", and not zero.
+  priceCents  Int?
+  currency    String  @default("USD")
+  imageUrl    String?
+  /// Where the product is bought. This is what the ad links to.
+  url         String
+  available   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, externalId])
+  @@index([organizationId])
 }
 
 /// Where a sales ad's pictures and words come from.
