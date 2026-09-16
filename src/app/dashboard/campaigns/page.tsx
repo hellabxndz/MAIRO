@@ -15,6 +15,7 @@ import { readinessFor } from "@/lib/readiness";
 import { PendingReason } from "@/components/readiness-panel";
 import { ScheduleControl } from "./schedule-control";
 import { DeleteCampaign } from "./delete-campaign";
+import { DestinationControl } from "./destination-control";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
@@ -335,6 +336,21 @@ export default async function CampaignsPage() {
                         ? localInputValue(campaign.startDate, campaign.startTimeZone)
                         : null
                     }
+                  />
+                )}
+
+                {/* Where the clicks go, and a way to change it. Directly above
+                    the lines that say an ad could not be built, because "no
+                    address on it yet" is the most common reason they appear
+                    and this is the fix. */}
+                {campaign.status !== "ARCHIVED" && (
+                  <DestinationControl
+                    campaignId={campaign.id}
+                    type={campaign.destinationType}
+                    url={campaign.destinationUrl}
+                    phone={campaign.destinationPhone}
+                    channel={campaign.messageChannel}
+                    built={campaign.platformCampaigns.some((c) => c.externalAdId)}
                   />
                 )}
 

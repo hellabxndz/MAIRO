@@ -11,6 +11,7 @@ import {
   type EntitlementFlag,
 } from "@/lib/entitlements";
 import { activeOrganizationId } from "@/lib/active-org";
+import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
 import {
   recommendAllocation,
   splitBudget,
@@ -536,4 +537,88 @@ export async function searchPlacesAction(
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   return searchPlaces(organizationId, query);
+}
+
+/**
+ * Changes where an existing campaign sends people.
+ *
+ * The gap this fills: a campaign created without a destination says so on its
+ * card, plainly — "there's no address on it yet" — and until now the only way
+ * to act on that was to set the business's default in Settings, which changes
+ * every campaign, or to delete this one and build it again, which throws away
+ * the review it has already been through.
+ *
+ * Refused once an ad exists. The ad on Meta carries the link inside its
+ * creative, and MAIRO has no path that rewrites a creative in place — so
+ * storing a new address here would leave the dashboard showing one destination
+ * while the live ad sent people to another. Saying that is better than being
+ * quietly wrong about where a customer's money is going.
+ */
+export async function setCampaignDestinationAction(
+  mairoCampaignId: string,
+  input: { type: AdDestination; value: string; channel?: MessageChannel }
+): Promise<{ error?: string; saved?: boolean }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not authenticated" };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  const campaign = await db.mairoCampaign.findFirst({
+    // Scoped in the query rather than checked after, so an id from another
+    // account reads as missing.
+    where: { id: mairoCampaignId, organizationId },
+    include: { platformCampaigns: true },
+  });
+  if (!campaign) return { error: "Campaign not found" };
+
+  if (campaign.platformCampaigns.some((c) => c.externalAdId)) {
+    return {
+      error:
+        "The ad for this campaign is already built, and it carries the old address inside it. Create a new campaign to send people somewhere else.",
+    };
+  }
+
+  let url: string | null = null;
+  let phone: string | null = null;
+
+  if (input.type === "WEBSITE") {
+    url = normalizeUrl(input.value);
+    if (!url) {
+      return { error: "That doesn't look like a web address. Something like yourshop.com/offer." };
+    }
+  } else if (input.type === "PHONE_CALL") {
+    phone = normalizePhone(input.value);
+    if (!phone) {
+      return {
+        error:
+          "That doesn't look like a phone number MAIRO can dial. Include the area code — for example (555) 123-4567.",
+      };
+    }
+  } else if (input.type === "LEAD_FORM") {
+    // Written now, for the same reason the campaign form writes it now: a form
+    // is a public page carrying this business's name, so it is created when
+    // somebody actually asks for one.
+    const form = await ensureLeadForm(organizationId);
+    if (!form) {
+      return { error: "MAIRO couldn't write your form just now. Try again in a moment." };
+    }
+    url = leadFormUrl(form.slug, siteUrl());
+  }
+
+  await db.mairoCampaign.update({
+    where: { id: campaign.id },
+    data: {
+      destinationType: input.type,
+      destinationUrl: url,
+      destinationPhone: phone,
+      messageChannel: input.channel ?? "MESSENGER",
+      // The old reason is about the address that has just been replaced.
+      // Leaving it would have the card still explaining a problem they fixed
+      // until the next launch attempt overwrote it.
+      platformCampaigns: { updateMany: { where: {}, data: { lastError: null } } },
+    },
+  });
+
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard");
+  return { saved: true };
 }
