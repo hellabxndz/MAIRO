@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { GalaxyBackground } from "@/components/galaxy/galaxy-background";
 import { SpacePanel } from "@/components/space-panel";
-import { Grain } from "@/components/grain";
 import { SiteNav } from "@/components/site-nav";
 import { CinematicIntro } from "@/components/intro/cinematic-intro";
 import { ReplayIntroLink } from "@/components/intro/replay-intro-link";
@@ -100,7 +99,6 @@ export default function Home() {
           render of the same galaxy where WebGL2 is unavailable or motion is
           not wanted. */}
       <GalaxyBackground />
-      <Grain />
       <SiteNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
