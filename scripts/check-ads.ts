@@ -19,8 +19,10 @@ import { metaObjectiveFor, metaCampaignBody } from "@/lib/meta/campaigns";
 import {
   CHANNEL_LABELS,
   CHANNEL_META,
+  needsSiteTracking,
   normalizePhone,
   normalizeUrl,
+  requiredDetailFor,
   resolveDestination,
 } from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
@@ -383,6 +385,24 @@ console.log("\n— a Graph error says something a person can act on —");
     "a body with no error at all still says something",
     describeGraphError(null, 500).includes("500")
   );
+}
+
+console.log("\n— what signup has to ask for, and what it can measure —");
+{
+  // One answer for the form and the server. Split across the two they drift,
+  // and a form that stops asking while the server still insists is a signup
+  // nobody can finish.
+  ok("a call needs the number", requiredDetailFor("PHONE_CALL") === "phone");
+  ok("a website needs the address", requiredDetailFor("WEBSITE") === "website");
+  ok("a form needs nothing — MAIRO writes it", requiredDetailFor("LEAD_FORM") === null);
+  ok("a message needs nothing — the Page is connected", requiredDetailFor("DIRECT_MESSAGE") === null);
+
+  // The reason signup asks how leads should arrive at all: three of the four
+  // finish somewhere MAIRO or Meta can already see.
+  ok("only a website needs code on the business's own site", needsSiteTracking("WEBSITE"));
+  ok("a call does not", !needsSiteTracking("PHONE_CALL"));
+  ok("a form MAIRO hosts does not", !needsSiteTracking("LEAD_FORM"));
+  ok("a message does not", !needsSiteTracking("DIRECT_MESSAGE"));
 }
 
 console.log("\n— the permissions the login dialog asks for —");

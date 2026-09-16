@@ -199,3 +199,38 @@ export const CHANNEL_META: Record<
     appDestination: "WHATSAPP",
   },
 };
+
+/**
+ * What the business itself has to supply for a destination to work.
+ *
+ * One answer, read by the signup form to decide which field to show and by the
+ * server to decide what to insist on. Split across the two, they drift: a form
+ * that stops asking for a number while the server still demands one is a signup
+ * nobody can finish, and the reverse is a business whose ads have nowhere to
+ * send anyone.
+ *
+ * A form and a conversation need nothing, which is the point of them. MAIRO
+ * writes the form and hosts it; the conversation opens on the Page that is
+ * already connected.
+ */
+export function requiredDetailFor(type: AdDestination): "phone" | "website" | null {
+  if (type === "PHONE_CALL") return "phone";
+  if (type === "WEBSITE") return "website";
+  return null;
+}
+
+/**
+ * Whether measuring this needs tracking code on the business's own website.
+ *
+ * The question behind "can MAIRO set the tracking up for them", and the reason
+ * signup asks how leads should arrive rather than assuming a website.
+ *
+ * Only a website does. A call and a message both finish inside Meta, which
+ * counts them itself. A form finishes on a page MAIRO hosts, so MAIRO sees
+ * every submission without anybody installing anything — the business never
+ * touches its own site, which for most of them is the difference between
+ * tracking that works and tracking that never gets set up.
+ */
+export function needsSiteTracking(type: AdDestination): boolean {
+  return type === "WEBSITE";
+}

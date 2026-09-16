@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { completeOnboardingAction } from "@/lib/actions/onboarding-actions";
+import { needsSiteTracking, requiredDetailFor } from "@/lib/campaigns/destination";
+import type { AdDestination } from "@/generated/prisma/enums";
 
 const inputClass =
   "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
@@ -14,11 +16,65 @@ const GOALS = [
   { value: "APP_PROMOTION", label: "Promote my app" },
 ];
 
+// How a business wants leads to reach it.
+//
+// Only shown when the goal is leads, and it is the question that decides
+// whether MAIRO can measure the results on its own. Three of these four finish
+// somewhere MAIRO or Meta can already see — a call and a message inside Meta, a
+// form on a page MAIRO hosts — so nothing has to be installed on the business's
+// website. The fourth is the one that does, which is why it says so.
+const LEAD_DESTINATIONS = [
+  {
+    key: "PHONE_CALL" as const,
+    label: "They call me",
+    sub: "A tap-to-call button on the ad",
+  },
+  {
+    key: "LEAD_FORM" as const,
+    label: "They fill in a form",
+    sub: "MAIRO writes the questions and hosts it for you",
+  },
+  {
+    key: "DIRECT_MESSAGE" as const,
+    label: "They message me",
+    sub: "The ad opens a chat with your Facebook Page",
+  },
+  {
+    key: "WEBSITE" as const,
+    label: "They enquire on my website",
+    sub: "Your own contact or booking page",
+  },
+];
+
+// Everything else: the ad is pointing at a shop or a page, or at a phone.
+const GENERAL_DESTINATIONS = [
+  {
+    key: "WEBSITE" as const,
+    label: "They go to my website",
+    sub: "A shop, a booking page, anything online",
+  },
+  {
+    key: "PHONE_CALL" as const,
+    label: "They call me",
+    sub: "A tap-to-call button on the ad",
+  },
+];
+
 export function OnboardingForm() {
   const [state, formAction, pending] = useActionState(completeOnboardingAction, undefined);
   // What a tap on their ads should do. Asked at signup so no campaign has to
   // guess, and so the campaign form has something to pre-fill.
-  const [destination, setDestination] = useState<"WEBSITE" | "PHONE_CALL">("WEBSITE");
+  const [primaryGoal, setPrimaryGoal] = useState("LEADS");
+  const [destination, setDestination] = useState<AdDestination>("WEBSITE");
+
+  const gettingLeads = primaryGoal === "LEADS";
+  const options = gettingLeads ? LEAD_DESTINATIONS : GENERAL_DESTINATIONS;
+
+  // Switching the goal can strand a choice the new list does not offer — a
+  // business that picked "they fill in a form" and then changed to online
+  // sales would submit LEAD_FORM while looking at nothing selected.
+  const chosen = options.some((o) => o.key === destination) ? destination : options[0].key;
+  const needs = requiredDetailFor(chosen);
 
   return (
     <form action={formAction} className="space-y-8">
@@ -34,7 +90,8 @@ export function OnboardingForm() {
               name="primaryGoal"
               value={goal.value}
               required
-              defaultChecked={goal.value === "LEADS"}
+              checked={goal.value === primaryGoal}
+              onChange={() => setPrimaryGoal(goal.value)}
               className="accent-white"
             />
             {goal.label}
@@ -57,22 +114,19 @@ export function OnboardingForm() {
 
       <fieldset className="space-y-3">
         <legend className="mb-1 text-sm font-medium">
-          When someone taps your ad, what should happen?
+          {gettingLeads
+            ? "How do you want those leads to reach you?"
+            : "When someone taps your ad, what should happen?"}
         </legend>
         <div className="grid gap-3 sm:grid-cols-2">
-          {(
-            [
-              { key: "WEBSITE" as const, label: "They go to my website", sub: "A shop, a booking page, anything online" },
-              { key: "PHONE_CALL" as const, label: "They call me", sub: "A tap-to-call button on the ad" },
-            ]
-          ).map((d) => (
+          {options.map((d) => (
             <button
               key={d.key}
               type="button"
-              aria-pressed={destination === d.key}
+              aria-pressed={chosen === d.key}
               onClick={() => setDestination(d.key)}
               className={`rounded-lg border p-4 text-left transition ${
-                destination === d.key
+                chosen === d.key
                   ? "border-white/40 bg-white/[0.06]"
                   : "border-white/10 bg-white/5 hover:border-white/25"
               }`}
@@ -82,7 +136,22 @@ export function OnboardingForm() {
             </button>
           ))}
         </div>
-        <input type="hidden" name="destinationType" value={destination} />
+        <input type="hidden" name="destinationType" value={chosen} />
+
+        {/* What the choice means for measuring results, said before they
+            commit to it rather than discovered on the tracking screen weeks
+            later. This is the whole reason the question is asked. */}
+        <p
+          className={`rounded-lg border px-3 py-2 text-xs leading-relaxed ${
+            needsSiteTracking(chosen)
+              ? "border-amber-400/20 bg-amber-400/[0.04] text-amber-200/80"
+              : "border-emerald-400/20 bg-emerald-400/[0.04] text-emerald-200/80"
+          }`}
+        >
+          {needsSiteTracking(chosen)
+            ? "MAIRO will need a small piece of tracking code on your website to count these. It walks you through that after setup — or does it for you if you use Google Tag Manager."
+            : "Nothing to install. MAIRO can count these on its own, so your ads learn who to find more of without you touching your website."}
+        </p>
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -90,7 +159,7 @@ export function OnboardingForm() {
           <label className="text-sm font-medium">Industry</label>
           <input name="industry" className={inputClass} placeholder="e.g. Dental practice" />
         </div>
-        {destination === "PHONE_CALL" ? (
+        {needs === "phone" ? (
           <div className="space-y-1">
             <label className="text-sm font-medium">Phone number</label>
             <input
@@ -103,7 +172,7 @@ export function OnboardingForm() {
               The number your ads will ring. Nobody sees it until they tap the button.
             </p>
           </div>
-        ) : (
+        ) : needs === "website" ? (
           <div className="space-y-1">
             <label className="text-sm font-medium">Website</label>
             <input name="website" className={inputClass} placeholder="yourbusiness.com" />
@@ -112,7 +181,7 @@ export function OnboardingForm() {
               else later.
             </p>
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-1">

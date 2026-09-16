@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
 import { activeOrganizationId } from "@/lib/active-org";
-import { normalizePhone, normalizeUrl } from "@/lib/campaigns/destination";
+import { normalizePhone, normalizeUrl, requiredDetailFor } from "@/lib/campaigns/destination";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
@@ -17,8 +17,14 @@ const intakeSchema = z.object({
   /**
    * What the business wants a tap on its ads to do. Asked here so no campaign
    * has to guess, and so the campaign form can pre-fill it.
+   *
+   * All four, because a business whose goal is leads is asked how it wants them
+   * — a call, a form, a message or its own site — and the answer decides
+   * whether MAIRO can measure the results without anybody installing tracking.
    */
-  destinationType: z.enum(["WEBSITE", "PHONE_CALL"]).default("WEBSITE"),
+  destinationType: z
+    .enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE"])
+    .default("WEBSITE"),
   phone: z.string().optional(),
   targetAudience: z.string().optional(),
   brandVoice: z.string().optional(),
@@ -75,10 +81,14 @@ export async function completeOnboardingAction(
     };
   }
 
-  if (data.destinationType === "PHONE_CALL" && !phone) {
+  // Whether anything is required at all comes from requiredDetailFor, the same
+  // answer the form used to decide which field to show. A form or a message
+  // needs nothing from the business, which is what makes them the easy start.
+  const needs = requiredDetailFor(data.destinationType);
+  if (needs === "phone" && !phone) {
     return { error: "Add the number you want your ads to ring." };
   }
-  if (data.destinationType === "WEBSITE" && !website) {
+  if (needs === "website" && !website) {
     return { error: "Add the web address you want people sent to when they tap your ad." };
   }
 
