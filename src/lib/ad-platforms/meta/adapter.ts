@@ -276,10 +276,15 @@ export const metaAdapter: AdPlatformAdapter = {
       );
     }
 
-    if (!input.creative.imageData) {
+    // None of the below applies to a post that already exists. It has its own
+    // picture and its own words, on Meta, and demanding a generated image and a
+    // written headline first would refuse the one kind of ad that needs neither.
+    const boosting = Boolean(input.boostPostId);
+
+    if (!boosting && !input.creative.imageData) {
       return fail("rejected", "This creative has no finished picture to run.");
     }
-    if (!input.creative.headline || !input.creative.primaryText) {
+    if (!boosting && (!input.creative.headline || !input.creative.primaryText)) {
       return fail(
         "rejected",
         "This creative is missing its headline or its main text, so MAIRO won't build an ad from it."
@@ -287,22 +292,27 @@ export const metaAdapter: AdPlatformAdapter = {
     }
 
     try {
-      const image = await uploadAdImage(
-        loaded.creds.externalAccountId,
-        loaded.creds.accessToken,
-        input.creative.imageData,
-        input.name
-      );
+      // Skipped entirely when boosting: there is no picture to upload, and
+      // uploading one would cost a Graph call to produce a hash nothing reads.
+      const image = boosting
+        ? null
+        : await uploadAdImage(
+            loaded.creds.externalAccountId,
+            loaded.creds.accessToken,
+            input.creative.imageData!,
+            input.name
+          );
 
       const creative = await createAdCreative({
         adAccountId: loaded.creds.externalAccountId,
         accessToken: loaded.creds.accessToken,
         name: input.name,
         pageId: connection.pageId,
-        imageHash: image.hash,
+        imageHash: image?.hash ?? "",
+        boostPostId: input.boostPostId ?? null,
         destination: input.destination,
-        message: input.creative.primaryText,
-        headline: input.creative.headline,
+        message: input.creative.primaryText ?? "",
+        headline: input.creative.headline ?? "",
         callToAction: input.creative.cta ?? null,
       });
 

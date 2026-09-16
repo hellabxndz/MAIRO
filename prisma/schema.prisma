@@ -98,6 +98,18 @@ model Organization {
   /// The number a tap-to-call ad rings, in E.164 (+15551234567).
   phone              String?
 
+  /// Where the pictures and words in a sales ad come from.
+  ///
+  /// Asked after payment and only of businesses selling online, because it is
+  /// the only goal where the answer differs: a plumber has no catalogue and no
+  /// post worth boosting, while a shop usually has both and would rather run
+  /// the post that already did well than have one written from scratch.
+  salesAdSource    SalesAdSource @default(MAIRO_CREATES)
+  /// The Page post to run as an ad, as Meta's own {page-id}_{post-id}.
+  boostPostId      String?
+  /// The Meta product catalogue to sell from, once one is chosen.
+  productCatalogId String?
+
   /// Stops MAIRO putting campaigns live on its own.
   ///
   /// Off by default, because running the ads is what the customer is paying
@@ -276,6 +288,20 @@ enum AdDestination {
   LEAD_FORM
   /// A conversation. The ad opens Messenger with the business's Page.
   DIRECT_MESSAGE
+}
+
+/// Where a sales ad's pictures and words come from.
+///
+/// Three genuinely different builds, not three settings. MAIRO_CREATES is the
+/// pipeline that already exists: a picture generated, copy written, an ad
+/// assembled. EXISTING_POST runs something the business already published, so
+/// Meta is handed the post's own id and MAIRO writes nothing. CATALOG is
+/// Meta's own catalogue ads, where Meta picks which product to show each
+/// person — a different campaign shape again, and the one still to be built.
+enum SalesAdSource {
+  MAIRO_CREATES
+  EXISTING_POST
+  CATALOG
 }
 
 enum CampaignStatus {

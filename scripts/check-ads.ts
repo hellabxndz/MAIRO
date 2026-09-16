@@ -28,6 +28,8 @@ import {
 import { describeGraphError } from "@/lib/meta/client";
 import { metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
+import { describePost, postToBoost } from "@/lib/campaigns/sales-source";
+import { metaAdCreativeParams } from "@/lib/meta/creatives";
 import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
 
@@ -403,6 +405,76 @@ console.log("\n— what signup has to ask for, and what it can measure —");
   ok("a call does not", !needsSiteTracking("PHONE_CALL"));
   ok("a form MAIRO hosts does not", !needsSiteTracking("LEAD_FORM"));
   ok("a message does not", !needsSiteTracking("DIRECT_MESSAGE"));
+}
+
+console.log("\n— running a post the business already published —");
+{
+  // Both halves, or nothing. A business that asked to run one of its posts but
+  // never picked which has nothing to run, and a post id left behind by
+  // somebody who switched back to MAIRO writing the ads must not keep boosting.
+  ok(
+    "a chosen post is run",
+    postToBoost({ salesAdSource: "EXISTING_POST", boostPostId: "1002_55" }) === "1002_55"
+  );
+  ok(
+    "asking for a post without picking one runs nothing",
+    postToBoost({ salesAdSource: "EXISTING_POST", boostPostId: null }) === null
+  );
+  ok(
+    "a leftover post id does not boost once they switch back",
+    postToBoost({ salesAdSource: "MAIRO_CREATES", boostPostId: "1002_55" }) === null
+  );
+  ok(
+    "and a catalogue business does not boost a post either",
+    postToBoost({ salesAdSource: "CATALOG", boostPostId: "1002_55" }) === null
+  );
+
+  // object_story_id and object_story_spec are alternatives — Meta rejects a
+  // creative carrying both — so a boosted post sends no picture, no headline
+  // and no button, whatever the generated creative happened to contain.
+  const base = {
+    adAccountId: "act_1",
+    accessToken: "t",
+    name: "n",
+    pageId: "PAGE1",
+    imageHash: "hash",
+    destination: { type: "WEBSITE" as const, url: "https://x.test" },
+    message: "words",
+    headline: "head",
+    callToAction: null,
+  };
+
+  const post = metaAdCreativeParams({ ...base, boostPostId: "1002_55" });
+  ok("a boosted post is sent by id", post.object_story_id === "1002_55");
+  ok("and carries no story spec alongside it", post.object_story_spec === undefined);
+
+  const built = metaAdCreativeParams({ ...base, boostPostId: null });
+  ok("a generated ad still sends the spec", typeof built.object_story_spec === "string");
+  ok("and no story id", built.object_story_id === undefined);
+
+  // The label under each post in the picker. A post has no title, and a photo
+  // with no words at all must not render as a blank row.
+  ok(
+    "a post is named by its first line",
+    describePost({ id: "1", message: "Spring sale\nends Friday", imageUrl: null, permalink: null, createdAt: null }) ===
+      "Spring sale"
+  );
+  ok(
+    "a wordless photo is named as one",
+    describePost({ id: "1", message: null, imageUrl: null, permalink: null, createdAt: null }) === "Photo post"
+  );
+  ok(
+    "a long first line is cut rather than wrapped forever",
+    describePost(
+      { id: "1", message: "x".repeat(200), imageUrl: null, permalink: null, createdAt: null },
+      20
+    ).length === 20
+  );
+  ok(
+    "and blank lines at the top are skipped",
+    describePost({ id: "1", message: "\n\n  Real line", imageUrl: null, permalink: null, createdAt: null }) ===
+      "Real line"
+  );
 }
 
 console.log("\n— the permissions the login dialog asks for —");

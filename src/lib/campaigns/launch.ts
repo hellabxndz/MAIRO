@@ -13,6 +13,7 @@ import { nicheById, primaryAction } from "@/lib/tracking/niches";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
 import { describeMissing, resolveDestination, type Destination } from "@/lib/campaigns/destination";
+import { postToBoost } from "@/lib/campaigns/sales-source";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -444,8 +445,19 @@ async function buildDeliverable(input: {
     });
   }
 
-  const creative = await approvedCreativeFor(input.organizationId);
-  if (!creative) {
+  // A post the business already published, when that is what they asked for.
+  // Only Meta can run one — the post lives on a Facebook Page — so another
+  // network in the same campaign still builds from an approved creative.
+  const boostPostId =
+    input.platform === "META" ? await boostPostFor(input.organizationId) : null;
+
+  // The bar for a generated ad: somebody approved a picture. A post that is
+  // already published has cleared a higher one — the business wrote it, posted
+  // it under its own name, and picked it out of its own feed — so requiring an
+  // approved creative as well would block the ad on producing something nothing
+  // will ever use.
+  const creative = boostPostId ? null : await approvedCreativeFor(input.organizationId);
+  if (!creative && !boostPostId) {
     const blocker =
       "There is no approved creative to run yet, so the ad hasn't been built. Approve a picture on the Creatives page and launch again.";
     await db.platformCampaign.update({
@@ -461,11 +473,12 @@ async function buildDeliverable(input: {
     name: input.name,
     creative: {
       aspectRatio: "SQUARE_1_1",
-      headline: creative.headline,
-      primaryText: creative.primaryText,
-      cta: creative.cta,
-      imageData: creative.imageData,
+      headline: creative?.headline ?? null,
+      primaryText: creative?.primaryText ?? null,
+      cta: creative?.cta ?? null,
+      imageData: creative?.imageData ?? null,
     },
+    boostPostId,
     destination,
   });
 
@@ -526,6 +539,22 @@ async function conversionTargetFor(
     pixelId: pixel.externalPixelId,
     event: platform === "TIKTOK" ? action.tiktokEvent : action.metaEvent,
   };
+}
+
+/**
+ * The post this business wants run as its ads, when it asked for one.
+ *
+ * Both halves are required and the pair is the point: a business that picked
+ * "run one of my posts" but never chose which has nothing to run, and a post id
+ * left behind by somebody who has since switched back to MAIRO writing the ads
+ * must not quietly keep boosting.
+ */
+async function boostPostFor(organizationId: string): Promise<string | null> {
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { salesAdSource: true, boostPostId: true },
+  });
+  return organization ? postToBoost(organization) : null;
 }
 
 /**

@@ -73,6 +73,13 @@ export type AdCreativeInput = {
   /** The Facebook Page the ad is published by. Meta requires one. */
   pageId: string;
   imageHash: string;
+  /**
+   * A post the business already published, as Meta's {page-id}_{post-id}.
+   *
+   * When set, everything else about the look of the ad is ignored — see
+   * createAdCreative. The picture and words are already on Meta.
+   */
+  boostPostId?: string | null;
   /** What a click does: open a link, or ring the business. */
   destination: Destination;
   /** The text above the ad. */
@@ -91,7 +98,38 @@ export type AdCreativeInput = {
  * never picked a Page cannot have one made, which is checked before this is
  * called rather than discovered here.
  */
-export async function createAdCreative(input: AdCreativeInput): Promise<{ id: string }> {
+/**
+ * The creative exactly as Meta will receive it.
+ *
+ * Pulled out of the Graph call so it can be asserted without one — in
+ * particular that object_story_id and object_story_spec never appear together,
+ * which Meta rejects outright and which no amount of reading the call site
+ * proves.
+ */
+export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unknown> {
+  // Meta's automatic variations — cropping the image, reordering the text — are
+  // off in both shapes below. The customer approved a specific picture and a
+  // specific line, or picked a specific post because of how it performed;
+  // MAIRO showing them one ad while Meta runs a different one would make that
+  // meaningless.
+  const noEnhancements = JSON.stringify({
+    creative_features_spec: {
+      standard_enhancements: { enroll_status: "OPT_OUT" },
+    },
+  });
+
+  // A post that already exists is handed over by id, and that is the whole
+  // creative. There is no image hash, no headline and no button here: the post
+  // already carries all three, which is the point of running something people
+  // already responded to rather than something new.
+  if (input.boostPostId) {
+    return {
+      name: input.name,
+      object_story_id: input.boostPostId,
+      degrees_of_freedom_spec: noEnhancements,
+    };
+  }
+
   // The button is decided by what the ad is for, not by the concept. A
   // tap-to-call ad has one button and it is CALL_NOW; a message ad has
   // MESSAGE_PAGE. The concept's suggestion ("Shop Now", "Learn More") is about
@@ -130,36 +168,32 @@ export async function createAdCreative(input: AdCreativeInput): Promise<{ id: st
           { app_destination: CHANNEL_META[input.destination.channel].appDestination }
         : { link: input.destination.url };
 
+  return {
+    name: input.name,
+    object_story_spec: JSON.stringify({
+      page_id: input.pageId,
+      link_data: {
+        image_hash: input.imageHash,
+        link: storyLink,
+        message: input.message,
+        name: input.headline,
+        call_to_action: {
+          type: cta,
+          // The button needs its own destination even when it matches the link;
+          // omitting it makes the button inert on some placements.
+          value: buttonValue,
+        },
+      },
+    }),
+    degrees_of_freedom_spec: noEnhancements,
+  };
+}
+
+export async function createAdCreative(input: AdCreativeInput): Promise<{ id: string }> {
   return metaGraphRequest<{ id: string }>(`/${input.adAccountId}/adcreatives`, {
     method: "POST",
     accessToken: input.accessToken,
-    params: {
-      name: input.name,
-      object_story_spec: JSON.stringify({
-        page_id: input.pageId,
-        link_data: {
-          image_hash: input.imageHash,
-          link: storyLink,
-          message: input.message,
-          name: input.headline,
-          call_to_action: {
-            type: cta,
-            // The button needs its own destination even when it matches the
-            // link; omitting it makes the button inert on some placements.
-            value: buttonValue,
-          },
-        },
-      }),
-      // Meta's automatic variations — cropping the image, reordering the text —
-      // are off. The customer approved a specific picture and a specific line,
-      // and MAIRO showing them one ad while Meta runs a different one would
-      // make the approval meaningless.
-      degrees_of_freedom_spec: JSON.stringify({
-        creative_features_spec: {
-          standard_enhancements: { enroll_status: "OPT_OUT" },
-        },
-      }),
-    },
+    params: metaAdCreativeParams(input) as Record<string, string | number | undefined>,
   });
 }
 

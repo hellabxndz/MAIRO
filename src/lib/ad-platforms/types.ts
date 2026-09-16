@@ -205,6 +205,14 @@ export type CreateAdInput = {
    * is required — an ad with nowhere to go is not an ad.
    */
   destination: Destination;
+  /**
+   * A post the business already published, run as the ad itself.
+   *
+   * When set, `creative` is ignored: there is nothing to generate, upload or
+   * write, because the post already carries its own picture and words. The
+   * whole appeal is that real people already responded to this exact thing.
+   */
+  boostPostId?: string | null;
 };
 
 export type CreatedEntity = { externalId: string };

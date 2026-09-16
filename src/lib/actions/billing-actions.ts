@@ -158,7 +158,25 @@ async function createCheckoutUrl(input: {
   // landed on /dashboard/settings would either be bounced back to /clients
   // (no client open) or shown some client's business settings — neither of
   // which is the account that just bought anything.
-  const home = isFreelancerTier(tier) ? "/clients" : "/dashboard/settings";
+  //
+  // A business selling online goes somewhere else again: the one set of
+  // questions MAIRO holds back until there is a subscription to act on. The
+  // goal is read here rather than on the way back, because the return URL is
+  // fixed when checkout opens and Stripe will not decide this for us.
+  const sellingOnline = isFreelancerTier(tier)
+    ? false
+    : (
+        await db.onboardingIntake.findUnique({
+          where: { organizationId },
+          select: { primaryGoal: true },
+        })
+      )?.primaryGoal === "SALES";
+
+  const home = isFreelancerTier(tier)
+    ? "/clients"
+    : sellingOnline
+      ? "/dashboard/sales-setup"
+      : "/dashboard/settings";
 
   const checkout = await stripe().checkout.sessions.create({
     mode: "subscription",
