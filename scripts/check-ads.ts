@@ -29,6 +29,12 @@ import { describeGraphError } from "@/lib/meta/client";
 import { metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
 import { describePost, postToBoost } from "@/lib/campaigns/sales-source";
+import {
+  AUDIENCE_DEFAULTS,
+  describeAudience,
+  metaTargeting,
+  normalizeAudience,
+} from "@/lib/campaigns/audience";
 import { metaAdCreativeParams } from "@/lib/meta/creatives";
 import {
   absolutize,
@@ -549,6 +555,55 @@ console.log("\n— reading what a shop sells off its own website —");
   // A page carrying both a list and a detail block lists the same thing twice.
   const twice = dedupe([...structured, ...structured]);
   ok("repeats are dropped", twice.length === 2, String(twice.length));
+}
+
+console.log("\n— who the ad is shown to —");
+{
+  // The default that was never chosen: before the form asked, every ad set went
+  // out to the whole United States at every age.
+  const nationwide = metaTargeting(AUDIENCE_DEFAULTS);
+  ok("no town means the whole country", JSON.stringify(nationwide.geo_locations) === '{"countries":["US"]}');
+  ok("with an age range Meta accepts", nationwide.age_min === 18 && nationwide.age_max === 65);
+  // "Everyone" is an unset field, not [1,2]: same delivery, but an explicit
+  // list tells Meta a choice was made.
+  ok("and no gender at all", nationwide.genders === undefined);
+
+  const local = metaTargeting(
+    normalizeAudience({ geoKey: "2418779", geoLabel: "Austin, Texas", geoRadius: 25, ageMin: 30, ageMax: 55, genders: 2 })
+  );
+  // cities, not custom_locations. Meta rejects a key sent to the wrong field.
+  const geo = local.geo_locations as { cities?: { key: string; radius: number; distance_unit: string }[] };
+  ok("a town targets by Meta's own key", geo.cities?.[0].key === "2418779");
+  ok("with the radius in miles", geo.cities?.[0].radius === 25 && geo.cities?.[0].distance_unit === "mile");
+  ok("the age range is carried", local.age_min === 30 && local.age_max === 55);
+  ok("and a chosen gender is sent as a list", JSON.stringify(local.genders) === "[2]");
+
+  // A form can be posted from a console, and Meta refuses a bad range at launch
+  // with a message naming a field the customer never saw.
+  const backwards = normalizeAudience({ ageMin: 60, ageMax: 25 });
+  ok("a reversed age range is swapped, not refused", backwards.ageMin === 25 && backwards.ageMax === 60);
+  const silly = normalizeAudience({ ageMin: 4, ageMax: 200 });
+  ok("under 18 is raised to Meta's floor", silly.ageMin === 18);
+  ok("and an absurd age lands on its ceiling", silly.ageMax === 65);
+  ok("an unknown gender is everyone", normalizeAudience({ genders: 9 }).genders === 0);
+
+  // A label with no key is a place Meta cannot target. Keeping it would show
+  // somebody "Austin, TX" under an ad running nationwide.
+  const orphan = normalizeAudience({ geoLabel: "Austin, Texas", geoRadius: 25 });
+  ok("a place with no key is dropped", orphan.geoLabel === null && orphan.geoKey === null);
+  ok("and so is its radius", orphan.geoRadius === null);
+
+  ok(
+    "the audience reads back as a sentence",
+    describeAudience(normalizeAudience({ geoKey: "1", geoLabel: "Austin, Texas", geoRadius: 10, ageMin: 25, ageMax: 40 })) ===
+      "people aged 25–40, Austin, Texas + 10 miles",
+    describeAudience(normalizeAudience({ geoKey: "1", geoLabel: "Austin, Texas", geoRadius: 10, ageMin: 25, ageMax: 40 }))
+  );
+  ok(
+    "and says 65+ rather than 65 to 65",
+    describeAudience(AUDIENCE_DEFAULTS) === "people aged 18+, everywhere in the US",
+    describeAudience(AUDIENCE_DEFAULTS)
+  );
 }
 
 console.log("\n— the permissions the login dialog asks for —");

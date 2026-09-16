@@ -8,6 +8,7 @@ import { UpgradeModal, type UpgradeCopy } from "@/components/upgrade-modal";
 import { StartTimePicker } from "@/components/start-time-picker";
 import { recommendAllocation, rebalance, splitBudget } from "@/lib/budget/allocation";
 import type { AdGoal, AdPlatform } from "@/generated/prisma/enums";
+import { AudienceFields } from "./audience-fields";
 
 // Creating a campaign, which is now a question about places as well as money.
 //
@@ -211,6 +212,16 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
             </div>
           </div>
         </div>
+
+        {/* ---- who sees it ---- */}
+        {/* The question Ads Manager puts behind a map and a box of interests,
+            and the one MAIRO was not asking at all — so every ad ran across the
+            whole country at every age, which is most of a small budget spent on
+            people who were never going to buy. */}
+        <fieldset className="space-y-3 border-t border-white/10 pt-6">
+          <legend className="text-sm text-white">Who should see it?</legend>
+          <AudienceFields />
+        </fieldset>
 
         {/* ---- what the click does ---- */}
         {/* Asked, because it cannot be guessed. MAIRO used to take the

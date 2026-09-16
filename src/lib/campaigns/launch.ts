@@ -14,6 +14,7 @@ import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
 import { describeMissing, resolveDestination, type Destination } from "@/lib/campaigns/destination";
 import { postToBoost } from "@/lib/campaigns/sales-source";
+import { metaTargeting, normalizeAudience, type Audience } from "@/lib/campaigns/audience";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -98,6 +99,14 @@ export type CreateMairoCampaignInput = {
     channel?: MessageChannel | null;
     delivery?: LeadFormDelivery | null;
   };
+  /**
+   * Who should see it.
+   *
+   * Optional so nothing that creates a campaign another way has to know about
+   * it; omitted means the whole country at every age, which is what every
+   * campaign got before the form asked.
+   */
+  audience?: Partial<Audience>;
 };
 
 /**
@@ -128,6 +137,7 @@ export async function createMairoCampaign(
       destinationPhone: input.destination?.phone ?? null,
       messageChannel: input.destination?.channel ?? "MESSENGER",
       leadFormDelivery: input.destination?.delivery ?? "HOSTED_PAGE",
+      ...normalizeAudience(input.audience ?? {}),
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
@@ -421,6 +431,9 @@ async function buildDeliverable(input: {
       goal: input.objective,
       campaignOwnsBudget: input.adapter.budgetLevel === "campaign",
       conversion,
+      // Who sees it. Without this every ad set fell back to the whole of the
+      // United States at every age, which is the default nobody chose.
+      targeting: metaTargeting(await audienceFor(input.mairoCampaignId)),
       destination: destination ?? undefined,
       pageId: await pageIdFor(input.organizationId, input.platform),
       // The booked start, which becomes the network's own start_time. MAIRO
@@ -539,6 +552,28 @@ async function conversionTargetFor(
     pixelId: pixel.externalPixelId,
     event: platform === "TIKTOK" ? action.tiktokEvent : action.metaEvent,
   };
+}
+
+/**
+ * Who this campaign is for, as the customer answered it.
+ *
+ * Normalized on the way out as well as on the way in: a row written before the
+ * form asked carries the defaults, and a row edited directly in the database
+ * carries whatever somebody typed there.
+ */
+async function audienceFor(mairoCampaignId: string): Promise<Audience> {
+  const campaign = await db.mairoCampaign.findUnique({
+    where: { id: mairoCampaignId },
+    select: {
+      geoKey: true,
+      geoLabel: true,
+      geoRadius: true,
+      ageMin: true,
+      ageMax: true,
+      genders: true,
+    },
+  });
+  return normalizeAudience(campaign ?? {});
 }
 
 /**

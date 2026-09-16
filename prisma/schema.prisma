@@ -624,6 +624,26 @@ model MairoCampaign {
   /// Where the form lives, when destinationType is LEAD_FORM.
   leadFormDelivery LeadFormDelivery @default(HOSTED_PAGE)
 
+  /// Who should see this, in the three things a business can actually answer.
+  ///
+  /// Every campaign MAIRO built before this targeted the whole United States,
+  /// every age, because nothing ever asked. For a plumber in Austin that is the
+  /// entire budget spent on people who will never call him.
+  ///
+  /// Meta's own id for the place, from its targeting search. Null means the
+  /// whole country, which is right for a shop that posts everywhere and wrong
+  /// for everyone else — so it is asked rather than assumed.
+  geoKey      String?
+  /// What that place is called, so the campaign can say it back to them.
+  geoLabel    String?
+  /// How far around it to advertise, in miles. Meta's own unit here.
+  geoRadius   Int?
+  ageMin      Int @default(18)
+  ageMax      Int @default(65)
+  /// 0 everyone, 1 men, 2 women — Meta's own numbering, kept so nothing has to
+  /// translate it twice.
+  genders     Int @default(0)
+
   /// The one number the customer entered. The children's budgets are derived
   /// from this and their allocation percentages, and are kept summing to it.
   totalDailyBudgetCents Int

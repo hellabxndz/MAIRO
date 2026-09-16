@@ -32,6 +32,7 @@ import {
 } from "@/lib/campaigns/destination";
 import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
 import { pushFormToMeta } from "@/lib/leads/meta-form";
+import { searchPlaces, type Place } from "@/lib/meta/places";
 import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
@@ -66,6 +67,15 @@ const createCampaignSchema = z.object({
   messageChannel: z.enum(["MESSENGER", "INSTAGRAM", "WHATSAPP"]).nullish(),
   /** Where the lead form lives: a page MAIRO hosts, or Meta's own. */
   leadFormDelivery: z.enum(["HOSTED_PAGE", "META_NATIVE"]).nullish(),
+  // Who sees it. Everything here is re-checked by normalizeAudience, because a
+  // form can be posted from a console and Meta refuses a bad age range at
+  // launch with a message naming a field the customer never saw.
+  geoKey: z.string().nullish(),
+  geoLabel: z.string().nullish(),
+  geoRadius: z.coerce.number().nullish(),
+  ageMin: z.coerce.number().nullish(),
+  ageMax: z.coerce.number().nullish(),
+  genders: z.coerce.number().nullish(),
 });
 
 export type CampaignActionState =
@@ -114,6 +124,12 @@ export async function createCampaignAction(
     formAuthor: formData.get("formAuthor"),
     messageChannel: formData.get("messageChannel"),
     leadFormDelivery: formData.get("leadFormDelivery"),
+    geoKey: formData.get("geoKey") || null,
+    geoLabel: formData.get("geoLabel") || null,
+    geoRadius: formData.get("geoRadius") || null,
+    ageMin: formData.get("ageMin") || null,
+    ageMax: formData.get("ageMax") || null,
+    genders: formData.get("genders") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -273,6 +289,14 @@ export async function createCampaignAction(
       phone: destinationPhone,
       channel: parsed.data.messageChannel ?? "MESSENGER",
       delivery: parsed.data.leadFormDelivery ?? "HOSTED_PAGE",
+    },
+    audience: {
+      geoKey: parsed.data.geoKey ?? null,
+      geoLabel: parsed.data.geoLabel ?? null,
+      geoRadius: parsed.data.geoRadius ?? null,
+      ageMin: parsed.data.ageMin ?? undefined,
+      ageMax: parsed.data.ageMax ?? undefined,
+      genders: parsed.data.genders ?? undefined,
     },
   });
 
@@ -495,4 +519,21 @@ export async function deleteCampaignAction(
   revalidatePath("/dashboard");
 
   return { deleted: true, name: campaign.name };
+}
+
+/**
+ * Places matching what somebody typed, so a town becomes something Meta targets.
+ *
+ * Meta targets by its own id and there are eleven Austins, so the customer
+ * picks which one they meant rather than MAIRO guessing — a campaign running
+ * around the wrong Austin spends the whole budget before anybody notices.
+ */
+export async function searchPlacesAction(
+  query: string
+): Promise<{ ok: true; places: Place[] } | { ok: false; error: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  return searchPlaces(organizationId, query);
 }
