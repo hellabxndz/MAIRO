@@ -13,6 +13,13 @@ export function ReplayIntroLink({ className = "" }: { className?: string }) {
       onClick={() => window.dispatchEvent(new CustomEvent("mairo:play-intro"))}
       className={className}
     >
+      {/* Drawn rather than typed: the ▶ character renders as a colour emoji on
+          Windows and Android, which is a bright orange box in the middle of a
+          monochrome page. This inherits currentColor and stays the same weight
+          as the text beside it. */}
+      <svg aria-hidden viewBox="0 0 10 12" className="h-2.5 w-2.5 flex-none fill-current">
+        <path d="M0 0l10 6-10 6z" />
+      </svg>
       Why MAIRO?
     </button>
   );

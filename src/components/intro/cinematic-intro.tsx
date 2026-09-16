@@ -45,29 +45,15 @@ const CONCEPTS = [
   },
 ];
 
-const STORAGE_KEY = "mairo.intro.v1";
 const REPLAY_EVENT = "mairo:play-intro";
 const CLOSE_MS = 380;
 
-/** Once a device has failed to render this, it should not keep trying. */
-type Outcome = "seen" | "dismissed" | "unsupported";
-
-function remember(outcome: Outcome) {
-  try {
-    localStorage.setItem(STORAGE_KEY, outcome);
-  } catch {
-    // Private browsing. The intro will show again next time, which is a far
-    // better failure than throwing on the homepage.
-  }
-}
-
-function alreadyDecided() {
-  try {
-    return Boolean(localStorage.getItem(STORAGE_KEY));
-  } catch {
-    return false;
-  }
-}
+// Nothing is remembered any more, and nothing distinguishes the ways out.
+// Whether this device had seen the film, and how it left, were only ever asked
+// to decide whether to start it unbidden — and it no longer starts unbidden.
+// Somebody who presses "Why MAIRO?" a second time is asking for it a second
+// time, and refusing them on the strength of a localStorage key would be the
+// wrong answer to a plain request.
 
 const SCRIM =
   "pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.34)_42%,rgba(0,0,0,0)_72%)]";
@@ -85,10 +71,9 @@ export function CinematicIntro() {
   const alive = useRef(false);
   const closeTimer = useRef<number | undefined>(undefined);
 
-  const close = useCallback((outcome: Outcome) => {
+  const close = useCallback(() => {
     if (!alive.current) return;
     alive.current = false;
-    remember(outcome);
     audio.current?.stop();
     audio.current = null;
     setClosing(true);
@@ -110,25 +95,22 @@ export function CinematicIntro() {
     setPlaying(true);
   }, []);
 
-  // Decide whether to play at all. Everything here is a reason not to.
+  // Played on request, never on arrival.
+  //
+  // It used to start by itself 260ms after load and hold the page for eighteen
+  // seconds. It opens on a near-black starfield, so what a first-time visitor
+  // actually saw was a black screen with a small × in the corner — and the
+  // person who commissioned the film looked at his own homepage and reported it
+  // as broken. If the author cannot tell it is a film, nobody can.
+  //
+  // So the homepage is the homepage, and this waits to be asked for. The
+  // trigger is in the hero and in the footer, both saying "Why MAIRO?".
   useEffect(() => {
     const replay = () => begin();
     window.addEventListener(REPLAY_EVENT, replay);
 
-    let start: number | undefined;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!reduced && !alreadyDecided()) {
-      // A beat before it begins, so the homepage has painted underneath. If the
-      // visitor has already started reading or scrolling, they have chosen the
-      // site over the film and should not be interrupted.
-      start = window.setTimeout(() => {
-        if (window.scrollY < 40) begin();
-      }, 260);
-    }
-
     return () => {
       window.removeEventListener(REPLAY_EVENT, replay);
-      window.clearTimeout(start);
       window.clearTimeout(closeTimer.current);
       audio.current?.stop();
       audio.current = null;
@@ -150,7 +132,7 @@ export function CinematicIntro() {
   useEffect(() => {
     if (!playing) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close("dismissed");
+      if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -162,7 +144,7 @@ export function CinematicIntro() {
     if (!playing) return;
     started.current = false;
     const guard = window.setTimeout(() => {
-      if (!started.current) close("unsupported");
+      if (!started.current) close();
     }, 2500);
     return () => window.clearTimeout(guard);
   }, [playing, close]);
@@ -216,8 +198,8 @@ export function CinematicIntro() {
         clock={clock}
         onScene={onScene}
         onCaption={onCaption}
-        onEnd={() => close("seen")}
-        onTooSlow={() => close("unsupported")}
+        onEnd={() => close()}
+        onTooSlow={() => close()}
       />
 
       {/* The marketing page's own nebulae, inside the film.
@@ -506,7 +488,7 @@ export function CinematicIntro() {
               </p>
               <button
                 type="button"
-                onClick={() => close("seen")}
+                onClick={() => close()}
                 className="pointer-events-auto mt-14 inline-flex items-center gap-3 rounded-full bg-white px-9 py-4 text-xs uppercase tracking-[0.16em] text-black transition hover:bg-neutral-200"
                 style={{ animation: "intro-rise 1s 3.4s both" }}
               >
@@ -550,7 +532,7 @@ export function CinematicIntro() {
       {/* Close. Always there, from the first black frame. */}
       <button
         type="button"
-        onClick={() => close("dismissed")}
+        onClick={() => close()}
         aria-label="Close introduction and go to the site"
         className="absolute z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.14] bg-white/[0.10] text-white transition hover:border-white/30 hover:bg-white/[0.16]"
         style={{

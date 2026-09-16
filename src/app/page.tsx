@@ -155,6 +155,13 @@ export default function Home() {
             >
               Discover MAIRO
             </a>
+            {/* The film, offered rather than imposed. It used to start by
+                itself and hold the page for eighteen seconds, opening on a
+                near-black starfield — which reads as a site that failed to
+                load, because that is what it looks like. Here it is a thing
+                somebody can choose, next to the two other things they can
+                choose. */}
+            <ReplayIntroLink className="inline-flex items-center gap-2.5 text-xs uppercase tracking-[0.16em] text-neutral-500 transition hover:text-neutral-200" />
           </Reveal>
         </div>
 
