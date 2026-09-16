@@ -62,18 +62,25 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
   });
   if (!org) return NOTHING;
 
-  if (org.autoLaunchHeld) {
-    return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
-  }
-
   // Finish anything that reached the network but never got an ad, before
   // looking for what to switch on. The two belong together: a campaign with no
   // ad is invisible to the query below — it can never be "ready" — so without
   // this, one that stalled for a reason the customer has since fixed stays
   // stalled forever and the checklist keeps asking for a step nothing performs.
   //
+  // Before the hold, not after. The hold is documented as stopping MAIRO
+  // putting campaigns live, and nothing here does that: everything
+  // finishHalfBuilt creates is paused, exactly as it would have been had the
+  // campaign built first time. Returning early left somebody who wanted to look
+  // before going live with a campaign that could never finish being built, and
+  // therefore nothing to look at.
+  //
   // Cheap when there is nothing to do: one indexed read that returns no rows.
   await finishHalfBuilt(organizationId);
+
+  if (org.autoLaunchHeld) {
+    return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
+  }
 
   // Is there anything to do at all? Asked before the funding check, which is a
   // network round trip to Meta and not worth spending on an account with
