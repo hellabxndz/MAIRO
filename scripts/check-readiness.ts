@@ -24,16 +24,26 @@ const ok = (n: string, c: boolean, x = "") => {
 };
 
 function step(id: ReadinessStep["id"], done: boolean, unknown = false): ReadinessStep {
-  return { id, done, unknown, label: `Do ${id}`, detail: `Because ${id}.`, href: "/x" };
+  return {
+    id,
+    done,
+    unknown,
+    // Only the campaign is MAIRO's own work; everything else is the customer's.
+    owner: id === "campaign" ? "mairo" : "you",
+    label: `Do ${id}`,
+    detail: `Because ${id}.`,
+    href: "/x",
+  };
 }
 
-function readiness(steps: ReadinessStep[]): Readiness {
+function readiness(steps: ReadinessStep[], blocker: string | null = null): Readiness {
   const next = steps.find((s) => !s.done) ?? null;
   return {
     steps,
     ready: steps.every((s) => s.done),
     next,
     remaining: steps.filter((s) => !s.done).length,
+    blocker,
   };
 }
 
@@ -156,6 +166,41 @@ console.log("\n— the order the steps block in —");
   ok("the first thing asked for is the plan", nothing.next?.id === "plan");
   ok("six things outstanding", nothing.remaining === 6);
   ok("and not ready", !nothing.ready);
+}
+
+console.log("\n— the panel says who it is actually waiting on —");
+{
+  // The bug on the screen: every outstanding step was headed "Waiting on you",
+  // including the one whose label names MAIRO doing the work, and then promised
+  // it would happen by itself while the card underneath said it had not.
+  ok("the campaign step is MAIRO's, not the customer's", step("campaign", false).owner === "mairo");
+  ok("approving an ad is the customer's", step("creative", false).owner === "you");
+  ok("so is paying", step("plan", false).owner === "you");
+
+  // A reason is only worth showing while the step it explains is outstanding.
+  const stuck = readiness(
+    [step("plan", true), step("creative", true), step("campaign", false)],
+    "There's no address on it yet."
+  );
+  ok("a stopped campaign carries its reason", stuck.blocker === "There's no address on it yet.");
+  ok("and the step it belongs to is MAIRO's", stuck.next?.owner === "mairo");
+
+  const waiting = readiness([step("plan", true), step("creative", false), step("campaign", false)]);
+  ok("while a customer step is outstanding, that is what is next", waiting.next?.id === "creative");
+  ok("and it is theirs", waiting.next?.owner === "you");
+
+  // What the AI specialists are told has to match the screen — that is the
+  // entire reason the brief exists.
+  const brief = readinessBrief(stuck);
+  ok("the brief carries the reason too", brief.includes("There's no address on it yet."));
+  ok(
+    "and still refuses to promise anything",
+    brief.includes("Do not promise anything will go live")
+  );
+  ok(
+    "a brief with nothing stuck does not invent a reason",
+    !readinessBrief(waiting).includes("stopped with")
+  );
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

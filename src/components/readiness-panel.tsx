@@ -176,10 +176,36 @@ export function PendingReason({
   }
 
   const next = readiness.next;
+  if (!next) return null;
+
+  // MAIRO's own step, and a network has said why it stopped. This is the case
+  // the panel used to get most wrong: it headed the line "Waiting on you",
+  // named a job the customer does not do, and promised it would happen by
+  // itself — while the campaign card directly underneath said it had not.
+  if (next.owner === "mairo" && readiness.blocker) {
+    return (
+      <p className="mt-3 max-w-2xl text-xs leading-relaxed text-amber-200/90">
+        MAIRO couldn&rsquo;t finish building the campaign:{" "}
+        <span className="font-medium">{readiness.blocker}</span> Sort that and MAIRO picks it
+        up again on its own.
+      </p>
+    );
+  }
+
+  // MAIRO's own step with nothing blocking it. Still not the customer's to do,
+  // so it does not ask them for anything.
+  if (next.owner === "mairo") {
+    return (
+      <p className="mt-3 max-w-2xl text-xs leading-relaxed text-neutral-400">
+        Nothing left for you to do. {next.detail}
+      </p>
+    );
+  }
+
   return (
     <p className="mt-3 max-w-2xl text-xs leading-relaxed text-amber-200/90">
-      Waiting on you: <span className="font-medium">{next?.label.toLowerCase()}</span>.{" "}
-      {next?.detail} MAIRO switches this on by itself once that&rsquo;s done.
+      Waiting on you: <span className="font-medium">{next.label.toLowerCase()}</span>.{" "}
+      {next.detail} MAIRO carries on by itself once that&rsquo;s done.
     </p>
   );
 }

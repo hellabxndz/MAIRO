@@ -25,6 +25,15 @@ export type ReadinessStepId =
 export type ReadinessStep = {
   id: ReadinessStepId;
   done: boolean;
+  /**
+   * Who this one is waiting on.
+   *
+   * Not decoration. The panel used to head every outstanding step with
+   * "Waiting on you", including the one whose label is "Let MAIRO build the
+   * campaign" — so the screen told a customer they were holding up a job that
+   * was not theirs, and then promised it would happen by itself.
+   */
+  owner: "you" | "mairo";
   /** What the customer has to do, in their words. */
   label: string;
   /** Why it blocks. Shown when it is the thing they are stuck on. */
@@ -47,6 +56,16 @@ export type Readiness = {
   /** The next thing for them to do, or null when there is nothing left. */
   next: ReadinessStep | null;
   remaining: number;
+  /**
+   * Why MAIRO's own step has not happened, when a network has said.
+   *
+   * The campaign step claims to happen on its own, and mostly it does. When it
+   * does not — no address to send people to, no Page, a rejected ad — the
+   * network said why, and that sentence is the only useful thing on the screen.
+   * Without it the panel repeats its promise indefinitely at somebody whose
+   * campaign is sitting there half-built.
+   */
+  blocker: string | null;
 };
 
 /**
@@ -90,7 +109,7 @@ export async function readinessFor(
     billing,
   }: { checkFunding?: boolean; billing?: BillingStatus | null } = {}
 ): Promise<Readiness> {
-  const [org, intake, meta, creative, campaign] = await Promise.all([
+  const [org, intake, meta, creative, campaign, stalled] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { subscriptionTier: true, subscriptionStatus: true, website: true },
@@ -123,6 +142,18 @@ export async function readinessFor(
       },
       select: { id: true },
     }),
+    // Why the last attempt stopped, when it stopped. Written by the launch
+    // path, and already shown on the campaign card — the panel above it was
+    // the only thing still claiming everything was fine.
+    db.platformCampaign.findFirst({
+      where: {
+        mairoCampaign: { organizationId, status: { not: "ARCHIVED" } },
+        status: { not: "ARCHIVED" },
+        lastError: { not: null },
+      },
+      orderBy: { updatedAt: "desc" },
+      select: { lastError: true },
+    }),
   ]);
 
   const planName = planFor(org?.subscriptionTier ?? "NONE").name;
@@ -147,6 +178,7 @@ export async function readinessFor(
   const steps: ReadinessStep[] = [
     {
       id: "plan",
+      owner: "you",
       done: paid,
       label: `Choose a plan`,
       detail: `MAIRO builds and runs the campaigns for you — the ${planName} plan is where that starts. This is separate from what you spend on the ads themselves.`,
@@ -154,6 +186,7 @@ export async function readinessFor(
     },
     {
       id: "business",
+      owner: "you",
       done: Boolean(intake),
       label: "Tell MAIRO about your business",
       detail:
@@ -162,6 +195,7 @@ export async function readinessFor(
     },
     {
       id: "ad_account",
+      owner: "you",
       done: connected,
       label: "Connect your Meta ad account",
       detail:
@@ -170,6 +204,7 @@ export async function readinessFor(
     },
     {
       id: "funding",
+      owner: "you",
       done: funded,
       unknown: connected && fundingUnknown,
       label: "Put a card on your Meta account",
@@ -178,6 +213,7 @@ export async function readinessFor(
     },
     {
       id: "creative",
+      owner: "you",
       done: Boolean(creative),
       label: "Approve an ad",
       detail:
@@ -186,21 +222,28 @@ export async function readinessFor(
     },
     {
       id: "campaign",
+      owner: "mairo",
       done: Boolean(campaign),
-      label: "Let MAIRO build the campaign",
+      label: "MAIRO builds the campaign",
       detail:
-        "MAIRO creates it in your own ad account, paused, with the ad already in it. This happens on its own once the steps above are done.",
+        "MAIRO creates it in your own ad account, paused, with the ad already in it, once everything above is done.",
       href: "/dashboard/campaigns",
     },
   ];
 
   const next = steps.find((s) => !s.done) ?? null;
 
+  // Only worth reporting while the step it explains is outstanding. A stale
+  // error from a campaign that has since been built would contradict a screen
+  // that is, by then, correct.
+  const blocker = campaign ? null : stalled?.lastError ?? null;
+
   return {
     steps,
     ready: steps.every((s) => s.done),
     next,
     remaining: steps.filter((s) => !s.done).length,
+    blocker,
   };
 }
 
@@ -221,6 +264,9 @@ export function readinessBrief(readiness: Readiness): string {
   return [
     "This account cannot run ads yet. What is still outstanding, in the order it blocks:",
     ...outstanding.map((s, i) => `${i + 1}. ${s.label} — ${s.detail}`),
+    ...(readiness.blocker
+      ? ["", `The last attempt to build the campaign stopped with: ${readiness.blocker}`]
+      : []),
     "",
     "If they ask why nothing is running, say exactly this and nothing more optimistic. Do not promise anything will go live before these are done.",
   ].join("\n");
