@@ -81,6 +81,7 @@ export default async function CampaignsPage() {
       select: {
       subscriptionTier: true,
       defaultDestination: true,
+      defaultMessageChannel: true,
       website: true,
       phone: true,
     },
@@ -134,6 +135,7 @@ export default async function CampaignsPage() {
       type: organization?.defaultDestination ?? "WEBSITE",
       website: organization?.website ?? null,
       phone: organization?.phone ?? null,
+      channel: organization?.defaultMessageChannel ?? "MESSENGER",
       formUrl: leadForm ? leadFormUrl(leadForm.slug, siteUrl()) : null,
       formQuestions: formPreview,
     },

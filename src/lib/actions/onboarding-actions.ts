@@ -25,6 +25,10 @@ const intakeSchema = z.object({
   destinationType: z
     .enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE"])
     .default("WEBSITE"),
+  /// Which inbox, when the answer was "they message me". Defaulted rather than
+  /// required so the three other answers do not have to send a field they have
+  /// no opinion about.
+  messageChannel: z.enum(["MESSENGER", "INSTAGRAM", "WHATSAPP"]).default("MESSENGER"),
   phone: z.string().optional(),
   targetAudience: z.string().optional(),
   brandVoice: z.string().optional(),
@@ -49,6 +53,7 @@ export async function completeOnboardingAction(
     industry: formData.get("industry") || undefined,
     website: formData.get("website") || undefined,
     destinationType: formData.get("destinationType") || "WEBSITE",
+    messageChannel: formData.get("messageChannel") || "MESSENGER",
     phone: formData.get("phone") || undefined,
     targetAudience: formData.get("targetAudience") || undefined,
     brandVoice: formData.get("brandVoice") || undefined,
@@ -99,6 +104,7 @@ export async function completeOnboardingAction(
       website,
       phone,
       defaultDestination: data.destinationType,
+      defaultMessageChannel: data.messageChannel,
     },
   });
 

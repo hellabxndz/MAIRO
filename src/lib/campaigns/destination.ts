@@ -213,9 +213,31 @@ export const CHANNEL_META: Record<
  * writes the form and hosts it; the conversation opens on the Page that is
  * already connected.
  */
-export function requiredDetailFor(type: AdDestination): "phone" | "website" | null {
+/**
+ * The three inboxes a message ad can open, and what each needs first.
+ *
+ * Here rather than in the signup form because two places read it — the form
+ * that asks, and the check that asserts signup can never stall on the answer.
+ * A second copy in the component is how those two quietly stop agreeing.
+ */
+export const MESSAGE_CHANNELS: { key: MessageChannel; label: string; sub: string }[] = [
+  { key: "MESSENGER", label: "Messenger", sub: "Nothing to set up" },
+  { key: "INSTAGRAM", label: "Instagram", sub: "Needs Instagram linked to your Page" },
+  { key: "WHATSAPP", label: "WhatsApp", sub: "Needs a number connected to your Page" },
+];
+
+/** What a message ad opens when nobody has said otherwise. */
+export const DEFAULT_MESSAGE_CHANNEL: MessageChannel = "MESSENGER";
+
+export function requiredDetailFor(
+  type: AdDestination,
+): "phone" | "website" | "channel" | null {
   if (type === "PHONE_CALL") return "phone";
   if (type === "WEBSITE") return "website";
+  // Which inbox. Messenger, Instagram and WhatsApp are three different ads with
+  // three different setup requirements on Meta's side, so "they message me" is
+  // not a complete answer on its own — it was just being treated as one.
+  if (type === "DIRECT_MESSAGE") return "channel";
   return null;
 }
 

@@ -63,6 +63,8 @@ export type PlanContext = {
     type: "WEBSITE" | "PHONE_CALL" | "LEAD_FORM" | "DIRECT_MESSAGE";
     website: string | null;
     phone: string | null;
+    /** Which inbox, for a message ad. Also answered at signup. */
+    channel: "MESSENGER" | "INSTAGRAM" | "WHATSAPP";
     /** The MAIRO-hosted form, if they already chose one before. */
     formUrl: string | null;
     /** What MAIRO would ask, shown before anything is created. */
@@ -99,7 +101,9 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
   const [formAuthor, setFormAuthor] = useState<"MAIRO" | "OWN">("MAIRO");
   // Which inbox a message ad opens. Messenger needs nothing; the other two
   // depend on the Page having Instagram or WhatsApp attached to it.
-  const [channel, setChannel] = useState<"MESSENGER" | "INSTAGRAM" | "WHATSAPP">("MESSENGER");
+  const [channel, setChannel] = useState<"MESSENGER" | "INSTAGRAM" | "WHATSAPP">(
+    plan.destination.channel,
+  );
   // Where the form opens. The hosted page works today; Meta's own converts
   // better and is gated behind App Review.
   const [delivery, setDelivery] = useState<"HOSTED_PAGE" | "META_NATIVE">("HOSTED_PAGE");

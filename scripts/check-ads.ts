@@ -24,6 +24,8 @@ import {
   normalizeUrl,
   requiredDetailFor,
   resolveDestination,
+  MESSAGE_CHANNELS,
+  DEFAULT_MESSAGE_CHANNEL,
 } from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
 import { metaScopes } from "@/lib/meta/oauth";
@@ -410,7 +412,21 @@ console.log("\n— what signup has to ask for, and what it can measure —");
   ok("a call needs the number", requiredDetailFor("PHONE_CALL") === "phone");
   ok("a website needs the address", requiredDetailFor("WEBSITE") === "website");
   ok("a form needs nothing — MAIRO writes it", requiredDetailFor("LEAD_FORM") === null);
-  ok("a message needs nothing — the Page is connected", requiredDetailFor("DIRECT_MESSAGE") === null);
+  // This asserted null, on the grounds that the Page is already connected so
+  // there is nothing left to collect. That was about Meta's setup, not about
+  // what the person is asked — and signup did then have to pick an inbox for
+  // them, silently, always Messenger. Messenger, Instagram and WhatsApp are
+  // three different ads, so "they message me" is now a question with a second
+  // half, and this is the function both the form and the server read it from.
+  ok("a message needs the inbox", requiredDetailFor("DIRECT_MESSAGE") === "channel");
+  // …but it never blocks signup the way a missing number does. The picker
+  // always has something selected, so there is no state where the form has
+  // stopped asking and the server still insists — the failure this whole block
+  // exists to catch.
+  ok(
+    "and the inbox always has an answer, so signup cannot stall on it",
+    MESSAGE_CHANNELS.some((c) => c.key === DEFAULT_MESSAGE_CHANNEL),
+  );
 
   // The reason signup asks how leads should arrive at all: three of the four
   // finish somewhere MAIRO or Meta can already see.

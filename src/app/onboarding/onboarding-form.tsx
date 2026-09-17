@@ -2,8 +2,13 @@
 
 import { useActionState, useState } from "react";
 import { completeOnboardingAction } from "@/lib/actions/onboarding-actions";
-import { needsSiteTracking, requiredDetailFor } from "@/lib/campaigns/destination";
-import type { AdDestination } from "@/generated/prisma/enums";
+import {
+  needsSiteTracking,
+  requiredDetailFor,
+  MESSAGE_CHANNELS,
+  DEFAULT_MESSAGE_CHANNEL,
+} from "@/lib/campaigns/destination";
+import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
 
 const inputClass =
   "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
@@ -66,6 +71,7 @@ export function OnboardingForm() {
   // guess, and so the campaign form has something to pre-fill.
   const [primaryGoal, setPrimaryGoal] = useState("LEADS");
   const [destination, setDestination] = useState<AdDestination>("WEBSITE");
+  const [channel, setChannel] = useState<MessageChannel>(DEFAULT_MESSAGE_CHANNEL);
 
   const gettingLeads = primaryGoal === "LEADS";
   const options = gettingLeads ? LEAD_DESTINATIONS : GENERAL_DESTINATIONS;
@@ -180,6 +186,34 @@ export function OnboardingForm() {
               Where people land when they tap your ad. You can point a single campaign somewhere
               else later.
             </p>
+          </div>
+        ) : needs === "channel" ? (
+          // "They message me" used to be the end of the conversation, and every
+          // campaign then assumed Messenger. Messenger, Instagram and WhatsApp
+          // are three different ads with three different things to set up on
+          // Meta's side, so the requirement is said here rather than discovered
+          // at launch.
+          <div className="space-y-1 sm:col-span-2">
+            <label className="text-sm font-medium">Which inbox should it open?</label>
+            <input type="hidden" name="messageChannel" value={channel} />
+            <div className="mt-1 grid gap-3 sm:grid-cols-3">
+              {MESSAGE_CHANNELS.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  aria-pressed={channel === c.key}
+                  onClick={() => setChannel(c.key)}
+                  className={`rounded-lg border p-3 text-left transition ${
+                    channel === c.key
+                      ? "border-white/40 bg-white/[0.06]"
+                      : "border-white/10 bg-white/5 hover:border-white/25"
+                  }`}
+                >
+                  <p className="text-sm text-white">{c.label}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">{c.sub}</p>
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>

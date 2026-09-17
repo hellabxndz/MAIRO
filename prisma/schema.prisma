@@ -97,6 +97,14 @@ model Organization {
   defaultDestination AdDestination @default(WEBSITE)
   /// The number a tap-to-call ad rings, in E.164 (+15551234567).
   phone              String?
+  /// Which inbox a message ad opens, when defaultDestination is DIRECT_MESSAGE.
+  ///
+  /// Stored for the same reason phone is: it is the detail that answer needs to
+  /// be usable. Without it, signup accepted "they message me" and then every
+  /// campaign silently assumed Messenger — which is wrong for the businesses
+  /// whose customers are on WhatsApp, and wrong quietly, because the ad still
+  /// launches and just opens the wrong place.
+  defaultMessageChannel MessageChannel @default(MESSENGER)
 
   /// Where the pictures and words in a sales ad come from.
   ///
