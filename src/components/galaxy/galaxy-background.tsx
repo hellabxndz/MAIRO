@@ -50,18 +50,39 @@ function initialTier(): Tier {
  * always answers "no" — which is what puts the still panorama into the HTML
  * that ships, rather than a black rectangle waiting for JavaScript.
  *
- * Touch devices were held on the still panorama for a while, because phones
- * were drawing hard-edged squares over the sky and nothing in the arithmetic
- * accounted for them. The squares were the point sprites — the only geometry
- * in this scene that is a screen-aligned square — and those are gone now, so
- * the hold is gone with them and a phone flies the same path as everything
- * else, at the lowest tier.
+ * Touch devices get the panorama and no canvas at all.
+ *
+ * Phones draw small, hard-edged, screen-aligned squares over the sky. Five
+ * rounds went into finding out why, and each one narrowed it without catching
+ * it: the film grain was removed, the dither was stopped re-rolling per frame,
+ * every pass was clamped to a finite ceiling (which turned the squares from
+ * black to white, so the clamp was in the path), and finally every particle in
+ * the scene was deleted — the star field, the distant galaxies and the dust
+ * motes, which between them were the only geometry here that is a
+ * screen-aligned square. The squares survived all of it.
+ *
+ * What is left has been measured rather than reasoned about. The volume
+ * raymarch was ported to JS and swept across the hero frame: peak output 0.89,
+ * zero non-finite rays, zero out-of-range pow bases. White begins at 1.25 and
+ * the half-float buffers overflow at 65504. Nothing in this renderer accounts
+ * for what those devices are drawing, and there is no GPU here to catch it on —
+ * software rendering abandons the scene before it runs long enough.
+ *
+ * So the phone is given the one configuration that cannot produce a shader
+ * artifact, because it runs no shader: the panorama, a real photograph of the
+ * same galaxy, already in the server-rendered HTML and up on the first paint.
+ * The canvas is not merely idle on that path, it is not in the document.
+ * Desktop, where this has always rendered correctly, still flies the whole
+ * path.
  */
 let capability: boolean | null = null;
 
 function readCapability(): boolean {
   if (capability !== null) return capability;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    window.matchMedia("(pointer: coarse)").matches
+  ) {
     capability = false;
   } else {
     capability = Boolean(document.createElement("canvas").getContext("webgl2"));
@@ -180,11 +201,20 @@ export function GalaxyBackground() {
         </div>
       )}
 
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 h-full w-full"
-        style={{ opacity: live ? 1 : 0, transition: "opacity 900ms ease" }}
-      />
+      {/* Not rendered at all where the scene is not offered.
+
+          It used to sit there empty at its default 300x150, transparent and
+          harmless. "Harmless" is doing work it has not earned on a page where
+          something is drawing squares nobody can explain: a canvas that is not
+          in the document cannot be the thing doing it, and that is worth more
+          right now than one fewer branch. */}
+      {capable && (
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 h-full w-full"
+          style={{ opacity: live ? 1 : 0, transition: "opacity 900ms ease" }}
+        />
+      )}
 
       {/* Legibility, without flattening the picture.
 
