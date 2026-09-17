@@ -198,12 +198,18 @@ export function AppShell({
   children,
   mode,
   businessName,
+  userName,
+  showUpgrade = false,
   extraNav = [],
   footer,
 }: {
   children: ReactNode;
   mode: ViewMode;
   businessName: string;
+  /** Whose account this is, for the chip in the top right. */
+  userName: string;
+  /** Hidden on the top plan, where there is nothing to upgrade to. */
+  showUpgrade?: boolean;
   /**
    * Entries the layout decided this account should also see — Enquiries only
    * exists for businesses that collect them, and the old layout already made
@@ -251,6 +257,31 @@ export function AppShell({
 
         <nav className="flex flex-1 flex-col gap-1">{primary.map((i) => row(i, isActive(pathname, i.href)))}</nav>
 
+        {showUpgrade && (
+          <Link
+            href="/dashboard/plan"
+            className="mb-4 block rounded-2xl border p-4 text-center transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
+            style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
+          >
+            <span className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-xl text-blue-bright">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden>
+                <path d="M3 14l1.6-8 4 3.4L10 4l1.4 5.4 4-3.4L17 14H3z" />
+              </svg>
+            </span>
+            <span className="block text-[13px] font-medium text-white">Upgrade plan</span>
+            <span className="mt-1 block text-[11px] leading-relaxed text-faint">
+              More features, higher limits.
+            </span>
+            <span
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-[12px] font-medium text-white"
+              style={{ backgroundImage: "var(--mairo-ramp)" }}
+            >
+              Upgrade
+              <span aria-hidden>→</span>
+            </span>
+          </Link>
+        )}
+
         <div className="mt-4 space-y-1 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
           {SECONDARY_NAV.map((i) => row(i, isActive(pathname, i.href)))}
           {footer}
@@ -280,8 +311,26 @@ export function AppShell({
         {/* Desktop keeps the toggle at the top of the content rather than in
             the sidebar: it changes what this screen shows, so it belongs
             beside the screen. */}
-        <div className="mb-6 hidden justify-end lg:flex">
+        <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
           <ViewToggle mode={mode} />
+          {/* The reference also puts a notification bell here. There is no
+              notification system behind it yet, and a bell that never has
+              anything in it is a control that lies about what the product
+              does — it arrives with the feature. */}
+          <Link
+            href="/dashboard/account"
+            className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"
+            style={{ borderColor: "var(--mairo-line)" }}
+          >
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-medium text-white"
+              style={{ backgroundImage: "var(--mairo-ramp)" }}
+              aria-hidden
+            >
+              {(userName || businessName || "?").charAt(0).toUpperCase()}
+            </span>
+            <span className="text-[12.5px] text-white">{userName || businessName}</span>
+          </Link>
         </div>
         {children}
       </main>

@@ -115,7 +115,12 @@ export default async function DashboardOverviewPage() {
       <SimpleDashboard
         firstName={firstNameFrom(session.user.name, "")}
         performance={performance}
-        campaigns={campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status }))}
+        campaigns={campaigns.map((c) => ({
+          id: c.id,
+          name: c.name,
+          status: c.status,
+          platforms: c.platformCampaigns.map((p) => p.platform),
+        }))}
         notices={recommendations.map((r) => r.recommendation.headline)}
         anyConnected={anyConnected}
       />

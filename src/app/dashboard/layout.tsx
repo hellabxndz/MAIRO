@@ -66,7 +66,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const pathname = (await headers()).get("x-pathname") ?? "";
 
   const [organization, intake, metaAccount, seenTour, leadForm] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
+    db.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true, subscriptionTier: true },
+    }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
@@ -98,6 +101,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <AppShell
       mode={mode}
       businessName={organization?.name ?? ""}
+      userName={session.user.name ?? ""}
+      showUpgrade={organization?.subscriptionTier !== "AGENCY"}
       extraNav={collectsLeads ? [ENQUIRIES_NAV] : []}
       footer={
         <form action={signOutAction}>
