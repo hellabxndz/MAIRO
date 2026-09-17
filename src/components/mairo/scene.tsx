@@ -51,7 +51,7 @@ export function MairoSceneWide() {
       // the buttons — so pinning the plate at zero put the core's glow through
       // the second button. Expressed against --plate-w so the offset scales
       // with the artwork instead of drifting at wide widths.
-      style={{ top: "calc(var(--plate-w) * 0.082)" }}
+      style={{ top: "calc(var(--plate-w) * 0.134)" }}
     >
       <Image
         src={SRC}

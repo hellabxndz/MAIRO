@@ -36,9 +36,11 @@ const LONG =
  * that is the version that fails when somebody asks whether it was clear.
  */
 export function ResultsNote({ className = "" }: { className?: string }) {
-  return (
-    <p className={`text-[12px] leading-relaxed text-faint ${className}`}>{SHORT}</p>
-  );
+  // `muted`, not `faint`. Measured against the page background, faint (#5d6e91)
+  // came out at 3.2:1 — under the 4.5:1 AA needs for text this size, and this is
+  // the one paragraph on the site that has to survive somebody arguing it was
+  // not conspicuous. muted (#94a6cc) measures 7.8:1 on the same background.
+  return <p className={`text-[12px] leading-relaxed text-muted ${className}`}>{SHORT}</p>;
 }
 
 /**

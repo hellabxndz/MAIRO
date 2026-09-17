@@ -348,12 +348,21 @@ function OptimizationCard() {
         >
           <RisingLine className="h-11" />
         </div>
+        {/* The render puts "+287% Avg. ROAS uplift" here. That is an invented
+            performance figure for a product with no customers yet, and it sat
+            a couple of hundred pixels from the line saying MAIRO cannot promise
+            a return — which is worse than either alone, and is the exact
+            pairing the FTC and the CMA look for.
+            
+            What replaces it is true, on the same subject, and is the thing that
+            actually distinguishes this product: the optimizer says what changed
+            in words, rather than handing you a chart to interpret. */}
         <div
           className="flex flex-col justify-center rounded-lg border px-3 py-2.5 text-center"
           style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(61,125,255,0.10)" }}
         >
-          <p className="text-[17px] font-semibold leading-none text-white">+287%</p>
-          <p className="mt-1.5 text-[9.5px] leading-tight text-muted">Avg. ROAS uplift</p>
+          <p className="text-[13px] font-semibold leading-tight text-white">Plain English</p>
+          <p className="mt-1.5 text-[9.5px] leading-tight text-muted">Not just charts</p>
         </div>
       </div>
 
