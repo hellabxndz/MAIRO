@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { viewMode } from "@/lib/view-mode";
+import { SimpleDashboard, firstNameFrom } from "@/components/mairo/simple-dashboard";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
@@ -100,6 +102,25 @@ export default async function DashboardOverviewPage() {
   const allPlatformsInUse = [
     ...new Set(campaigns.flatMap((c) => c.platformCampaigns.map((p) => p.platform))),
   ];
+
+  // Simple View is the same screen at a different depth, not a second product.
+  //
+  // Everything above this line — the auto-launch, the readiness list, the
+  // billing check, the live figures — has already run and is shared. The only
+  // thing the mode decides is how much of it to put on the screen, which is
+  // exactly the guarantee that the two views can never disagree about the
+  // state of an account.
+  if ((await viewMode()) === "simple") {
+    return (
+      <SimpleDashboard
+        firstName={firstNameFrom(session.user.name, "")}
+        performance={performance}
+        campaigns={campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status }))}
+        notices={recommendations.map((r) => r.recommendation.headline)}
+        anyConnected={anyConnected}
+      />
+    );
+  }
 
   return (
     <div>
