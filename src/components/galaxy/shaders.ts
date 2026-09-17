@@ -144,6 +144,29 @@ float dustDensity(vec3 p, float smooth_) {
 }
 `;
 
+/**
+ * The ceiling every pass writes under.
+ *
+ * All four render targets are RGBA16F, and a half float stops at 65504. Past
+ * that a value is not clipped, it becomes +Inf — and Inf survives the bloom and
+ * arrives at the tone map, where `asinh(l)/l` is Inf/Inf, which is NaN. The
+ * composite then ends on `max(c, 0.0)`, and GLSL's max returns its second
+ * argument when the first is NaN, so the pixel is written as exactly zero.
+ *
+ * That is what produces the black squares reported on phones: hard-edged,
+ * pure black, a couple of texels of a reduced-resolution buffer across, sharp
+ * because a NaN does not interpolate, and drifting with whatever overflowed.
+ * Not grain and not the dither — arithmetic. Diagnosed from a screen recording
+ * rather than reproduced here, because software rendering will not run this
+ * scene fast enough to hold it.
+ *
+ * 512 is the cap because after the 0.8 exposure and the arcsinh curve anything
+ * above about 5 is already flat white; 512 is a hundred times that, so nothing
+ * that was ever visible is changed, and it would take a hundred and twenty-eight
+ * of these blended on top of each other to reach the half-float limit.
+ */
+const HDR_CEIL = /* glsl */ `const float HDR_CEIL = 512.0;`;
+
 export const STAR_VERT = /* glsl */ `#version 300 es
 precision highp float;
 precision highp sampler3D;
@@ -251,6 +274,8 @@ in float vSeed;
 
 out vec4 outColor;
 
+${HDR_CEIL}
+
 void main() {
   vec2 d = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(d, d);
@@ -263,7 +288,7 @@ void main() {
   float core = exp(-r2 * 7.5);
   float skirt = exp(-r2 * 1.6) * 0.16;
 
-  outColor = vec4(vColor * (core + skirt) * vIntensity, 1.0);
+  outColor = vec4(min(vColor * (core + skirt) * vIntensity, HDR_CEIL), 1.0);
 }
 `;
 
@@ -318,12 +343,15 @@ precision highp float;
 in vec3 vColor;
 in float vIntensity;
 out vec4 outColor;
+
+${HDR_CEIL}
+
 void main() {
   vec2 d = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(d, d);
   if (r2 > 1.0) discard;
   float a = exp(-r2 * 3.2);
-  outColor = vec4(vColor * a * vIntensity, 1.0);
+  outColor = vec4(min(vColor * a * vIntensity, HDR_CEIL), 1.0);
 }
 `;
 
@@ -345,6 +373,8 @@ precision highp sampler3D;
 
 in vec2 vUv;
 out vec4 outColor;
+
+${HDR_CEIL}
 
 uniform mat4 uInvViewProj;
 uniform vec3 uCamPos;
@@ -485,7 +515,7 @@ void main() {
     }
   }
 
-  outColor = vec4(acc * uReveal, 1.0 - trans);
+  outColor = vec4(min(acc * uReveal, HDR_CEIL), 1.0 - trans);
 }
 `;
 
@@ -495,13 +525,16 @@ in vec2 vUv;
 out vec4 outColor;
 uniform sampler2D uSrc;
 uniform float uThreshold;
+
+${HDR_CEIL}
+
 void main() {
   vec3 c = texture(uSrc, vUv).rgb;
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   // Soft knee: a hard cut makes the bloom switch on along a visible contour
   // wherever a gradient crosses the threshold.
   float k = smoothstep(uThreshold, uThreshold * 2.2, l);
-  outColor = vec4(c * k, 1.0);
+  outColor = vec4(min(c * k, HDR_CEIL), 1.0);
 }
 `;
 
@@ -511,6 +544,9 @@ in vec2 vUv;
 out vec4 outColor;
 uniform sampler2D uSrc;
 uniform vec2 uDir;   // texel-sized step, horizontal or vertical
+
+${HDR_CEIL}
+
 void main() {
   // Nine taps at linearly-interpolated offsets, which buys the reach of a
   // seventeen-tap Gaussian for nine fetches.
@@ -519,7 +555,10 @@ void main() {
   vec2 o2 = uDir * 3.2307692308;
   sum += (texture(uSrc, vUv + o1).rgb + texture(uSrc, vUv - o1).rgb) * 0.3162162162;
   sum += (texture(uSrc, vUv + o2).rgb + texture(uSrc, vUv - o2).rgb) * 0.0702702703;
-  outColor = vec4(sum, 1.0);
+  // The weights sum to one, so a blur of values under the ceiling is under it
+  // too — but a single bad texel upstream would otherwise be smeared across
+  // seven more by this, and the clamp keeps it to the one.
+  outColor = vec4(min(sum, HDR_CEIL), 1.0);
 }
 `;
 
@@ -535,9 +574,24 @@ uniform float uExposure;
 uniform float uTime;
 uniform float uVignette;
 
+${HDR_CEIL}
+
 void main() {
-  vec3 c = texture(uScene, vUv).rgb + texture(uBloom, vUv).rgb * uBloomAmount;
-  c *= uExposure;
+  // Both samples are clamped before they are added, and that is load-bearing
+  // rather than tidy.
+  //
+  // An Inf reaching this shader does not show up as something too bright. It
+  // goes through the arcsinh below as Inf/Inf, which is NaN, and NaN loses
+  // every comparison — so the max() at the end of this function hands back its
+  // second argument and the pixel is written as exactly zero. One overflowed
+  // value upstream became a hard black square on a near-black page, drifting
+  // with whatever produced it. Every pass now writes under HDR_CEIL, so this
+  // cannot arise; clamping here as well means that if one ever does, it reads
+  // as a bright pixel, which is both what it actually is and invisible.
+  vec3 scene = min(texture(uScene, vUv).rgb, HDR_CEIL);
+  vec3 glow = min(texture(uBloom, vUv).rgb, HDR_CEIL) * uBloomAmount;
+
+  vec3 c = (scene + glow) * uExposure;
 
   // arcsinh, the stretch astronomers use. It holds faint nebulosity up where
   // it can be seen without driving the core to a flat white disc, which is
@@ -651,6 +705,8 @@ in float vKind;
 in float vLayer;
 
 out vec4 outColor;
+
+${HDR_CEIL}
 
 uniform sampler3D uNoise;
 uniform sampler2D uEarthDay;
@@ -921,7 +977,7 @@ void main() {
   // Edge coverage, so the silhouette is not a staircase.
   float edge = smoothstep(1.0, 0.965, r2);
 
-  outColor = vec4(col * uReveal, edge * uReveal);
+  outColor = vec4(min(col * uReveal, HDR_CEIL), edge * uReveal);
 }
 `;
 
@@ -1026,6 +1082,8 @@ in float vFade;
 
 out vec4 outColor;
 
+${HDR_CEIL}
+
 void main() {
   if (vFade <= 0.001) discard;
 
@@ -1045,6 +1103,6 @@ void main() {
 
   // A meteor is light rather than an object, so it occludes nothing. Zero
   // alpha under the pass's premultiplied blend is exactly an additive draw.
-  outColor = vec4(col * vFade, 0.0);
+  outColor = vec4(min(col * vFade, HDR_CEIL), 0.0);
 }
 `;

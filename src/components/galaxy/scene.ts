@@ -1256,7 +1256,14 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.bindTexture(gl.TEXTURE_2D, hdr.tex);
     gl.uniform1i(uComp.uScene, 0);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, cfg.bloom ? bloomA.tex : hdr.tex);
+    // A 1x1 black texture when there is no bloom, not the scene again.
+    //
+    // A sampler has to be bound to something, and binding the HDR buffer and
+    // multiplying it by an amount of zero looks harmless. It is not: zero times
+    // a very large value is still zero, but zero times an infinity is NaN, and
+    // the tier without bloom is the tier phones run. See HDR_CEIL in
+    // shaders.ts for what a NaN does to the composite.
+    gl.bindTexture(gl.TEXTURE_2D, cfg.bloom ? bloomA.tex : blankTex);
     gl.uniform1i(uComp.uBloom, 1);
     gl.uniform1f(uComp.uBloomAmount, cfg.bloom ? 0.45 : 0.0);
     gl.uniform1f(uComp.uExposure, 0.80);
