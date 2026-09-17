@@ -5,16 +5,22 @@
 //   1. the volume — one fullscreen raymarch through the galactic disc, at a
 //      fraction of the canvas resolution, giving the dust, the nebulae and the
 //      glow of the core;
-//   2. the stars — three sets of GPU points, additively blended over it;
+//   2. the worlds — planets as instanced billboards, and meteors as streaks;
 //   3. bloom — bright-pass, then a separable blur at quarter resolution;
 //   4. the composite — tone map, bloom, vignette, grain.
+//
+// There are no point sprites here any more. Stars, distant galaxies and near
+// dust motes were all drawn as GL points, and on phones the largest of them
+// rendered as hard-edged squares — black at first, then white once every pass
+// was clamped. They are gone rather than fixed: the light of the galaxy is the
+// volume pass, and it carries the picture on its own.
 //
 // Float buffers matter here. The core is hundreds of times brighter than the
 // faint halo, and an 8-bit intermediate would clip the first and quantise the
 // second into bands. Working in HDR and tone mapping once at the end is what
 // keeps a genuinely dark sky dark while the core still blooms.
 
-/** Shared: the density field of the galaxy. Used by the volume and the stars. */
+/** The density field of the galaxy, for the volume raymarch. */
 const FIELD = /* glsl */ `
 uniform sampler3D uNoise;
 uniform float uArmPitch;
@@ -98,28 +104,6 @@ float discDensity(vec3 p) {
  * reason a galaxy has a dark lane down the middle of it rather than just
  * looking dimmer in places.
  */
-/**
- * Everything in dustDensity except the second noise octave.
- *
- * The star pass evaluates dust four times per star, and at four hundred
- * thousand stars the difference between one texture fetch and two is over a
- * million fetches a frame in the vertex shader. The second octave decides what
- * the edge of a dust lane looks like up close, and a star is a single pixel:
- * it cannot show the difference. The volume pass, which can, still uses both.
- */
-float dustDensityFast(vec3 p) {
-  float r = length(p.xz);
-  float t = r / R_DISC;
-  float h = H_DISC * (0.22 + t * 0.62);
-  float base = exp(-r / (R_SCALE * 1.15)) * exp(-abs(p.y) / h);
-
-  float arm = armField(r, atan(p.z, p.x), -0.85);
-  float lane = mix(1.0, 0.16 + 2.80 * arm, smoothstep(0.04, 0.34, t));
-
-  float n = pow(clamp(fbm(p * 0.00135) * 2.05, 0.0, 1.0), 2.1);
-  return base * lane * n;
-}
-
 float dustDensity(vec3 p, float smooth_) {
   float r = length(p.xz);
   float t = r / R_DISC;
@@ -166,194 +150,6 @@ float dustDensity(vec3 p, float smooth_) {
  * of these blended on top of each other to reach the half-float limit.
  */
 const HDR_CEIL = /* glsl */ `const float HDR_CEIL = 512.0;`;
-
-export const STAR_VERT = /* glsl */ `#version 300 es
-precision highp float;
-precision highp sampler3D;
-
-// Locations are pinned in the shader rather than bound from JavaScript.
-// glBindAttribLocation only takes effect if it is called before linking, and
-// getting that order wrong silently mismaps every attribute — the galaxy still
-// draws, out of colours and brightnesses read from the wrong offsets.
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec3 aColor;
-layout(location = 2) in float aBright;
-layout(location = 3) in float aSeed;
-
-uniform mat4 uViewProj;
-uniform vec3 uCamPos;
-uniform float uTime;
-uniform float uPixelScale;   // half the drawing-buffer height, for point sizing
-uniform float uSizeScale;
-uniform float uExtinction;
-uniform float uFlux;
-uniform float uFar;
-
-out vec3 vColor;
-out float vIntensity;
-out float vSeed;
-
-${FIELD}
-
-void main() {
-  vec3 toCam = uCamPos - aPos;
-  float dist = max(length(toCam), 1.0);
-  vec3 dir = toCam / dist;
-
-  // How much dust the light had to come through to reach us.
-  //
-  // Four taps along the line of sight rather than a single lookup at the star:
-  // one sample tells you how dusty it is where the star is, which is not the
-  // question. Dust lanes are foreground objects, and a star is dimmed by what
-  // lies between, so the samples have to be spread along the path. Four is the
-  // point where adding more stops changing the picture.
-  float span = min(dist, 900.0);
-  float tau = 0.0;
-  for (int i = 0; i < 3; i++) {
-    float s = (float(i) + 0.5) / 3.0;
-    tau += dustDensityFast(aPos + dir * (span * s));
-  }
-  tau *= span * (1.0 / 3.0) * uExtinction;
-
-  // Redder light gets through thicker dust. This is why dust lanes go amber at
-  // their edges instead of simply fading to grey, and it is most of what makes
-  // the warm side of the picture feel like starlight rather than a colour wash.
-  vec3 transmit = exp(-tau * vec3(0.72, 1.00, 1.42));
-
-  gl_Position = uViewProj * vec4(aPos, 1.0);
-
-  // Inverse square, once. The received light from a point falls off with the
-  // square of the distance and that is the only distance term there should be;
-  // an earlier version also scaled by the lost sprite area, which is the same
-  // physics applied twice and made everything past a thousand units vanish.
-  float lum = aBright * uFlux / (dist * dist + 1.0);
-
-  // The sprite grows with brightness, and the peak is divided by the area it
-  // now covers, so the total light a star puts on the screen stays fixed as it
-  // spreads. Below a pixel the size pins at one and the peak falls instead,
-  // which is what stops distant stars flickering as they cross that boundary.
-  //
-  // The exponent is well under a half and the cap is small on purpose. Sizing
-  // by the square root is the physically tidy choice and it is wrong to look
-  // at: flying into the core, the nearest stars grew to forty pixels and the
-  // galaxy turned into a wall of glowing balls. A star is a point at every
-  // distance. Brightness should carry almost all of the range, and the size
-  // should only open up enough to give the bloom something to catch.
-  float size = clamp(uSizeScale * pow(lum, 0.28), 1.0, 9.0);
-  gl_PointSize = size;
-
-  // A slow, very slight variation in brightness. Real stars do not twinkle in
-  // vacuum; this is here because a completely static field of points reads as
-  // a texture, and the eye needs a little life to accept it as distance.
-  float tw = 0.90 + 0.10 * sin(uTime * (0.35 + aSeed * 0.9) + aSeed * 40.0);
-
-  // Reveal. Each star has its own threshold, so they arrive scattered across
-  // the opening rather than all fading up together — and because the seed is
-  // uncorrelated with position, the galaxy assembles out of the dark evenly
-  // instead of wiping in from one side.
-  //
-  // The stars finish well before the reveal does. They are the first stage of
-  // three: points, then dust, then the shape of the galaxy behind both.
-  float gate = smoothstep(aSeed * 0.52, aSeed * 0.52 + 0.20, uReveal);
-
-  // Fades out entirely before the far plane, so nothing pops as it crosses it.
-  float horizon = 1.0 - smoothstep(uFar * 0.72, uFar, dist);
-
-  vColor = aColor * transmit;
-  vIntensity = (lum / (size * size)) * tw * gate * horizon;
-  vSeed = aSeed;
-}
-`;
-
-export const STAR_FRAG = /* glsl */ `#version 300 es
-precision highp float;
-
-in vec3 vColor;
-in float vIntensity;
-in float vSeed;
-
-out vec4 outColor;
-
-${HDR_CEIL}
-
-void main() {
-  vec2 d = gl_PointCoord * 2.0 - 1.0;
-  float r2 = dot(d, d);
-  if (r2 > 1.0) discard;
-
-  // A tight core with a wide, faint skirt. One Gaussian gives a fuzzy ball;
-  // the second, much broader term is the halo every real optical system puts
-  // around a bright point, and it is what stops the brightest stars looking
-  // like stickers.
-  float core = exp(-r2 * 7.5);
-  float skirt = exp(-r2 * 1.6) * 0.16;
-
-  outColor = vec4(min(vColor * (core + skirt) * vIntensity, HDR_CEIL), 1.0);
-}
-`;
-
-/** The near dust motes: same idea, but positioned relative to the camera. */
-export const MOTE_VERT = /* glsl */ `#version 300 es
-precision highp float;
-
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec3 aColor;
-layout(location = 2) in float aBright;
-layout(location = 3) in float aSeed;
-
-uniform mat4 uViewProj;
-uniform vec3 uCamPos;
-uniform vec3 uDrift;
-uniform float uTime;
-uniform float uPixelScale;
-uniform float uBox;
-uniform float uReveal;
-
-out vec3 vColor;
-out float vIntensity;
-
-void main() {
-  // A lattice fixed in world space, wrapped into the cell the camera is in.
-  //
-  // The distinction matters. Positioning these relative to the camera keeps
-  // them permanently in front of it — they travel along, and the nearest thing
-  // in the scene never moves, which is exactly what makes a background feel
-  // like a background. Fixed in the world and wrapped, they stream past as the
-  // camera flies, and they are the only layer close enough for that to read as
-  // speed.
-  vec3 base = aPos * uBox + uDrift * uTime;
-  vec3 p = mod(base - uCamPos + uBox, 2.0 * uBox) - uBox;
-  vec3 world = uCamPos + p;
-
-  float dist = max(length(p), 0.05);
-  gl_Position = uViewProj * vec4(world, 1.0);
-  gl_PointSize = clamp(uPixelScale * aBright * 0.012 / dist, 1.0, 160.0);
-
-  // Fade out both very close and very far, so nothing appears or vanishes
-  // abruptly at the edge of the box.
-  float near = smoothstep(0.0, 0.25, dist);
-  float far = 1.0 - smoothstep(uBox * 0.55, uBox * 0.98, dist);
-  vColor = aColor;
-  vIntensity = 0.030 * near * far * smoothstep(0.55, 1.0, uReveal);
-}
-`;
-
-export const MOTE_FRAG = /* glsl */ `#version 300 es
-precision highp float;
-in vec3 vColor;
-in float vIntensity;
-out vec4 outColor;
-
-${HDR_CEIL}
-
-void main() {
-  vec2 d = gl_PointCoord * 2.0 - 1.0;
-  float r2 = dot(d, d);
-  if (r2 > 1.0) discard;
-  float a = exp(-r2 * 3.2);
-  outColor = vec4(min(vColor * a * vIntensity, HDR_CEIL), 1.0);
-}
-`;
 
 export const FULLSCREEN_VERT = /* glsl */ `#version 300 es
 precision highp float;

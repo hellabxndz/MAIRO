@@ -27,7 +27,7 @@ import type { Scene, Tier } from "./scene";
 // own frame times and steps itself down if it cannot hold the budget, which is
 // the only honest way to handle a laptop that looks capable and is not.
 
-function initialTier(): { tier: Tier; stars: number } {
+function initialTier(): Tier {
   const cores = navigator.hardwareConcurrency ?? 4;
   const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
   const coarse = window.matchMedia("(pointer: coarse)").matches;
@@ -36,13 +36,9 @@ function initialTier(): { tier: Tier; stars: number } {
   // Phones start low. Not because they cannot render it — a recent phone GPU
   // is quick — but because the volume pass is fill-rate bound and a phone has
   // three times the pixels of a laptop and a battery to think about.
-  // Roughly forty per cent fewer than this started with. A dense carpet of
-  // stars is what makes a real exposure look deep, but this is a page with
-  // words on it, and past a certain density every headline sits on texture
-  // instead of on sky. The galaxy still reads; the type wins.
-  if (coarse || narrow) return { tier: 0, stars: 82_000 };
-  if (cores <= 4 || mem <= 4) return { tier: 1, stars: 150_000 };
-  return { tier: 2, stars: 240_000 };
+  if (coarse || narrow) return 0;
+  if (cores <= 4 || mem <= 4) return 1;
+  return 2;
 }
 
 /**
@@ -54,33 +50,18 @@ function initialTier(): { tier: Tier; stars: number } {
  * always answers "no" — which is what puts the still panorama into the HTML
  * that ships, rather than a black rectangle waiting for JavaScript.
  *
- * Touch devices get the panorama, and that is not a performance judgement.
- *
- * Phones rendered small, hard-edged, screen-aligned squares over the sky —
- * first black, then, once every pass was clamped to a finite ceiling, white.
- * Four rounds went into it. Every pass was then measured against the real star
- * and noise data rather than guessed at: the volume raymarch peaks at 0.89, the
- * brightest star fragment at the hero camera is about 7, the dust motes at
- * 0.03, and the only geometry in the scene that is a screen-aligned square is a
- * point sprite, which is cut to a disc in the fragment shader. Nothing in the
- * arithmetic can put an eight-pixel block of anything on that page, so what
- * those devices are doing is not something this code can be written against
- * from here.
- *
- * So the phone gets the thing that is known to be right. The panorama is a real
- * photograph of the same galaxy, it is in the server-rendered HTML so it is up
- * on the first paint, it costs 144KB and no battery, and it has never once
- * drawn a square. Desktop, where the scene has always rendered correctly, still
- * flies.
+ * Touch devices were held on the still panorama for a while, because phones
+ * were drawing hard-edged squares over the sky and nothing in the arithmetic
+ * accounted for them. The squares were the point sprites — the only geometry
+ * in this scene that is a screen-aligned square — and those are gone now, so
+ * the hold is gone with them and a phone flies the same path as everything
+ * else, at the lowest tier.
  */
 let capability: boolean | null = null;
 
 function readCapability(): boolean {
   if (capability !== null) return capability;
-  if (
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    window.matchMedia("(pointer: coarse)").matches
-  ) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     capability = false;
   } else {
     capability = Boolean(document.createElement("canvas").getContext("webgl2"));
@@ -130,11 +111,9 @@ export function GalaxyBackground() {
         const { createScene } = await import("./scene");
         if (cancelled || !canvasRef.current) return;
 
-        const { tier, stars } = initialTier();
         scene = createScene({
           canvas: canvasRef.current,
-          starCount: stars,
-          tier,
+          tier: initialTier(),
           onReady: () => {
             // The sky is lit; cross to it. Until this fires the page is
             // showing the still panorama, which is in the server-rendered

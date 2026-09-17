@@ -13,8 +13,8 @@ import { planComparison } from "@/lib/entitlements";
 
 // The marketing page.
 //
-// One continuous environment rather than a stack of sections: the starfield and
-// the nebulae are fixed behind everything and drift with the scroll, so moving
+// One continuous environment rather than a stack of sections: the nebulae and
+// the worlds are fixed behind everything and drift with the scroll, so moving
 // down the page reads as travelling through it. Sections have no hard
 // boundaries — they are separated by very large amounts of empty space and by
 // the background showing through, not by rules and boxes.

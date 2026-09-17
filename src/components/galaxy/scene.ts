@@ -13,9 +13,8 @@
 // exposes.
 
 import { buildNoiseVolume, NOISE_SIZE } from "./noise";
-import { buildGalaxy, STAR_STRIDE, type StarBuffers } from "./stars";
 import {
-  STAR_VERT, STAR_FRAG, MOTE_VERT, MOTE_FRAG, PLANET_VERT, PLANET_FRAG,
+  PLANET_VERT, PLANET_FRAG,
   TRAVELLER_VERT, TRAVELLER_FRAG,
   FULLSCREEN_VERT, VOLUME_FRAG, BRIGHT_FRAG, BLUR_FRAG, COMPOSITE_FRAG, COPY_FRAG,
 } from "./shaders";
@@ -467,14 +466,13 @@ function buildTravellers(): Float32Array {
 export type Tier = 0 | 1 | 2;
 
 const TIERS = [
-  { stars: 0.30, volumeScale: 0.30, steps: 14, bloom: false, renderScale: 1.00, motes: 0.4 },
-  { stars: 0.60, volumeScale: 0.42, steps: 26, bloom: true,  renderScale: 1.25, motes: 0.7 },
-  { stars: 1.00, volumeScale: 0.55, steps: 42, bloom: true,  renderScale: 1.50, motes: 1.0 },
+  { volumeScale: 0.30, steps: 14, bloom: false, renderScale: 1.00 },
+  { volumeScale: 0.42, steps: 26, bloom: true,  renderScale: 1.25 },
+  { volumeScale: 0.55, steps: 42, bloom: true,  renderScale: 1.50 },
 ] as const;
 
 export type SceneOptions = {
   canvas: HTMLCanvasElement;
-  starCount: number;
   tier: Tier;
   /** Called when the renderer decides the device cannot keep up and drops a tier. */
   onTier?: (tier: Tier) => void;
@@ -565,16 +563,7 @@ export function createScene(opts: SceneOptions): Scene | null {
   if (!gl.getExtension("EXT_color_buffer_float")) return null;
 
   let tier: Tier = opts.tier;
-  let buffers: StarBuffers;
-  try {
-    buffers = buildGalaxy(opts.starCount);
-  } catch {
-    return null;
-  }
-
   // --- programs ---
-  const progStar = link(gl, STAR_VERT, STAR_FRAG, "star");
-  const progMote = link(gl, MOTE_VERT, MOTE_FRAG, "mote");
   const progPlanet = link(gl, PLANET_VERT, PLANET_FRAG, "planet");
   const progTraveller = link(gl, TRAVELLER_VERT, TRAVELLER_FRAG, "traveller");
   const progVolume = link(gl, FULLSCREEN_VERT, VOLUME_FRAG, "volume");
@@ -589,11 +578,6 @@ export function createScene(opts: SceneOptions): Scene | null {
     return m;
   };
 
-  const uStar = uni(progStar, [
-    "uViewProj", "uCamPos", "uTime", "uPixelScale", "uSizeScale",
-    "uExtinction", "uFlux", "uFar", "uNoise", "uArmPitch", "uReveal",
-  ]);
-  const uMote = uni(progMote, ["uViewProj", "uCamPos", "uDrift", "uTime", "uPixelScale", "uBox", "uReveal"]);
   const uTrav = uni(progTraveller, ["uViewProj", "uCamPos", "uRight", "uUp", "uFwd", "uTime", "uReveal"]);
   const uPlanet = uni(progPlanet, ["uViewProj", "uCamPos", "uRight", "uUp", "uNoise", "uReveal", "uTime", "uEarthDay", "uEarthNight", "uEarthLoaded", "uDetail",
     "uPlanetAlbedo", "uPlanetRelief", "uMapsLoaded", "uReliefTexel"]);
@@ -607,28 +591,6 @@ export function createScene(opts: SceneOptions): Scene | null {
   const uCopy = uni(progCopy, ["uSrc", "uScale"]);
 
   // --- geometry ---
-  function makeCloud(data: Float32Array): { vao: WebGLVertexArrayObject; vbo: WebGLBuffer } {
-    const vao = gl.createVertexArray()!;
-    const vbo = gl.createBuffer()!;
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    const s = STAR_STRIDE * 4;
-    gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, s, 0);
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, s, 12);
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, s, 24);
-    gl.enableVertexAttribArray(3);
-    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, s, 28);
-    gl.bindVertexArray(null);
-    return { vao, vbo };
-  }
-
-  const starCloud = makeCloud(buffers.stars);
-  const distantCloud = makeCloud(buffers.distant);
-  const moteCloud = makeCloud(buffers.motes);
   const emptyVao = gl.createVertexArray()!;
 
   // Planets: one quad, drawn once per world with instanced attributes.
@@ -1099,7 +1061,8 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1f(uVol.uEnergy, 1.60);
     gl.uniform1f(uVol.uSmooth, tier === 0 ? 0.35 : 0.0);
     gl.uniform1f(uVol.uArmPitch, 0.235);
-    // The gas waits for the stars. Second stage of the three.
+    // The gas comes up first now, and the planets behind it. The stars used
+    // to be the first of three stages; with them gone this is the opening.
     const gasReveal = Math.max(0, (revealEase - 0.16) / 0.84);
     gl.uniform1f(uVol.uReveal, gasReveal * gasReveal * (3 - 2 * gasReveal));
     gl.activeTexture(gl.TEXTURE0);
@@ -1121,37 +1084,6 @@ export function createScene(opts: SceneOptions): Scene | null {
     gl.uniform1i(uCopy.uSrc, 0);
     gl.uniform1f(uCopy.uScale, 1.0);
     fullscreen(progCopy);
-
-    gl.useProgram(progStar);
-    gl.uniformMatrix4fv(uStar.uViewProj, false, viewProj);
-    gl.uniform3fv(uStar.uCamPos, eye);
-    gl.uniform1f(uStar.uTime, t);
-    gl.uniform1f(uStar.uPixelScale, height * 0.5);
-    gl.uniform1f(uStar.uSizeScale, 1.35);
-    gl.uniform1f(uStar.uFlux, 5.2e5);
-    gl.uniform1f(uStar.uExtinction, 0.0480);
-    gl.uniform1f(uStar.uFar, 32000);
-    gl.uniform1f(uStar.uArmPitch, 0.235);
-    gl.uniform1f(uStar.uReveal, revealEase);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_3D, noiseTex);
-    gl.uniform1i(uStar.uNoise, 0);
-
-    gl.bindVertexArray(starCloud.vao);
-    gl.drawArrays(gl.POINTS, 0, Math.round(buffers.starCount * cfg.stars));
-    gl.bindVertexArray(distantCloud.vao);
-    gl.drawArrays(gl.POINTS, 0, buffers.distantCount);
-
-    gl.useProgram(progMote);
-    gl.uniformMatrix4fv(uMote.uViewProj, false, viewProj);
-    gl.uniform3fv(uMote.uCamPos, eye);
-    gl.uniform3f(uMote.uDrift, 0.06, -0.03, 0.11);
-    gl.uniform1f(uMote.uTime, t);
-    gl.uniform1f(uMote.uPixelScale, height * 0.5);
-    gl.uniform1f(uMote.uBox, 26);
-    gl.uniform1f(uMote.uReveal, revealEase);
-    gl.bindVertexArray(moteCloud.vao);
-    gl.drawArrays(gl.POINTS, 0, Math.round(buffers.moteCount * cfg.motes));
 
     // Meteors and the ship. Premultiplied rather than additive: a meteor is
     // light and emits zero alpha, so it blends exactly as it always did, but
@@ -1336,10 +1268,6 @@ export function createScene(opts: SceneOptions): Scene | null {
       cancelAnimationFrame(raf);
       dropTargets();
       gl.deleteTexture(noiseTex);
-      for (const c of [starCloud, distantCloud, moteCloud]) {
-        gl.deleteVertexArray(c.vao);
-        gl.deleteBuffer(c.vbo);
-      }
       gl.deleteVertexArray(emptyVao);
       gl.deleteVertexArray(planetVao);
       gl.deleteVertexArray(travVao);
@@ -1347,7 +1275,7 @@ export function createScene(opts: SceneOptions): Scene | null {
       gl.deleteBuffer(travInst);
       gl.deleteBuffer(planetQuad);
       gl.deleteBuffer(planetInst);
-      for (const p of [progStar, progMote, progPlanet, progTraveller, progVolume, progBright, progBlur, progComposite, progCopy]) {
+      for (const p of [progPlanet, progTraveller, progVolume, progBright, progBlur, progComposite, progCopy]) {
         gl.deleteProgram(p);
       }
     },
