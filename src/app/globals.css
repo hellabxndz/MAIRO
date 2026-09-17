@@ -53,6 +53,65 @@
   --color-muted: #94a6cc;
   --color-faint: #5d6e91;
 
+  /* ---- The legacy greys, re-pointed at the MAIRO palette ---------------- */
+  /*
+     There are around seven hundred uses of text-neutral-400, text-neutral-500
+     and friends across sixty-five signed-in screens, written before this
+     design system existed. They are not wrong, they are just grey — which is
+     why every page past the dashboard still looked like the old product.
+     
+     Rewriting seven hundred class names by hand across screens that handle
+     money and campaign state is a large diff with nothing to catch a mistake
+     in it. Re-pointing the scale does the same job in ten lines: the same
+     class now resolves to the navy-tinted equivalent, so the whole app moves
+     onto the palette at once and any page written against the scale in future
+     lands in the right place automatically.
+     
+     The steps keep their relative lightness, so contrast ratios move with the
+     hue rather than collapsing.
+  */
+  --color-neutral-50: #f4f7ff;
+  --color-neutral-100: #e4eaf8;
+  --color-neutral-200: #cdd8ef;
+  --color-neutral-300: #b0c0e0;
+  --color-neutral-400: #94a6cc;
+  --color-neutral-500: #7a8cb4;
+  --color-neutral-600: #5d6e91;
+  --color-neutral-700: #3f4f73;
+  --color-neutral-800: #22304f;
+  --color-neutral-900: #111c36;
+  --color-neutral-950: #070b18;
+
+  /* The same trick for the three legacy accent families. The inner screens
+     were built before the tokens existed and reach for Tailwind's stock
+     sky/emerald/amber — 62 uses of sky-400 alone. Re-pointing the steps here
+     moves every one of them onto the vocabulary without touching the call
+     sites, and keeps the meaning each family already carried:
+
+       sky      informational, so it becomes the MAIRO blue
+       emerald  live/success, so it becomes --color-live
+       amber    waiting on somebody, so it becomes --color-warn
+
+     The 400 step of each lands exactly on the token it maps to, because that
+     is the step the app overwhelmingly uses. */
+  --color-sky-200: #a9c6ff;
+  --color-sky-300: #8bb2ff;
+  --color-sky-400: #3d7dff;
+  --color-sky-500: #2f66e0;
+
+  --color-emerald-100: #d3f7e7;
+  --color-emerald-200: #a7e9cd;
+  --color-emerald-300: #6fe0b4;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #17b783;
+  --color-emerald-600: #0f9b6c;
+
+  --color-amber-100: #fdf3d4;
+  --color-amber-200: #fde9a8;
+  --color-amber-300: #fcd469;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #eaa612;
+
   /* ---- Form ------------------------------------------------------------ */
   --radius-card: 1.125rem;
   --radius-panel: 1.375rem;

@@ -226,7 +226,7 @@ export function CreativeRequestForm() {
           {path === "photo" && (
             <div className="space-y-3 rounded-xl border border-dashed border-white/15 p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <label className="cursor-pointer rounded-lg border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.1em] text-neutral-300 transition hover:border-white hover:bg-white hover:text-black">
+                <label className="cursor-pointer rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white">
                   {preview ? "Change picture" : "Choose a picture"}
                   <input
                     ref={fileInput}
@@ -473,7 +473,7 @@ function SuggestionPanel({
               type="button"
               onClick={onUse}
               disabled={ideaUsed}
-              className="rounded-full bg-white px-4 py-1.5 text-xs font-medium text-black transition hover:bg-neutral-200 disabled:opacity-50"
+              className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-1.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-50"
             >
               {ideaUsed ? "Added above" : "Use this idea"}
             </button>

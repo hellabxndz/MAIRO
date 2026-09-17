@@ -105,7 +105,7 @@ export function ReadinessPanel({
                       href={action.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 inline-flex rounded-full bg-white px-4 py-2 text-[11px] font-medium text-black transition hover:bg-neutral-200"
+                      className="mt-3 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-[11px] font-medium text-white transition hover:brightness-110"
                     >
                       {action.label} →
                     </a>

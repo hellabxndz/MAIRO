@@ -128,7 +128,7 @@ export function GtmConnect({
           className={
             summary.connected
               ? "rounded-full border border-white/15 px-4 py-2 text-xs text-neutral-300 transition hover:border-white/30 hover:text-white"
-              : "rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition hover:bg-neutral-200"
+              : "rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-white transition hover:brightness-110"
           }
         >
           {summary.connected ? "Reconnect" : "Connect Google"}

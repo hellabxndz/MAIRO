@@ -51,7 +51,7 @@ export function AddClientForm({ room, allowed }: { room: number; allowed: number
       <button
         type="submit"
         disabled={room === 0 || pending}
-        className="mt-5 rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200 disabled:opacity-40"
+        className="mt-5 rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-40"
       >
         {pending ? "Adding…" : "Add client"}
       </button>

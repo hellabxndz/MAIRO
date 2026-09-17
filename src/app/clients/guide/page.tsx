@@ -286,7 +286,7 @@ export default async function GuidePage() {
           </p>
           <Link
             href="/clients"
-            className="mt-6 inline-flex rounded-full bg-white px-6 py-3 text-xs font-medium uppercase tracking-[0.14em] text-black transition hover:bg-neutral-200"
+            className="mt-6 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-6 py-3 text-xs font-medium uppercase tracking-[0.14em] text-white transition hover:brightness-110"
           >
             Back to your clients
           </Link>

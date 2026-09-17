@@ -117,7 +117,7 @@ export default async function SocialPage() {
           </p>
           <Link
             href="/dashboard/meta"
-            className="mt-4 inline-flex rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200"
+            className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110"
           >
             Open your Meta connection
           </Link>

@@ -366,8 +366,8 @@ export default function Home() {
                     href="/sign-up"
                     className={`mt-12 inline-flex justify-center rounded-full px-6 py-3.5 text-xs uppercase tracking-[0.16em] transition ${
                       plan.featured
-                        ? "bg-white text-black hover:bg-neutral-200"
-                        : "border border-white/20 text-neutral-300 hover:border-white hover:bg-white hover:text-black"
+                        ? "bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] text-white hover:brightness-110"
+                        : "border border-[color:var(--mairo-line)] text-white/85 hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white"
                     }`}
                   >
                     Start with {plan.name}
@@ -413,7 +413,7 @@ export default function Home() {
               <Magnetic>
                 <Link
                   href="/for-freelancers"
-                  className="group mt-12 inline-flex items-center gap-3 rounded-full border border-white/20 px-9 py-4 text-xs uppercase tracking-[0.16em] text-neutral-200 transition hover:border-white hover:bg-white hover:text-black"
+                  className="group mt-12 inline-flex items-center gap-3 rounded-full border border-[color:var(--mairo-line)] px-9 py-4 text-xs uppercase tracking-[0.16em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white"
                 >
                   Set up a studio
                   <span className="transition group-hover:translate-x-1">→</span>
@@ -475,7 +475,7 @@ export default function Home() {
             <Magnetic>
               <Link
                 href="/sign-up"
-                className="group inline-flex items-center gap-3 rounded-full bg-white px-11 py-5 text-xs uppercase tracking-[0.16em] text-black transition hover:bg-neutral-200"
+                className="group inline-flex items-center gap-3 rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-11 py-5 text-xs uppercase tracking-[0.16em] text-white transition hover:brightness-110"
               >
                 Start with MAIRO
                 <span className="transition group-hover:translate-x-1">→</span>

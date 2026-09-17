@@ -117,7 +117,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
           <button
             type="submit"
             disabled={applying}
-            className="rounded-full bg-white px-5 py-2.5 text-xs font-medium text-black transition hover:bg-neutral-200 disabled:opacity-60"
+            className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
             {applying ? "Applying…" : "Apply Mairo Recommendation"}
           </button>

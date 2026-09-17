@@ -126,8 +126,14 @@ function CapabilityCard({ badge, title, body, icon, chips }: Capability) {
 }
 
 export function MairoHero() {
+  // overflow-x-clip, not overflow-hidden: the core's atmosphere glow is drawn
+  // 28% outside its own box on every side, which on a phone — where the core is
+  // nearly the full width — pushed the page 67px wider than the viewport and
+  // gave the whole site a sideways scroll. `clip` stops that without creating a
+  // scroll container, so the glow still bleeds vertically and nothing inside
+  // loses position: sticky.
   return (
-    <section className="relative px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-28">
+    <section className="relative overflow-x-clip px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-28">
       <div className="mx-auto w-full max-w-[1400px]">
         {/* ---- The statement ---- */}
         <div className="relative z-10 mx-auto max-w-3xl text-center">

@@ -109,7 +109,7 @@ export function ImageStudio({
                 type="button"
                 onClick={() => unchoose(current.id)}
                 disabled={busy}
-                className="rounded-lg border border-emerald-500/40 px-4 py-2 text-xs uppercase tracking-[0.1em] text-emerald-300 transition hover:bg-emerald-500 hover:text-black disabled:opacity-60"
+                className="rounded-full border border-live/40 px-4 py-2 text-xs uppercase tracking-[0.1em] text-live transition hover:bg-live hover:text-black disabled:opacity-60"
               >
                 Chosen — remove
               </button>
@@ -118,7 +118,7 @@ export function ImageStudio({
                 type="button"
                 onClick={() => choose(current.id)}
                 disabled={busy || finals.length >= MAX_FINAL_IMAGES}
-                className="rounded-lg border border-white/25 px-4 py-2 text-xs uppercase tracking-[0.1em] text-white transition hover:border-white hover:bg-white hover:text-black disabled:opacity-40"
+                className="rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
               >
                 {choosing ? "Checking…" : "Use this in the campaign"}
               </button>
@@ -168,7 +168,7 @@ export function ImageStudio({
               type="button"
               onClick={runOwnPhoto}
               disabled={busy}
-              className="rounded-lg border border-white/20 px-4 py-2 text-xs uppercase tracking-[0.1em] text-neutral-300 transition hover:border-white hover:bg-white hover:text-black disabled:opacity-40"
+              className="rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
             >
               {choosing ? "Checking…" : "Use my photo as the ad"}
             </button>

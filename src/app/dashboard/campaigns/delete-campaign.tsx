@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteCampaignAction } from "@/lib/actions/campaign-actions";
+import { primaryButtonClass } from "@/components/ui";
 
 // Deleting a campaign, with the one sentence that matters said before it
 // happens rather than after.
@@ -104,7 +105,7 @@ export function DeleteCampaign({
           <p className="text-xs text-neutral-400">Or don&apos;t choose between them:</p>
           <Link
             href="/dashboard/settings#billing"
-            className="mt-2 inline-flex items-center rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_0_28px_-8px_rgba(52,211,153,0.7)] transition hover:bg-emerald-300"
+            className={`mt-2 ${primaryButtonClass}`}
           >
             Keep this one and run {upgrade.campaigns} — {upgrade.name}, ${upgrade.price}/mo
           </Link>

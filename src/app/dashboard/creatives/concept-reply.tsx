@@ -32,7 +32,7 @@ export function ConceptReply({ creativeRequestId }: { creativeRequestId: string 
         <button
           type="submit"
           disabled={pending}
-          className="shrink-0 rounded-lg border border-white/25 px-4 py-2 text-xs uppercase tracking-[0.1em] text-white transition hover:border-white hover:bg-white hover:text-black disabled:opacity-60"
+          className="shrink-0 rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60"
         >
           {pending ? "Rewriting…" : "Rewrite it"}
         </button>

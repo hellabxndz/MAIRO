@@ -46,7 +46,7 @@ export function ChatClient({
             <div
               className={
                 message.role === "user"
-                  ? "max-w-[80%] rounded-2xl bg-white px-4 py-2 text-sm text-black"
+                  ? "max-w-[80%] rounded-2xl bg-blue/20 px-4 py-2 text-sm text-white ring-1 ring-blue/30"
                   : "max-w-[80%] rounded-2xl bg-white/10 px-4 py-2 text-sm text-white"
               }
             >

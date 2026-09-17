@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { Card, PageHeader, Badge, EmptyState, primaryButtonClass } from "@/components/ui";
 import { planFor, PLANS } from "@/lib/plans";
 import { entitlementsFor } from "@/lib/entitlements";
 import { NewCampaignForm, type PlanContext } from "./new-campaign-form";
@@ -194,7 +194,7 @@ export default async function CampaignsPage() {
                 the quieter of the two. */}
             <Link
               href="/dashboard/settings#billing"
-              className="rounded-full bg-emerald-400 px-6 py-3 text-sm font-semibold text-black shadow-[0_0_32px_-8px_rgba(52,211,153,0.7)] transition hover:bg-emerald-300"
+              className={primaryButtonClass}
             >
               {upgradeTarget.name} runs {upgradeTarget.limits.campaigns} — ${upgradeTarget.priceMonthly}/mo
             </Link>

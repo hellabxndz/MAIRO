@@ -219,7 +219,7 @@ export function OnboardingForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-white px-4 py-3 text-sm font-medium text-black hover:bg-neutral-200 disabled:opacity-60"
+        className="w-full rounded-lg bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
       >
         {pending ? "Building your plan..." : "Build my plan"}
       </button>
