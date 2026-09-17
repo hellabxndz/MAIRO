@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { MairoCore } from "@/components/mairo/core";
 import { MairoButton, MairoCard } from "@/components/mairo";
 import { CreativeThumbs, RisingLine, Sparkline, AudiencePlot } from "@/components/mairo/card-visuals";
 import {
@@ -15,8 +14,7 @@ import {
   BrandTikTokMark,
   BrandInstagramMark,
 } from "@/components/mairo/marks";
-import { MairoEnvironment } from "@/components/mairo/environment";
-import { MairoStreams } from "@/components/mairo/streams";
+import { MairoSceneWide, MairoSceneNarrow } from "@/components/mairo/scene";
 
 // The MAIRO hero, built from the desktop reference render.
 //
@@ -473,12 +471,16 @@ export function MairoHero() {
     // `isolate` is load-bearing: the environment and the streams sit at
     // negative z, and without a stacking context of their own they drop
     // behind the page background and disappear entirely.
-    <section className="relative isolate overflow-x-clip px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-24">
-      {/* The place the composition sits in, and the light running through it.
-          Both are behind the content and neither takes a pointer event, so the
-          whole of this layer is invisible to keyboard and screen readers. */}
-      <MairoEnvironment className="-z-20" />
-      <MairoStreams className="-z-10" />
+    <section
+      className="relative isolate overflow-x-clip px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-24"
+      // One number drives the plate and the space reserved for its core. The
+      // floor stops the artwork collapsing on a narrow laptop; the ceiling stops
+      // it filling an ultrawide with a sphere three feet across.
+      style={{ ["--plate-w" as string]: "min(max(100vw, 1240px), 2000px)" }}
+    >
+      {/* The render itself, behind everything. See scene.tsx for why this is a
+          plate rather than the SVG scene it replaced. */}
+      <MairoSceneWide />
 
       <div className="relative mx-auto w-full max-w-[1460px]">
         {/* The corner labels. Absolute on lg so they sit in the corners of the
@@ -552,12 +554,23 @@ export function MairoHero() {
               </div>
             </div>
 
-            <div className="relative mt-4 sm:mt-6 lg:mt-2">
-              <MairoCore className="mx-auto w-[min(88vw,420px)] lg:w-full lg:max-w-[560px]" />
+            <div className="relative mt-4 sm:mt-6 lg:mt-0">
+              <MairoSceneNarrow />
+
+              {/* On lg the core is already on the plate behind this column, so
+                  all that is needed is the room it occupies. Sized off the same
+                  --plate-w the plate is, which is what keeps the gap under the
+                  buttons and the gap above the pill correct as the plate scales
+                  rather than drifting apart at wide widths. */}
+              <div
+                aria-hidden
+                className="hidden lg:block"
+                style={{ height: "calc(var(--plate-w) * 0.30)" }}
+              />
 
               {/* The two inner labels, which in the reference sit either side of
                   the core's equator rather than under it. */}
-              <div className="pointer-events-none absolute inset-x-0 top-[38%] hidden justify-between lg:flex">
+              <div className="pointer-events-none absolute inset-x-0 top-[13%] hidden justify-between lg:flex">
                 <CornerLabel>
                   One AI core
                   <br />
@@ -571,7 +584,7 @@ export function MairoHero() {
               </div>
             </div>
 
-            <div className="mt-5 flex justify-center lg:-mt-2">
+            <div className="mt-5 flex justify-center lg:mt-7">
               <span
                 className="rounded-full border px-5 py-2.5 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-muted sm:text-[10px] sm:tracking-[0.24em]"
                 style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.65)" }}
