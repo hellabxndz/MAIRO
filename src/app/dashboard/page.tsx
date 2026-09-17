@@ -17,6 +17,7 @@ import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { readinessFor } from "@/lib/readiness";
 import { ReadinessPanel } from "@/components/readiness-panel";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
+import { ResultsNote } from "@/components/results-disclaimer";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -292,6 +293,10 @@ export default async function DashboardOverviewPage() {
             </Link>
           </div>
           {plan && <p className="mt-4 line-clamp-3 text-sm text-neutral-400">{plan.strategySummary}</p>}
+          {/* Attached to the plan rather than parked at the bottom of the
+              screen: the plan is the thing that describes a month that has not
+              happened yet, so this is the claim that needs the qualifier. */}
+          <ResultsNote className="mt-4" />
         </Card>
       </div>
 

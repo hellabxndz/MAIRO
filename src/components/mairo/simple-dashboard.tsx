@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { OrganizationReport } from "@/lib/ad-platforms/performance";
 import { GlassPanel, MairoButton, MairoCard, AIStatus } from "@/components/mairo";
+import { ResultsNote } from "@/components/results-disclaimer";
 
 // Simple View, built from the MAIRO dashboard reference.
 //
@@ -581,11 +582,16 @@ export function SimpleDashboard({
         ))}
       </div>
 
+      {/* Two different things, said separately. The first is about the numbers
+          on this screen being stale; the second is about what MAIRO can promise
+          at all. They were one paragraph, which meant the second half was
+          phrased here and phrased differently everywhere else — and a
+          disclaimer that exists in four wordings is the weakest of the four. */}
       <p className="pt-1 text-[11px] leading-relaxed text-faint">
         Figures are read from your connected advertising accounts and may lag behind the platform by
-        a few hours. Mairo uses available campaign and business data to make recommendations;
-        advertising results vary and cannot be guaranteed.
+        a few hours.
       </p>
+      <ResultsNote className="text-[11px]" />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
 import { regeneratePlanAction, approvePlanAction } from "@/lib/actions/plan-actions";
 import { RegenerateButton } from "./regenerate-button";
 import { activeOrganizationId } from "@/lib/active-org";
+import { ResultsDisclaimer } from "@/components/results-disclaimer";
 
 const statusTone = {
   DRAFT: "neutral",
@@ -99,8 +100,15 @@ export default async function PlanPage() {
               </div>
             </Card>
           )}
+
         </div>
       )}
+
+      {/* Outside the `plan &&` branch on purpose. Nested inside it, this screen
+          showed the disclaimer only once a plan existed — which is backwards:
+          somebody reading the empty state is deciding whether to have MAIRO
+          write one, and that is exactly when what it can promise matters. */}
+      <ResultsDisclaimer className="mt-8" />
     </div>
   );
 }
