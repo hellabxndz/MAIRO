@@ -15,6 +15,14 @@ import {
   BrandInstagramMark,
 } from "@/components/mairo/marks";
 import { MairoSceneWide, MairoSceneNarrow } from "@/components/mairo/scene";
+import {
+  HeroStage,
+  HeroSlot,
+  HeroBeams,
+  HeroCoreHud,
+  HeroCoreAnchor,
+  HeroCommand,
+} from "@/components/mairo/hero-stage";
 
 // The MAIRO hero, built from the desktop reference render.
 //
@@ -137,7 +145,12 @@ function CapabilityCard({
   children?: ReactNode;
 }) {
   return (
-    <MairoCard lit className="p-4 sm:p-5">
+    // The chevron in the render implies these go somewhere, so they do: all
+    // four open the section that explains the whole system. It also makes them
+    // reachable by keyboard, which is what lets Tab light the core the same way
+    // hovering does — without a link there was nothing in the card to focus and
+    // the whole interaction was mouse-only.
+    <MairoCard lit href="#capabilities" className="p-4 sm:p-5">
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
@@ -159,8 +172,8 @@ function CapabilityCard({
           <p className="mt-1.5 text-[12.5px] leading-[1.5] text-muted">{body}</p>
         </div>
 
-        {/* The chevron in the reference. Decorative — the whole card is the
-            target, so this must not be a second focus stop. */}
+        {/* The card itself is the link, so this stays aria-hidden — a second
+            focus stop for the same destination is just an extra Tab. */}
         <span aria-hidden className="mt-1 shrink-0 text-faint transition-colors group-hover:text-blue-bright">
           <svg viewBox="0 0 12 12" className="h-3.5 w-3.5" fill="none">
             <path d="M4 2l4.5 4L4 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -482,6 +495,8 @@ export function MairoHero() {
           plate rather than the SVG scene it replaced. */}
       <MairoSceneWide />
 
+      <HeroStage>
+      <HeroBeams />
       <div className="relative mx-auto w-full max-w-[1460px]">
         {/* The corner labels. Absolute on lg so they sit in the corners of the
             composition as they do in the reference, and simply absent below
@@ -506,8 +521,12 @@ export function MairoHero() {
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.05fr)_minmax(0,1fr)] lg:gap-7 xl:gap-9">
           {/* ---- Left column: two cards. Second on a phone. ---- */}
           <div className="order-2 space-y-4 lg:order-1 lg:mt-[128px] lg:space-y-5">
-            <CreativeCard />
-            <CampaignCard />
+            <HeroSlot id="creative">
+              <CreativeCard />
+            </HeroSlot>
+            <HeroSlot id="campaign">
+              <CampaignCard />
+            </HeroSlot>
           </div>
 
           {/* ---- Centre: the statement, then the core. ---- */}
@@ -552,10 +571,21 @@ export function MairoHero() {
                   Watch a 2-min demo
                 </MairoButton>
               </div>
+
+              {/* The command line. Anything typed here is carried into sign-up
+                  as `intent`, so the first screen after registering can open on
+                  what the person came to do. */}
+              <HeroCommand />
             </div>
 
             <div className="relative mt-4 sm:mt-6 lg:mt-0">
               <MairoSceneNarrow />
+
+              {/* Where the core sits on the plate, in this column's own
+                  coordinates. The beams measure this rather than guessing, so
+                  they still land when the grid reflows. */}
+              <HeroCoreAnchor className="absolute left-1/2 top-[46%] h-2 w-2 -translate-x-1/2 -translate-y-1/2" />
+              <HeroCoreHud />
 
               {/* On lg the core is already on the plate behind this column, so
                   all that is needed is the room it occupies. Sized off the same
@@ -596,8 +626,12 @@ export function MairoHero() {
 
           {/* ---- Right column: two cards. Third on a phone. ---- */}
           <div className="order-3 space-y-4 lg:mt-[128px] lg:space-y-5">
-            <AudienceCard />
-            <OptimizationCard />
+            <HeroSlot id="audience">
+              <AudienceCard />
+            </HeroSlot>
+            <HeroSlot id="optimize">
+              <OptimizationCard />
+            </HeroSlot>
           </div>
         </div>
 
@@ -617,6 +651,7 @@ export function MairoHero() {
 
         <TrustStrip />
       </div>
+      </HeroStage>
     </section>
   );
 }

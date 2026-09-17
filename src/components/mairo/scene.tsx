@@ -51,7 +51,7 @@ export function MairoSceneWide() {
       // the buttons — so pinning the plate at zero put the core's glow through
       // the second button. Expressed against --plate-w so the offset scales
       // with the artwork instead of drifting at wide widths.
-      style={{ top: "calc(var(--plate-w) * 0.028)" }}
+      style={{ top: "calc(var(--plate-w) * 0.082)" }}
     >
       <Image
         src={SRC}
@@ -60,7 +60,7 @@ export function MairoSceneWide() {
         height={H}
         priority
         sizes="(min-width: 2000px) 2000px, 100vw"
-        className="h-auto max-w-none select-none"
+        className="mairo-par-scene h-auto max-w-none select-none"
         style={{ width: "var(--plate-w)" }}
         draggable={false}
       />
@@ -78,7 +78,7 @@ export function MairoSceneNarrow() {
         height={682}
         priority
         sizes="112vw"
-        className="ml-[-6%] h-auto w-[112%] max-w-none select-none"
+        className="mairo-par-scene ml-[-6%] h-auto w-[112%] max-w-none select-none"
         draggable={false}
       />
     </div>
