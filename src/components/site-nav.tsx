@@ -85,15 +85,17 @@ export function SiteNav() {
         <div className="flex items-center gap-2 sm:gap-5">
           <Link
             href="/sign-in"
-            className="hidden text-[11px] uppercase tracking-[0.2em] text-neutral-500 transition hover:text-white sm:inline"
+            className="hidden text-[12px] text-muted transition hover:text-white sm:inline"
           >
-            Sign in
+            Log in
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-full bg-white px-5 py-2.5 text-[11px] uppercase tracking-[0.16em] text-black transition hover:bg-neutral-200"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110"
+            style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
           >
-            Try MAIRO
+            Launch your ads
+            <span aria-hidden>→</span>
           </Link>
 
           <button

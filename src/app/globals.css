@@ -1,11 +1,122 @@
 @import "tailwindcss";
 
-/* Geist Mono is loaded in layout.tsx but Tailwind v4 does not know about it
-   until it is named here, so `font-mono` was falling through to whatever the
-   OS had. The monospace is load-bearing on this page rather than decorative:
-   it is what separates the machine's voice — parameters, states, the things
-   MAIRO decided — from the human sentences around it. */
+/* ===========================================================================
+   THE MAIRO DESIGN SYSTEM
+   ===========================================================================
+
+   One place for every colour, radius, glow and easing in the product. Nothing
+   below this file should contain a hand-written blue.
+
+   The palette is taken from the MAIRO reference renders: a near-black navy
+   environment, electric blue carrying the mass, ultraviolet for the second
+   voice, cyan as the cold edge and magenta used sparingly enough that it still
+   means something. White type throughout.
+
+   The rule the references actually encode, and the one worth keeping: glow is
+   a signal, not a texture. A primary action glows. A metric that moved glows.
+   A card sitting there does not. If everything glows, nothing reads as
+   important and the interface becomes exhausting to look at.
+   =========================================================================== */
+
 @theme {
+  /* ---- Type ------------------------------------------------------------ */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* The machine's voice: parameters, states, HUD labels, anything MAIRO
+     decided rather than said. */
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- Environment ----------------------------------------------------- */
+  /* Four steps of dark, not one. A single flat black gives no dimension and
+     every panel on it looks pasted on. */
+  --color-ink: #05070f;
+  --color-ink-2: #070b18;
+  --color-surface: #0a1020;
+  --color-surface-2: #0e1730;
+  --color-line: #1a2744;
+  --color-line-lit: #2b4478;
+
+  /* ---- Signal ---------------------------------------------------------- */
+  --color-blue: #3d7dff;
+  --color-blue-bright: #6aa6ff;
+  --color-blue-deep: #1b49c9;
+  --color-cyan: #22d3ee;
+  --color-violet: #7c5cff;
+  --color-violet-bright: #a78bfa;
+  --color-magenta: #d946ef;
+
+  /* ---- Status ---------------------------------------------------------- */
+  --color-live: #34d399;
+  --color-warn: #fbbf24;
+  --color-alert: #f87171;
+
+  /* ---- Text ------------------------------------------------------------ */
+  --color-muted: #94a6cc;
+  --color-faint: #5d6e91;
+
+  /* ---- Form ------------------------------------------------------------ */
+  --radius-card: 1.125rem;
+  --radius-panel: 1.375rem;
+
+  /* ---- Motion ---------------------------------------------------------- */
+  /* One easing for everything that moves, so the product has a single
+     physical character rather than five. */
+  --ease-mairo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  /* Values Tailwind cannot express as utilities. Referenced by name from the
+     MAIRO components, never retyped. */
+  --mairo-line: rgba(122, 162, 255, 0.16);
+  --mairo-line-lit: rgba(122, 162, 255, 0.38);
+
+  /* Glass: a translucent fill and a hairline, nothing more. No backdrop-filter
+     anywhere in this product — it cannot sample a fixed backdrop on mobile
+     browsers and composites the element on its own, which paints a
+     nearly-transparent panel as an opaque black rectangle. That shipped once
+     and took weeks to find. */
+  --mairo-glass: linear-gradient(
+    160deg,
+    rgba(18, 28, 56, 0.72) 0%,
+    rgba(10, 16, 34, 0.62) 100%
+  );
+
+  /* Three glow strengths, and they are a scale rather than a palette: rest,
+     interactive, and the one thing on the screen that matters most. */
+  --mairo-glow-soft: 0 0 0 1px rgba(122, 162, 255, 0.1), 0 18px 48px -24px rgba(0, 0, 0, 0.9);
+  --mairo-glow-lift: 0 0 0 1px rgba(122, 162, 255, 0.24), 0 26px 60px -26px rgba(29, 73, 201, 0.55);
+  --mairo-glow-key: 0 0 0 1px rgba(122, 162, 255, 0.34), 0 0 34px -6px rgba(61, 125, 255, 0.55),
+    0 24px 60px -28px rgba(0, 0, 0, 0.95);
+
+  /* The primary action, and the headline's second line. The same ramp, so the
+     button and the word "Mairo" are recognisably the same material. */
+  --mairo-ramp: linear-gradient(120deg, #2f6dff 0%, #4b7dff 42%, #7c5cff 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #6aa6ff 0%, #8fb5ff 45%, #a78bfa 100%);
+}
+
+/* The lattice. Used as a class rather than a component because it is applied
+   to sections that already exist; it never moves and costs one paint. */
+.mairo-grid {
+  background-image:
+    repeating-linear-gradient(to right, rgba(122, 162, 255, 0.05) 0 1px, transparent 1px 88px),
+    repeating-linear-gradient(to bottom, rgba(122, 162, 255, 0.05) 0 1px, transparent 1px 88px);
+  -webkit-mask-image: radial-gradient(ellipse 120% 78% at 50% 42%, #000 10%, rgba(0, 0, 0, 0.45) 58%, transparent 92%);
+  mask-image: radial-gradient(ellipse 120% 78% at 50% 42%, #000 10%, rgba(0, 0, 0, 0.45) 58%, transparent 92%);
+}
+
+/* Focus, once, for everything. A futuristic interface that cannot be operated
+   from a keyboard is a broken interface. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-blue-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

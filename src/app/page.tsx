@@ -9,6 +9,8 @@ import { Magnetic } from "@/components/magnetic";
 import { ConceptDemo } from "@/components/concept-demo";
 import { AiConsole } from "@/components/ai-console";
 import { IntelligenceField } from "@/components/intelligence-field";
+import { MairoHero } from "@/components/mairo/hero";
+import { MairoButton } from "@/components/mairo";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
 
@@ -100,85 +102,41 @@ export default function Home() {
       <IntelligenceField />
       <SiteNav />
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[92vh] flex-col justify-center px-6 sm:px-10">
-        <div className="mx-auto w-full max-w-[1500px] pt-20 sm:pt-28">
-          {/* Two columns from lg up, and the right one is bounded rather than
-              fractional: the console is an instrument at a fixed size, and
-              letting it grow with the viewport made it a wall of text at
-              1900px while the headline lost the width it needs to land. */}
-          <div className="grid items-center gap-y-10 sm:gap-y-16 lg:grid-cols-[1fr_minmax(360px,440px)] lg:gap-x-20">
-            <div>
-          <Reveal duration={1.4}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:tracking-[0.34em]">
-              Meta and TikTok advertising, run by AI
+      <MairoHero />
+
+      {/* ── How it works ─────────────────────────────────────────────────
+
+          The translation layer, which the brief calls one of the most
+          important parts of MAIRO, shown rather than described: the same six
+          steps the product actually runs, streaming. This is also where the
+          hero's second CTA lands, so the anchor has to exist. */}
+      <section id="how-it-works" className="relative px-5 py-24 sm:px-8 sm:py-32">
+        <div className="mx-auto grid max-w-[1400px] items-center gap-12 lg:grid-cols-[1fr_minmax(360px,520px)] lg:gap-20">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-bright/80">
+              The translation layer
             </p>
-          </Reveal>
-
-          <h1
-            className="mt-6 font-light leading-[0.86] tracking-[-0.04em] text-white sm:mt-10"
-            style={{ fontSize: "clamp(64px, 12vw, 190px)" }}
-          >
-            <TextReveal>MAIRO</TextReveal>
-          </h1>
-
-          <div
-            className="mt-5 font-light leading-[0.95] tracking-[-0.03em] sm:mt-8"
-            style={{ fontSize: "clamp(30px, 5.2vw, 76px)" }}
-          >
-            <TextReveal delay={0.12} className="text-neutral-300">
-              Advertising,
-            </TextReveal>
-            <TextReveal delay={0.22} className="text-neutral-600">
-              without the expert.
-            </TextReveal>
-          </div>
-
-          <Reveal delay={0.4} className="mt-9 max-w-xl sm:mt-14">
-            <p className="text-base leading-relaxed text-neutral-400 sm:text-lg">
-              You set the goal and the budget. MAIRO writes the plan, makes the creative
-              from your own photos, and runs the campaigns in your own Meta and TikTok
-              ad accounts.
+            <h2 className="mt-5 text-[clamp(28px,4.6vw,46px)] font-semibold leading-[1.1] tracking-[-0.025em] text-white">
+              You answer five questions.
+              <br />
+              <span className="text-muted">Mairo does the other forty.</span>
+            </h2>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-muted">
+              Ads Manager asks for an objective, an optimization event, a bid strategy,
+              placements and an attribution window. You should not have to become a media
+              buyer to advertise your own business. Tell Mairo what you sell, what you want
+              to happen and what you want to spend — it works out the rest and shows you
+              exactly what it decided before anything goes live.
             </p>
-          </Reveal>
-
-          <Reveal delay={0.55} className="mt-9 flex flex-wrap items-center gap-5 sm:mt-14">
-            <Magnetic>
-              <Link
-                href="/sign-up"
-                className="group inline-flex items-center gap-3 rounded-full bg-white px-9 py-4 text-xs uppercase tracking-[0.16em] text-black transition hover:bg-neutral-200"
-              >
-                Try MAIRO
-                <span className="transition group-hover:translate-x-1">→</span>
-              </Link>
-            </Magnetic>
-            <a
-              href="#capabilities"
-              className="inline-flex items-center gap-3 rounded-full border border-white/20 px-9 py-4 text-xs uppercase tracking-[0.16em] text-neutral-300 transition hover:border-white/50 hover:text-white"
-            >
-              Discover MAIRO
-            </a>
-            {/* The film, offered rather than imposed. It used to start by
-                itself and hold the page for eighteen seconds, opening on a
-                near-black starfield — which reads as a site that failed to
-                load, because that is what it looks like. Here it is a thing
-                somebody can choose, next to the two other things they can
-                choose. */}
-            <ReplayIntroLink className="inline-flex items-center gap-2.5 text-xs uppercase tracking-[0.16em] text-neutral-500 transition hover:text-neutral-200" />
-          </Reveal>
+            <div className="mt-8">
+              <MairoButton href="/sign-up">
+                Launch your ads
+                <span aria-hidden>→</span>
+              </MairoButton>
             </div>
-
-            {/* The claim, demonstrated. Every headline on this page said the
-                work is done by an AI and then showed a photograph; this shows
-                the decision chain actually running. */}
-            <Reveal delay={0.7} y={44} duration={1.3}>
-              <AiConsole />
-            </Reveal>
           </div>
-        </div>
 
-        <div className="pointer-events-none absolute bottom-12 left-1/2 hidden -translate-x-1/2 sm:block">
-          <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/25 to-transparent" />
+          <AiConsole />
         </div>
       </section>
 
