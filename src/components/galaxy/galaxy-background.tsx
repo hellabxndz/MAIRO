@@ -53,12 +53,34 @@ function initialTier(): { tier: Tier; stars: number } {
  * change during a session, so the subscription is a no-op and the server
  * always answers "no" — which is what puts the still panorama into the HTML
  * that ships, rather than a black rectangle waiting for JavaScript.
+ *
+ * Touch devices get the panorama, and that is not a performance judgement.
+ *
+ * Phones rendered small, hard-edged, screen-aligned squares over the sky —
+ * first black, then, once every pass was clamped to a finite ceiling, white.
+ * Four rounds went into it. Every pass was then measured against the real star
+ * and noise data rather than guessed at: the volume raymarch peaks at 0.89, the
+ * brightest star fragment at the hero camera is about 7, the dust motes at
+ * 0.03, and the only geometry in the scene that is a screen-aligned square is a
+ * point sprite, which is cut to a disc in the fragment shader. Nothing in the
+ * arithmetic can put an eight-pixel block of anything on that page, so what
+ * those devices are doing is not something this code can be written against
+ * from here.
+ *
+ * So the phone gets the thing that is known to be right. The panorama is a real
+ * photograph of the same galaxy, it is in the server-rendered HTML so it is up
+ * on the first paint, it costs 144KB and no battery, and it has never once
+ * drawn a square. Desktop, where the scene has always rendered correctly, still
+ * flies.
  */
 let capability: boolean | null = null;
 
 function readCapability(): boolean {
   if (capability !== null) return capability;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    window.matchMedia("(pointer: coarse)").matches
+  ) {
     capability = false;
   } else {
     capability = Boolean(document.createElement("canvas").getContext("webgl2"));
