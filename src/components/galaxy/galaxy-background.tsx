@@ -232,9 +232,25 @@ export function GalaxyBackground() {
           two-thirds black or heavier — a black slab over the picture, which is
           exactly what it looks like. What a phone needs is a vertical fall:
           heaviest across the headline at the top, easing off down the frame so
-          the galaxy has somewhere to be. */}
+          the galaxy has somewhere to be.
+
+          The middle of that fall was eased again once the phone stopped being
+          offered the live scene. It was set against a rendered galaxy bright
+          enough to push through it; the photograph is not, and the band sits
+          exactly where the wash used to be heaviest. The top is untouched,
+          because that is where the headline is and the sky behind it is black
+          anyway.
+
+          The flat section between 38% and 53% is the body copy, and it is the
+          one place the fall is not allowed to keep easing. The panorama's core
+          is the brightest thing in the picture and it lands right there;
+          brightened enough to read as a galaxy, it took the contrast behind
+          that paragraph down to 3.4:1, under the 4.5 that body text wants.
+          Holding the wash flat across those two stops puts it back over 4.5
+          while the galaxy still comes through above the paragraph and below
+          it, which is where it is actually being looked at. */}
       <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.66)_26%,rgba(0,0,0,0.24)_54%,rgba(0,0,0,0)_80%)] md:block" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.70)_0%,rgba(0,0,0,0.48)_24%,rgba(0,0,0,0.30)_48%,rgba(0,0,0,0.18)_70%,rgba(0,0,0,0.14)_88%,rgba(0,0,0,0.40)_100%)] md:hidden" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.70)_0%,rgba(0,0,0,0.42)_24%,rgba(0,0,0,0.34)_38%,rgba(0,0,0,0.34)_53%,rgba(0,0,0,0.15)_68%,rgba(0,0,0,0.12)_88%,rgba(0,0,0,0.40)_100%)] md:hidden" />
       <div className="absolute inset-0 hidden bg-[linear-gradient(to_bottom,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0)_18%,rgba(0,0,0,0)_82%,rgba(0,0,0,0.55)_100%)] md:block" />
     </div>
   );

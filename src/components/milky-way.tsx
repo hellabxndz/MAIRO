@@ -226,7 +226,29 @@ export function MilkyWay() {
            bulge is what anyone actually means by the Milky Way; going by
            column mean opened the phone on the pale half of the picture. */
         @media (max-width: 900px) {
-          .milkyway-tile { width: 250vw; }
+          /* Brightened, and not as a matter of taste.
+             
+             On a phone this image is not a fallback that shows for a moment
+             while something better loads — it is the background, permanently,
+             because the live scene is not offered on touch devices. It was
+             exposed to sit under a rendered galaxy that was carrying the
+             frame, and on its own, under the page's legibility scrim, it came
+             out at about half the brightness of the thing it replaced.
+             Measured on the hero: mean luminance 19-32 across the band
+             against the live scene's 42-59. That is the difference between a
+             galaxy and a brown haze, and a brown haze is what it looked like.
+             
+             Brightness alone would lift the black of space to grey and lose
+             the depth, so the contrast comes up with it to put the blacks
+             back down, and the saturation with that because the dust is the
+             warm part and warmth is what survives being dimmed least well.
+             
+             A filter on an <img>, not a backdrop-filter on anything — see the
+             note in space-panel.tsx for why the distinction matters here. */
+          .milkyway-tile {
+            width: 250vw;
+            filter: brightness(1.85) contrast(1.12) saturate(1.18);
+          }
           .milkyway-frame {
             top: calc(50% - 70.32vw);
             bottom: auto;
