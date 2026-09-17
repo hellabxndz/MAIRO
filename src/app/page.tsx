@@ -8,6 +8,8 @@ import { Reveal } from "@/components/reveal";
 import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ConceptDemo } from "@/components/concept-demo";
+import { AiConsole } from "@/components/ai-console";
+import { TechGrid } from "@/components/tech-grid";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
 
@@ -103,22 +105,32 @@ export default function Home() {
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative flex min-h-[92vh] flex-col justify-center px-6 sm:px-10">
-        <div className="mx-auto w-full max-w-[1500px] pt-28">
+        {/* The engineered layer. Static lattice, one slow scan — see
+            tech-grid.tsx for why neither of them is a particle. */}
+        <TechGrid scan />
+
+        <div className="mx-auto w-full max-w-[1500px] pt-20 sm:pt-28">
+          {/* Two columns from lg up, and the right one is bounded rather than
+              fractional: the console is an instrument at a fixed size, and
+              letting it grow with the viewport made it a wall of text at
+              1900px while the headline lost the width it needs to land. */}
+          <div className="grid items-center gap-y-10 sm:gap-y-16 lg:grid-cols-[1fr_minmax(360px,440px)] lg:gap-x-20">
+            <div>
           <Reveal duration={1.4}>
-            <p className="text-[11px] uppercase tracking-[0.42em] text-neutral-500">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500 sm:tracking-[0.34em]">
               Meta and TikTok advertising, run by AI
             </p>
           </Reveal>
 
           <h1
-            className="mt-10 font-light leading-[0.86] tracking-[-0.04em] text-white"
+            className="mt-6 font-light leading-[0.86] tracking-[-0.04em] text-white sm:mt-10"
             style={{ fontSize: "clamp(64px, 12vw, 190px)" }}
           >
             <TextReveal>MAIRO</TextReveal>
           </h1>
 
           <div
-            className="mt-8 font-light leading-[0.95] tracking-[-0.03em]"
+            className="mt-5 font-light leading-[0.95] tracking-[-0.03em] sm:mt-8"
             style={{ fontSize: "clamp(30px, 5.2vw, 76px)" }}
           >
             <TextReveal delay={0.12} className="text-neutral-300">
@@ -129,7 +141,7 @@ export default function Home() {
             </TextReveal>
           </div>
 
-          <Reveal delay={0.4} className="mt-14 max-w-xl">
+          <Reveal delay={0.4} className="mt-9 max-w-xl sm:mt-14">
             <p className="text-base leading-relaxed text-neutral-400 sm:text-lg">
               You set the goal and the budget. MAIRO writes the plan, makes the creative
               from your own photos, and runs the campaigns in your own Meta and TikTok
@@ -137,7 +149,7 @@ export default function Home() {
             </p>
           </Reveal>
 
-          <Reveal delay={0.55} className="mt-14 flex flex-wrap items-center gap-5">
+          <Reveal delay={0.55} className="mt-9 flex flex-wrap items-center gap-5 sm:mt-14">
             <Magnetic>
               <Link
                 href="/sign-up"
@@ -161,6 +173,15 @@ export default function Home() {
                 choose. */}
             <ReplayIntroLink className="inline-flex items-center gap-2.5 text-xs uppercase tracking-[0.16em] text-neutral-500 transition hover:text-neutral-200" />
           </Reveal>
+            </div>
+
+            {/* The claim, demonstrated. Every headline on this page said the
+                work is done by an AI and then showed a photograph; this shows
+                the decision chain actually running. */}
+            <Reveal delay={0.7} y={44} duration={1.3}>
+              <AiConsole />
+            </Reveal>
+          </div>
         </div>
 
         <div className="pointer-events-none absolute bottom-12 left-1/2 hidden -translate-x-1/2 sm:block">
@@ -170,7 +191,8 @@ export default function Home() {
 
       {/* ── The thesis, in as few words as possible ──────────────────── */}
       <section className="relative px-6 py-56 sm:px-10 sm:py-72">
-        <div className="mx-auto max-w-[1500px]">
+        <TechGrid />
+        <div className="relative mx-auto max-w-[1500px]">
           <h2
             className="font-light leading-[0.92] tracking-[-0.035em]"
             style={{ fontSize: "clamp(38px, 7vw, 116px)" }}
@@ -207,9 +229,15 @@ export default function Home() {
             >
               <div>
                 <Reveal>
-                  <p className="text-[11px] uppercase tracking-[0.42em] text-neutral-500">
-                    {c.eyebrow}
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono text-[10px] tracking-[0.2em] text-neutral-600">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="h-px w-10 bg-white/15" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.34em] text-neutral-400">
+                      {c.eyebrow}
+                    </span>
+                  </div>
                 </Reveal>
                 <h3
                   className="mt-8 whitespace-pre-line font-light leading-[0.94] tracking-[-0.03em]"

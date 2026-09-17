@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Geist Mono is loaded in layout.tsx but Tailwind v4 does not know about it
+   until it is named here, so `font-mono` was falling through to whatever the
+   OS had. The monospace is load-bearing on this page rather than decorative:
+   it is what separates the machine's voice — parameters, states, the things
+   MAIRO decided — from the human sentences around it. */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
