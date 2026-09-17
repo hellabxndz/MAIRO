@@ -4,7 +4,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
-import { DashboardShell } from "@/components/dashboard-shell";
+import { AppShell } from "@/components/mairo/app-shell";
+import { viewMode } from "@/lib/view-mode";
 import { Tour } from "@/components/tour";
 import { hasSeenTour } from "@/lib/actions/tour-actions";
 import { OWNER_TOUR } from "./tour-steps";
@@ -12,35 +13,23 @@ import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
 
-const NAV = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/plan", label: "Monthly plan" },
-  { href: "/dashboard/campaigns", label: "Campaigns" },
-  { href: "/dashboard/analytics", label: "Performance" },
-  { href: "/dashboard/creatives", label: "Creatives" },
-  // Next to Creatives because it is what happens to one afterwards: the ads
-  // are the paid half, this is the customer's own feed. Shown on every plan
-  // rather than hidden below the top plan — the page itself sells the upgrade, and a
-  // feature nobody can see is a feature nobody buys.
-  { href: "/dashboard/social", label: "Your social posts" },
-  // Was "Meta connection" when Meta was the only place to advertise. The
-  // Meta-specific screen still exists at /dashboard/meta and is linked from
-  // here, because it does more than connect — it picks a Page and explains
-  // Meta's own failure modes.
-  // Next to Creatives and before "where you advertise": the enquiries an ad
-  // produced matter more day to day than the plumbing that produced them.
-  //
-  // Only for businesses that actually collect them — see collectsLeads below.
-  { href: "/dashboard/leads", label: "Enquiries", whenCollectingLeads: true },
-  { href: "/dashboard/integrations", label: "Where you advertise" },
-  // Sits next to "where you advertise" because it is the other half of the
-  // same setup: one says where the ads run, this says how you find out whether
-  // they worked.
-  { href: "/dashboard/tracking", label: "Measuring sales" },
-  { href: "/dashboard/agents", label: "AI specialists" },
-  { href: "/dashboard/settings", label: "Settings" },
-  { href: "/dashboard/guide", label: "How it works" },
-];
+// Enquiries is the one destination that is not shown to everybody, because
+// most businesses do not collect them and an empty inbox in the sidebar is
+// noise. Everything else in the old eleven-item NAV moved into the new shell's
+// primary list or onto /dashboard/account — none of it was deleted, and every
+// route is unchanged.
+//
+// See src/components/mairo/app-shell.tsx for the map from the old labels.
+const ENQUIRIES_NAV = {
+  href: "/dashboard/leads",
+  label: "Enquiries",
+  icon: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="2.6" y="4.4" width="14.8" height="11.2" rx="2.2" />
+      <path d="M3.2 6.2l6.8 4.6 6.8-4.6" />
+    </svg>
+  ),
+};
 
 // Pages the not-yet-connected client can still open.
 //
@@ -103,12 +92,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/dashboard/meta?required=1");
   }
 
+  const mode = await viewMode();
+
   return (
-    <DashboardShell
-      navItems={NAV.filter((item) => !item.whenCollectingLeads || collectsLeads)}
-      brandLabel="MAIRO"
-      subtitle={organization?.name}
-      onSignOut={signOutAction}
+    <AppShell
+      mode={mode}
+      businessName={organization?.name ?? ""}
+      extraNav={collectsLeads ? [ENQUIRIES_NAV] : []}
+      footer={
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="w-full rounded-xl px-3 py-2.5 text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
+          >
+            Sign out
+          </button>
+        </form>
+      }
     >
       {/* Offered on the first visit after setup, and on demand after that.
           Mounted in the layout so it works from whichever screen someone
@@ -158,6 +158,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
       {children}
-    </DashboardShell>
+    </AppShell>
   );
 }

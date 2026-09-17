@@ -43,10 +43,14 @@ export const OWNER_TOUR: Step[] = [
       "The ads themselves. Anything MAIRO builds arrives PAUSED in your ad account — nothing spends a penny until you switch it on yourself.",
   },
   {
-    target: "nav:/dashboard/meta",
-    title: "Meta connection",
+    // Was nav:/dashboard/meta, which is no longer a sidebar entry — the
+    // Meta-specific screen still exists and is still linked, from Integrations
+    // and from Account, but a tour step pointing at a nav item that is not
+    // there highlights nothing and looks broken.
+    target: "nav:/dashboard/integrations",
+    title: "Where you advertise",
     body:
-      "Links MAIRO to your own Facebook and Instagram ad account. Until this is connected you can plan and design, but nothing can go live.",
+      "Links MAIRO to your own Facebook, Instagram and TikTok ad accounts. Until one is connected you can plan and design, but nothing can go live.",
   },
   {
     target: "nav:/dashboard/agents",
