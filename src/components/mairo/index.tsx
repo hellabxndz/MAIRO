@@ -124,10 +124,17 @@ export function MairoCard({
   children,
   href,
   className = "",
+  lit = false,
 }: {
   children: ReactNode;
   href?: string;
   className?: string;
+  /**
+   * The lit edge from the reference renders: a brighter border and a blue cast
+   * on the shadow. For a card that is meant to glow as part of a composition,
+   * not for every card on a dense screen — if they all glow, none of them does.
+   */
+  lit?: boolean;
 }) {
   const inner = (
     <div
@@ -138,9 +145,13 @@ export function MairoCard({
         className
       }
       style={{
-        backgroundImage: "var(--mairo-glass)",
-        borderColor: "var(--mairo-line)",
-        boxShadow: "var(--mairo-glow-soft)",
+        backgroundImage: lit
+          ? "linear-gradient(158deg, rgba(28,48,104,0.58), rgba(9,15,36,0.72))"
+          : "var(--mairo-glass)",
+        borderColor: lit ? "rgba(108,158,255,0.42)" : "var(--mairo-line)",
+        boxShadow: lit
+          ? "0 0 0 1px rgba(80,130,235,0.12), 0 0 28px rgba(61,125,255,0.22), 0 18px 48px rgba(2,6,18,0.6)"
+          : "var(--mairo-glow-soft)",
       }}
     >
       {/* The border illumination, as an overlay rather than a border-colour

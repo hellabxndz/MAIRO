@@ -11,7 +11,12 @@ import {
   SnapchatMark,
   PinterestMark,
   LinkedInMark,
+  BrandMetaMark,
+  BrandTikTokMark,
+  BrandInstagramMark,
 } from "@/components/mairo/marks";
+import { MairoEnvironment } from "@/components/mairo/environment";
+import { MairoStreams } from "@/components/mairo/streams";
 
 // The MAIRO hero, built from the desktop reference render.
 //
@@ -134,7 +139,7 @@ function CapabilityCard({
   children?: ReactNode;
 }) {
   return (
-    <MairoCard className="p-4 sm:p-5">
+    <MairoCard lit className="p-4 sm:p-5">
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
@@ -211,13 +216,13 @@ function CampaignCard() {
     >
       <div className="mt-4 flex items-center gap-2.5">
         <PlatformTile>
-          <MetaMark />
+          <BrandMetaMark />
         </PlatformTile>
         <PlatformTile>
-          <TikTokMark />
+          <BrandTikTokMark />
         </PlatformTile>
         <PlatformTile>
-          <InstagramMark />
+          <BrandInstagramMark />
         </PlatformTile>
         <span
           className="flex h-9 w-9 items-center justify-center rounded-full border text-[15px] leading-none text-faint"
@@ -465,8 +470,17 @@ export function MairoHero() {
   // scroll container, so the glow still bleeds vertically and nothing inside
   // loses position: sticky.
   return (
-    <section className="relative overflow-x-clip px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-24">
-      <div className="mx-auto w-full max-w-[1460px]">
+    // `isolate` is load-bearing: the environment and the streams sit at
+    // negative z, and without a stacking context of their own they drop
+    // behind the page background and disappear entirely.
+    <section className="relative isolate overflow-x-clip px-5 pb-16 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:pb-24">
+      {/* The place the composition sits in, and the light running through it.
+          Both are behind the content and neither takes a pointer event, so the
+          whole of this layer is invisible to keyboard and screen readers. */}
+      <MairoEnvironment className="-z-20" />
+      <MairoStreams className="-z-10" />
+
+      <div className="relative mx-auto w-full max-w-[1460px]">
         {/* The corner labels. Absolute on lg so they sit in the corners of the
             composition as they do in the reference, and simply absent below
             that — on a phone there are no corners to put them in. */}

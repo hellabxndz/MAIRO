@@ -1,185 +1,249 @@
 // The MAIRO Intelligence Core.
 //
-// The glowing sphere at the centre of the reference render: a wireframe globe
-// inside three tilted orbital rings, sitting on a lit platform, with the
-// wordmark through the middle of it.
+// The bright sphere at the centre of the reference render. It is not a
+// wireframe globe with a few dots on it — it is dense: several hundred points
+// spread evenly over a sphere, wired into a mesh, lit from the front-left and
+// wrapped in a hot ring, with ad creatives caught in orbit around it.
 //
-// It is SVG and CSS. No WebGL, no canvas, no particle system — this product
-// spent weeks chasing hard-edged squares that turned out to come from a WebGL
-// scene, and there is no version of a marketing background worth reintroducing
-// that risk for. Everything here is a path or a gradient, every animation is a
-// transform or an opacity, and the whole thing scales to a 320px phone by
-// being drawn in a viewBox rather than in pixels.
+// SVG and CSS. No WebGL, no canvas, no particle engine — this product spent
+// weeks chasing hard-edged black squares that turned out to come from a WebGL
+// scene, and there is no version of a marketing graphic worth reintroducing
+// that risk for. Everything below is a path, a circle or a gradient, and every
+// animation is a transform or an opacity.
 //
-// What it is meant to communicate, in the order someone reads it: there is one
-// intelligence (the core), it is connected to things (the nodes and their
-// links), it is working (the orbits and the pulse), and it is the brand (the
-// wordmark, dead centre, the only text).
+// What it says, in the order it is read: there is one intelligence (the
+// sphere), it is connected (the mesh), it is working (the orbits and the
+// pulse), and it is the brand (the wordmark, dead centre, the only text).
 
-/** Nodes on the globe. Fixed rather than random, so the composition is designed. */
-const NODES: { x: number; y: number; r: number; lit?: boolean }[] = [
-  { x: 108, y: 96, r: 2.6, lit: true },
-  { x: 150, y: 70, r: 1.8 },
-  { x: 196, y: 92, r: 2.2, lit: true },
-  { x: 86, y: 148, r: 2 },
-  { x: 214, y: 150, r: 2.4, lit: true },
-  { x: 120, y: 196, r: 1.9 },
-  { x: 176, y: 206, r: 2.3 },
-  { x: 152, y: 132, r: 1.7 },
-  { x: 66, y: 118, r: 1.6 },
-  { x: 236, y: 118, r: 1.6 },
-];
+const CX = 150;
+const CY = 150;
+const R = 92;
 
-/** Which nodes are wired to which. A network, not a scatter. */
-const LINKS: [number, number][] = [
-  [0, 1],
-  [1, 2],
-  [0, 3],
-  [2, 4],
-  [3, 5],
-  [4, 6],
-  [5, 6],
-  [0, 7],
-  [7, 2],
-  [8, 0],
-  [9, 4],
-];
+type Pt = { x: number; y: number; z: number };
 
 /**
- * The creative tiles around the core.
+ * Points spread evenly over a sphere, then projected flat.
  *
- * Fixed positions rather than a ring generated from an angle, because a ring
- * puts them at even spacing and the reference does not: they cluster at the
- * sides and leave the top and bottom of the sphere clear, which is what keeps
- * the wordmark readable through the middle.
+ * A Fibonacci lattice rather than random placement or a lat/long grid. Random
+ * clumps, and a grid bunches hard at the poles — both of which read as a
+ * mistake at this density. The lattice is the only cheap way to get points that
+ * look deliberately even from every angle.
+ *
+ * Computed once at module load, so the server and the client draw byte-identical
+ * markup and React never has to reconcile a hydration mismatch.
+ */
+function sphere(n: number): Pt[] {
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  const out: Pt[] = [];
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (i / (n - 1)) * 2;
+    const ring = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = golden * i;
+    out.push({
+      x: CX + Math.cos(theta) * ring * R,
+      y: CY + y * R,
+      // z is the depth, -1 at the back and 1 at the front. Everything that
+      // makes this read as a ball rather than a disc is driven off it.
+      z: Math.sin(theta) * ring,
+    });
+  }
+  return out;
+}
+
+const POINTS = sphere(300);
+
+/**
+ * The mesh.
+ *
+ * Joining each point to the one after it traces the lattice's spiral; joining
+ * it to the one 17 along cuts across that spiral and turns the spiral into a
+ * net. Two passes is enough — a third made it solid rather than woven, and cost
+ * three hundred more nodes for the privilege.
+ */
+const EDGES: [number, number][] = [];
+for (let i = 0; i < POINTS.length - 1; i++) {
+  EDGES.push([i, i + 1]);
+  if (i + 17 < POINTS.length) EDGES.push([i, i + 17]);
+}
+
+/**
+ * The creative tiles in orbit.
+ *
+ * Fixed positions rather than a generated ring: an even ring puts one at the
+ * top and bottom of the sphere, which is exactly where the wordmark is. These
+ * cluster at the sides and leave the middle clear.
  */
 const TILES: { x: number; y: number; w: number; r: number; o: number }[] = [
-  { x: 10, y: 38, w: 6.5, r: -14, o: 0.5 },
-  { x: 14, y: 56, w: 8, r: -9, o: 0.72 },
-  { x: 21, y: 70, w: 7, r: 7, o: 0.55 },
-  { x: 31, y: 78, w: 8.5, r: 12, o: 0.68 },
-  { x: 60, y: 79, w: 8, r: -10, o: 0.62 },
-  { x: 71, y: 70, w: 9, r: -6, o: 0.78 },
-  { x: 80, y: 54, w: 7.5, r: 9, o: 0.6 },
-  { x: 84, y: 36, w: 6.5, r: 14, o: 0.45 },
-  { x: 26, y: 26, w: 5.5, r: -18, o: 0.36 },
-  { x: 68, y: 24, w: 5.5, r: 16, o: 0.34 },
+  { x: 9, y: 40, w: 6.5, r: -14, o: 0.5 },
+  { x: 13, y: 57, w: 8, r: -9, o: 0.72 },
+  { x: 20, y: 71, w: 7, r: 7, o: 0.55 },
+  { x: 30, y: 79, w: 8.5, r: 12, o: 0.68 },
+  { x: 61, y: 80, w: 8, r: -10, o: 0.62 },
+  { x: 72, y: 71, w: 9, r: -6, o: 0.78 },
+  { x: 81, y: 55, w: 7.5, r: 9, o: 0.6 },
+  { x: 85, y: 37, w: 6.5, r: 14, o: 0.45 },
+  { x: 25, y: 26, w: 5.5, r: -18, o: 0.36 },
+  { x: 69, y: 24, w: 5.5, r: 16, o: 0.34 },
 ];
 
 export function MairoCore({ className = "" }: { className?: string }) {
   return (
     <div className={`relative ${className}`} aria-hidden>
-      {/* The atmosphere the core sits in. Drawn as one radial gradient rather
-          than a blur, because blur on an element this large is the most
-          expensive thing you can put on a phone. */}
+      {/* The atmosphere. One radial gradient rather than a blurred shape,
+          because blur on an element this large is the most expensive thing you
+          can put on a phone. */}
       <div
-        className="pointer-events-none absolute inset-[-28%]"
+        className="pointer-events-none absolute inset-[-30%]"
         style={{
           background:
-            "radial-gradient(closest-side, rgba(61,125,255,0.46), rgba(61,125,255,0.14) 46%, transparent 74%)",
+            "radial-gradient(closest-side, rgba(70,135,255,0.5), rgba(61,125,255,0.16) 44%, transparent 72%)",
         }}
       />
 
       <svg viewBox="0 0 300 300" className="relative w-full" role="presentation">
         <defs>
-          <radialGradient id="mairo-globe" cx="42%" cy="36%" r="72%">
-            <stop offset="0%" stopColor="#a9d0ff" stopOpacity="0.72" />
-            <stop offset="45%" stopColor="#3f7cff" stopOpacity="0.46" />
-            <stop offset="100%" stopColor="#0c1c46" stopOpacity="0.9" />
+          {/* Lit from the front-left, so the sphere has a light source rather
+              than just being brighter in the middle. */}
+          <radialGradient id="core-body" cx="36%" cy="31%" r="78%">
+            <stop offset="0%" stopColor="#8fc4ff" stopOpacity="0.34" />
+            <stop offset="34%" stopColor="#2c5fd8" stopOpacity="0.34" />
+            <stop offset="70%" stopColor="#102a70" stopOpacity="0.62" />
+            <stop offset="100%" stopColor="#030817" stopOpacity="0.96" />
           </radialGradient>
-          <linearGradient id="mairo-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6aa6ff" stopOpacity="0.05" />
-            <stop offset="35%" stopColor="#8fc0ff" stopOpacity="1" />
-            <stop offset="65%" stopColor="#b9a5ff" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#6aa6ff" stopOpacity="0.05" />
+
+          {/* The hole the wordmark sits in. The mesh is dense enough at the
+              centre that white type on it lands around 2:1 — this drops the
+              value directly behind the text without dimming the sphere. */}
+          <radialGradient id="core-well" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#030714" stopOpacity="0.82" />
+            <stop offset="62%" stopColor="#040a1c" stopOpacity="0.44" />
+            <stop offset="100%" stopColor="#040a1c" stopOpacity="0" />
+          </radialGradient>
+
+          <radialGradient id="core-hot" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#eaf3ff" stopOpacity="0.62" />
+            <stop offset="34%" stopColor="#6aa6ff" stopOpacity="0.42" />
+            <stop offset="66%" stopColor="#4d84ff" stopOpacity="0.14" />
+            <stop offset="100%" stopColor="#3d7dff" stopOpacity="0" />
+          </radialGradient>
+
+          <linearGradient id="core-ring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#6aa6ff" stopOpacity="0.04" />
+            <stop offset="30%" stopColor="#bcd9ff" stopOpacity="1" />
+            <stop offset="62%" stopColor="#b9a5ff" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#6aa6ff" stopOpacity="0.04" />
           </linearGradient>
-          <linearGradient id="mairo-wire" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#bcd9ff" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#5b8dff" stopOpacity="0.3" />
-          </linearGradient>
-          {/* Clips the wireframe to the globe so the meridians do not run off
-              the edge of the sphere and read as flat ellipses. */}
-          <clipPath id="mairo-sphere">
-            <circle cx="150" cy="150" r="88" />
+
+          <clipPath id="core-clip">
+            <circle cx={CX} cy={CY} r={R} />
           </clipPath>
         </defs>
 
-        {/* ---- Orbits. Three, tilted differently, turning at three speeds so
-                the composition never repeats a frame. ---- */}
-        <g className="mairo-orbit mairo-orbit-1" style={{ transformOrigin: "150px 150px" }}>
-          <ellipse cx="150" cy="150" rx="132" ry="46" fill="none" stroke="url(#mairo-ring)" strokeWidth="1.5" />
-        </g>
-        <g className="mairo-orbit mairo-orbit-2" style={{ transformOrigin: "150px 150px" }}>
-          <ellipse cx="150" cy="150" rx="46" ry="132" fill="none" stroke="url(#mairo-ring)" strokeWidth="1.5" />
-        </g>
-        <g className="mairo-orbit mairo-orbit-3" style={{ transformOrigin: "150px 150px" }}>
-          <ellipse cx="150" cy="150" rx="124" ry="98" fill="none" stroke="url(#mairo-ring)" strokeWidth="1.2" />
-        </g>
+        {/* ---- the halo, behind everything ---- */}
+        <circle cx={CX} cy={CY} r={R * 1.62} fill="url(#core-hot)" />
 
-        {/* ---- The globe ---- */}
-        <circle cx="150" cy="150" r="88" fill="url(#mairo-globe)" />
-        <g clipPath="url(#mairo-sphere)" stroke="url(#mairo-wire)" fill="none" strokeWidth="0.9">
-          {/* Latitudes */}
-          {[-58, -30, 0, 30, 58].map((dy) => (
-            <ellipse key={dy} cx="150" cy={150 + dy} rx="88" ry={Math.max(10, 88 - Math.abs(dy) * 1.05)} />
-          ))}
-          {/* Meridians */}
-          {[18, 40, 62, 84].map((rx) => (
-            <ellipse key={rx} cx="150" cy="150" rx={rx} ry="88" />
-          ))}
-        </g>
-
-        {/* ---- The network on the surface ---- */}
-        <g clipPath="url(#mairo-sphere)">
-          {LINKS.map(([a, b], i) => (
-            <line
-              key={i}
-              x1={NODES[a].x}
-              y1={NODES[a].y}
-              x2={NODES[b].x}
-              y2={NODES[b].y}
-              stroke="#8fc0ff"
-              strokeOpacity="0.28"
-              strokeWidth="0.6"
+        {/* ---- orbits, three tilts and three speeds so no frame repeats ---- */}
+        {/* Each orbit is drawn twice — a wide soft pass under a narrow bright
+            one. That is what gives the render's rings their bloom, and it costs
+            one extra ellipse where an SVG filter would cost an offscreen buffer
+            the size of the sphere, recomputed every frame they rotate. */}
+        {[
+          { rx: 138, ry: 48, w: 1.7, cls: "mairo-orbit-1" },
+          { rx: 48, ry: 138, w: 1.7, cls: "mairo-orbit-2" },
+          { rx: 130, ry: 102, w: 1.3, cls: "mairo-orbit-3" },
+        ].map((o) => (
+          <g
+            key={o.cls}
+            className={`mairo-orbit ${o.cls}`}
+            style={{ transformOrigin: `${CX}px ${CY}px` }}
+          >
+            <ellipse
+              cx={CX}
+              cy={CY}
+              rx={o.rx}
+              ry={o.ry}
+              fill="none"
+              stroke="url(#core-ring)"
+              strokeOpacity="0.3"
+              strokeWidth={o.w * 7}
             />
-          ))}
-          {NODES.map((n, i) => (
-            <circle
-              key={i}
-              cx={n.x}
-              cy={n.y}
-              r={n.r}
-              fill={n.lit ? "#cfe2ff" : "#7aa6ff"}
-              fillOpacity={n.lit ? 0.95 : 0.6}
-              className={n.lit ? "mairo-node" : undefined}
-              style={n.lit ? { animationDelay: `${i * 0.9}s` } : undefined}
-            />
-          ))}
+            <ellipse cx={CX} cy={CY} rx={o.rx} ry={o.ry} fill="none" stroke="url(#core-ring)" strokeWidth={o.w} />
+          </g>
+        ))}
+
+        {/* ---- the body ---- */}
+        <circle cx={CX} cy={CY} r={R} fill="url(#core-body)" />
+
+        {/* ---- the mesh ----
+
+            Depth drives opacity on every edge and every node, which is the
+            whole trick: the back of the sphere fades out, the front stays
+            bright, and a flat circle of dots turns into a ball. */}
+        <g clipPath="url(#core-clip)">
+          <g stroke="#9cc4ff">
+            {EDGES.map(([a, b], i) => {
+              const depth = (POINTS[a].z + POINTS[b].z) / 2;
+              const front = (depth + 1) / 2;
+              return (
+                <line
+                  key={i}
+                  x1={POINTS[a].x}
+                  y1={POINTS[a].y}
+                  x2={POINTS[b].x}
+                  y2={POINTS[b].y}
+                  strokeOpacity={0.04 + front * 0.34}
+                  strokeWidth={0.25 + front * 0.4}
+                />
+              );
+            })}
+          </g>
+
+          {POINTS.map((p, i) => {
+            const front = (p.z + 1) / 2;
+            return (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={0.5 + front * 1.1}
+                fill={front > 0.78 ? "#f0f6ff" : "#a9cdff"}
+                fillOpacity={0.14 + front * 0.86}
+                className={i % 23 === 0 ? "mairo-node" : undefined}
+                style={i % 23 === 0 ? { animationDelay: `${(i % 7) * 0.7}s` } : undefined}
+              />
+            );
+          })}
         </g>
 
-        {/* ---- The rim, which is what actually makes it read as a sphere ---- */}
-        <circle cx="150" cy="150" r="88" fill="none" stroke="#cfe2ff" strokeOpacity="0.7" strokeWidth="1.2" />
-        <circle cx="150" cy="150" r="88" fill="none" stroke="#5f9bff" strokeOpacity="0.6" strokeWidth="4" className="mairo-breathe" style={{ transformOrigin: "150px 150px" }} />
+        {/* The well behind the wordmark. After the mesh, before the rim. */}
+        <ellipse cx={CX} cy={CY - 4} rx="76" ry="46" fill="url(#core-well)" />
 
-        {/* ---- The platform it stands on ---- */}
-        <g opacity="0.75">
-          <ellipse cx="150" cy="268" rx="104" ry="15" fill="none" stroke="#4b7dff" strokeOpacity="0.4" strokeWidth="1" />
-          <ellipse cx="150" cy="276" rx="74" ry="10" fill="none" stroke="#6aa6ff" strokeOpacity="0.3" strokeWidth="0.8" />
-          <ellipse cx="150" cy="264" rx="132" ry="19" fill="none" stroke="#3d7dff" strokeOpacity="0.18" strokeWidth="0.8" />
+        {/* ---- the rim, which is what actually reads as "sphere" ---- */}
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#eaf4ff" strokeOpacity="0.85" strokeWidth="1.4" />
+        <circle
+          cx={CX}
+          cy={CY}
+          r={R}
+          fill="none"
+          stroke="#8fc0ff"
+          strokeOpacity="0.6"
+          strokeWidth="7"
+          className="mairo-breathe"
+          style={{ transformOrigin: `${CX}px ${CY}px` }}
+        />
+
+        {/* ---- the platform it stands on ---- */}
+        <g fill="none">
+          <ellipse cx={CX} cy="272" rx="108" ry="15" stroke="#7fb0ff" strokeOpacity="0.4" strokeWidth="1.1" />
+          <ellipse cx={CX} cy="280" rx="76" ry="10" stroke="#9cc4ff" strokeOpacity="0.3" strokeWidth="0.9" />
+          <ellipse cx={CX} cy="268" rx="138" ry="20" stroke="#5f9bff" strokeOpacity="0.18" strokeWidth="0.9" />
         </g>
+        {/* The light coming off the bottom of the sphere onto it. */}
+        <path d="M132 244 L168 244 L184 288 L116 288 Z" fill="#bcd9ff" fillOpacity="0.1" />
       </svg>
 
-      {/* The creative tiles drifting around the core.
-          
-          In the reference these are ad images caught mid-orbit, which is the
-          one part of the picture that says what the core is actually doing —
-          it is not a decorative globe, it is a thing with creatives moving
-          through it. Drawn as translucent cards rather than photographs: at
-          this size the content of the image never reads anyway, and eight more
-          image requests in the first viewport is not worth a shape.
-          
-          Positioned in percentages so they hold their place against the sphere
-          at every width, and hidden below `sm` — on a phone the core is small
+      {/* The creative tiles. Percentages, so they keep their place against the
+          sphere at every width, and hidden below `sm` where the core is small
           enough that they crowd the wordmark. */}
       <div className="pointer-events-none absolute inset-0 hidden sm:block" aria-hidden>
         {TILES.map((t, i) => (
@@ -197,9 +261,9 @@ export function MairoCore({ className = "" }: { className?: string }) {
               // animation started.
               ["--tilt" as string]: `${t.r}deg`,
               transform: `rotate(${t.r}deg)`,
-              borderColor: "rgba(165,200,255,0.42)",
-              background:
-                "linear-gradient(150deg, rgba(175,210,255,0.42), rgba(45,80,175,0.24))",
+              borderColor: "rgba(175,210,255,0.5)",
+              background: "linear-gradient(150deg, rgba(185,218,255,0.5), rgba(45,80,175,0.26))",
+              boxShadow: "0 0 14px rgba(110,165,255,0.35)",
               opacity: t.o,
               animationDelay: `${i * 1.3}s`,
             }}
@@ -207,22 +271,20 @@ export function MairoCore({ className = "" }: { className?: string }) {
         ))}
       </div>
 
-      {/* The wordmark, in HTML rather than SVG text so it uses the real font
-          and stays selectable and legible at every size. */}
+      {/* The wordmark, in HTML rather than SVG text so it uses the real font and
+          stays selectable and legible at every size. The shadow is not
+          decoration: the type sits on a lit sphere, not on the page
+          background, and without it the subtitle falls under 3:1. */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-[10%]">
         <p
           className="text-[clamp(20px,4.6vw,34px)] font-light tracking-[0.36em] text-white"
-          style={{ textShadow: "0 2px 18px rgba(4,8,22,0.8)" }}
+          style={{ textShadow: "0 2px 20px rgba(3,7,20,0.9)" }}
         >
           MAIRO
         </p>
-        {/* Brighter than it looks like it needs to be, and with a shadow: the
-            sphere behind it is lit, so the type is sitting on a mid-blue field
-            rather than on the page background, and the value that read fine
-            against the old dimmer globe fell under 3:1 against this one. */}
         <p
-          className="mt-2 max-w-[54%] text-center font-mono text-[7px] uppercase leading-[2] tracking-[0.3em] text-[#d8e7ff] sm:text-[9px]"
-          style={{ textShadow: "0 1px 10px rgba(4,8,22,0.85)" }}
+          className="mt-2 max-w-[54%] text-center font-mono text-[7px] uppercase leading-[2] tracking-[0.3em] text-[#dceaff] sm:text-[9px]"
+          style={{ textShadow: "0 1px 12px rgba(3,7,20,0.95)" }}
         >
           Intelligence turns
           <br />
@@ -235,7 +297,6 @@ export function MairoCore({ className = "" }: { className?: string }) {
         .mairo-orbit-1 { animation-duration: 38s; }
         .mairo-orbit-2 { animation-duration: 53s; animation-direction: reverse; }
         .mairo-orbit-3 { animation-duration: 71s; }
-
         @keyframes mairo-spin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
@@ -245,8 +306,14 @@ export function MairoCore({ className = "" }: { className?: string }) {
            way to say "this is running". */
         .mairo-breathe { animation: mairo-breathe 6.5s ease-in-out infinite; }
         @keyframes mairo-breathe {
-          0%, 100% { opacity: 0.22; transform: scale(1); }
-          50%      { opacity: 0.6;  transform: scale(1.035); }
+          0%, 100% { opacity: 0.25; transform: scale(1); }
+          50%      { opacity: 0.65; transform: scale(1.03); }
+        }
+
+        .mairo-node { animation: mairo-node 4.2s ease-in-out infinite; }
+        @keyframes mairo-node {
+          0%, 100% { opacity: 0.4; }
+          50%      { opacity: 1; }
         }
 
         /* The tiles breathing in place. A translate, not an orbit: something
@@ -256,12 +323,6 @@ export function MairoCore({ className = "" }: { className?: string }) {
         @keyframes mairo-tile {
           0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
           50%      { transform: translateY(-5%) rotate(var(--tilt, 0deg)); }
-        }
-
-        .mairo-node { animation: mairo-node 4.2s ease-in-out infinite; }
-        @keyframes mairo-node {
-          0%, 100% { opacity: 0.45; }
-          50%      { opacity: 1; }
         }
 
         @media (prefers-reduced-motion: reduce) {
