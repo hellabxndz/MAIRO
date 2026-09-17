@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
 import { GlassPanel } from "@/components/mairo";
+import { StartTourLink } from "@/components/tour";
 
 // Account: everywhere the new navigation does not go.
 //
@@ -105,6 +106,18 @@ export default async function AccountPage() {
             </GlassPanel>
           </section>
         ))}
+      </div>
+
+      {/* The only way back into the walkthrough.
+      
+          It auto-starts once, on the dashboard home, and never again — so
+          without this there was no second chance at it for anyone who skipped
+          it or clicked through it too fast. The old shell had this link; the
+          one that replaced it did not, and nothing noticed because a tour that
+          cannot be restarted still looks fine on the screen it starts on. */}
+      <div className="mt-10 border-t pt-6" style={{ borderColor: "var(--mairo-line)" }}>
+        <p className="text-[13px] text-muted">New here, or want a reminder?</p>
+        <StartTourLink className="mt-2 inline-flex text-[14px] text-blue-bright transition-colors hover:text-white" />
       </div>
     </div>
   );

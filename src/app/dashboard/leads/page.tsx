@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, EmptyState } from "@/components/ui";
+import Link from "next/link";
+import { Card, PageHeader, EmptyState, primaryButtonClass } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { activeOrganizationId } from "@/lib/active-org";
 import { existingLeadForm, leadFormUrl, parseFields, previewLeadForm } from "@/lib/leads/forms";
@@ -19,7 +20,16 @@ import { siteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeadsPage() {
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ setup?: string }>;
+}) {
+  // `setup=1` means onboarding sent them here because they answered "they fill
+  // in a form". It changes nothing about what this screen can do — it changes
+  // what it says, because somebody who chose to be here is browsing and
+  // somebody who was sent here is mid-signup and owed a next step.
+  const inSetup = (await searchParams).setup === "1";
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -47,18 +57,42 @@ export default async function LeadsPage() {
   return (
     <div>
       <PageHeader
-        title="Leads"
-        description="People who filled in your form after tapping an ad."
+        title={inSetup && !form ? "Your form" : "Leads"}
+        description={
+          inSetup && !form
+            ? "You said people will get in touch by filling in a form. These are the questions it would ask."
+            : "People who filled in your form after tapping an ad."
+        }
       />
 
       {!form && (
         <Card className="mb-8">
-          <h2 className="text-base text-white">You don&apos;t have a form yet</h2>
+          <h2 className="text-base text-white">
+            {inSetup ? "Start with these questions, or write your own" : "You don\u2019t have a form yet"}
+          </h2>
           <p className="mb-5 mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
-            You don&apos;t have to do anything here — picking &ldquo;Fill in a form&rdquo; on a
-            campaign writes one. This is if you&apos;d rather see it first, or write your own.
+            {inSetup
+              ? "Short forms get finished; long ones get abandoned. MAIRO keeps it to what you actually need to reply to somebody \u2014 but it is your form, so change anything."
+              : "You don\u2019t have to do anything here \u2014 picking \u201cFill in a form\u201d on a campaign writes one. This is if you\u2019d rather see it first, or write your own."}
           </p>
           <ChooseForm preview={preview} />
+        </Card>
+      )}
+
+      {/* Once the form exists, hand them on. Onboarding used to send everybody
+          to the Meta connection; the people who came through here still have to
+          do it, and this is the only screen that knows they were interrupted. */}
+      {inSetup && form && (
+        <Card className="mb-8" >
+          <h2 className="text-base text-white">Your form is ready</h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
+            That is the last thing MAIRO needed from you. Connect your Meta account and it can
+            start building campaigns that point at it.
+          </p>
+          <Link href="/dashboard/meta?required=1" className={`mt-5 ${primaryButtonClass}`}>
+            Connect Meta
+            <span aria-hidden>&rarr;</span>
+          </Link>
         </Card>
       )}
 

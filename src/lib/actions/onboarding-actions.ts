@@ -172,5 +172,17 @@ export async function completeOnboardingAction(
     });
   }
 
+  // Where onboarding lets go of somebody.
+  //
+  // Everyone used to land on the Meta connection, including the people who had
+  // just answered "they fill in a form" — and the form's questions live on a
+  // screen they had no reason to look for, behind a nav entry that only appears
+  // once a form exists. So the one answer that creates more to decide was the
+  // one answer that led nowhere.
+  //
+  // Now it leads to the questions, and that screen hands them on to Meta after.
+  if (data.destinationType === "LEAD_FORM") {
+    redirect("/dashboard/leads?setup=1");
+  }
   redirect("/dashboard/meta?required=1");
 }

@@ -44,11 +44,19 @@ const ENQUIRIES_NAV = {
 // it is now the screen that lists every network a business can connect, and
 // gating "connect somewhere to advertise" behind having connected somewhere
 // to advertise is the same trap in a wider form.
+// /dashboard/leads is here on the same principle rather than as a convenience.
+// The lead form is a page MAIRO hosts at /f/<slug>; it does not live on Meta,
+// does not need an ad account to exist, and works the moment it is written.
+// Onboarding now sends anyone who answered "they fill in a form" straight to it,
+// and gating the one thing that does not depend on Meta behind connecting Meta
+// would send them to a screen they were not ready for and lose the answer they
+// had just given.
 const ALWAYS_REACHABLE = [
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",
   "/dashboard/guide",
+  "/dashboard/leads",
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -128,7 +136,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
           Whether they have seen it comes from their user row, not from the
           browser — so signing in on a phone, in a private window, or after
           clearing site data does not start it again. */}
-      <Tour steps={OWNER_TOUR} autoStart={Boolean(intake)} alreadySeen={seenTour} />
+      {/* Starts on the dashboard home, not on whatever screen happens to be
+          first. Onboarding now drops anyone who answered "they fill in a form"
+          onto /dashboard/leads to write it, and the tour was opening on top of
+          that — a nine-step walkthrough of the product over the one task they
+          were sent there to finish. A tour of the dashboard belongs on the
+          dashboard; it is still available on demand from Account. */}
+      <Tour
+        steps={OWNER_TOUR}
+        autoStart={Boolean(intake) && pathname === "/dashboard"}
+        alreadySeen={seenTour}
+      />
 
       {/* Whose account you are in, and the way back out. A freelancer moving
           between clients needs this on every screen — editing the wrong
