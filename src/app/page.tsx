@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GalaxyBackground } from "@/components/galaxy/galaxy-background";
 import { SpacePanel } from "@/components/space-panel";
 import { SiteNav } from "@/components/site-nav";
 import { CinematicIntro } from "@/components/intro/cinematic-intro";
@@ -9,7 +8,7 @@ import { TextReveal } from "@/components/text-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ConceptDemo } from "@/components/concept-demo";
 import { AiConsole } from "@/components/ai-console";
-import { TechGrid } from "@/components/tech-grid";
+import { IntelligenceField } from "@/components/intelligence-field";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
 
@@ -95,20 +94,14 @@ export default function Home() {
           time — closing the intro is a state change, not a navigation. */}
       <CinematicIntro />
 
-      {/* The galaxy the whole page lives inside. Fixed, never unmounted, and
-          driven by scroll — moving down the page flies the camera through it
-          rather than sliding a picture upwards. Falls back to a still 4K
-          render of the same galaxy where WebGL2 is unavailable or motion is
-          not wanted. */}
-      <GalaxyBackground />
+      {/* The field the whole page lives in. Fixed, never unmounted, and built
+          out of gradients rather than a renderer — see intelligence-field.tsx
+          for why the galaxy that used to be here is gone. */}
+      <IntelligenceField />
       <SiteNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative flex min-h-[92vh] flex-col justify-center px-6 sm:px-10">
-        {/* The engineered layer. Static lattice, one slow scan — see
-            tech-grid.tsx for why neither of them is a particle. */}
-        <TechGrid scan />
-
         <div className="mx-auto w-full max-w-[1500px] pt-20 sm:pt-28">
           {/* Two columns from lg up, and the right one is bounded rather than
               fractional: the console is an instrument at a fixed size, and
@@ -191,7 +184,6 @@ export default function Home() {
 
       {/* ── The thesis, in as few words as possible ──────────────────── */}
       <section className="relative px-6 py-56 sm:px-10 sm:py-72">
-        <TechGrid />
         <div className="relative mx-auto max-w-[1500px]">
           <h2
             className="font-light leading-[0.92] tracking-[-0.035em]"
