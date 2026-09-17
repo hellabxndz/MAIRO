@@ -11,7 +11,6 @@ import { AiConsole } from "@/components/ai-console";
 import { IntelligenceField } from "@/components/intelligence-field";
 import { MairoHero } from "@/components/mairo/hero";
 import { MairoButton } from "@/components/mairo";
-import { ResultsDisclaimer, ResultsNote } from "@/components/results-disclaimer";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
 
@@ -377,13 +376,6 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
-
-          {/* Under the plans, not in the small print. This is the point where
-              somebody decides to pay, so it is the point where what they are
-              buying has to be unambiguous. */}
-          <Reveal delay={0.3}>
-            <ResultsDisclaimer className="mt-10" />
-          </Reveal>
         </div>
       </section>
 
@@ -505,9 +497,7 @@ export default function Home() {
           >
             MAIRO
           </p>
-          <ResultsNote className="mt-16 max-w-2xl" />
-
-          <div className="mt-10 flex flex-col gap-6 text-xs tracking-wide text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-20 flex flex-col gap-6 text-xs tracking-wide text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
             <span>© {new Date().getFullYear()} MAIRO</span>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
               <ReplayIntroLink className="transition hover:text-neutral-300" />

@@ -7,7 +7,6 @@ import {
   BrandInstagramMark,
 } from "@/components/mairo/marks";
 import { MairoSceneWide, MairoSceneNarrow } from "@/components/mairo/scene";
-import { ResultsNote } from "@/components/results-disclaimer";
 import {
   HeroStage,
   HeroSlot,
@@ -497,12 +496,6 @@ export function MairoHero() {
                   as `intent`, so the first screen after registering can open on
                   what the person came to do. */}
               <HeroCommand />
-
-              {/* Said here rather than only in the footer, because this is the
-                  screen that does the persuading — and the card to the right of
-                  it shows a ROAS figure. A disclaimer three scrolls below the
-                  claim it qualifies is not a disclaimer. */}
-              <ResultsNote className="mx-auto mt-4 max-w-md text-center" />
             </div>
 
             <div className="relative mt-4 sm:mt-6 lg:mt-0">
