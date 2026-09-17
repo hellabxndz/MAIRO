@@ -38,7 +38,7 @@ export const FREELANCER_TOUR: Step[] = [
     target: "guide",
     title: "The long version",
     body:
-      "Everything in more depth — briefs, connecting Meta, why campaigns arrive paused, which specialist to ask what. Worth ten minutes at some point.",
+      "Everything in more depth — briefs, connecting Meta, why campaigns arrive paused, how to get what you need out of MAIRO AI. Worth ten minutes at some point.",
   },
   {
     target: "billing",

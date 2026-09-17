@@ -2,14 +2,6 @@ import type { ReactNode } from "react";
 import { MairoButton, MairoCard } from "@/components/mairo";
 import { CreativeThumbs, RisingLine, Sparkline, AudiencePlot } from "@/components/mairo/card-visuals";
 import {
-  MetaMark,
-  InstagramMark,
-  FacebookMark,
-  TikTokMark,
-  GoogleMark,
-  SnapchatMark,
-  PinterestMark,
-  LinkedInMark,
   BrandMetaMark,
   BrandTikTokMark,
   BrandInstagramMark,
@@ -35,14 +27,11 @@ import {
 // follows, and the four cards stack under it. Same elements, same order of
 // importance, one set of markup.
 //
-// One thing from the reference is deliberately not reproduced: the row of
-// Shopify, Google, Samsung, Nike, allbirds, Stripe and Notion logos under the
-// words "trusted by ambitious brands". MAIRO does not have those customers, and
-// a false endorsement of eight real companies is the kind of claim that gets a
-// letter from Nike's lawyers rather than a signup. The strip keeps its exact
-// layout, treatment and logo count, and says the thing that is true instead:
-// these are the platforms MAIRO runs your ads on. Swap in real customer marks
-// the day there are some.
+// The render has a "trusted by ambitious brands" logo wall along the bottom.
+// It is not reproduced, and nothing stands in its place: those are not MAIRO's
+// customers, and the honest version of that strip — the platforms it runs ads
+// on — was not worth the height it took. When there are real customer logos,
+// this is where they go.
 
 /* ------------------------------------------------------------------ pieces */
 
@@ -393,84 +382,6 @@ function OptimizationCard() {
   );
 }
 
-/* --------------------------------------------------------------- the strip */
-
-// The platforms MAIRO runs on. `live` is what is connected and working today;
-// the rest are the ones the integrations screen lists as coming, and they are
-// shown dimmer so the row never implies more than is true.
-const PLATFORMS: { name: string; mark: ReactNode; live: boolean }[] = [
-  { name: "Meta", mark: <MetaMark />, live: true },
-  { name: "Facebook", mark: <FacebookMark />, live: true },
-  { name: "Instagram", mark: <InstagramMark />, live: true },
-  { name: "TikTok", mark: <TikTokMark />, live: true },
-  { name: "Google", mark: <GoogleMark />, live: false },
-  { name: "Snapchat", mark: <SnapchatMark />, live: false },
-  { name: "Pinterest", mark: <PinterestMark />, live: false },
-  { name: "LinkedIn", mark: <LinkedInMark />, live: false },
-];
-
-// Three figures, and every one of them is checkable. The reference has "10x
-// faster", "3.2x higher ROAS" and "-70% less manual work" here; those are
-// performance promises for an advertising product with no customers yet, which
-// is the one claim this product must never make. These say something true at
-// the same size and in the same rhythm.
-const FIGURES = [
-  { value: "2", label: "Ad platforms\nlive today" },
-  { value: "1", label: "Login for\nall of them" },
-  { value: "0", label: "Ads managers\nto open" },
-];
-
-function TrustStrip() {
-  return (
-    <div className="mt-10 border-t pt-8 sm:mt-12" style={{ borderColor: "var(--mairo-line)" }}>
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-10">
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-[9px] uppercase tracking-[0.26em] text-faint sm:text-[10px]">
-            Runs your ads on
-          </p>
-          {/* One row at every width that can hold one. The per-mark "soon" tag
-              was what pushed LinkedIn onto a second line, so the state is
-              carried by the dimming and said once in the line underneath —
-              which reads better anyway than the word repeated four times. */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-4">
-            {PLATFORMS.map((p) => (
-              <span
-                key={p.name}
-                className={`inline-flex items-center gap-1.5 transition-colors duration-300 ${
-                  p.live ? "text-white/75 hover:text-white" : "text-faint/60"
-                }`}
-              >
-                <span className="h-4 w-4 shrink-0">{p.mark}</span>
-                <span className="text-[12.5px] font-medium tracking-tight">{p.name}</span>
-              </span>
-            ))}
-          </div>
-          <p className="mt-4 text-[11.5px] leading-relaxed text-faint">
-            Meta, Facebook, Instagram and TikTok are live today. The rest are on the way.
-          </p>
-        </div>
-
-        <div
-          className="grid shrink-0 grid-cols-3 gap-6 border-t pt-7 sm:gap-10 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0"
-          style={{ borderColor: "var(--mairo-line)" }}
-        >
-          {FIGURES.map((f) => (
-            <div key={f.value}>
-              <p
-                className="bg-clip-text text-[22px] font-semibold leading-none tracking-tight text-transparent sm:text-[26px]"
-                style={{ backgroundImage: "var(--mairo-ramp-soft)" }}
-              >
-                {f.value}
-              </p>
-              <p className="mt-2 whitespace-pre-line text-[11px] leading-[1.45] text-muted">{f.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ----------------------------------------------------------------- the hero */
 
 export function MairoHero() {
@@ -649,7 +560,6 @@ export function MairoHero() {
           </CornerLabel>
         </div>
 
-        <TrustStrip />
       </div>
       </HeroStage>
     </section>

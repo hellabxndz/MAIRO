@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { addClientAction, type ClientActionState } from "@/lib/actions/client-actions";
+import { GlassPanel } from "@/components/mairo";
+import { inputClass, primaryButtonClass } from "@/components/ui";
 
 // Adding a client is two fields and a button on purpose. The rest of the
 // business — goal, budget, audience — is asked once you are inside it, by the
@@ -15,46 +17,51 @@ export function AddClientForm({ room, allowed }: { room: number; allowed: number
 
   if (allowed === 0) {
     return (
-      <div data-tour="add" className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 text-sm text-neutral-400">
-        Choose a freelancer plan to start adding client businesses.
-      </div>
+      <GlassPanel className="mt-8 p-6" as="section">
+        <div data-tour="add">
+          <p className="text-[15px] font-medium text-white">No client slots on this plan</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+            Choose a freelancer plan to start adding client businesses.
+          </p>
+        </div>
+      </GlassPanel>
     );
   }
 
+  const full = room === 0;
+
   return (
-    <form action={action} data-tour="add" className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
-      <p className="text-sm font-medium">Add a client</p>
-      <p className="mt-1 text-xs text-neutral-500">
-        {room > 0
-          ? `Room for ${room} more on your plan.`
-          : "You've used every client on your plan — upgrade to add another."}
-      </p>
+    <GlassPanel className="mt-8 p-5 sm:p-6" as="section" lit={!full}>
+      <form action={action} data-tour="add">
+        <p className="text-[15px] font-medium text-white">Add a client</p>
+        <p className="mt-1.5 text-[13px] text-muted">
+          {full
+            ? "You've used every client on your plan — upgrade to add another."
+            : `Room for ${room} more on your plan.`}
+        </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <input
-          name="name"
-          required
-          disabled={room === 0 || pending}
-          placeholder="Business name"
-          className="rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-600 focus:border-white/30 disabled:opacity-40"
-        />
-        <input
-          name="industry"
-          disabled={room === 0 || pending}
-          placeholder="Industry (optional)"
-          className="rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-600 focus:border-white/30 disabled:opacity-40"
-        />
-      </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <input
+            name="name"
+            required
+            disabled={full || pending}
+            placeholder="Business name"
+            className={`${inputClass} disabled:opacity-40`}
+          />
+          <input
+            name="industry"
+            disabled={full || pending}
+            placeholder="Industry (optional)"
+            className={`${inputClass} disabled:opacity-40`}
+          />
+        </div>
 
-      {state?.error && <p className="mt-4 text-sm text-red-400">{state.error}</p>}
+        {state?.error && <p className="mt-4 text-sm text-alert">{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={room === 0 || pending}
-        className="mt-5 rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-40"
-      >
-        {pending ? "Adding…" : "Add client"}
-      </button>
-    </form>
+        <button type="submit" disabled={full || pending} className={`mt-5 ${primaryButtonClass}`}>
+          {pending ? "Adding…" : "Add client"}
+        </button>
+      </form>
+    </GlassPanel>
   );
 }

@@ -26,18 +26,18 @@ export default async function AgentsIndexPage() {
   return (
     <div>
       <PageHeader
-        title="AI specialists"
+        title="Mairo AI"
         description="Chat with an agent that knows your account and campaigns."
       />
 
-      {/* Locked rather than hidden. Somebody who can see the three specialists
+      {/* Locked rather than hidden. Somebody who can see what MAIRO AI does
           and a padlock knows what they would be buying; somebody who sees an
           empty page assumes the product is thin. */}
       {!unlocked && (
         <div className="mb-8">
           <PlanLock
-            title="The specialists come with a plan"
-            body="A strategist who knows your numbers, a creative director who writes your ads, and someone to answer anything else — all of them looking at your actual account rather than guessing. Pick a plan and they open up straight away."
+            title="Mairo AI comes with a plan"
+            body="One assistant that knows your numbers, writes your ads and answers anything else — looking at your actual account rather than guessing. Pick a plan and it opens up straight away."
           />
         </div>
       )}

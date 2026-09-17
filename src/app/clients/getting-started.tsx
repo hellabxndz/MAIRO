@@ -60,14 +60,25 @@ export function GettingStarted({ state }: { state: GuideState }) {
   const nextIndex = STEPS.findIndex((s) => !state[s.key]);
 
   return (
-    <section data-tour="checklist" className="mt-14 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 sm:p-8">
+    <section
+      data-tour="checklist"
+      className="mt-12 rounded-[var(--radius-panel)] border p-6 sm:p-8"
+      style={{
+        backgroundImage: "var(--mairo-glass)",
+        borderColor: "var(--mairo-line)",
+        boxShadow: "var(--mairo-glow-soft)",
+      }}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium">How this works</h2>
+        <h2 className="text-[15px] font-medium text-white">How this works</h2>
         <div className="flex items-center gap-4">
-          <a href="/clients/guide" className="text-xs text-neutral-400 underline transition hover:text-white">
+          <a
+            href="/clients/guide"
+            className="text-[12px] text-muted underline decoration-[color:var(--mairo-line-lit)] underline-offset-2 transition-colors hover:text-white"
+          >
             Read the full guide
           </a>
-          <p className="text-xs text-neutral-500">
+          <p className="text-[12px] text-faint">
             {done} of {STEPS.length} done
           </p>
         </div>
@@ -75,10 +86,10 @@ export function GettingStarted({ state }: { state: GuideState }) {
 
       {/* Progress, as a single hairline. A bar with a percentage would be more
           emphasis than a five-step list deserves. */}
-      <div className="mt-4 h-px w-full bg-white/10">
+      <div className="mt-4 h-px w-full" style={{ background: "var(--mairo-line)" }}>
         <div
-          className="h-px bg-white/60 transition-all duration-700"
-          style={{ width: `${(done / STEPS.length) * 100}%` }}
+          className="h-px transition-all duration-700 [transition-timing-function:var(--ease-mairo)]"
+          style={{ width: `${(done / STEPS.length) * 100}%`, backgroundImage: "var(--mairo-ramp)" }}
         />
       </div>
 
@@ -91,24 +102,21 @@ export function GettingStarted({ state }: { state: GuideState }) {
               <span
                 className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] ${
                   complete
-                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                    ? "border-live/35 bg-live/10 text-live"
                     : isNext
-                      ? "border-white/40 text-white"
-                      : "border-white/10 text-neutral-600"
+                      ? "border-[color:var(--mairo-line-lit)] text-white"
+                      : "border-[color:var(--mairo-line)] text-faint"
                 }`}
+                style={isNext && !complete ? { boxShadow: "var(--mairo-glow-soft)" } : undefined}
               >
-                {complete ? "✓" : i + 1}
+                {complete ? "\u2713" : i + 1}
               </span>
               <div className="min-w-0">
-                <p
-                  className={`text-sm ${
-                    complete ? "text-neutral-500 line-through decoration-neutral-700" : "text-white"
-                  }`}
-                >
+                <p className={`text-[14px] ${complete ? "text-faint line-through" : "text-white"}`}>
                   {step.title}
                 </p>
                 {!complete && (
-                  <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-neutral-500">
+                  <p className="mt-1.5 max-w-xl text-[12.5px] leading-relaxed text-muted">
                     {step.body}
                   </p>
                 )}

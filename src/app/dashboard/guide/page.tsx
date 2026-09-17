@@ -154,7 +154,7 @@ export default async function OwnerGuidePage() {
       body: (
         <>
           <p>
-            Three specialists, unlimited on every plan, and they know your business and
+            One assistant, unlimited on every plan, and it knows your business and
             your numbers.
           </p>
           <ul className="mt-4 space-y-2">
@@ -225,7 +225,7 @@ export default async function OwnerGuidePage() {
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
           <p className="text-sm">Still not sure about something?</p>
           <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-            Ask the Support specialist — it knows how MAIRO works and it can see your
+            Ask MAIRO — it knows how the product works and it can see your
             account.
           </p>
           <Link

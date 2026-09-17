@@ -159,8 +159,8 @@ export default async function MetaConnectionPage({
               </form>
             </div>
             <p className="text-xs leading-relaxed text-neutral-600">
-              You can explore the dashboard, build a plan, and talk to the AI
-              specialists without connecting. Nothing goes live until you do.
+              You can explore the dashboard, build a plan, and talk to MAIRO AI
+              without connecting. Nothing goes live until you do.
             </p>
           </div>
         )}

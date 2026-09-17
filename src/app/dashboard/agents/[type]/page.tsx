@@ -37,7 +37,7 @@ export default async function AgentChatPage({
         <PageHeader title={`${AGENT_LABELS[agentType]} agent`} />
         <PlanLock
           title="This one comes with a plan"
-          body="The specialists read your real account — your budget, your campaigns, what actually sold — rather than answering in general. That needs a plan."
+          body="MAIRO reads your real account — your budget, your campaigns, what actually sold — rather than answering in general. That needs a plan."
         />
       </div>
     );

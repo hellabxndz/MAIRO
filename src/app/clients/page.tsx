@@ -1,17 +1,16 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { limitsFor, planFor } from "@/lib/plans";
-import { signOutAction } from "@/lib/actions/auth-actions";
 import { switchClientAction, removeClientAction } from "@/lib/actions/client-actions";
 import { AddClientForm } from "./add-client-form";
-import { AmbientSky } from "@/components/ambient-sky";
 import { Welcome } from "./welcome";
 import { GettingStarted } from "./getting-started";
 import { Tour, StartTourLink } from "@/components/tour";
 import { FREELANCER_TOUR } from "./tour-steps";
 import { hasSeenTour } from "@/lib/actions/tour-actions";
+import { PageHeader, Badge, EmptyState, primaryButtonClass } from "@/components/ui";
+import { MairoCard } from "@/components/mairo";
 
 // A freelancer's home: every business they run ads for, in one list.
 //
@@ -19,6 +18,10 @@ import { hasSeenTour } from "@/lib/actions/tour-actions";
 // than inside one. Everything else — campaigns, creatives, the plan, the Meta
 // connection — belongs to a single client, and you reach it by choosing one
 // from here.
+//
+// The header this page used to draw is gone; the shell in layout.tsx owns the
+// wordmark, the workspace name, the plan and the navigation now. What is left
+// here is the list itself.
 
 export default async function ClientsPage({
   searchParams,
@@ -67,106 +70,74 @@ export default async function ClientsPage({
   const room = Math.max(allowed - clients.length, 0);
 
   return (
-    <div className="relative min-h-screen text-white">
-      <AmbientSky />
-      {justSubscribed && (
-        <Welcome planName={plan.name} clientLimit={limitsFor(workspace.subscriptionTier).clients ?? 0} />
-      )}
+    <>
+      {justSubscribed && <Welcome planName={plan.name} clientLimit={allowed} />}
       {/* Offers itself once, right after paying. Available on demand after that. */}
       <Tour steps={FREELANCER_TOUR} autoStart={justSubscribed} alreadySeen={seenTour} />
-      <header className="border-b border-white/[0.07] bg-black/50">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <div>
-            <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
-              {workspace.name}
-            </p>
-          </div>
-          <div className="flex items-center gap-5 text-xs text-neutral-400">
-            <span>
-              {plan.name} · {clients.length}/{allowed} clients
-            </span>
-            {/* The workspace's own billing, not a client's. A freelancer has no
-                dashboard of their own to put this on — /dashboard is always
-                some client's dashboard. */}
-            <StartTourLink className="hover:text-white" />
-            <Link href="/clients/guide" data-tour="guide" className="hover:text-white">
-              Guide
-            </Link>
-            <Link href="/clients/billing" data-tour="billing" className="hover:text-white">
-              Billing
-            </Link>
-            <form action={signOutAction}>
-              <button type="submit" className="hover:text-white">
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <h1 className="font-light tracking-[-0.02em]" style={{ fontSize: "clamp(32px, 4.4vw, 52px)" }}>
-          Your clients
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-neutral-400">
-          Each business here has its own ad account, its own campaigns and its own
-          creatives. Open one to work inside it.
-        </p>
+      <PageHeader
+        title="Your clients"
+        description="Each business here has its own ad account, its own campaigns and its own creatives. Open one to work inside it."
+        action={<StartTourLink className="text-[13px] text-muted transition-colors hover:text-white" />}
+      />
 
-        <div data-tour="list" className="mt-10 space-y-3">
-          {clients.length === 0 && (
-            <p className="rounded-xl border border-white/10 bg-white/[0.02] px-5 py-8 text-center text-sm text-neutral-500">
-              No clients yet. Add the first business you run ads for.
-            </p>
-          )}
+      <div data-tour="list" className="space-y-3">
+        {clients.length === 0 && (
+          <EmptyState
+            title="No clients yet"
+            description="Add the first business you run ads for. A name is enough to start."
+          />
+        )}
 
-          {clients.map((client) => {
-            const connected = client.metaAdAccount?.status === "CONNECTED";
-            return (
-              <div
-                key={client.id}
-                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] px-5 py-4 transition hover:border-white/20"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{client.name}</p>
-                  <p className="mt-1 text-xs text-neutral-500">
+        {clients.map((client) => {
+          const connected = client.metaAdAccount?.status === "CONNECTED";
+          return (
+            <MairoCard key={client.id} className="p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <p className="truncate text-[15px] font-medium text-white">{client.name}</p>
+                    {/* Meta state carries the vocabulary the rest of the product
+                        uses: green is live, yellow is waiting on somebody. */}
+                    <Badge tone={connected ? "green" : "yellow"}>
+                      {connected ? "Meta connected" : "Meta not connected"}
+                    </Badge>
+                    {!client.intake && <Badge tone="neutral">Setup unfinished</Badge>}
+                  </div>
+                  <p className="mt-1.5 text-[13px] text-muted">
                     {client.industry ? `${client.industry} · ` : ""}
                     {client._count.campaigns} campaign
-                    {client._count.campaigns === 1 ? "" : "s"} ·{" "}
-                    <span className={connected ? "text-emerald-400/90" : "text-amber-400/90"}>
-                      {connected ? "Meta connected" : "Meta not connected"}
-                    </span>
-                    {!client.intake && " · setup unfinished"}
+                    {client._count.campaigns === 1 ? "" : "s"}
                   </p>
                 </div>
-                <div data-tour="open" className="flex items-center gap-2">
-                  <form action={switchClientAction.bind(null, client.id)}>
-                    <button
-                      type="submit"
-                      className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-white transition hover:brightness-110"
-                    >
+
+                {/* Stacks under the name on a phone rather than being squeezed
+                    beside it, which is where two buttons used to wrap to three
+                    lines each. */}
+                <div data-tour="open" className="flex w-full items-center gap-2 sm:w-auto">
+                  <form action={switchClientAction.bind(null, client.id)} className="flex-1 sm:flex-none">
+                    <button type="submit" className={`w-full ${primaryButtonClass}`}>
                       Open
                     </button>
                   </form>
-                  <form action={removeClientAction.bind(null, client.id)}>
+                  <form action={removeClientAction.bind(null, client.id)} className="flex-1 sm:flex-none">
                     <button
                       type="submit"
-                      className="rounded-full border border-white/15 px-4 py-2 text-xs text-neutral-400 transition hover:border-red-500/40 hover:text-red-300"
+                      className="w-full rounded-full border border-[color:var(--mairo-line)] px-5 py-2.5 text-sm text-muted transition-colors hover:border-alert/40 hover:text-alert"
                     >
                       Remove
                     </button>
                   </form>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </MairoCard>
+          );
+        })}
+      </div>
 
-        <AddClientForm room={room} allowed={allowed} />
+      <AddClientForm room={room} allowed={allowed} />
 
-        <GettingStarted state={guide} />
-      </main>
-    </div>
+      <GettingStarted state={guide} />
+    </>
   );
 }

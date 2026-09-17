@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { primaryButtonClass } from "@/components/ui";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { AmbientSky } from "@/components/ambient-sky";
 import { limitsFor, planFor } from "@/lib/plans";
 import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/lib/ai/agents";
 
@@ -185,11 +185,11 @@ export default async function GuidePage() {
     },
     {
       n: "08",
-      title: "The AI specialists",
+      title: "MAIRO AI",
       body: (
         <>
           <p>
-            Three of them, unlimited on every plan, and they answer in the context of
+            One assistant, unlimited on every plan, and it answers in the context of
             whichever client you have open — ask about the gym and you get the gym&apos;s
             numbers.
           </p>
@@ -236,62 +236,54 @@ export default async function GuidePage() {
   ];
 
   return (
-    <div className="relative min-h-screen text-white">
-      <AmbientSky />
+    <>
+      <h1
+        className="font-light leading-[1.05] tracking-[-0.025em] text-white"
+        style={{ fontSize: "clamp(30px, 4.4vw, 50px)" }}
+      >
+        Running MAIRO
+        <br />
+        <span className="text-faint">for other people.</span>
+      </h1>
+      <p className="mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted">
+        Ten minutes of reading that will save you a month of working it out. Written for the
+        job you are actually doing — running ads for businesses that are not yours.
+      </p>
 
-      <header className="border-b border-white/[0.07] bg-black/50">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-          <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
-          <Link href="/clients" className="text-xs text-neutral-400 transition hover:text-white">
-            Back to clients
-          </Link>
-        </div>
-      </header>
+      <div className="mt-14 space-y-14">
+        {sections.map((s) => (
+          <section key={s.n}>
+            <div className="flex items-baseline gap-4">
+              <span className="font-mono text-[11px] tabular-nums tracking-[0.2em] text-blue-bright/70">
+                {s.n}
+              </span>
+              <h2 className="text-[19px] font-light tracking-[-0.01em] text-white">{s.title}</h2>
+            </div>
+            <div className="mt-4 space-y-4 pl-0 text-[13.5px] leading-relaxed text-muted sm:pl-10">
+              {s.body}
+            </div>
+          </section>
+        ))}
+      </div>
 
-      <main className="mx-auto max-w-3xl px-6 py-14">
-        <h1
-          className="font-light leading-[1.05] tracking-[-0.025em]"
-          style={{ fontSize: "clamp(32px, 5vw, 56px)" }}
-        >
-          Running MAIRO
-          <br />
-          <span className="text-neutral-600">for other people.</span>
-        </h1>
-        <p className="mt-6 max-w-xl leading-relaxed text-neutral-400">
-          Ten minutes of reading that will save you a month of working it out. Written for
-          the job you are actually doing — running ads for businesses that are not yours.
+      <div
+        className="mt-16 rounded-[var(--radius-panel)] border p-6 sm:p-7"
+        style={{
+          backgroundImage: "var(--mairo-glass)",
+          borderColor: "var(--mairo-line)",
+          boxShadow: "var(--mairo-glow-soft)",
+        }}
+      >
+        <p className="text-[15px] font-medium text-white">Still stuck on something?</p>
+        <p className="mt-2 max-w-lg text-[13.5px] leading-relaxed text-muted">
+          Open any client and ask MAIRO. It knows how the product works and it answers about
+          the account you have open.
         </p>
-
-        <div className="mt-16 space-y-14">
-          {sections.map((s) => (
-            <section key={s.n}>
-              <div className="flex items-baseline gap-4">
-                <span className="text-[11px] tabular-nums tracking-[0.2em] text-neutral-600">
-                  {s.n}
-                </span>
-                <h2 className="text-xl font-light tracking-[-0.01em]">{s.title}</h2>
-              </div>
-              <div className="mt-4 space-y-4 pl-0 text-sm leading-relaxed text-neutral-400 sm:pl-10">
-                {s.body}
-              </div>
-            </section>
-          ))}
-        </div>
-
-        <div className="mt-20 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-7">
-          <p className="text-sm">Still stuck on something?</p>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-            Open any client and ask the Support specialist. It knows how MAIRO works and it
-            answers about the account you have open.
-          </p>
-          <Link
-            href="/clients"
-            className="mt-6 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-6 py-3 text-xs font-medium uppercase tracking-[0.14em] text-white transition hover:brightness-110"
-          >
-            Back to your clients
-          </Link>
-        </div>
-      </main>
-    </div>
+        <Link href="/clients" className={`mt-6 ${primaryButtonClass}`}>
+          Back to your clients
+          <span aria-hidden>→</span>
+        </Link>
+      </div>
+    </>
   );
 }

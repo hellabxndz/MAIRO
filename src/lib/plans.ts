@@ -161,7 +161,7 @@ export const FREELANCER_PLANS: Plan[] = [
       "3 active campaigns per client",
       "6 creative requests a month per client",
       "Switch between clients from one login",
-      "All three AI specialists on every client",
+      "MAIRO AI on every client, in that client's context",
       "Meta + TikTok, with separate ad accounts per client",
     ],
   },
@@ -223,7 +223,7 @@ const UNSUBSCRIBED: Plan = {
   headline: "Nothing runs yet",
   features: [
     "Look around the dashboard",
-    "Talk to the AI specialists",
+    "Talk to MAIRO AI",
     "Choose a plan whenever you're ready",
   ],
 };

@@ -1,14 +1,17 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { AmbientSky } from "@/components/ambient-sky";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
 import { FREELANCER_PLANS, planFor, billingEnforced } from "@/lib/plans";
 import { purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
+import { PageHeader, Card, Badge, secondaryButtonClass } from "@/components/ui";
 
 // Billing for a freelancer.
+//
+// The page's own header is gone — the shell in ../layout.tsx draws the
+// wordmark, the workspace and the navigation, so this had a second copy of all
+// three plus a "Back to clients" link that was the only way out of the screen.
 //
 // It needs its own screen. A business owner manages their plan in
 // /dashboard/settings, which sits inside an organization — but a freelancer's
@@ -43,113 +46,89 @@ export default async function FreelancerBillingPage() {
   const buyable = purchasableTiers();
 
   return (
-    <div className="relative min-h-screen text-white">
-      <AmbientSky />
+    <>
+      <PageHeader
+        title="Plan and billing"
+        description="Your plan covers every client business in your studio. The businesses themselves are never billed."
+      />
 
-      <header className="border-b border-white/[0.07] bg-black/50">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
-          <div>
-            <p className="text-sm font-light tracking-[0.28em]">MAIRO</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
-              {workspace.name}
-            </p>
-          </div>
-          <Link href="/clients" className="text-xs text-neutral-400 transition hover:text-white">
-            Back to clients
-          </Link>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <h1
-          className="font-light tracking-[-0.02em]"
-          style={{ fontSize: "clamp(30px, 4vw, 46px)" }}
-        >
-          Plan and billing
-        </h1>
-        <p className="mt-3 max-w-lg text-sm leading-relaxed text-neutral-400">
-          Your plan covers every client business in your studio. The businesses
-          themselves are never billed.
+      <Card className="mb-10">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">Current plan</p>
+        <p className="mt-3 text-[26px] font-light tracking-[-0.02em] text-white">
+          {subscribed
+            ? current.name
+            : billingEnforced()
+              ? "No plan"
+              : `${current.name} (free while in launch)`}
         </p>
-
-        <div className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6">
-          <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Current plan</p>
-          <p className="mt-3 text-2xl font-light">
-            {subscribed ? current.name : billingEnforced() ? "No plan" : `${current.name} (free while in launch)`}
+        <p className="mt-2 text-[13px] text-muted">
+          {clientCount} client {clientCount === 1 ? "business" : "businesses"} ·{" "}
+          {current.limits.clients ?? 0} included
+        </p>
+        {workspace.currentPeriodEnd && subscribed && (
+          <p className="mt-2 text-[12px] text-faint">
+            Renews {workspace.currentPeriodEnd.toLocaleDateString()}
           </p>
-          <p className="mt-2 text-sm text-neutral-500">
-            {clientCount} client {clientCount === 1 ? "business" : "businesses"} ·{" "}
-            {current.limits.clients ?? 0} included
-          </p>
-          {workspace.currentPeriodEnd && subscribed && (
-            <p className="mt-2 text-xs text-neutral-600">
-              Renews {workspace.currentPeriodEnd.toLocaleDateString()}
-            </p>
-          )}
-          {workspace.stripeCustomerId && (
-            <form action={openBillingPortalAction} className="mt-5">
-              <button
-                type="submit"
-                className="rounded-full border border-white/15 px-5 py-2.5 text-xs text-neutral-300 transition hover:border-white/40 hover:text-white"
-              >
-                Manage subscription
-              </button>
-            </form>
-          )}
-        </div>
+        )}
+        {workspace.stripeCustomerId && (
+          <form action={openBillingPortalAction} className="mt-5">
+            <button type="submit" className={secondaryButtonClass}>
+              Manage subscription
+            </button>
+          </form>
+        )}
+      </Card>
 
-        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] sm:grid-cols-2">
-          {FREELANCER_PLANS.map((plan) => {
-            const isCurrent = subscribed && workspace.subscriptionTier === plan.tier;
-            const available = buyable.includes(plan.tier as never);
-            return (
-              <div key={plan.tier} className="flex h-full flex-col bg-black/60 p-7">
-                <div className="flex items-baseline justify-between">
-                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                    {plan.name}
-                  </p>
-                  {isCurrent && (
-                    <span className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-emerald-300/90">
-                      Current
-                    </span>
-                  )}
-                </div>
-                <p className="mt-5 text-3xl font-light tabular-nums">
-                  ${plan.priceMonthly}
-                  <span className="ml-1 text-sm text-neutral-600">/mo</span>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {FREELANCER_PLANS.map((plan) => {
+          const isCurrent = subscribed && workspace.subscriptionTier === plan.tier;
+          const available = buyable.includes(plan.tier as never);
+          return (
+            <Card key={plan.tier} className="flex h-full flex-col">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-faint">
+                  {plan.name}
                 </p>
-                <p className="mt-3 text-xs text-neutral-500">{plan.spendGuidance}</p>
-                <ul className="mt-6 flex-1 space-y-2.5 text-sm text-neutral-400">
-                  {/* features lists only what this plan adds, so the plan it
-                      builds on has to be named — otherwise the dearer card
-                      reads as the smaller one. */}
-                  {plan.inherits && (
-                    <li className="flex gap-3 text-neutral-300">
-                      <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-600" />
-                      Everything in {plan.inherits}, plus:
-                    </li>
-                  )}
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-3">
-                      <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {isCurrent ? (
-                  <p className="mt-6 text-xs text-neutral-600">You&apos;re on this plan.</p>
-                ) : available ? (
-                  <PlanButton tier={plan.tier} label={`Choose ${plan.name}`} />
-                ) : (
-                  <p className="mt-6 text-xs text-neutral-600">
-                    Not available yet — no price is configured for this plan.
-                  </p>
-                )}
+                {isCurrent && <Badge tone="green">Current</Badge>}
               </div>
-            );
-          })}
-        </div>
-      </main>
-    </div>
+              <p className="mt-5 text-[30px] font-light tabular-nums tracking-[-0.02em] text-white">
+                ${plan.priceMonthly}
+                <span className="ml-1 text-[14px] text-faint">/mo</span>
+              </p>
+              <p className="mt-3 text-[12.5px] text-muted">{plan.spendGuidance}</p>
+              <ul className="mt-6 flex-1 space-y-2.5 text-[13.5px] text-muted">
+                {/* features lists only what this plan adds, so the plan it
+                    builds on has to be named — otherwise the dearer card
+                    reads as the smaller one. */}
+                {plan.inherits && (
+                  <li className="flex gap-3 text-white/85">
+                    <span className="mt-[9px] h-px w-3 shrink-0 bg-blue-bright/70" />
+                    Everything in {plan.inherits}, plus:
+                  </li>
+                )}
+                {plan.features.map((f) => (
+                  <li key={f} className="flex gap-3">
+                    <span
+                      className="mt-[9px] h-px w-3 shrink-0"
+                      style={{ background: "var(--mairo-line-lit)" }}
+                    />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {isCurrent ? (
+                <p className="mt-6 text-[12px] text-faint">You&apos;re on this plan.</p>
+              ) : available ? (
+                <PlanButton tier={plan.tier} label={`Choose ${plan.name}`} />
+              ) : (
+                <p className="mt-6 text-[12px] text-faint">
+                  Not available yet — no price is configured for this plan.
+                </p>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+    </>
   );
 }
