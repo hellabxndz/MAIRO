@@ -3,6 +3,7 @@ import { retryStuckReviews } from "@/lib/creatives/review-run";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
+import { announceMonthlyReports } from "@/lib/reports/monthly";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -61,7 +62,11 @@ export async function GET(req: Request) {
   // two updates that nobody else can trigger — "something needs attention" and
   // the weekly summary — need somebody to go and look. It costs nothing for an
   // account that has not asked to be texted.
+  // Only does anything in the first few days of a month, and only for
+  // businesses whose month had advertising in it.
+  const reports = await announceMonthlyReports();
+
   const texts = await sweepSmsNotifications();
 
-  return NextResponse.json({ reviews, leads, insights, texts });
+  return NextResponse.json({ reviews, leads, insights, reports, texts });
 }

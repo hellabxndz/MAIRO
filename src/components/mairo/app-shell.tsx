@@ -66,6 +66,13 @@ const I = {
       <path d="M4.5 13l3.4-4 3 2.6L17 5.5" />
     </>
   ),
+  reports: (
+    <>
+      <path d="M5 3h7l3 3v11H5z" />
+      <path d="M12 3v3h3" />
+      <path d="M7.5 11h5M7.5 13.5h3.5" />
+    </>
+  ),
   mairo: (
     <>
       <circle cx="10" cy="10" r="6.6" />
@@ -127,6 +134,7 @@ export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} /> },
   { href: "/dashboard/audiences", label: "Audiences", icon: <Icon d={I.audiences} /> },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
+  { href: "/dashboard/reports", label: "Reports", icon: <Icon d={I.reports} /> },
   { href: "/dashboard/agents", label: "Mairo AI", icon: <Icon d={I.mairo} /> },
   { href: "/dashboard/integrations", label: "Integrations", icon: <Icon d={I.integrations} /> },
 ];
