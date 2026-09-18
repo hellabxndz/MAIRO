@@ -46,14 +46,25 @@ const MIN_SPEND_CENTS = 2000;
 
 export function campaignHealth(
   metrics: PlatformMetrics | null,
-  opts: { live: boolean } = { live: true },
+  opts: { live: boolean; scope?: "campaign" | "account" } = { live: true },
 ): CampaignHealth {
+  // The same function reads one campaign and the whole account, and the two
+  // need different nouns — the dashboard saying "this campaign" over an
+  // account-wide figure is the kind of small wrongness that makes somebody
+  // stop trusting the number next to it.
+  const it = opts.scope === "account" ? "your advertising" : "this campaign";
   if (!opts.live) {
     return {
       level: "unknown",
       label: "Not running",
-      summary: "This campaign is not live, so there is nothing to measure yet.",
-      note: "MAIRO starts watching the moment it launches.",
+      summary:
+        opts.scope === "account"
+          ? "Nothing is running yet, so there is nothing to measure."
+          : "This campaign is not live, so there is nothing to measure yet.",
+      note:
+        opts.scope === "account"
+          ? "MAIRO starts watching the moment your first campaign launches."
+          : "MAIRO starts watching the moment it launches.",
     };
   }
 
@@ -63,7 +74,7 @@ export function campaignHealth(
     return {
       level: "unknown",
       label: "No data yet",
-      summary: "The platform has not reported any figures for this campaign yet.",
+      summary: `The platform has not reported any figures for ${it} yet.`,
       note: "Numbers usually appear within a few hours of launch.",
     };
   }

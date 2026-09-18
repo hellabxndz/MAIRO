@@ -5,6 +5,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
 import { AppShell } from "@/components/mairo/app-shell";
+import { MairoAssistant } from "@/components/mairo/assistant";
+import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
+import { hasActivePlan } from "@/lib/readiness";
 import { viewMode } from "@/lib/view-mode";
 import { Tour } from "@/components/tour";
 import { hasSeenTour } from "@/lib/actions/tour-actions";
@@ -76,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [organization, intake, metaAccount, seenTour, leadForm] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, subscriptionTier: true },
+      select: { name: true, subscriptionTier: true, subscriptionStatus: true },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
@@ -104,6 +107,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const mode = await viewMode();
+
+  // The assistant's thread. Same thread the full-page chat uses, so the panel
+  // and the page are one conversation rather than two that each forget the
+  // other. Created lazily on first dashboard load and reused after that.
+  const assistant =
+    organization && hasActivePlan(organization) && session.user.id
+      ? await (async () => {
+          const thread = await findOrCreateThread(session.user.id!, organizationId, "SUPPORT");
+          return { threadId: thread.id, messages: await loadThreadMessages(thread.id) };
+        })()
+      : null;
 
   return (
     <AppShell
@@ -181,6 +195,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
       {children}
+
+      {/* MAIRO, reachable from every screen. Mounted here rather than per page
+          for the same reason the tour is: it has to be available wherever
+          somebody gets stuck, and the thread is the account's, not the page's.
+
+          Only for accounts whose plan includes it — the endpoint costs real
+          money to serve and already refuses without one, so a launcher that
+          opens onto a refusal would be a button that lies. */}
+      {assistant && (
+        <MairoAssistant
+          threadId={assistant.threadId}
+          initialMessages={assistant.messages}
+          businessName={organization?.name ?? "your business"}
+        />
+      )}
     </AppShell>
   );
 }

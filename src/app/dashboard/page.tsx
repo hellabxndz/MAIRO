@@ -18,6 +18,8 @@ import { readinessFor } from "@/lib/readiness";
 import { ReadinessPanel } from "@/components/readiness-panel";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { ResultsNote } from "@/components/results-disclaimer";
+import { campaignHealth } from "@/lib/campaigns/health";
+import { organizationActions } from "@/lib/campaigns/action-log";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -111,6 +113,13 @@ export default async function DashboardOverviewPage() {
   // thing the mode decides is how much of it to put on the screen, which is
   // exactly the guarantee that the two views can never disagree about the
   // state of an account.
+  // The account as a whole, and what MAIRO has actually changed. Both read the
+  // same way the campaign screen does, so the dashboard and a campaign can
+  // never describe the same state differently.
+  const anyLive = campaigns.some((c) => c.status === "ACTIVE");
+  const accountHealth = campaignHealth(performance.total, { live: anyLive, scope: "account" });
+  const actions = await organizationActions(organizationId, 6);
+
   if ((await viewMode()) === "simple") {
     return (
       <SimpleDashboard
@@ -124,6 +133,8 @@ export default async function DashboardOverviewPage() {
         }))}
         notices={recommendations.map((r) => r.recommendation.headline)}
         anyConnected={anyConnected}
+        health={accountHealth}
+        actions={actions}
       />
     );
   }

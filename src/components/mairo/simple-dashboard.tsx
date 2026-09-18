@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import type { OrganizationReport } from "@/lib/ad-platforms/performance";
 import { GlassPanel, MairoButton, MairoCard, AIStatus } from "@/components/mairo";
 import { ResultsNote } from "@/components/results-disclaimer";
+import type { CampaignHealth } from "@/lib/campaigns/health";
+import type { ActionEntry } from "@/lib/campaigns/action-log";
+import { CampaignHealthPanel, AIActionCard } from "@/components/mairo/campaign-parts";
 
 // Simple View, built from the MAIRO dashboard reference.
 //
@@ -235,6 +238,10 @@ export type SimpleDashboardProps = {
   campaigns: { id: string; name: string; status: string; platforms: string[] }[];
   notices: string[];
   anyConnected: boolean;
+  /** One word and one sentence for the account as a whole. */
+  health: CampaignHealth;
+  /** What MAIRO has changed by itself, newest first. Real rows only. */
+  actions: ActionEntry[];
 };
 
 function greeting(): string {
@@ -263,6 +270,8 @@ export function SimpleDashboard({
   campaigns,
   notices,
   anyConnected,
+  health,
+  actions,
 }: SimpleDashboardProps) {
   const t = performance.total;
 
@@ -373,6 +382,39 @@ export function SimpleDashboard({
       {/* ================= campaigns + assistant ================= */}
       <div className="grid gap-4 xl:grid-cols-[1.55fr_1fr]">
         {/* ---- Your campaigns ---- */}
+        {/* How it is going, then what MAIRO has been doing about it. This is the
+            whole promise of the product in two panels: somebody who does not
+            know what CPA means can still tell whether their advertising is
+            working and whether anything is being done. */}
+        <CampaignHealthPanel health={health} className="mb-6" />
+
+        <GlassPanel className="mb-6 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[16px] font-medium text-white">What Mairo is doing</h2>
+            {actions.length > 0 && (
+              <Link
+                href="/dashboard/campaigns"
+                className="text-[12px] text-blue-bright hover:text-white"
+              >
+                See all
+              </Link>
+            )}
+          </div>
+          {actions.length === 0 ? (
+            <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-muted">
+              {anyConnected
+                ? "Nothing has needed changing yet. Mairo leaves a campaign alone while the platform is still learning who to show it to — and every change it does make will appear here, with the numbers behind it."
+                : "Once a campaign is running, everything Mairo changes shows up here — what it changed, and why."}
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {actions.slice(0, 4).map((a) => (
+                <AIActionCard key={a.id} entry={a} showCampaign />
+              ))}
+            </div>
+          )}
+        </GlassPanel>
+
         <GlassPanel className="p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-medium text-white">Your campaigns</h2>
