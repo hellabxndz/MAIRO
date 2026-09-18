@@ -10,6 +10,9 @@ import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { platformName } from "@/lib/ad-platforms/registry";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import type { AdPlatform } from "@/generated/prisma/enums";
+import { compare, metric } from "@/lib/analytics/metrics";
+import { parseRange, RANGE_KEYS, rangeInfo, type RangeKey } from "@/lib/analytics/ranges";
+import { MetricTile } from "@/components/mairo/metric-tile";
 
 // Everything, in one place, with the ability to look at one network at a time.
 //
@@ -46,7 +49,7 @@ function seconds(value: number | null): string {
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ platform?: string }>;
+  searchParams: Promise<{ platform?: string; range?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
@@ -55,9 +58,20 @@ export default async function AnalyticsPage({
   const params = await searchParams;
   const filter: Filter =
     params.platform === "meta" ? "meta" : params.platform === "tiktok" ? "tiktok" : "all";
+  const rangeKey: RangeKey = parseRange(params.range);
+  const period = rangeInfo(rangeKey);
 
-  const [report, entitlements] = await Promise.all([
-    fetchOrganizationPerformance(organizationId),
+  // The window, and the window before it. Both fetched together so the page
+  // can say how a figure moved rather than only what it is — which is the
+  // difference between a number and a fact somebody can act on.
+  //
+  // The comparison is best-effort: if the previous window cannot be read, the
+  // page shows the current figures with no change line rather than failing.
+  const [report, previousReport, entitlements] = await Promise.all([
+    fetchOrganizationPerformance(organizationId, period.range ?? undefined),
+    period.previous
+      ? fetchOrganizationPerformance(organizationId, period.previous).catch(() => null)
+      : Promise.resolve(null),
     entitlementsFor(organizationId),
   ]);
 
@@ -69,6 +83,21 @@ export default async function AnalyticsPage({
       ? report.total
       : (report.byPlatform.find((p) => p.platform === selected)?.metrics ??
         report.total);
+
+  const previousShown: PlatformMetrics | null =
+    previousReport === null
+      ? null
+      : selected === null
+        ? previousReport.total
+        : (previousReport.byPlatform.find((p) => p.platform === selected)?.metrics ?? null);
+
+  /** A change line for one figure, or nothing when there is no honest one. */
+  const since = period.previousLabel;
+  const change = (
+    current: number | null,
+    prev: number | null,
+    key: Parameters<typeof metric>[0],
+  ) => (since ? compare(current, prev, metric(key).direction, since) : undefined);
 
   const available = report.byPlatform.map((p) => p.platform);
   const tiktokReport = report.byPlatform.find((p) => p.platform === "TIKTOK");
@@ -90,12 +119,36 @@ export default async function AnalyticsPage({
         </div>
       )}
 
+      {/* When, then where. The period changes what every figure on the page
+          means, so it comes first. */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {RANGE_KEYS.map((key) => {
+          const info = rangeInfo(key);
+          const query = new URLSearchParams();
+          if (key !== "all") query.set("range", key);
+          if (filter !== "all") query.set("platform", filter);
+          const qs = query.toString();
+          return (
+            <FilterTab
+              key={key}
+              href={`/dashboard/analytics${qs ? `?${qs}` : ""}`}
+              label={info.label}
+              active={rangeKey === key}
+            />
+          );
+        })}
+      </div>
+
       {available.length > 1 && (
         <div className="mb-6 flex flex-wrap gap-2">
-          <FilterTab href="/dashboard/analytics" label="All platforms" active={filter === "all"} />
+          <FilterTab
+            href={rangeKey === "all" ? "/dashboard/analytics" : `/dashboard/analytics?range=${rangeKey}`}
+            label="All platforms"
+            active={filter === "all"}
+          />
           {available.includes("META") && (
             <FilterTab
-              href="/dashboard/analytics?platform=meta"
+              href={`/dashboard/analytics?platform=meta${rangeKey === "all" ? "" : `&range=${rangeKey}`}`}
               label="Meta"
               active={filter === "meta"}
               platform="META"
@@ -103,7 +156,7 @@ export default async function AnalyticsPage({
           )}
           {available.includes("TIKTOK") && (
             <FilterTab
-              href="/dashboard/analytics?platform=tiktok"
+              href={`/dashboard/analytics?platform=tiktok${rangeKey === "all" ? "" : `&range=${rangeKey}`}`}
               label="TikTok"
               active={filter === "tiktok"}
               platform="TIKTOK"
@@ -134,20 +187,65 @@ export default async function AnalyticsPage({
             </div>
 
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-              <Figure label="Spend" value={money(shown.spendCents)} large />
-              <Figure label="Revenue" value={money(shown.revenueCents)} large />
-              <Figure label="ROAS" value={ratio(shown.roas)} large />
-              <Figure label="Purchases" value={count(shown.purchases)} large />
-              <Figure label="Cost per purchase" value={money(shown.costPerPurchaseCents)} large />
+              <MetricTile
+                info={metric("spend")}
+                value={money(shown.spendCents)}
+                comparison={change(shown.spendCents, previousShown?.spendCents ?? null, "spend")}
+                large
+              />
+              <MetricTile
+                info={metric("revenue")}
+                value={money(shown.revenueCents)}
+                comparison={change(shown.revenueCents, previousShown?.revenueCents ?? null, "revenue")}
+                large
+              />
+              <MetricTile
+                info={metric("roas")}
+                value={ratio(shown.roas)}
+                comparison={change(shown.roas, previousShown?.roas ?? null, "roas")}
+                large
+              />
+              <MetricTile
+                info={metric("purchases")}
+                value={count(shown.purchases)}
+                comparison={change(shown.purchases, previousShown?.purchases ?? null, "purchases")}
+                large
+              />
+              <MetricTile
+                info={metric("costPerPurchase")}
+                value={money(shown.costPerPurchaseCents)}
+                comparison={change(
+                  shown.costPerPurchaseCents,
+                  previousShown?.costPerPurchaseCents ?? null,
+                  "costPerPurchase",
+                )}
+                large
+              />
             </div>
 
             <div className="mt-8 grid grid-cols-2 gap-6 border-t border-white/[0.06] pt-6 sm:grid-cols-3 lg:grid-cols-6">
-              <Figure label="Impressions" value={count(shown.impressions)} />
-              <Figure label="Reach" value={count(shown.reach)} />
-              <Figure label="Clicks" value={count(shown.clicks)} />
-              <Figure label="CTR" value={percent(shown.ctr)} />
-              <Figure label="CPC" value={money(shown.cpcCents)} />
-              <Figure label="CPM" value={money(shown.cpmCents)} />
+              <MetricTile info={metric("impressions")} value={count(shown.impressions)} />
+              <MetricTile info={metric("reach")} value={count(shown.reach)} />
+              <MetricTile
+                info={metric("clicks")}
+                value={count(shown.clicks)}
+                comparison={change(shown.clicks, previousShown?.clicks ?? null, "clicks")}
+              />
+              <MetricTile
+                info={metric("ctr")}
+                value={percent(shown.ctr)}
+                comparison={change(shown.ctr, previousShown?.ctr ?? null, "ctr")}
+              />
+              <MetricTile
+                info={metric("cpc")}
+                value={money(shown.cpcCents)}
+                comparison={change(shown.cpcCents, previousShown?.cpcCents ?? null, "cpc")}
+              />
+              <MetricTile
+                info={metric("cpm")}
+                value={money(shown.cpmCents)}
+                comparison={change(shown.cpmCents, previousShown?.cpmCents ?? null, "cpm")}
+              />
             </div>
           </Card>
 

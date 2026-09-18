@@ -29,7 +29,8 @@
     "check:automation": "tsx scripts/check-automation.ts",
     "check:notifications": "tsx scripts/check-notifications.ts",
     "check:memory": "tsx scripts/check-memory.ts",
-    "check:reports": "tsx scripts/check-reports.ts"
+    "check:reports": "tsx scripts/check-reports.ts",
+    "check:analytics": "tsx scripts/check-analytics.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",
