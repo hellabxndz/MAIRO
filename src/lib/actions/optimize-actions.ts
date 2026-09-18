@@ -232,9 +232,10 @@ export async function dismissRecommendationAction(
 // --- Auto Optimize ---------------------------------------------------------
 
 const autoOptimizeSchema = z.object({
-  enabled: z.boolean(),
+  level: z.enum(["MANUAL", "ASSISTED", "AUTOPILOT"]),
   maxDailyBudget: z.coerce.number().min(1),
   maxDailyIncreasePercent: z.coerce.number().min(1).max(100),
+  maxBudgetShiftPercent: z.coerce.number().min(1).max(100),
   minRoas: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   maxCpa: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   platforms: z.array(z.enum(["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"])),
@@ -250,14 +251,20 @@ export async function saveAutoOptimizeAction(
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  if (!(await can(organizationId, "auto_optimize"))) {
-    return { error: `Auto Optimize is part of the ${planFor("SCALE").name} plan.` };
+  // Manual is always allowed: it is the setting where MAIRO does nothing on
+  // its own, so gating it would mean a customer whose plan lapsed could not
+  // turn automation OFF — the exact wrong way round for a feature that spends
+  // money. Only the two levels that act are gated.
+  const wantsLevel = String(formData.get("level") ?? "MANUAL");
+  if (wantsLevel !== "MANUAL" && !(await can(organizationId, "auto_optimize"))) {
+    return { error: `Letting MAIRO act on its own is part of the ${planFor("SCALE").name} plan.` };
   }
 
   const parsed = autoOptimizeSchema.safeParse({
-    enabled: formData.get("enabled") === "on",
+    level: formData.get("level"),
     maxDailyBudget: formData.get("maxDailyBudget"),
     maxDailyIncreasePercent: formData.get("maxDailyIncreasePercent"),
+    maxBudgetShiftPercent: formData.get("maxBudgetShiftPercent"),
     minRoas: formData.get("minRoas") ?? "",
     maxCpa: formData.get("maxCpa") ?? "",
     platforms: formData.getAll("platforms"),
@@ -267,9 +274,14 @@ export async function saveAutoOptimizeAction(
   }
 
   const data = {
-    enabled: parsed.data.enabled,
+    level: parsed.data.level,
+    // Kept in step with the level rather than stored separately. Older code
+    // reads `enabled`, and a second field that can disagree with the level is
+    // a way for the product to act against what the settings page promises.
+    enabled: parsed.data.level !== "MANUAL",
     maxDailyBudgetCents: Math.round(parsed.data.maxDailyBudget * 100),
     maxDailyIncreasePercent: parsed.data.maxDailyIncreasePercent,
+    maxBudgetShiftPercent: parsed.data.maxBudgetShiftPercent,
     minRoas:
       parsed.data.minRoas === "" || parsed.data.minRoas === undefined
         ? null
@@ -326,9 +338,10 @@ export async function runAutoOptimize(organizationId: string): Promise<{
     const verdict = checkGuardrails({
       recommendation: item.recommendation,
       limits: {
-        enabled: settings.enabled,
+        level: settings.level,
         maxDailyBudgetCents: settings.maxDailyBudgetCents,
         maxDailyIncreasePercent: settings.maxDailyIncreasePercent,
+        maxBudgetShiftPercent: settings.maxBudgetShiftPercent,
         minRoas: settings.minRoas,
         maxCpaCents: settings.maxCpaCents,
         platforms: settings.platforms,

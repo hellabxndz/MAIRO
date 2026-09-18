@@ -158,7 +158,7 @@ export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   tiktok_growth: "TikTok Growth Mode",
   tiktok_account_setup: "MAIRO sets up your TikTok",
   social_posting: "MAIRO posts to your Instagram and TikTok",
-  auto_optimize: "Mairo Auto Optimize",
+  auto_optimize: "Assisted and Autopilot automation",
   advanced_analytics: "Advanced analytics",
 };
 

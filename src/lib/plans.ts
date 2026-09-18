@@ -125,7 +125,7 @@ export const PLANS: Plan[] = [
     features: [
       "MAIRO posts to your Instagram and TikTok for you",
       "Organic posts written from your approved creatives",
-      "Mairo Auto Optimize — MAIRO moves the budget itself",
+      "Assisted and Autopilot — MAIRO acts inside limits you set",
       "Advanced creative testing",
       "Priority campaign processing",
       "Future advertising platforms as they land",

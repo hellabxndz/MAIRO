@@ -121,6 +121,24 @@ export default async function DashboardOverviewPage() {
   const accountHealth = campaignHealth(performance.total, { live: anyLive, scope: "account" });
   const actions = await organizationActions(organizationId, 6);
 
+  // What is going out and what is allowed to move it. Both read here rather
+  // than inside the dashboard component, so the figures on the card are the
+  // same rows the rest of the page was rendered from.
+  const [intake, automation] = await Promise.all([
+    db.onboardingIntake.findUnique({
+      where: { organizationId },
+      select: { monthlyBudgetCents: true },
+    }),
+    db.autoOptimizeSettings.findUnique({
+      where: { organizationId },
+      select: { level: true },
+    }),
+  ]);
+
+  const dailyCents = campaigns
+    .filter((c) => c.status === "ACTIVE")
+    .reduce((total, c) => total + c.totalDailyBudgetCents, 0);
+
   if ((await viewMode()) === "simple") {
     return (
       <SimpleDashboard
@@ -137,6 +155,14 @@ export default async function DashboardOverviewPage() {
         health={accountHealth}
         actions={actions}
         assistantName={assistantNameOf(organization?.assistantName)}
+        spend={{
+          spentCents: performance.total.spendCents,
+          // Nothing running is not a daily budget of zero — it is no daily
+          // budget, which reads as a dash rather than as $0.
+          dailyCents: dailyCents > 0 ? dailyCents : null,
+          monthlyCents: intake?.monthlyBudgetCents ?? null,
+        }}
+        automationLevel={automation?.level ?? "MANUAL"}
       />
     );
   }

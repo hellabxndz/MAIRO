@@ -1,4 +1,5 @@
-import type { AdPlatform } from "@/generated/prisma/enums";
+import type { AdPlatform, AutomationLevel } from "@/generated/prisma/enums";
+import { mayDoAutomatically } from "@/lib/automation/levels";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import { platformName } from "@/lib/ad-platforms/registry";
 import { splitBudget, PLATFORM_MINIMUM_DAILY_CENTS, type Allocation } from "./allocation";
@@ -183,9 +184,19 @@ export function recommendReallocation(
 // --- automatic application -------------------------------------------------
 
 export type AutoOptimizeLimits = {
-  enabled: boolean;
+  /**
+   * How much MAIRO may do without asking.
+   *
+   * Moving budget is one of the actions in src/lib/automation/levels.ts, and
+   * the check below asks that module rather than deciding for itself — so a
+   * customer on Manual cannot have money moved by this path no matter what the
+   * rest of the row says.
+   */
+  level: AutomationLevel;
   maxDailyBudgetCents: number;
   maxDailyIncreasePercent: number;
+  /** The most of a campaign's own budget that may move in one day, per cent. */
+  maxBudgetShiftPercent: number;
   minRoas: number | null;
   maxCpaCents: number | null;
   platforms: AdPlatform[];
@@ -216,8 +227,17 @@ export function checkGuardrails(input: {
 }): GuardrailVerdict {
   const { recommendation, limits, totalDailyBudgetCents } = input;
 
-  if (!limits.enabled) {
-    return { allowed: false, reason: "Auto Optimize is off for this account." };
+  // The first and broadest gate. On Manual this is the whole answer, and on
+  // the other two it is still asked rather than assumed — which is what keeps
+  // the settings page's inventory and this function in agreement.
+  if (!mayDoAutomatically(limits.level, "shift-budget")) {
+    return {
+      allowed: false,
+      reason:
+        limits.level === "MANUAL"
+          ? "MAIRO is set to Manual on this account, so it recommends changes rather than making them."
+          : "Moving budget automatically is not permitted at this automation level.",
+    };
   }
 
   // Every platform being touched has to be one the customer allowed.
@@ -272,6 +292,22 @@ export function checkGuardrails(input: {
         }% daily cap.`,
       };
     }
+  }
+
+  // How much of the campaign moves in total, as distinct from how much any one
+  // platform grows. Ten points off Meta and ten onto TikTok passes every
+  // per-platform check above while still being a fifth of the budget changing
+  // hands in a day, which is the thing a customer setting "15%" meant to stop.
+  const moved =
+    recommendation.proposal.reduce(
+      (total, shift) => total + Math.max(0, shift.toPercent - shift.fromPercent),
+      0,
+    );
+  if (moved > limits.maxBudgetShiftPercent) {
+    return {
+      allowed: false,
+      reason: `This would move ${moved}% of the campaign's budget in one day, above the ${limits.maxBudgetShiftPercent}% you allowed.`,
+    };
   }
 
   // Performance floors. Below them, MAIRO may only reduce spend — a campaign

@@ -57,6 +57,20 @@ enum PlanStatus {
   COMPLETE
 }
 
+/// How much MAIRO may do without asking.
+///
+/// The meanings, and the inventory of exactly what each one permits, live in
+/// src/lib/automation/levels.ts — not here and not in the UI, so there is one
+/// answer to "what is MAIRO allowed to do" rather than three that drift.
+enum AutomationLevel {
+  /// MAIRO proposes, a person applies. Nothing moves on its own.
+  MANUAL
+  /// Reversible changes inside an existing budget happen automatically.
+  ASSISTED
+  /// Adds targeting and bids, still inside the customer's own ceilings.
+  AUTOPILOT
+}
+
 enum SubscriptionTier {
   NONE
   STARTER
@@ -901,7 +915,21 @@ model AutoOptimizeSettings {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String       @unique
 
+  /// How much MAIRO may do without asking.
+  ///
+  /// This replaced a bare on/off switch. `enabled` is kept in step with it —
+  /// MANUAL is off, the other two are on — because the guardrail check and a
+  /// good deal of older code read it, and a second field that can disagree
+  /// with this one is a way for the product to act against what the settings
+  /// page says it will do.
+  level AutomationLevel @default(MANUAL)
+
   enabled Boolean @default(false)
+
+  /// The largest share of a campaign's budget MAIRO may move in one day,
+  /// whole per cent. Distinct from maxDailyIncreasePercent, which caps how
+  /// much any single platform's share may grow; this caps the whole movement.
+  maxBudgetShiftPercent Int @default(15)
 
   /// Hard ceiling on total daily spend across every platform.
   maxDailyBudgetCents     Int

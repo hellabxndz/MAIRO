@@ -111,10 +111,14 @@ if (rec) {
 
   console.log("\n— guardrails —");
   const base = { recommendation: rec, totalDailyBudgetCents: 10000, currentTotalDailyBudgetCents: 10000 };
-  const limits = { enabled: true, maxDailyBudgetCents: 50000, maxDailyIncreasePercent: 100, minRoas: null, maxCpaCents: null, platforms: ["META","TIKTOK"] as const };
+  const limits = { level: "AUTOPILOT" as const, maxDailyBudgetCents: 50000, maxDailyIncreasePercent: 100, maxBudgetShiftPercent: 100, minRoas: null, maxCpaCents: null, platforms: ["META","TIKTOK"] as const };
 
-  check("refuses when Auto Optimize is off",
-    checkGuardrails({ ...base, limits: { ...limits, enabled: false, platforms:[...limits.platforms] } }).allowed === false);
+  check("refuses on Manual, where MAIRO only recommends",
+    checkGuardrails({ ...base, limits: { ...limits, level: "MANUAL", platforms:[...limits.platforms] } }).allowed === false);
+  check("allows on Assisted, where moving budget is permitted",
+    checkGuardrails({ ...base, limits: { ...limits, level: "ASSISTED", platforms:[...limits.platforms] } }).allowed === true);
+  check("refuses a move larger than the share the customer allowed",
+    checkGuardrails({ ...base, limits: { ...limits, maxBudgetShiftPercent: 1, platforms:[...limits.platforms] } }).allowed === false);
   check("refuses a platform the customer didn't allow",
     checkGuardrails({ ...base, limits: { ...limits, platforms: ["META"] } }).allowed === false);
   check("refuses a budget above the ceiling",

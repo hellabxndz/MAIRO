@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Card, PageHeader } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
-import { AutoOptimizeSection } from "./auto-optimize-section";
+import { AutomationSection } from "./automation-section";
 import { AutoLaunchSection } from "./auto-launch-section";
 import { AssistantSection } from "./assistant-section";
 import { autoLaunchIntent } from "@/lib/campaigns/auto-launch";
@@ -86,17 +86,18 @@ export default async function SettingsPage() {
       </div>
 
       <div className="mb-8">
-        <AutoOptimizeSection
+        <AutomationSection
           allowed={entitlements.auto_optimize}
           upgradePlanName={upgradeTarget.name}
           values={{
-            // Defaults chosen to be safe rather than useful: a ceiling of
-            // twice what they spend now, and a 20% daily step. Someone who
-            // switches this on without reading the fields gets conservative
-            // behaviour, not a blank cheque.
-            enabled: autoOptimize?.enabled ?? false,
+            // Defaults chosen to be safe rather than useful: Manual, a ceiling
+            // of twice what they spend now, and small steps. Someone who turns
+            // this up without reading the fields gets conservative behaviour,
+            // not a blank cheque.
+            level: autoOptimize?.level ?? "MANUAL",
             maxDailyBudget: autoOptimize ? autoOptimize.maxDailyBudgetCents / 100 : 100,
             maxDailyIncreasePercent: autoOptimize?.maxDailyIncreasePercent ?? 20,
+            maxBudgetShiftPercent: autoOptimize?.maxBudgetShiftPercent ?? 15,
             minRoas: autoOptimize?.minRoas ?? null,
             maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
             platforms: autoOptimize?.platforms ?? [],

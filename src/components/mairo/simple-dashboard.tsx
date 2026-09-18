@@ -5,6 +5,8 @@ import { GlassPanel, MairoButton, MairoCard, AIStatus } from "@/components/mairo
 import { ResultsNote } from "@/components/results-disclaimer";
 import type { CampaignHealth } from "@/lib/campaigns/health";
 import type { ActionEntry } from "@/lib/campaigns/action-log";
+import type { AutomationLevel } from "@/generated/prisma/enums";
+import { SpendControls, type SpendFigures } from "@/components/mairo/spend-controls";
 import { CampaignHealthPanel, AIActionCard } from "@/components/mairo/campaign-parts";
 
 // Simple View, built from the MAIRO dashboard reference.
@@ -244,6 +246,10 @@ export type SimpleDashboardProps = {
   actions: ActionEntry[];
   /** What this business calls its assistant. Default "Alex". */
   assistantName: string;
+  /** Money out, and the ceilings around it. */
+  spend: SpendFigures;
+  /** How much MAIRO may do without asking. */
+  automationLevel: AutomationLevel;
 };
 
 function greeting(): string {
@@ -275,6 +281,8 @@ export function SimpleDashboard({
   health,
   actions,
   assistantName,
+  spend,
+  automationLevel,
 }: SimpleDashboardProps) {
   const t = performance.total;
 
@@ -390,6 +398,11 @@ export function SimpleDashboard({
             know what CPA means can still tell whether their advertising is
             working and whether anything is being done. */}
         <CampaignHealthPanel health={health} className="mb-6" />
+
+        {/* Directly above the log of what MAIRO changed, because the two
+            questions are one question: what is it allowed to do, and what has
+            it done. Split across two screens they are much less reassuring. */}
+        <SpendControls figures={spend} level={automationLevel} className="mb-6" />
 
         <GlassPanel className="mb-6 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
