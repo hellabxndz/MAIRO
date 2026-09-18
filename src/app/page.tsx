@@ -10,6 +10,8 @@ import { ConceptDemo } from "@/components/concept-demo";
 import { AiConsole } from "@/components/ai-console";
 import { IntelligenceField } from "@/components/intelligence-field";
 import { MairoHero } from "@/components/mairo/hero";
+import { ProblemSection } from "@/components/mairo/problem-section";
+import { LiveDemo } from "@/components/mairo/live-demo";
 import { MairoButton } from "@/components/mairo";
 import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
@@ -31,8 +33,8 @@ const capabilities = [
     eyebrow: "Ask",
     title: "Talk to it\nlike a person.",
     body:
-      "Three specialists, always available. Ask why your cost per click moved, what to do with $500, whether a campaign is worth keeping. Plain English in, plain English back.",
-    panel: "Strategist",
+      "One assistant, always available, that knows your account. Ask why your cost per click moved, what to do with $500, whether a campaign is worth keeping. Plain English in, plain English back.",
+    panel: "Mairo",
     lines: [
       { who: "you", text: "why did my cost per click go up this week?" },
       {
@@ -103,6 +105,54 @@ export default function Home() {
       <SiteNav />
 
       <MairoHero />
+
+      {/* ── The problem, before the solution ─────────────────────────────
+
+          Directly under the hero on purpose. Somebody who has just read "let
+          MAIRO run your ads" needs to be reminded what running them yourself
+          actually involves, or the offer has nothing to land against. */}
+      <ProblemSection />
+
+      {/* ── Ten seconds to understand it ─────────────────────────────────
+
+          One sentence in, a strategy out. This is the section that has to do
+          the work for somebody who will not read the rest of the page. */}
+      <section id="demo" className="relative px-6 py-24 sm:px-10 sm:py-32">
+        <div className="mx-auto grid max-w-[1300px] items-center gap-12 lg:grid-cols-[1fr_minmax(380px,560px)] lg:gap-20">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-bright/80">
+              Watch Mairo work
+            </p>
+            <h2 className="mt-5 text-[clamp(28px,4.6vw,46px)] font-semibold leading-[1.1] tracking-[-0.025em] text-white">
+              Describe your business.
+              <br />
+              <span className="text-muted">Get a campaign back.</span>
+            </h2>
+            <p className="mt-6 max-w-lg text-[15px] leading-relaxed text-muted">
+              No objectives to pick, no bid strategy to choose, no attribution window to
+              understand. One sentence about what you sell and what you want, and Mairo comes
+              back with the plan, the split and the ads — for you to approve before anything
+              spends.
+            </p>
+            <div className="mt-8">
+              <MairoButton href="/sign-up">
+                Start free
+                <span aria-hidden>→</span>
+              </MairoButton>
+            </div>
+            {/* The figures in the panel are arithmetic on the stated $2,000,
+                not a customer's results. Saying so is cheaper than being
+                asked. */}
+            <p className="mt-6 max-w-lg text-[12px] leading-relaxed text-faint">
+              A worked example on a $2,000 month. Real accounts get their own numbers, and
+              Mairo can&rsquo;t promise a particular result — it works from what you tell it
+              and what the ad platforms report back.
+            </p>
+          </div>
+
+          <LiveDemo />
+        </div>
+      </section>
 
       {/* ── How it works ─────────────────────────────────────────────────
 
@@ -210,7 +260,7 @@ export default function Home() {
                         {c.lines.map((l, n) => (
                           <div key={n}>
                             <p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-600">
-                              {l.who === "you" ? "You" : "Strategist"}
+                              {l.who === "you" ? "You" : "Mairo"}
                             </p>
                             <p
                               className={`text-sm leading-relaxed ${
@@ -454,6 +504,56 @@ export default function Home() {
               </div>
             </Reveal>
           </div>
+        </div>
+      </section>
+
+      {/* ── Social proof, when there is any ──────────────────────────────
+
+          Structured and empty rather than filled with invented numbers. MAIRO
+          has no customers to quote yet, and a landing page that says "10,000
+          businesses" before it has ten is a page that has to be quietly
+          rewritten later — and, for a product asking people to trust it with
+          an advertising budget, the worst possible first impression to be
+          caught in.
+
+          The slots are here so that adding the first real case study is
+          dropping content into a layout rather than designing one. Until then
+          this section says, accurately, that it is early. */}
+      <section className="relative px-6 py-28 sm:px-10 sm:py-40">
+        <div className="mx-auto max-w-[1200px]">
+          <Reveal>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-bright/80">
+              Results
+            </p>
+            <h2 className="mt-5 max-w-3xl text-[clamp(26px,4.2vw,44px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white">
+              We&rsquo;d rather show you nothing than show you someone else&rsquo;s numbers.
+            </h2>
+            <p className="mt-6 max-w-2xl text-[15px] leading-relaxed text-muted">
+              MAIRO is new. When there are real campaigns with real figures behind them, they
+              will be here with the businesses&rsquo; names on them. Until then this space
+              stays empty on purpose — every number you see anywhere in this product is one
+              your own account produced.
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.15}>
+            <div className="mt-12 grid gap-3 sm:grid-cols-3">
+              {["Case studies", "Customer results", "What people say"].map((slot) => (
+                <div
+                  key={slot}
+                  className="rounded-2xl border border-dashed p-6"
+                  style={{ borderColor: "rgba(255,255,255,0.09)" }}
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/25">
+                    {slot}
+                  </p>
+                  <p className="mt-3 text-[13px] leading-relaxed text-white/35">
+                    Coming once there are real ones to show.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
