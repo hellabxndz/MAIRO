@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { hasActivePlan, readinessBrief, readinessFor } from "@/lib/readiness";
 import { agentModel } from "@/lib/ai/model";
 import { systemPromptFor } from "@/lib/ai/agents";
+import { memoryBrief, memoryProfile } from "@/lib/memory/profile";
 import type { AgentType } from "@/generated/prisma/enums";
 
 function lastUserText(messages: UIMessage[]): string | null {
@@ -108,6 +109,12 @@ export async function POST(req: Request) {
   // the kind of confidently wrong reply that stops people trusting it.
   const readiness = await readinessFor(threadOrgId, { checkFunding: true });
 
+  // What MAIRO knows about this business, and — the part that matters — what
+  // it does not. An assistant that has not been told its own blind spots fills
+  // them in confidently, and a confident guess about somebody's own business
+  // is the fastest way to lose them.
+  const memory = await memoryProfile(threadOrgId);
+
   await recordUserMessage(threadId, messages);
 
   // The assistant answers as whatever this business named it, about this
@@ -117,7 +124,7 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}`;
+  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}`;
 
   return stream(threadId, system, messages);
 }

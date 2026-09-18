@@ -9,6 +9,8 @@ import { GlassPanel, HudLabel, MairoButton } from "@/components/mairo";
 import { assistantNameOf, ASSISTANT_SKILLS, CLIENT_AGENT } from "@/lib/ai/agents";
 import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
 import { AssistantConsole } from "./assistant-console";
+import { memoryProfile } from "@/lib/memory/profile";
+import { MemoryPanel } from "@/components/mairo/memory-panel";
 
 // The assistant's own page.
 //
@@ -63,7 +65,7 @@ export default async function AssistantPage({
     );
   }
 
-  const [thread, live, creatives, changes, sms] = await Promise.all([
+  const [thread, live, creatives, changes, sms, memory] = await Promise.all([
     findOrCreateThread(session.user.id, organizationId, CLIENT_AGENT),
     db.mairoCampaign.count({ where: { organizationId, status: "ACTIVE" } }),
     db.platformCreative.count({ where: { organizationId } }),
@@ -77,6 +79,7 @@ export default async function AssistantPage({
       where: { organizationId },
       select: { verifiedAt: true, optedOutAt: true },
     }),
+    memoryProfile(organizationId),
   ]);
 
   const initialMessages = await loadThreadMessages(thread.id);
@@ -118,6 +121,13 @@ export default async function AssistantPage({
           autoAsk={ask === "changes" ? "I'd like some changes made to this campaign." : (ask ?? null)}
           aboutCampaignId={about ?? null}
         />
+      </div>
+
+      {/* Under the conversation rather than above it: somebody who came here
+          to ask something should reach the box first, and what MAIRO knows is
+          what they look at when the answer was thinner than they hoped. */}
+      <div className="mt-8">
+        <MemoryPanel profile={memory} assistantName={name} />
       </div>
 
       <section className="mt-10">
