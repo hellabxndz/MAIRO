@@ -7,6 +7,8 @@ import type { CampaignHealth } from "@/lib/campaigns/health";
 import type { ActionEntry } from "@/lib/campaigns/action-log";
 import type { AutomationLevel } from "@/generated/prisma/enums";
 import { SpendControls, type SpendFigures } from "@/components/mairo/spend-controls";
+import { InsightCards } from "@/components/mairo/insight-cards";
+import type { Notification } from "@/generated/prisma/client";
 import { CampaignHealthPanel, AIActionCard } from "@/components/mairo/campaign-parts";
 
 // Simple View, built from the MAIRO dashboard reference.
@@ -250,6 +252,8 @@ export type SimpleDashboardProps = {
   spend: SpendFigures;
   /** How much MAIRO may do without asking. */
   automationLevel: AutomationLevel;
+  /** Unread things MAIRO noticed without being asked. At most two. */
+  insights: Notification[];
 };
 
 function greeting(): string {
@@ -283,6 +287,7 @@ export function SimpleDashboard({
   assistantName,
   spend,
   automationLevel,
+  insights,
 }: SimpleDashboardProps) {
   const t = performance.total;
 
@@ -397,6 +402,11 @@ export function SimpleDashboard({
             whole promise of the product in two panels: somebody who does not
             know what CPA means can still tell whether their advertising is
             working and whether anything is being done. */}
+        {/* Before the health panel, because an insight is the thing MAIRO
+            wanted to say and the health grade is the thing it says every day.
+            Nothing renders here when there is nothing to report. */}
+        <InsightCards insights={insights} className="mb-6" />
+
         <CampaignHealthPanel health={health} className="mb-6" />
 
         {/* Directly above the log of what MAIRO changed, because the two

@@ -62,6 +62,27 @@ enum PlanStatus {
 /// The meanings, and the inventory of exactly what each one permits, live in
 /// src/lib/automation/levels.ts — not here and not in the UI, so there is one
 /// answer to "what is MAIRO allowed to do" rather than three that drift.
+/// What a notification is about. Drives the icon, the tone and which SMS
+/// preference governs it — the copy itself lives on the row, because it is
+/// written from that account's own figures.
+enum NotificationKind {
+  CAMPAIGN_LIVE
+  NEEDS_ATTENTION
+  BUDGET_OPPORTUNITY
+  CREATIVE_FATIGUE
+  CREATIVES_READY
+  MONTHLY_REPORT
+  PAYMENT_ISSUE
+  ACCOUNT_DISCONNECTED
+  MAIRO_ACTED
+}
+
+enum NotificationSeverity {
+  INFO
+  OPPORTUNITY
+  WARNING
+}
+
 enum AutomationLevel {
   /// MAIRO proposes, a person applies. Nothing moves on its own.
   MANUAL
@@ -205,6 +226,7 @@ model Organization {
   trackingProfile      TrackingProfile?
   gtmConnection        GtmConnection?
   leadForms            LeadForm[]
+  notifications        Notification[]
   smsPreference        SmsPreference?
   leads                Lead[]
   products             Product[]
@@ -260,6 +282,53 @@ model SmsPreference {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Something worth telling the business about, written down once.
+///
+/// The rule this model exists to enforce is that a notification is a fact, not
+/// a feeling. Every row is created from figures that were true at the time and
+/// carries them in `evidenceJson`, so "your cost per purchase went up" can
+/// still be checked a week later when the numbers have moved on.
+///
+/// `dedupeKey` is what stops it becoming spam. A detector that runs daily and
+/// finds the same fatigued creative every day would otherwise produce a
+/// notification a day about one problem; the key is unique per organization,
+/// so the second run updates nothing and creates nothing.
+model Notification {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  kind     NotificationKind
+  severity NotificationSeverity @default(INFO)
+
+  /// One line, in the customer's language.
+  title String
+  /// The detail, already written from this account's own numbers.
+  body  String  @db.Text
+
+  /// Where to go about it, when there is somewhere to go.
+  actionLabel String?
+  actionHref  String?
+
+  /// What it is about, for linking and for clearing it when that thing changes.
+  mairoCampaignId String?
+
+  /// The figures behind it, so it can be explained rather than just asserted.
+  evidenceJson String? @db.Text
+
+  /// Unique per organization. Two runs of the same detector over the same
+  /// situation produce the same key and therefore one row.
+  dedupeKey String
+
+  readAt      DateTime?
+  dismissedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, dedupeKey])
+  @@index([organizationId, createdAt])
 }
 
 model OnboardingIntake {

@@ -124,7 +124,7 @@ export default async function DashboardOverviewPage() {
   // What is going out and what is allowed to move it. Both read here rather
   // than inside the dashboard component, so the figures on the card are the
   // same rows the rest of the page was rendered from.
-  const [intake, automation] = await Promise.all([
+  const [intake, automation, insights] = await Promise.all([
     db.onboardingIntake.findUnique({
       where: { organizationId },
       select: { monthlyBudgetCents: true },
@@ -132,6 +132,13 @@ export default async function DashboardOverviewPage() {
     db.autoOptimizeSettings.findUnique({
       where: { organizationId },
       select: { level: true },
+    }),
+    // Unread only, and at most two. A proactive card that stays after it has
+    // been read becomes furniture, and four at once is a feed.
+    db.notification.findMany({
+      where: { organizationId, readAt: null, dismissedAt: null },
+      orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
+      take: 2,
     }),
   ]);
 
@@ -163,6 +170,7 @@ export default async function DashboardOverviewPage() {
           monthlyCents: intake?.monthlyBudgetCents ?? null,
         }}
         automationLevel={automation?.level ?? "MANUAL"}
+        insights={insights}
       />
     );
   }

@@ -205,6 +205,7 @@ export function AppShell({
   userName,
   showUpgrade = false,
   extraNav = [],
+  notifications,
   assistantName,
   footer,
 }: {
@@ -221,6 +222,8 @@ export function AppShell({
    * that call from the database.
    */
   extraNav?: NavEntry[];
+  /** The bell, when the layout had notifications to give it. */
+  notifications?: ReactNode;
   /**
    * What this business calls its assistant, for the nav entry.
    *
@@ -318,8 +321,9 @@ export function AppShell({
           MAIRO
         </Link>
         <span className="truncate text-[12px] text-faint">{businessName}</span>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-1.5">
           <ViewToggle mode={mode} />
+          {notifications}
           {/* The way to settings, billing and signing out on a phone, now that
               the bottom bar carries Analytics instead. */}
           <Link
@@ -344,10 +348,7 @@ export function AppShell({
             beside the screen. */}
         <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
           <ViewToggle mode={mode} />
-          {/* The reference also puts a notification bell here. There is no
-              notification system behind it yet, and a bell that never has
-              anything in it is a control that lies about what the product
-              does — it arrives with the feature. */}
+          {notifications}
           <Link
             href="/dashboard/account"
             className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"

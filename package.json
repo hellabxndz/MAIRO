@@ -26,7 +26,8 @@
     "check:leads": "tsx scripts/check-leads.ts",
     "check:env": "tsx scripts/check-env.ts",
     "check:assistant": "tsx scripts/check-assistant.ts",
-    "check:automation": "tsx scripts/check-automation.ts"
+    "check:automation": "tsx scripts/check-automation.ts",
+    "check:notifications": "tsx scripts/check-notifications.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",
