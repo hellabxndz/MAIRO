@@ -16,10 +16,13 @@ import { GlassPanel } from "@/components/mairo";
 // after it has been read stops being an interruption and becomes furniture,
 // and four of them at once is a feed. Everything else is in the centre.
 
-const TONE: Record<NotificationSeverity, { edge: string; text: string; label: string }> = {
-  INFO: { edge: "rgba(108,158,255,0.42)", text: "text-blue-bright", label: "MAIRO noticed" },
-  OPPORTUNITY: { edge: "rgba(52,211,153,0.42)", text: "text-live", label: "Opportunity" },
-  WARNING: { edge: "rgba(251,191,36,0.42)", text: "text-warn", label: "Needs a look" },
+// Severity picks the colour only. The words come from the kind, because the
+// two vocabularies overlapped — an OPPORTUNITY notification was rendering as
+// "Opportunity · Opportunity", which reads like a bug because it is one.
+const TONE: Record<NotificationSeverity, { edge: string; text: string }> = {
+  INFO: { edge: "rgba(108,158,255,0.42)", text: "text-blue-bright" },
+  OPPORTUNITY: { edge: "rgba(52,211,153,0.42)", text: "text-live" },
+  WARNING: { edge: "rgba(251,191,36,0.42)", text: "text-warn" },
 };
 
 export function InsightCards({
@@ -54,7 +57,7 @@ export function InsightCards({
               </span>
               <div className="min-w-0 flex-1">
                 <p className={`font-mono text-[10px] uppercase tracking-[0.18em] ${tone.text}`}>
-                  {tone.label} · {kindInfo(n.kind).label}
+                  Mairo noticed · {kindInfo(n.kind).label}
                 </p>
                 <h3 className="mt-1.5 text-[14.5px] font-medium leading-snug text-white">
                   {n.title}
