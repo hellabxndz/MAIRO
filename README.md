@@ -7,6 +7,14 @@ account, and gives them AI specialists (Strategist, Creative, Support) to talk
 to. The owner gets a separate **AIOS** dashboard (`/aios`) to run every client
 account, manage the creative pipeline, and use an internal Claude copilot.
 
+## Two apps in this repository
+
+- **`/` (this folder)** — the MAIRO web platform described below.
+- **`desktop/`** — **Mairo**, a local Python + PySide6 voice assistant for
+  Windows: a glowing-orb interface, speech in and out, and tools that open
+  apps, search the web, take notes and control the computer. It is entirely
+  self-contained; see [`desktop/README.md`](desktop/README.md) for setup.
+
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript, Tailwind v4)
