@@ -60,6 +60,11 @@ const PLATFORM_LABEL: Record<AdPlatform, string> = {
   LINKEDIN: "LinkedIn",
 };
 
+/** First letter up. The blockers arrive as fragments and are used as sentences. */
+function sentence(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function list(items: string[]): string {
   if (items.length === 0) return "";
   if (items.length === 1) return items[0];
@@ -97,15 +102,20 @@ export function campaignTimeline(input: TimelineInput): TimelineStep[] {
       key: "connection",
       title: "Account connection",
       summary:
-        missing.length === 0
-          ? `${list(connectedRequested.map((p) => PLATFORM_LABEL[p]))} connected.`
-          : `${list(missing.map((p) => PLATFORM_LABEL[p]))} still needs connecting.`,
+        // A campaign with no network rows at all is not "connected" — it is a
+        // campaign that never reached one. Saying "connected." with nothing in
+        // front of it was the shape of that bug.
+        input.requested.length === 0
+          ? "This campaign has not reached an advertising network yet."
+          : missing.length === 0
+            ? `${list(connectedRequested.map((p) => PLATFORM_LABEL[p]))} connected.`
+            : `${list(missing.map((p) => PLATFORM_LABEL[p]))} still needs connecting.`,
       detail:
-        missing.length === 0
+        missing.length === 0 && input.requested.length > 0
           ? "MAIRO builds campaigns inside your own advertising account. The account stays yours, the ad spend is billed to you by the platform, and you can disconnect at any time."
           : "Nothing can go live until the account is connected. MAIRO never takes custody of your budget — you pay the platform directly and MAIRO decides how that budget is used.",
       action:
-        missing.length === 0
+        missing.length === 0 && input.requested.length > 0
           ? undefined
           : { label: "Connect", href: "/dashboard/integrations" },
     },
@@ -143,7 +153,7 @@ export function campaignTimeline(input: TimelineInput): TimelineStep[] {
       title: "Campaign review",
       summary: readyToLaunch
         ? "Checked for the things that stop a campaign delivering."
-        : input.blockers[0],
+        : sentence(input.blockers[0] ?? "Something is still missing."),
       detail: readyToLaunch
         ? "Budget against objective, targeting against location, creative against the platform's own policies — the checks that otherwise fail after you have already pressed go."
         : `Still to sort: ${list(input.blockers)}.`,
@@ -191,7 +201,7 @@ export function campaignTimeline(input: TimelineInput): TimelineStep[] {
   // current, because those two need to look different.
   const done: Record<string, boolean> = {
     analysis: input.hasIntake,
-    connection: missing.length === 0,
+    connection: missing.length === 0 && input.requested.length > 0,
     strategy: true,
     creative: input.creativeCount > 0,
     targeting: input.hasTargeting,

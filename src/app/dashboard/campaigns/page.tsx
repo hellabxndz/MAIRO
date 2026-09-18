@@ -223,7 +223,18 @@ export default async function CampaignsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3">
-                      <h3 className="text-base text-white">{campaign.name}</h3>
+                      {/* The name is the way into the campaign's own screen —
+                          the timeline, the action log, everything MAIRO has
+                          done to it. This list stays the place to change
+                          budget and schedule. */}
+                      <h3 className="text-base text-white">
+                        <Link
+                          href={`/dashboard/campaigns/${campaign.id}`}
+                          className="transition-colors hover:text-blue-bright"
+                        >
+                          {campaign.name}
+                        </Link>
+                      </h3>
                       <PlatformIcons platforms={platforms} />
                     </div>
                     <p className="mt-1 text-xs text-neutral-500">

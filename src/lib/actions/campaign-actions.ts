@@ -18,6 +18,7 @@ import {
   validateAllocation,
 } from "@/lib/budget/allocation";
 import { createMairoCampaign } from "@/lib/campaigns/launch";
+import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import {
   instantFromLocal,
   SCHEDULE_PROBLEM_MESSAGE,
@@ -621,4 +622,54 @@ export async function setCampaignDestinationAction(
   revalidatePath("/dashboard/campaigns");
   revalidatePath("/dashboard");
   return { saved: true };
+}
+
+/**
+ * A person approving one campaign.
+ *
+ * The only step in this product that a human has to take. Everything else —
+ * writing the ads, choosing the audience, building it on the network, moving
+ * budget once it runs — MAIRO does by itself; this is the moment money starts
+ * being spent, so it is the moment somebody has to say so.
+ *
+ * It goes through maybeGoLive rather than flipping statuses here, because every
+ * safeguard worth having already lives in there: the funding check, the
+ * scheduled start floor, the half-built repair, and the per-network failure
+ * handling. A second launch path would be a second copy of those, and the copy
+ * would be the one that forgot the funding check.
+ */
+export async function approveCampaignAction(
+  mairoCampaignId: string,
+): Promise<{ error?: string } | undefined> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not authenticated" };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  // An id in a URL is not authorisation.
+  const owned = await db.mairoCampaign.findFirst({
+    where: { id: mairoCampaignId, organizationId },
+    select: { id: true },
+  });
+  if (!owned) return { error: "Campaign not found." };
+
+  const outcome = await maybeGoLive(organizationId, {
+    onlyCampaignId: mairoCampaignId,
+    approvedByPerson: true,
+  });
+
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath(`/dashboard/campaigns/${mairoCampaignId}`);
+  revalidatePath("/dashboard");
+
+  if (!outcome.launched) {
+    // Not an error in itself — the network may simply still be reviewing it.
+    // Returning the reason is the difference between "nothing happened" and
+    // "nothing happened, and here is why".
+    return {
+      error:
+        outcome.heldBecause ??
+        "Not live yet — the network is still reviewing this campaign. MAIRO switches it on the moment that clears, without you having to come back.",
+    };
+  }
+  return undefined;
 }

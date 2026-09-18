@@ -55,7 +55,22 @@ const NOTHING: AutoLaunchOutcome = { launched: false, names: [], heldBecause: nu
  * account has just crossed the line, and it is idempotent — a campaign already
  * ACTIVE is skipped rather than resumed again.
  */
-export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOutcome> {
+export async function maybeGoLive(
+  organizationId: string,
+  opts: {
+    /** Launch only this campaign, leaving anything else waiting alone. */
+    onlyCampaignId?: string;
+    /**
+     * A person pressed approve on this campaign.
+     *
+     * The hold means "don't put things live on your own", and somebody clicking
+     * Approve is the opposite of MAIRO acting on its own — so an explicit
+     * approval passes it. It does not clear the hold: the next campaign they
+     * build still waits for them, which is what they asked for.
+     */
+    approvedByPerson?: boolean;
+  } = {},
+): Promise<AutoLaunchOutcome> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { autoLaunchHeld: true, subscriptionTier: true },
@@ -78,7 +93,7 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
   // Cheap when there is nothing to do: one indexed read that returns no rows.
   await finishHalfBuilt(organizationId);
 
-  if (org.autoLaunchHeld) {
+  if (org.autoLaunchHeld && !opts.approvedByPerson) {
     return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
   }
 
@@ -88,6 +103,10 @@ export async function maybeGoLive(organizationId: string): Promise<AutoLaunchOut
   const waiting = await db.platformCampaign.findMany({
     where: {
       mairoCampaign: { organizationId },
+      // Scoped when a person approved one campaign. Without this, approving
+      // one would also switch on every other campaign that happened to be
+      // ready — which is a surprising way to start spending money.
+      ...(opts.onlyCampaignId ? { mairoCampaignId: opts.onlyCampaignId } : {}),
       status: "PENDING_REVIEW",
       externalCampaignId: { not: null },
       // No ad means nothing can be shown, whatever the status says.
