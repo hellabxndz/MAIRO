@@ -257,7 +257,13 @@ export async function saveAutoOptimizeAction(
   // money. Only the two levels that act are gated.
   const wantsLevel = String(formData.get("level") ?? "MANUAL");
   if (wantsLevel !== "MANUAL" && !(await can(organizationId, "auto_optimize"))) {
-    return { error: `Letting MAIRO act on its own is part of the ${planFor("SCALE").name} plan.` };
+    return { error: `Letting MAIRO act on its own comes with a plan.` };
+  }
+  // Autopilot is gated separately, and enforced here rather than only in the
+  // UI — a disabled card somebody can walk around by posting the form is not
+  // a gate, and this one decides whether MAIRO may change targeting and bids.
+  if (wantsLevel === "AUTOPILOT" && !(await can(organizationId, "autopilot"))) {
+    return { error: `Full Autopilot is part of the ${planFor("SCALE").name} plan.` };
   }
 
   const parsed = autoOptimizeSchema.safeParse({

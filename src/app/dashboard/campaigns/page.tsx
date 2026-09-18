@@ -114,7 +114,10 @@ export default async function CampaignsPage() {
   const live = campaigns.filter((c) => c.status !== "ARCHIVED");
   const archived = campaigns.filter((c) => c.status === "ARCHIVED");
   const activeCount = live.length;
-  const atLimit = activeCount >= entitlements.campaign_limit;
+  // Infinity is how an unlimited plan says so, and it must never reach the
+  // screen as the word "Infinity".
+  const unlimitedCampaigns = !Number.isFinite(entitlements.campaign_limit);
+  const atLimit = !unlimitedCampaigns && activeCount >= entitlements.campaign_limit;
 
   // The plan to sell if they reach for something they don't have. Asked for by
   // capability rather than named, so changing which plan includes TikTok
@@ -151,7 +154,9 @@ export default async function CampaignsPage() {
         description="One campaign, however many places it runs. MAIRO handles the rest."
         action={
           <Badge tone={atLimit ? "yellow" : "neutral"}>
-            {activeCount} of {entitlements.campaign_limit} campaigns
+            {unlimitedCampaigns
+              ? `${activeCount} ${activeCount === 1 ? "campaign" : "campaigns"}`
+              : `${activeCount} of ${entitlements.campaign_limit} campaigns`}
           </Badge>
         }
       />
@@ -180,14 +185,18 @@ export default async function CampaignsPage() {
            on the screen. */
         <Card className="mb-8 border-sky-400/20 bg-sky-400/[0.04]">
           <h2 className="text-base text-white">
-            {entitlements.campaign_limit === 1
-              ? `${plan.name} runs one campaign at a time`
-              : `You're using all ${entitlements.campaign_limit} of your campaigns`}
+            {entitlements.campaign_limit === 0
+              ? "Campaigns come with a plan"
+              : entitlements.campaign_limit === 1
+                ? `${plan.name} runs one campaign at a time`
+                : `You're using all ${entitlements.campaign_limit} of your campaigns`}
           </h2>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
-            {entitlements.campaign_limit === 1
-              ? "To start a different one, delete the campaign below first — that stops its ads and frees the slot. Or move up a plan and run more than one at once."
-              : "Delete one below to free a slot, or move up a plan to run more at once."}
+            {entitlements.campaign_limit === 0
+              ? "Choose a plan and you can create as many campaigns as your business needs — there is no cap on the number."
+              : entitlements.campaign_limit === 1
+                ? "To start a different one, delete the campaign below first — that stops its ads and frees the slot. Or move up a plan and run more than one at once."
+                : "Delete one below to free a slot, or move up a plan to run more at once."}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-4">
             {/* The way out that is not destructive, so it is the one that

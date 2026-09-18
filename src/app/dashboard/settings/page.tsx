@@ -88,6 +88,7 @@ export default async function SettingsPage() {
       <div className="mb-8">
         <AutomationSection
           allowed={entitlements.auto_optimize}
+          autopilotAllowed={entitlements.autopilot}
           upgradePlanName={upgradeTarget.name}
           values={{
             // Defaults chosen to be safe rather than useful: Manual, a ceiling

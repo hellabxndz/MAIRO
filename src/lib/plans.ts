@@ -70,40 +70,60 @@ export type Plan = {
   features: string[];
 };
 
+/**
+ * Days of free trial on every client plan.
+ *
+ * One constant rather than a number typed into Stripe and again into the
+ * marketing copy — those two drift, and the version that drifts is always the
+ * one on the page promising longer than the card actually gives.
+ *
+ * Zero switches trials off everywhere at once.
+ */
+export const TRIAL_DAYS = 7;
+
 export const PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 49.99,
-    tagline: "Get your first campaign live on Meta.",
-    spendGuidance: "Best for $100–500/mo in ad spend",
-    limits: { campaigns: 1, creativesPerMonth: 2 },
+    priceMonthly: 199,
+    tagline: "Your advertising department, on Meta.",
+    spendGuidance: "Best for businesses starting paid advertising",
+    // Unlimited rather than one. A cap of one campaign made the product worse
+    // at the thing it is for: a business with a summer sale and an evergreen
+    // offer has two campaigns, and charging them to have a second one taught
+    // them to cram both into one and get worse results. Creative generation
+    // still has a monthly ceiling, because each one costs real money to make.
+    limits: { campaigns: Infinity, creativesPerMonth: 20 },
     headline: "Facebook and Instagram",
     features: [
+      "Meta advertising — Facebook and Instagram",
+      "AI strategy built from your business",
       "AI campaign builder",
-      "AI-written ad copy, unlimited rewrites",
-      "Creative generation",
-      "Performance dashboard",
+      "AI creative generation",
+      "Your Mairo assistant, unlimited questions",
+      "Campaign analytics in plain English",
+      "Assisted automation — Mairo handles the small changes",
+      "Unlimited campaigns, subject to fair use",
     ],
   },
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 139.99,
+    priceMonthly: 399,
     tagline: "Meta and TikTok, from one place.",
-    spendGuidance: "Best for $500–2,000/mo in ad spend",
+    spendGuidance: "Best for businesses advertising on more than one network",
     featured: true,
-    limits: { campaigns: 3, creativesPerMonth: 8 },
+    limits: { campaigns: Infinity, creativesPerMonth: 60 },
     headline: "Adds TikTok",
     inherits: "Starter",
     features: [
       "TikTok ads alongside Meta, from one campaign",
-      "MAIRO sets up your TikTok account for you",
-      "TikTok Growth Mode",
-      "TikTok-native creative generation",
-      "One dashboard covering both networks",
+      "Mairo sets up your TikTok account for you",
+      "Advanced analytics, every metric explained",
+      "More creative generation",
+      "Creative performance intelligence",
       "AI budget recommendations",
-      "Creative testing",
+      "Priority AI processing",
     ],
   },
   {
@@ -116,18 +136,20 @@ export const PLANS: Plan[] = [
     // single place the plan is named.
     tier: "SCALE",
     name: "Scale",
-    priceMonthly: 249.99,
-    tagline: "Let MAIRO run the budget.",
-    spendGuidance: "Best for $2,000+/mo in ad spend",
-    limits: { campaigns: 10, creativesPerMonth: 20 },
-    headline: "Adds your own feed",
+    priceMonthly: 699,
+    tagline: "Let Mairo run the budget.",
+    spendGuidance: "Best for businesses running advertising continuously",
+    limits: { campaigns: Infinity, creativesPerMonth: 150 },
+    headline: "Adds Autopilot",
     inherits: "Growth",
     features: [
-      "MAIRO posts to your Instagram and TikTok for you",
-      "Organic posts written from your approved creatives",
-      "Assisted and Autopilot — MAIRO acts inside limits you set",
-      "Advanced creative testing",
-      "Priority campaign processing",
+      "Full Autopilot — Mairo manages campaigns inside your limits",
+      "Custom optimisation rules",
+      "Higher creative limits",
+      "Multiple businesses from one account",
+      "Advanced reporting",
+      "Mairo posts to your Instagram and TikTok for you",
+      "Priority support",
       "Future advertising platforms as they land",
     ],
   },

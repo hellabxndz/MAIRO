@@ -43,11 +43,14 @@ const SELECTABLE: AdPlatform[] = ["META", "TIKTOK"];
 export function AutomationSection({
   values,
   allowed,
+  autopilotAllowed,
   upgradePlanName,
 }: {
   values: AutoOptimizeValues;
-  /** False on plans without auto_optimize — the form renders locked. */
+  /** False on plans without Assisted — the form renders locked. */
   allowed: boolean;
+  /** False on plans without Autopilot — that one card renders locked. */
+  autopilotAllowed: boolean;
   upgradePlanName: string;
 }) {
   const [state, formAction, pending] = useActionState(saveAutoOptimizeAction, undefined);
@@ -101,7 +104,11 @@ export function AutomationSection({
         <div className="grid gap-3 sm:grid-cols-3">
           {LEVELS.map((l) => {
             const on = l.level === level;
-            const needsPlan = locked && l.level !== "MANUAL";
+            // Manual is always available. Assisted needs the plan; Autopilot
+            // needs its own flag on top, because the two are sold separately.
+            const needsPlan =
+              (l.level === "ASSISTED" && locked) ||
+              (l.level === "AUTOPILOT" && (locked || !autopilotAllowed));
             return (
               <button
                 key={l.level}

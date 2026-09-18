@@ -13,7 +13,7 @@ import { MairoHero } from "@/components/mairo/hero";
 import { ProblemSection } from "@/components/mairo/problem-section";
 import { LiveDemo } from "@/components/mairo/live-demo";
 import { MairoButton } from "@/components/mairo";
-import { PLANS, FREELANCER_PLANS } from "@/lib/plans";
+import { PLANS, FREELANCER_PLANS, TRIAL_DAYS } from "@/lib/plans";
 import { planComparison } from "@/lib/entitlements";
 
 // The marketing page.
@@ -333,10 +333,51 @@ export default function Home() {
                 something else. */}
             <p className="leading-relaxed text-neutral-400">
               {PLANS[0].name} runs your ads on Facebook and Instagram. {PLANS[1].name} adds
-              TikTok. {PLANS[2].name} posts to your own feed as well as running the ads.
-              Cancel whenever.
+              TikTok. {PLANS[2].name} adds full Autopilot and posts to your own feed. Every
+              plan creates as many campaigns as your business needs. Cancel whenever.
             </p>
           </Reveal>
+
+          {/* The two-wallets point, before the prices rather than after them.
+              Somebody reading "$199/month" and assuming it includes their ad
+              budget will feel misled at the first Meta invoice, and that is a
+              refund conversation the page can prevent with one paragraph. */}
+          <Reveal delay={0.25} className="mt-10 max-w-3xl">
+            <div
+              className="rounded-2xl border p-6"
+              style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+            >
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-blue-bright/80">
+                Two separate costs
+              </p>
+              <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <p className="text-[14px] text-white">Your Mairo subscription</p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-neutral-400">
+                    The prices below. This is the AI advertising system — the strategy, the
+                    ads, the management and the reporting.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[14px] text-white">Your advertising budget</p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-neutral-400">
+                    Paid to Meta and TikTok directly, from your own account, at whatever you
+                    set. Mairo never takes custody of it — it decides how it gets used.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {TRIAL_DAYS > 0 && (
+            <Reveal delay={0.3} className="mt-8">
+              <p className="text-[14px] leading-relaxed text-neutral-300">
+                <span className="text-white">Try Mairo free for {TRIAL_DAYS} days.</span>{" "}
+                $0 today. Connect your business, use your assistant, generate creatives and
+                build campaigns — before you spend anything on advertising.
+              </p>
+            </Reveal>
+          )}
 
           <div className="mt-24 grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.06] lg:grid-cols-3">
             {PLANS.map((plan, i) => (

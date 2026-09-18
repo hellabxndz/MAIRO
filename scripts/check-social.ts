@@ -65,9 +65,9 @@ console.log("\n— the pricing cards say the same thing the code does —");
   ok("Growth is called Growth", growth.name === "Growth", growth.name);
 
   const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
-  ok("Starter is $49.99", starterPlan.priceMonthly === 49.99, `$${starterPlan.priceMonthly}`);
-  ok("Growth is $139.99", growth.priceMonthly === 139.99, `$${growth.priceMonthly}`);
-  ok(`${TOP.name} is $249.99`, pro.priceMonthly === 249.99, `$${pro.priceMonthly}`);
+  ok("Starter is $199", starterPlan.priceMonthly === 199, `$${starterPlan.priceMonthly}`);
+  ok("Growth is $399", growth.priceMonthly === 399, `$${growth.priceMonthly}`);
+  ok(`${TOP.name} is $699`, pro.priceMonthly === 699, `$${pro.priceMonthly}`);
   // The ladder has to climb, whatever the numbers are changed to next.
   ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
 
@@ -177,10 +177,25 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
     pro["Posts to your own feed"]
   );
 
-  // The numbers must come from the limits, not be typed twice.
-  ok("campaign counts climb", Number(starter["Campaigns at once"]) < Number(growth["Campaigns at once"]) && Number(growth["Campaigns at once"]) < Number(pro["Campaigns at once"]));
+  // Campaigns are uncapped on every client plan now — a cap of one taught
+  // businesses to cram a sale and an evergreen offer into a single campaign
+  // and get worse results from both. The card must say so in a word, never as
+  // the string "Infinity".
+  ok(
+    "campaigns read as unlimited on every plan",
+    [starter, growth, pro].every((c) => c["Campaigns at once"] === "Unlimited"),
+    [starter, growth, pro].map((c) => c["Campaigns at once"]).join(" / "),
+  );
+  ok(
+    "and never leak the sentinel",
+    ![starter, growth, pro].some((c) => /Infinity/.test(c["Campaigns at once"])),
+  );
+  // Creative generation still costs real money per item, so that ladder climbs.
   ok("creative counts climb", Number(starter["New ads a month"]) < Number(growth["New ads a month"]) && Number(growth["New ads a month"]) < Number(pro["New ads a month"]));
-  ok("and they match the limits", Number(growth["Campaigns at once"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.campaigns);
+  ok(
+    "and they match the limits",
+    Number(growth["New ads a month"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.creativesPerMonth,
+  );
 
   // Every adjacent pair must differ in at least one row, or a card gives a
   // reader no reason to choose it.

@@ -45,8 +45,20 @@ export type Entitlements = {
    * puts words on their account under their own name.
    */
   social_posting: boolean;
-  /** Let MAIRO move budget by itself, within the customer's limits. */
+  /**
+   * Assisted automation: MAIRO may make reversible changes inside an existing
+   * budget without asking — pause a loser, test a creative, move a slice.
+   */
   auto_optimize: boolean;
+  /**
+   * Autopilot: adds targeting and bids on top of Assisted.
+   *
+   * Its own flag rather than a level on auto_optimize, because the two are
+   * sold separately and the settings screen has to be able to offer Assisted
+   * while holding Autopilot back. src/lib/automation/levels.ts still decides
+   * what each level DOES; this only decides which levels a plan may select.
+   */
+  autopilot: boolean;
   /** Per-platform breakdowns, creative-level figures, video metrics. */
   advanced_analytics: boolean;
   /** Creative requests per calendar month. */
@@ -77,6 +89,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_account_setup: false,
     social_posting: false,
     auto_optimize: false,
+    autopilot: false,
     advanced_analytics: false,
     creative_limit: 0,
     campaign_limit: 0,
@@ -88,10 +101,11 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_growth: false,
     tiktok_account_setup: false,
     social_posting: false,
-    auto_optimize: false,
+    auto_optimize: true,
+    autopilot: false,
     advanced_analytics: false,
-    creative_limit: 2,
-    campaign_limit: 1,
+    creative_limit: 20,
+    campaign_limit: Infinity,
   },
   GROWTH: {
     meta_ads: true,
@@ -100,10 +114,11 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_growth: true,
     tiktok_account_setup: true,
     social_posting: false,
-    auto_optimize: false,
+    auto_optimize: true,
+    autopilot: false,
     advanced_analytics: true,
-    creative_limit: 8,
-    campaign_limit: 3,
+    creative_limit: 60,
+    campaign_limit: Infinity,
   },
   // The top business plan. Its enum value is still SCALE and that is
   // deliberate: Stripe price ids are keyed off the tier name in the
@@ -118,9 +133,10 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_account_setup: true,
     social_posting: true,
     auto_optimize: true,
+    autopilot: true,
     advanced_analytics: true,
-    creative_limit: 20,
-    campaign_limit: 10,
+    creative_limit: 150,
+    campaign_limit: Infinity,
   },
   // Freelancer plans. Per-client capability matches Growth, because a
   // freelancer's client is a real business running real campaigns.
@@ -131,10 +147,11 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_growth: true,
     tiktok_account_setup: true,
     social_posting: false,
-    auto_optimize: false,
+    auto_optimize: true,
+    autopilot: false,
     advanced_analytics: true,
-    creative_limit: 8,
-    campaign_limit: 3,
+    creative_limit: 60,
+    campaign_limit: Infinity,
   },
   AGENCY: {
     meta_ads: true,
@@ -144,9 +161,10 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     tiktok_account_setup: true,
     social_posting: true,
     auto_optimize: true,
+    autopilot: true,
     advanced_analytics: true,
-    creative_limit: 20,
-    campaign_limit: 10,
+    creative_limit: 150,
+    campaign_limit: Infinity,
   },
 };
 
@@ -158,7 +176,8 @@ export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   tiktok_growth: "TikTok Growth Mode",
   tiktok_account_setup: "MAIRO sets up your TikTok",
   social_posting: "MAIRO posts to your Instagram and TikTok",
-  auto_optimize: "Assisted and Autopilot automation",
+  auto_optimize: "Assisted automation",
+  autopilot: "Full Autopilot",
   advanced_analytics: "Advanced analytics",
 };
 
@@ -321,7 +340,12 @@ export function planComparison(
 
   return [
     { label: "Runs ads on", value: networks || "Nothing yet", muted: !networks },
-    { label: "Campaigns at once", value: String(limits.campaigns) },
+    {
+      label: "Campaigns at once",
+      // Infinity is the sentinel for unlimited and must never reach a pricing
+      // card as the word "Infinity".
+      value: Number.isFinite(limits.campaigns) ? String(limits.campaigns) : "Unlimited",
+    },
     { label: "New ads a month", value: String(limits.creativesPerMonth) },
     {
       label: "Posts to your own feed",

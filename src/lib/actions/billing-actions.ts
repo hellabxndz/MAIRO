@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
-import { ALL_PLANS, isFreelancerTier } from "@/lib/plans";
+import { ALL_PLANS, isFreelancerTier, TRIAL_DAYS } from "@/lib/plans";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -187,7 +187,18 @@ async function createCheckoutUrl(input: {
     // Carried onto the subscription so the webhook can identify the
     // organization without a lookup, and without trusting anything the client
     // sent us.
-    subscription_data: { metadata: { organizationId } },
+    subscription_data: {
+      metadata: { organizationId },
+      // The trial. Stripe still collects a card, which is deliberate: it is
+      // what lets the subscription continue without a second conversation,
+      // and a trial that ends by silently locking somebody out of campaigns
+      // that are live and spending would be worse for them than a charge.
+      //
+      // Read from one constant so the checkout and the copy cannot disagree
+      // about how long it is. Zero means no trial, and the field is omitted
+      // entirely rather than sent as 0, which Stripe rejects.
+      ...(TRIAL_DAYS > 0 ? { trial_period_days: TRIAL_DAYS } : {}),
+    },
     // Lets Stripe collect the address it needs for tax where that applies.
     billing_address_collection: "auto",
     allow_promotion_codes: true,
