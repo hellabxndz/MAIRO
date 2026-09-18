@@ -139,12 +139,16 @@ export const SECONDARY_NAV: NavEntry[] = [
 ];
 
 /** The five on a phone. Chosen by what someone opens the app to do. */
+// Create sits in the middle, which is where a thumb lands and where the one
+// action the product exists for belongs. Account came off this bar to make room
+// for Analytics and moved to the top bar instead — dropping it entirely would
+// have stranded anyone on a phone with no way to reach settings or sign out.
 const MOBILE_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
-  { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
-  { href: "/dashboard/agents", label: "Mairo AI", icon: <Icon d={I.mairo} /> },
-  { href: "/dashboard/account", label: "Account", icon: <Icon d={I.account} /> },
+  { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
+  { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
+  { href: "/dashboard/agents", label: "Mairo", icon: <Icon d={I.mairo} /> },
 ];
 
 /**
@@ -297,8 +301,18 @@ export function AppShell({
           MAIRO
         </Link>
         <span className="truncate text-[12px] text-faint">{businessName}</span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2.5">
           <ViewToggle mode={mode} />
+          {/* The way to settings, billing and signing out on a phone, now that
+              the bottom bar carries Analytics instead. */}
+          <Link
+            href="/dashboard/account"
+            aria-label="Account"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-white"
+            style={{ backgroundImage: "var(--mairo-ramp)" }}
+          >
+            {(userName || businessName || "?").charAt(0).toUpperCase()}
+          </Link>
         </div>
       </header>
 
@@ -359,7 +373,13 @@ export function AppShell({
                   style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "0 0 12px 1px rgba(61,125,255,0.6)" }}
                 />
               )}
-              <span className={`h-5 w-5 ${active ? "text-blue-bright" : "text-faint"}`}>{item.icon}</span>
+              <span
+                className={`flex h-5 w-5 items-center justify-center ${
+                  active ? "text-blue-bright" : "text-faint"
+                }`}
+              >
+                {item.icon}
+              </span>
               <span className={`text-[10px] leading-none ${active ? "text-white" : "text-faint"}`}>
                 {item.label}
               </span>
