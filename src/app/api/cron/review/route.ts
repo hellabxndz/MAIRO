@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { retryStuckReviews } from "@/lib/creatives/review-run";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
+import { sweepSmsNotifications } from "@/lib/sms/sweep";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -50,5 +51,11 @@ export async function GET(req: Request) {
   // somebody asks, and nobody would.
   const leads = await syncAllMetaLeads();
 
-  return NextResponse.json({ reviews, leads });
+  // On the same schedule for the same reason: Hobby allows two crons, and the
+  // two updates that nobody else can trigger — "something needs attention" and
+  // the weekly summary — need somebody to go and look. It costs nothing for an
+  // account that has not asked to be texted.
+  const texts = await sweepSmsNotifications();
+
+  return NextResponse.json({ reviews, leads, texts });
 }

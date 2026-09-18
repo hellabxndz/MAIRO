@@ -29,6 +29,8 @@ type Props = {
   initialMessages: UIMessage[];
   /** What this account is called, for the opening line. */
   businessName: string;
+  /** What this business calls its assistant. Default "Alex". */
+  assistantName: string;
 };
 
 /** What the person is looking at, worked out from the URL. */
@@ -78,9 +80,15 @@ function useScreenContext() {
   }, [pathname]);
 }
 
-export function MairoAssistant({ threadId, initialMessages, businessName }: Props) {
+export function MairoAssistant({
+  threadId,
+  initialMessages,
+  businessName,
+  assistantName,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const pathname = usePathname();
   const ctx = useScreenContext();
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -89,10 +97,9 @@ export function MairoAssistant({ threadId, initialMessages, businessName }: Prop
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: "/api/agents/chat",
-      // SUPPORT is the one that answers about the account as a whole rather
-      // than only strategy or only creative, which is what a general-purpose
-      // assistant needs to be.
-      body: { threadId, agentType: "SUPPORT" },
+      // Which prompt runs is decided by the thread row on the server, so
+      // there is nothing to name here.
+      body: { threadId },
     }),
   });
 
@@ -118,14 +125,19 @@ export function MairoAssistant({ threadId, initialMessages, businessName }: Prop
     setInput("");
   };
 
+  // Not on the assistant's own page. A floating button that opens a small
+  // version of the screen somebody is already looking at is a button that
+  // covers the real thing with a worse copy of it.
+  const onAssistantPage = pathname.startsWith("/dashboard/agents");
+
   return (
     <>
       {/* The launcher. Above the mobile bottom bar rather than behind it. */}
-      {!open && (
+      {!open && !onAssistantPage && (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Ask MAIRO"
+          aria-label={`Ask ${assistantName}`}
           className="fixed bottom-[88px] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white transition-transform duration-300 [transition-timing-function:var(--ease-mairo)] hover:scale-105 lg:bottom-6 lg:right-6"
           style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
         >
@@ -145,7 +157,7 @@ export function MairoAssistant({ threadId, initialMessages, businessName }: Prop
           />
           <aside
             role="dialog"
-            aria-label="MAIRO assistant"
+            aria-label={`${assistantName}, your assistant`}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl border-t lg:inset-y-0 lg:left-auto lg:right-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:border-l lg:border-t-0"
             style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(6,10,24,0.98)" }}
           >
@@ -158,7 +170,7 @@ export function MairoAssistant({ threadId, initialMessages, businessName }: Prop
                 <span className="relative h-2 w-2 rounded-full bg-live" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium text-white">MAIRO</p>
+                <p className="text-[14px] font-medium text-white">{assistantName}</p>
                 <p className="truncate text-[11.5px] text-faint">Looking at {ctx.label}</p>
               </div>
               <button
@@ -258,8 +270,8 @@ export function MairoAssistant({ threadId, initialMessages, businessName }: Prop
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask MAIRO…"
-                  aria-label="Ask MAIRO"
+                  placeholder={`Ask ${assistantName}…`}
+                  aria-label={`Ask ${assistantName}`}
                   className="min-w-0 flex-1 bg-transparent text-[13.5px] text-white placeholder-faint outline-none"
                 />
                 <button

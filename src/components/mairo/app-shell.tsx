@@ -205,6 +205,7 @@ export function AppShell({
   userName,
   showUpgrade = false,
   extraNav = [],
+  assistantName,
   footer,
 }: {
   children: ReactNode;
@@ -220,11 +221,27 @@ export function AppShell({
    * that call from the database.
    */
   extraNav?: NavEntry[];
+  /**
+   * What this business calls its assistant, for the nav entry.
+   *
+   * The label is the name rather than a product noun because that is what the
+   * customer thinks of it as — somebody who renamed theirs to Jess and then
+   * has to click "Mairo AI" to reach Jess has been told the rename did not
+   * really take.
+   */
+  assistantName?: string;
   /** Sign out, the org switcher, whatever the layout already put down there. */
   footer?: ReactNode;
 }) {
   const pathname = usePathname();
-  const primary = [...PRIMARY_NAV, ...extraNav];
+  const named = (entries: NavEntry[]) =>
+    assistantName
+      ? entries.map((e) =>
+          e.href === "/dashboard/agents" ? { ...e, label: assistantName } : e,
+        )
+      : entries;
+
+  const primary = named([...PRIMARY_NAV, ...extraNav]);
 
   const row = (item: NavEntry, active: boolean) => (
     <Link
@@ -355,7 +372,7 @@ export function AppShell({
         style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.96)" }}
         aria-label="Primary"
       >
-        {MOBILE_NAV.map((item) => {
+        {named(MOBILE_NAV).map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link

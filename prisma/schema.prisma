@@ -106,6 +106,14 @@ model Organization {
   /// launches and just opens the wrong place.
   defaultMessageChannel MessageChannel @default(MESSENGER)
 
+  /// What this business calls its assistant.
+  ///
+  /// Defaults to Alex and is theirs to change. It is the same assistant either
+  /// way — the name is on the organization rather than in the model's prompt
+  /// identity, so renaming it does not change what it knows or how it behaves,
+  /// only what it is called on screen and how it signs a text message.
+  assistantName String @default("Alex")
+
   /// Where the pictures and words in a sales ad come from.
   ///
   /// Asked after payment and only of businesses selling online, because it is
@@ -183,8 +191,58 @@ model Organization {
   trackingProfile      TrackingProfile?
   gtmConnection        GtmConnection?
   leadForms            LeadForm[]
+  smsPreference        SmsPreference?
   leads                Lead[]
   products             Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Where a business wants MAIRO to text them, and proof they asked for it.
+///
+/// A separate model rather than three columns on Organization, because consent
+/// is an event with a time on it, not a flag. Regulators in both the US and the
+/// UK ask the same question after the fact — when did this person agree, and
+/// what did they agree to — and a boolean cannot answer it.
+///
+/// Nothing here sends anything on its own. src/lib/sms/send.ts refuses without
+/// a verified number, live consent, and no opt-out, and refuses again if no
+/// provider is configured.
+model SmsPreference {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// E.164, as +15551234567. Stored only once a code sent to it came back.
+  phone String
+
+  /// When a code sent to this number was entered correctly. Null means the
+  /// number is claimed but unproven, and nothing is ever sent to it.
+  verifiedAt DateTime?
+  /// The code most recently sent, and when it stops being accepted.
+  verifyCode String?
+  verifyExpiresAt DateTime?
+
+  /// When this person agreed to be texted, and the exact wording they agreed
+  /// to. The wording is stored because it changes over time and consent is to
+  /// what was on the screen that day, not to whatever the screen says now.
+  consentAt   DateTime?
+  consentText String?  @db.Text
+
+  /// When they stopped it — from the settings screen or by replying STOP.
+  /// Set rather than deleted, so a number that opted out cannot be re-added
+  /// quietly by anyone who can reach the form.
+  optedOutAt DateTime?
+
+  // What they actually want to hear about. All off by default: somebody who
+  // turns texting on has not thereby asked for everything.
+  onCampaignLive   Boolean @default(true)
+  onNeedsAttention Boolean @default(true)
+  onWeeklySummary  Boolean @default(false)
+  onBudgetChange   Boolean @default(false)
+
+  lastSentAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

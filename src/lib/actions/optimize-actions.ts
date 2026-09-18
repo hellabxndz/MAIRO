@@ -15,6 +15,7 @@ import {
   type Recommendation,
 } from "@/lib/budget/optimizer";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
+import { sendSms } from "@/lib/sms/send";
 import { applyAllocation } from "@/lib/campaigns/launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
 
@@ -313,6 +314,7 @@ export async function runAutoOptimize(organizationId: string): Promise<{
 
   const recommendations = await buildRecommendations(organizationId);
   const refused: { campaign: string; reason: string }[] = [];
+  const moved: string[] = [];
   let applied = 0;
 
   for (const item of recommendations) {
@@ -352,6 +354,29 @@ export async function runAutoOptimize(organizationId: string): Promise<{
         data: { status: "APPLIED", appliedAt: new Date(), automatic: true },
       });
       applied += 1;
+      moved.push(item.campaignName);
+    }
+  }
+
+  // One text for the run, not one per campaign. A customer with four campaigns
+  // rebalanced on the same pass should get a sentence, not four phone buzzes —
+  // and the detail is on the campaign page, which is where it belongs.
+  //
+  // Off by default in the preferences, because this is MAIRO doing exactly
+  // what it was switched on to do. Somebody who wants to watch it work can ask
+  // to be told; nobody should be woken up by it without asking.
+  if (moved.length > 0) {
+    try {
+      const names = [...new Set(moved)];
+      await sendSms(
+        organizationId,
+        "budget-change",
+        names.length === 1
+          ? `MAIRO moved budget on your campaign "${names[0]}" to follow what is working.`
+          : `MAIRO moved budget across ${names.length} campaigns: ${names.join(", ")}.`,
+      );
+    } catch (error) {
+      console.error("Could not send the budget-change text:", error);
     }
   }
 

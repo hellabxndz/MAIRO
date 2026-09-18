@@ -4,16 +4,13 @@ import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { primaryButtonClass, inputClass } from "@/components/ui";
-import type { AgentType } from "@/generated/prisma/enums";
 
 export function ChatClient({
   threadId,
-  agentType,
   initialMessages,
   agentLabel,
 }: {
   threadId: string;
-  agentType: AgentType;
   initialMessages: UIMessage[];
   agentLabel: string;
 }) {
@@ -24,7 +21,7 @@ export function ChatClient({
     messages: initialMessages,
     transport: new DefaultChatTransport({
       api: "/api/agents/chat",
-      body: { threadId, agentType },
+      body: { threadId },
     }),
   });
 

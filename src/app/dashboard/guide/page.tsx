@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { limitsFor, planFor } from "@/lib/plans";
-import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/lib/ai/agents";
+import { assistantNameOf, ASSISTANT_SKILLS } from "@/lib/ai/agents";
 import { PageHeader } from "@/components/ui";
 
 // How MAIRO works, for the person whose business it is.
@@ -27,8 +27,9 @@ export default async function OwnerGuidePage() {
 
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { subscriptionTier: true },
+    select: { subscriptionTier: true, assistantName: true },
   });
+  const assistant = assistantNameOf(org?.assistantName);
   const plan = planFor(org?.subscriptionTier ?? "NONE");
   const limits = limitsFor(org?.subscriptionTier ?? "NONE");
 
@@ -154,16 +155,17 @@ export default async function OwnerGuidePage() {
       body: (
         <>
           <p>
-            One assistant, unlimited on every plan, and it knows your business and
-            your numbers.
+            One assistant, called {assistant} unless you rename it, unlimited on every
+            plan. There is no panel of specialists to choose between — whatever the
+            question is, you ask {assistant}:
           </p>
           <ul className="mt-4 space-y-2">
-            {(["STRATEGIST", "CREATIVE", "SUPPORT"] as const).map((a) => (
-              <li key={a} className="flex gap-3">
+            {ASSISTANT_SKILLS.map((skill) => (
+              <li key={skill.title} className="flex gap-3">
                 <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
                 <span>
-                  <strong className="font-medium text-white">{AGENT_LABELS[a]}</strong> —{" "}
-                  {AGENT_DESCRIPTIONS[a].toLowerCase()}
+                  <strong className="font-medium text-white">{skill.title}</strong> —{" "}
+                  {skill.body.charAt(0).toLowerCase() + skill.body.slice(1)}
                 </span>
               </li>
             ))}
@@ -172,6 +174,12 @@ export default async function OwnerGuidePage() {
             Ask in ordinary words. &ldquo;Is £20 a day enough?&rdquo; &ldquo;Why did this
             get more clicks than that one?&rdquo; You will get a straight answer, not a
             chart to interpret.
+          </p>
+          <p className="mt-4">
+            It can also text you when something happens — a campaign going live, a
+            campaign spending with nothing to show for it — so you are not checking a
+            dashboard to find out. You choose which of those are worth a text in
+            Settings, and you can stop them in one click.
           </p>
         </>
       ),
@@ -229,7 +237,7 @@ export default async function OwnerGuidePage() {
             account.
           </p>
           <Link
-            href="/dashboard/agents/support"
+            href="/dashboard/agents"
             className="mt-5 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110"
           >
             Ask Support

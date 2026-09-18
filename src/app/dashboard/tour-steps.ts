@@ -54,9 +54,9 @@ export const OWNER_TOUR: Step[] = [
   },
   {
     target: "nav:/dashboard/agents",
-    title: "Mairo AI",
+    title: "Your assistant",
     body:
-      "Three of them, unlimited, and they know your business. \"Why did my cost per click go up?\" — ask in plain English and get a plain answer. Cheapest habit in the whole product.",
+      "One assistant, called Alex until you rename it, unlimited, and it knows your business. \"Why did my cost per click go up?\" — ask in plain English and get a plain answer. It can text you when something happens, too.",
   },
   {
     target: "nav:/dashboard/settings",

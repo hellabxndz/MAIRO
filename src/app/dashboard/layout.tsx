@@ -7,6 +7,7 @@ import { signOutAction } from "@/lib/actions/auth-actions";
 import { AppShell } from "@/components/mairo/app-shell";
 import { MairoAssistant } from "@/components/mairo/assistant";
 import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
+import { assistantNameOf, CLIENT_AGENT } from "@/lib/ai/agents";
 import { hasActivePlan } from "@/lib/readiness";
 import { viewMode } from "@/lib/view-mode";
 import { Tour } from "@/components/tour";
@@ -79,7 +80,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [organization, intake, metaAccount, seenTour, leadForm] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, subscriptionTier: true, subscriptionStatus: true },
+      select: {
+        name: true,
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        assistantName: true,
+      },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
@@ -114,7 +120,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const assistant =
     organization && hasActivePlan(organization) && session.user.id
       ? await (async () => {
-          const thread = await findOrCreateThread(session.user.id!, organizationId, "SUPPORT");
+          const thread = await findOrCreateThread(session.user.id!, organizationId, CLIENT_AGENT);
           return { threadId: thread.id, messages: await loadThreadMessages(thread.id) };
         })()
       : null;
@@ -125,6 +131,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       businessName={organization?.name ?? ""}
       userName={session.user.name ?? ""}
       showUpgrade={organization?.subscriptionTier !== "AGENCY"}
+      assistantName={assistantNameOf(organization?.assistantName)}
       extraNav={collectsLeads ? [ENQUIRIES_NAV] : []}
       footer={
         <form action={signOutAction}>
@@ -208,6 +215,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           threadId={assistant.threadId}
           initialMessages={assistant.messages}
           businessName={organization?.name ?? "your business"}
+          assistantName={assistantNameOf(organization?.assistantName)}
         />
       )}
     </AppShell>

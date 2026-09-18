@@ -242,6 +242,8 @@ export type SimpleDashboardProps = {
   health: CampaignHealth;
   /** What MAIRO has changed by itself, newest first. Real rows only. */
   actions: ActionEntry[];
+  /** What this business calls its assistant. Default "Alex". */
+  assistantName: string;
 };
 
 function greeting(): string {
@@ -272,6 +274,7 @@ export function SimpleDashboard({
   anyConnected,
   health,
   actions,
+  assistantName,
 }: SimpleDashboardProps) {
   const t = performance.total;
 
@@ -319,7 +322,7 @@ export function SimpleDashboard({
                 <span aria-hidden className="h-4 w-4 text-blue-bright">
                   {ICONS.chat}
                 </span>
-                Talk to Mairo AI
+                Talk to {assistantName}
               </MairoButton>
             </div>
           </div>
@@ -522,7 +525,7 @@ export function SimpleDashboard({
         {/* ---- Mairo AI assistant ---- */}
         <GlassPanel className="flex flex-col p-5 sm:p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-[16px] font-medium text-white">Mairo AI assistant</h2>
+            <h2 className="text-[16px] font-medium text-white">{assistantName}</h2>
             <AIStatus label="Online" />
           </div>
 
@@ -546,7 +549,7 @@ export function SimpleDashboard({
             className="mt-auto flex items-center gap-3 rounded-full border px-4 py-2.5 pt-2.5 text-[13px] text-faint transition-colors hover:text-muted"
             style={{ borderColor: "var(--mairo-line)", marginTop: "1.25rem" }}
           >
-            Ask Mairo anything…
+            Ask {assistantName} anything…
             <span
               aria-hidden
               className="ml-auto flex h-7 w-7 items-center justify-center rounded-full text-white"

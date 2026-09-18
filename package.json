@@ -24,7 +24,8 @@
     "check:social": "tsx scripts/check-social.ts",
     "plans:sync": "tsx scripts/sync-plan-config.ts",
     "check:leads": "tsx scripts/check-leads.ts",
-    "check:env": "tsx scripts/check-env.ts"
+    "check:env": "tsx scripts/check-env.ts",
+    "check:assistant": "tsx scripts/check-assistant.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

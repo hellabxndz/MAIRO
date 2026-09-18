@@ -1,64 +1,13 @@
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
-import { AGENT_LABELS } from "@/lib/ai/agents";
-import type { AgentType } from "@/generated/prisma/enums";
-import { PageHeader } from "@/components/ui";
-import { ChatClient } from "./chat-client";
-import { activeOrganizationId } from "@/lib/active-org";
-import { db } from "@/lib/db";
-import { hasActivePlan } from "@/lib/readiness";
-import { PlanLock } from "@/components/plan-lock";
+import { redirect } from "next/navigation";
 
-const CLIENT_AGENT_TYPES: AgentType[] = ["STRATEGIST", "CREATIVE", "SUPPORT"];
+// The old per-specialist URLs.
+//
+// /dashboard/agents/strategist, /creative and /support were three separate
+// chats. There is one assistant now, so all three land on it. Kept as a
+// redirect rather than deleted because these URLs are in the product's own
+// older screens, in the guide, and in whatever anybody bookmarked — and a 404
+// on a link the product itself printed is worse than an extra hop.
 
-export default async function AgentChatPage({
-  params,
-}: {
-  params: Promise<{ type: string }>;
-}) {
-  const session = await auth();
-  if (!session?.user?.organizationId) redirect("/sign-in");
-
-  const organizationId =
-    (await activeOrganizationId()) ?? session.user.organizationId;
-
-  const { type } = await params;
-  const agentType = type.toUpperCase() as AgentType;
-  if (!CLIENT_AGENT_TYPES.includes(agentType)) notFound();
-
-  const org = await db.organization.findUnique({
-    where: { id: organizationId },
-    select: { subscriptionTier: true, subscriptionStatus: true },
-  });
-  if (!org || !hasActivePlan(org)) {
-    return (
-      <div>
-        <PageHeader title={`${AGENT_LABELS[agentType]} agent`} />
-        <PlanLock
-          title="This one comes with a plan"
-          body="MAIRO reads your real account — your budget, your campaigns, what actually sold — rather than answering in general. That needs a plan."
-        />
-      </div>
-    );
-  }
-
-  const thread = await findOrCreateThread(
-    session.user.id,
-    organizationId,
-    agentType
-  );
-  const initialMessages = await loadThreadMessages(thread.id);
-
-  return (
-    <div>
-      <PageHeader title={`${AGENT_LABELS[agentType]} agent`} />
-      <ChatClient
-        threadId={thread.id}
-        agentType={agentType}
-        initialMessages={initialMessages}
-        agentLabel={AGENT_LABELS[agentType]}
-      />
-    </div>
-  );
+export default async function LegacyAgentRedirect() {
+  redirect("/dashboard/agents");
 }

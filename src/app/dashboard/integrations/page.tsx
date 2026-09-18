@@ -319,7 +319,7 @@ function StartFromZero({
             </a>
             , or{" "}
             <Link
-              href="/dashboard/agents/strategist"
+              href="/dashboard/agents"
               className="underline underline-offset-4 hover:text-neutral-300"
             >
               ask MAIRO to walk you through it

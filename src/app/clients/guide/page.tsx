@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { limitsFor, planFor } from "@/lib/plans";
-import { AGENT_LABELS, AGENT_DESCRIPTIONS } from "@/lib/ai/agents";
+import { assistantNameOf, ASSISTANT_SKILLS } from "@/lib/ai/agents";
 
 // How to run MAIRO for other people's businesses.
 //
@@ -27,8 +27,9 @@ export default async function GuidePage() {
 
   const workspace = await db.organization.findUnique({
     where: { id: session.user.organizationId },
-    select: { subscriptionTier: true },
+    select: { subscriptionTier: true, assistantName: true },
   });
+  const assistant = assistantNameOf(workspace?.assistantName);
   const plan = planFor(workspace?.subscriptionTier ?? "NONE");
   const limits = limitsFor(workspace?.subscriptionTier ?? "NONE");
 
@@ -189,24 +190,24 @@ export default async function GuidePage() {
       body: (
         <>
           <p>
-            One assistant, unlimited on every plan, and it answers in the context of
-            whichever client you have open — ask about the gym and you get the gym&apos;s
-            numbers.
+            One assistant, called {assistant} unless you rename it, unlimited on every
+            plan. It answers in the context of whichever client you have open — ask about
+            the gym and you get the gym&apos;s numbers. It covers:
           </p>
           <ul className="mt-4 space-y-2">
-            {(["STRATEGIST", "CREATIVE", "SUPPORT"] as const).map((a) => (
-              <li key={a} className="flex gap-3">
+            {ASSISTANT_SKILLS.map((skill) => (
+              <li key={skill.title} className="flex gap-3">
                 <span className="mt-[9px] h-px w-3 shrink-0 bg-neutral-700" />
                 <span>
-                  <strong className="font-medium text-white">{AGENT_LABELS[a]}</strong> —{" "}
-                  {AGENT_DESCRIPTIONS[a].toLowerCase()}
+                  <strong className="font-medium text-white">{skill.title}</strong> —{" "}
+                  {skill.body.charAt(0).toLowerCase() + skill.body.slice(1)}
                 </span>
               </li>
             ))}
           </ul>
           <p className="mt-4">
-            The most useful habit: before a client call, open their account and ask the
-            Strategist what moved this month. It answers in sentences you can repeat.
+            The most useful habit: before a client call, open their account and ask
+            {" "}{assistant} what moved this month. It answers in sentences you can repeat.
           </p>
         </>
       ),

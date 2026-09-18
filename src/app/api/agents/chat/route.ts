@@ -21,16 +21,46 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { messages, threadId, agentType } = (await req.json()) as {
+  const { messages, threadId } = (await req.json()) as {
     messages: UIMessage[];
     threadId: string;
-    agentType: AgentType;
   };
 
   const thread = await db.agentThread.findUnique({ where: { id: threadId } });
-  // A thread with no organization cannot be checked against a plan or read for
-  // readiness, so it is not a thread this endpoint will serve.
-  if (!thread || thread.userId !== session.user.id || !thread.organizationId) {
+  if (!thread || thread.userId !== session.user.id) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  // Which prompt to run comes from the thread row, not from the request body.
+  // It used to be a field the browser sent, which meant anybody could ask for
+  // OWNER_COPILOT — the internal prompt written for whoever runs MAIRO, with
+  // every client account in scope — simply by changing one string in devtools.
+  // The thread's own type cannot be picked that way: it is set when the thread
+  // is created, on the server, from who is asking.
+  const agentType: AgentType = thread.agentType;
+
+  // The owner's copilot is a different shape of request and always was: it has
+  // no organization, so there is no plan to check and no account readiness to
+  // read. It was being rejected by the organization check below, which meant
+  // the internal copilot answered nothing at all. Gated on the role instead,
+  // which is what actually governs it.
+  if (agentType === "OWNER_COPILOT") {
+    if (session.user.role !== "OWNER") {
+      return new Response("Not found", { status: 404 });
+    }
+    if (!process.env.ANTHROPIC_API_KEY?.trim()) {
+      return new Response(
+        "The AI isn't configured on this deployment. Add ANTHROPIC_API_KEY in your hosting environment variables and redeploy — /aios/setup shows whether it's set.",
+        { status: 503 }
+      );
+    }
+    await recordUserMessage(threadId, messages);
+    return stream(threadId, systemPromptFor("OWNER_COPILOT"), messages);
+  }
+
+  // Everything else is a customer's assistant, and it cannot be served without
+  // an organization to check a plan against or read readiness from.
+  if (!thread.organizationId) {
     return new Response("Not found", { status: 404 });
   }
   const threadOrgId = thread.organizationId;
@@ -40,11 +70,16 @@ export async function POST(req: Request) {
   // endpoint costs real money to serve.
   const org = await db.organization.findUnique({
     where: { id: threadOrgId },
-    select: { subscriptionTier: true, subscriptionStatus: true },
+    select: {
+      name: true,
+      assistantName: true,
+      subscriptionTier: true,
+      subscriptionStatus: true,
+    },
   });
   if (!org || !hasActivePlan(org)) {
     return new Response(
-      "The AI specialists come with a plan. Choose one in Settings and they open up straight away.",
+      "Your assistant comes with a plan. Choose one in Settings and it opens up straight away.",
       { status: 402 }
     );
   }
@@ -73,16 +108,32 @@ export async function POST(req: Request) {
   // the kind of confidently wrong reply that stops people trusting it.
   const readiness = await readinessFor(threadOrgId, { checkFunding: true });
 
-  const userText = lastUserText(messages);
-  if (userText) {
-    await db.agentMessage.create({
-      data: { threadId, role: "USER", content: userText },
-    });
-  }
+  await recordUserMessage(threadId, messages);
 
+  // The assistant answers as whatever this business named it, about this
+  // business by name. Both are read from the organization rather than sent by
+  // the browser — a prompt field the client controls is a prompt field the
+  // client can rewrite.
+  const system = `${systemPromptFor(agentType, {
+    assistantName: org.assistantName,
+    businessName: org.name,
+  })}\n\n${readinessBrief(readiness)}`;
+
+  return stream(threadId, system, messages);
+}
+
+/** Store what they just asked, so the thread survives a reload. */
+async function recordUserMessage(threadId: string, messages: UIMessage[]) {
+  const userText = lastUserText(messages);
+  if (!userText) return;
+  await db.agentMessage.create({ data: { threadId, role: "USER", content: userText } });
+}
+
+/** The model call and the reply row, shared by both kinds of thread. */
+function stream(threadId: string, system: string, messages: UIMessage[]) {
   const result = streamText({
     model: agentModel,
-    system: `${systemPromptFor(agentType)}\n\n${readinessBrief(readiness)}`,
+    system,
     messages: convertToModelMessages(messages),
     onFinish: async ({ text }) => {
       // An empty completion isn't worth a row, and storing one makes the

@@ -6,17 +6,20 @@ import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
 import { AutoOptimizeSection } from "./auto-optimize-section";
 import { AutoLaunchSection } from "./auto-launch-section";
+import { AssistantSection } from "./assistant-section";
 import { autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { activeOrganizationId } from "@/lib/active-org";
 import { entitlementsFor } from "@/lib/entitlements";
 import { planFor, PLANS } from "@/lib/plans";
+import { assistantNameOf } from "@/lib/ai/agents";
+import { maskPhone } from "@/lib/sms/send";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, intake, autoOptimize, entitlements, autoLaunch] = await Promise.all([
+  const [organization, intake, autoOptimize, entitlements, autoLaunch, sms] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -27,12 +30,14 @@ export default async function SettingsPage() {
         subscriptionStatus: true,
         currentPeriodEnd: true,
         stripeCustomerId: true,
+        assistantName: true,
       },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
     db.autoOptimizeSettings.findUnique({ where: { organizationId } }),
     entitlementsFor(organizationId),
     autoLaunchIntent(organizationId),
+    db.smsPreference.findUnique({ where: { organizationId } }),
   ]);
   if (!organization) redirect("/sign-in");
 
@@ -95,6 +100,30 @@ export default async function SettingsPage() {
             minRoas: autoOptimize?.minRoas ?? null,
             maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
             platforms: autoOptimize?.platforms ?? [],
+          }}
+        />
+      </div>
+
+      {/* Above the brief, because this is the setting people come looking
+          for — the assistant is the part of MAIRO they actually talk to. */}
+      <div className="mb-8">
+        <AssistantSection
+          assistantName={assistantNameOf(organization.assistantName)}
+          phone={{
+            masked: sms?.phone ? maskPhone(sms.phone) : null,
+            verified: Boolean(sms?.verifiedAt) && !sms?.optedOutAt,
+            // A code that has expired is not a code they are waiting on, so
+            // the form goes back to asking for a number rather than for a
+            // code that will never be accepted.
+            awaitingCode: Boolean(
+              sms?.verifyCode && sms.verifyExpiresAt && sms.verifyExpiresAt > new Date(),
+            ),
+            prefs: {
+              onCampaignLive: sms?.onCampaignLive ?? true,
+              onNeedsAttention: sms?.onNeedsAttention ?? true,
+              onWeeklySummary: sms?.onWeeklySummary ?? false,
+              onBudgetChange: sms?.onBudgetChange ?? false,
+            },
           }}
         />
       </div>

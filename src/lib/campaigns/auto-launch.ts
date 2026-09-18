@@ -4,6 +4,7 @@ import { readinessFor } from "@/lib/readiness";
 import { planFor } from "@/lib/plans";
 import { describeStart, isDue } from "@/lib/campaigns/schedule";
 import { finishHalfBuilt } from "@/lib/campaigns/launch";
+import { sendSms } from "@/lib/sms/send";
 
 // Putting the ads live without asking.
 //
@@ -219,7 +220,29 @@ export async function maybeGoLive(
     data: { autoLaunchedAt: new Date() },
   });
 
-  return { launched: true, names: [...new Set(names)], heldBecause: null };
+  const launched = [...new Set(names)];
+
+  // Tell them, if they asked to be told. This is the single most worth-a-text
+  // moment in the product — money starts leaving their account — so it is the
+  // one notification that defaults to on.
+  //
+  // Deliberately not awaited into the return value and deliberately unable to
+  // fail this function: a text that does not send must not stop a campaign
+  // that already went live from being reported as live. sendSms returns its
+  // reasons rather than throwing, and the catch is there for the unexpected.
+  try {
+    await sendSms(
+      organizationId,
+      "campaign-live",
+      launched.length === 1
+        ? `Your campaign "${launched[0]}" is now live and running.`
+        : `${launched.length} of your campaigns are now live: ${launched.join(", ")}.`,
+    );
+  } catch (error) {
+    console.error("Could not send the campaign-live text:", error);
+  }
+
+  return { launched: true, names: launched, heldBecause: null };
 }
 
 /**

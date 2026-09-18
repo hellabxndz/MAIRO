@@ -17,9 +17,19 @@ import { type ReactNode } from "react";
 // constants — so this is a visual change with no call-site churn, which is the
 // only safe way to touch this many screens in one commit.
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function Card({
+  children,
+  className = "",
+  id,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** For linking straight to one section of a long settings page. */
+  id?: string;
+}) {
   return (
     <div
+      id={id}
       className={`rounded-[var(--radius-panel)] border p-6 ${className}`}
       style={{
         backgroundImage: "var(--mairo-glass)",

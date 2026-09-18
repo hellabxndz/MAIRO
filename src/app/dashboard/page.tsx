@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { viewMode } from "@/lib/view-mode";
 import { SimpleDashboard, firstNameFrom } from "@/components/mairo/simple-dashboard";
+import { assistantNameOf } from "@/lib/ai/agents";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
@@ -135,6 +136,7 @@ export default async function DashboardOverviewPage() {
         anyConnected={anyConnected}
         health={accountHealth}
         actions={actions}
+        assistantName={assistantNameOf(organization?.assistantName)}
       />
     );
   }
