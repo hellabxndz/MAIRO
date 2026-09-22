@@ -1,4 +1,4 @@
-import type { SalesAdSource } from "@/generated/prisma/enums";
+import type { CampaignAdSource, SalesAdSource } from "@/generated/prisma/enums";
 
 // What a shop's ads are made of, in the parts that are safe everywhere.
 //
@@ -45,3 +45,38 @@ export function postToBoost(organization: {
   if (organization.salesAdSource !== "EXISTING_POST") return null;
   return organization.boostPostId ?? null;
 }
+
+export type MetaPostToRun = { facebookPostId: string | null; instagramMediaId: string | null };
+
+/**
+ * The post a campaign's Meta ad runs, if any.
+ *
+ * The campaign's own answer wins, including "make me an ad", so a business
+ * with a post picked on Sales setup can still run a generated ad for one
+ * campaign. A campaign that never answered follows the business-wide choice.
+ */
+export function metaPostToRun(
+  campaign: {
+    adSource: CampaignAdSource | null;
+    boostPostId: string | null;
+    boostInstagramMediaId: string | null;
+  },
+  organization: { salesAdSource: SalesAdSource; boostPostId: string | null },
+): MetaPostToRun {
+  const none = { facebookPostId: null, instagramMediaId: null };
+  switch (campaign.adSource) {
+    case "FACEBOOK_POST":
+      return { ...none, facebookPostId: campaign.boostPostId };
+    case "INSTAGRAM_POST":
+      return { ...none, instagramMediaId: campaign.boostInstagramMediaId };
+    case "CREATIVE":
+      return none;
+    default:
+      return { ...none, facebookPostId: postToBoost(organization) };
+  }
+}
+
+/** Meta's {page-id}_{post-id} for a Facebook post. */
+export const FACEBOOK_POST_ID = /^\d+_\d+$/;
+/** An Instagram media id. */
+export const INSTAGRAM_MEDIA_ID = /^\d+$/;

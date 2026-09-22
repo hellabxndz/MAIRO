@@ -83,6 +83,8 @@ export type AdCreativeInput = {
    * createAdCreative. The picture and words are already on Meta.
    */
   boostPostId?: string | null;
+  /** An Instagram post to run as-is, and the Instagram account it belongs to. */
+  instagram?: { mediaId: string; userId: string } | null;
   /** What a click does: open a link, or ring the business. */
   destination: Destination;
   /** The text above the ad. */
@@ -91,6 +93,17 @@ export type AdCreativeInput = {
   headline: string;
   callToAction: string | null;
 };
+
+/** The individual features that made up Meta's retired standard_enhancements bundle. */
+export const STANDARD_ENHANCEMENT_FEATURES = [
+  "image_touchups",
+  "image_brightness_and_contrast",
+  "image_templates",
+  "video_auto_crop",
+  "text_optimizations",
+  "enhance_cta",
+  "inline_comment",
+] as const;
 
 /**
  * Builds the creative: the thing the person actually sees.
@@ -109,17 +122,6 @@ export type AdCreativeInput = {
  * which Meta rejects outright and which no amount of reading the call site
  * proves.
  */
-/** The individual features that made up Meta's retired standard_enhancements bundle. */
-export const STANDARD_ENHANCEMENT_FEATURES = [
-  "image_touchups",
-  "image_brightness_and_contrast",
-  "image_templates",
-  "video_auto_crop",
-  "text_optimizations",
-  "enhance_cta",
-  "inline_comment",
-] as const;
-
 export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unknown> {
   // Meta's automatic variations — cropping the image, reordering the text — are
   // off in both shapes below. The customer approved a specific picture and a
@@ -143,6 +145,27 @@ export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unk
     return {
       name: input.name,
       object_story_id: input.boostPostId,
+      degrees_of_freedom_spec: noEnhancements,
+    };
+  }
+
+  // An Instagram post is named by its media id and the account it lives on,
+  // with the Page as the object behind it. Only a website ad gets a button:
+  // the post itself is the rest of the creative.
+  if (input.instagram) {
+    return {
+      name: input.name,
+      object_id: input.pageId,
+      instagram_user_id: input.instagram.userId,
+      source_instagram_media_id: input.instagram.mediaId,
+      ...(input.destination.type === "WEBSITE"
+        ? {
+            call_to_action: JSON.stringify({
+              type: "LEARN_MORE",
+              value: { link: input.destination.url },
+            }),
+          }
+        : {}),
       degrees_of_freedom_spec: noEnhancements,
     };
   }

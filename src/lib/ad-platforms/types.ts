@@ -183,6 +183,8 @@ export type CreateAdGroupInput = {
    * when MAIRO is not.
    */
   startAt?: Date | null;
+  /** When delivery stops. Absent runs until someone stops it. */
+  endAt?: Date | null;
 };
 
 export type CreateAdInput = {
@@ -213,6 +215,8 @@ export type CreateAdInput = {
    * whole appeal is that real people already responded to this exact thing.
    */
   boostPostId?: string | null;
+  /** An Instagram post to run as the ad, the same way. Meta only. */
+  boostInstagramMediaId?: string | null;
 };
 
 export type CreatedEntity = { externalId: string };
@@ -349,6 +353,8 @@ export interface AdPlatformAdapter {
     organizationId: string;
     externalAdGroupId: string;
     startAt: Date | null;
+    /** The campaign's booked end, which a network that rewrites the whole schedule must keep. */
+    endAt?: Date | null;
   }): Promise<PlatformResult<void>>;
 
   updateBudget(input: {

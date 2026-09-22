@@ -282,7 +282,12 @@ export const tiktokAdapter: AdPlatformAdapter = {
           placement_type: "PLACEMENT_TYPE_NORMAL",
           placements: ["PLACEMENT_TIKTOK"],
           operation_status: "DISABLE",
-          ...(await tiktokSchedule(loaded.creds.accessToken, loaded.creds.externalAccountId, input.startAt)),
+          ...(await tiktokSchedule(
+            loaded.creds.accessToken,
+            loaded.creds.externalAccountId,
+            input.startAt,
+            input.endAt
+          )),
           ...(input.targeting ?? {}),
         },
       });
@@ -329,7 +334,8 @@ export const tiktokAdapter: AdPlatformAdapter = {
       const schedule = await tiktokSchedule(
         loaded.creds.accessToken,
         loaded.creds.externalAccountId,
-        input.startAt
+        input.startAt,
+        input.endAt
       );
       await tiktokRequest("/adgroup/update/", {
         method: "POST",
@@ -595,12 +601,25 @@ type TikTokReportRow = {
 async function tiktokSchedule(
   accessToken: string,
   advertiserId: string,
-  startAt: Date | null | undefined
+  startAt: Date | null | undefined,
+  endAt?: Date | null
 ): Promise<Record<string, string>> {
-  if (!isSchedulable(startAt)) return {};
+  if (!isSchedulable(startAt) && !endAt) return {};
 
   const zone = await fetchAdvertiserTimeZone(accessToken, advertiserId);
   if (!zone) return {};
+
+  // An end date means START_END, which needs a start too; with none booked it
+  // starts a few minutes out, which TikTok treats as now.
+  if (endAt) {
+    const start = isSchedulable(startAt) ? startAt : new Date(Date.now() + 10 * 60 * 1000);
+    return {
+      schedule_type: "SCHEDULE_START_END",
+      schedule_start_time: wallClockInZone(start, zone),
+      schedule_end_time: wallClockInZone(endAt, zone),
+    };
+  }
+  if (!isSchedulable(startAt)) return {};
 
   return {
     // FROM_NOW rather than START_END: the customer picked when to begin and

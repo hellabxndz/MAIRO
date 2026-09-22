@@ -226,3 +226,28 @@ export const SCHEDULE_PROBLEM_MESSAGE: Record<ScheduleProblem, string> = {
   past: "That start time has already passed. Pick one in the future, or let it start as soon as Meta approves it.",
   too_far: "That's more than six months out. Pick something sooner.",
 };
+
+/** The shortest run MAIRO will book. Less than a day is not enough to learn anything. */
+export const MIN_RUN_MS = 24 * 60 * 60 * 1000;
+
+export type EndProblem = "unreadable" | "too_soon" | "too_far";
+
+/** Checks a requested end against the start, or against now when it starts on approval. */
+export function validateEnd(
+  endAt: Date | null,
+  startAt: Date | null,
+  now: Date = new Date()
+): EndProblem | null {
+  if (!endAt) return null;
+  if (!Number.isFinite(endAt.getTime())) return "unreadable";
+  const from = startAt && startAt.getTime() > now.getTime() ? startAt : now;
+  if (endAt.getTime() < from.getTime() + MIN_RUN_MS) return "too_soon";
+  if (endAt.getTime() > now.getTime() + MAX_AHEAD_MS + MIN_RUN_MS) return "too_far";
+  return null;
+}
+
+export const END_PROBLEM_MESSAGE: Record<EndProblem, string> = {
+  unreadable: "MAIRO couldn't read that end date. Pick it again.",
+  too_soon: "The end has to be at least a day after the campaign starts.",
+  too_far: "That end date is more than six months out. Pick something sooner, or let it keep running.",
+};

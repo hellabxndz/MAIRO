@@ -3,8 +3,10 @@ import type {
   AdDestination,
   AdGoal,
   AdPlatform,
+  CampaignAdSource,
   LeadFormDelivery,
   MessageChannel,
+  MetaPlacement,
 } from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
@@ -13,8 +15,9 @@ import { nicheById, primaryAction } from "@/lib/tracking/niches";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
 import { describeMissing, resolveDestination, type Destination } from "@/lib/campaigns/destination";
-import { postToBoost } from "@/lib/campaigns/sales-source";
+import { metaPostToRun, type MetaPostToRun } from "@/lib/campaigns/sales-source";
 import { metaTargeting, normalizeAudience, type Audience } from "@/lib/campaigns/audience";
+import { metaPlacementTargeting } from "@/lib/campaigns/placements";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -107,6 +110,14 @@ export type CreateMairoCampaignInput = {
    * campaign got before the form asked.
    */
   audience?: Partial<Audience>;
+  /** When delivery stops. Null runs until someone stops it. */
+  endAt?: Date | null;
+  /** How the Meta ad is made. Null follows the business-wide setting. */
+  adSource?: CampaignAdSource | null;
+  boostPostId?: string | null;
+  boostInstagramMediaId?: string | null;
+  /** Where the Meta ad shows. Empty lets Meta choose. */
+  placements?: MetaPlacement[];
 };
 
 /**
@@ -132,6 +143,11 @@ export async function createMairoCampaign(
       tiktokGrowthMode: input.tiktokGrowthMode ?? false,
       startDate: input.startAt ?? null,
       startTimeZone: input.startTimeZone ?? null,
+      endDate: input.endAt ?? null,
+      adSource: input.adSource ?? null,
+      boostPostId: input.boostPostId ?? null,
+      boostInstagramMediaId: input.boostInstagramMediaId ?? null,
+      placements: input.placements ?? [],
       destinationType: input.destination?.type ?? "WEBSITE",
       destinationUrl: input.destination?.url ?? null,
       destinationPhone: input.destination?.phone ?? null,
@@ -420,6 +436,19 @@ async function buildDeliverable(input: {
     return { stage: "campaign", blocker };
   }
 
+  const options = await deliveryOptionsFor(input.mairoCampaignId);
+
+  // An end date that has already passed is refused by the network, and a
+  // campaign that ended before it was built has nothing left to do.
+  if (options.endAt && options.endAt.getTime() <= Date.now()) {
+    const blocker = "This campaign's end date has passed, so MAIRO didn't finish building it.";
+    await db.platformCampaign.update({
+      where: { id: input.platformCampaignId },
+      data: { lastError: blocker },
+    });
+    return { stage: input.existingAdGroupId ? "ad_set" : "campaign", blocker };
+  }
+
   let adGroupId = input.existingAdGroupId ?? null;
 
   if (!adGroupId) {
@@ -433,13 +462,17 @@ async function buildDeliverable(input: {
       conversion,
       // Who sees it. Without this every ad set fell back to the whole of the
       // United States at every age, which is the default nobody chose.
-      targeting: metaTargeting(await audienceFor(input.mairoCampaignId)),
+      targeting: {
+        ...metaTargeting(await audienceFor(input.mairoCampaignId)),
+        ...(input.platform === "META" ? metaPlacementTargeting(options.placements) : {}),
+      },
       destination: destination ?? undefined,
       pageId: await pageIdFor(input.organizationId, input.platform),
       // The booked start, which becomes the network's own start_time. MAIRO
       // also holds the campaign paused until then, but only while it is
       // running — this is what keeps the schedule when it is not.
       startAt: input.startAt ?? null,
+      endAt: options.endAt,
     });
 
     if (!adGroup.ok) {
@@ -459,18 +492,21 @@ async function buildDeliverable(input: {
   }
 
   // A post the business already published, when that is what they asked for.
-  // Only Meta can run one — the post lives on a Facebook Page — so another
+  // Only Meta can run one — the post lives on its Page or Instagram — so another
   // network in the same campaign still builds from an approved creative.
-  const boostPostId =
-    input.platform === "META" ? await boostPostFor(input.organizationId) : null;
+  const post: MetaPostToRun =
+    input.platform === "META"
+      ? await metaPostFor(input.organizationId, options)
+      : { facebookPostId: null, instagramMediaId: null };
+  const boosting = Boolean(post.facebookPostId || post.instagramMediaId);
 
   // The bar for a generated ad: somebody approved a picture. A post that is
   // already published has cleared a higher one — the business wrote it, posted
   // it under its own name, and picked it out of its own feed — so requiring an
   // approved creative as well would block the ad on producing something nothing
   // will ever use.
-  const creative = boostPostId ? null : await approvedCreativeFor(input.organizationId);
-  if (!creative && !boostPostId) {
+  const creative = boosting ? null : await approvedCreativeFor(input.organizationId);
+  if (!creative && !boosting) {
     const blocker =
       "There is no approved creative to run yet, so the ad hasn't been built. Approve a picture on the Creatives page and launch again.";
     await db.platformCampaign.update({
@@ -491,7 +527,8 @@ async function buildDeliverable(input: {
       cta: creative?.cta ?? null,
       imageData: creative?.imageData ?? null,
     },
-    boostPostId,
+    boostPostId: post.facebookPostId,
+    boostInstagramMediaId: post.instagramMediaId,
     destination,
   });
 
@@ -576,20 +613,48 @@ async function audienceFor(mairoCampaignId: string): Promise<Audience> {
   return normalizeAudience(campaign ?? {});
 }
 
+type DeliveryOptions = {
+  endAt: Date | null;
+  placements: MetaPlacement[];
+  adSource: CampaignAdSource | null;
+  boostPostId: string | null;
+  boostInstagramMediaId: string | null;
+};
+
+/** What the customer chose in the Create flow beyond the audience. */
+async function deliveryOptionsFor(mairoCampaignId: string): Promise<DeliveryOptions> {
+  const campaign = await db.mairoCampaign.findUnique({
+    where: { id: mairoCampaignId },
+    select: {
+      endDate: true,
+      placements: true,
+      adSource: true,
+      boostPostId: true,
+      boostInstagramMediaId: true,
+    },
+  });
+  return {
+    endAt: campaign?.endDate ?? null,
+    placements: campaign?.placements ?? [],
+    adSource: campaign?.adSource ?? null,
+    boostPostId: campaign?.boostPostId ?? null,
+    boostInstagramMediaId: campaign?.boostInstagramMediaId ?? null,
+  };
+}
+
 /**
- * The post this business wants run as its ads, when it asked for one.
- *
- * Both halves are required and the pair is the point: a business that picked
- * "run one of my posts" but never chose which has nothing to run, and a post id
- * left behind by somebody who has since switched back to MAIRO writing the ads
- * must not quietly keep boosting.
+ * The post this campaign's Meta ad runs, if any: the campaign's own choice,
+ * or the business-wide one when the campaign never answered.
  */
-async function boostPostFor(organizationId: string): Promise<string | null> {
+async function metaPostFor(
+  organizationId: string,
+  options: DeliveryOptions
+): Promise<MetaPostToRun> {
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
     select: { salesAdSource: true, boostPostId: true },
   });
-  return organization ? postToBoost(organization) : null;
+  return metaPostToRun(options, organization ?? { salesAdSource: "MAIRO_CREATES", boostPostId: null });
 }
 
 /**

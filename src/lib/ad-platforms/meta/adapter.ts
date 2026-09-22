@@ -279,7 +279,22 @@ export const metaAdapter: AdPlatformAdapter = {
     // None of the below applies to a post that already exists. It has its own
     // picture and its own words, on Meta, and demanding a generated image and a
     // written headline first would refuse the one kind of ad that needs neither.
-    const boosting = Boolean(input.boostPostId);
+    const boosting = Boolean(input.boostPostId || input.boostInstagramMediaId);
+
+    // An Instagram post runs as the Instagram account linked to the Page, so
+    // that account is looked up rather than assumed.
+    let instagram: { mediaId: string; userId: string } | null = null;
+    if (input.boostInstagramMediaId) {
+      const account = await findInstagramAccount(input.organizationId);
+      if (!account.ok) return fail("rejected", account.error.message);
+      if (!account.data) {
+        return fail(
+          "rejected",
+          "This ad runs an Instagram post, but no Instagram account is linked to your Facebook Page. Link one in Meta Business settings, or pick a different kind of ad."
+        );
+      }
+      instagram = { mediaId: input.boostInstagramMediaId, userId: account.data.igUserId };
+    }
 
     if (!boosting && !input.creative.imageData) {
       return fail("rejected", "This creative has no finished picture to run.");
@@ -310,6 +325,7 @@ export const metaAdapter: AdPlatformAdapter = {
         pageId: connection.pageId,
         imageHash: image?.hash ?? "",
         boostPostId: input.boostPostId ?? null,
+        instagram,
         destination: input.destination,
         message: input.creative.primaryText ?? "",
         headline: input.creative.headline ?? "",
@@ -557,6 +573,7 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     // a start_time in the past outright, and failing a whole launch over a
     // customer who meant "now" would be absurd.
     ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
+    ...(input.endAt ? { end_time: metaStartTime(input.endAt) } : {}),
     targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
     // Required whenever the ad set optimizes for a pixel conversion, and
     // meaningless otherwise. It is what ties the tracking MAIRO set up to the

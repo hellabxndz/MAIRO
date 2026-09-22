@@ -30,7 +30,15 @@ import {
 import { describeGraphError } from "@/lib/meta/client";
 import { metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
-import { describePost, postToBoost } from "@/lib/campaigns/sales-source";
+import {
+  describePost,
+  FACEBOOK_POST_ID,
+  INSTAGRAM_MEDIA_ID,
+  metaPostToRun,
+  postToBoost,
+} from "@/lib/campaigns/sales-source";
+import { isPlacement, metaPlacementTargeting, PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
+import { validateEnd } from "@/lib/campaigns/schedule";
 import {
   AUDIENCE_DEFAULTS,
   describeAudience,
@@ -725,6 +733,127 @@ console.log("\n— a click has somewhere to go —");
   ok("an international number is kept", normalizePhone("+44 20 7946 0000") === "+442079460000");
   ok("something too short is refused", normalizePhone("12345") === null);
   ok("and letters are not a number", normalizePhone("call me") === null);
+}
+
+console.log("\n— the Create flow's Ads Manager choices —");
+{
+  // Placements: nothing chosen is Advantage+, which only works if nothing is sent.
+  ok("no placements chosen sends no placement fields", Object.keys(metaPlacementTargeting([])).length === 0);
+  const feeds = metaPlacementTargeting(["FACEBOOK_FEED", "INSTAGRAM_FEED"]);
+  ok(
+    "both feeds name both platforms",
+    JSON.stringify(feeds.publisher_platforms) === JSON.stringify(["facebook", "instagram"])
+  );
+  ok("Facebook feed is feed", JSON.stringify(feeds.facebook_positions) === JSON.stringify(["feed"]));
+  ok("Instagram feed is stream", JSON.stringify(feeds.instagram_positions) === JSON.stringify(["stream"]));
+  const stories = metaPlacementTargeting(["STORIES"]);
+  ok(
+    "Stories covers Facebook and Instagram",
+    JSON.stringify(stories.facebook_positions) === JSON.stringify(["story"]) &&
+      JSON.stringify(stories.instagram_positions) === JSON.stringify(["story"])
+  );
+  const reels = metaPlacementTargeting(["REELS"]);
+  ok(
+    "Reels uses each platform's own name for it",
+    JSON.stringify(reels.facebook_positions) === JSON.stringify(["facebook_reels"]) &&
+      JSON.stringify(reels.instagram_positions) === JSON.stringify(["reels"])
+  );
+  const igOnly = metaPlacementTargeting(["INSTAGRAM_FEED"]);
+  ok(
+    "Instagram only never names Facebook",
+    JSON.stringify(igOnly.publisher_platforms) === JSON.stringify(["instagram"]) &&
+      igOnly.facebook_positions === undefined
+  );
+  ok("every offered placement is recognised", PLACEMENT_OPTIONS.every((p) => isPlacement(p.value)));
+  ok("and a made-up one is not", !isPlacement("AUDIENCE_NETWORK"));
+
+  // The end date reaches Meta as the ad set's end_time.
+  const adSetBase = {
+    organizationId: "org",
+    externalCampaignId: "c1",
+    name: "n",
+    dailyBudgetCents: 2000,
+    goal: "TRAFFIC" as const,
+    campaignOwnsBudget: true,
+    destination: { type: "WEBSITE" as const, url: "https://x.test" },
+  };
+  const end = new Date("2030-01-15T12:00:00Z");
+  ok(
+    "an end date becomes end_time",
+    metaAdSetBody({ ...adSetBase, endAt: end }).end_time === "2030-01-15T12:00:00.000Z"
+  );
+  ok("no end date sends no end_time", metaAdSetBody(adSetBase).end_time === undefined);
+
+  // End dates that would be refused, caught before anything is built.
+  const now = new Date("2030-01-01T00:00:00Z");
+  const hours = (h: number) => new Date(now.getTime() + h * 3600 * 1000);
+  ok("no end is fine", validateEnd(null, null, now) === null);
+  ok("an end a day out is fine", validateEnd(hours(25), null, now) === null);
+  ok("an end within a day is too soon", validateEnd(hours(5), null, now) === "too_soon");
+  ok("an end measured from a later start", validateEnd(hours(30), hours(20), now) === "too_soon");
+  ok("an end a day after a later start is fine", validateEnd(hours(45), hours(20), now) === null);
+  ok("an end years out is refused", validateEnd(hours(24 * 400), null, now) === "too_far");
+
+  // Which post a campaign runs.
+  const orgPicked = { salesAdSource: "EXISTING_POST" as const, boostPostId: "1_2" };
+  const orgMakes = { salesAdSource: "MAIRO_CREATES" as const, boostPostId: null };
+  const campaign = (adSource: "CREATIVE" | "FACEBOOK_POST" | "INSTAGRAM_POST" | null) => ({
+    adSource,
+    boostPostId: "10_20",
+    boostInstagramMediaId: "30",
+  });
+  ok(
+    "a campaign that picked a Facebook post runs it",
+    JSON.stringify(metaPostToRun(campaign("FACEBOOK_POST"), orgMakes)) ===
+      JSON.stringify({ facebookPostId: "10_20", instagramMediaId: null })
+  );
+  ok(
+    "a campaign that picked an Instagram post runs only that",
+    JSON.stringify(metaPostToRun(campaign("INSTAGRAM_POST"), orgPicked)) ===
+      JSON.stringify({ facebookPostId: null, instagramMediaId: "30" })
+  );
+  ok(
+    "a campaign that asked MAIRO to make the ad ignores the business's post",
+    JSON.stringify(metaPostToRun(campaign("CREATIVE"), orgPicked)) ===
+      JSON.stringify({ facebookPostId: null, instagramMediaId: null })
+  );
+  ok(
+    "a campaign that never answered follows the business",
+    metaPostToRun(campaign(null), orgPicked).facebookPostId === "1_2"
+  );
+  ok("post ids are checked for shape", FACEBOOK_POST_ID.test("123_456") && !FACEBOOK_POST_ID.test("123"));
+  ok("media ids too", INSTAGRAM_MEDIA_ID.test("1789") && !INSTAGRAM_MEDIA_ID.test("17_89"));
+
+  // An Instagram post as the creative.
+  const igBase = {
+    adAccountId: "act_1",
+    accessToken: "t",
+    name: "n",
+    pageId: "PAGE1",
+    imageHash: "",
+    message: "",
+    headline: "",
+    callToAction: null,
+    instagram: { mediaId: "MEDIA1", userId: "IG1" },
+  };
+  const ig = metaAdCreativeParams({ ...igBase, destination: { type: "WEBSITE", url: "https://x.test" } });
+  ok("an Instagram post is sent by media id", ig.source_instagram_media_id === "MEDIA1");
+  ok("as the linked Instagram account", ig.instagram_user_id === "IG1");
+  ok("with the Page behind it", ig.object_id === "PAGE1");
+  ok(
+    "and carries neither Facebook post shape",
+    ig.object_story_spec === undefined && ig.object_story_id === undefined
+  );
+  ok(
+    "a website ad gets a button to the site",
+    JSON.parse(String(ig.call_to_action)).value.link === "https://x.test"
+  );
+  const igCall = metaAdCreativeParams({ ...igBase, destination: { type: "PHONE_CALL", phone: "+15551234567" } });
+  ok("other destinations run the post as it is", igCall.call_to_action === undefined);
+  ok(
+    "enhancements are off for Instagram posts too",
+    !("standard_enhancements" in JSON.parse(String(ig.degrees_of_freedom_spec)).creative_features_spec)
+  );
 }
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);

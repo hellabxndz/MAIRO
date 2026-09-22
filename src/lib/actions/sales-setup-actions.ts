@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { normalizeUrl } from "@/lib/campaigns/destination";
-import { listPagePosts } from "@/lib/meta/sales-sources";
+import { listInstagramPosts, listPagePosts } from "@/lib/meta/sales-sources";
 import type { PagePost } from "@/lib/campaigns/sales-source";
 import { readShop, saveProducts } from "@/lib/catalog/read-shop";
 
@@ -30,6 +30,17 @@ export async function loadPagePostsAction(): Promise<
   if (!organizationId) return { ok: false, error: "Not signed in." };
 
   const result = await listPagePosts(organizationId);
+  return result.ok ? { ok: true, posts: result.data } : { ok: false, error: result.error };
+}
+
+/** The linked Instagram account's posts, for the Create flow's picker. */
+export async function loadInstagramPostsAction(): Promise<
+  { ok: true; posts: PagePost[] } | { ok: false; error: string }
+> {
+  const organizationId = await currentOrganization();
+  if (!organizationId) return { ok: false, error: "Not signed in." };
+
+  const result = await listInstagramPosts(organizationId);
   return result.ok ? { ok: true, posts: result.data } : { ok: false, error: result.error };
 }
 

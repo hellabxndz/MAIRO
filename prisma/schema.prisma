@@ -491,6 +491,21 @@ enum SalesAdSource {
   CATALOG
 }
 
+/// One campaign's answer to "how would you like to create your ad?".
+enum CampaignAdSource {
+  CREATIVE
+  FACEBOOK_POST
+  INSTAGRAM_POST
+}
+
+/// The placements the Create flow offers, in the customer's terms.
+enum MetaPlacement {
+  FACEBOOK_FEED
+  INSTAGRAM_FEED
+  STORIES
+  REELS
+}
+
 enum CampaignStatus {
   DRAFT
   PENDING_REVIEW
@@ -819,7 +834,19 @@ model MairoCampaign {
   /// re-rendering it in whatever zone the current device happens to be in.
   startTimeZone String?
 
+  /// When delivery stops. Null runs until someone stops it.
   endDate DateTime?
+
+  /// What this campaign's Meta ad is made of. Null follows the business-wide
+  /// choice on the Sales setup screen, which is what campaigns made anywhere
+  /// other than the Create flow get.
+  adSource              CampaignAdSource?
+  /// The Facebook post to run, as Meta's {page-id}_{post-id}.
+  boostPostId           String?
+  /// The Instagram post to run, as its media id.
+  boostInstagramMediaId String?
+  /// Where the Meta ad shows. Empty lets Meta choose, which is its advice.
+  placements            MetaPlacement[] @default([])
 
   /// Set when the customer asked for TikTok Growth Mode on this campaign:
   /// TikTok-native creative, hook variations, and Spark-ad readiness for a

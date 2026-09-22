@@ -20,8 +20,10 @@ import {
 import { createMairoCampaign } from "@/lib/campaigns/launch";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import {
+  END_PROBLEM_MESSAGE,
   instantFromLocal,
   SCHEDULE_PROBLEM_MESSAGE,
+  validateEnd,
   validateStart,
 } from "@/lib/campaigns/schedule";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
@@ -35,6 +37,7 @@ import {
 import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
 import { pushFormToMeta } from "@/lib/leads/meta-form";
 import { searchPlaces, type Place } from "@/lib/meta/places";
+import { FACEBOOK_POST_ID, INSTAGRAM_MEDIA_ID } from "@/lib/campaigns/sales-source";
 import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
@@ -78,6 +81,18 @@ const createCampaignSchema = z.object({
   ageMin: z.coerce.number().nullish(),
   ageMax: z.coerce.number().nullish(),
   genders: z.coerce.number().nullish(),
+  /** When it stops, in the same zone as the start. Empty keeps it running. */
+  endLocal: z.string().trim().nullish(),
+  /** How the Meta ad is made. Absent follows the business-wide setting. */
+  adSource: z.enum(["CREATIVE", "FACEBOOK_POST", "INSTAGRAM_POST"]).nullish(),
+  boostPostId: z.string().trim().regex(FACEBOOK_POST_ID, "That Facebook post can't be used.").nullish(),
+  boostInstagramMediaId: z
+    .string()
+    .trim()
+    .regex(INSTAGRAM_MEDIA_ID, "That Instagram post can't be used.")
+    .nullish(),
+  /** Empty lets Meta choose where the ad shows. */
+  placements: z.array(z.enum(["FACEBOOK_FEED", "INSTAGRAM_FEED", "STORIES", "REELS"])).default([]),
 });
 
 export type CampaignActionState =
@@ -132,9 +147,27 @@ export async function createCampaignAction(
     ageMin: formData.get("ageMin") || null,
     ageMax: formData.get("ageMax") || null,
     genders: formData.get("genders") || null,
+    endLocal: formData.get("endLocal") || null,
+    adSource: formData.get("adSource") || null,
+    boostPostId: formData.get("boostPostId") || null,
+    boostInstagramMediaId: formData.get("boostInstagramMediaId") || null,
+    placements: formData.getAll("placements"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  // Picking "run one of my posts" without picking which post is caught here,
+  // not at launch, where it would leave a campaign on Meta with no ad.
+  const { adSource } = parsed.data;
+  const boostPostId = adSource === "FACEBOOK_POST" ? (parsed.data.boostPostId ?? null) : null;
+  const boostInstagramMediaId =
+    adSource === "INSTAGRAM_POST" ? (parsed.data.boostInstagramMediaId ?? null) : null;
+  if (adSource === "FACEBOOK_POST" && !boostPostId) {
+    return { error: "Pick which Facebook post to run, or choose another way to make the ad." };
+  }
+  if (adSource === "INSTAGRAM_POST" && !boostInstagramMediaId) {
+    return { error: "Pick which Instagram post to run, or choose another way to make the ad." };
   }
 
   const { name, objective, dailyBudget, platforms, percents, tiktokGrowthMode } = parsed.data;
@@ -158,6 +191,17 @@ export async function createCampaignAction(
     }
     const problem = validateStart(startAt);
     if (problem) return { error: SCHEDULE_PROBLEM_MESSAGE[problem] };
+  }
+
+  let endAt: Date | null = null;
+  if (parsed.data.endLocal) {
+    if (!startTimeZone) {
+      return { error: "MAIRO couldn't tell what timezone that end date is in. Try again." };
+    }
+    endAt = instantFromLocal(parsed.data.endLocal, startTimeZone);
+    if (!endAt) return { error: END_PROBLEM_MESSAGE.unreadable };
+    const problem = validateEnd(endAt, startAt);
+    if (problem) return { error: END_PROBLEM_MESSAGE[problem] };
   }
 
   const organization = await db.organization.findUnique({
@@ -284,7 +328,12 @@ export async function createCampaignAction(
     allocations,
     tiktokGrowthMode,
     startAt,
-    startTimeZone: startAt ? startTimeZone : null,
+    startTimeZone: startAt || endAt ? startTimeZone : null,
+    endAt,
+    adSource: adSource ?? null,
+    boostPostId,
+    boostInstagramMediaId,
+    placements: parsed.data.placements,
     destination: {
       type: destinationType,
       url: destinationUrl,
@@ -402,6 +451,11 @@ export async function rescheduleCampaignAction(
     if (problem) return { error: SCHEDULE_PROBLEM_MESSAGE[problem] };
   }
 
+  // A booked end still has to come at least a day after the new start.
+  if (validateEnd(campaign.endDate, startAt) === "too_soon") {
+    return { error: "That start is too close to this campaign's end date. Pick an earlier start." };
+  }
+
   await db.mairoCampaign.update({
     where: { id: campaign.id },
     data: { startDate: startAt, startTimeZone: startAt ? startTimeZone : null },
@@ -419,6 +473,7 @@ export async function rescheduleCampaignAction(
       organizationId,
       externalAdGroupId: child.externalAdGroupId,
       startAt,
+      endAt: campaign.endDate,
     });
     if (!result.ok) failures.push(`${platformName(child.platform)}: ${result.error.message}`);
   }

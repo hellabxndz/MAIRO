@@ -1,17 +1,24 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { AdPlatform } from "@/generated/prisma/enums";
+import type { AdPlatform, MetaPlacement } from "@/generated/prisma/enums";
 import { createCampaignAction, type CampaignActionState } from "@/lib/actions/campaign-actions";
+import { loadInstagramPostsAction, loadPagePostsAction } from "@/lib/actions/sales-setup-actions";
 import { inputClass } from "@/components/ui";
 import { AnalysisScan } from "./analysis-scan";
+import { PostPicker } from "./post-picker";
+import { AudienceFields } from "@/app/dashboard/campaigns/audience-fields";
 import { StudioWorkspace } from "@/components/creative-studio/studio-workspace";
+import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
+import type { PagePost } from "@/lib/campaigns/sales-source";
 import type { CreditBalance } from "@/lib/creative-studio/credits";
 import type { CreditCosts } from "@/lib/creative-studio/pricing";
 
-// Telling MAIRO what to run, in four questions.
+// Telling MAIRO what to run, one plain question per screen — the same choices
+// Ads Manager offers, each already answered with a sensible default so someone
+// who does not care can press Continue straight through.
 //
 // The point of the product is that somebody who does not know what a campaign
 // objective is can still buy advertising that works. So this asks what they
@@ -78,6 +85,11 @@ type Props = {
   };
 };
 
+/** How the ad gets made. "later" and "generate" both mean MAIRO's own creative. */
+type AdChoice = "none" | "generate" | "attached" | "later" | "FACEBOOK_POST" | "INSTAGRAM_POST";
+
+type StepId = "goal" | "subject" | "ad" | "audience" | "placements" | "budget" | "accounts";
+
 const PLATFORM_LABEL: Record<string, string> = {
   META: "Meta",
   TIKTOK: "TikTok",
@@ -95,15 +107,42 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
 
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState<Goal>(GOALS[0]);
-  // The creative step. "skip" is a real, first-class choice — a business
-  // with an already-approved creative, or one who would rather add it after,
-  // has always been able to launch without ever visiting this screen; this
-  // step offers to do it now without requiring it.
-  const [creativeChoice, setCreativeChoice] = useState<"none" | "generate" | "attached">("none");
+  // The ad step. Leaving it unanswered is allowed — the campaign then follows
+  // whatever the business chose on Sales setup, or MAIRO writes the ad.
+  const [adChoice, setAdChoice] = useState<AdChoice>("none");
   const [attachedPreview, setAttachedPreview] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<PagePost | null>(null);
+  // Posts are fetched once per source, when somebody first picks it.
+  const [posts, setPosts] = useState<Partial<Record<"FACEBOOK_POST" | "INSTAGRAM_POST", PagePost[]>>>({});
+  const [postError, setPostError] = useState<string | null>(null);
+  const [loadingPosts, startLoadingPosts] = useTransition();
+
   const [subject, setSubject] = useState(business.website ?? "");
+  // Empty means Meta chooses where the ad shows, which is its own advice.
+  const [placements, setPlacements] = useState<MetaPlacement[]>([]);
+  const [choosingPlacements, setChoosingPlacements] = useState(false);
   const [period, setPeriod] = useState<"daily" | "monthly">("monthly");
   const [amount, setAmount] = useState(600);
+  const [startLocal, setStartLocal] = useState("");
+  const [endLocal, setEndLocal] = useState("");
+  const [startOnDate, setStartOnDate] = useState(false);
+  const [endOnDate, setEndOnDate] = useState(false);
+  const [timeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+  const hasMeta = service.platforms.includes("META");
+
+  function choosePostSource(source: "FACEBOOK_POST" | "INSTAGRAM_POST") {
+    setAdChoice(source);
+    setSelectedPost(null);
+    setPostError(null);
+    if (posts[source]) return;
+    startLoadingPosts(async () => {
+      const result =
+        source === "FACEBOOK_POST" ? await loadPagePostsAction() : await loadInstagramPostsAction();
+      if (result.ok) setPosts((prev) => ({ ...prev, [source]: result.posts }));
+      else setPostError(result.error);
+    });
+  }
 
   // The analysis screen goes up the moment the form is submitted and comes down
   // only when the server answers. It is covering real work — the action writes
@@ -128,22 +167,60 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
   const dailyCents = period === "daily" ? amount * 100 : Math.round((amount * 100) / 30);
   const monthly = period === "daily" ? amount * 30 : amount;
 
-  if (showAnalysis) {
-    return <AnalysisScan businessName={business.name} platforms={service.platforms} />;
-  }
+  const steps: { id: StepId; label: string }[] = [
+    { id: "goal", label: "What you want" },
+    { id: "subject", label: "What you're advertising" },
+    { id: "ad", label: "Your ad" },
+    { id: "audience", label: "Who sees it" },
+    // Placements are a Meta idea; a TikTok-only campaign has nothing to choose.
+    ...(hasMeta ? [{ id: "placements" as const, label: "Where it shows" }] : []),
+    { id: "budget", label: "Budget and dates" },
+    { id: "accounts", label: "Accounts" },
+  ];
+  const current = steps[step].id;
+  const lastStep = steps.length - 1;
 
-  const steps = ["What you want", "What you're advertising", "Your ad", "Budget", "Accounts"];
+  const pickingPost = adChoice === "FACEBOOK_POST" || adChoice === "INSTAGRAM_POST";
+  const formAdSource =
+    adChoice === "FACEBOOK_POST" || adChoice === "INSTAGRAM_POST"
+      ? adChoice
+      : adChoice === "none"
+        ? ""
+        : "CREATIVE";
+
+  // What stops Continue on the current screen, said rather than just greyed out.
+  const blockedBecause =
+    current === "subject" && subject.trim().length === 0
+      ? "Add a link or a description to continue."
+      : current === "ad" && pickingPost && !selectedPost
+        ? "Pick a post, or choose another way to make the ad."
+        : current === "placements" && choosingPlacements && placements.length === 0
+          ? "Pick at least one place, or let Meta choose."
+          : current === "budget" && startOnDate && !startLocal
+            ? "Pick a start date, or start as soon as it's approved."
+            : current === "budget" && endOnDate && !endLocal
+              ? "Pick an end date, or keep it running."
+              : null;
 
   return (
+    <>
+    {showAnalysis && <AnalysisScan businessName={business.name} platforms={service.platforms} />}
+    {/* Hidden rather than removed while it builds: answers held inside the
+        screens (the audience) would otherwise be lost if Meta sends back an
+        error and the customer lands back here to fix it. */}
     <form
       action={formAction}
       onSubmit={() => setAttempt((n) => n + 1)}
-      className="mx-auto max-w-2xl"
+      onKeyDown={(e) => {
+        // Enter in a date or number box would otherwise submit the whole form
+        // and build the campaign before the last screen.
+        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
+      }}
+      className={showAnalysis ? "hidden" : "mx-auto max-w-2xl"}
     >
-      {/* Everything the server action needs, carried along rather than asked
-          again. The advanced form on /dashboard/campaigns is where somebody
-          changes targeting; this flow uses what the business already said at
-          signup, which is the whole point of having asked. */}
+      {/* Everything the server action needs. What the business said at signup
+          is carried along rather than asked again; the rest comes from the
+          screens below, each of which starts already answered. */}
       <input type="hidden" name="objective" value={goal.objective} />
       <input type="hidden" name="dailyBudget" value={(dailyCents / 100).toFixed(2)} />
       {service.platforms.map((p) => (
@@ -164,12 +241,24 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
       />
       <input type="hidden" name="messageChannel" value={business.messageChannel} />
       <input type="hidden" name="formAuthor" value="MAIRO" />
+      <input type="hidden" name="adSource" value={formAdSource} />
+      {adChoice === "FACEBOOK_POST" && selectedPost && (
+        <input type="hidden" name="boostPostId" value={selectedPost.id} />
+      )}
+      {adChoice === "INSTAGRAM_POST" && selectedPost && (
+        <input type="hidden" name="boostInstagramMediaId" value={selectedPost.id} />
+      )}
+      {choosingPlacements &&
+        placements.map((p) => <input key={p} type="hidden" name="placements" value={p} />)}
+      {startOnDate && startLocal && <input type="hidden" name="startLocal" value={startLocal} />}
+      {endOnDate && endLocal && <input type="hidden" name="endLocal" value={endLocal} />}
+      <input type="hidden" name="startTimeZone" value={timeZone} />
 
       {/* The rail. Position without a countdown. */}
       <div className="mb-8 flex items-center gap-2" aria-hidden>
         {steps.map((s, i) => (
           <span
-            key={s}
+            key={s.id}
             className="h-0.5 flex-1 rounded-full transition-all duration-500 [transition-timing-function:var(--ease-mairo)]"
             style={{
               backgroundImage: i <= step ? "var(--mairo-ramp)" : "none",
@@ -179,7 +268,7 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
         ))}
       </div>
 
-      {step === 0 && (
+      {current === "goal" && (
         <Question
           title="What are you trying to achieve?"
           sub="MAIRO turns this into the campaign settings the platform needs. You never have to."
@@ -198,7 +287,7 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
         </Question>
       )}
 
-      {step === 1 && (
+      {current === "subject" && (
         <Question
           title="What are you advertising?"
           sub="A link is enough — MAIRO reads the page and writes the ads from what it finds. If you would rather describe it, do that instead."
@@ -211,69 +300,158 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
             placeholder="yourbusiness.com/the-thing — or describe what you sell and who buys it"
           />
           <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-            You can add your own images or video once the campaign is built. MAIRO will have
-            written a first set by then.
+            Next you&rsquo;ll choose the ad itself — made by MAIRO, or a post you already have.
           </p>
         </Question>
       )}
 
-      {step === 2 && (
+      {current === "ad" && (
         <Question
           title="How would you like to create your ad?"
-          sub={`Optional here — skip it and ${studio.assistantName} will write a first set once the campaign exists, or come back to it any time from Creative Studio.`}
+          sub={`Skip it and ${studio.assistantName} writes a first set once the campaign exists — you can change it any time from Creative Studio.`}
         >
-          {!studio.configured ? (
-            <p className="rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--mairo-line)" }}>
-              AI Creative Studio isn&rsquo;t switched on for this deployment yet. Skip this step — your
-              campaign will still build normally.
-            </p>
-          ) : creativeChoice === "attached" && attachedPreview ? (
+          {adChoice === "attached" && attachedPreview ? (
             <div className="space-y-3">
               {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL, see studio-workspace.tsx */}
               <img src={attachedPreview} alt="Attached creative" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--mairo-line)" }} />
               <p className="text-[13px] text-live">Ready — {studio.assistantName} wrote ad copy for it too.</p>
-              <button
-                type="button"
-                onClick={() => setCreativeChoice("none")}
-                className="text-[12.5px] text-muted underline underline-offset-4 hover:text-white"
-              >
-                Choose a different one
-              </button>
+              <BackToChoices onClick={() => setAdChoice("none")} />
             </div>
-          ) : creativeChoice === "generate" ? (
-            <StudioWorkspace
-              assistantName={studio.assistantName}
-              creditBalance={studio.creditBalance}
-              costs={studio.costs}
-              mode={studio.mode}
-              embedded
-              onAttached={(_assetId, imageUrl) => {
-                setAttachedPreview(imageUrl);
-                setCreativeChoice("attached");
-              }}
-            />
+          ) : adChoice === "generate" ? (
+            <div className="space-y-4">
+              <StudioWorkspace
+                assistantName={studio.assistantName}
+                creditBalance={studio.creditBalance}
+                costs={studio.costs}
+                mode={studio.mode}
+                embedded
+                onAttached={(_assetId, imageUrl) => {
+                  setAttachedPreview(imageUrl);
+                  setAdChoice("attached");
+                }}
+              />
+              <BackToChoices onClick={() => setAdChoice("none")} />
+            </div>
+          ) : pickingPost ? (
+            <div className="space-y-4">
+              <p className="text-[13px] text-white">
+                {adChoice === "FACEBOOK_POST"
+                  ? "Which Facebook post should MAIRO run?"
+                  : "Which Instagram post should MAIRO run?"}
+              </p>
+              <PostPicker
+                posts={posts[adChoice] ?? null}
+                error={postError}
+                loading={loadingPosts}
+                selectedId={selectedPost?.id ?? null}
+                onSelect={setSelectedPost}
+                emptyText={
+                  adChoice === "FACEBOOK_POST"
+                    ? "There are no posts with a picture on your Page yet. Post one, or let MAIRO make the ad."
+                    : "There are no posts on your Instagram yet. Post one, or let MAIRO make the ad."
+                }
+              />
+              <BackToChoices onClick={() => setAdChoice("none")} />
+            </div>
           ) : (
             <div className="grid gap-2.5 sm:grid-cols-2">
+              {studio.configured && (
+                <Choice
+                  selected={false}
+                  onClick={() => setAdChoice("generate")}
+                  label="Make one with AI"
+                  sub="Describe it, transform a product photo, or upload a picture you already have"
+                />
+              )}
+              {hasMeta && (
+                <Choice
+                  selected={false}
+                  onClick={() => choosePostSource("FACEBOOK_POST")}
+                  label="Use a Facebook post"
+                  sub="Run something you already posted on your Page"
+                />
+              )}
+              {hasMeta && (
+                <Choice
+                  selected={false}
+                  onClick={() => choosePostSource("INSTAGRAM_POST")}
+                  label="Use an Instagram post"
+                  sub="Run something you already posted on Instagram"
+                />
+              )}
               <Choice
-                selected={false}
-                onClick={() => setCreativeChoice("generate")}
-                label="Generate with Mairo AI"
-                sub="Describe it, transform a product photo, or upload one you already have"
-              />
-              <Choice
-                selected={false}
-                onClick={() => setStep(3)}
-                label="I'll add one later"
-                sub={`Skip for now — ${studio.assistantName} writes a first set once the campaign exists`}
+                selected={adChoice === "later"}
+                onClick={() => {
+                  setAdChoice("later");
+                  setStep(step + 1);
+                }}
+                label={`Let ${studio.assistantName} write it`}
+                sub="Skip this — a first set is written once the campaign exists"
               />
             </div>
           )}
         </Question>
       )}
 
-      {step === 3 && (
+      {/* Kept mounted on every screen and only hidden, so its answers survive
+          moving back and forth and still reach the form when it is sent. */}
+      <div className={current === "audience" ? "" : "hidden"}>
         <Question
-          title="How much do you want to spend?"
+          title="Who should see it?"
+          sub="Already set to everyone 18 and over, anywhere in the US. Narrow it if your customers are in one place."
+        >
+          <AudienceFields />
+        </Question>
+      </div>
+
+      {current === "placements" && (
+        <Question
+          title="Where should it show?"
+          sub="Meta usually gets you more for your money when it can choose. Pick places only if you know where your customers are."
+        >
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            <Choice
+              selected={!choosingPlacements}
+              onClick={() => setChoosingPlacements(false)}
+              label="Let Meta choose (recommended)"
+              sub="Facebook, Instagram, Stories, Reels — wherever it works best"
+            />
+            <Choice
+              selected={choosingPlacements}
+              onClick={() => {
+                setChoosingPlacements(true);
+                if (placements.length === 0) setPlacements(["FACEBOOK_FEED", "INSTAGRAM_FEED"]);
+              }}
+              label="I'll choose"
+              sub="Only the places you tick"
+            />
+          </div>
+          {choosingPlacements && (
+            <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
+              {PLACEMENT_OPTIONS.map((p) => {
+                const on = placements.includes(p.value);
+                return (
+                  <Choice
+                    key={p.value}
+                    selected={on}
+                    onClick={() =>
+                      setPlacements((prev) =>
+                        on ? prev.filter((x) => x !== p.value) : [...prev, p.value],
+                      )
+                    }
+                    label={`${on ? "✓ " : ""}${p.label}`}
+                    sub={p.sub}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </Question>
+      )}
+
+      {current === "budget" && (
+        <Question
+          title="How much, and for how long?"
           sub="This is the advertising budget, not what you pay MAIRO."
         >
           <div className="inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--mairo-line)" }}>
@@ -326,10 +504,32 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
               Your MAIRO subscription is separate, and is what you already pay us.
             </p>
           </div>
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+            <DateChoice
+              label="When should it start?"
+              defaultLabel="As soon as it's approved"
+              pickLabel="On a date"
+              picking={startOnDate}
+              onPicking={setStartOnDate}
+              value={startLocal}
+              onChange={setStartLocal}
+            />
+            <DateChoice
+              label="When should it stop?"
+              defaultLabel="Keep it running"
+              pickLabel="On a date"
+              picking={endOnDate}
+              onPicking={setEndOnDate}
+              value={endLocal}
+              onChange={setEndLocal}
+            />
+          </div>
+          <p className="mt-3 text-[12px] text-faint">Times are in your time zone ({timeZone}).</p>
         </Question>
       )}
 
-      {step === 4 && (
+      {current === "accounts" && (
         <Question
           title={missing.length ? "One account to connect" : "Ready when you are"}
           sub={
@@ -405,11 +605,15 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
           ← Back
         </button>
 
-        {step < 4 ? (
+        {/* Keyed apart so React never turns the Continue button into the
+            submit button mid-click — the browser would finish that click as a
+            submit and build the campaign one screen early. */}
+        {step < lastStep ? (
           <button
+            key="next"
             type="button"
             onClick={() => setStep((s) => s + 1)}
-            disabled={step === 1 && subject.trim().length === 0}
+            disabled={blockedBecause !== null}
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
             style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
           >
@@ -418,6 +622,7 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
           </button>
         ) : (
           <button
+            key="submit"
             type="submit"
             disabled={pending || missing.length > 0}
             className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
@@ -428,11 +633,80 @@ export function LaunchFlow({ service, connected, business, studio }: Props) {
           </button>
         )}
       </div>
+      {blockedBecause && step < lastStep && (
+        <p className="mt-3 text-right text-[12px] text-faint">{blockedBecause}</p>
+      )}
     </form>
+    </>
   );
 }
 
 /* ----------------------------------------------------------------- pieces */
+
+function BackToChoices({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-[12.5px] text-muted underline underline-offset-4 hover:text-white"
+    >
+      Choose a different kind of ad
+    </button>
+  );
+}
+
+/** A default answer, or a date the customer picks instead. */
+function DateChoice({
+  label,
+  defaultLabel,
+  pickLabel,
+  picking,
+  onPicking,
+  value,
+  onChange,
+}: {
+  label: string;
+  defaultLabel: string;
+  pickLabel: string;
+  picking: boolean;
+  onPicking: (picking: boolean) => void;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <p className="text-[13px] text-white">{label}</p>
+      <div className="mt-2 inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--mairo-line)" }}>
+        {[
+          { on: false, text: defaultLabel },
+          { on: true, text: pickLabel },
+        ].map((o) => (
+          <button
+            key={o.text}
+            type="button"
+            aria-pressed={picking === o.on}
+            onClick={() => onPicking(o.on)}
+            className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-all duration-300 ${
+              picking === o.on ? "text-white" : "text-faint hover:text-muted"
+            }`}
+            style={picking === o.on ? { backgroundImage: "var(--mairo-ramp)" } : undefined}
+          >
+            {o.text}
+          </button>
+        ))}
+      </div>
+      {picking && (
+        <input
+          type="datetime-local"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          className={`${inputClass} mt-3`}
+        />
+      )}
+    </div>
+  );
+}
 
 function Question({
   title,
