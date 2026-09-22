@@ -473,22 +473,16 @@ export function MairoHero() {
                 optimize performance across Meta and TikTok.
               </p>
 
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              {/* One CTA, not two. The second used to say "Watch a 2-min demo"
+                  and point at #how-it-works — a text section, not a video. A
+                  play-button icon promising footage that doesn't exist is the
+                  kind of small mismatch that costs more trust than the button
+                  was worth; the interactive demo further down the page (see
+                  live-demo.tsx) is the honest version of "show, don't tell". */}
+              <div className="mt-8 flex justify-center">
                 <MairoButton href="/sign-up" className="w-full sm:w-auto">
                   Launch your ads
                   <span aria-hidden>→</span>
-                </MairoButton>
-                <MairoButton href="#how-it-works" tone="ghost" className="w-full sm:w-auto">
-                  <span
-                    aria-hidden
-                    className="flex h-5 w-5 items-center justify-center rounded-full"
-                    style={{ backgroundImage: "var(--mairo-ramp)" }}
-                  >
-                    <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 fill-white" aria-hidden>
-                      <path d="M1 0l8 5-8 5z" />
-                    </svg>
-                  </span>
-                  Watch a 2-min demo
                 </MairoButton>
               </div>
 
