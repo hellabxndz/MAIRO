@@ -206,7 +206,13 @@ function parseEntitlements(raw: string, fallback: Entitlements): Entitlements {
     // defaults means the new flag takes its compiled-in value instead of
     // becoming undefined — which would read as false and silently switch a
     // feature off for every paying customer on the next deploy.
-    return { ...fallback, ...parsed };
+    const merged = { ...fallback, ...parsed } as Record<string, unknown>;
+    // JSON has no Infinity: JSON.stringify writes an unlimited limit as null,
+    // and null compared as a number is 0 — which would refuse every campaign.
+    for (const [key, value] of Object.entries(merged)) {
+      if (value === null && typeof (fallback as Record<string, unknown>)[key] === "number") merged[key] = Infinity;
+    }
+    return merged as Entitlements;
   } catch {
     return fallback;
   }

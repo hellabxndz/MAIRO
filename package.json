@@ -31,7 +31,8 @@
     "check:memory": "tsx scripts/check-memory.ts",
     "check:reports": "tsx scripts/check-reports.ts",
     "check:analytics": "tsx scripts/check-analytics.ts",
-    "check:creative-studio": "tsx scripts/check-creative-studio.ts"
+    "check:creative-studio": "tsx scripts/check-creative-studio.ts",
+    "check:campaign-wizard": "tsx scripts/check-campaign-wizard.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

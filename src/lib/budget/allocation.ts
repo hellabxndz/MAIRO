@@ -40,6 +40,8 @@ const GOAL_WEIGHTS: Record<AdGoal, Partial<Record<AdPlatform, number>>> = {
   AWARENESS: { META: 40, TIKTOK: 60 },
   TRAFFIC: { META: 55, TIKTOK: 45 },
   APP_PROMOTION: { META: 55, TIKTOK: 45 },
+  // Meta-only: messages and post engagement have no TikTok equivalent here.
+  ENGAGEMENT: { META: 100, TIKTOK: 0 },
 };
 
 /** The default weight for a network with no opinion recorded for this goal. */

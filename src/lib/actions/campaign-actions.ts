@@ -38,13 +38,15 @@ import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
 import { pushFormToMeta } from "@/lib/leads/meta-form";
 import { searchPlaces, type Place } from "@/lib/meta/places";
 import { FACEBOOK_POST_ID, INSTAGRAM_MEDIA_ID } from "@/lib/campaigns/sales-source";
+import { goalOption, supportsDestination } from "@/lib/campaigns/objectives";
+import { appStoreUrl, META_APP_ID } from "@/lib/campaigns/destination";
 import { siteUrl } from "@/lib/site";
 
 const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
 
 const createCampaignSchema = z.object({
   name: z.string().min(1),
-  objective: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
+  objective: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION", "ENGAGEMENT"]),
   dailyBudget: z.coerce.number().min(1),
   platforms: z.array(z.enum(PLATFORM_VALUES)).min(1, "Pick at least one place to advertise."),
   /** Whole per cent per platform, in the same order as `platforms`. */
@@ -64,7 +66,9 @@ const createCampaignSchema = z.object({
    * What a click does, and the value it needs. Both nullish for the same
    * reason as the schedule: a form that omits the field sends null.
    */
-  destinationType: z.enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE"]).nullish(),
+  destinationType: z
+    .enum(["WEBSITE", "PHONE_CALL", "LEAD_FORM", "DIRECT_MESSAGE", "POST_ENGAGEMENT", "APP"])
+    .nullish(),
   destinationValue: z.string().trim().max(2000).nullish(),
   /** Who writes the lead form, when one is being made now. */
   formAuthor: z.enum(["MAIRO", "OWN"]).nullish(),
@@ -93,6 +97,22 @@ const createCampaignSchema = z.object({
     .nullish(),
   /** Empty lets Meta choose where the ad shows. */
   placements: z.array(z.enum(["FACEBOOK_FEED", "INSTAGRAM_FEED", "STORIES", "REELS"])).default([]),
+  specialAdCategory: z
+    .enum(["HOUSING", "EMPLOYMENT", "FINANCIAL_PRODUCTS_SERVICES", "ISSUES_ELECTIONS_POLITICS"])
+    .nullish(),
+  advantageAudience: z.boolean().default(false),
+  /** DAILY spends dailyBudget each day; LIFETIME spends lifetimeBudget over the whole run. */
+  budgetType: z.enum(["DAILY", "LIFETIME"]).default("DAILY"),
+  lifetimeBudget: z.coerce.number().min(1).nullish(),
+  metaAppId: z.string().trim().regex(META_APP_ID, "That Meta app id should be a number.").nullish(),
+  promotes: z.string().trim().max(40).nullish(),
+  // What the business told the Create flow about itself, saved back so the
+  // next campaign doesn't ask again.
+  offering: z.string().trim().max(1000).nullish(),
+  differentiator: z.string().trim().max(1000).nullish(),
+  targetAudience: z.string().trim().max(1000).nullish(),
+  /** The draft this came from, removed once the campaign exists. */
+  draftId: z.string().trim().max(64).nullish(),
 });
 
 export type CampaignActionState =
@@ -152,6 +172,16 @@ export async function createCampaignAction(
     boostPostId: formData.get("boostPostId") || null,
     boostInstagramMediaId: formData.get("boostInstagramMediaId") || null,
     placements: formData.getAll("placements"),
+    specialAdCategory: formData.get("specialAdCategory") || null,
+    advantageAudience: formData.get("advantageAudience") === "on",
+    budgetType: formData.get("budgetType") || "DAILY",
+    lifetimeBudget: formData.get("lifetimeBudget") || null,
+    metaAppId: formData.get("metaAppId") || null,
+    promotes: formData.get("promotes") || null,
+    offering: formData.get("offering") || null,
+    differentiator: formData.get("differentiator") || null,
+    targetAudience: formData.get("targetAudience") || null,
+    draftId: formData.get("draftId") || null,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -202,6 +232,30 @@ export async function createCampaignAction(
     if (!endAt) return { error: END_PROBLEM_MESSAGE.unreadable };
     const problem = validateEnd(endAt, startAt);
     if (problem) return { error: END_PROBLEM_MESSAGE[problem] };
+  }
+
+  // Goals and destinations only MAIRO's newer paths build. Checked for those
+  // alone so older combinations the advanced form already launches keep working.
+  const requestedDestination = parsed.data.destinationType ?? "WEBSITE";
+  const newPath =
+    objective === "ENGAGEMENT" ||
+    objective === "APP_PROMOTION" ||
+    requestedDestination === "POST_ENGAGEMENT" ||
+    requestedDestination === "APP";
+  if (newPath && !supportsDestination(objective, requestedDestination)) {
+    return { error: "That goal can't send people there. Pick one of the destinations offered for it." };
+  }
+  if (goalOption(objective).metaOnly && platforms.some((p) => p !== "META")) {
+    return { error: `"${goalOption(objective).label}" runs on Meta only. Choose a Meta campaign for it.` };
+  }
+
+  // A total budget is spent by an end date, so it needs one — and both networks
+  // refuse a lifetime budget without it.
+  let lifetimeBudgetCents: number | null = null;
+  if (parsed.data.budgetType === "LIFETIME") {
+    if (!parsed.data.lifetimeBudget) return { error: "Enter the total you want to spend." };
+    if (!endAt) return { error: "A total budget needs an end date. Pick when the campaign should stop." };
+    lifetimeBudgetCents = Math.round(parsed.data.lifetimeBudget * 100);
   }
 
   const organization = await db.organization.findUnique({
@@ -260,8 +314,19 @@ export async function createCampaignAction(
 
   // A conversation needs nothing from anybody: the Page is already chosen on
   // the Meta connection screen, and that is what the ad opens a thread with.
-  if (destinationType === "DIRECT_MESSAGE") {
+  if (destinationType === "DIRECT_MESSAGE" || destinationType === "POST_ENGAGEMENT") {
     // Nothing to validate and nothing to store.
+  } else if (destinationType === "APP") {
+    destinationUrl = appStoreUrl(rawDestination);
+    if (!destinationUrl) {
+      return { error: "Paste your app's App Store or Google Play link." };
+    }
+    if (!parsed.data.metaAppId) {
+      return {
+        error:
+          "Add your app's Meta app id — it's the number on your app's page at developers.facebook.com. Meta needs it to run app ads.",
+      };
+    }
   } else if (destinationType === "LEAD_FORM") {
     // Written here, at the moment somebody actually chooses it — not when they
     // open a page and look. A form is a public URL with this business's name
@@ -320,6 +385,37 @@ export async function createCampaignAction(
     if (!resolved) return { error: describeMissing(destinationType) };
   }
 
+  // What they told the Create flow about the business, kept so the next
+  // campaign starts already knowing it. Only fields they actually answered.
+  const businessAnswers = {
+    ...(parsed.data.offering ? { offering: parsed.data.offering } : {}),
+    ...(parsed.data.differentiator ? { differentiator: parsed.data.differentiator } : {}),
+    ...(parsed.data.targetAudience ? { targetAudience: parsed.data.targetAudience } : {}),
+  };
+  if (Object.keys(businessAnswers).length > 0) {
+    await db.onboardingIntake.updateMany({ where: { organizationId }, data: businessAnswers });
+  }
+
+  // Claimed before anything is built, so a double click or a retried request
+  // for the same draft can't create the campaign twice. The claim is atomic:
+  // only one request can move the draft to BUILDING.
+  let claimedDraft: string | null = null;
+  if (parsed.data.draftId) {
+    const claim = await db.campaignDraft.updateMany({
+      where: { id: parsed.data.draftId, organizationId, step: { not: "BUILDING" } },
+      data: { step: "BUILDING" },
+    });
+    if (claim.count === 0) {
+      const exists = await db.campaignDraft.count({ where: { id: parsed.data.draftId, organizationId } });
+      if (exists > 0) {
+        return { error: "This campaign is already being built. Check Campaigns in a moment." };
+      }
+      // A draft that no longer exists was already turned into a campaign.
+      return { error: "This campaign was already created. You'll find it on the Campaigns page." };
+    }
+    claimedDraft = parsed.data.draftId;
+  }
+
   const outcome = await createMairoCampaign({
     organizationId,
     name,
@@ -334,6 +430,11 @@ export async function createCampaignAction(
     boostPostId,
     boostInstagramMediaId,
     placements: parsed.data.placements,
+    specialAdCategory: parsed.data.specialAdCategory ?? null,
+    advantageAudience: parsed.data.advantageAudience,
+    lifetimeBudgetCents,
+    metaAppId: destinationType === "APP" ? (parsed.data.metaAppId ?? null) : null,
+    promotes: parsed.data.promotes ?? null,
     destination: {
       type: destinationType,
       url: destinationUrl,
@@ -355,6 +456,20 @@ export async function createCampaignAction(
   revalidatePath("/dashboard");
 
   const failures = outcome.results.filter((r) => !r.launched);
+
+  // The draft is done with once anything reached a network; if nothing did,
+  // it is released so the customer can fix the problem and build again.
+  if (claimedDraft) {
+    if (failures.length < outcome.results.length) {
+      await db.campaignDraft.deleteMany({ where: { id: claimedDraft, organizationId } });
+      revalidatePath("/dashboard/create");
+    } else {
+      await db.campaignDraft.updateMany({
+        where: { id: claimedDraft, organizationId },
+        data: { step: "launch" },
+      });
+    }
+  }
 
   // Everything failed: the campaign is saved as a draft and the customer is
   // told why, in the network's own words.

@@ -22,6 +22,7 @@ import type { AdPlatform } from "@/generated/prisma/enums";
 import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
 import { metaAdsManagerUrl } from "@/lib/ad-platforms/billing";
+import { asDefaultDestination } from "@/lib/campaigns/destination";
 
 // Each row's figures are live calls to Meta and TikTok. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget, now doubled because
@@ -136,7 +137,7 @@ export default async function CampaignsPage() {
     upgradePlanName: upgradeTarget.name,
     upgradePlanPrice: upgradeTarget.priceMonthly,
     destination: {
-      type: organization?.defaultDestination ?? "WEBSITE",
+      type: asDefaultDestination(organization?.defaultDestination),
       website: organization?.website ?? null,
       phone: organization?.phone ?? null,
       channel: organization?.defaultMessageChannel ?? "MESSENGER",

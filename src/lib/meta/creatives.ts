@@ -175,38 +175,51 @@ export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unk
   // MESSAGE_PAGE. The concept's suggestion ("Shop Now", "Learn More") is about
   // a page neither of those ads has, so it is overridden rather than argued
   // with — and only a link ad gets to use it.
+  const destination = input.destination;
   const cta =
-    input.destination.type === "PHONE_CALL"
+    destination.type === "PHONE_CALL"
       ? "CALL_NOW"
-      : input.destination.type === "INSTANT_FORM"
+      : destination.type === "INSTANT_FORM"
         ? "SIGN_UP"
-        : input.destination.type === "DIRECT_MESSAGE"
-          ? CHANNEL_META[input.destination.channel].cta
-        : input.callToAction && META_CTA_TYPES.has(input.callToAction)
-          ? input.callToAction
-          : "LEARN_MORE";
+        : destination.type === "DIRECT_MESSAGE"
+          ? CHANNEL_META[destination.channel].cta
+          : destination.type === "APP"
+            ? "INSTALL_MOBILE_APP"
+            : input.callToAction && META_CTA_TYPES.has(input.callToAction)
+              ? input.callToAction
+              : "LEARN_MORE";
 
   // link_data.link is required by Meta whatever the button does, and it must be
   // a web address — a tel: URI is refused there. A call or message ad therefore
   // points its story at the Page that publishes it, which is where somebody who
   // taps the image rather than the button should land anyway.
   const pageUrl = `https://www.facebook.com/${input.pageId}`;
-  const storyLink = input.destination.type === "WEBSITE" ? input.destination.url : pageUrl;
+  const storyLink =
+    destination.type === "WEBSITE"
+      ? destination.url
+      : destination.type === "APP"
+        ? destination.storeUrl
+        : pageUrl;
 
-  // What the button itself does.
-  const buttonValue: Record<string, unknown> =
-    input.destination.type === "PHONE_CALL"
-      ? { link: `tel:${input.destination.phone}` }
-      : input.destination.type === "INSTANT_FORM"
+  // What the button itself does. An engagement ad has no button: the point is
+  // the reaction to the post, not a click away from it.
+  const buttonValue: Record<string, unknown> | null =
+    destination.type === "PHONE_CALL"
+      ? { link: `tel:${destination.phone}` }
+      : destination.type === "INSTANT_FORM"
         ? // The form itself, attached to the button. Nothing is linked to — the
           // form opens inside the app, which is the whole point of it.
-          { lead_gen_form_id: input.destination.metaFormId }
-        : input.destination.type === "DIRECT_MESSAGE"
-        ? // A thread rather than a link. app_destination is what turns this
-          // from a button that opens the Page into one that opens the inbox,
-          // and it has to name the same inbox the ad set does.
-          { app_destination: CHANNEL_META[input.destination.channel].appDestination }
-        : { link: input.destination.url };
+          { lead_gen_form_id: destination.metaFormId }
+        : destination.type === "DIRECT_MESSAGE"
+          ? // A thread rather than a link. app_destination is what turns this
+            // from a button that opens the Page into one that opens the inbox,
+            // and it has to name the same inbox the ad set does.
+            { app_destination: CHANNEL_META[destination.channel].appDestination }
+          : destination.type === "APP"
+            ? { application: destination.metaAppId, link: destination.storeUrl }
+            : destination.type === "ON_POST"
+              ? null
+              : { link: destination.url };
 
   return {
     name: input.name,
@@ -217,12 +230,16 @@ export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unk
         link: storyLink,
         message: input.message,
         name: input.headline,
-        call_to_action: {
-          type: cta,
-          // The button needs its own destination even when it matches the link;
-          // omitting it makes the button inert on some placements.
-          value: buttonValue,
-        },
+        ...(buttonValue
+          ? {
+              call_to_action: {
+                type: cta,
+                // The button needs its own destination even when it matches the
+                // link; omitting it makes the button inert on some placements.
+                value: buttonValue,
+              },
+            }
+          : {}),
       },
     }),
     degrees_of_freedom_spec: noEnhancements,

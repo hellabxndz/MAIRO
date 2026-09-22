@@ -58,6 +58,9 @@ const OBJECTIVE_MAP: Record<AdGoal, string> = {
   AWARENESS: "REACH",
   TRAFFIC: "TRAFFIC",
   APP_PROMOTION: "APP_PROMOTION",
+  // Never sent: engagement campaigns are Meta-only and refused before launch
+  // when TikTok is selected (see createCampaignAction).
+  ENGAGEMENT: "ENGAGEMENT",
 };
 
 export function tiktokObjectiveFor(goal: AdGoal): string {
@@ -247,8 +250,9 @@ export const tiktokAdapter: AdPlatformAdapter = {
           advertiser_id: loaded.creds.externalAccountId,
           campaign_name: input.name,
           objective_type: tiktokObjectiveFor(input.goal),
-          budget_mode: "BUDGET_MODE_DAY",
-          budget: centsToUnits(input.dailyBudgetCents),
+          ...(input.lifetimeBudgetCents
+            ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
+            : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) }),
           // Paused unless explicitly told otherwise. A campaign with no ad
           // group under it cannot spend anyway, but defaulting to live is how
           // money gets spent by accident.
@@ -277,8 +281,11 @@ export const tiktokAdapter: AdPlatformAdapter = {
           advertiser_id: loaded.creds.externalAccountId,
           campaign_id: input.externalCampaignId,
           adgroup_name: input.name,
-          budget_mode: "BUDGET_MODE_DAY",
-          budget: centsToUnits(input.dailyBudgetCents),
+          // A total budget runs to a fixed end, which tiktokSchedule turns
+          // into SCHEDULE_START_END — TikTok requires that pairing.
+          ...(input.lifetimeBudgetCents
+            ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
+            : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) }),
           placement_type: "PLACEMENT_TYPE_NORMAL",
           placements: ["PLACEMENT_TIKTOK"],
           operation_status: "DISABLE",

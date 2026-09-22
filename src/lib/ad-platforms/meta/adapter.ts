@@ -19,7 +19,7 @@ import { MetaApiError, metaGraphRequest } from "@/lib/meta/client";
 import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { isSchedulable, metaStartTime } from "@/lib/campaigns/schedule";
-import { CHANNEL_META } from "@/lib/campaigns/destination";
+import { CHANNEL_META, type Destination } from "@/lib/campaigns/destination";
 import { findInstagramAccount } from "@/lib/instagram/publish";
 import {
   createAdCreative,
@@ -206,6 +206,8 @@ export const metaAdapter: AdPlatformAdapter = {
         status: input.activate ? "ACTIVE" : "PAUSED",
         hasConversionTracking: input.hasConversionTracking ?? false,
         usesInstantForm: input.destination?.type === "INSTANT_FORM",
+        lifetimeBudgetCents: input.lifetimeBudgetCents ?? null,
+        specialAdCategory: input.specialAdCategory ?? null,
       });
       return ok({
         externalId: campaign.id,
@@ -534,9 +536,10 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
   // goal that actually means "get me these forms filled in" — the one case
   // where it is right, since MAIRO now does create the form.
   const instantForm = input.destination?.type === "INSTANT_FORM";
+  const app = input.destination?.type === "APP" ? input.destination : null;
   const optimization = instantForm
     ? "LEAD_GENERATION"
-    : metaOptimizationGoal(input.goal, Boolean(input.conversion));
+    : metaOptimizationGoal(input.goal, Boolean(input.conversion), input.destination?.type);
 
   return {
     name: input.name,
@@ -554,6 +557,8 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     ...(input.destination?.type === "DIRECT_MESSAGE"
       ? { destination_type: CHANNEL_META[input.destination.channel].destinationType }
       : {}),
+    // Engagement with the ad itself: likes, comments and shares on the post.
+    ...(input.destination?.type === "ON_POST" ? { destination_type: "ON_POST" } : {}),
     // An instant form lives on the ad, so the ad set says so and names the
     // Page the form belongs to. Without the promoted_object Meta refuses the
     // ad set; without ON_AD it builds a link ad whose button happens to carry
@@ -574,7 +579,13 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     // customer who meant "now" would be absurd.
     ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
     ...(input.endAt ? { end_time: metaStartTime(input.endAt) } : {}),
-    targeting: input.targeting ?? { geo_locations: { countries: ["US"] } },
+    targeting: {
+      ...(input.targeting ?? { geo_locations: { countries: ["US"] } }),
+      // Stated either way: newer API versions refuse an ad set that leaves
+      // Advantage+ audience unsaid. 1 lets Meta widen past the choices when
+      // it expects better results; 0 keeps to them exactly.
+      targeting_automation: { advantage_audience: input.advantageAudience ? 1 : 0 },
+    },
     // Required whenever the ad set optimizes for a pixel conversion, and
     // meaningless otherwise. It is what ties the tracking MAIRO set up to the
     // thing the campaign is actually trying to cause.
@@ -584,11 +595,21 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     // the pixel over it leaves an ON_AD ad set that names no Page, which Meta
     // refuses. A form filled in inside the ad is not a pixel event anyway; the
     // lead is the conversion.
-    ...(input.conversion && !instantForm
+    ...(input.conversion && !instantForm && !app
       ? {
           promoted_object: JSON.stringify({
             pixel_id: input.conversion.pixelId,
             custom_event_type: metaCustomEventType(input.conversion.event),
+          }),
+        }
+      : {}),
+    // An app campaign is refused without the app it promotes, named by its
+    // Meta app id and its store listing.
+    ...(app
+      ? {
+          promoted_object: JSON.stringify({
+            application_id: app.metaAppId,
+            object_store_url: app.storeUrl,
           }),
         }
       : {}),
@@ -602,9 +623,14 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
  */
 function metaOptimizationGoal(
   goal: Parameters<typeof metaObjectiveFor>[0],
-  hasPixel: boolean
+  hasPixel: boolean,
+  destination?: Destination["type"]
 ): string {
   switch (goal) {
+    case "ENGAGEMENT":
+      // A message ad counts conversations started; otherwise it's the
+      // likes, comments and shares on the post.
+      return destination === "DIRECT_MESSAGE" ? "CONVERSATIONS" : "POST_ENGAGEMENT";
     case "LEADS":
       // OFFSITE_CONVERSIONS, not LEAD_GENERATION. LEAD_GENERATION means one of
       // Meta's instant forms, which lives on Facebook and which MAIRO does not

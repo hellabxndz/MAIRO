@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
@@ -8,6 +9,8 @@ import { planFor } from "@/lib/plans";
 import { PlatformCard, type ServiceStatus } from "@/components/mairo/campaign-parts";
 import { PageHeader } from "@/components/ui";
 import { MetaMark, TikTokMark, GoogleMark } from "@/components/mairo/marks";
+import { deleteCampaignDraftAction } from "@/lib/actions/campaign-wizard-actions";
+import { WIZARD_STEPS } from "@/lib/campaigns/plan";
 
 // Ad services: what MAIRO should run, rather than what to buy.
 //
@@ -31,12 +34,20 @@ export const dynamic = "force-dynamic";
 
 const ICON = "h-full w-full";
 
+/** Longer than any build takes. */
+const BUILD_STALE_MS = 15 * 60 * 1000;
+function staleBuildCutoff(): Date {
+  return new Date(Date.now() - BUILD_STALE_MS);
+}
+
+const SERVICE_NAME: Record<string, string> = { meta: "Meta", tiktok: "TikTok", multi: "Meta + TikTok" };
+
 export default async function CreatePage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, connections, campaignCount] = await Promise.all([
+  const [organization, connections, campaignCount, drafts] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { subscriptionTier: true },
@@ -44,6 +55,14 @@ export default async function CreatePage() {
     connectionSummaries(organizationId),
     db.mairoCampaign.count({
       where: { organizationId, status: { not: "ARCHIVED" } },
+    }),
+    db.campaignDraft.findMany({
+      // One stuck mid-build (the server stopped before it could say how the
+      // build went) drops off after a while; Campaigns shows what it made.
+      where: { organizationId, OR: [{ step: { not: "BUILDING" } }, { updatedAt: { gte: staleBuildCutoff() } }] },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+      select: { id: true, label: true, service: true, step: true, updatedAt: true },
     }),
   ]);
 
@@ -72,6 +91,45 @@ export default async function CreatePage() {
         title="What should MAIRO run?"
         description="Pick where you want to advertise. MAIRO builds the campaign, writes the ads and manages it from there — you approve before anything goes live."
       />
+
+      {drafts.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-[15px] font-medium text-white">Pick up where you left off</h2>
+          <ul className="mt-3 divide-y overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
+            {drafts.map((d) => {
+              const building = d.step === "BUILDING";
+              const step = WIZARD_STEPS.find((s) => s.id === d.step)?.label;
+              return (
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+                  <div className="min-w-0">
+                    <p className="truncate text-[13.5px] text-white">{d.label}</p>
+                    <p className="mt-0.5 text-[11.5px] text-faint">
+                      {SERVICE_NAME[d.service] ?? d.service} · {building ? "Being built now" : `Stopped at ${step ?? "the start"}`} · saved{" "}
+                      {d.updatedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                  {!building && (
+                    <div className="flex items-center gap-2">
+                      <form action={deleteCampaignDraftAction.bind(null, d.id)}>
+                        <button type="submit" className="rounded-full px-3 py-1.5 text-[12px] text-muted transition hover:text-white">
+                          Delete
+                        </button>
+                      </form>
+                      <Link
+                        href={`/dashboard/create/${d.service}?draft=${d.id}`}
+                        className="rounded-full px-4 py-1.5 text-[12px] font-medium text-white"
+                        style={{ backgroundImage: "var(--mairo-ramp)" }}
+                      >
+                        Continue
+                      </Link>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <PlatformCard

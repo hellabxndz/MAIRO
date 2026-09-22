@@ -7,16 +7,22 @@ import type {
   LeadFormDelivery,
   MessageChannel,
   MetaPlacement,
+  SpecialAdCategory,
 } from "@/generated/prisma/enums";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
-import type { Allocation } from "@/lib/budget/allocation";
+import { splitBudget, type Allocation } from "@/lib/budget/allocation";
 import { nicheById, primaryAction } from "@/lib/tracking/niches";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { parseAdCopy } from "@/lib/meta/creative-copy";
 import { describeMissing, resolveDestination, type Destination } from "@/lib/campaigns/destination";
 import { metaPostToRun, type MetaPostToRun } from "@/lib/campaigns/sales-source";
-import { metaTargeting, normalizeAudience, type Audience } from "@/lib/campaigns/audience";
+import {
+  metaTargeting,
+  normalizeAudience,
+  restrictForSpecialCategory,
+  type Audience,
+} from "@/lib/campaigns/audience";
 import { metaPlacementTargeting } from "@/lib/campaigns/placements";
 
 // Turning one Mairo campaign into real campaigns on real networks.
@@ -118,6 +124,15 @@ export type CreateMairoCampaignInput = {
   boostInstagramMediaId?: string | null;
   /** Where the Meta ad shows. Empty lets Meta choose. */
   placements?: MetaPlacement[];
+  specialAdCategory?: SpecialAdCategory | null;
+  /** Let Meta widen the audience past the choices (Advantage+ audience). */
+  advantageAudience?: boolean;
+  /** One total for the whole run instead of a daily amount. Needs endAt. */
+  lifetimeBudgetCents?: number | null;
+  /** The advertised app's Meta app id; its store link travels as destination.url. */
+  metaAppId?: string | null;
+  /** What the customer said they're advertising. */
+  promotes?: string | null;
 };
 
 /**
@@ -134,6 +149,16 @@ export async function createMairoCampaign(
   // campaign with some children still marked DRAFT — which is recoverable and
   // true. The alternative, writing rows as each network succeeds, loses the
   // record of a campaign that was created on Meta and then crashed.
+  // Saved already inside Meta's rules for a special category, so what the
+  // campaign page shows is what actually runs.
+  const audience = normalizeAudience(input.audience ?? {});
+  const lifetime = input.lifetimeBudgetCents
+    ? splitBudget(
+        input.lifetimeBudgetCents,
+        input.allocations.map((a) => ({ platform: a.platform, percent: a.percent }))
+      )
+    : null;
+
   const campaign = await db.mairoCampaign.create({
     data: {
       organizationId: input.organizationId,
@@ -148,18 +173,27 @@ export async function createMairoCampaign(
       boostPostId: input.boostPostId ?? null,
       boostInstagramMediaId: input.boostInstagramMediaId ?? null,
       placements: input.placements ?? [],
+      specialAdCategory: input.specialAdCategory ?? null,
+      // Meta doesn't offer Advantage+ audience on special-category ads.
+      advantageAudience: input.specialAdCategory ? false : (input.advantageAudience ?? false),
+      budgetType: input.lifetimeBudgetCents ? "LIFETIME" : "DAILY",
+      lifetimeBudgetCents: input.lifetimeBudgetCents ?? null,
+      metaAppId: input.metaAppId ?? null,
+      promotes: input.promotes ?? null,
       destinationType: input.destination?.type ?? "WEBSITE",
       destinationUrl: input.destination?.url ?? null,
       destinationPhone: input.destination?.phone ?? null,
       messageChannel: input.destination?.channel ?? "MESSENGER",
       leadFormDelivery: input.destination?.delivery ?? "HOSTED_PAGE",
-      ...normalizeAudience(input.audience ?? {}),
+      ...(input.specialAdCategory ? restrictForSpecialCategory(audience) : audience),
       status: "DRAFT",
       platformCampaigns: {
         create: input.allocations.map((a) => ({
           platform: a.platform,
           budgetPercent: a.percent,
           dailyBudgetCents: a.dailyBudgetCents,
+          lifetimeBudgetCents:
+            lifetime?.find((l) => l.platform === a.platform)?.dailyBudgetCents ?? null,
           status: "DRAFT" as const,
         })),
       },
@@ -178,6 +212,8 @@ export async function createMairoCampaign(
         objective: input.objective,
         destinationType: campaign.destinationType,
         dailyBudgetCents: child.dailyBudgetCents,
+        lifetimeBudgetCents: child.lifetimeBudgetCents,
+        specialAdCategory: campaign.specialAdCategory,
         activate: input.activate ?? false,
         startAt: input.startAt ?? null,
       })
@@ -211,6 +247,8 @@ export async function launchOne(input: {
   objective: AdGoal;
   destinationType: AdDestination;
   dailyBudgetCents: number;
+  lifetimeBudgetCents?: number | null;
+  specialAdCategory?: SpecialAdCategory | null;
   activate: boolean;
   startAt?: Date | null;
 }): Promise<LaunchOutcome["results"][number]> {
@@ -247,6 +285,8 @@ export async function launchOne(input: {
     name: input.name,
     goal: input.objective,
     dailyBudgetCents: input.dailyBudgetCents,
+    lifetimeBudgetCents: input.lifetimeBudgetCents ?? null,
+    specialAdCategory: input.specialAdCategory ?? null,
     activate: input.activate,
     hasConversionTracking: Boolean(conversion),
     destination: campaignDestination ?? undefined,
@@ -436,7 +476,7 @@ async function buildDeliverable(input: {
     return { stage: "campaign", blocker };
   }
 
-  const options = await deliveryOptionsFor(input.mairoCampaignId);
+  const options = await deliveryOptionsFor(input.mairoCampaignId, input.platformCampaignId);
 
   // An end date that has already passed is refused by the network, and a
   // campaign that ended before it was built has nothing left to do.
@@ -463,9 +503,15 @@ async function buildDeliverable(input: {
       // Who sees it. Without this every ad set fell back to the whole of the
       // United States at every age, which is the default nobody chose.
       targeting: {
-        ...metaTargeting(await audienceFor(input.mairoCampaignId)),
+        ...metaTargeting(
+          options.specialAdCategory
+            ? restrictForSpecialCategory(await audienceFor(input.mairoCampaignId))
+            : await audienceFor(input.mairoCampaignId)
+        ),
         ...(input.platform === "META" ? metaPlacementTargeting(options.placements) : {}),
       },
+      advantageAudience: options.advantageAudience && !options.specialAdCategory,
+      lifetimeBudgetCents: options.lifetimeBudgetCents,
       destination: destination ?? undefined,
       pageId: await pageIdFor(input.organizationId, input.platform),
       // The booked start, which becomes the network's own start_time. MAIRO
@@ -619,26 +665,44 @@ type DeliveryOptions = {
   adSource: CampaignAdSource | null;
   boostPostId: string | null;
   boostInstagramMediaId: string | null;
+  specialAdCategory: SpecialAdCategory | null;
+  advantageAudience: boolean;
+  /** This network's share of a total budget, or null for a daily budget. */
+  lifetimeBudgetCents: number | null;
 };
 
 /** What the customer chose in the Create flow beyond the audience. */
-async function deliveryOptionsFor(mairoCampaignId: string): Promise<DeliveryOptions> {
-  const campaign = await db.mairoCampaign.findUnique({
-    where: { id: mairoCampaignId },
-    select: {
-      endDate: true,
-      placements: true,
-      adSource: true,
-      boostPostId: true,
-      boostInstagramMediaId: true,
-    },
-  });
+async function deliveryOptionsFor(
+  mairoCampaignId: string,
+  platformCampaignId: string
+): Promise<DeliveryOptions> {
+  const [campaign, child] = await Promise.all([
+    db.mairoCampaign.findUnique({
+      where: { id: mairoCampaignId },
+      select: {
+        endDate: true,
+        placements: true,
+        adSource: true,
+        boostPostId: true,
+        boostInstagramMediaId: true,
+        specialAdCategory: true,
+        advantageAudience: true,
+      },
+    }),
+    db.platformCampaign.findUnique({
+      where: { id: platformCampaignId },
+      select: { lifetimeBudgetCents: true },
+    }),
+  ]);
   return {
     endAt: campaign?.endDate ?? null,
     placements: campaign?.placements ?? [],
     adSource: campaign?.adSource ?? null,
     boostPostId: campaign?.boostPostId ?? null,
     boostInstagramMediaId: campaign?.boostInstagramMediaId ?? null,
+    specialAdCategory: campaign?.specialAdCategory ?? null,
+    advantageAudience: campaign?.advantageAudience ?? false,
+    lifetimeBudgetCents: child?.lifetimeBudgetCents ?? null,
   };
 }
 
@@ -716,6 +780,7 @@ async function destinationFor(
         destinationPhone: true,
         messageChannel: true,
         leadFormDelivery: true,
+        metaAppId: true,
       },
     }),
     db.organization.findUnique({
@@ -731,6 +796,7 @@ async function destinationFor(
       url: campaign.destinationUrl,
       phone: campaign.destinationPhone,
       channel: campaign.messageChannel,
+      metaAppId: campaign.metaAppId,
       // Only when the campaign asked for the native form. A business with a
       // form pushed to Meta for one campaign should not have another campaign
       // silently switch to it.
@@ -773,6 +839,23 @@ export async function applyAllocation(input: {
 
   const applied: AdPlatform[] = [];
   const failed: { platform: AdPlatform; error: string }[] = [];
+
+  // Every move below is a daily amount. Sending one to a total-budget campaign
+  // would quietly turn it into a daily one and change what the customer agreed
+  // to spend, so these keep the split they launched with.
+  const parent = await db.mairoCampaign.findUnique({
+    where: { id: input.mairoCampaignId },
+    select: { budgetType: true },
+  });
+  if (parent?.budgetType === "LIFETIME") {
+    return {
+      applied,
+      failed: input.allocations.map((a) => ({
+        platform: a.platform,
+        error: "This campaign has a total budget, so MAIRO keeps the split it launched with.",
+      })),
+    };
+  }
 
   for (const allocation of input.allocations) {
     const child = children.find((c) => c.platform === allocation.platform);

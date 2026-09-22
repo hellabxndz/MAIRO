@@ -47,6 +47,8 @@ enum AdGoal {
   AWARENESS
   TRAFFIC
   APP_PROMOTION
+  /// Messages, or likes, comments and shares on the ad. Meta only.
+  ENGAGEMENT
 }
 
 enum PlanStatus {
@@ -232,6 +234,7 @@ model Organization {
   products             Product[]
   creativeStudioAssets CreativeStudioAsset[]
   creativeCreditLedger CreativeCreditLedger[]
+  campaignDrafts       CampaignDraft[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -344,6 +347,10 @@ model OnboardingIntake {
   brandVoice         String?
   competitors        String?
   notes              String?
+  /// What the business sells or offers, in its own words.
+  offering           String?
+  /// What makes it different from competitors.
+  differentiator     String?
 
   completedAt DateTime @default(now())
 }
@@ -442,6 +449,45 @@ enum AdDestination {
   LEAD_FORM
   /// A conversation. The ad opens Messenger with the business's Page.
   DIRECT_MESSAGE
+  /// Nowhere to go: the point is likes, comments and shares on the ad itself.
+  POST_ENGAGEMENT
+  /// The business's mobile app, in its app store.
+  APP
+}
+
+/// Meta's special ad categories. Each restricts how the ad may be targeted.
+enum SpecialAdCategory {
+  HOUSING
+  EMPLOYMENT
+  FINANCIAL_PRODUCTS_SERVICES
+  ISSUES_ELECTIONS_POLITICS
+}
+
+enum BudgetType {
+  /// The same amount every day until it stops.
+  DAILY
+  /// One total for the whole run, spent by the end date.
+  LIFETIME
+}
+
+/// A Create flow somebody started and hasn't finished, kept so they can come back.
+model CampaignDraft {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  createdByUserId String?
+  /// Which Create service it belongs to: meta, tiktok or multi.
+  service         String
+  /// A readable name for the list of drafts.
+  label           String
+  /// The screen they were on.
+  step            String
+  /// Every answer so far, exactly as the flow holds it.
+  data            Json
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([organizationId, updatedAt])
 }
 
 /// One thing a business sells, read off its own website.
@@ -847,6 +893,17 @@ model MairoCampaign {
   boostInstagramMediaId String?
   /// Where the Meta ad shows. Empty lets Meta choose, which is its advice.
   placements            MetaPlacement[] @default([])
+  /// Set when the ad falls in one of Meta's special categories.
+  specialAdCategory     SpecialAdCategory?
+  /// Whether Meta may widen the audience beyond what was chosen (Advantage+ audience).
+  advantageAudience     Boolean         @default(false)
+  budgetType            BudgetType      @default(DAILY)
+  /// The whole run's budget when budgetType is LIFETIME.
+  lifetimeBudgetCents   Int?
+  /// The advertised app's Meta app id, for app campaigns.
+  metaAppId             String?
+  /// What the customer said they're advertising (business, product, offer…).
+  promotes              String?
 
   /// Set when the customer asked for TikTok Growth Mode on this campaign:
   /// TikTok-native creative, hook variations, and Spark-ad readiness for a
@@ -895,6 +952,8 @@ model PlatformCampaign {
   /// because the check spans rows.
   budgetPercent    Int
   dailyBudgetCents Int
+  /// This network's share of a total-budget campaign. Null for daily budgets.
+  lifetimeBudgetCents Int?
 
   status    CampaignStatus @default(DRAFT)
   lastError String?        @db.Text

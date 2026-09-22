@@ -24,6 +24,9 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 // Desktop: a side panel. Mobile: a bottom sheet, because a side panel on a
 // phone is a full-screen takeover with extra steps.
 
+/** Dispatch on window to open the assistant from anywhere in the dashboard. */
+export const OPEN_ASSISTANT_EVENT = "mairo:open-assistant";
+
 type Props = {
   threadId: string;
   initialMessages: UIMessage[];
@@ -50,6 +53,18 @@ function useScreenContext() {
           "What has MAIRO changed on it?",
           "Should I increase the budget?",
           "Which ad is performing best?",
+        ],
+      };
+    }
+    if (pathname.startsWith("/dashboard/create")) {
+      return {
+        label: "your new campaign",
+        hint: "The person is creating a campaign in MAIRO's Create wizard (business, goal, audience, budget, ad, review, launch). Help them choose; explain options in plain words. You can't change their answers yourself — tell them which screen to change.",
+        prompts: [
+          "Which goal should I pick?",
+          "Is my budget enough?",
+          "Should I use my own post or a new ad?",
+          "Who should I target?",
         ],
       };
     }
@@ -122,6 +137,14 @@ export function MairoAssistant({
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [messages, open]);
+
+  // Other screens can open the panel — the Create wizard's "Ask" button does —
+  // without owning its state.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_ASSISTANT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_ASSISTANT_EVENT, onOpen);
+  }, []);
 
   // Escape closes, as every other overlay in the product does.
   useEffect(() => {

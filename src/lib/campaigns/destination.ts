@@ -34,7 +34,11 @@ export type Destination =
    * campaign objective, the ad set's promoted object and destination, and the
    * button all differ from a link ad.
    */
-  | { type: "INSTANT_FORM"; metaFormId: string };
+  | { type: "INSTANT_FORM"; metaFormId: string }
+  /** Likes, comments and shares on the ad itself — no click-through. */
+  | { type: "ON_POST" }
+  /** The business's app, by its store listing and its Meta app id. */
+  | { type: "APP"; storeUrl: string; metaAppId: string };
 
 // LEAD_FORM is not a third shape here on purpose. A form MAIRO hosts is a page
 // with an address, so by the time an ad is built it IS a website destination —
@@ -51,6 +55,8 @@ export type DestinationSource = {
   channel?: MessageChannel | null;
   /** The form's id on Meta, when the campaign uses the native one. */
   metaFormId?: string | null;
+  /** The advertised app's Meta app id, for APP. Its store link travels in `url`. */
+  metaAppId?: string | null;
 };
 
 /**
@@ -73,6 +79,14 @@ export function resolveDestination(
 
   if (type === "DIRECT_MESSAGE") {
     return { type: "DIRECT_MESSAGE", channel: campaign.channel ?? "MESSENGER" };
+  }
+
+  if (type === "POST_ENGAGEMENT") return { type: "ON_POST" };
+
+  if (type === "APP") {
+    const storeUrl = appStoreUrl(campaign.url ?? "");
+    const metaAppId = campaign.metaAppId?.trim() ?? "";
+    return storeUrl && META_APP_ID.test(metaAppId) ? { type: "APP", storeUrl, metaAppId } : null;
   }
 
   if (type === "LEAD_FORM") {
@@ -162,7 +176,35 @@ export function describeMissing(type: AdDestination): string {
   if (type === "LEAD_FORM") {
     return "This campaign opens an enquiry form, but MAIRO hasn't written one for this business yet.";
   }
+  if (type === "APP") {
+    return "This campaign promotes your app, but it needs both the app's store link and its Meta app id.";
+  }
   return "This campaign sends people to your website, but there's no address on it yet. Add the page you want them to land on.";
+}
+
+/** The destinations a business can default to at signup; anything else reads as its website. */
+export type DefaultDestination = "WEBSITE" | "PHONE_CALL" | "LEAD_FORM" | "DIRECT_MESSAGE";
+
+export function asDefaultDestination(type: AdDestination | null | undefined): DefaultDestination {
+  return type === "PHONE_CALL" || type === "LEAD_FORM" || type === "DIRECT_MESSAGE" ? type : "WEBSITE";
+}
+
+/** A Meta app id: the number shown on the app's page at developers.facebook.com. */
+export const META_APP_ID = /^\d{6,20}$/;
+
+/**
+ * An App Store or Google Play listing, or null.
+ *
+ * Meta's promoted_object only accepts a real store listing, so anything else is
+ * refused here rather than at launch.
+ */
+export function appStoreUrl(raw: string): string | null {
+  const url = normalizeUrl(raw);
+  if (!url) return null;
+  const host = new URL(url).hostname;
+  return host === "apps.apple.com" || host === "itunes.apple.com" || host === "play.google.com"
+    ? url
+    : null;
 }
 
 /** What each inbox is called where somebody picks one. */

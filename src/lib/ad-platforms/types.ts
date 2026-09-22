@@ -1,4 +1,9 @@
-import type { AdGoal, AdPlatform, CreativeAspect } from "@/generated/prisma/enums";
+import type {
+  AdGoal,
+  AdPlatform,
+  CreativeAspect,
+  SpecialAdCategory,
+} from "@/generated/prisma/enums";
 import type { Destination } from "@/lib/campaigns/destination";
 
 // The one interface every advertising network is reached through.
@@ -116,6 +121,10 @@ export type CreateCampaignInput = {
    * objective cannot be changed once the campaign exists.
    */
   destination?: Destination;
+  /** One total for the whole run, instead of dailyBudgetCents. Needs an end date. */
+  lifetimeBudgetCents?: number | null;
+  /** Meta's special ad category, when the ad falls in one. */
+  specialAdCategory?: SpecialAdCategory | null;
 };
 
 export type CreatedCampaign = {
@@ -185,6 +194,10 @@ export type CreateAdGroupInput = {
   startAt?: Date | null;
   /** When delivery stops. Absent runs until someone stops it. */
   endAt?: Date | null;
+  /** Whether Meta may widen the audience past what was chosen (Advantage+ audience). */
+  advantageAudience?: boolean;
+  /** This network's share of a total-budget campaign, for networks that budget per ad group. */
+  lifetimeBudgetCents?: number | null;
 };
 
 export type CreateAdInput = {

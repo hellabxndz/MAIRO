@@ -1,4 +1,6 @@
-const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION || "v21.0";
+// The version Meta's own current Node SDK targets. META_GRAPH_API_VERSION
+// overrides it, e.g. to roll back to v21.0 without a code change.
+const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION || "v24.0";
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
 export class MetaApiError extends Error {

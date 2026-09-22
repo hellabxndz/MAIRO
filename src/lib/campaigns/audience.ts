@@ -113,6 +113,27 @@ export function metaTargeting(audience: Audience): Record<string, unknown> {
   };
 }
 
+/** The smallest radius Meta allows around a place for a special-category ad. */
+export const SPECIAL_CATEGORY_MIN_RADIUS = 15;
+
+/**
+ * The audience brought inside Meta's rules for housing, jobs and credit ads.
+ *
+ * Meta refuses those ads when they narrow by age or gender, or draw a circle
+ * tighter than 15 miles, so the answer is widened rather than refused at launch.
+ */
+export function restrictForSpecialCategory(audience: Audience): Audience {
+  return {
+    ...audience,
+    ageMin: AGE_FLOOR,
+    ageMax: AGE_CEILING,
+    genders: 0,
+    geoRadius: audience.geoKey
+      ? Math.max(SPECIAL_CATEGORY_MIN_RADIUS, audience.geoRadius ?? SPECIAL_CATEGORY_MIN_RADIUS)
+      : null,
+  };
+}
+
 /** How the audience reads back on the campaign, in a line. */
 export function describeAudience(audience: Audience): string {
   const where = audience.geoLabel

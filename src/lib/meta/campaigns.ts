@@ -1,5 +1,5 @@
 import { metaGraphRequest } from "@/lib/meta/client";
-import type { AdGoal } from "@/generated/prisma/enums";
+import type { AdGoal, SpecialAdCategory } from "@/generated/prisma/enums";
 
 // Maps MAIRO's simplified client-facing goal to a Meta campaign objective.
 // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/#odax
@@ -9,6 +9,7 @@ const OBJECTIVE_MAP: Record<AdGoal, string> = {
   AWARENESS: "OUTCOME_AWARENESS",
   TRAFFIC: "OUTCOME_TRAFFIC",
   APP_PROMOTION: "OUTCOME_APP_PROMOTION",
+  ENGAGEMENT: "OUTCOME_ENGAGEMENT",
 };
 
 /**
@@ -59,6 +60,9 @@ export type CreateMetaCampaignInput = {
   hasConversionTracking?: boolean;
   /** Whether the ad carries Meta's own instant form. */
   usesInstantForm?: boolean;
+  /** A total for the whole run instead of a daily amount. Needs an end date on the ad set. */
+  lifetimeBudgetCents?: number | null;
+  specialAdCategory?: SpecialAdCategory | null;
 };
 
 export type MetaCampaign = {
@@ -86,6 +90,8 @@ export function metaCampaignBody(input: {
   status?: "PAUSED" | "ACTIVE";
   hasConversionTracking?: boolean;
   usesInstantForm?: boolean;
+  lifetimeBudgetCents?: number | null;
+  specialAdCategory?: SpecialAdCategory | null;
 }): Record<string, unknown> {
   return {
     name: input.name,
@@ -95,8 +101,13 @@ export function metaCampaignBody(input: {
       input.usesInstantForm ?? false
     ),
     status: input.status ?? "PAUSED",
-    special_ad_categories: [],
-    daily_budget: input.dailyBudgetCents,
+    // Declared, never inferred: an ad in a special category that isn't
+    // declared is rejected, and so is one declared without its country.
+    special_ad_categories: input.specialAdCategory ? [input.specialAdCategory] : [],
+    ...(input.specialAdCategory ? { special_ad_category_country: ["US"] } : {}),
+    ...(input.lifetimeBudgetCents
+      ? { lifetime_budget: input.lifetimeBudgetCents }
+      : { daily_budget: input.dailyBudgetCents }),
     // Stated rather than inherited, and that is the whole point of the line.
     //
     // Left unset, Meta falls back to whatever bid strategy the ad account

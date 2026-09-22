@@ -33,7 +33,7 @@ import type { CreditCosts } from "@/lib/creative-studio/pricing";
 // and style choices they already made.
 //
 // Reusable by design: the campaign-creation flow embeds this exact component
-// (see launch-flow.tsx) rather than linking out to a separate page, because
+// (see create/[service]/step-ad.tsx) rather than linking out to a separate page, because
 // navigating away and back would lose everything already typed into the
 // campaign form. `embedded` trims the chrome; `onAttached` is how the
 // campaign flow hears "a creative was chosen" without this component knowing
@@ -92,6 +92,7 @@ export function StudioWorkspace({
   mode,
   embedded = false,
   onAttached,
+  initialTab = "generate",
 }: {
   assistantName: string;
   creditBalance: CreditBalance;
@@ -99,8 +100,10 @@ export function StudioWorkspace({
   mode: "simple" | "advanced";
   embedded?: boolean;
   onAttached?: (assetId: string, imageUrl: string) => void;
+  /** Which tab opens first. */
+  initialTab?: "generate" | "transform" | "upload";
 }) {
-  const [tab, setTab] = useState<"generate" | "transform" | "upload">("generate");
+  const [tab, setTab] = useState<"generate" | "transform" | "upload">(initialTab);
   const [prompt, setPrompt] = useState("");
   const [preset, setPreset] = useState<CreativeStylePreset | null>(null);
   const [format, setFormat] = useState<CreativeFormat>("SQUARE");
