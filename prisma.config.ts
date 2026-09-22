@@ -3,6 +3,23 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// Neon's direct endpoint is its pooled hostname without "-pooler". Deriving it
+// means a deployment that only has the pooled DATABASE_URL still migrates over
+// a direct connection instead of timing out on the advisory lock (P1002).
+function neonDirectUrl(databaseUrl: string | undefined): string | undefined {
+  if (!databaseUrl) return undefined;
+  try {
+    const url = new URL(databaseUrl);
+    if (url.hostname.endsWith(".neon.tech") && url.hostname.includes("-pooler.")) {
+      url.hostname = url.hostname.replace("-pooler.", ".");
+      return url.toString();
+    }
+  } catch {
+    // Not a parseable URL — hand it to Prisma untouched and let it report.
+  }
+  return databaseUrl;
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
@@ -14,7 +31,11 @@ export default defineConfig({
     // session-level advisory locks Prisma Migrate uses. The app itself
     // (src/lib/db.ts) still connects via the pooled DATABASE_URL at
     // runtime, which is what you want for normal queries.
-    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
+    // DATABASE_URL_UNPOOLED is what Vercel's Neon integration provides.
+    url:
+      process.env["DIRECT_URL"] ||
+      process.env["DATABASE_URL_UNPOOLED"] ||
+      neonDirectUrl(process.env["DATABASE_URL"]),
 
     // Only needed to *author* a migration locally: `prisma migrate diff`
     // replays the existing migrations into a scratch database to work out what

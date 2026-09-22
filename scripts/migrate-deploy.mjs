@@ -50,6 +50,19 @@ function runMigrate() {
 
 const totalAttempts = ATTEMPT_DELAYS_MS.length + 1;
 
+// Prisma prints the host it connected to. A "-pooler" host means migrations
+// went through Neon's connection pooler, where the advisory lock Prisma takes
+// times out — retrying cannot fix that, so it is named instead of retried
+// silently.
+function warnIfPooled(output) {
+  if (!/at "[^"]*-pooler[^"]*"/.test(output)) return;
+  console.error(
+    "\nMigrations are running through Neon's pooled endpoint, which times out on " +
+      "Prisma's migration lock. Set DIRECT_URL to the non-pooled connection string " +
+      "(the same URL without \"-pooler\" in the hostname) and redeploy."
+  );
+}
+
 for (let attempt = 1; attempt <= totalAttempts; attempt++) {
   const { code, output } = await runMigrate();
 
@@ -57,6 +70,8 @@ for (let attempt = 1; attempt <= totalAttempts; attempt++) {
     if (attempt > 1) console.log(`\nMigrations applied on attempt ${attempt}.`);
     process.exit(0);
   }
+
+  if (attempt === 1) warnIfPooled(output);
 
   const retryable = RETRYABLE.some((marker) => output.includes(marker));
 
