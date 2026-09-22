@@ -37,7 +37,7 @@ import {
   metaTargeting,
   normalizeAudience,
 } from "@/lib/campaigns/audience";
-import { metaAdCreativeParams } from "@/lib/meta/creatives";
+import { metaAdCreativeParams, STANDARD_ENHANCEMENT_FEATURES } from "@/lib/meta/creatives";
 import {
   absolutize,
   dedupe,
@@ -480,6 +480,18 @@ console.log("\n— running a post the business already published —");
   const built = metaAdCreativeParams({ ...base, boostPostId: null });
   ok("a generated ad still sends the spec", typeof built.object_story_spec === "string");
   ok("and no story id", built.object_story_id === undefined);
+
+  // Meta refuses the retired standard_enhancements bundle outright (subcode
+  // 3858504), which left every ad unbuildable. Each feature is opted out by
+  // name instead, on both creative shapes.
+  for (const [label, creative] of [["generated ad", built], ["boosted post", post]] as const) {
+    const features = JSON.parse(String(creative.degrees_of_freedom_spec)).creative_features_spec;
+    ok(`${label}: never sends the retired standard_enhancements switch`, !("standard_enhancements" in features));
+    ok(
+      `${label}: opts out of every feature the bundle used to cover`,
+      STANDARD_ENHANCEMENT_FEATURES.every((f) => features[f]?.enroll_status === "OPT_OUT")
+    );
+  }
 
   // The label under each post in the picker. A post has no title, and a photo
   // with no words at all must not render as a blank row.

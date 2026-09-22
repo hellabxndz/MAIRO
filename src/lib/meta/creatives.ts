@@ -109,16 +109,30 @@ export type AdCreativeInput = {
  * which Meta rejects outright and which no amount of reading the call site
  * proves.
  */
+/** The individual features that made up Meta's retired standard_enhancements bundle. */
+export const STANDARD_ENHANCEMENT_FEATURES = [
+  "image_touchups",
+  "image_brightness_and_contrast",
+  "image_templates",
+  "video_auto_crop",
+  "text_optimizations",
+  "enhance_cta",
+  "inline_comment",
+] as const;
+
 export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unknown> {
   // Meta's automatic variations — cropping the image, reordering the text — are
   // off in both shapes below. The customer approved a specific picture and a
   // specific line, or picked a specific post because of how it performed;
   // MAIRO showing them one ad while Meta runs a different one would make that
   // meaningless.
+  //
+  // Meta no longer accepts the single standard_enhancements switch (error
+  // subcode 3858504), so each feature that bundle covered is opted out by name.
   const noEnhancements = JSON.stringify({
-    creative_features_spec: {
-      standard_enhancements: { enroll_status: "OPT_OUT" },
-    },
+    creative_features_spec: Object.fromEntries(
+      STANDARD_ENHANCEMENT_FEATURES.map((feature) => [feature, { enroll_status: "OPT_OUT" }])
+    ),
   });
 
   // A post that already exists is handed over by id, and that is the whole
