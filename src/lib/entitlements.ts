@@ -65,6 +65,17 @@ export type Entitlements = {
   creative_limit: number;
   /** Campaigns that aren't archived. */
   campaign_limit: number;
+  /**
+   * AI Creative Studio image credits granted each calendar month.
+   *
+   * A separate pool from creative_limit on purpose: creative_limit counts
+   * requests on the older Creatives page (one concept + up to two pictures
+   * per request); Studio credits meter individual OpenAI calls, where a
+   * single session can reasonably spend several — a generation, a couple of
+   * edits, a set of variations. Conflating the two would make one page's
+   * limit read as stingy and the other's as unlimited for no honest reason.
+   */
+  studio_credits_monthly: number;
 };
 
 export type EntitlementFlag = {
@@ -93,6 +104,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: false,
     creative_limit: 0,
     campaign_limit: 0,
+    studio_credits_monthly: 0,
   },
   STARTER: {
     meta_ads: true,
@@ -106,6 +118,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: false,
     creative_limit: 20,
     campaign_limit: Infinity,
+    studio_credits_monthly: 40,
   },
   GROWTH: {
     meta_ads: true,
@@ -119,6 +132,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: true,
     creative_limit: 60,
     campaign_limit: Infinity,
+    studio_credits_monthly: 150,
   },
   // The top business plan. Its enum value is still SCALE and that is
   // deliberate: Stripe price ids are keyed off the tier name in the
@@ -137,6 +151,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: true,
     creative_limit: 150,
     campaign_limit: Infinity,
+    studio_credits_monthly: 400,
   },
   // Freelancer plans. Per-client capability matches Growth, because a
   // freelancer's client is a real business running real campaigns.
@@ -152,6 +167,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: true,
     creative_limit: 60,
     campaign_limit: Infinity,
+    studio_credits_monthly: 150,
   },
   AGENCY: {
     meta_ads: true,
@@ -165,6 +181,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     advanced_analytics: true,
     creative_limit: 150,
     campaign_limit: Infinity,
+    studio_credits_monthly: 400,
   },
 };
 
@@ -347,6 +364,7 @@ export function planComparison(
       value: Number.isFinite(limits.campaigns) ? String(limits.campaigns) : "Unlimited",
     },
     { label: "New ads a month", value: String(limits.creativesPerMonth) },
+    { label: "AI Creative Studio credits", value: `${e.studio_credits_monthly}/mo` },
     {
       label: "Posts to your own feed",
       value: e.social_posting ? "Instagram + TikTok" : "No",

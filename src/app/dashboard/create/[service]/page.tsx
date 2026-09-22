@@ -7,6 +7,12 @@ import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { entitlementsForTier } from "@/lib/entitlements";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { LaunchFlow } from "./launch-flow";
+import { assistantNameOf } from "@/lib/ai/agents";
+import { openAiImageConfigured } from "@/lib/ai/openai-image";
+import { storageConfigured } from "@/lib/storage/blob";
+import { creditBalance } from "@/lib/creative-studio/credits";
+import { creditCosts } from "@/lib/creative-studio/pricing";
+import { viewMode } from "@/lib/view-mode";
 
 // One route for every service on the create screen.
 //
@@ -36,7 +42,7 @@ export default async function CreateServicePage({
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, connections] = await Promise.all([
+  const [organization, connections, balance, costs, mode] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -46,9 +52,13 @@ export default async function CreateServicePage({
         subscriptionTier: true,
         defaultDestination: true,
         defaultMessageChannel: true,
+        assistantName: true,
       },
     }),
     connectionSummaries(organizationId),
+    creditBalance(organizationId),
+    creditCosts(),
+    viewMode(),
   ]);
   if (!organization) redirect("/sign-in");
 
@@ -80,6 +90,13 @@ export default async function CreateServicePage({
           phone: organization.phone,
           destinationType: organization.defaultDestination,
           messageChannel: organization.defaultMessageChannel,
+        }}
+        studio={{
+          assistantName: assistantNameOf(organization.assistantName),
+          configured: openAiImageConfigured() && storageConfigured(),
+          creditBalance: balance,
+          costs,
+          mode,
         }}
       />
     </div>

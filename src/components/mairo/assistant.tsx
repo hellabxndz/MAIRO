@@ -53,6 +53,18 @@ function useScreenContext() {
         ],
       };
     }
+    if (pathname.startsWith("/dashboard/creative-studio")) {
+      return {
+        label: "AI Creative Studio",
+        hint: "The person is in AI Creative Studio — where they generate advertising images with OpenAI, transform product photos, or upload their own. If they describe a product or a look they want, suggest a style preset and a format, and offer to help them write the description rather than generating anything yourself — image generation only happens through the Studio's own controls.",
+        prompts: [
+          "I own a jewellery company. What kind of picture should I make?",
+          "What style should I use for a hoodie ad?",
+          "Which format is best for TikTok?",
+          "Why does this one look weak?",
+        ],
+      };
+    }
     if (pathname.startsWith("/dashboard/creatives")) {
       return {
         label: "your ads",

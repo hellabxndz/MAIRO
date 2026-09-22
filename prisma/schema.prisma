@@ -230,6 +230,8 @@ model Organization {
   smsPreference        SmsPreference?
   leads                Lead[]
   products             Product[]
+  creativeStudioAssets CreativeStudioAsset[]
+  creativeCreditLedger CreativeCreditLedger[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1647,4 +1649,230 @@ model InstagramPost {
   updatedAt DateTime  @updatedAt
 
   @@index([organizationId, status])
+}
+
+// --- AI Creative Studio ----------------------------------------------------
+//
+// Every image a business makes or uploads through the Studio, with real
+// object storage behind it (not a data-URL text column — see the comment on
+// CreativeStudioVersion), a version history per creative concept, and a
+// credit ledger that meters OpenAI calls separately from the older Creatives
+// page's monthly request count.
+//
+// A finished image reaches an actual campaign through the EXISTING pipeline:
+// choosing one creates a CreativeRequest + a final, reviewed CreativeImage —
+// the same rows the Creatives page has always produced, read by the same
+// approvedCreativeFor() the launch code already trusts. That is deliberate:
+// it is the smallest possible integration, and it means the safety review, the
+// Meta/TikTok ad-creative payload, and the approval gate did not have to be
+// touched or duplicated to add this.
+
+/// How a Creative Studio asset came to exist.
+enum CreativeStudioSource {
+  /// Described in words, generated from nothing.
+  PROMPT
+  /// An uploaded product photo, transformed into an advertising image.
+  PRODUCT_UPLOAD
+  /// A finished ad the business already made. No model call involved.
+  OWN_UPLOAD
+}
+
+enum CreativeStudioStatus {
+  PENDING
+  COMPLETE
+  FAILED
+}
+
+/// What one pass through the pipeline actually was, for the credit ledger and
+/// for the version-history UI to label rows correctly.
+enum CreativeStudioActionKind {
+  /// The first image in an asset's lineage.
+  GENERATE
+  /// A natural-language change applied to the previous version.
+  EDIT
+  /// One of a batch of sibling concepts made from the same brief at once.
+  VARIATION
+  /// No model call — the business's own file, stored as-is.
+  UPLOAD
+}
+
+/// The four shapes advertising actually runs in. Named for the placement they
+/// serve rather than the ratio, because "Story" means something to a business
+/// owner and "9:16" does not — the ratio is still shown beside it in the UI.
+enum CreativeFormat {
+  /// 1:1 — the standard feed shape on every network.
+  SQUARE
+  /// 4:5 — the tallest ratio most feeds allow before cropping it themselves.
+  PORTRAIT
+  /// 9:16 — Stories and Reels, full-screen on a phone.
+  STORY
+  /// 16:9 — in-stream and some feed placements.
+  LANDSCAPE
+}
+
+enum CreativeStylePreset {
+  LUXURY_STUDIO
+  STREETWEAR
+  MINIMALIST
+  LIFESTYLE
+  CINEMATIC
+  PRODUCT_PHOTOGRAPHY
+  URBAN
+  HIGH_FASHION
+  FITNESS
+  FOOD_PHOTOGRAPHY
+  TECHNOLOGY
+  CUSTOM
+}
+
+/// One creative concept: a prompt, an uploaded product, or an uploaded ad —
+/// and everything made from it. The unit the library and the "generate 4
+/// variations" grid are both built from.
+model CreativeStudioAsset {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  /// Who asked for it, for the activity trail. Not a hard relation — a user
+  /// can be removed from an organization without taking its creatives with it.
+  createdByUserId String?
+
+  source CreativeStudioSource
+  preset CreativeStylePreset?
+  format CreativeFormat       @default(SQUARE)
+
+  /// Shared across sibling assets from one "generate N variations" batch, so
+  /// the library can group and grid them. Null on everything else.
+  variationGroupId String?
+
+  /// The uploaded starting image — a product photo or the business's own
+  /// finished ad — in blob storage. Null for a pure PROMPT asset.
+  sourceImageUrl String? @db.Text
+
+  /// Set once a version of this asset is attached to a campaign, which
+  /// creates a CreativeRequest under the hood. Makes "Use in campaign"
+  /// idempotent: clicking it again shows what already happened rather than
+  /// creating a second approved creative.
+  linkedCreativeRequestId String?
+
+  /// Removed from the library view without deleting the underlying files —
+  /// object storage is cleaned up separately, on a schedule, never inline
+  /// with a click a person is waiting on.
+  archivedAt DateTime?
+
+  versions CreativeStudioVersion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, archivedAt, updatedAt])
+  @@index([organizationId, variationGroupId])
+}
+
+/// One image. The first version is the generation or the upload; every
+/// version after that is one natural-language edit, each keeping the ones
+/// before it rather than overwriting them — asked for explicitly in the
+/// product spec, and it is also just what "undo" needs to exist at all.
+model CreativeStudioVersion {
+  id      String              @id @default(cuid())
+  asset   CreativeStudioAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId String
+
+  version Int
+  kind    CreativeStudioActionKind
+
+  status       CreativeStudioStatus @default(PENDING)
+  errorMessage String?              @db.Text
+
+  /// What produced this version: the prompt (first pass) or the edit
+  /// instruction (every pass after). Null for an UPLOAD.
+  instruction String? @db.Text
+
+  provider String  @default("openai")
+  /// The exact model id used, e.g. "gpt-image-2" — recorded per version
+  /// rather than assumed from today's config, because that config can change
+  /// and an old row should still say what actually made it.
+  model    String?
+
+  /// Object storage, not a database column — a base64 image in Postgres was
+  /// the previous approach (see CreativeImage.imageData) and is exactly what
+  /// this table exists to stop doing at Studio volume. Both URLs point at the
+  /// same blob store; rawImageUrl is the model's native output, imageUrl is
+  /// that cropped to `format` on the parent asset. Changing the format on an
+  /// existing asset re-crops from rawImageUrl rather than calling the model
+  /// again — cropping is free, a generation is not.
+  rawImageUrl String? @db.Text
+  imageUrl    String? @db.Text
+  width       Int?
+  height      Int?
+
+  creditsSpent Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, version])
+  @@index([assetId])
+}
+
+enum CreativeCreditStatus {
+  RESERVED
+  CONFIRMED
+}
+
+/// Every AI Creative Studio credit, spent or reserved.
+///
+/// Two-phase on purpose. A generation call to OpenAI takes several seconds,
+/// and holding a database lock for that long would be its own outage; not
+/// holding one at all would let two requests fired together both read "under
+/// the limit" and both proceed, over-spending it. So: a short transaction
+/// locks the organization's own row, sums this month's RESERVED and CONFIRMED
+/// credits, and — only if the new cost still fits — inserts a RESERVED row
+/// and commits, which releases the lock in milliseconds. The model call then
+/// runs with nothing held. On success the row is updated to CONFIRMED with
+/// the asset/version it paid for; on failure it is deleted, so a failed
+/// generation never costs anything. A RESERVED row past a couple of minutes
+/// old is excluded from the running total — the request that made it is gone
+/// either way, and an abandoned reservation must not strand real credits.
+model CreativeCreditLedger {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// "2026-09" — matches CreativeRequest.month. The allowance resets on the
+  /// 1st, and this is what a monthly total groups on.
+  month String
+
+  kind    CreativeStudioActionKind
+  credits Int
+  status  CreativeCreditStatus @default(RESERVED)
+
+  /// Which asset/version this spend paid for. Null while RESERVED — the
+  /// version does not exist yet, the model has not answered.
+  assetId   String?
+  versionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, month, status])
+}
+
+/// What each kind of Studio action costs, in credits, editable without a
+/// deploy. One row, a fixed id — unlike PlanConfig there is only ever one
+/// live price list rather than one per tier, because what a generation costs
+/// does not depend on which plan paid for it; only the monthly allowance
+/// (Entitlements.studio_credits_monthly) does that.
+model CreativeCreditPricing {
+  id String @id @default("default")
+
+  /// gpt-image "medium" quality — the default for a first generation.
+  standardCost Int @default(5)
+  /// "high" quality — noticeably better, costs roughly 4x more to produce.
+  premiumCost Int @default(15)
+  /// One natural-language change to an existing image.
+  editCost Int @default(5)
+  /// Cost of ONE image within a "generate N variations" batch — the batch's
+  /// total is this times N, computed at call time, never stored as a flat fee.
+  variationCost Int @default(4)
+
+  updatedAt DateTime @updatedAt
 }

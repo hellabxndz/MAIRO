@@ -131,7 +131,13 @@ export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
   { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
-  { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} /> },
+  // Points at the new AI Creative Studio, the primary place to make an ad
+  // image now. The older /dashboard/creatives concept-and-copy tool still
+  // works and is still linked from inside the product (e.g. the campaign
+  // launch pipeline's own error copy) — it is just no longer the thing this
+  // link opens, which is a deliberate "make the better tool the one people
+  // find" change, not a removal of the older one.
+  { href: "/dashboard/creative-studio", label: "Creative Studio", icon: <Icon d={I.creatives} /> },
   { href: "/dashboard/audiences", label: "Audiences", icon: <Icon d={I.audiences} /> },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
   { href: "/dashboard/reports", label: "Reports", icon: <Icon d={I.reports} /> },

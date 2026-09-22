@@ -7,6 +7,9 @@ import type { AdPlatform } from "@/generated/prisma/enums";
 import { createCampaignAction, type CampaignActionState } from "@/lib/actions/campaign-actions";
 import { inputClass } from "@/components/ui";
 import { AnalysisScan } from "./analysis-scan";
+import { StudioWorkspace } from "@/components/creative-studio/studio-workspace";
+import type { CreditBalance } from "@/lib/creative-studio/credits";
+import type { CreditCosts } from "@/lib/creative-studio/pricing";
 
 // Telling MAIRO what to run, in four questions.
 //
@@ -65,6 +68,14 @@ type Props = {
     messageChannel: "MESSENGER" | "INSTAGRAM" | "WHATSAPP";
     phone: string | null;
   };
+  /** Everything the embedded Creative Studio step needs to actually run. */
+  studio: {
+    assistantName: string;
+    configured: boolean;
+    creditBalance: CreditBalance;
+    costs: CreditCosts;
+    mode: "simple" | "advanced";
+  };
 };
 
 const PLATFORM_LABEL: Record<string, string> = {
@@ -76,7 +87,7 @@ const PLATFORM_LABEL: Record<string, string> = {
   LINKEDIN: "LinkedIn",
 };
 
-export function LaunchFlow({ service, connected, business }: Props) {
+export function LaunchFlow({ service, connected, business, studio }: Props) {
   const [state, formAction, pending] = useActionState<CampaignActionState, FormData>(
     createCampaignAction,
     undefined,
@@ -84,6 +95,12 @@ export function LaunchFlow({ service, connected, business }: Props) {
 
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState<Goal>(GOALS[0]);
+  // The creative step. "skip" is a real, first-class choice — a business
+  // with an already-approved creative, or one who would rather add it after,
+  // has always been able to launch without ever visiting this screen; this
+  // step offers to do it now without requiring it.
+  const [creativeChoice, setCreativeChoice] = useState<"none" | "generate" | "attached">("none");
+  const [attachedPreview, setAttachedPreview] = useState<string | null>(null);
   const [subject, setSubject] = useState(business.website ?? "");
   const [period, setPeriod] = useState<"daily" | "monthly">("monthly");
   const [amount, setAmount] = useState(600);
@@ -115,7 +132,7 @@ export function LaunchFlow({ service, connected, business }: Props) {
     return <AnalysisScan businessName={business.name} platforms={service.platforms} />;
   }
 
-  const steps = ["What you want", "What you're advertising", "Budget", "Accounts"];
+  const steps = ["What you want", "What you're advertising", "Your ad", "Budget", "Accounts"];
 
   return (
     <form
@@ -202,6 +219,60 @@ export function LaunchFlow({ service, connected, business }: Props) {
 
       {step === 2 && (
         <Question
+          title="How would you like to create your ad?"
+          sub={`Optional here — skip it and ${studio.assistantName} will write a first set once the campaign exists, or come back to it any time from Creative Studio.`}
+        >
+          {!studio.configured ? (
+            <p className="rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--mairo-line)" }}>
+              AI Creative Studio isn&rsquo;t switched on for this deployment yet. Skip this step — your
+              campaign will still build normally.
+            </p>
+          ) : creativeChoice === "attached" && attachedPreview ? (
+            <div className="space-y-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL, see studio-workspace.tsx */}
+              <img src={attachedPreview} alt="Attached creative" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--mairo-line)" }} />
+              <p className="text-[13px] text-live">Ready — {studio.assistantName} wrote ad copy for it too.</p>
+              <button
+                type="button"
+                onClick={() => setCreativeChoice("none")}
+                className="text-[12.5px] text-muted underline underline-offset-4 hover:text-white"
+              >
+                Choose a different one
+              </button>
+            </div>
+          ) : creativeChoice === "generate" ? (
+            <StudioWorkspace
+              assistantName={studio.assistantName}
+              creditBalance={studio.creditBalance}
+              costs={studio.costs}
+              mode={studio.mode}
+              embedded
+              onAttached={(_assetId, imageUrl) => {
+                setAttachedPreview(imageUrl);
+                setCreativeChoice("attached");
+              }}
+            />
+          ) : (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <Choice
+                selected={false}
+                onClick={() => setCreativeChoice("generate")}
+                label="Generate with Mairo AI"
+                sub="Describe it, transform a product photo, or upload one you already have"
+              />
+              <Choice
+                selected={false}
+                onClick={() => setStep(3)}
+                label="I'll add one later"
+                sub={`Skip for now — ${studio.assistantName} writes a first set once the campaign exists`}
+              />
+            </div>
+          )}
+        </Question>
+      )}
+
+      {step === 3 && (
+        <Question
           title="How much do you want to spend?"
           sub="This is the advertising budget, not what you pay MAIRO."
         >
@@ -258,7 +329,7 @@ export function LaunchFlow({ service, connected, business }: Props) {
         </Question>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <Question
           title={missing.length ? "One account to connect" : "Ready when you are"}
           sub={
@@ -334,7 +405,7 @@ export function LaunchFlow({ service, connected, business }: Props) {
           ← Back
         </button>
 
-        {step < 3 ? (
+        {step < 4 ? (
           <button
             type="button"
             onClick={() => setStep((s) => s + 1)}

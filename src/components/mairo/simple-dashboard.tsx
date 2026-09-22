@@ -611,10 +611,10 @@ export function SimpleDashboard({
       <div className="grid gap-4 sm:grid-cols-2">
         {[
           {
-            href: "/dashboard/creatives",
+            href: "/dashboard/creative-studio",
             icon: ICONS.image,
-            title: "Generate ad creatives",
-            body: "Turn what you sell into ad concepts, headlines and hooks.",
+            title: "AI Creative Studio",
+            body: "Describe an ad, transform a product photo, or upload your own — generate it with AI.",
           },
           anyConnected
             ? {

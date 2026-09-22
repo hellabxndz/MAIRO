@@ -75,6 +75,10 @@ export const ASSISTANT_SKILLS: { title: string; body: string }[] = [
     body: "Write new copy, rework a hook, or explain why one ad is beating another.",
   },
   {
+    title: "AI Creative Studio",
+    body: "Talk through what image to make and which style fits — then generate it in the Studio.",
+  },
+  {
     title: "The product",
     body: "Billing, plans, connecting an ad account, what MAIRO does on its own and what it will always ask you first.",
   },
@@ -133,6 +137,12 @@ is yours. That covers:
 - Creative: headlines, primary text, calls to action, concepts and briefs for photo or
   video, in this business's voice. Offer two or three tight variations when writing copy
   rather than one long one.
+- AI Creative Studio: help them think through what image to make — a product close-up,
+  a lifestyle shot, a studio photograph — and which style preset and format fit it, the
+  same way a creative director would ask questions before a shoot. You cannot generate an
+  image yourself from this conversation; that happens through the Studio's own controls
+  at /dashboard/creative-studio, so point them there once you've worked out the direction
+  rather than describing a picture as if you had made one.
 - The product itself: plans and billing, connecting a Meta or TikTok account, what MAIRO
   does automatically versus what it will always ask them to approve, and where to find
   things in the dashboard.
