@@ -372,11 +372,17 @@ export const tiktokAdapter: AdPlatformAdapter = {
   },
 
   async pauseCampaign(input): Promise<PlatformResult<void>> {
-    return setStatus(input.organizationId, input.externalCampaignId, "DISABLE");
+    return setStatus(input.organizationId, "campaign", input.externalCampaignId, "DISABLE");
   },
 
   async resumeCampaign(input): Promise<PlatformResult<void>> {
-    return setStatus(input.organizationId, input.externalCampaignId, "ENABLE");
+    // The ad group is built DISABLE and has to be switched on too; ads are
+    // created enabled. Campaign last, so a failure leaves nothing running.
+    if (input.externalAdGroupId) {
+      const result = await setStatus(input.organizationId, "adgroup", input.externalAdGroupId, "ENABLE");
+      if (!result.ok) return result;
+    }
+    return setStatus(input.organizationId, "campaign", input.externalCampaignId, "ENABLE");
   },
 
   async getCampaignPerformance(input): Promise<PlatformResult<CampaignPerformance[]>> {
@@ -425,25 +431,30 @@ export const tiktokAdapter: AdPlatformAdapter = {
 
 async function setStatus(
   organizationId: string,
-  externalCampaignId: string,
+  level: "campaign" | "adgroup",
+  externalId: string,
   operation: "ENABLE" | "DISABLE"
 ): Promise<PlatformResult<void>> {
   const loaded = await credentialsOr<void>(organizationId);
   if (!loaded.ok) return loaded.result;
 
   try {
-    await tiktokRequest("/campaign/status/update/", {
+    await tiktokRequest(`/${level}/status/update/`, {
       method: "POST",
       accessToken: loaded.creds.accessToken,
       body: {
         advertiser_id: loaded.creds.externalAccountId,
-        campaign_ids: [externalCampaignId],
+        [`${level}_ids`]: [externalId],
         operation_status: operation,
       },
     });
     return ok(undefined);
   } catch (error) {
-    return toFailure(organizationId, error, "Couldn't change the campaign status on TikTok.");
+    return toFailure(
+      organizationId,
+      error,
+      `Couldn't change the ${level === "adgroup" ? "ad group" : "campaign"} status on TikTok.`
+    );
   }
 }
 

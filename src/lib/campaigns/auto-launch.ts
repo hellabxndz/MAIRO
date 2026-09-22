@@ -190,6 +190,8 @@ export async function maybeGoLive(
     const result = await adapter.resumeCampaign({
       organizationId,
       externalCampaignId: child.externalCampaignId,
+      externalAdGroupId: child.externalAdGroupId,
+      externalAdId: child.externalAdId,
     });
 
     if (!result.ok) {

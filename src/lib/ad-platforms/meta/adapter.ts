@@ -383,6 +383,14 @@ export const metaAdapter: AdPlatformAdapter = {
   },
 
   async resumeCampaign(input): Promise<PlatformResult<void>> {
+    // The ad and ad set are built PAUSED. Switched on first, campaign last:
+    // the campaign is what starts spending, so a failure part-way through
+    // leaves nothing running.
+    for (const id of [input.externalAdId, input.externalAdGroupId]) {
+      if (!id) continue;
+      const result = await setStatus(input.organizationId, id, "ACTIVE");
+      if (!result.ok) return result;
+    }
     return setStatus(input.organizationId, input.externalCampaignId, "ACTIVE");
   },
 
@@ -600,22 +608,23 @@ function metaOptimizationGoal(
   }
 }
 
+/** Sets the status of a campaign, ad set or ad — Meta takes the same call for all three. */
 async function setStatus(
   organizationId: string,
-  externalCampaignId: string,
+  externalId: string,
   status: "ACTIVE" | "PAUSED"
 ): Promise<PlatformResult<void>> {
   const loaded = await credentialsOr<void>(organizationId);
   if (!loaded.ok) return loaded.result;
 
   try {
-    await metaGraphRequest(`/${externalCampaignId}`, {
+    await metaGraphRequest(`/${externalId}`, {
       method: "POST",
       accessToken: loaded.creds.accessToken,
       body: { status },
     });
     return ok(undefined);
   } catch (error) {
-    return toFailure(organizationId, error, "Couldn't change the campaign status on Meta.");
+    return toFailure(organizationId, error, "Couldn't change the status on Meta.");
   }
 }

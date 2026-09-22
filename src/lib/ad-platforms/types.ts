@@ -362,9 +362,16 @@ export interface AdPlatformAdapter {
     externalCampaignId: string;
   }): Promise<PlatformResult<void>>;
 
+  /**
+   * Switches the campaign on, along with the ad set and ad MAIRO built under
+   * it. Those are created switched off, and a network only delivers when all
+   * three are on.
+   */
   resumeCampaign(input: {
     organizationId: string;
     externalCampaignId: string;
+    externalAdGroupId?: string | null;
+    externalAdId?: string | null;
   }): Promise<PlatformResult<void>>;
 
   getCampaignPerformance(input: {
