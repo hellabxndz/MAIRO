@@ -102,11 +102,20 @@ export async function runProductTransform(input: {
   format: CreativeFormat;
   quality: Quality;
 }): Promise<PipelineOutcome> {
-  const sourceStored = await storeImage(
-    `creative-studio/${input.organizationId}/uploads/${randomUUID()}.png`,
-    input.productImage,
-    input.productImageContentType || "image/png",
-  );
+  let sourceStored: Awaited<ReturnType<typeof storeImage>>;
+  try {
+    sourceStored = await storeImage(
+      `creative-studio/${input.organizationId}/uploads/${randomUUID()}.png`,
+      input.productImage,
+      input.productImageContentType || "image/png",
+    );
+  } catch (error) {
+    // No version row exists yet at this point, so there's nothing to mark
+    // failed — this just has to come back as an ordinary outcome instead of
+    // an uncaught exception, the same as every failure below it.
+    const message = error instanceof Error ? error.message : "Couldn't save that upload.";
+    return { ok: false, error: message };
+  }
 
   const asset = await db.creativeStudioAsset.create({
     data: {
