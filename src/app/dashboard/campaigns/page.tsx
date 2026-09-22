@@ -21,6 +21,7 @@ import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
+import { metaAdsManagerUrl } from "@/lib/ad-platforms/billing";
 
 // Each row's figures are live calls to Meta and TikTok. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget, now doubled because
@@ -226,6 +227,10 @@ export default async function CampaignsPage() {
           {live.map((campaign) => {
             const report = byCampaign.get(campaign.id);
             const platforms = campaign.platformCampaigns.map((c) => c.platform);
+            const metaAccountId = connections.get("META")?.accountId;
+            const metaCampaignId = campaign.platformCampaigns.find(
+              (c) => c.platform === "META" && c.externalCampaignId,
+            )?.externalCampaignId;
 
             return (
               <Card key={campaign.id}>
@@ -409,6 +414,18 @@ export default async function CampaignsPage() {
                       {c.lastError}
                     </p>
                   ))}
+
+                {metaAccountId && metaCampaignId && (
+                  <a
+                    href={metaAdsManagerUrl(metaAccountId, metaCampaignId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mr-3 mt-4 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white"
+                  >
+                    Open in Ads Manager
+                    <span aria-hidden>↗</span>
+                  </a>
+                )}
 
                 <DeleteCampaign
                   campaignId={campaign.id}

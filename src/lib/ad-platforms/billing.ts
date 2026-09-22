@@ -90,8 +90,10 @@ export function metaBillingHubUrl(adAccountId: string): string {
   return `https://business.facebook.com/billing_hub/accounts?asset_id=${bareAccountId(adAccountId)}`;
 }
 
-export function metaAdsManagerUrl(adAccountId: string): string {
-  return `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${bareAccountId(adAccountId)}`;
+/** Ads Manager for the account, narrowed to one campaign when its id is given. */
+export function metaAdsManagerUrl(adAccountId: string, campaignId?: string | null): string {
+  const url = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${bareAccountId(adAccountId)}`;
+  return campaignId ? `${url}&selected_campaign_ids=${encodeURIComponent(campaignId)}` : url;
 }
 
 /** TikTok bills the advertiser account the same way; this is its equivalent. */
