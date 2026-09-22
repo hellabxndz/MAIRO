@@ -55,7 +55,10 @@ export async function uploadAdImage(
   }>(`/${adAccountId}/adimages`, {
     method: "POST",
     accessToken,
-    params: { bytes: base64, name: filename },
+    // The image bytes go in the POST body, not the query string — see
+    // formParams in client.ts. A generated ad image easily runs past what any
+    // URL is allowed to hold, and this was silently rejected before.
+    formParams: { bytes: base64, name: filename },
   });
 
   // Meta keys the response by a filename it chooses, not the one sent, so the

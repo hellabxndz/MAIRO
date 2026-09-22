@@ -17,11 +17,24 @@ type MetaRequestOptions = {
   accessToken?: string;
   params?: Record<string, string | number | undefined>;
   body?: Record<string, unknown>;
+  /**
+   * Fields that belong in the POST body, form-encoded, rather than the URL.
+   *
+   * Everything in `params` above ends up in the query string, which is fine
+   * for a campaign name or a JSON-stringified targeting spec — a few hundred
+   * bytes at most. It is not fine for an uploaded image's base64 bytes, which
+   * can run to megabytes: Meta's edge (and most things in front of it) caps a
+   * URL's length far below that and answers with a 400 whose body usually
+   * isn't even JSON, which is why that failure used to show up as a bare
+   * "status 400" with no explanation. `formParams` is the same idea as
+   * `params` but sent as the request body instead, which has no such limit.
+   */
+  formParams?: Record<string, string | number | undefined>;
 };
 
 export async function metaGraphRequest<T = unknown>(
   path: string,
-  { method = "GET", accessToken, params = {}, body }: MetaRequestOptions = {}
+  { method = "GET", accessToken, params = {}, body, formParams }: MetaRequestOptions = {}
 ): Promise<T> {
   const url = new URL(`${GRAPH_BASE}${path}`);
   for (const [key, value] of Object.entries(params)) {
@@ -29,10 +42,24 @@ export async function metaGraphRequest<T = unknown>(
   }
   if (accessToken) url.searchParams.set("access_token", accessToken);
 
+  let requestBody: string | undefined;
+  let contentType: string | undefined;
+  if (body) {
+    requestBody = JSON.stringify(body);
+    contentType = "application/json";
+  } else if (formParams) {
+    const form = new URLSearchParams();
+    for (const [key, value] of Object.entries(formParams)) {
+      if (value !== undefined) form.set(key, String(value));
+    }
+    requestBody = form.toString();
+    contentType = "application/x-www-form-urlencoded";
+  }
+
   const res = await fetch(url.toString(), {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: contentType ? { "Content-Type": contentType } : undefined,
+    body: requestBody,
     cache: "no-store",
   });
 
