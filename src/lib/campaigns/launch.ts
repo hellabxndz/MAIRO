@@ -148,6 +148,7 @@ export type CreateMairoCampaignInput = {
 export type CampaignAdInput = {
   kind: CampaignAdKind;
   creativeRequestId?: string | null;
+  imageUrl?: string | null;
   videoUrl?: string | null;
   videoPosterUrl?: string | null;
   sourceAdId?: string | null;
@@ -800,6 +801,19 @@ async function adInputFor(
       ok: true,
       input: { creative: { aspectRatio: "SQUARE_1_1", ...words, imageData: poster }, metaVideoId: videoId },
     };
+  }
+
+  // IMAGE, their own upload: fetched and sent as it is, with their words.
+  if (ad.imageUrl) {
+    try {
+      const response = await fetch(ad.imageUrl, { signal: AbortSignal.timeout(30_000) });
+      if (!response.ok) throw new Error(String(response.status));
+      const type = response.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+      const imageData = `data:${type};base64,${Buffer.from(await response.arrayBuffer()).toString("base64")}`;
+      return { ok: true, input: { creative: { aspectRatio: "SQUARE_1_1", ...words, imageData } } };
+    } catch {
+      return { ok: false, blocker: "MAIRO couldn't read your picture for this ad. Upload it again in Create." };
+    }
   }
 
   // IMAGE: an approved picture, with the words the customer chose over the

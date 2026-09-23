@@ -14,6 +14,7 @@ import { resolveDestination } from "@/lib/campaigns/destination";
 import { reviewCampaign, type CampaignReview } from "@/lib/campaigns/review";
 import { writeAdCopyOptions } from "@/lib/ai/ad-copy";
 import type { CopyOption } from "@/lib/campaigns/ad-copy";
+import { isOwnUpload } from "@/lib/campaigns/media-rules";
 import { goalOption, PROMOTES_OPTIONS } from "@/lib/campaigns/objectives";
 import { listAccountAds, type AccountAd } from "@/lib/meta/existing-ads";
 
@@ -119,6 +120,9 @@ export async function writeAdCopyAction(
       goal: plan.goal ? goalOption(plan.goal).label : "Get results",
       destination: plan.destinationType ?? null,
       website: String(plan.website ?? "").slice(0, 300),
+      // Their own creative, so the suggested words fit it. Only this
+      // business's own uploads are passed along.
+      imageUrl: ownCreativeUrl(plan, scope.organizationId),
     });
     return { ok: true, options };
   } catch (error) {
@@ -172,7 +176,9 @@ export async function previewAdAction(
       );
     } else if (hasOwnWords(plan)) {
       const words = runningCopy(plan)[0];
-      const picture = plan.adChoice === "video" ? plan.video?.posterUrl : plan.attachedPreview;
+      const picture =
+        plan.adChoice === "video" ? plan.video?.posterUrl : plan.adChoice === "images" ? plan.images?.[0]?.url : plan.attachedPreview;
+      if (plan.adChoice === "images" && (plan.images?.length ?? 0) > 1) note = "This shows your first picture — each of the others runs as its own ad with the same words.";
       if (!words || !picture || !/^https:\/\//.test(picture)) return { ok: false, error: "Finish the ad and its words to see a preview." };
       if (plan.adChoice === "video") note = "The preview shows the video's thumbnail — the video itself plays in the real ad.";
       const spec = previewSpec(plan, connection.pageId, picture, words);
@@ -217,4 +223,18 @@ function previewSpec(plan: CampaignPlan, pageId: string, picture: string, words:
   delete story.link_data.image_hash;
   story.link_data.picture = picture;
   return { object_story_spec: story };
+}
+
+function ownCreativeUrl(plan: CampaignPlan, organizationId: string): string | null {
+  const url =
+    plan.adChoice === "images"
+      ? plan.images?.[0]?.url
+      : plan.adChoice === "video"
+        ? plan.video?.posterUrl
+        : plan.adChoice === "attached"
+          ? plan.attachedPreview
+          : null;
+  if (!url) return null;
+  if (plan.adChoice === "attached") return /^https:\/\//.test(url) ? url : null;
+  return isOwnUpload(url, organizationId) ? url : null;
 }

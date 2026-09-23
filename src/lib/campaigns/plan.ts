@@ -39,6 +39,8 @@ export type AdChoice =
   | "upload"
   /** A video the customer uploads. */
   | "video"
+  /** Pictures the customer uploads themselves — no credits, one ad each. */
+  | "images"
   /** An ad already in their Meta ad account. */
   | "EXISTING_AD"
   | "later"
@@ -90,6 +92,8 @@ export type CampaignPlan = {
   /** The Creative Studio asset attached as the ad's picture. */
   studioAssetId: string | null;
   video: PlanVideo | null;
+  /** The customer's own pictures, when adChoice is "images". */
+  images: PlanImage[];
   existingAd: { id: string; name: string; thumbnailUrl: string | null; headline: string | null; body: string | null } | null;
   /** The versions of the ad's words, as written and then edited. */
   copyOptions: CopyOption[];
@@ -100,6 +104,16 @@ export type CampaignPlan = {
   /** The versions in the test, by index into copyOptions. */
   testPicks: number[];
 };
+
+export type PlanImage = {
+  url: string;
+  name: string;
+  width: number;
+  height: number;
+};
+
+/** How many of their own pictures one campaign takes. */
+export const MAX_OWN_IMAGES = 5;
 
 export type PlanVideo = {
   url: string;
@@ -113,7 +127,7 @@ export type PlanVideo = {
 
 /** The ad choices that carry words the customer writes. */
 export function hasOwnWords(plan: Pick<CampaignPlan, "adChoice">): boolean {
-  return plan.adChoice === "attached" || plan.adChoice === "video";
+  return plan.adChoice === "attached" || plan.adChoice === "video" || plan.adChoice === "images";
 }
 
 /** The versions that will run, in order: the chosen one first. */
@@ -177,6 +191,7 @@ export function newPlan(input: {
     attachedPreview: null,
     studioAssetId: null,
     video: null,
+    images: [],
     existingAd: null,
     copyOptions: [],
     chosenCopy: 0,

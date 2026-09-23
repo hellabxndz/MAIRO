@@ -176,6 +176,19 @@ ok("\"later\" sends no ads and follows the approved creative", planAds({ ...with
 ok("the form carries the ads", planFormEntries(withPicture, { draftId: null, now }).some(([k]) => k === "ads"));
 ok("a post sends no ads field", !planFormEntries({ ...withPicture, adChoice: "FACEBOOK_POST", selectedPost: { id: "1_2", message: null, imageUrl: null, permalink: null, createdAt: null } }, { draftId: null, now }).some(([k]) => k === "ads"));
 
+console.log("\n— their own pictures: one ad each, no credits —");
+const pic = (n: number) => ({ url: `https://x.public.blob.vercel-storage.com/ad-media/o/image-${n}.jpg`, name: `p${n}.jpg`, width: 1080, height: 1080 });
+const ownPics: CampaignPlan = { ...withPicture, adChoice: "images", studioAssetId: null, images: [pic(1), pic(2), pic(3)] };
+const picAds = planAds(ownPics) as { kind: string; imageUrl: string; headline: string }[];
+ok("three pictures make three ads", picAds.length === 3 && picAds.every((a) => a.kind === "IMAGE") && new Set(picAds.map((a) => a.imageUrl)).size === 3);
+ok("each with the chosen words", picAds.every((a) => a.headline === "H2"));
+ok("several pictures don't multiply by word versions", (planAds({ ...ownPics, testing: true, testPicks: [0, 2] }) as unknown[]).length === 3);
+ok("one picture can still test its words", (planAds({ ...ownPics, images: [pic(1)], testing: true, testPicks: [0] }) as unknown[]).length === 2);
+ok("no pictures yet blocks", idsOf({ ...ownPics, images: [] }, facts).includes("no-pictures"));
+ok("more pictures than the budget tests well is only a note", idsOf({ ...ownPics, dailyAmount: 10 }, facts).includes("many-pictures") && reviewStatus(reviewFindings({ ...ownPics, dailyAmount: 10 }, facts, now)) !== "SETUP_REQUIRED");
+ok("own pictures don't trip \"no approved picture\"", !idsOf(ownPics, { ...facts, hasApprovedCreative: false }).includes("no-creative"));
+ok("own pictures aren't allowed on TikTok", idsOf({ ...ownPics, service: "tiktok" }, { ...facts, tiktokConnected: true }).includes("tiktok-video"));
+
 console.log("\n— a video ad is built the way Meta expects —");
 const videoAd = JSON.parse(String(metaAdCreativeParams({ ...creativeBase, videoId: "V1", destination: { type: "WEBSITE", url: "https://x.test" } }).object_story_spec));
 ok("video_data, not link_data", videoAd.video_data?.video_id === "V1" && videoAd.link_data === undefined);

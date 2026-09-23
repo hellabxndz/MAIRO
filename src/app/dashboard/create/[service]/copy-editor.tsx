@@ -36,6 +36,10 @@ export function CopyEditor({
   const ctas = ctaChoicesFor(plan.destinationType);
   const chosen = plan.copyOptions[plan.chosenCopy] ?? null;
   const cap = maxTestAds(plannedSpend(plan).perDayCents);
+  // Their own picture or video: the words are suggestions for their creative.
+  const own = plan.adChoice === "images" || plan.adChoice === "video";
+  // Several pictures already test against each other; the words stay one.
+  const multiPicture = plan.adChoice === "images" && (plan.images ?? []).length > 1;
 
   async function write() {
     setWriting(true);
@@ -82,7 +86,11 @@ export function CopyEditor({
   return (
     <SubQuestion
       title="The words on your ad"
-      sub={`${assistantName} wrote these from what you told it about the business — nothing invented. Pick one and change anything.`}
+      sub={
+        own
+          ? `${assistantName} suggested these from your ${plan.adChoice === "video" ? "video" : "pictures"} and what you told it about the business — they're your ads, so change anything.`
+          : `${assistantName} wrote these from what you told it about the business — nothing invented. Pick one and change anything.`
+      }
     >
       {writing && <p className="text-[13px] text-muted">Writing three versions…</p>}
       {error && <Note tone="warn">{error}</Note>}
@@ -164,7 +172,14 @@ export function CopyEditor({
         </div>
       )}
 
-      {plan.copyOptions.length > 1 && (
+      {multiPicture && (
+        <p className="mt-6 text-[12.5px] text-muted">
+          Each of your {(plan.images ?? []).length} pictures runs as its own ad with these words, and Meta shows more of whichever
+          people respond to.
+        </p>
+      )}
+
+      {plan.copyOptions.length > 1 && !multiPicture && (
         <div className="mt-8">
           <p className="text-[14px] text-white">Test more than one version?</p>
           <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">

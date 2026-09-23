@@ -952,6 +952,8 @@ model CampaignAd {
 
   /// IMAGE: the approved creative whose picture runs.
   creativeRequestId String?
+  /// IMAGE: a picture the customer uploaded themselves, instead.
+  imageUrl          String?
   /// VIDEO: where the upload lives, and a still for the thumbnail.
   videoUrl          String?
   videoPosterUrl    String?

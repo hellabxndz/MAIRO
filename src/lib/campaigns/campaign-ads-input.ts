@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import type { AdDestination } from "@/generated/prisma/enums";
-import { reviewCreative } from "@/lib/ai/review";
+import { reviewAdImage, reviewCreative } from "@/lib/ai/review";
 import { checkCopy, ctaLabel, fitCta, maxTestAds } from "@/lib/campaigns/ad-copy";
 import { isOwnUpload } from "@/lib/campaigns/media-rules";
 import type { CampaignAdInput } from "@/lib/campaigns/launch";
@@ -15,6 +15,8 @@ import type { CampaignAdInput } from "@/lib/campaigns/launch";
 const adSchema = z.object({
   kind: z.enum(["IMAGE", "VIDEO", "EXISTING_AD"]),
   studioAssetId: z.string().max(64).nullish(),
+  /** A picture the customer uploaded themselves. */
+  imageUrl: z.string().max(2000).nullish(),
   videoUrl: z.string().max(2000).nullish(),
   videoPosterUrl: z.string().max(2000).nullish(),
   sourceAdId: z.string().regex(/^\d{5,25}$/).nullish(),
@@ -24,7 +26,8 @@ const adSchema = z.object({
   cta: z.string().max(40).nullish(),
 });
 
-const adsSchema = z.array(adSchema).min(1).max(3);
+/** Up to five of their own pictures, or three versions of the words. */
+const adsSchema = z.array(adSchema).min(1).max(5);
 
 export type WizardAd = z.infer<typeof adSchema>;
 
@@ -46,11 +49,17 @@ export async function resolveCampaignAds(input: {
     return { ok: false, error: "The ad settings didn't come through. Go back to Your Advertisement and choose again." };
   }
 
-  if (parsed.length > maxTestAds(input.perDayCents)) {
+  // The budget cap is for testing versions of the words on one creative.
+  // Several different pictures are the customer's call — Meta favours the
+  // best of them — so they aren't capped by budget.
+  const ownPictures = new Set(parsed.filter((a) => a.imageUrl).map((a) => a.imageUrl)).size;
+  const wordVersions = parsed.length - Math.max(0, ownPictures - 1);
+  if (wordVersions > maxTestAds(input.perDayCents)) {
     return { ok: false, error: "That budget is too small to test this many versions fairly. Run fewer, or raise the budget." };
   }
 
   const ads: CampaignAdInput[] = [];
+  const reviewed = new Set<string>();
   for (const ad of parsed) {
     if (ad.kind === "EXISTING_AD" && !input.usesMeta) {
       return { ok: false, error: "Existing ads run on Meta only." };
@@ -74,7 +83,19 @@ export async function resolveCampaignAds(input: {
     const problem = checkCopy(words, input.destination).find((f) => f.level === "problem");
     if (problem) return { ok: false, error: problem.text };
 
-    if (ad.kind === "IMAGE") {
+    if (ad.kind === "IMAGE" && ad.imageUrl) {
+      // Their own picture: it must be this business's upload, and it gets the
+      // same picture safety review every other ad does. No credits involved.
+      if (!isOwnUpload(ad.imageUrl, input.organizationId)) {
+        return { ok: false, error: "That picture upload can't be used. Upload it again in Your Advertisement." };
+      }
+      if (!reviewed.has(ad.imageUrl)) {
+        const verdict = await reviewPicture(ad.imageUrl, input.businessName);
+        if (!verdict.ok) return { ok: false, error: verdict.error };
+        reviewed.add(ad.imageUrl);
+      }
+      ads.push({ kind: "IMAGE", imageUrl: ad.imageUrl, ...copyFields(words) });
+    } else if (ad.kind === "IMAGE") {
       const asset = ad.studioAssetId
         ? await db.creativeStudioAsset.findFirst({
             where: { id: ad.studioAssetId, organizationId: input.organizationId },
@@ -120,4 +141,27 @@ export async function resolveCampaignAds(input: {
 
 function copyFields(words: { headline: string; primaryText: string; cta: string }) {
   return { headline: words.headline || null, primaryText: words.primaryText, callToAction: words.cta === "NO_BUTTON" ? null : words.cta };
+}
+
+/** The same picture safety review every ad picture in MAIRO gets. */
+async function reviewPicture(url: string, businessName: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  let dataUrl: string;
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    if (!response.ok) throw new Error(String(response.status));
+    const type = response.headers.get("content-type")?.split(";")[0] || "image/jpeg";
+    dataUrl = `data:${type};base64,${Buffer.from(await response.arrayBuffer()).toString("base64")}`;
+  } catch {
+    return { ok: false, error: "MAIRO couldn't read one of your pictures to check it. Upload it again and try once more." };
+  }
+  try {
+    const review = await reviewAdImage({ imageDataUrl: dataUrl, brief: "The business's own ad picture, uploaded in MAIRO's campaign builder.", businessName });
+    if (review.verdict === "BLOCK") {
+      return { ok: false, error: review.reason || "One of your pictures didn't pass the safety check. Use a different one." };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("Picture safety review failed at launch:", error);
+    return { ok: false, error: "MAIRO couldn't check your pictures just now, and nothing runs unchecked. Try again in a moment." };
+  }
 }

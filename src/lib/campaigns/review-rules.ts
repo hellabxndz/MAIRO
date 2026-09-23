@@ -153,7 +153,12 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
   if (post && !plan.selectedPost) {
     add({ id: "no-post", severity: "blocking", area: "Advertisement", title: "Pick the post to promote", detail: "You chose to run an existing post but haven't picked which.", fix: "ad" });
   }
-  const ownVisual = plan.adChoice === "attached" || plan.adChoice === "video" || plan.adChoice === "EXISTING_AD";
+  const ownVisual =
+    plan.adChoice === "attached" || plan.adChoice === "video" || plan.adChoice === "EXISTING_AD" || plan.adChoice === "images";
+  const pictures = plan.adChoice === "images" ? (plan.images ?? []).length : 0;
+  if (plan.adChoice === "images" && pictures === 0) {
+    add({ id: "no-pictures", severity: "blocking", area: "Advertisement", title: "Add your pictures", detail: "You chose to use your own pictures but haven't added any yet.", fix: "ad" });
+  }
   if (plan.adChoice === "EXISTING_AD" && !plan.existingAd) {
     add({ id: "no-existing-ad", severity: "blocking", area: "Advertisement", title: "Pick the ad to run again", detail: "You chose to reuse one of your ads but haven't picked which.", fix: "ad" });
   }
@@ -192,7 +197,10 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
       }
     });
     const cap = maxTestAds(plannedSpend(plan, now).perDayCents);
-    if (plan.testing && words.length > cap) {
+    if (pictures > cap) {
+      add({ id: "many-pictures", severity: "recommendation", area: "Budget", title: "A lot of pictures for this budget", detail: `At this budget Meta may show some of your ${pictures} pictures only rarely while it finds the best one. That's fine — or pick your strongest ${cap}.`, fix: "ad" });
+    }
+    if (plan.testing && pictures <= 1 && words.length > cap) {
       add({ id: "test-too-big", severity: "blocking", area: "Budget", title: "Too many versions for this budget", detail: `At this budget MAIRO can fairly test ${cap} version${cap === 1 ? "" : "s"} — each needs about $5 a day. Run fewer, or raise the budget.`, fix: "ad" });
     }
   }

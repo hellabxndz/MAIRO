@@ -1,6 +1,6 @@
 import type { AdGoal } from "@/generated/prisma/enums";
 import { AGE_CEILING, AGE_FLOOR } from "@/lib/campaigns/audience";
-import { hasOwnWords, plannedSpend, runningCopy, type CampaignPlan } from "@/lib/campaigns/plan";
+import { hasOwnWords, MAX_OWN_IMAGES, plannedSpend, runningCopy, type CampaignPlan } from "@/lib/campaigns/plan";
 
 /** The campaign's own ads, as createCampaignAction's `ads` field. Null follows the approved creative. */
 export function planAds(plan: CampaignPlan): object[] | null {
@@ -15,8 +15,17 @@ export function planAds(plan: CampaignPlan): object[] | null {
         ? { kind: "IMAGE", studioAssetId: plan.studioAssetId }
         : null;
   const words = runningCopy(plan);
+  const text = (w: (typeof words)[number]) => ({ headline: w.headline, primaryText: w.primaryText, cta: w.cta });
+  // Their own pictures: one ad per picture, each with the chosen words. With a
+  // single picture, testing words works as it does for any other ad.
+  if (plan.adChoice === "images") {
+    const images = (plan.images ?? []).slice(0, MAX_OWN_IMAGES);
+    if (images.length === 0 || words.length === 0) return null;
+    if (images.length === 1) return words.map((w) => ({ kind: "IMAGE", imageUrl: images[0].url, ...text(w) }));
+    return images.map((img) => ({ kind: "IMAGE", imageUrl: img.url, ...text(words[0]) }));
+  }
   if (!visual || words.length === 0) return null;
-  return words.map((w) => ({ ...visual, headline: w.headline, primaryText: w.primaryText, cta: w.cta }));
+  return words.map((w) => ({ ...visual, ...text(w) }));
 }
 
 // The wizard's plan as the form createCampaignAction already accepts, so the

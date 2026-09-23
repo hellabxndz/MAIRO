@@ -12,6 +12,7 @@ import type { CreditCosts } from "@/lib/creative-studio/pricing";
 import { CopyEditor } from "./copy-editor";
 import { ExistingAdPicker } from "./existing-ad-picker";
 import { PostPicker } from "./post-picker";
+import { ImageUpload } from "./image-upload";
 import { VideoUpload } from "./video-upload";
 import { Choice, Note, Question } from "./wizard-parts";
 
@@ -123,6 +124,15 @@ export function StepAd({
           </p>
           <BackLink onClick={back} />
         </div>
+      ) : plan.adChoice === "images" ? (
+        <div className="space-y-4">
+          <ImageUpload
+            organizationId={studio.organizationId}
+            images={plan.images ?? []}
+            onChange={(images) => update({ images })}
+          />
+          <BackLink onClick={back} />
+        </div>
       ) : plan.adChoice === "video" ? (
         <div className="space-y-4">
           <VideoUpload
@@ -207,8 +217,9 @@ export function StepAd({
       ) : menu === "upload" ? (
         <div className="space-y-4">
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {studio.configured && (
-              <Choice selected={false} onClick={() => update({ adChoice: "upload", ...RESET_WORDS })} label="A picture" sub="JPG or PNG — Mairo sizes it for each placement" />
+            {studio.storageReady && (
+              <Choice selected={false} onClick={() => update({ adChoice: "images", images: [], ...RESET_WORDS })}
+                label="Pictures" sub="JPG or PNG, up to 5 — each runs as its own ad. No credits used." />
             )}
             {metaOnly && studio.storageReady && (
               <Choice selected={false} onClick={() => update({ adChoice: "video", video: null, ...RESET_WORDS })} label="A video" sub="MP4 or MOV, checked against Meta's rules before it uploads" />
@@ -239,9 +250,9 @@ export function StepAd({
             <Choice selected={false} onClick={() => update({ adChoice: "generate", ...RESET_WORDS })}
               label="Create an Ad With AI" sub="Let Mairo create a professional advertisement for your business" />
           )}
-          {(studio.configured || (metaOnly && studio.storageReady)) && (
+          {studio.storageReady && (
             <Choice selected={false} onClick={() => setMenu("upload")}
-              label="Upload My Own Advertisement" sub="A picture or a video you already have" />
+              label="Upload My Own Advertisement" sub="Pictures or a video you already have — MAIRO suggests the words" />
           )}
           {usesMeta && (
             <Choice selected={false} onClick={() => setMenu("posts")}
@@ -253,7 +264,7 @@ export function StepAd({
         </div>
       )}
 
-      {hasOwnWords(plan) && (plan.adChoice !== "video" || plan.video) && (
+      {hasOwnWords(plan) && (plan.adChoice !== "video" || plan.video) && (plan.adChoice !== "images" || (plan.images ?? []).length > 0) && (
         <CopyEditor plan={plan} update={update} assistantName={studio.assistantName} />
       )}
 

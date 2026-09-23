@@ -518,6 +518,7 @@ function blockedBecause(
       if (plan.adChoice === "EXISTING_AD" && !plan.existingAd) return "Pick which ad to run, or choose another way.";
       if (plan.adChoice === "generate" || plan.adChoice === "upload") return "Finish the ad and attach it, or choose another way.";
       if (plan.adChoice === "video" && !plan.video) return "Upload the video, or choose another way.";
+      if (plan.adChoice === "images" && (plan.images ?? []).length === 0) return "Add at least one picture, or choose another way.";
       if (hasOwnWords(plan)) {
         const words = runningCopy(plan);
         if (words.length === 0) return "Choose the words for your ad.";
@@ -556,6 +557,7 @@ const AD_LABEL: Record<CampaignPlan["adChoice"], string> = {
   upload: "Being uploaded",
   attached: "A picture, ready",
   video: "Your video",
+  images: "Your own pictures",
   EXISTING_AD: "An ad you've run before",
   later: "MAIRO writes it after the campaign is built",
   FACEBOOK_POST: "An existing Facebook post",
@@ -601,7 +603,7 @@ function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mod
     ...(hasOwnWords(plan) && runningCopy(plan).length > 0
       ? [["Words", runningCopy(plan).length > 1 ? `${runningCopy(plan).length} versions, tested against each other` : `“${runningCopy(plan)[0].headline || runningCopy(plan)[0].primaryText.slice(0, 50)}”`] as [string, string]]
       : []),
-    ["Ad", plan.adChoice === "EXISTING_AD" && plan.existingAd ? `${AD_LABEL.EXISTING_AD} — ${plan.existingAd.name}` : plan.selectedPost ? `${AD_LABEL[plan.adChoice]}${plan.selectedPost.message ? ` — “${plan.selectedPost.message.slice(0, 60)}”` : ""}` : AD_LABEL[plan.adChoice]],
+    ["Ad", plan.adChoice === "images" ? `${(plan.images ?? []).length} of your own picture${(plan.images ?? []).length === 1 ? "" : "s"}, each its own ad` : plan.adChoice === "EXISTING_AD" && plan.existingAd ? `${AD_LABEL.EXISTING_AD} — ${plan.existingAd.name}` : plan.selectedPost ? `${AD_LABEL[plan.adChoice]}${plan.selectedPost.message ? ` — “${plan.selectedPost.message.slice(0, 60)}”` : ""}` : AD_LABEL[plan.adChoice]],
   ];
 
   return (

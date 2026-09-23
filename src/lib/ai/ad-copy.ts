@@ -22,6 +22,8 @@ export type CopyFacts = {
   goal: string;
   destination: AdDestination | null;
   website: string;
+  /** A public address of the ad's picture (or a video still), to write words that fit it. */
+  imageUrl?: string | null;
 };
 
 const SYSTEM = [
@@ -68,11 +70,23 @@ export async function writeAdCopyOptions(facts: CopyFacts): Promise<CopyOption[]
     .filter(Boolean)
     .join("\n");
 
+  const ask = `${factText}\n\nButton options: ${ctas.map((c) => `${c.value} (${c.label})`).join(", ")}. Pick the one that fits each version.`;
+  const image = facts.imageUrl && /^https:\/\//.test(facts.imageUrl) ? new URL(facts.imageUrl) : null;
   const { object } = await generateObject({
     model: agentModel,
     schema,
     system: SYSTEM,
-    prompt: `${factText}\n\nButton options: ${ctas.map((c) => `${c.value} (${c.label})`).join(", ")}. Pick the one that fits each version.`,
+    messages: [
+      {
+        role: "user",
+        content: image
+          ? [
+              { type: "text" as const, text: `${ask}\n\nThe attached picture is the business's own ad creative. Write words that fit what it shows — but state only facts given above, never ones read off the picture (no prices, offers or claims from it).` },
+              { type: "image" as const, image },
+            ]
+          : [{ type: "text" as const, text: ask }],
+      },
+    ],
   });
 
   return object.versions.slice(0, 3).map((v) => {

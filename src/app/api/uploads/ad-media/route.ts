@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { storageConfigured } from "@/lib/storage/blob";
-import { MAX_VIDEO_BYTES, VIDEO_TYPES } from "@/lib/campaigns/media-rules";
+import { IMAGE_TYPES, MAX_VIDEO_BYTES, VIDEO_TYPES } from "@/lib/campaigns/media-rules";
 
 // Hands the browser a short-lived token to upload an ad video (and its
-// thumbnail) straight to storage. A video is far too large to pass through a
+// thumbnail), or the customer's own ad pictures, straight to storage. A video is far too large to pass through a
 // server action, so the bytes go browser → storage, and this route only
 // decides whether that's allowed: signed in, the right kind of file, under the
 // size limit, and only into this business's own folder.
@@ -35,7 +35,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new Error("That upload location isn't allowed.");
         }
         return {
-          allowedContentTypes: [...VIDEO_TYPES, "image/jpeg"],
+          allowedContentTypes: [...VIDEO_TYPES, ...IMAGE_TYPES],
           maximumSizeInBytes: MAX_VIDEO_BYTES,
           addRandomSuffix: true,
           validUntil: Date.now() + 30 * 60 * 1000,
