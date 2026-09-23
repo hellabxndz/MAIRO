@@ -192,6 +192,7 @@ export async function maybeGoLive(
       externalCampaignId: child.externalCampaignId,
       externalAdGroupId: child.externalAdGroupId,
       externalAdId: child.externalAdId,
+      extraExternalAdIds: child.extraExternalAdIds,
     });
 
     if (!result.ok) {

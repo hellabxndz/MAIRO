@@ -3,6 +3,7 @@ import type {
   AdDestination,
   AdGoal,
   AdPlatform,
+  CampaignAdKind,
   CampaignAdSource,
   LeadFormDelivery,
   MessageChannel,
@@ -24,6 +25,10 @@ import {
   type Audience,
 } from "@/lib/campaigns/audience";
 import { metaPlacementTargeting } from "@/lib/campaigns/placements";
+import { fetchImageBytes } from "@/lib/storage/blob";
+import { uploadAdVideo, waitForVideo } from "@/lib/meta/videos";
+import { creativeOfAccountAd } from "@/lib/meta/existing-ads";
+import type { CreateAdInput } from "@/lib/ad-platforms/types";
 
 // Turning one Mairo campaign into real campaigns on real networks.
 //
@@ -133,6 +138,23 @@ export type CreateMairoCampaignInput = {
   metaAppId?: string | null;
   /** What the customer said they're advertising. */
   promotes?: string | null;
+  /**
+   * The ads this campaign runs, main one first. Omitted or empty follows the
+   * business-wide approved creative, as every campaign before this did.
+   */
+  ads?: CampaignAdInput[];
+};
+
+export type CampaignAdInput = {
+  kind: CampaignAdKind;
+  creativeRequestId?: string | null;
+  videoUrl?: string | null;
+  videoPosterUrl?: string | null;
+  sourceAdId?: string | null;
+  sourceAdName?: string | null;
+  headline?: string | null;
+  primaryText?: string | null;
+  callToAction?: string | null;
 };
 
 /**
@@ -187,6 +209,9 @@ export async function createMairoCampaign(
       leadFormDelivery: input.destination?.delivery ?? "HOSTED_PAGE",
       ...(input.specialAdCategory ? restrictForSpecialCategory(audience) : audience),
       status: "DRAFT",
+      ads: {
+        create: (input.ads ?? []).map((ad, position) => ({ ...ad, position })),
+      },
       platformCampaigns: {
         create: input.allocations.map((a) => ({
           platform: a.platform,
@@ -546,6 +571,28 @@ async function buildDeliverable(input: {
       : { facebookPostId: null, instagramMediaId: null };
   const boosting = Boolean(post.facebookPostId || post.instagramMediaId);
 
+  // The campaign's own ads, when the customer chose them in Create.
+  if (!boosting) {
+    const own = await buildCampaignAds({
+      organizationId: input.organizationId,
+      platform: input.platform,
+      adapter: input.adapter,
+      mairoCampaignId: input.mairoCampaignId,
+      adGroupId,
+      name: input.name,
+      destination,
+    });
+    if (own) {
+      await db.platformCampaign.update({
+        where: { id: input.platformCampaignId },
+        data: own.ok
+          ? { externalAdId: own.mainAdId, extraExternalAdIds: own.extraAdIds, lastError: own.note }
+          : { lastError: own.blocker },
+      });
+      return own.ok ? { stage: "ready", blocker: null } : { stage: "ad_set", blocker: own.blocker };
+    }
+  }
+
   // The bar for a generated ad: somebody approved a picture. A post that is
   // already published has cleared a higher one — the business wrote it, posted
   // it under its own name, and picked it out of its own feed — so requiring an
@@ -592,6 +639,166 @@ async function buildDeliverable(input: {
   });
 
   return { stage: "ready", blocker: null };
+}
+
+type OwnAdsOutcome =
+  | { ok: true; mainAdId: string; extraAdIds: string[]; note: string | null }
+  | { ok: false; blocker: string };
+
+/**
+ * Builds the ads the customer chose for this campaign, main one first.
+ *
+ * Null when the campaign has none of its own (it then follows the approved
+ * creative, as before), or when none of its ads can run on this network — a
+ * video or an existing Meta ad has no TikTok form, so TikTok's half of a
+ * two-network campaign falls back the same way.
+ *
+ * The main ad has to succeed; a test version that fails is reported, not
+ * fatal, because the campaign still has an ad to run.
+ */
+async function buildCampaignAds(input: {
+  organizationId: string;
+  platform: AdPlatform;
+  adapter: NonNullable<ReturnType<typeof getAdapter>>;
+  mairoCampaignId: string;
+  adGroupId: string;
+  name: string;
+  destination: Destination;
+}): Promise<OwnAdsOutcome | null> {
+  const all = await db.campaignAd.findMany({
+    where: { mairoCampaignId: input.mairoCampaignId },
+    orderBy: { position: "asc" },
+  });
+  // TikTok runs the first picture only: testing and video are Meta features here.
+  const ads = input.platform === "META" ? all : all.filter((a) => a.kind === "IMAGE").slice(0, 1);
+  if (ads.length === 0) return null;
+
+  const creds = input.platform === "META" ? await loadCredentials(input.organizationId, "META") : null;
+  const ids: string[] = [];
+  const failures: string[] = [];
+
+  for (const [index, ad] of ads.entries()) {
+    const name = index === 0 ? input.name : `${input.name} — version ${index + 1}`;
+    const built = await adInputFor(input.organizationId, ad, creds);
+    if (!built.ok) {
+      if (index === 0) return { ok: false, blocker: built.blocker };
+      failures.push(built.blocker);
+      continue;
+    }
+    const created = await input.adapter.createAd({
+      organizationId: input.organizationId,
+      externalAdGroupId: input.adGroupId,
+      name,
+      destination: input.destination,
+      ...built.input,
+    });
+    if (!created.ok) {
+      if (index === 0) return { ok: false, blocker: created.error.message };
+      failures.push(created.error.message);
+      continue;
+    }
+    ids.push(created.data.externalId);
+  }
+
+  return {
+    ok: true,
+    mainAdId: ids[0],
+    extraAdIds: ids.slice(1),
+    note: failures.length
+      ? `${failures.length} of ${ads.length} ad versions couldn't be built, so the test runs with fewer: ${failures[0]}`
+      : null,
+  };
+}
+
+type CampaignAdRow = Awaited<ReturnType<typeof db.campaignAd.findMany>>[number];
+
+async function adInputFor(
+  organizationId: string,
+  ad: CampaignAdRow,
+  creds: Awaited<ReturnType<typeof loadCredentials>>
+): Promise<
+  | { ok: true; input: Pick<CreateAdInput, "creative" | "metaVideoId" | "reuseCreativeId"> }
+  | { ok: false; blocker: string }
+> {
+  const words = { headline: ad.headline, primaryText: ad.primaryText, cta: ad.callToAction };
+
+  if (ad.kind === "EXISTING_AD") {
+    if (!creds || !ad.sourceAdId) return { ok: false, blocker: "Connect Meta to run an existing ad." };
+    const creative = await creativeOfAccountAd(creds.externalAccountId, creds.accessToken, ad.sourceAdId);
+    if (!creative.ok) return { ok: false, blocker: creative.error };
+    return {
+      ok: true,
+      input: { creative: { aspectRatio: "SQUARE_1_1" }, reuseCreativeId: creative.data },
+    };
+  }
+
+  if (ad.kind === "VIDEO") {
+    if (!creds || !ad.videoUrl || !ad.videoPosterUrl) {
+      return { ok: false, blocker: "The video for this ad is missing. Upload it again in Create." };
+    }
+    let videoId = ad.metaVideoId;
+    try {
+      if (!videoId) {
+        videoId = await uploadAdVideo(creds.externalAccountId, creds.accessToken, ad.videoUrl, `mairo-${ad.id}`);
+        // Saved at once, so a retry reuses this upload rather than making another.
+        await db.campaignAd.update({ where: { id: ad.id }, data: { metaVideoId: videoId } });
+      }
+      const state = await waitForVideo(videoId, creds.accessToken);
+      if (state === "processing") {
+        return {
+          ok: false,
+          blocker: "Meta is still processing your video. MAIRO finishes the ad by itself as soon as it's ready — usually within a few minutes.",
+        };
+      }
+      if (state === "error") {
+        await db.campaignAd.update({ where: { id: ad.id }, data: { metaVideoId: null } });
+        return { ok: false, blocker: "Meta couldn't process that video. Try exporting it again as an MP4 and uploading it." };
+      }
+    } catch (error) {
+      console.error("Meta video upload failed:", error);
+      return { ok: false, blocker: "MAIRO couldn't send your video to Meta. It will try again shortly." };
+    }
+    let poster: string;
+    try {
+      poster = `data:image/jpeg;base64,${(await fetchImageBytes(ad.videoPosterUrl)).toString("base64")}`;
+    } catch {
+      return { ok: false, blocker: "MAIRO couldn't read your video's thumbnail. Upload the video again in Create." };
+    }
+    return {
+      ok: true,
+      input: { creative: { aspectRatio: "SQUARE_1_1", ...words, imageData: poster }, metaVideoId: videoId },
+    };
+  }
+
+  // IMAGE: an approved picture, with the words the customer chose over the
+  // ones written when the picture was approved.
+  const request = ad.creativeRequestId
+    ? await db.creativeRequest.findFirst({
+        where: {
+          id: ad.creativeRequestId,
+          organizationId,
+          status: { in: ["APPROVED", "DELIVERED"] },
+        },
+        include: { images: { where: { isFinal: true }, orderBy: { version: "desc" }, take: 1 } },
+      })
+    : null;
+  const image = request?.images[0];
+  if (!request || !image) {
+    return { ok: false, blocker: "The picture for this ad isn't approved yet, so the ad hasn't been built." };
+  }
+  const parsed = parseAdCopy(request.aiConcept);
+  return {
+    ok: true,
+    input: {
+      creative: {
+        aspectRatio: "SQUARE_1_1",
+        headline: words.headline ?? parsed.headline,
+        primaryText: words.primaryText ?? parsed.primaryText,
+        cta: words.cta ?? parsed.callToAction,
+        imageData: image.imageData,
+      },
+    },
+  };
 }
 
 /**

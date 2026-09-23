@@ -9,6 +9,7 @@ import type { PagePost } from "@/lib/campaigns/sales-source";
 import type { Promotes } from "@/lib/campaigns/objectives";
 import { AGE_CEILING, AGE_FLOOR } from "@/lib/campaigns/audience";
 import { instantFromLocal } from "@/lib/campaigns/schedule";
+import type { CopyOption } from "@/lib/campaigns/ad-copy";
 
 // Everything the Create wizard knows about the campaign being planned, in one
 // serializable shape: it is what the screens edit, what a draft saves, what the
@@ -36,6 +37,10 @@ export type AdChoice =
   | "generate"
   | "attached"
   | "upload"
+  /** A video the customer uploads. */
+  | "video"
+  /** An ad already in their Meta ad account. */
+  | "EXISTING_AD"
   | "later"
   | "FACEBOOK_POST"
   | "INSTAGRAM_POST";
@@ -82,7 +87,46 @@ export type CampaignPlan = {
   adChoice: AdChoice;
   selectedPost: PagePost | null;
   attachedPreview: string | null;
+  /** The Creative Studio asset attached as the ad's picture. */
+  studioAssetId: string | null;
+  video: PlanVideo | null;
+  existingAd: { id: string; name: string; thumbnailUrl: string | null; headline: string | null; body: string | null } | null;
+  /** The versions of the ad's words, as written and then edited. */
+  copyOptions: CopyOption[];
+  /** Which version runs. */
+  chosenCopy: number;
+  /** Run several versions as separate ads and let Meta favour the winner. */
+  testing: boolean;
+  /** The versions in the test, by index into copyOptions. */
+  testPicks: number[];
 };
+
+export type PlanVideo = {
+  url: string;
+  posterUrl: string;
+  name: string;
+  width: number;
+  height: number;
+  durationSec: number;
+  bytes: number;
+};
+
+/** The ad choices that carry words the customer writes. */
+export function hasOwnWords(plan: Pick<CampaignPlan, "adChoice">): boolean {
+  return plan.adChoice === "attached" || plan.adChoice === "video";
+}
+
+/** The versions that will run, in order: the chosen one first. */
+export function runningCopy(plan: CampaignPlan): CopyOption[] {
+  const chosen = plan.copyOptions[plan.chosenCopy];
+  if (!chosen) return [];
+  if (!plan.testing) return [chosen];
+  const others = plan.testPicks
+    .filter((i) => i !== plan.chosenCopy)
+    .map((i) => plan.copyOptions[i])
+    .filter((c): c is CopyOption => Boolean(c));
+  return [chosen, ...others];
+}
 
 export function newPlan(input: {
   service: CampaignPlan["service"];
@@ -131,6 +175,13 @@ export function newPlan(input: {
     adChoice: "none",
     selectedPost: null,
     attachedPreview: null,
+    studioAssetId: null,
+    video: null,
+    existingAd: null,
+    copyOptions: [],
+    chosenCopy: 0,
+    testing: false,
+    testPicks: [],
   };
 }
 

@@ -12,7 +12,8 @@ import { ViewToggle } from "@/components/mairo/app-shell";
 import { inputClass } from "@/components/ui";
 import { destinationsFor, goalOption, PROMOTES_OPTIONS, recommendedGoal } from "@/lib/campaigns/objectives";
 import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
-import { dollars, plannedSpend, WIZARD_STEPS, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
+import { dollars, hasOwnWords, plannedSpend, runningCopy, WIZARD_STEPS, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
+import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { campaignName, planFormEntries } from "@/lib/campaigns/plan-form";
 import type { CampaignReview } from "@/lib/campaigns/review";
 import type { ReviewStep } from "@/lib/campaigns/review-rules";
@@ -442,11 +443,21 @@ function blockedBecause(
       if (plan.startOnDate && !plan.startLocal) return "Pick a start date, or start as soon as it's approved.";
       if ((plan.endOnDate || plan.budgetType === "LIFETIME") && !plan.endLocal) return "Pick an end date.";
       return null;
-    case "ad":
+    case "ad": {
       if (plan.adChoice === "none") return "Choose how to make the ad.";
       if ((plan.adChoice === "FACEBOOK_POST" || plan.adChoice === "INSTAGRAM_POST") && !plan.selectedPost) return "Pick a post, or choose another way.";
+      if (plan.adChoice === "EXISTING_AD" && !plan.existingAd) return "Pick which ad to run, or choose another way.";
       if (plan.adChoice === "generate" || plan.adChoice === "upload") return "Finish the ad and attach it, or choose another way.";
+      if (plan.adChoice === "video" && !plan.video) return "Upload the video, or choose another way.";
+      if (hasOwnWords(plan)) {
+        const words = runningCopy(plan);
+        if (words.length === 0) return "Choose the words for your ad.";
+        if (words.some((w) => checkCopy(w, plan.destinationType).some((f) => f.level === "problem"))) {
+          return "Fix the ad's words first.";
+        }
+      }
       return null;
+    }
     case "review":
       if (ctx.checking || !ctx.review || ctx.reviewStale) return "Waiting for the review.";
       if (ctx.review.status === "SETUP_REQUIRED") return "Fix what the review found first.";
@@ -474,7 +485,9 @@ const AD_LABEL: Record<CampaignPlan["adChoice"], string> = {
   none: "Not chosen yet",
   generate: "Being made with AI",
   upload: "Being uploaded",
-  attached: "Ready",
+  attached: "A picture, ready",
+  video: "Your video",
+  EXISTING_AD: "An ad you've run before",
   later: "MAIRO writes it after the campaign is built",
   FACEBOOK_POST: "An existing Facebook post",
   INSTAGRAM_POST: "An existing Instagram post",
@@ -516,7 +529,10 @@ function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mod
     ["Budget", `${budget}${plan.service === "multi" ? ` · Meta ${plan.metaPercent}% / TikTok ${100 - plan.metaPercent}%` : ""}`],
     ["When", when],
     ["Planned spend", spend.maxCents !== null ? `Up to ${dollars(spend.maxCents)}` : `About ${dollars(spend.per30DaysCents)} per 30 days`],
-    ["Ad", plan.selectedPost ? `${AD_LABEL[plan.adChoice]}${plan.selectedPost.message ? ` — “${plan.selectedPost.message.slice(0, 60)}”` : ""}` : AD_LABEL[plan.adChoice]],
+    ...(hasOwnWords(plan) && runningCopy(plan).length > 0
+      ? [["Words", runningCopy(plan).length > 1 ? `${runningCopy(plan).length} versions, tested against each other` : `“${runningCopy(plan)[0].headline || runningCopy(plan)[0].primaryText.slice(0, 50)}”`] as [string, string]]
+      : []),
+    ["Ad", plan.adChoice === "EXISTING_AD" && plan.existingAd ? `${AD_LABEL.EXISTING_AD} — ${plan.existingAd.name}` : plan.selectedPost ? `${AD_LABEL[plan.adChoice]}${plan.selectedPost.message ? ` — “${plan.selectedPost.message.slice(0, 60)}”` : ""}` : AD_LABEL[plan.adChoice]],
   ];
 
   return (

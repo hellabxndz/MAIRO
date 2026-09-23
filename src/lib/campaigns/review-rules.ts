@@ -3,6 +3,8 @@ import type { CampaignPlan } from "@/lib/campaigns/plan";
 import { LOW_DAILY_CENTS, MIN_DAILY_CENTS, dollars, plannedSpend } from "@/lib/campaigns/plan";
 import { goalOption, supportsDestination } from "@/lib/campaigns/objectives";
 import type { LandingProbe } from "@/lib/campaigns/landing-probe";
+import { checkCopy, maxTestAds, unsupportedNumbers } from "@/lib/campaigns/ad-copy";
+import { hasOwnWords, runningCopy } from "@/lib/campaigns/plan";
 
 // The checks run before a campaign is built. Each one is a rule MAIRO can
 // actually verify from the plan and the account, not a score. Blocking issues
@@ -150,7 +152,50 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
   if (post && !plan.selectedPost) {
     add({ id: "no-post", severity: "blocking", area: "Advertisement", title: "Pick the post to promote", detail: "You chose to run an existing post but haven't picked which.", fix: "ad" });
   }
-  if (!post && plan.adChoice !== "attached" && !facts.hasApprovedCreative) {
+  const ownVisual = plan.adChoice === "attached" || plan.adChoice === "video" || plan.adChoice === "EXISTING_AD";
+  if (plan.adChoice === "EXISTING_AD" && !plan.existingAd) {
+    add({ id: "no-existing-ad", severity: "blocking", area: "Advertisement", title: "Pick the ad to run again", detail: "You chose to reuse one of your ads but haven't picked which.", fix: "ad" });
+  }
+  if (plan.adChoice === "EXISTING_AD" && plan.existingAd) {
+    add({ id: "existing-ad-as-is", severity: "recommendation", area: "Advertisement", title: "Your existing ad runs exactly as it was", detail: "Its picture, words and button — including where it sends people — stay as they were. Check that matches the destination you chose here.", fix: "ad" });
+  }
+  if ((plan.adChoice === "video" && !plan.video) || plan.adChoice === "generate" || plan.adChoice === "upload") {
+    add({ id: "ad-unfinished", severity: "blocking", area: "Advertisement", title: "Finish your advertisement", detail: "The ad was started but not finished. Finish it, or pick another way to make it.", fix: "ad" });
+  }
+  if (plan.adChoice === "video" && plan.video) {
+    add({ id: "video-processing", severity: "recommendation", area: "Advertisement", title: "Meta processes videos before they run", detail: "It usually takes a few minutes. If it isn't ready when the campaign is built, MAIRO finishes the ad by itself once it is.", fix: null });
+  }
+  if (hasOwnWords(plan)) {
+    const words = runningCopy(plan);
+    if (words.length === 0) {
+      add({ id: "no-copy", severity: "blocking", area: "Advertisement", title: "Choose the words for your ad", detail: "Pick one of the versions MAIRO wrote, or write your own.", fix: "ad" });
+    }
+    const facts_ = [plan.businessName, plan.offering, plan.targetAudience, plan.differentiator, plan.promotesDetail, plan.website].join(" ");
+    const seen = new Set<string>();
+    words.forEach((w, i) => {
+      for (const f of checkCopy(w, plan.destinationType)) {
+        if (seen.has(f.text)) continue;
+        seen.add(f.text);
+        add({
+          id: `copy-${seen.size}`,
+          severity: f.level === "problem" ? "blocking" : "recommendation",
+          area: "Advertisement",
+          title: f.level === "problem" ? `Version ${i + 1}'s words need a change` : "A note on the ad's words",
+          detail: f.text,
+          fix: "ad",
+        });
+      }
+      const numbers = unsupportedNumbers(`${w.headline} ${w.primaryText}`, facts_);
+      if (numbers.length) {
+        add({ id: `numbers-${i}`, severity: "recommendation", area: "Advertisement", title: "Check the numbers in your ad are true", detail: `The ad mentions ${numbers.slice(0, 3).join(", ")}, which isn't in what you told MAIRO about the business. Prices and offers in ads have to be real.`, fix: "ad" });
+      }
+    });
+    const cap = maxTestAds(plannedSpend(plan, now).perDayCents);
+    if (plan.testing && words.length > cap) {
+      add({ id: "test-too-big", severity: "blocking", area: "Budget", title: "Too many versions for this budget", detail: `At this budget MAIRO can fairly test ${cap} version${cap === 1 ? "" : "s"} — each needs about $5 a day. Run fewer, or raise the budget.`, fix: "ad" });
+    }
+  }
+  if (!post && !ownVisual && !facts.hasApprovedCreative) {
     add({ id: "no-creative", severity: "recommendation", area: "Advertisement", title: "There's no approved picture yet", detail: "The campaign and audience will be built, but the ad itself waits until a picture is approved — make one now with AI or upload your own.", fix: "ad" });
   }
   if (plan.goal === "ENGAGEMENT" && plan.destinationType === "POST_ENGAGEMENT" && !post) {

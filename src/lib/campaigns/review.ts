@@ -6,6 +6,9 @@ import { normalizeUrl } from "@/lib/campaigns/destination";
 import { probeLandingPage } from "@/lib/campaigns/landing-probe";
 import type { CampaignPlan } from "@/lib/campaigns/plan";
 import { reviewFindings, reviewStatus, type Finding, type ReviewFacts, type ReviewStatus } from "@/lib/campaigns/review-rules";
+import { hasOwnWords, runningCopy } from "@/lib/campaigns/plan";
+import { ctaLabel } from "@/lib/campaigns/ad-copy";
+import { reviewCreative } from "@/lib/ai/review";
 
 export type CampaignReview = {
   status: ReviewStatus;
@@ -44,5 +47,46 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
   };
 
   const findings = reviewFindings(plan, facts);
+  const safety = await copySafety(plan);
+  if (safety) findings.push(safety);
   return { status: reviewStatus(findings), findings, checkedAt: new Date().toISOString() };
+}
+
+/**
+ * The same AI safety review the words get at launch, run early so a problem
+ * shows here with a way to fix it rather than as a refusal on the last screen.
+ */
+async function copySafety(plan: CampaignPlan): Promise<Finding | null> {
+  if (!hasOwnWords(plan)) return null;
+  const words = runningCopy(plan).filter((w) => w.primaryText.trim());
+  if (words.length === 0) return null;
+  try {
+    const review = await reviewCreative({
+      type: "COPY",
+      brief: "Ad copy chosen and edited by the business in MAIRO's campaign builder.",
+      businessName: plan.businessName,
+      concept: words
+        .map((w, i) => `Version ${i + 1}\n**Headline:** ${w.headline}\n**Primary text:** ${w.primaryText}\n**Call to action:** ${ctaLabel(w.cta)}`)
+        .join("\n\n"),
+    });
+    if (review.verdict !== "BLOCK") return null;
+    return {
+      id: "copy-safety",
+      severity: "blocking",
+      area: "Advertisement",
+      title: "The ad's words won't pass Meta's rules",
+      detail: review.reason || "Something in the text would likely be rejected. Change it and check again.",
+      fix: "ad",
+    };
+  } catch (error) {
+    console.error("Copy safety review failed during campaign review:", error);
+    return {
+      id: "copy-safety-unavailable",
+      severity: "recommendation",
+      area: "Advertisement",
+      title: "The ad's words couldn't be safety-checked just now",
+      detail: "MAIRO checks them again when you launch, and nothing runs unchecked.",
+      fix: null,
+    };
+  }
 }

@@ -216,6 +216,16 @@ export type CreateAdInput = {
     imageData?: string | null;
   };
   /**
+   * A video ad (Meta): the uploaded video's id, with imageData as its
+   * thumbnail.
+   */
+  metaVideoId?: string | null;
+  /**
+   * Run an existing Meta creative as it is — from an ad already in the
+   * account. Nothing is uploaded or written; the creative already has both.
+   */
+  reuseCreativeId?: string | null;
+  /**
    * What a click does. Networks build a different creative for each, so this
    * is required — an ad with nowhere to go is not an ad.
    */
@@ -391,6 +401,8 @@ export interface AdPlatformAdapter {
     externalCampaignId: string;
     externalAdGroupId?: string | null;
     externalAdId?: string | null;
+    /** Test versions in the same ad set, switched on with the main ad. */
+    extraExternalAdIds?: string[];
   }): Promise<PlatformResult<void>>;
 
   getCampaignPerformance(input: {

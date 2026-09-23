@@ -144,6 +144,8 @@ export default async function CreateServicePage({
         studio={{
           assistantName: assistantNameOf(organization.assistantName),
           configured: openAiImageConfigured() && storageConfigured(),
+          storageReady: storageConfigured(),
+          organizationId,
           creditBalance: balance,
           costs,
           mode,

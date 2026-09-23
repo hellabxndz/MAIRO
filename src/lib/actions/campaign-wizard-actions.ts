@@ -6,6 +6,10 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { isWizardStep, type CampaignPlan } from "@/lib/campaigns/plan";
 import { reviewCampaign, type CampaignReview } from "@/lib/campaigns/review";
+import { writeAdCopyOptions } from "@/lib/ai/ad-copy";
+import type { CopyOption } from "@/lib/campaigns/ad-copy";
+import { goalOption, PROMOTES_OPTIONS } from "@/lib/campaigns/objectives";
+import { listAccountAds, type AccountAd } from "@/lib/meta/existing-ads";
 
 // Saving an unfinished campaign, and checking a finished one before it's built.
 // Every query is scoped to the signed-in organization in its WHERE clause.
@@ -89,4 +93,38 @@ export async function reviewCampaignAction(
     console.error("Campaign review failed:", error);
     return { ok: false, error: "MAIRO couldn't finish the review. Try again in a moment." };
   }
+}
+
+/** Three versions of the ad's words, written from what the business told MAIRO. */
+export async function writeAdCopyAction(
+  plan: CampaignPlan
+): Promise<{ ok: true; options: CopyOption[] } | { ok: false; error: string }> {
+  const scope = await currentScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  if (!SERVICES.has(plan?.service)) return { ok: false, error: "That campaign can't be written for." };
+  const promotes = PROMOTES_OPTIONS.find((o) => o.value === plan.promotes)?.label ?? "";
+  try {
+    const options = await writeAdCopyOptions({
+      businessName: String(plan.businessName ?? "").slice(0, 200),
+      offering: String(plan.offering ?? "").slice(0, 1000),
+      targetAudience: String(plan.targetAudience ?? "").slice(0, 1000),
+      differentiator: String(plan.differentiator ?? "").slice(0, 1000),
+      advertising: [promotes, String(plan.promotesDetail ?? "").slice(0, 200)].filter(Boolean).join(" — "),
+      goal: plan.goal ? goalOption(plan.goal).label : "Get results",
+      destination: plan.destinationType ?? null,
+      website: String(plan.website ?? "").slice(0, 300),
+    });
+    return { ok: true, options };
+  } catch (error) {
+    console.error("Writing ad copy failed:", error);
+    return { ok: false, error: "MAIRO couldn't write the ad text just now. Try again, or write your own below." };
+  }
+}
+
+/** The ads already in the business's Meta ad account that can run again. */
+export async function loadAccountAdsAction(): Promise<{ ok: true; ads: AccountAd[] } | { ok: false; error: string }> {
+  const scope = await currentScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  const result = await listAccountAds(scope.organizationId);
+  return result.ok ? { ok: true, ads: result.data } : { ok: false, error: result.error };
 }

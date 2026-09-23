@@ -17,7 +17,8 @@ import {
   splitBudget,
   validateAllocation,
 } from "@/lib/budget/allocation";
-import { createMairoCampaign } from "@/lib/campaigns/launch";
+import { createMairoCampaign, type CampaignAdInput } from "@/lib/campaigns/launch";
+import { resolveCampaignAds } from "@/lib/campaigns/campaign-ads-input";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import {
   END_PROBLEM_MESSAGE,
@@ -260,7 +261,7 @@ export async function createCampaignAction(
 
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { subscriptionTier: true },
+    select: { subscriptionTier: true, name: true },
   });
   if (!organization) return { error: "Organization not found" };
 
@@ -392,6 +393,23 @@ export async function createCampaignAction(
     ...(parsed.data.differentiator ? { differentiator: parsed.data.differentiator } : {}),
     ...(parsed.data.targetAudience ? { targetAudience: parsed.data.targetAudience } : {}),
   };
+  // The campaign's own ads, when the Create wizard chose them. Checked before
+  // anything is claimed or built.
+  let ads: CampaignAdInput[] | undefined;
+  const rawAds = formData.get("ads");
+  if (typeof rawAds === "string" && rawAds.trim() && !boostPostId && !boostInstagramMediaId) {
+    const resolved = await resolveCampaignAds({
+      organizationId,
+      raw: rawAds,
+      destination: destinationType,
+      perDayCents: totalDailyBudgetCents,
+      businessName: organization.name,
+      usesMeta: platforms.includes("META"),
+    });
+    if (!resolved.ok) return { error: resolved.error };
+    ads = resolved.ads;
+  }
+
   if (Object.keys(businessAnswers).length > 0) {
     await db.onboardingIntake.updateMany({ where: { organizationId }, data: businessAnswers });
   }
@@ -435,6 +453,7 @@ export async function createCampaignAction(
     lifetimeBudgetCents,
     metaAppId: destinationType === "APP" ? (parsed.data.metaAppId ?? null) : null,
     promotes: parsed.data.promotes ?? null,
+    ads,
     destination: {
       type: destinationType,
       url: destinationUrl,

@@ -10,6 +10,10 @@ import { newPlan, plannedSpend, type CampaignPlan } from "@/lib/campaigns/plan";
 import { restrictForSpecialCategory, normalizeAudience } from "@/lib/campaigns/audience";
 import { appStoreUrl, resolveDestination } from "@/lib/campaigns/destination";
 import { reviewFindings, reviewStatus, type ReviewFacts } from "@/lib/campaigns/review-rules";
+import { checkCopy, ctaChoicesFor, fitCta, maxTestAds, unsupportedNumbers } from "@/lib/campaigns/ad-copy";
+import { checkVideo, checkImage, isOwnUpload } from "@/lib/campaigns/media-rules";
+import { runningCopy } from "@/lib/campaigns/plan";
+import { planAds, planFormEntries } from "@/lib/campaigns/plan-form";
 
 let bad = 0;
 const ok = (name: string, cond: boolean, extra = "") => {
@@ -117,6 +121,66 @@ ok("a local business running nationwide is flagged", idsOf({ ...ready, audienceM
 ok("paying for visits with working tracking is flagged", idsOf({ ...ready, goal: "TRAFFIC" }, facts).includes("traffic-vs-sales"));
 ok("a non-dollar account is flagged", idsOf(ready, { ...facts, currency: "EUR" }).includes("currency"));
 ok("every finding says which screen fixes it or why it can't", reviewFindings({ ...ready, dailyAmount: 2 }, { ...facts, metaPixelActive: false }, now).every((f) => f.title.length > 0 && f.detail.length > 0));
+
+console.log("\n— ad words are checked the way Meta reads them —");
+const words = { primaryText: "Warm hoodies made in Austin.", headline: "Heavyweight hoodies", cta: "SHOP_NOW" };
+const problems = (w: typeof words, d: Parameters<typeof checkCopy>[1] = "WEBSITE") => checkCopy(w, d).filter((f) => f.level === "problem");
+ok("ordinary copy passes", problems(words).length === 0);
+ok("empty text is a problem", problems({ ...words, primaryText: "" }).length > 0);
+ok("asking about the reader's debt is refused", problems({ ...words, primaryText: "Are you struggling with debt? We can help." }).length > 0);
+ok("offering help with debt is fine", problems({ ...words, primaryText: "Friendly help with debt, from a local advisor." }).length === 0);
+ok("an unrelated question isn't mistaken for it", problems({ ...words, primaryText: "Are you in Austin? We fix debt paperwork fast." }).length === 0);
+ok("\"guaranteed\" gets a note, not a block", checkCopy({ ...words, primaryText: "Guaranteed warm." }, "WEBSITE").some((f) => f.level === "note") && problems({ ...words, primaryText: "Guaranteed warm." }).length === 0);
+ok("an engagement ad needs no headline", problems({ ...words, headline: "" }, "POST_ENGAGEMENT").length === 0);
+ok("a website ad does", problems({ ...words, headline: "" }).length > 0);
+ok("a call ad's only button is Call now", ctaChoicesFor("PHONE_CALL").map((c) => c.value).join() === "CALL_NOW");
+ok("a website button survives", fitCta("SHOP_NOW", "WEBSITE") === "SHOP_NOW");
+ok("a website button on a call ad becomes Call now", fitCta("SHOP_NOW", "PHONE_CALL") === "CALL_NOW");
+ok("a discount the business never mentioned is caught", unsupportedNumbers("Get 20% off today", "We sell hoodies").join() === "20%");
+ok("one they did mention isn't", unsupportedNumbers("Get 20% off today", "Spring sale: 20% off hoodies").length === 0);
+ok("$5/day can't test", maxTestAds(500) === 1);
+ok("$10/day tests two", maxTestAds(1000) === 2);
+ok("$30/day tests three", maxTestAds(3000) === 3);
+
+console.log("\n— uploads are checked against Meta's rules before they're sent —");
+const vid = { type: "video/mp4", bytes: 20e6, width: 1080, height: 1920, durationSec: 20 };
+ok("a vertical 20s MP4 is fine", checkVideo(vid).problems.length === 0 && checkVideo(vid).warnings.length === 0);
+ok("an AVI is refused", checkVideo({ ...vid, type: "video/x-msvideo" }).problems.length > 0);
+ok("an ultra-wide video is refused", checkVideo({ ...vid, width: 2560, height: 1080 }).problems.length > 0);
+ok("a two-minute video gets a note", checkVideo({ ...vid, durationSec: 120 }).warnings.length > 0);
+ok("a tiny picture is refused", checkImage({ type: "image/png", bytes: 1e5, width: 400, height: 400 }).problems.length > 0);
+ok("only this business's own uploads are accepted", isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org1/video-x.mp4", "org1") && !isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org2/video-x.mp4", "org1") && !isOwnUpload("https://evil.test/ad-media/org1/v.mp4", "org1"));
+
+console.log("\n— the plan becomes the ads that run —");
+const options = [
+  { angle: "A", primaryText: "One", headline: "H1", cta: "SHOP_NOW" },
+  { angle: "B", primaryText: "Two", headline: "H2", cta: "LEARN_MORE" },
+  { angle: "C", primaryText: "Three", headline: "H3", cta: "SHOP_NOW" },
+];
+const withPicture: CampaignPlan = { ...base, goal: "SALES", destinationType: "WEBSITE", destinationValue: "https://x.test", adChoice: "attached", studioAssetId: "asset1", copyOptions: options, chosenCopy: 1 };
+ok("one version runs when not testing", runningCopy(withPicture).map((c) => c.angle).join() === "B");
+ok("the chosen version leads a test", runningCopy({ ...withPicture, testing: true, testPicks: [0, 2] }).map((c) => c.angle).join() === "B,A,C");
+const ads = planAds({ ...withPicture, testing: true, testPicks: [2] }) as { kind: string; studioAssetId: string; headline: string }[];
+ok("each tested version is its own ad", ads.length === 2 && ads.every((a) => a.kind === "IMAGE" && a.studioAssetId === "asset1") && ads[0].headline === "H2");
+ok("a video carries its upload", (planAds({ ...withPicture, adChoice: "video", video: { url: "u", posterUrl: "p", name: "n", width: 1, height: 1, durationSec: 1, bytes: 1 } }) as { kind: string; videoUrl: string }[])[0].videoUrl === "u");
+ok("an existing ad carries only its id", JSON.stringify(planAds({ ...withPicture, adChoice: "EXISTING_AD", existingAd: { id: "123456", name: "Old", thumbnailUrl: null, headline: null, body: null } })) === JSON.stringify([{ kind: "EXISTING_AD", sourceAdId: "123456", sourceAdName: "Old" }]));
+ok("\"later\" sends no ads and follows the approved creative", planAds({ ...withPicture, adChoice: "later" }) === null);
+ok("the form carries the ads", planFormEntries(withPicture, { draftId: null, now }).some(([k]) => k === "ads"));
+ok("a post sends no ads field", !planFormEntries({ ...withPicture, adChoice: "FACEBOOK_POST", selectedPost: { id: "1_2", message: null, imageUrl: null, permalink: null, createdAt: null } }, { draftId: null, now }).some(([k]) => k === "ads"));
+
+console.log("\n— a video ad is built the way Meta expects —");
+const videoAd = JSON.parse(String(metaAdCreativeParams({ ...creativeBase, videoId: "V1", destination: { type: "WEBSITE", url: "https://x.test" } }).object_story_spec));
+ok("video_data, not link_data", videoAd.video_data?.video_id === "V1" && videoAd.link_data === undefined);
+ok("with a thumbnail", videoAd.video_data.image_hash === "h");
+ok("and the button carries the link", videoAd.video_data.call_to_action.value.link === "https://x.test");
+
+console.log("\n— the review checks the ad as well —");
+ok("a picture with no words chosen blocks", idsOf({ ...ready, adChoice: "attached", studioAssetId: "a" }, facts).includes("no-copy"));
+ok("words that ask about the reader block", reviewStatus(reviewFindings({ ...withPicture, copyOptions: [{ ...options[0], primaryText: "Are you overweight? Try our gym." }], chosenCopy: 0 }, facts, now)) === "SETUP_REQUIRED");
+ok("an invented discount is flagged", idsOf({ ...withPicture, copyOptions: [{ ...options[0], primaryText: "50% off everything" }], chosenCopy: 0 }, facts).some((id) => id.startsWith("numbers")));
+ok("testing three on $10/day blocks", idsOf({ ...withPicture, dailyAmount: 10, testing: true, testPicks: [0, 2] }, facts).includes("test-too-big"));
+ok("an unpicked existing ad blocks", idsOf({ ...ready, adChoice: "EXISTING_AD" }, facts).includes("no-existing-ad"));
+ok("an attached picture doesn't trip \"no approved picture\"", !idsOf(withPicture, { ...facts, hasApprovedCreative: false }).includes("no-creative"));
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
 process.exit(bad === 0 ? 0 : 1);

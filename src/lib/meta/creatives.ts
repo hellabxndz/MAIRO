@@ -85,6 +85,11 @@ export type AdCreativeInput = {
   boostPostId?: string | null;
   /** An Instagram post to run as-is, and the Instagram account it belongs to. */
   instagram?: { mediaId: string; userId: string } | null;
+  /**
+   * A video ad: Meta's id for the uploaded video, and imageHash is then its
+   * thumbnail. Meta requires a thumbnail on every video creative.
+   */
+  videoId?: string | null;
   /** What a click does: open a link, or ring the business. */
   destination: Destination;
   /** The text above the ad. */
@@ -220,6 +225,27 @@ export function metaAdCreativeParams(input: AdCreativeInput): Record<string, unk
             : destination.type === "ON_POST"
               ? null
               : { link: destination.url };
+
+  const button = buttonValue ? { call_to_action: { type: cta, value: buttonValue } } : {};
+
+  // A video ad carries the same words and button, in video_data rather than
+  // link_data. It has no top-level link: where a tap goes lives in the button.
+  if (input.videoId) {
+    return {
+      name: input.name,
+      object_story_spec: JSON.stringify({
+        page_id: input.pageId,
+        video_data: {
+          video_id: input.videoId,
+          image_hash: input.imageHash,
+          message: input.message,
+          title: input.headline,
+          ...button,
+        },
+      }),
+      degrees_of_freedom_spec: noEnhancements,
+    };
+  }
 
   return {
     name: input.name,

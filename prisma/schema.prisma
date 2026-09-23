@@ -911,6 +911,9 @@ model MairoCampaign {
   tiktokGrowthMode Boolean @default(false)
 
   platformCampaigns PlatformCampaign[]
+  /// The ads this campaign runs, in order. Empty follows the business-wide
+  /// creative (the most recently approved one), as campaigns always did.
+  ads               CampaignAd[]
   creatives         PlatformCreative[]
   recommendations   OptimizationRecommendation[]
   /// Campaigns created before multi-platform existed, adopted by the backfill.
@@ -920,6 +923,46 @@ model MairoCampaign {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+}
+
+/// What one campaign ad is made of.
+enum CampaignAdKind {
+  /// An approved picture from Creative Studio.
+  IMAGE
+  /// A video the customer uploaded.
+  VIDEO
+  /// An ad already in the customer's Meta ad account, run again as it is.
+  EXISTING_AD
+}
+
+/// One ad a campaign runs. Several when the customer tests versions.
+model CampaignAd {
+  id              String         @id @default(cuid())
+  mairoCampaign   MairoCampaign  @relation(fields: [mairoCampaignId], references: [id], onDelete: Cascade)
+  mairoCampaignId String
+  /// 0 is the main ad; the rest are test versions.
+  position        Int
+  kind            CampaignAdKind
+
+  /// IMAGE: the approved creative whose picture runs.
+  creativeRequestId String?
+  /// VIDEO: where the upload lives, and a still for the thumbnail.
+  videoUrl          String?
+  videoPosterUrl    String?
+  /// VIDEO: Meta's id once uploaded, so a retry doesn't upload it again.
+  metaVideoId       String?
+  /// EXISTING_AD: the Meta ad whose creative runs again.
+  sourceAdId        String?
+  sourceAdName      String?
+
+  /// The words the customer chose. Null on an existing ad.
+  headline      String?
+  primaryText   String? @db.Text
+  callToAction  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([mairoCampaignId])
 }
 
 /// One network's half of a Mairo campaign.
@@ -946,6 +989,9 @@ model PlatformCampaign {
   externalAdGroupId  String?
   /// The ad itself. Until this exists, nothing delivers.
   externalAdId       String?
+  /// Further ads in the same ad set, when the customer is testing versions.
+  /// Switched on alongside externalAdId.
+  extraExternalAdIds String[] @default([])
 
   /// Whole per cent of the parent's budget. Siblings always sum to 100; that
   /// is enforced in src/lib/budget/allocation.ts rather than by the database,

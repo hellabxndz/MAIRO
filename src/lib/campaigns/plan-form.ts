@@ -1,6 +1,23 @@
 import type { AdGoal } from "@/generated/prisma/enums";
 import { AGE_CEILING, AGE_FLOOR } from "@/lib/campaigns/audience";
-import { plannedSpend, type CampaignPlan } from "@/lib/campaigns/plan";
+import { hasOwnWords, plannedSpend, runningCopy, type CampaignPlan } from "@/lib/campaigns/plan";
+
+/** The campaign's own ads, as createCampaignAction's `ads` field. Null follows the approved creative. */
+export function planAds(plan: CampaignPlan): object[] | null {
+  if (plan.adChoice === "EXISTING_AD" && plan.existingAd) {
+    return [{ kind: "EXISTING_AD", sourceAdId: plan.existingAd.id, sourceAdName: plan.existingAd.name }];
+  }
+  if (!hasOwnWords(plan)) return null;
+  const visual =
+    plan.adChoice === "video" && plan.video
+      ? { kind: "VIDEO", videoUrl: plan.video.url, videoPosterUrl: plan.video.posterUrl }
+      : plan.adChoice === "attached" && plan.studioAssetId
+        ? { kind: "IMAGE", studioAssetId: plan.studioAssetId }
+        : null;
+  const words = runningCopy(plan);
+  if (!visual || words.length === 0) return null;
+  return words.map((w) => ({ ...visual, headline: w.headline, primaryText: w.primaryText, cta: w.cta }));
+}
 
 // The wizard's plan as the form createCampaignAction already accepts, so the
 // Create wizard and the advanced campaign form share one launch path — its
@@ -83,6 +100,8 @@ export function planFormEntries(
     if (plan.adChoice === "INSTAGRAM_POST") put("boostInstagramMediaId", plan.selectedPost?.id);
   } else if (plan.adChoice !== "none") {
     put("adSource", "CREATIVE");
+    const ads = planAds(plan);
+    if (ads) put("ads", JSON.stringify(ads));
   }
 
   put("promotes", plan.promotes);

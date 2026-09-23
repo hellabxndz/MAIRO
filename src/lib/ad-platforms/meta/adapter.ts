@@ -278,6 +278,23 @@ export const metaAdapter: AdPlatformAdapter = {
       );
     }
 
+    // An ad already in the account: a new ad pointing at its creative. The
+    // creative carries its own picture, words and destination.
+    if (input.reuseCreativeId) {
+      try {
+        const ad = await createMetaAd({
+          adAccountId: loaded.creds.externalAccountId,
+          accessToken: loaded.creds.accessToken,
+          name: input.name,
+          adSetId: input.externalAdGroupId,
+          creativeId: input.reuseCreativeId,
+        });
+        return ok({ externalId: ad.id });
+      } catch (error) {
+        return toFailure(input.organizationId, error, "Couldn't run that existing ad in the new campaign.");
+      }
+    }
+
     // None of the below applies to a post that already exists. It has its own
     // picture and its own words, on Meta, and demanding a generated image and a
     // written headline first would refuse the one kind of ad that needs neither.
@@ -326,6 +343,7 @@ export const metaAdapter: AdPlatformAdapter = {
         name: input.name,
         pageId: connection.pageId,
         imageHash: image?.hash ?? "",
+        videoId: boosting ? null : (input.metaVideoId ?? null),
         boostPostId: input.boostPostId ?? null,
         instagram,
         destination: input.destination,
@@ -404,7 +422,7 @@ export const metaAdapter: AdPlatformAdapter = {
     // The ad and ad set are built PAUSED. Switched on first, campaign last:
     // the campaign is what starts spending, so a failure part-way through
     // leaves nothing running.
-    for (const id of [input.externalAdId, input.externalAdGroupId]) {
+    for (const id of [...(input.extraExternalAdIds ?? []), input.externalAdId, input.externalAdGroupId]) {
       if (!id) continue;
       const result = await setStatus(input.organizationId, id, "ACTIVE");
       if (!result.ok) return result;
