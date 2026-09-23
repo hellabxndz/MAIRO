@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { isWizardStep, type CampaignPlan } from "@/lib/campaigns/plan";
+import { hasOwnWords, isWizardStep, runningCopy, type CampaignPlan } from "@/lib/campaigns/plan";
+import { loadMetaConnection } from "@/lib/meta/connection";
+import { isPreviewFormat, previewCreativeSpec, previewExistingAd } from "@/lib/meta/previews";
+import { creativeOfAccountAd } from "@/lib/meta/existing-ads";
+import { findInstagramAccount } from "@/lib/instagram/publish";
+import { metaAdCreativeParams } from "@/lib/meta/creatives";
+import { resolveDestination } from "@/lib/campaigns/destination";
 import { reviewCampaign, type CampaignReview } from "@/lib/campaigns/review";
 import { writeAdCopyOptions } from "@/lib/ai/ad-copy";
 import type { CopyOption } from "@/lib/campaigns/ad-copy";
@@ -127,4 +133,88 @@ export async function loadAccountAdsAction(): Promise<{ ok: true; ads: AccountAd
   if (!scope) return { ok: false, error: "Not signed in." };
   const result = await listAccountAds(scope.organizationId);
   return result.ok ? { ok: true, ads: result.data } : { ok: false, error: result.error };
+}
+
+/**
+ * Meta's own preview of the ad as planned, in one placement. Drawn by Meta
+ * without creating anything in the ad account.
+ */
+export async function previewAdAction(
+  plan: CampaignPlan,
+  format: string
+): Promise<{ ok: true; src: string; note: string | null } | { ok: false; error: string }> {
+  const scope = await currentScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  if (!SERVICES.has(plan?.service) || !isPreviewFormat(format)) return { ok: false, error: "That preview isn't available." };
+
+  const connection = await loadMetaConnection(scope.organizationId);
+  if (!connection) return { ok: false, error: "Connect Meta to see previews." };
+  if (!connection.pageId) return { ok: false, error: "Pick a Facebook Page on the Meta connection screen to see previews." };
+
+  try {
+    let src: string | null = null;
+    let note: string | null = null;
+
+    if (plan.adChoice === "EXISTING_AD" && plan.existingAd) {
+      const owned = await creativeOfAccountAd(connection.metaAdAccountId, connection.accessToken, plan.existingAd.id);
+      if (!owned.ok) return { ok: false, error: owned.error };
+      src = await previewExistingAd(plan.existingAd.id, connection.accessToken, format);
+    } else if (plan.adChoice === "FACEBOOK_POST" && plan.selectedPost) {
+      src = await previewCreativeSpec(connection.metaAdAccountId, connection.accessToken, { object_story_id: plan.selectedPost.id }, format);
+    } else if (plan.adChoice === "INSTAGRAM_POST" && plan.selectedPost) {
+      const account = await findInstagramAccount(scope.organizationId);
+      if (!account.ok || !account.data) return { ok: false, error: "Link an Instagram account to your Page to preview Instagram posts." };
+      src = await previewCreativeSpec(
+        connection.metaAdAccountId,
+        connection.accessToken,
+        { object_id: connection.pageId, instagram_user_id: account.data.igUserId, source_instagram_media_id: plan.selectedPost.id },
+        format
+      );
+    } else if (hasOwnWords(plan)) {
+      const words = runningCopy(plan)[0];
+      const picture = plan.adChoice === "video" ? plan.video?.posterUrl : plan.attachedPreview;
+      if (!words || !picture || !/^https:\/\//.test(picture)) return { ok: false, error: "Finish the ad and its words to see a preview." };
+      if (plan.adChoice === "video") note = "The preview shows the video's thumbnail — the video itself plays in the real ad.";
+      const spec = previewSpec(plan, connection.pageId, picture, words);
+      if (!spec) return { ok: false, error: "Finish where the ad sends people (Your Goal) to see a preview." };
+      src = await previewCreativeSpec(connection.metaAdAccountId, connection.accessToken, spec, format);
+    } else {
+      return { ok: false, error: "There's no ad to preview yet — MAIRO makes it after the campaign is built." };
+    }
+
+    return src ? { ok: true, src, note } : { ok: false, error: "Meta didn't return a preview for that placement." };
+  } catch (error) {
+    console.error("Meta preview failed:", error);
+    return { ok: false, error: "Meta couldn't draw that preview just now. Try another placement or try again." };
+  }
+}
+
+/** The ad as a creative spec, with the picture by URL — nothing uploaded. */
+function previewSpec(plan: CampaignPlan, pageId: string, picture: string, words: CopyOption): Record<string, unknown> | null {
+  // A form that doesn't exist yet can't be attached; the preview shows the
+  // button pointing at the Page instead, which looks the same.
+  const destination =
+    plan.destinationType === "LEAD_FORM"
+      ? ({ type: "WEBSITE", url: `https://www.facebook.com/${pageId}` } as const)
+      : resolveDestination(
+          { type: plan.destinationType ?? "WEBSITE", url: plan.destinationValue, phone: plan.destinationValue, channel: plan.messageChannel, metaAppId: plan.metaAppId },
+          { type: "WEBSITE", url: plan.website }
+        );
+  if (!destination) return null;
+  const params = metaAdCreativeParams({
+    adAccountId: "",
+    accessToken: "",
+    name: "preview",
+    pageId,
+    imageHash: "",
+    destination,
+    message: words.primaryText,
+    headline: words.headline,
+    callToAction: plan.destinationType === "LEAD_FORM" ? "SIGN_UP" : words.cta,
+  });
+  const story = JSON.parse(String(params.object_story_spec)) as { link_data?: Record<string, unknown> };
+  if (!story.link_data) return null;
+  delete story.link_data.image_hash;
+  story.link_data.picture = picture;
+  return { object_story_spec: story };
 }

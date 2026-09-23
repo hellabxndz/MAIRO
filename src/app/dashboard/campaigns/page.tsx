@@ -18,6 +18,7 @@ import { DeleteCampaign } from "./delete-campaign";
 import { DestinationControl } from "./destination-control";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
+import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
@@ -64,6 +65,7 @@ export default async function CampaignsPage() {
   // so somebody who finishes their setup and lands here rather than on the
   // overview gets the same behaviour.
   await maybeGoLive(organizationId);
+  await syncAdReviews(organizationId).catch(() => 0);
 
   const [
     campaigns,
@@ -413,6 +415,20 @@ export default async function CampaignsPage() {
                         {platformLabel(c.platform)}:
                       </span>{" "}
                       {c.lastError}
+                    </p>
+                  ))}
+
+                {campaign.platformCampaigns
+                  .filter((c) => c.adReviewState === "REJECTED" || c.adReviewState === "WITH_ISSUES")
+                  .map((c) => (
+                    <p key={`review-${c.id}`} className="mt-3 text-xs text-red-300/90">
+                      <span className="font-medium">
+                        {c.adReviewState === "REJECTED" ? "Meta didn't approve the ad" : "Meta flagged the ad"}:
+                      </span>{" "}
+                      {c.adReviewExplanation}{" "}
+                      <Link href={`/dashboard/campaigns/${campaign.id}`} className="underline underline-offset-2">
+                        What to do
+                      </Link>
                     </p>
                   ))}
 

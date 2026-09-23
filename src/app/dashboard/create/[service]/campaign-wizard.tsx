@@ -17,6 +17,7 @@ import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { campaignName, planFormEntries } from "@/lib/campaigns/plan-form";
 import type { CampaignReview } from "@/lib/campaigns/review";
 import type { ReviewStep } from "@/lib/campaigns/review-rules";
+import { AdPreview } from "./ad-preview";
 import { AnalysisScan } from "./analysis-scan";
 import { StepAd, type StudioProps } from "./step-ad";
 import { aiAudienceStrategy, StepAudience } from "./step-audience";
@@ -298,6 +299,8 @@ export function CampaignWizard(props: Props) {
               sub="Everything MAIRO will build, in one place. Nothing is spent until you agree below."
             >
               <PlanSummary plan={plan} mode={mode} detailed />
+
+              {plan.service !== "tiktok" && <AdPreview plan={plan} />}
 
               {mode === "advanced" && (
                 <label className="mt-6 block max-w-lg">

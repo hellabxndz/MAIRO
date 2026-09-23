@@ -3,6 +3,7 @@ import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { platformName } from "@/lib/ad-platforms/registry";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { notify } from "./notify";
+import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 
 // MAIRO noticing things nobody asked it to look at.
 //
@@ -71,6 +72,14 @@ export async function detectFor(organizationId: string): Promise<DetectResult> {
   // A disconnected account is worth saying even with nothing running, because
   // it is the one problem that silently stops everything else from working.
   await detectDisconnected(organizationId, live.length > 0, result);
+
+  // Meta's verdict on each ad, including ones not live yet — a rejection is
+  // exactly what stops a waiting campaign from ever starting.
+  try {
+    result.found += await syncAdReviews(organizationId);
+  } catch (error) {
+    console.error("Ad review sync failed:", error);
+  }
 
   if (live.length === 0) return result;
 

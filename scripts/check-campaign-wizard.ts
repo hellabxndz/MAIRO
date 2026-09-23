@@ -14,6 +14,8 @@ import { checkCopy, ctaChoicesFor, fitCta, maxTestAds, unsupportedNumbers } from
 import { checkVideo, checkImage, isOwnUpload } from "@/lib/campaigns/media-rules";
 import { runningCopy } from "@/lib/campaigns/plan";
 import { planAds, planFormEntries } from "@/lib/campaigns/plan-form";
+import { explainAdReview } from "@/lib/meta/ad-review";
+import { previewSrc } from "@/lib/meta/preview-formats";
 
 let bad = 0;
 const ok = (name: string, cond: boolean, extra = "") => {
@@ -181,6 +183,24 @@ ok("an invented discount is flagged", idsOf({ ...withPicture, copyOptions: [{ ..
 ok("testing three on $10/day blocks", idsOf({ ...withPicture, dailyAmount: 10, testing: true, testPicks: [0, 2] }, facts).includes("test-too-big"));
 ok("an unpicked existing ad blocks", idsOf({ ...ready, adChoice: "EXISTING_AD" }, facts).includes("no-existing-ad"));
 ok("an attached picture doesn't trip \"no approved picture\"", !idsOf(withPicture, { ...facts, hasApprovedCreative: false }).includes("no-creative"));
+
+console.log("\n— Meta's rejections are explained, not passed on as codes —");
+const personal = explainAdReview("DISAPPROVED", { global: { "Personal Attributes": "Ads must not assert or imply personal attributes." } }, null);
+ok("a personal-attributes rejection says what to change", personal.state === "REJECTED" && /describe what you offer/.test(personal.action ?? "") && personal.fix === "ad");
+ok("a landing-page rejection points at the destination", explainAdReview("DISAPPROVED", { global: { "Non-Functional Landing Page": "The page didn't load." } }, null).fix === "goal");
+ok("an undeclared housing ad points at the audience screen", explainAdReview("DISAPPROVED", { global: { "Special Ad Category": "Housing ads must be declared." } }, null).fix === "audience");
+ok("an unknown policy is passed through in Meta's words", /Meta's reason: Weird Policy/.test(explainAdReview("DISAPPROVED", { global: { "Weird Policy": "Something." } }, null).explanation ?? ""));
+ok("a rejection with no reason still says so", explainAdReview("DISAPPROVED", null, null).explanation !== null);
+ok("an ad with issues shows Meta's summary", explainAdReview("WITH_ISSUES", null, [{ error_summary: "Image too small" }]).explanation === "Image too small");
+ok("in review is pending", explainAdReview("PENDING_REVIEW", null, null).state === "PENDING");
+ok("running is approved", explainAdReview("ACTIVE", null, null).state === "APPROVED");
+
+console.log("\n— previews only ever load Meta's own pages —");
+ok("Meta's preview iframe is accepted", previewSrc('<iframe src="https://www.facebook.com/ads/api/preview_iframe.php?d=AQ&amp;t=AQ" width="540"></iframe>') === "https://www.facebook.com/ads/api/preview_iframe.php?d=AQ&t=AQ");
+ok("anything else is refused", previewSrc('<iframe src="https://evil.test/x"></iframe>') === null);
+ok("a look-alike domain is refused", previewSrc('<iframe src="https://facebook.com.evil.test/x"></iframe>') === null);
+ok("plain http is refused", previewSrc('<iframe src="http://www.facebook.com/x"></iframe>') === null);
+ok("no iframe, no preview", previewSrc("<div>nothing</div>") === null);
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
 process.exit(bad === 0 ? 0 : 1);

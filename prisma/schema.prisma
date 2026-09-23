@@ -993,6 +993,13 @@ model PlatformCampaign {
   /// Switched on alongside externalAdId.
   extraExternalAdIds String[] @default([])
 
+  /// What Meta's ad review last said about this campaign's ads, in plain
+  /// English (see src/lib/meta/ad-review.ts). Null until first checked.
+  adReviewState       String?
+  adReviewExplanation String?   @db.Text
+  adReviewAction      String?   @db.Text
+  adReviewCheckedAt   DateTime?
+
   /// Whole per cent of the parent's budget. Siblings always sum to 100; that
   /// is enforced in src/lib/budget/allocation.ts rather than by the database,
   /// because the check spans rows.

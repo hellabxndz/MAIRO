@@ -27,6 +27,7 @@ import { PlatformIcons } from "@/components/platform-icons";
 import { CampaignTabs } from "./tabs";
 import { parseTab } from "./tab-list";
 import { CampaignApproval } from "./approval";
+import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 
 // One campaign, end to end.
 //
@@ -57,13 +58,26 @@ export default async function CampaignPage({
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
+  // Meta's latest verdict on the ads, so a rejection shows here as soon as it
+  // happens. Throttled inside: a recent check costs nothing.
+  await syncAdReviews(organizationId).catch(() => 0);
+
   const campaign = await db.mairoCampaign.findFirst({
     // Scoped by organization as well as id: an id in the URL is not
     // authorisation, and this is the only thing standing between one customer
     // and another's campaign.
     where: { id, organizationId },
     include: {
-      platformCampaigns: { select: { platform: true, status: true, externalAdId: true } },
+      platformCampaigns: {
+        select: {
+          platform: true,
+          status: true,
+          externalAdId: true,
+          adReviewState: true,
+          adReviewExplanation: true,
+          adReviewAction: true,
+        },
+      },
       creatives: {
         select: {
           id: true,
@@ -177,6 +191,34 @@ export default async function CampaignPage({
               hint="All time"
             />
           </div>
+
+          {campaign.platformCampaigns
+            .filter((p) => p.adReviewState === "REJECTED" || p.adReviewState === "WITH_ISSUES")
+            .map((p) => (
+              <section
+                key={p.platform}
+                className="rounded-xl border p-5"
+                style={{ borderColor: "rgba(248,113,113,0.35)", background: "rgba(248,113,113,0.05)" }}
+              >
+                <p className="text-[15px] font-medium text-white">
+                  {p.adReviewState === "REJECTED" ? "Meta didn't approve this ad" : "Meta flagged a problem with this ad"}
+                </p>
+                {p.adReviewExplanation && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{p.adReviewExplanation}</p>}
+                {p.adReviewAction && <p className="mt-2 text-[13px] leading-relaxed text-white/90">What to do: {p.adReviewAction}</p>}
+                <Link
+                  href="/dashboard/create"
+                  className="mt-4 inline-flex rounded-full px-4 py-2 text-[12.5px] font-medium text-white"
+                  style={{ backgroundImage: "var(--mairo-ramp)" }}
+                >
+                  Make a new ad
+                </Link>
+              </section>
+            ))}
+          {campaign.platformCampaigns.some((p) => p.adReviewState === "PENDING") && (
+            <p className="text-[12.5px] text-muted">
+              Meta is reviewing the ad — usually within a day. MAIRO tells you if anything needs changing.
+            </p>
+          )}
 
           <CampaignHealthPanel health={health} />
 
