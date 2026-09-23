@@ -28,6 +28,8 @@ import { CampaignTabs } from "./tabs";
 import { parseTab } from "./tab-list";
 import { CampaignApproval } from "./approval";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
+import { campaignAdvice } from "@/lib/campaigns/advice";
+import { RunControl } from "./run-control";
 
 // One campaign, end to end.
 //
@@ -104,10 +106,22 @@ export default async function CampaignPage({
     }),
   ]);
 
+  const protectionLog = await db.protectionEvent.findMany({
+    where: { organizationId, mairoCampaignId: campaign.id },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
   const report = performance.campaigns.find((c) => c.mairoCampaignId === campaign.id) ?? null;
   const metrics = report?.total ?? null;
   const live = campaign.status === "ACTIVE";
   const health = campaignHealth(metrics, { live });
+  const advice = campaignAdvice({
+    objective: campaign.objective,
+    metrics,
+    liveSince: campaign.startDate && campaign.startDate > campaign.createdAt ? campaign.startDate : campaign.createdAt,
+    live,
+    dailyBudgetCents: campaign.totalDailyBudgetCents,
+  });
 
   const requested = campaign.platformCampaigns.map((p) => p.platform);
   const connected = [...connections.values()].filter((c) => c.connected).map((c) => c.platform);
@@ -174,6 +188,9 @@ export default async function CampaignPage({
             <span>{money(campaign.totalDailyBudgetCents)} a day</span>
           </div>
         </div>
+        {(campaign.status === "ACTIVE" || campaign.status === "PAUSED") && (
+          <RunControl campaignId={campaign.id} status={campaign.status} dailyBudgetLabel={money(campaign.totalDailyBudgetCents)} />
+        )}
       </div>
 
       <CampaignTabs active={tab} />
@@ -221,6 +238,51 @@ export default async function CampaignPage({
           )}
 
           <CampaignHealthPanel health={health} />
+
+          {advice.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[15px] font-medium text-white">What MAIRO recommends</h2>
+              <div className="grid gap-3 md:grid-cols-2">
+                {advice.map((a) => (
+                  <GlassPanel key={a.title} className="p-4">
+                    <p className="flex items-center gap-2 text-[14px] text-white">
+                      <span
+                        className="h-2 w-2 flex-none rounded-full"
+                        style={{ background: a.tone === "good" ? "#34d399" : a.tone === "fix" ? "#fbbf24" : a.tone === "idea" ? "#6c9eff" : "rgba(255,255,255,0.35)" }}
+                        aria-hidden
+                      />
+                      {a.title}
+                    </p>
+                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{a.detail}</p>
+                    {a.href && (
+                      <Link href={a.href} className="mt-3 inline-block text-[12.5px] text-white/90 underline underline-offset-4">
+                        {a.hrefLabel}
+                      </Link>
+                    )}
+                  </GlassPanel>
+                ))}
+              </div>
+              <p className="mt-2 text-[11.5px] text-faint">Advice only — MAIRO doesn&rsquo;t change anything here without you.</p>
+            </section>
+          )}
+
+          {protectionLog.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[15px] font-medium text-white">Spend Protection</h2>
+              <GlassPanel className="p-4">
+                <ul className="space-y-2">
+                  {protectionLog.map((e) => (
+                    <li key={e.id} className="text-[12.5px] leading-relaxed text-muted">
+                      <span className="text-faint">{e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span> · {e.message}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/dashboard/settings#spend-protection" className="mt-3 inline-block text-[12px] text-muted underline underline-offset-4">
+                  Change your limits
+                </Link>
+              </GlassPanel>
+            </section>
+          )}
 
           {!live && <CampaignApproval campaignId={campaign.id} blockers={blockers} />}
 

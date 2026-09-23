@@ -7,6 +7,8 @@ import { BillingSection } from "./billing-section";
 import { AutomationSection } from "./automation-section";
 import { AutoLaunchSection } from "./auto-launch-section";
 import { AssistantSection } from "./assistant-section";
+import { SpendProtectionSection } from "./spend-protection-section";
+import { protectionSettings } from "@/lib/protection/run";
 import { autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { activeOrganizationId } from "@/lib/active-org";
 import { entitlementsFor } from "@/lib/entitlements";
@@ -19,6 +21,10 @@ export default async function SettingsPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
+  const [protection, protectionEvents] = await Promise.all([
+    protectionSettings(organizationId),
+    db.protectionEvent.findMany({ where: { organizationId }, orderBy: { createdAt: "desc" }, take: 10 }),
+  ]);
   const [organization, intake, autoOptimize, entitlements, autoLaunch, sms] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
@@ -82,6 +88,25 @@ export default async function SettingsPage() {
           held={autoLaunch.held}
           waitingCount={autoLaunch.waitingCount}
           lastLaunchedAt={autoLaunch.lastLaunchedAt}
+        />
+      </div>
+
+      <div className="mb-8">
+        <SpendProtectionSection
+          values={{
+            stopLossCents: protection.stopLossCents,
+            stopLossAction: protection.stopLossAction,
+            monthlyCapCents: protection.monthlyCapCents,
+            warnAtPercent: protection.warnAtPercent,
+          }}
+          events={protectionEvents.map((e) => ({
+            id: e.id,
+            at: e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            campaignName: null,
+            kind: e.kind,
+            action: e.action,
+            message: e.message,
+          }))}
         />
       </div>
 

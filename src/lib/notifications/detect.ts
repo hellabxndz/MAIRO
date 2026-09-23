@@ -4,6 +4,7 @@ import { platformName } from "@/lib/ad-platforms/registry";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { notify } from "./notify";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
+import { runSpendProtection } from "@/lib/protection/run";
 
 // MAIRO noticing things nobody asked it to look at.
 //
@@ -82,6 +83,13 @@ export async function detectFor(organizationId: string): Promise<DetectResult> {
   }
 
   if (live.length === 0) return result;
+
+  // Spend Protection first: a limit that's been hit matters more than an insight.
+  try {
+    result.found += await runSpendProtection(organizationId);
+  } catch (error) {
+    console.error("Spend Protection run failed:", error);
+  }
 
   let report;
   try {

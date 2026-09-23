@@ -234,6 +234,8 @@ model Organization {
   products             Product[]
   creativeStudioAssets CreativeStudioAsset[]
   creativeCreditLedger CreativeCreditLedger[]
+  spendProtection  SpendProtection?
+  protectionEvents ProtectionEvent[]
   campaignDrafts       CampaignDraft[]
 
   createdAt DateTime @default(now())
@@ -1156,6 +1158,55 @@ model AutoOptimizeSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// What Spend Protection does when a limit is hit.
+enum ProtectionAction {
+  /// Tell the customer; change nothing.
+  NOTIFY
+  /// Pause the campaign on the network, then tell the customer.
+  PAUSE
+}
+
+/// The customer's own spending limits, checked on a schedule whatever the
+/// automation level. Protective only: nothing here can raise a budget or
+/// start a campaign — it can only warn, or pause.
+model SpendProtection {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// A campaign that spends this much without a single result is flagged.
+  /// Null switches the check off.
+  stopLossCents  Int?             @default(5000)
+  stopLossAction ProtectionAction @default(NOTIFY)
+  /// Account-wide spend for the calendar month. Reaching it pauses every
+  /// running MAIRO campaign. Null switches it off.
+  monthlyCapCents Int?
+  /// Warn when month-to-date spend passes this share of the cap.
+  warnAtPercent   Int  @default(80)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Every warning and pause Spend Protection made, and every resume after one,
+/// with the figures it was based on. The audit trail for "why did it stop?".
+model ProtectionEvent {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mairoCampaignId String?
+  /// STOP_LOSS, MONTHLY_CAP_WARNING, MONTHLY_CAP_REACHED, RESUMED, PAUSED_BY_YOU
+  kind            String
+  /// NOTIFIED, PAUSED or RESUMED.
+  action          String
+  message         String   @db.Text
+  amountCents     Int?
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([mairoCampaignId])
 }
 
 /// Pricing and feature permissions, in the database rather than in the code.

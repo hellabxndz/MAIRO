@@ -16,6 +16,9 @@ import { runningCopy } from "@/lib/campaigns/plan";
 import { planAds, planFormEntries } from "@/lib/campaigns/plan-form";
 import { explainAdReview } from "@/lib/meta/ad-review";
 import { previewSrc } from "@/lib/meta/preview-formats";
+import { checkMonthlyCap, checkStopLoss, resultsFor } from "@/lib/protection/rules";
+import { campaignAdvice } from "@/lib/campaigns/advice";
+import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 
 let bad = 0;
 const ok = (name: string, cond: boolean, extra = "") => {
@@ -201,6 +204,34 @@ ok("anything else is refused", previewSrc('<iframe src="https://evil.test/x"></i
 ok("a look-alike domain is refused", previewSrc('<iframe src="https://facebook.com.evil.test/x"></iframe>') === null);
 ok("plain http is refused", previewSrc('<iframe src="http://www.facebook.com/x"></iframe>') === null);
 ok("no iframe, no preview", previewSrc("<div>nothing</div>") === null);
+
+console.log("\n— Spend Protection only acts on real figures —");
+const blank: PlatformMetrics = { spendCents: null, impressions: null, reach: null, clicks: null, ctr: null, cpcCents: null, cpmCents: null, conversions: null, purchases: null, costPerPurchaseCents: null, revenueCents: null, roas: null, videoViews: null, videoViews2s: null, videoViews6s: null, averageWatchTimeSeconds: null, videoCompletionRate: null, profileVisits: null, followersGained: null, likes: null, comments: null, shares: null };
+const m = (x: Partial<PlatformMetrics>): PlatformMetrics => ({ ...blank, ...x });
+ok("$60 and no purchases trips a $50 limit", checkStopLoss({ stopLossCents: 5000, objective: "SALES", metrics: m({ spendCents: 6000, purchases: 0 }), campaignName: "x" }).tripped);
+ok("one purchase doesn't", !checkStopLoss({ stopLossCents: 5000, objective: "SALES", metrics: m({ spendCents: 6000, purchases: 1 }), campaignName: "x" }).tripped);
+ok("unreported results are never judged as zero", !checkStopLoss({ stopLossCents: 5000, objective: "SALES", metrics: m({ spendCents: 9000 }), campaignName: "x" }).tripped);
+ok("under the limit doesn't", !checkStopLoss({ stopLossCents: 5000, objective: "LEADS", metrics: m({ spendCents: 4000, conversions: 0 }), campaignName: "x" }).tripped);
+ok("awareness is never judged by results", resultsFor("AWARENESS", m({ spendCents: 9000, clicks: 0 })) === null);
+ok("traffic counts clicks", resultsFor("TRAFFIC", m({ clicks: 12 })) === 12);
+ok("off means off", !checkStopLoss({ stopLossCents: null, objective: "SALES", metrics: m({ spendCents: 99999, purchases: 0 }), campaignName: "x" }).tripped);
+ok("a cap warns at 80%", checkMonthlyCap({ monthlyCapCents: 100000, warnAtPercent: 80, monthSpendCents: 85000 }).state === "warn");
+ok("and is reached at 100%", checkMonthlyCap({ monthlyCapCents: 100000, warnAtPercent: 80, monthSpendCents: 100000 }).state === "reached");
+ok("an unknown month's spend is not a breach", checkMonthlyCap({ monthlyCapCents: 100000, warnAtPercent: 80, monthSpendCents: null }).state === "ok");
+ok("no cap, no check", checkMonthlyCap({ monthlyCapCents: null, warnAtPercent: 80, monthSpendCents: 999999 }).state === "off");
+
+console.log("\n— advice waits for enough data —");
+const day = 86400000;
+const adv = (x: Partial<PlatformMetrics>, days: number, objective: "SALES" | "TRAFFIC" = "SALES") => campaignAdvice({ objective, metrics: m(x), liveSince: new Date(now.getTime() - days * day), live: true, dailyBudgetCents: 2000, now });
+ok("day one says wait", adv({ spendCents: 1500, purchases: 0 }, 1)[0].tone === "wait");
+ok("plenty spent but only a day in still says wait", adv({ spendCents: 9000, purchases: 0, clicks: 100, impressions: 20000 }, 1)[0].tone === "wait");
+ok("two days with no spend says it isn't delivering", adv({ spendCents: 0 }, 2)[0].title === "It isn't spending");
+ok("results are reported as working", adv({ spendCents: 6000, purchases: 3, roas: 2.5 }, 5).some((a) => a.tone === "good" && /3 purchases/.test(a.title)));
+ok("low click rate suggests a new ad", adv({ spendCents: 6000, purchases: 1, impressions: 20000, clicks: 40 }, 5).some((a) => a.title === "People scroll past the ad"));
+ok("clicks without purchases points at the page", adv({ spendCents: 6000, purchases: 0, impressions: 5000, clicks: 80 }, 5).some((a) => /don't buy/.test(a.title)));
+ok("high frequency suggests refreshing", adv({ spendCents: 6000, purchases: 2, impressions: 8000, reach: 2000, clicks: 100 }, 5).some((a) => /seeing it a lot/.test(a.title)));
+ok("a paused campaign gets no advice", campaignAdvice({ objective: "SALES", metrics: m({}), liveSince: now, live: false, dailyBudgetCents: 2000, now }).length === 0);
+ok("advice never says MAIRO will raise the budget itself", adv({ spendCents: 6000, purchases: 3, roas: 3 }, 9).every((a) => !/MAIRO will raise|raising your budget now/i.test(a.detail)));
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
 process.exit(bad === 0 ? 0 : 1);
