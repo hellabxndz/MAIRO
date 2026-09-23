@@ -4,8 +4,9 @@ import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { notify } from "@/lib/notifications/notify";
 import { checkMonthlyCap, checkStopLoss, usd } from "@/lib/protection/rules";
 
-// Spend Protection, applied. Runs with the scheduled detector (hourly), and
-// works at every automation level: protecting money isn't optimising it, so
+// Spend Protection, applied. Runs with the daily scheduled detector and
+// whenever the business opens its dashboard or campaigns (at most every 15
+// minutes — see maybeRunSpendProtection), and works at every automation level: protecting money isn't optimising it, so
 // it never waits for Assisted or Autopilot to be switched on.
 //
 // It can only do two things: tell the customer, or pause. It never raises a
@@ -180,7 +181,7 @@ export async function runSpendProtection(organizationId: string): Promise<number
           evidence: { spendCents: check.spendCents },
           smsBody: `MAIRO: "${c.name}" spent ${usd(check.spendCents)} with no results${result.ok ? " and was paused" : ""}.`,
         });
-        // A pause that keeps failing is logged once, not every hour.
+        // A pause that keeps failing is logged once, not on every check.
         if (result.ok || written.created) {
           await db.protectionEvent.create({
             data: {
@@ -217,4 +218,29 @@ export async function runSpendProtection(organizationId: string): Promise<number
     }
   }
   return acted;
+}
+
+const PAGE_CHECK_MS = 15 * 60 * 1000;
+
+/**
+ * Runs the checks from a page load, at most every 15 minutes per business.
+ * The claim is atomic, so two tabs loading at once don't both run it.
+ */
+export async function maybeRunSpendProtection(organizationId: string): Promise<void> {
+  const cutoff = new Date(Date.now() - PAGE_CHECK_MS);
+  await db.spendProtection.upsert({
+    where: { organizationId },
+    create: { organizationId },
+    update: {},
+  });
+  const claim = await db.spendProtection.updateMany({
+    where: { organizationId, OR: [{ checkedAt: null }, { checkedAt: { lt: cutoff } }] },
+    data: { checkedAt: new Date() },
+  });
+  if (claim.count === 0) return;
+  try {
+    await runSpendProtection(organizationId);
+  } catch (error) {
+    console.error("Spend Protection page check failed:", error);
+  }
 }

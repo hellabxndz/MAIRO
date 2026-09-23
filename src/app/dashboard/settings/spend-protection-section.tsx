@@ -28,7 +28,7 @@ export function SpendProtectionSection({
       <div id="spend-protection" className="scroll-mt-24">
         <h2 className="text-base text-white">Spend Protection</h2>
         <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-neutral-400">
-          Limits MAIRO checks every hour, whatever your automation level. They can only warn you or pause a campaign —
+          Limits MAIRO checks at least once a day and whenever you open MAIRO, whatever your automation level. They can only warn you or pause a campaign —
           never raise a budget or start anything.
         </p>
       </div>
@@ -72,8 +72,8 @@ export function SpendProtectionSection({
             </div>
           )}
           <p className="mt-2 pl-6 text-xs text-neutral-500">
-            When it&rsquo;s reached, MAIRO pauses every running campaign until next month or until you raise it. It&rsquo;s checked hourly,
-            so the networks can spend a little past it before the pause lands.
+            When it&rsquo;s reached, MAIRO pauses every running campaign until next month or until you raise it. Because it&rsquo;s checked
+            periodically rather than continuously, the networks can spend a little past it before the pause lands.
           </p>
         </div>
 

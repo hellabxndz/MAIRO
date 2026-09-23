@@ -1185,6 +1185,9 @@ model SpendProtection {
   monthlyCapCents Int?
   /// Warn when month-to-date spend passes this share of the cap.
   warnAtPercent   Int  @default(80)
+  /// When the limits were last checked, so a page load doesn't recheck them
+  /// every time.
+  checkedAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

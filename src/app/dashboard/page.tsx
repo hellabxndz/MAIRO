@@ -18,6 +18,7 @@ import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { readinessFor } from "@/lib/readiness";
 import { ReadinessPanel } from "@/components/readiness-panel";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
+import { maybeRunSpendProtection } from "@/lib/protection/run";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { campaignHealth } from "@/lib/campaigns/health";
 import { organizationActions } from "@/lib/campaigns/action-log";
@@ -47,6 +48,8 @@ export default async function DashboardOverviewPage() {
   // at all unless a campaign is built and every setup step is genuinely
   // finished — see src/lib/campaigns/auto-launch.ts for what it refuses to do.
   const launched = await maybeGoLive(organizationId);
+  // Spend limits, checked here too: the scheduled run is only daily.
+  await maybeRunSpendProtection(organizationId).catch(() => undefined);
 
   const [organization, plan, connections, campaigns, creativeCount] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),

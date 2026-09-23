@@ -18,6 +18,7 @@ import { DeleteCampaign } from "./delete-campaign";
 import { DestinationControl } from "./destination-control";
 import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
+import { maybeRunSpendProtection } from "@/lib/protection/run";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
@@ -65,6 +66,8 @@ export default async function CampaignsPage() {
   // so somebody who finishes their setup and lands here rather than on the
   // overview gets the same behaviour.
   await maybeGoLive(organizationId);
+  // Spend limits, checked here too: the scheduled run is only daily.
+  await maybeRunSpendProtection(organizationId).catch(() => undefined);
   await syncAdReviews(organizationId).catch(() => 0);
 
   const [
