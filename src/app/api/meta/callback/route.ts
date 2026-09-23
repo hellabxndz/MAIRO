@@ -11,6 +11,7 @@ import {
 import { stopExploring } from "@/lib/explore-mode";
 import { saveMetaConnection } from "@/lib/meta/connection";
 import { activeOrganizationId } from "@/lib/active-org";
+import { RETURN_COOKIE, safeReturnTo } from "@/lib/meta/return-to";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
@@ -110,7 +111,11 @@ export async function GET(req: NextRequest) {
     // A connected account that cannot be charged is the single most common
     // reason a first campaign never runs, so it is called out on arrival
     // rather than left for the customer to find.
-    const url = new URL("/dashboard/meta", origin);
+    // Back to where they started, when that was somewhere else — the
+    // campaign they were planning picks up where it left off.
+    const returnTo = safeReturnTo(cookieStore.get(RETURN_COOKIE)?.value);
+    cookieStore.delete(RETURN_COOKIE);
+    const url = new URL(returnTo ?? "/dashboard/meta", origin);
     url.searchParams.set("connected", "1");
     if (chosen.account_status !== 1) url.searchParams.set("checkBilling", "1");
     return NextResponse.redirect(url);

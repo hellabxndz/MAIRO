@@ -16,6 +16,7 @@ import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { isWizardStep, newPlan, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
 import { recommendAllocation } from "@/lib/budget/allocation";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
+import { connectionSummaries } from "@/lib/ad-platforms/connections";
 
 // One route for every service on the create screen.
 //
@@ -37,19 +38,19 @@ export default async function CreateServicePage({
   searchParams,
 }: {
   params: Promise<{ service: string }>;
-  searchParams: Promise<{ draft?: string | string[] }>;
+  searchParams: Promise<{ draft?: string | string[]; posts?: string; connected?: string }>;
 }) {
   const { service: slug } = await params;
   const service = SERVICES[slug];
   if (!service) notFound();
-  const { draft: draftParam } = await searchParams;
+  const { draft: draftParam, posts: postsParam, connected: connectedParam } = await searchParams;
   const draftId = typeof draftParam === "string" ? draftParam.slice(0, 64) : null;
 
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, intake, pixel, draft, balance, costs, mode] = await Promise.all([
+  const [organization, intake, pixel, draft, balance, costs, mode, connections] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -80,6 +81,7 @@ export default async function CreateServicePage({
     creditBalance(organizationId),
     creditCosts(),
     viewMode(),
+    connectionSummaries(organizationId),
   ]);
   if (!organization) redirect("/sign-in");
 
@@ -140,6 +142,9 @@ export default async function CreateServicePage({
         pixelActive={pixelActive}
         businessPhone={organization.phone}
         autoLaunchHeld={organization.autoLaunchHeld}
+        connected={service.platforms.filter((p) => connections.get(p)?.connected)}
+        justConnected={connectedParam === "1"}
+        openPosts={postsParam === "1"}
         mode={mode}
         studio={{
           assistantName: assistantNameOf(organization.assistantName),

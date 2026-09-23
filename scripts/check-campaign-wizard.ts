@@ -18,6 +18,7 @@ import { explainAdReview } from "@/lib/meta/ad-review";
 import { previewSrc } from "@/lib/meta/preview-formats";
 import { checkMonthlyCap, checkStopLoss, resultsFor } from "@/lib/protection/rules";
 import { campaignAdvice } from "@/lib/campaigns/advice";
+import { safeReturnTo } from "@/lib/meta/return-to";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 
 let bad = 0;
@@ -232,6 +233,15 @@ ok("clicks without purchases points at the page", adv({ spendCents: 6000, purcha
 ok("high frequency suggests refreshing", adv({ spendCents: 6000, purchases: 2, impressions: 8000, reach: 2000, clicks: 100 }, 5).some((a) => /seeing it a lot/.test(a.title)));
 ok("a paused campaign gets no advice", campaignAdvice({ objective: "SALES", metrics: m({}), liveSince: now, live: false, dailyBudgetCents: 2000, now }).length === 0);
 ok("advice never says MAIRO will raise the budget itself", adv({ spendCents: 6000, purchases: 3, roas: 3 }, 9).every((a) => !/MAIRO will raise|raising your budget now/i.test(a.detail)));
+
+console.log("\n— after connecting Meta, only ever back into the dashboard —");
+ok("a draft is a fine place to return to", safeReturnTo("/dashboard/create/meta?draft=abc&posts=1") === "/dashboard/create/meta?draft=abc&posts=1");
+ok("another site is refused", safeReturnTo("https://evil.test/dashboard/") === null);
+ok("a protocol-relative address is refused", safeReturnTo("//evil.test/dashboard/x") === null);
+ok("a backslash trick is refused", safeReturnTo("/dashboard/\\evil.test") === null);
+ok("climbing out of the dashboard is refused", safeReturnTo("/dashboard/../admin") === null);
+ok("outside the dashboard is refused", safeReturnTo("/api/meta/connect") === null);
+ok("nothing is nothing", safeReturnTo(null) === null);
 
 console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
 process.exit(bad === 0 ? 0 : 1);

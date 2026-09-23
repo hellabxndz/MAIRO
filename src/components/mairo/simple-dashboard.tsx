@@ -10,6 +10,8 @@ import { SpendControls, type SpendFigures } from "@/components/mairo/spend-contr
 import { InsightCards } from "@/components/mairo/insight-cards";
 import type { Notification } from "@/generated/prisma/client";
 import { CampaignHealthPanel, AIActionCard } from "@/components/mairo/campaign-parts";
+import { FirstSteps } from "@/components/mairo/first-steps";
+import type { Readiness } from "@/lib/readiness";
 
 // Simple View, built from the MAIRO dashboard reference.
 //
@@ -254,6 +256,10 @@ export type SimpleDashboardProps = {
   automationLevel: AutomationLevel;
   /** Unread things MAIRO noticed without being asked. At most two. */
   insights: Notification[];
+  /** The steps to a first campaign, shown until they're all done. */
+  readiness: Readiness;
+  monthlyPlan: { summary: string } | null;
+  monthLabel: string;
 };
 
 function greeting(): string {
@@ -288,6 +294,9 @@ export function SimpleDashboard({
   spend,
   automationLevel,
   insights,
+  readiness,
+  monthlyPlan,
+  monthLabel,
 }: SimpleDashboardProps) {
   const t = performance.total;
 
@@ -352,6 +361,8 @@ export function SimpleDashboard({
           </div>
         </div>
       </GlassPanel>
+
+      <FirstSteps readiness={readiness} monthlyPlan={monthlyPlan} monthLabel={monthLabel} />
 
       {/* ================= metrics ================= */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]">

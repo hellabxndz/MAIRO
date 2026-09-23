@@ -174,6 +174,9 @@ export default async function DashboardOverviewPage() {
         }}
         automationLevel={automation?.level ?? "MANUAL"}
         insights={insights}
+        readiness={readiness}
+        monthlyPlan={plan ? { summary: plan.strategySummary } : null}
+        monthLabel={formatMonthKey(currentMonthKey())}
       />
     );
   }

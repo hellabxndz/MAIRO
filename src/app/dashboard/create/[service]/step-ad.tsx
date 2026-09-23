@@ -34,17 +34,24 @@ export function StepAd({
   plan,
   update,
   studio,
+  metaConnected,
+  onConnectMeta,
+  openPosts,
 }: {
   plan: CampaignPlan;
   update: (patch: Partial<CampaignPlan>) => void;
   studio: StudioProps;
+  metaConnected: boolean;
+  /** Saves the draft and connects Meta, coming back to the post choices. */
+  onConnectMeta: () => void;
+  openPosts: boolean;
 }) {
   const [posts, setPosts] = useState<Partial<Record<"FACEBOOK_POST" | "INSTAGRAM_POST", PagePost[]>>>({});
   const [postError, setPostError] = useState<string | null>(null);
   const [accountAds, setAccountAds] = useState<AccountAd[] | null>(null);
   const [adsError, setAdsError] = useState<string | null>(null);
   const [loading, startLoading] = useTransition();
-  const [menu, setMenu] = useState<"main" | "posts" | "upload">("main");
+  const [menu, setMenu] = useState<"main" | "posts" | "upload">(openPosts && plan.adChoice === "none" ? "posts" : "main");
   const usesMeta = plan.service !== "tiktok";
   // Videos and existing ads are Meta ads; a two-network campaign can't run
   // them on TikTok, so they're offered on Meta campaigns only.
@@ -167,8 +174,24 @@ export function StepAd({
           </Note>
           <BackLink onClick={back} />
         </div>
+      ) : menu === "posts" && !metaConnected ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border p-5" style={{ borderColor: "rgba(108,158,255,0.35)", background: "rgba(61,125,255,0.05)" }}>
+            <p className="text-[14px] text-white">First, connect your Facebook &amp; Instagram</p>
+            <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">
+              Your posts live on your Facebook Page and Instagram account, so MAIRO needs your permission to see them. Your
+              campaign so far is saved — you&rsquo;ll come straight back here to pick the post.
+            </p>
+            <button type="button" onClick={onConnectMeta}
+              className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+              Connect Facebook &amp; Instagram →
+            </button>
+          </div>
+          <BackLink onClick={() => setMenu("main")} />
+        </div>
       ) : menu === "posts" ? (
         <div className="space-y-4">
+          <p className="text-[13px] text-white">Which post would you like to use?</p>
           <div className="grid gap-2.5 sm:grid-cols-2">
             <Choice selected={false} onClick={() => choosePosts("FACEBOOK_POST")} label="A Facebook post" sub="From your Facebook Page" />
             <Choice selected={false} onClick={() => choosePosts("INSTAGRAM_POST")} label="An Instagram post" sub="From the Instagram account linked to your Page" />

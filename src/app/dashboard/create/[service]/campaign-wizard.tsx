@@ -67,10 +67,18 @@ type Props = {
   autoLaunchHeld: boolean;
   mode: "simple" | "advanced";
   studio: StudioProps;
+  /** This campaign's networks that are connected right now. */
+  connected: AdPlatform[];
+  /** Arrived straight back from connecting Meta. */
+  justConnected: boolean;
+  /** Open the existing-post choices on arrival (after connecting for them). */
+  openPosts: boolean;
 };
 
 export function CampaignWizard(props: Props) {
-  const { orgName, platforms, defaultDestination, pixelActive, businessPhone, autoLaunchHeld, mode, studio } = props;
+  const { orgName, platforms, defaultDestination, pixelActive, businessPhone, autoLaunchHeld, mode, studio, connected } = props;
+  const missing = platforms.filter((p) => !connected.includes(p));
+  const metaConnected = connected.includes("META");
   const router = useRouter();
 
   const [plan, setPlan] = useState<CampaignPlan>(() => ({
@@ -167,6 +175,22 @@ export function CampaignWizard(props: Props) {
     if (target === REVIEW_INDEX && (reviewStale || !review)) void runReview(plan);
   }
 
+  /**
+   * Saves the draft, then sends them to connect Meta and back to this exact
+   * screen — so connecting never costs them what they've planned.
+   */
+  async function connectMeta(extra = "") {
+    const id = (await saveDraft(current, plan)) ?? draftIdRef.current;
+    const params = new URLSearchParams();
+    if (id) params.set("draft", id);
+    if (extra) params.set(extra, "1");
+    const back = `/dashboard/create/${plan.service}?${params.toString()}`;
+    // A full page load on purpose: this is an API route that hands off to
+    // Facebook's sign-in, not a page the client router can show.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = `/api/meta/connect?returnTo=${encodeURIComponent(back)}`;
+  }
+
   function fix(step: ReviewStep) {
     goTo(STEPS.findIndex((s) => s.id === step));
   }
@@ -207,7 +231,10 @@ export function CampaignWizard(props: Props) {
 
   // Follows what they said they're advertising on the first screen.
   const recommended = recommendedGoal({ promotes: plan.promotes, defaultDestination, hasActivePixel: pixelActive });
-  const blocked = blockedBecause(current, plan, { review, reviewStale, checking, confirmed });
+  const blocked =
+    current === "launch" && missing.length > 0
+      ? "Connect your account above to make the campaign."
+      : blockedBecause(current, plan, { review, reviewStale, checking, confirmed });
   const spend = plannedSpend(plan);
 
   return (
@@ -283,13 +310,52 @@ export function CampaignWizard(props: Props) {
             if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
           }}
         >
+          {props.justConnected && missing.length === 0 && (
+            <p className="mb-6 rounded-xl border px-4 py-3 text-[13px] text-live" style={{ borderColor: "rgba(52,211,153,0.3)", background: "rgba(52,211,153,0.05)" }}>
+              Connected — carry on where you left off.
+            </p>
+          )}
+          {missing.length > 0 && (
+            <div className="mb-8 rounded-xl border p-5" style={{ borderColor: "rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.05)" }}>
+              <p className="text-[14px] text-white">
+                Connect your {missing.map((p) => (p === "META" ? "Facebook & Instagram" : "TikTok")).join(" and ")} account to make this campaign
+              </p>
+              <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">
+                You can plan everything now — it saves as you go — but MAIRO can&rsquo;t create the campaign until the account is
+                connected. Nothing is spent before then.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {missing.includes("META") && (
+                  <button type="button" onClick={() => void connectMeta()}
+                    className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
+                    Connect Facebook &amp; Instagram
+                  </button>
+                )}
+                {missing.includes("TIKTOK") && (
+                  <Link href="/dashboard/integrations" className="rounded-full border px-4 py-2 text-[12.5px] text-white/90" style={{ borderColor: "var(--mairo-line)" }}>
+                    Connect TikTok
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
           {current === "business" && <StepBusiness plan={plan} update={update} orgName={orgName} />}
           {current === "goal" && (
             <StepGoal plan={plan} update={update} recommended={recommended} pixelActive={pixelActive} businessPhone={businessPhone} mode={mode} />
           )}
           {current === "audience" && <StepAudience plan={plan} update={update} mode={mode} />}
           {current === "budget" && <StepBudget plan={plan} update={update} />}
-          {current === "ad" && <StepAd plan={plan} update={update} studio={studio} />}
+          {current === "ad" && (
+            <StepAd
+              plan={plan}
+              update={update}
+              studio={studio}
+              metaConnected={metaConnected}
+              onConnectMeta={() => void connectMeta("posts")}
+              openPosts={props.openPosts}
+            />
+          )}
           {current === "review" && (
             <StepReview review={reviewStale ? null : review} error={reviewError} checking={checking} onRecheck={() => void runReview(plan)} onFix={fix} />
           )}
