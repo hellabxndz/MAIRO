@@ -1,3 +1,4 @@
+import type { Audience } from "@/lib/campaigns/audience";
 import type {
   AdGoal,
   AdPlatform,
@@ -114,6 +115,8 @@ export type CreateCampaignInput = {
    * the campaign already exists.
    */
   hasConversionTracking?: boolean;
+  /** The pixel event to optimise for, when there is one (TikTok picks its objective from it). */
+  conversionEvent?: string | null;
   /**
    * What a click does, when it changes how the campaign itself must be made.
    *
@@ -198,6 +201,11 @@ export type CreateAdGroupInput = {
   advantageAudience?: boolean;
   /** This network's share of a total-budget campaign, for networks that budget per ad group. */
   lifetimeBudgetCents?: number | null;
+  /**
+   * Who sees it, in MAIRO's own terms, for networks that don't take Meta's
+   * targeting shape (`targeting` above is Meta's). TikTok builds from this.
+   */
+  audience?: Audience | null;
 };
 
 export type CreateAdInput = {
@@ -225,6 +233,13 @@ export type CreateAdInput = {
    * account. Nothing is uploaded or written; the creative already has both.
    */
   reuseCreativeId?: string | null;
+  /**
+   * A video ad for networks that fetch the file themselves (TikTok): the
+   * public address of the video and of a still for its cover.
+   */
+  video?: { url: string; posterUrl: string } | null;
+  /** The name the ad appears under, where the network needs one (TikTok). */
+  displayName?: string | null;
   /**
    * What a click does. Networks build a different creative for each, so this
    * is required — an ad with nowhere to go is not an ad.

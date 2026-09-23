@@ -5,6 +5,7 @@ import { goalOption, supportsDestination } from "@/lib/campaigns/objectives";
 import type { LandingProbe } from "@/lib/campaigns/landing-probe";
 import { checkCopy, maxTestAds, unsupportedNumbers } from "@/lib/campaigns/ad-copy";
 import { hasOwnWords, runningCopy } from "@/lib/campaigns/plan";
+import { TIKTOK_TEXT_MAX } from "@/lib/ad-platforms/tiktok/delivery";
 
 // The checks run before a campaign is built. Each one is a rule MAIRO can
 // actually verify from the plan and the account, not a score. Blocking issues
@@ -193,6 +194,19 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
     const cap = maxTestAds(plannedSpend(plan, now).perDayCents);
     if (plan.testing && words.length > cap) {
       add({ id: "test-too-big", severity: "blocking", area: "Budget", title: "Too many versions for this budget", detail: `At this budget MAIRO can fairly test ${cap} version${cap === 1 ? "" : "s"} — each needs about $5 a day. Run fewer, or raise the budget.`, fix: "ad" });
+    }
+  }
+  // TikTok: video ads that link to a website, and nothing else.
+  if (plan.service !== "meta") {
+    if (plan.destinationType && plan.destinationType !== "WEBSITE") {
+      add({ id: "tiktok-website", severity: "blocking", area: "Destination", title: "TikTok ads link to a website", detail: "TikTok has no call, message or form ads, so a campaign that runs there needs a website as its destination.", fix: "goal" });
+    }
+    if (plan.adChoice !== "video") {
+      add({ id: "tiktok-video", severity: "blocking", area: "Advertisement", title: "TikTok needs a video", detail: "TikTok only runs video ads. Upload a video — vertical, 9 to 30 seconds works best.", fix: "ad" });
+    }
+    const long = runningCopy(plan).some((w) => w.primaryText.trim().length > TIKTOK_TEXT_MAX);
+    if (long) {
+      add({ id: "tiktok-text", severity: "recommendation", area: "Advertisement", title: "TikTok shows 100 characters of text", detail: "The text is longer than TikTok allows, so MAIRO trims it at a word there. Shorter text also reads better on a video.", fix: "ad" });
     }
   }
   if (!post && !ownVisual && !facts.hasApprovedCreative) {

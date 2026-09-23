@@ -62,26 +62,41 @@ type RequestOptions = {
   accessToken?: string;
   params?: Record<string, string | number | undefined>;
   body?: Record<string, unknown>;
+  /**
+   * Sent as multipart/form-data instead of JSON — the file upload endpoints
+   * take only that. Values are strings, or a Blob for a file.
+   */
+  form?: Record<string, string | Blob>;
   /** Overrides the base, for the OAuth endpoints that sit outside open_api. */
   baseUrl?: string;
 };
 
 export async function tiktokRequest<T = unknown>(
   path: string,
-  { method = "GET", accessToken, params = {}, body, baseUrl }: RequestOptions = {}
+  { method = "GET", accessToken, params = {}, body, form, baseUrl }: RequestOptions = {}
 ): Promise<T> {
   const url = new URL(`${baseUrl ?? API_BASE}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  // A multipart body sets its own Content-Type, boundary included.
+  const headers: Record<string, string> = form ? {} : { "Content-Type": "application/json" };
   if (accessToken) headers["Access-Token"] = accessToken;
+  let payload: string | FormData | undefined = body ? JSON.stringify(body) : undefined;
+  if (form) {
+    const fd = new FormData();
+    for (const [key, value] of Object.entries(form)) {
+      if (typeof value === "string") fd.append(key, value);
+      else fd.append(key, value, key);
+    }
+    payload = fd;
+  }
 
   const res = await fetch(url.toString(), {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: payload,
     cache: "no-store",
   });
 

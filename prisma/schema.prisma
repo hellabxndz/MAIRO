@@ -800,6 +800,10 @@ model PlatformConnection {
   status    PlatformConnectionStatus @default(CONNECTED)
   lastError String?                  @db.Text
 
+  /// TikTok: the custom identity (name and profile picture) ads appear
+  /// under, made once per advertiser and reused.
+  tiktokIdentityId String?
+
   platformCampaigns PlatformCampaign[]
 
   connectedAt DateTime @default(now())

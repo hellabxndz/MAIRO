@@ -56,6 +56,8 @@ export function StepAd({
   // Videos and existing ads are Meta ads; a two-network campaign can't run
   // them on TikTok, so they're offered on Meta campaigns only.
   const metaOnly = plan.service === "meta";
+  // A campaign that includes TikTok needs a video; see the menu below.
+  const videoOnly = plan.service !== "meta";
 
   const back = () => {
     setMenu("main");
@@ -125,6 +127,7 @@ export function StepAd({
         <div className="space-y-4">
           <VideoUpload
             organizationId={studio.organizationId}
+            forTikTok={plan.service !== "meta"}
             onUploaded={(video) => update({ adChoice: "video", video, ...RESET_WORDS })}
           />
           <BackLink onClick={back} />
@@ -213,6 +216,23 @@ export function StepAd({
           </div>
           <BackLink onClick={() => setMenu("main")} />
         </div>
+      ) : videoOnly ? (
+        // TikTok is a video platform: its ads are videos, so a campaign that
+        // runs there needs one. The same video runs on Meta too.
+        <div className="space-y-4">
+          <Note>
+            TikTok only runs video ads, so this campaign needs a video{plan.service === "multi" ? " — the same one runs on Facebook and Instagram too" : ""}.
+            Vertical (9:16), 9–30 seconds, with the point in the first three seconds works best.
+          </Note>
+          {studio.storageReady ? (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <Choice selected={false} onClick={() => update({ adChoice: "video", video: null, ...RESET_WORDS })}
+                label="Upload a video" sub="MP4 or MOV, checked against TikTok's and Meta's rules before it uploads" />
+            </div>
+          ) : (
+            <p className="text-[12.5px] text-faint">Video uploads need file storage, which isn&rsquo;t switched on for this deployment yet.</p>
+          )}
+        </div>
       ) : (
         <div className="grid gap-2.5 sm:grid-cols-2">
           {studio.configured && (
@@ -237,7 +257,7 @@ export function StepAd({
         <CopyEditor plan={plan} update={update} assistantName={studio.assistantName} />
       )}
 
-      {!studio.configured && plan.adChoice === "none" && menu === "main" && (
+      {!studio.configured && !videoOnly && plan.adChoice === "none" && menu === "main" && (
         <p className="mt-4 text-[12px] text-faint">Making an ad with AI needs AI Creative Studio, which isn&rsquo;t switched on for this deployment yet.</p>
       )}
     </Question>

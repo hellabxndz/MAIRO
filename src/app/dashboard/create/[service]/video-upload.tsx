@@ -53,9 +53,12 @@ function measure(file: File): Promise<Measured> {
 export function VideoUpload({
   organizationId,
   onUploaded,
+  forTikTok = false,
 }: {
   organizationId: string;
   onUploaded: (video: PlanVideo) => void;
+  /** Hold the video to TikTok's rules too. */
+  forTikTok?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [check, setCheck] = useState<MediaCheck | null>(null);
@@ -72,7 +75,7 @@ export function VideoUpload({
       setError(e instanceof Error ? e.message : "Couldn't read that video.");
       return;
     }
-    const result = checkVideo({ type: file.type, bytes: file.size, ...measured });
+    const result = checkVideo({ type: file.type, bytes: file.size, ...measured, forTikTok });
     setCheck(result);
     if (result.problems.length > 0) return;
 

@@ -135,3 +135,12 @@ export function recommendedGoal(input: {
   if (input.promotes === "SERVICE") return "LEADS";
   return input.hasActivePixel ? "SALES" : "TRAFFIC";
 }
+
+/**
+ * The destinations a goal offers for a service. TikTok ads link to a website
+ * only, so a campaign that includes TikTok offers only that.
+ */
+export function destinationsForService(goal: AdGoal, service: "meta" | "tiktok" | "multi"): DestinationOption[] {
+  const all = destinationsFor(goal);
+  return service === "meta" ? all : all.filter((d) => d.type === "WEBSITE");
+}

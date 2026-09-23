@@ -31,6 +31,15 @@ import {
   fetchAdvertiserTimeZone,
   grantedScopes,
 } from "./oauth";
+import {
+  tiktokAdText,
+  tiktokAgeGroups,
+  tiktokCta,
+  tiktokDelivery,
+  tiktokGender,
+  US_LOCATION_ID,
+} from "./delivery";
+import { ensureIdentity, findTikTokCity, uploadImageByUrl, uploadVideoByUrl, waitForTikTokVideo } from "./media";
 import { isSchedulable, wallClockInZone } from "@/lib/campaigns/schedule";
 
 // TikTok's half of the AdPlatform interface.
@@ -44,27 +53,11 @@ import { isSchedulable, wallClockInZone } from "@/lib/campaigns/schedule";
 // every number on it a lie.
 
 /**
- * MAIRO's goals mapped onto TikTok's objectives.
- *
- * TikTok's vocabulary is close to Meta's but not the same, and the differences
- * matter. There is no direct equivalent of an app-promotion outcome that also
- * works for web advertisers, so APP_PROMOTION maps to TikTok's app objective
- * and will fail for an advertiser with no app registered — which is the honest
- * outcome, rather than quietly running a traffic campaign instead.
+ * The objective TikTok is told, from the goal and whether there's a working
+ * pixel event to optimise for — see tiktokDelivery in ./delivery.
  */
-const OBJECTIVE_MAP: Record<AdGoal, string> = {
-  LEADS: "LEAD_GENERATION",
-  SALES: "CONVERSIONS",
-  AWARENESS: "REACH",
-  TRAFFIC: "TRAFFIC",
-  APP_PROMOTION: "APP_PROMOTION",
-  // Never sent: engagement campaigns are Meta-only and refused before launch
-  // when TikTok is selected (see createCampaignAction).
-  ENGAGEMENT: "ENGAGEMENT",
-};
-
-export function tiktokObjectiveFor(goal: AdGoal): string {
-  return OBJECTIVE_MAP[goal];
+export function tiktokObjectiveFor(goal: AdGoal, conversionEvent?: string | null): string {
+  return tiktokDelivery(goal, conversionEvent ? { event: conversionEvent } : null).objective;
 }
 
 /**
@@ -249,7 +242,7 @@ export const tiktokAdapter: AdPlatformAdapter = {
         body: {
           advertiser_id: loaded.creds.externalAccountId,
           campaign_name: input.name,
-          objective_type: tiktokObjectiveFor(input.goal),
+          objective_type: tiktokObjectiveFor(input.goal, input.hasConversionTracking ? input.conversionEvent : null),
           ...(input.lifetimeBudgetCents
             ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
             : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) }),
@@ -273,12 +266,27 @@ export const tiktokAdapter: AdPlatformAdapter = {
     const loaded = await credentialsOr<CreatedEntity>(input.organizationId);
     if (!loaded.ok) return loaded.result;
 
+    // TikTok ads send people to a website; there's no call or message
+    // destination here. Refused plainly rather than as a TikTok error.
+    if (input.destination && input.destination.type !== "WEBSITE") {
+      return fail("rejected", "TikTok ads send people to a website. Choose a website as the destination for this campaign.");
+    }
+
+    const delivery = tiktokDelivery(input.goal, input.conversion ?? null);
+    const audience = input.audience ?? null;
+    const a = { accessToken: loaded.creds.accessToken, advertiserId: loaded.creds.externalAccountId };
+
     try {
+      // A chosen town when TikTok knows it; otherwise the whole US. TikTok
+      // has no radius targeting, so the town itself is the area.
+      const city = audience?.geoLabel ? await findTikTokCity(a, audience.geoLabel, delivery.objective) : null;
+      const ages = audience ? tiktokAgeGroups(audience.ageMin, audience.ageMax) : [];
+
       const res = await tiktokRequest<{ adgroup_id: string }>("/adgroup/create/", {
         method: "POST",
         accessToken: loaded.creds.accessToken,
         body: {
-          advertiser_id: loaded.creds.externalAccountId,
+          advertiser_id: a.advertiserId,
           campaign_id: input.externalCampaignId,
           adgroup_name: input.name,
           // A total budget runs to a fixed end, which tiktokSchedule turns
@@ -286,16 +294,21 @@ export const tiktokAdapter: AdPlatformAdapter = {
           ...(input.lifetimeBudgetCents
             ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
             : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) }),
+          ...(delivery.objective === "REACH" ? {} : { promotion_type: "WEBSITE" }),
           placement_type: "PLACEMENT_TYPE_NORMAL",
           placements: ["PLACEMENT_TIKTOK"],
+          location_ids: [city ?? US_LOCATION_ID],
+          ...(ages.length ? { age_groups: ages } : {}),
+          gender: tiktokGender(audience?.genders ?? 0),
+          optimization_goal: delivery.optimizationGoal,
+          billing_event: delivery.billingEvent,
+          bid_type: "BID_TYPE_NO_BID",
+          pacing: "PACING_MODE_SMOOTH",
+          ...(delivery.optimizationGoal === "CONVERT" && input.conversion
+            ? { pixel_id: input.conversion.pixelId, optimization_event: delivery.optimizationEvent }
+            : {}),
           operation_status: "DISABLE",
-          ...(await tiktokSchedule(
-            loaded.creds.accessToken,
-            loaded.creds.externalAccountId,
-            input.startAt,
-            input.endAt
-          )),
-          ...(input.targeting ?? {}),
+          ...(await tiktokSchedule(a.accessToken, a.advertiserId, input.startAt, input.endAt)),
         },
       });
       return ok({ externalId: res.adgroup_id });
@@ -304,27 +317,65 @@ export const tiktokAdapter: AdPlatformAdapter = {
     }
   },
 
+  /**
+   * Builds a video ad: the video and its cover go into the advertiser's
+   * library (TikTok fetches both by URL), the ad appears under the business's
+   * own name, and it links to the campaign's website. The ad group above it
+   * is created switched off, so nothing delivers until it's switched on.
+   */
   async createAd(input: CreateAdInput): Promise<PlatformResult<CreatedEntity>> {
     const loaded = await credentialsOr<CreatedEntity>(input.organizationId);
     if (!loaded.ok) return loaded.result;
 
-    // TikTok will not create an ad without a video already uploaded to its own
-    // media library — there is no "here is a URL, fetch it" form. Uploading is
-    // a separate multi-step flow (upload, poll for processing, then reference
-    // the returned video_id) and MAIRO has no video pipeline yet, so this
-    // reports honestly instead of posting an ad that cannot render.
-    if (!input.creative.mediaUrl) {
-      return fail(
-        "rejected",
-        "A TikTok ad needs a video. Add one to this creative before publishing it."
-      );
+    if (!input.video?.url || !input.video.posterUrl) {
+      return fail("rejected", "TikTok ads have to be videos. Upload a video for this campaign in Create.");
     }
+    if (input.destination.type !== "WEBSITE") {
+      return fail("rejected", "TikTok ads send people to a website. Choose a website as the destination for this campaign.");
+    }
+    const text = tiktokAdText(input.creative.primaryText ?? input.creative.headline ?? "");
+    if (!text) return fail("rejected", "This ad has no text for TikTok. Add the words in Create.");
 
-    return fail(
-      "not_implemented",
-      "Publishing finished videos to TikTok isn't switched on yet. The campaign and ad group are live; " +
-        "the video has to be uploaded in TikTok Ads Manager for now."
-    );
+    const a = { accessToken: loaded.creds.accessToken, advertiserId: loaded.creds.externalAccountId };
+    try {
+      const identityId = await ensureIdentity(input.organizationId, a, input.displayName ?? input.name);
+      const videoId = await uploadVideoByUrl(a, input.video.url, input.name);
+      const ready = await waitForTikTokVideo(a, videoId);
+      if (!ready) {
+        return fail(
+          "unavailable",
+          "TikTok is still processing your video. MAIRO finishes the ad by itself as soon as it's ready — usually within a few minutes."
+        );
+      }
+      const coverId = await uploadImageByUrl(a, input.video.posterUrl, `${input.name}-cover`);
+
+      const res = await tiktokRequest<{ ad_ids?: string[] }>("/ad/create/", {
+        method: "POST",
+        accessToken: a.accessToken,
+        body: {
+          advertiser_id: a.advertiserId,
+          adgroup_id: input.externalAdGroupId,
+          creatives: [
+            {
+              ad_name: input.name.slice(0, 100),
+              identity_type: "CUSTOMIZED_USER",
+              identity_id: identityId,
+              ad_format: "SINGLE_VIDEO",
+              video_id: videoId,
+              image_ids: [coverId],
+              ad_text: text,
+              call_to_action: tiktokCta(input.creative.cta),
+              landing_page_url: input.destination.url,
+            },
+          ],
+        },
+      });
+      const adId = res.ad_ids?.[0];
+      if (!adId) return fail("rejected", "TikTok accepted the ad but returned no ad id.");
+      return ok({ externalId: adId });
+    } catch (error) {
+      return toFailure(input.organizationId, error, "Couldn't build the ad on TikTok.");
+    }
   },
 
   /**
@@ -611,22 +662,26 @@ async function tiktokSchedule(
   startAt: Date | null | undefined,
   endAt?: Date | null
 ): Promise<Record<string, string>> {
-  if (!isSchedulable(startAt) && !endAt) return {};
-
-  const zone = await fetchAdvertiserTimeZone(accessToken, advertiserId);
-  if (!zone) return {};
+  // TikTok requires a schedule type and start on every ad group, even one
+  // that should simply start as soon as it's approved. An unreadable time zone
+  // falls back to UTC — for a US advertiser that puts the start a few hours
+  // later, never earlier.
+  const zone = (await fetchAdvertiserTimeZone(accessToken, advertiserId).catch(() => null)) ?? "UTC";
+  const soon = new Date(Date.now() + 10 * 60 * 1000);
 
   // An end date means START_END, which needs a start too; with none booked it
   // starts a few minutes out, which TikTok treats as now.
   if (endAt) {
-    const start = isSchedulable(startAt) ? startAt : new Date(Date.now() + 10 * 60 * 1000);
+    const start = isSchedulable(startAt) ? startAt : soon;
     return {
       schedule_type: "SCHEDULE_START_END",
       schedule_start_time: wallClockInZone(start, zone),
       schedule_end_time: wallClockInZone(endAt, zone),
     };
   }
-  if (!isSchedulable(startAt)) return {};
+  if (!isSchedulable(startAt)) {
+    return { schedule_type: "SCHEDULE_FROM_NOW", schedule_start_time: wallClockInZone(soon, zone) };
+  }
 
   return {
     // FROM_NOW rather than START_END: the customer picked when to begin and

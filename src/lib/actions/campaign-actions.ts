@@ -249,6 +249,10 @@ export async function createCampaignAction(
   if (goalOption(objective).metaOnly && platforms.some((p) => p !== "META")) {
     return { error: `"${goalOption(objective).label}" runs on Meta only. Choose a Meta campaign for it.` };
   }
+  // TikTok ads link to a website; there's no call, message or form ad there.
+  if (platforms.includes("TIKTOK") && (parsed.data.destinationType ?? "WEBSITE") !== "WEBSITE") {
+    return { error: "TikTok ads send people to a website. Choose a website as the destination, or make this a Meta-only campaign." };
+  }
 
   // A total budget is spent by an end date, so it needs one — and both networks
   // refuse a lifetime budget without it.
@@ -405,6 +409,7 @@ export async function createCampaignAction(
       perDayCents: totalDailyBudgetCents,
       businessName: organization.name,
       usesMeta: platforms.includes("META"),
+      usesTikTok: platforms.includes("TIKTOK"),
     });
     if (!resolved.ok) return { error: resolved.error };
     ads = resolved.ads;

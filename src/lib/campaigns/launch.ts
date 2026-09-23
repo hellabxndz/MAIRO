@@ -314,6 +314,7 @@ export async function launchOne(input: {
     specialAdCategory: input.specialAdCategory ?? null,
     activate: input.activate,
     hasConversionTracking: Boolean(conversion),
+    conversionEvent: conversion?.event ?? null,
     destination: campaignDestination ?? undefined,
   });
 
@@ -536,6 +537,10 @@ async function buildDeliverable(input: {
         ...(input.platform === "META" ? metaPlacementTargeting(options.placements) : {}),
       },
       advantageAudience: options.advantageAudience && !options.specialAdCategory,
+      // MAIRO's own terms, for networks that don't use Meta's targeting shape.
+      audience: options.specialAdCategory
+        ? restrictForSpecialCategory(await audienceFor(input.mairoCampaignId))
+        : await audienceFor(input.mairoCampaignId),
       lifetimeBudgetCents: options.lifetimeBudgetCents,
       destination: destination ?? undefined,
       pageId: await pageIdFor(input.organizationId, input.platform),
@@ -669,9 +674,20 @@ async function buildCampaignAds(input: {
     where: { mairoCampaignId: input.mairoCampaignId },
     orderBy: { position: "asc" },
   });
-  // TikTok runs the first picture only: testing and video are Meta features here.
-  const ads = input.platform === "META" ? all : all.filter((a) => a.kind === "IMAGE").slice(0, 1);
-  if (ads.length === 0) return null;
+  // TikTok runs video only — every version of it, so a test runs there too.
+  // A campaign whose ads are all pictures or existing Meta ads can't run on
+  // TikTok, and says so rather than building an ad TikTok would refuse.
+  const ads = input.platform === "META" ? all : all.filter((a) => a.kind === "VIDEO");
+  if (ads.length === 0) {
+    if (input.platform === "TIKTOK" && all.length > 0) {
+      return { ok: false, blocker: "TikTok ads have to be videos. Upload a video for this campaign to run it on TikTok." };
+    }
+    return null;
+  }
+  const business = await db.mairoCampaign.findUnique({
+    where: { id: input.mairoCampaignId },
+    select: { organization: { select: { name: true } } },
+  });
 
   const creds = input.platform === "META" ? await loadCredentials(input.organizationId, "META") : null;
   const ids: string[] = [];
@@ -679,7 +695,7 @@ async function buildCampaignAds(input: {
 
   for (const [index, ad] of ads.entries()) {
     const name = index === 0 ? input.name : `${input.name} — version ${index + 1}`;
-    const built = await adInputFor(input.organizationId, ad, creds);
+    const built = await adInputFor(input.organizationId, ad, creds, input.platform);
     if (!built.ok) {
       if (index === 0) return { ok: false, blocker: built.blocker };
       failures.push(built.blocker);
@@ -690,6 +706,7 @@ async function buildCampaignAds(input: {
       externalAdGroupId: input.adGroupId,
       name,
       destination: input.destination,
+      displayName: business?.organization.name ?? null,
       ...built.input,
     });
     if (!created.ok) {
@@ -715,12 +732,27 @@ type CampaignAdRow = Awaited<ReturnType<typeof db.campaignAd.findMany>>[number];
 async function adInputFor(
   organizationId: string,
   ad: CampaignAdRow,
-  creds: Awaited<ReturnType<typeof loadCredentials>>
+  creds: Awaited<ReturnType<typeof loadCredentials>>,
+  platform: AdPlatform = "META"
 ): Promise<
-  | { ok: true; input: Pick<CreateAdInput, "creative" | "metaVideoId" | "reuseCreativeId"> }
+  | { ok: true; input: Pick<CreateAdInput, "creative" | "metaVideoId" | "reuseCreativeId" | "video"> }
   | { ok: false; blocker: string }
 > {
   const words = { headline: ad.headline, primaryText: ad.primaryText, cta: ad.callToAction };
+
+  // TikTok fetches the video and its cover itself, by address.
+  if (platform === "TIKTOK") {
+    if (ad.kind !== "VIDEO" || !ad.videoUrl || !ad.videoPosterUrl) {
+      return { ok: false, blocker: "TikTok ads have to be videos. Upload a video for this campaign in Create." };
+    }
+    return {
+      ok: true,
+      input: {
+        creative: { aspectRatio: "VERTICAL_9_16", ...words },
+        video: { url: ad.videoUrl, posterUrl: ad.videoPosterUrl },
+      },
+    };
+  }
 
   if (ad.kind === "EXISTING_AD") {
     if (!creds || !ad.sourceAdId) return { ok: false, blocker: "Connect Meta to run an existing ad." };

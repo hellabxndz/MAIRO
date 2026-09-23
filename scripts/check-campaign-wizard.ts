@@ -154,6 +154,8 @@ ok("a vertical 20s MP4 is fine", checkVideo(vid).problems.length === 0 && checkV
 ok("an AVI is refused", checkVideo({ ...vid, type: "video/x-msvideo" }).problems.length > 0);
 ok("an ultra-wide video is refused", checkVideo({ ...vid, width: 2560, height: 1080 }).problems.length > 0);
 ok("a two-minute video gets a note", checkVideo({ ...vid, durationSec: 120 }).warnings.length > 0);
+ok("a 3-second video is fine for Meta but not TikTok", checkVideo({ ...vid, durationSec: 3 }).problems.length === 0 && checkVideo({ ...vid, durationSec: 3, forTikTok: true }).problems.length > 0);
+ok("TikTok needs 540p", checkVideo({ ...vid, width: 360, height: 640, forTikTok: true }).problems.length > 0);
 ok("a tiny picture is refused", checkImage({ type: "image/png", bytes: 1e5, width: 400, height: 400 }).problems.length > 0);
 ok("only this business's own uploads are accepted", isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org1/video-x.mp4", "org1") && !isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org2/video-x.mp4", "org1") && !isOwnUpload("https://evil.test/ad-media/org1/v.mp4", "org1"));
 
@@ -233,6 +235,14 @@ ok("clicks without purchases points at the page", adv({ spendCents: 6000, purcha
 ok("high frequency suggests refreshing", adv({ spendCents: 6000, purchases: 2, impressions: 8000, reach: 2000, clicks: 100 }, 5).some((a) => /seeing it a lot/.test(a.title)));
 ok("a paused campaign gets no advice", campaignAdvice({ objective: "SALES", metrics: m({}), liveSince: now, live: false, dailyBudgetCents: 2000, now }).length === 0);
 ok("advice never says MAIRO will raise the budget itself", adv({ spendCents: 6000, purchases: 3, roas: 3 }, 9).every((a) => !/MAIRO will raise|raising your budget now/i.test(a.detail)));
+
+console.log("\n— TikTok campaigns need a video and a website —");
+const tt: CampaignPlan = { ...ready, service: "tiktok", goal: "TRAFFIC", destinationType: "WEBSITE" };
+ok("a picture ad on TikTok blocks", idsOf({ ...tt, adChoice: "attached", studioAssetId: "a", copyOptions: options, chosenCopy: 0 }, { ...facts, tiktokConnected: true }).includes("tiktok-video"));
+ok("a phone destination on TikTok blocks", idsOf({ ...tt, destinationType: "PHONE_CALL", destinationValue: "5551234567" }, { ...facts, tiktokConnected: true }).includes("tiktok-website"));
+const ttVideo: CampaignPlan = { ...tt, adChoice: "video", video: { url: "u", posterUrl: "p", name: "n", width: 1080, height: 1920, durationSec: 20, bytes: 1 }, copyOptions: [{ ...options[0], primaryText: "x".repeat(140) }], chosenCopy: 0 };
+ok("a video to a website is fine, with a note about long text", !idsOf(ttVideo, { ...facts, tiktokConnected: true }).includes("tiktok-video") && idsOf(ttVideo, { ...facts, tiktokConnected: true }).includes("tiktok-text"));
+ok("Meta campaigns aren't held to TikTok's rules", !idsOf({ ...ready, adChoice: "attached", studioAssetId: "a", copyOptions: options, chosenCopy: 0 }, facts).some((id) => id.startsWith("tiktok")));
 
 console.log("\n— after connecting Meta, only ever back into the dashboard —");
 ok("a draft is a fine place to return to", safeReturnTo("/dashboard/create/meta?draft=abc&posts=1") === "/dashboard/create/meta?draft=abc&posts=1");

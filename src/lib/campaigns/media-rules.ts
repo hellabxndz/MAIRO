@@ -64,9 +64,22 @@ export function checkVideo(input: {
   width: number;
   height: number;
   durationSec: number;
+  /** Also hold it to TikTok's rules, for a campaign that runs there. */
+  forTikTok?: boolean;
 }): MediaCheck {
   const problems: string[] = [];
   const warnings: string[] = [];
+  if (input.forTikTok) {
+    if (Number.isFinite(input.durationSec) && input.durationSec >= MIN_VIDEO_SECONDS && input.durationSec < 5) {
+      problems.push("TikTok ads need a video of at least 5 seconds.");
+    }
+    if (Math.min(input.width, input.height) < 540 && Math.min(input.width, input.height) >= 120) {
+      problems.push("TikTok needs at least 540 pixels on the short side (for example 540×960).");
+    }
+    if (input.width > input.height) {
+      warnings.push("TikTok is watched on upright phones — a landscape video shows small there. Vertical (9:16) fills the screen.");
+    }
+  }
   if (!(VIDEO_TYPES as readonly string[]).includes(input.type)) {
     problems.push("Upload an MP4 or MOV video — those are what Meta runs reliably.");
   }

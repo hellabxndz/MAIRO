@@ -14,6 +14,7 @@ import {
   type CopyOption,
 } from "@/lib/campaigns/ad-copy";
 import { dollars, plannedSpend, type CampaignPlan } from "@/lib/campaigns/plan";
+import { TIKTOK_TEXT_MAX } from "@/lib/ad-platforms/tiktok/delivery";
 import { Choice, Note, SubQuestion } from "./wizard-parts";
 
 // The ad's words: three versions MAIRO writes from what the business told it,
@@ -121,6 +122,11 @@ export function CopyEditor({
               </span>
             </span>
             <textarea value={chosen.primaryText} onChange={(e) => edit({ primaryText: e.target.value })} rows={3} className={`${inputClass} mt-1.5`} />
+            {plan.service !== "meta" && (
+              <span className={`mt-1 block text-[11.5px] ${chosen.primaryText.length > TIKTOK_TEXT_MAX ? "text-amber-200/90" : "text-faint"}`}>
+                TikTok shows up to {TIKTOK_TEXT_MAX} characters and no emoji — MAIRO trims it there if needed.
+              </span>
+            )}
           </label>
           {!noButton && (
             <label className="block">
