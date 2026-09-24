@@ -1,0 +1,41 @@
+# Supabase CLI configuration for LOCAL development (`supabase start`).
+# Production projects are configured in the Supabase dashboard — see README.md
+# ("Configure Supabase Auth"), which mirrors these settings.
+project_id = "mairo-assist"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+major_version = 17
+
+[auth]
+enabled = true
+site_url = "http://localhost:3100"
+additional_redirect_urls = ["http://localhost:3100/**"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+minimum_password_length = 10
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = false
+
+[auth.email.template.confirmation]
+subject = "Confirm your Mairo Assist email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Mairo Assist password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new Mairo Assist email"
+content_path = "./supabase/templates/email_change.html"

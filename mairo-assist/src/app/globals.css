@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+/*
+ * Mairo Assist design tokens. Dark-first: deep navy/black surfaces with
+ * purple and electric-blue accents, shared with the Mairo brand family.
+ */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-ink-950: #04050d;
+  --color-ink-900: #070a18;
+  --color-ink-850: #0a0e20;
+  --color-ink-800: #0e1329;
+  --color-ink-700: #151b36;
+  --color-ink-600: #1e2547;
+
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+
+  --color-fg: #eef0fb;
+  --color-fg-muted: #a4acc9;
+  --color-fg-subtle: #6f7898;
+
+  --color-violet-glow: #8b6cff;
+  --color-violet: #7c5cff;
+  --color-violet-deep: #5b3fe0;
+  --color-electric: #3aa0ff;
+  --color-cyan-glow: #36d6f0;
+
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+
+  --radius-xl: 0.9rem;
+  --radius-2xl: 1.25rem;
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-typing: typing 1.2s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes typing {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-3px); opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-ink-950);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    background: rgb(124 92 255 / 0.35);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-electric);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Subtle starfield + aurora used behind marketing and auth screens. */
+  .galaxy-bg {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgb(124 92 255 / 0.22), transparent 60%),
+      radial-gradient(900px 500px at 95% 5%, rgb(58 160 255 / 0.16), transparent 60%),
+      radial-gradient(700px 400px at 50% 110%, rgb(54 214 240 / 0.08), transparent 60%),
+      var(--color-ink-950);
+  }
+  .starfield {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, rgb(255 255 255 / 0.5), transparent),
+      radial-gradient(1px 1px at 120px 80px, rgb(255 255 255 / 0.35), transparent),
+      radial-gradient(1.5px 1.5px at 200px 150px, rgb(180 170 255 / 0.5), transparent),
+      radial-gradient(1px 1px at 280px 40px, rgb(255 255 255 / 0.3), transparent),
+      radial-gradient(1px 1px at 330px 190px, rgb(150 200 255 / 0.4), transparent);
+    background-size: 360px 220px;
+  }
+  .text-gradient {
+    background: linear-gradient(100deg, #ffffff 10%, #c9bcff 45%, #7cc4ff 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.02));
+    border: 1px solid var(--color-line);
+    backdrop-filter: blur(12px);
+  }
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px rgb(139 108 255 / 0.25),
+      0 10px 40px -10px rgb(124 92 255 / 0.45),
+      0 0 80px -20px rgb(58 160 255 / 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
