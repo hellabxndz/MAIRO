@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { appUrl, isSupabaseConfigured } from "@/lib/env";
+import { appUrl, isGoogleAuthEnabled, isSupabaseConfigured } from "@/lib/env";
 import { log } from "@/lib/log";
 import { clientKey, rateLimit } from "@/lib/security/rate-limit";
 import { safeNextPath } from "@/lib/security/redirect";
@@ -119,4 +119,28 @@ export async function resendVerificationAction(_prev: FormState, form: FormData)
   });
   if (error) log.warn("auth.resend_failed", { code: error.code });
   return { ok: true, message: "If that account still needs verifying, we've sent a new link." };
+}
+
+/**
+ * Start "Continue with Google". Supabase handles the Google OAuth exchange;
+ * we only ever see a one-time code at /auth/callback. Works for both sign-in
+ * and sign-up: a first-time Google user gets an account automatically.
+ */
+export async function signInWithGoogleAction(form: FormData): Promise<void> {
+  if (!isGoogleAuthEnabled()) redirect("/login?error=oauth-unavailable");
+  if (!(await rateLimit(`oauth:${await clientKey()}`, 30, 900))) redirect("/login?error=too-many");
+  const next = safeNextPath(str(form, "next"), "/dashboard");
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      queryParams: { prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) {
+    log.warn("auth.oauth_start_failed", { code: error?.code });
+    redirect("/login?error=oauth-failed");
+  }
+  redirect(data.url);
 }
