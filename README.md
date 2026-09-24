@@ -11,7 +11,7 @@ account, manage the creative pipeline, and use an internal Claude copilot.
 
 - **Next.js 16** (App Router, TypeScript, Tailwind v4)
 - **Postgres** via **Prisma 7** (driver adapter: `@prisma/adapter-pg`)
-- **Auth.js (NextAuth v5)** — email/password, `OWNER` vs `CLIENT` roles
+- **Auth.js (NextAuth v5)** — email/password and optional Google, `OWNER` vs `CLIENT` roles
 - **Claude** via the Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) for the
   monthly plan generator and the streaming agent chat
 - **Meta Marketing API** (Graph API) for OAuth + campaign creation
@@ -46,6 +46,23 @@ npx auth secret
 ```
 
 Paste the result into `.env` as `AUTH_SECRET`.
+
+### 3b. Continue with Google (optional)
+
+Create a **Web application** OAuth client at
+<https://console.cloud.google.com/apis/credentials> with the authorized redirect
+URI `https://<production-domain>/api/auth/callback/google` (and
+`http://localhost:3000/api/auth/callback/google` for local development), then set
+`AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`. With either unset the button is hidden
+and the provider isn't registered.
+
+A first-time Google user gets the same records as the email sign-up — a business
+and a `CLIENT`, or from `/for-freelancers` a workspace and a `FREELANCER` — and
+the business or studio name is still asked for, since it can't be changed later.
+A Google login links to an existing email account only when Google marks the
+address verified, and never creates a second user for one address. The rules are
+in `src/lib/google-sign-in-rules.ts`; `npm run check:google` tests them, and the
+database side too when `DATABASE_URL` points at a local Postgres.
 
 ### 4. Add your Anthropic API key
 
@@ -376,7 +393,7 @@ npm run dev
 
 ```
 prisma/schema.prisma      Data model (orgs, plans, campaigns, creatives, agent threads)
-src/lib/auth.ts           Auth.js config (credentials provider, JWT session)
+src/lib/auth.ts           Auth.js config (credentials + Google providers, JWT session)
 src/lib/db.ts             Prisma client (pg driver adapter)
 src/lib/meta/             Meta Graph API client, OAuth flow, campaign calls
 src/lib/ad-platforms/     One interface per advertising network (see below)

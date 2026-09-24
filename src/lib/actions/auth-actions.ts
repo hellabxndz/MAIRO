@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
 import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
+import { googleSignInEnabled, rememberGoogleIntent } from "@/lib/google-sign-in";
+import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
 
 const signUpSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -265,6 +267,42 @@ export async function signInAction(
   }
 
   return undefined;
+}
+
+/** Where a Google login from the sign-in page may land, same as the password form's rule. */
+function safeCallback(value: FormDataEntryValue | null): string {
+  const url = typeof value === "string" ? value : "";
+  const allowed = ["/dashboard", "/onboarding", "/aios", "/clients"];
+  return allowed.some((p) => url === p || url.startsWith(`${p}/`) || url.startsWith(`${p}?`)) ? url : "/dashboard";
+}
+
+/**
+ * "Continue with Google", from any of the three entry pages. `rawMode` says
+ * which one; for a sign-up it also carries the business or studio
+ * name, since that is the one thing a new account needs that Google doesn't
+ * know. Both ride along in a short-lived cookie that the signIn callback in
+ * auth.ts reads when Google sends the person back.
+ *
+ * The destinations lean on the dashboard's own routing: /dashboard sends a new
+ * business to onboarding, a freelancer to /clients, and the proxy sends an
+ * owner to /aios — so an existing account reached through a sign-up button
+ * still ends up in the right place.
+ */
+export async function googleSignInAction(rawMode: unknown, formData: FormData): Promise<void> {
+  if (!googleSignInEnabled()) redirect("/sign-in");
+
+  // Bound by the button rather than sent as its name/value: React leaves the
+  // submitter out of the form data when a button's formAction is a server
+  // action. It arrives from the browser either way, so it is checked here.
+  const mode: GoogleIntentMode = rawMode === "client" || rawMode === "freelancer" ? rawMode : "signin";
+  const orgName = formData.get(mode === "freelancer" ? "studioName" : "businessName");
+
+  await rememberGoogleIntent({ mode, orgName: typeof orgName === "string" ? orgName : undefined });
+
+  const redirectTo =
+    mode === "freelancer" ? "/clients" : mode === "client" ? "/dashboard" : safeCallback(formData.get("callbackUrl"));
+  // Throws the redirect to Google, which must not be caught.
+  await signIn("google", { redirectTo });
 }
 
 export async function signOutAction() {

@@ -4,14 +4,20 @@ import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInAction } from "@/lib/actions/auth-actions";
+import { signInErrorMessage } from "@/lib/google-sign-in-rules";
+import { GoogleButton, OrDivider } from "@/components/google-button";
 
 const inputClass =
   "w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
 
-export function SignInForm() {
+export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
   const [state, formAction, pending] = useActionState(signInAction, undefined);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  // A failed or cancelled Google login comes back here as ?error=. The form's
+  // own error, from the last password attempt, takes over once there is one.
+  const redirectError = signInErrorMessage(searchParams.get("error"));
+  const error = state?.error ?? redirectError;
 
   return (
     <div>
@@ -35,7 +41,11 @@ export function SignInForm() {
           <input name="password" type="password" required className={inputClass} />
         </div>
 
-        {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-red-400">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -44,6 +54,13 @@ export function SignInForm() {
         >
           {pending ? "Signing in..." : "Sign in"}
         </button>
+
+        {googleEnabled && (
+          <>
+            <OrDivider />
+            <GoogleButton mode="signin" />
+          </>
+        )}
       </form>
 
       <p className="mt-6 text-center text-sm text-neutral-400">

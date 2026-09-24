@@ -21,7 +21,14 @@ enum UserRole {
 model User {
   id              String        @id @default(cuid())
   email           String        @unique
-  passwordHash    String
+  /// Null for someone who only ever signed in with Google. The credentials
+  /// provider refuses an account without one, so it can't be signed into with
+  /// an empty password.
+  passwordHash    String?
+  /// The Google account's stable id (the OIDC `sub`), set the first time this
+  /// person continues with Google. Matched before email, so a later change of
+  /// address at Google still finds the same MAIRO account.
+  googleId        String?       @unique
   name            String?
   role            UserRole      @default(CLIENT)
   /// When this person finished — or skipped — the walkthrough.
