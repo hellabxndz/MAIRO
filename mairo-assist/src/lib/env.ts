@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { normalizeOrigin } from "./url";
 
 /**
  * Server-side configuration. Every integration is optional at boot so the
@@ -82,9 +83,5 @@ export const DEFAULT_SHOPIFY_API_VERSION = "2026-07";
 
 /** Public origin of this deployment, without trailing slash. */
 export function appUrl() {
-  const explicit = env().NEXT_PUBLIC_APP_URL;
-  if (explicit) return explicit.replace(/\/+$/, "");
-  const vercel = env().VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercel) return `https://${vercel}`;
-  return "http://localhost:3100";
+  return normalizeOrigin(env().NEXT_PUBLIC_APP_URL) ?? normalizeOrigin(env().VERCEL_PROJECT_PRODUCTION_URL) ?? "http://localhost:3100";
 }

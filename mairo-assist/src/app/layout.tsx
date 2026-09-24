@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import { normalizeOrigin } from "@/lib/url";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100"),
+  // A mistyped NEXT_PUBLIC_APP_URL must never take the whole site down.
+  metadataBase: new URL(
+    normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL) ??
+      normalizeOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
+      "http://localhost:3100",
+  ),
   title: {
     default: "Mairo Assist — Your AI sales and customer service employee",
     template: "%s · Mairo Assist",
