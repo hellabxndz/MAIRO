@@ -31,6 +31,9 @@ const TOOL_LABELS: Record<string, string> = {
   get_business_policy: "Read a policy",
   escalate_to_human: "Handed over to your team",
   capture_lead: "Saved a lead",
+  search_products: "Searched products",
+  get_product_details: "Looked up a product",
+  check_availability: "Checked availability",
 };
 const label = (s: string) => STATUSES.find((x) => x.value === s)?.label ?? s;
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v);
