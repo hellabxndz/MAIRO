@@ -10,6 +10,7 @@ import { runAgent } from "./agent";
 import { estimateCostUsd, getProvider, LIMITS } from "./config";
 import { buildInstructions } from "./prompt";
 import { definitionOf } from "./tool-spec";
+import { PRODUCT_TOOL_NAMES } from "./tools";
 import { enabledSpecs, executeTool } from "./tools-server";
 import type { AgentItem, AiProvider } from "./types";
 
@@ -69,8 +70,9 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
   };
 }
 
-export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee">): Set<string> {
+export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee" | "storeConnected">): Set<string> {
   const enabled = new Set<string>(["search_knowledge", "get_business_policy"]);
+  if (ctx.storeConnected && ctx.plan?.features.includes("product_questions")) PRODUCT_TOOL_NAMES.forEach((n) => enabled.add(n));
   const esc = ctx.employee.config.escalation;
   if (ctx.plan?.features.includes("human_escalation") && (esc.escalateOnRequest || esc.offerHumanWhenUpset)) enabled.add("escalate_to_human");
   if (ctx.business.ai_goals.includes("lead_collection")) enabled.add("capture_lead");
@@ -180,6 +182,7 @@ export async function runTurn(opts: {
       escalation: enabled.has("escalate_to_human"),
       leadCapture: enabled.has("capture_lead"),
       storeConnected: ctx.storeConnected,
+      products: enabled.has("search_products"),
     },
     supportEmail: ctx.supportEmail,
     mode: opts.mode,

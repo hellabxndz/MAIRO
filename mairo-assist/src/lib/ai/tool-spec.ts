@@ -11,7 +11,7 @@ export function toToolParameters(schema: z.ZodType): Record<string, unknown> {
   return strip(json) as Record<string, unknown>;
 }
 
-const DROP = new Set(["$schema", "maxLength", "minLength", "pattern", "format", "maxItems", "minItems"]);
+const DROP = new Set(["$schema", "maxLength", "minLength", "pattern", "format", "maxItems", "minItems", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"]);
 
 function strip(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(strip);
