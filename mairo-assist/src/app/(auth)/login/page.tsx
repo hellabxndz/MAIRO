@@ -9,6 +9,8 @@ export const metadata: Metadata = { title: "Sign in" };
 
 const ERRORS: Record<string, string> = {
   "link-expired": "That link has expired or was already used. Request a new one.",
+  "link-other-browser":
+    "We couldn't finish signing you in from that link — this happens when it's opened in a different browser or app than the one you signed up in. If you just confirmed your email, it's done: sign in below.",
   "link-invalid": "That link isn't valid.",
   "not-configured": "Accounts aren't available on this deployment yet.",
 };

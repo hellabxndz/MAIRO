@@ -27,8 +27,11 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (error) return fail("link-expired");
   } else if (code) {
+    // PKCE links only work in the browser that started the flow. By the time
+    // the user lands here Supabase has usually already confirmed the email,
+    // so point them to sign in rather than calling the link expired.
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) return fail("link-expired");
+    if (error) return fail("link-other-browser");
   } else {
     return fail("link-invalid");
   }
