@@ -6,7 +6,18 @@ export type FormState = {
   message?: string;
   errors?: Record<string, string[] | undefined>;
   values?: Record<string, string>;
+  /** Increments on every submission (see withNonce). */
+  nonce?: number;
 };
+
+/**
+ * React resets uncontrolled fields after a form action, and <select>s snap
+ * back to their first default. Wrapping the action adds a counter the form
+ * uses as its `key`, so it remounts with the submitted values as defaults.
+ */
+export function withNonce<S extends FormState>(action: (prev: S, form: FormData) => Promise<S>) {
+  return async (prev: S, form: FormData): Promise<S> => ({ ...(await action(prev, form)), nonce: (prev.nonce ?? 0) + 1 });
+}
 
 export function fieldErrors(error: z.ZodError): FormState["errors"] {
   const out: Record<string, string[]> = {};

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { recordAudit } from "@/lib/audit";
 import { requireUser } from "@/lib/auth/session";
 import { ACTIVE_BUSINESS_COOKIE, authorize, PermissionError } from "@/lib/tenancy/context";
+import { reindexDocument } from "@/lib/knowledge/service";
 import { createClient } from "@/lib/supabase/server";
 import { parseAiConfig } from "@/lib/validation/ai-employee";
 import { aiNameSchema, businessInfoSchema, goalsSchema, policiesSchema, sellsSchema } from "@/lib/validation/business";
@@ -179,22 +180,31 @@ export async function savePolicies(_prev: FormState, form: FormData): Promise<Fo
       .eq("source_type", "manual")
       .eq("title", doc.title)
       .maybeSingle();
+    let docId: string | null = null;
     if (existing) {
       const { error } = content
         ? await supabase.from("knowledge_documents").update({ content }).eq("id", existing.id)
         : await supabase.from("knowledge_documents").delete().eq("id", existing.id);
       if (error) return { message: "We couldn't save your policies. Please try again.", values: raw };
+      if (content) docId = existing.id;
     } else if (content) {
-      const { error } = await supabase.from("knowledge_documents").insert({
-        business_id: ctx.business.id,
-        title: doc.title,
-        category: doc.category,
-        source_type: "manual",
-        content,
-        created_by: ctx.user.id,
-      });
-      if (error) return { message: "We couldn't save your policies. Please try again.", values: raw };
+      const { data: created, error } = await supabase
+        .from("knowledge_documents")
+        .insert({
+          business_id: ctx.business.id,
+          title: doc.title,
+          category: doc.category,
+          source_type: "manual",
+          content,
+          created_by: ctx.user.id,
+        })
+        .select("id")
+        .single();
+      if (error || !created) return { message: "We couldn't save your policies. Please try again.", values: raw };
+      docId = created.id;
     }
+    // Make the policy searchable by the AI immediately.
+    if (docId) await reindexDocument(ctx.business.id, docId, content);
   }
 
   const { data: employee } = await supabase

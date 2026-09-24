@@ -1,30 +1,43 @@
 import { Bot } from "lucide-react";
 import type { Metadata } from "next";
+import { EditorForm } from "@/components/ai-employee/editor-form";
+import { PreviewChat } from "@/components/ai-employee/preview-chat";
+import { PublishBar } from "@/components/ai-employee/publish-bar";
+import { VersionsList, type VersionRow } from "@/components/ai-employee/versions-list";
 import { AiStatusControl } from "@/components/dashboard/ai-status-control";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WidgetPreview } from "@/components/widget/widget-preview";
-import { loadAiEmployee } from "@/lib/dashboard/metrics";
+import type { StoredMessage } from "@/lib/ai/turn";
+import { isOpenAIConfigured } from "@/lib/env";
+import { createClient } from "@/lib/supabase/server";
 import { requireBusiness } from "@/lib/tenancy/context";
 import { formatDateTime } from "@/lib/utils";
 import { parseAiConfig } from "@/lib/validation/ai-employee";
 
 export const metadata: Metadata = { title: "AI Employee" };
 
-const LABELS = {
-  personality: { professional: "Professional", friendly: "Friendly", luxury: "Luxury", casual: "Casual", energetic: "Energetic", minimal: "Minimal" },
-  formality: { casual: "Casual", balanced: "Balanced", formal: "Formal" },
-  salesApproach: { helpful_only: "Only when asked", gentle: "Gentle suggestions", proactive: "Proactive" },
-  serviceApproach: { concise: "Concise", warm: "Warm", thorough: "Thorough" },
-} as const;
+function stable(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((k) => `${k}:${stable((value as Record<string, unknown>)[k])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
 
-export default async function AiEmployeePage() {
+export default async function AiEmployeePage({ searchParams }: PageProps<"/dashboard/ai-employee">) {
   const ctx = await requireBusiness("ai.view");
-  const employee = await loadAiEmployee(ctx.business.id);
+  const { r: restored } = await searchParams;
+  const supabase = await createClient();
+  const { data: employee } = await supabase
+    .from("ai_employees")
+    .select("id, name, avatar_url, status, draft_config, published_version_id, tested_at, draft_saved_at")
+    .eq("business_id", ctx.business.id)
+    .maybeSingle();
 
   if (!employee) {
     return (
@@ -40,52 +53,97 @@ export default async function AiEmployeePage() {
     );
   }
 
+  const canConfigure = ctx.permissions.has("ai.configure");
   const config = parseAiConfig(employee.draft_config);
+
+  const [versionsRes, previewRes] = await Promise.all([
+    canConfigure
+      ? supabase
+          .from("ai_employee_versions")
+          .select("id, version, name, config, note, published_at, author:users(full_name, email)")
+          .eq("ai_employee_id", employee.id)
+          .order("version", { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [] as never[] }),
+    canConfigure
+      ? supabase
+          .from("conversations")
+          .select("id")
+          .eq("business_id", ctx.business.id)
+          .eq("channel", "preview")
+          .eq("preview_user_id", ctx.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const versions = versionsRes.data ?? [];
+  const live = versions.find((v) => v.id === employee.published_version_id);
+  const hasUnpublished = !live || live.name !== employee.name || stable(parseAiConfig(live.config)) !== stable(config);
+  const testedSinceSave = Boolean(employee.tested_at && employee.tested_at >= employee.draft_saved_at);
+
+  let previewMessages: StoredMessage[] = [];
+  if (previewRes.data) {
+    const { data } = await supabase
+      .from("conversation_messages")
+      .select("id, sender_type, content, sources, tool_names, created_at")
+      .eq("conversation_id", previewRes.data.id)
+      .order("created_at");
+    previewMessages = (data ?? []) as StoredMessage[];
+  }
+
+  const versionRows: VersionRow[] = versions.map((v) => {
+    const author = (Array.isArray(v.author) ? v.author[0] : v.author) as { full_name: string | null; email: string } | null;
+    return { id: v.id, version: v.version, note: v.note, publishedAt: formatDateTime(v.published_at), by: author?.full_name || author?.email || null, live: v.id === employee.published_version_id };
+  });
+
+  const statusTone = employee.status === "active" ? "success" : employee.status === "paused" ? "warning" : "neutral";
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={employee.name}
-        description="Your AI employee's personality, instructions and status."
+        description={<span className="flex items-center gap-2">Your AI employee&apos;s personality, instructions and status. <Badge tone={statusTone}>{employee.status === "draft" ? "not live" : employee.status}</Badge></span>}
         actions={<AiStatusControl status={employee.status} canActivate={Boolean(employee.tested_at && employee.published_version_id)} canToggle={ctx.permissions.has("ai.toggle")} />}
       />
-      <Alert tone="info" title="Full customization arrives with AI conversations">
-        Editing personality and approach, testing in preview, publishing versions and restoring earlier instructions ship in
-        the next release. Your current settings are saved as a draft.
-      </Alert>
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Current draft <Badge tone={employee.status === "active" ? "success" : employee.status === "paused" ? "warning" : "neutral"}>{employee.status}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-4 text-sm sm:grid-cols-2">
-              <Item label="Welcome message" value={config.welcomeMessage} />
-              <Item label="Personality" value={LABELS.personality[config.personality]} />
-              <Item label="Formality" value={LABELS.formality[config.formality]} />
-              <Item label="Sales approach" value={LABELS.salesApproach[config.salesApproach]} />
-              <Item label="Customer service approach" value={LABELS.serviceApproach[config.serviceApproach]} />
-              <Item label="Offer a person when a customer is upset" value={config.escalation.offerHumanWhenUpset ? "Yes" : "No"} />
-              <Item label="Last tested" value={employee.tested_at ? formatDateTime(employee.tested_at) : "Not yet"} />
-              <Item label="Published" value={employee.published_version_id ? "Yes" : "Not yet"} />
-              <div className="sm:col-span-2">
-                <Item label="Business instructions" value={config.instructions || "None yet"} pre />
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-        <WidgetPreview name={employee.name} welcomeMessage={config.welcomeMessage} brandColor={config.brandColor} businessName={ctx.business.name} />
-      </div>
-    </div>
-  );
-}
 
-function Item({ label, value, pre }: { label: string; value: string; pre?: boolean }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-fg-subtle">{label}</dt>
-      <dd className={pre ? "mt-1 whitespace-pre-wrap text-fg" : "mt-1 text-fg"}>{value}</dd>
+      {canConfigure ? (
+        <>
+          <PublishBar hasUnpublished={hasUnpublished} testedSinceSave={testedSinceSave} canPublish={ctx.permissions.has("ai.publish")} />
+          <div className="grid items-start gap-6 xl:grid-cols-[1fr_380px]">
+            <EditorForm key={`restored-${typeof restored === "string" ? restored : 0}`} name={employee.name} avatarUrl={employee.avatar_url} config={config} />
+            <div className="space-y-4 xl:sticky xl:top-24">
+              <PreviewChat
+                key={previewRes.data?.id ?? "none"}
+                name={employee.name}
+                welcomeMessage={config.welcomeMessage}
+                brandColor={config.brandColor}
+                initialMessages={previewMessages}
+                enabled={isOpenAIConfigured()}
+                disabledReason={isOpenAIConfigured() ? undefined : "The AI engine isn't configured on this deployment yet (OPENAI_API_KEY and OPENAI_MODEL)."}
+              />
+              <p className="text-xs text-fg-subtle">
+                Preview chats use your saved draft, run the real AI with your knowledge base, and never reach customers or your inbox.
+                Actions like handing over to a person are simulated.
+              </p>
+            </div>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Version history</CardTitle>
+              <CardDescription>Every publish is saved. Restore any version to your draft, then publish it again.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VersionsList versions={versionRows} canRestore />
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+          <Alert tone="info">Only owners and admins can change the AI employee.</Alert>
+          <WidgetPreview name={employee.name} welcomeMessage={config.welcomeMessage} brandColor={config.brandColor} businessName={ctx.business.name} />
+        </div>
+      )}
     </div>
   );
 }

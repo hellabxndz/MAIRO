@@ -2,7 +2,7 @@
 # E2E ONLY: stops the local stack started by start.sh and deletes its data.
 cd "$(dirname "$0")/../.."
 STATE="${E2E_STATE_DIR:-$PWD/.e2e}"
-for svc in gotrue postgrest gateway smtp; do
+for svc in gotrue postgrest gateway smtp fake-openai; do
   [ -f "$STATE/$svc.pid" ] && kill "$(cat "$STATE/$svc.pid")" 2>/dev/null || true
 done
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"

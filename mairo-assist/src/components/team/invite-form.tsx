@@ -8,16 +8,16 @@ import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { inviteMember } from "@/lib/team/actions";
-import type { FormState } from "@/lib/validation/form";
+import { type FormState, withNonce } from "@/lib/validation/form";
 
 export function InviteForm() {
-  const [state, action] = useActionState(inviteMember, {} as FormState);
+  const [state, action] = useActionState(withNonce(inviteMember), {} as FormState);
   const [copied, setCopied] = useState(false);
   const inviteUrl = state.ok ? state.values?.inviteUrl : undefined;
 
   return (
     <div className="space-y-4">
-      <form action={action} className="grid gap-3 sm:grid-cols-[1fr_180px_auto] sm:items-end" noValidate>
+      <form key={state.nonce ?? 0} action={action} className="grid gap-3 sm:grid-cols-[1fr_180px_auto] sm:items-end" noValidate>
         <Field label="Email" htmlFor="invite-email" errors={state.errors?.email}>
           <Input id="invite-email" name="email" type="email" required placeholder="teammate@yourstore.com" defaultValue={state.ok ? "" : state.values?.email} />
         </Field>

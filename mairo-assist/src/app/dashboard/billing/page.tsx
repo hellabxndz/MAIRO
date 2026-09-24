@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { costPricingConfigured } from "@/lib/ai/config";
 import { formatPlanPrice, PLAN_LIST } from "@/lib/billing/plans";
 import { createClient } from "@/lib/supabase/server";
 import { requireBusiness } from "@/lib/tenancy/context";
@@ -17,7 +18,7 @@ export default async function BillingPage() {
   const periodStart = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).toISOString().slice(0, 10);
   const [{ data: sub }, { data: usage }] = await Promise.all([
     supabase.from("subscriptions").select("plan_key, status, provider, current_period_end, cancel_at_period_end").eq("business_id", ctx.business.id).maybeSingle(),
-    supabase.from("usage_counters").select("conversations, model_requests").eq("business_id", ctx.business.id).eq("period_start", periodStart).maybeSingle(),
+    supabase.from("usage_counters").select("conversations, model_requests, input_tokens, output_tokens, estimated_cost_usd").eq("business_id", ctx.business.id).eq("period_start", periodStart).maybeSingle(),
   ]);
 
   const limits = ctx.plan?.limits;
@@ -51,6 +52,13 @@ export default async function BillingPage() {
           <CardContent className="space-y-3 text-sm">
             <UsageBar label="Conversations" used={usage?.conversations ?? 0} limit={limits?.conversationsPerMonth} />
             <UsageBar label="AI requests" used={usage?.model_requests ?? 0} limit={limits?.aiRequestsPerMonth} />
+            <p className="pt-1 text-xs text-fg-subtle">
+              {formatNumber(Number(usage?.input_tokens ?? 0))} input · {formatNumber(Number(usage?.output_tokens ?? 0))} output tokens
+              {costPricingConfigured()
+                ? ` · estimated AI cost $${Number(usage?.estimated_cost_usd ?? 0).toFixed(2)}`
+                : " · cost estimates need OPENAI_PRICE_* settings"}
+              . Preview tests count toward AI requests.
+            </p>
           </CardContent>
         </Card>
       </div>

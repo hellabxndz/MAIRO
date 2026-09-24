@@ -64,10 +64,11 @@ test.describe.serial("Phase 1", () => {
     await expect(page.getByLabel("Shipping policy")).toHaveValue("We ship in 3-5 business days.");
     await expect(page.getByLabel("Instructions for your AI employee")).toHaveValue("Speak casually. Do not invent shipping dates.");
     await page.goto("/dashboard/knowledge");
-    await expect(page.getByRole("row").filter({ hasText: "Shipping policy" })).toHaveCount(1);
-    await expect(page.getByRole("row").filter({ hasText: "Return policy" })).toHaveCount(1);
+    const docs = page.getByTestId("knowledge-doc");
+    await expect(docs.filter({ hasText: "Shipping policy" })).toHaveCount(1);
+    await expect(docs.filter({ hasText: "Return policy" })).toHaveCount(1);
     // Refunds were left empty, so no document was created for them.
-    await expect(page.getByRole("row").filter({ hasText: "Refund policy" })).toHaveCount(0);
+    await expect(docs.filter({ hasText: "Refund policy" })).toHaveCount(0);
   });
 
   test("view preference, settings and AI employee page", async ({ page }) => {

@@ -7,20 +7,12 @@ Each phase is completed and verified before dependent work starts.
 Project setup, landing page, authentication, database, multi-tenant
 architecture, business onboarding, dashboard.
 
-## Phase 2 — The AI employee
+## Phase 2 — The AI employee ✅
 
-- AI Employee page: edit name, avatar, welcome message, personality, formality,
-  sales/service approach, escalation rules, instructions; **Save**, **Preview**,
-  **Publish**, **Pause/Resume**; version history with restore
-  (`ai_employee_versions`).
-- Preview chat (marks `tested_at`), which unlocks activation.
-- OpenAI Responses API engine with the tool layer (knowledge + policy tools
-  first), prompt-injection defenses, usage recording and allowance checks.
-- Knowledge base: manual entries, safe uploads (PDF/TXT/MD/DOCX) to Supabase
-  Storage, text extraction, chunking, full-text + vector retrieval (pgvector),
-  source references for merchant inspection.
-- Conversation storage, AI Inbox (three-pane), human takeover / hand back.
-- Retention job for old conversations.
+Editing, versions and preview; the OpenAI engine and tool layer; knowledge
+base with uploads and retrieval; conversations and the inbox with human
+takeover; retention. (Retrieval uses Postgres full-text search; vector
+embeddings are a later enhancement behind the same tool.)
 
 ## Phase 3 — Shopify
 
@@ -200,3 +192,134 @@ project with Root Directory `mairo-assist`, and a domain.
 Phase 2: AI employee editing/versions/preview, the OpenAI engine and tool
 layer, knowledge uploads and retrieval, conversations and the AI Inbox with
 human takeover.
+
+---
+
+# Phase 2 report
+
+## 1. Features implemented
+
+- **AI Employee page**: edit name, avatar, welcome message, personality,
+  formality, sales and service approach, communication style, escalation rules,
+  business instructions, brand color, bubble position and logo. **Save
+  Changes** (draft), **Publish Changes** (with an optional note), **Pause/Resume
+  AI**, an "unpublished changes" indicator, and **version history** with
+  *Restore to draft*.
+- **Preview chat**: tests the saved draft with the real engine, knowledge base
+  and tools, shows which tools ran and which knowledge sources were used.
+  Escalation and lead capture are simulated. A successful preview marks the
+  employee tested; activation still requires a published version (enforced by
+  the database).
+- **AI engine**: OpenAI Responses API (server-only, `store: false`), a
+  provider-neutral agent loop with a tool-round limit, and four tools —
+  `search_knowledge`, `get_business_policy`, `escalate_to_human`,
+  `capture_lead` — each with a strict schema, server-side validation, per-business
+  enablement (plan, goals, escalation settings), error handling and an audit row
+  with emails masked. Safety rules come first in the instructions; owner text is
+  fenced; knowledge and tool output are marked as data.
+- **Conversation handling**: messages stored with sources and tools used;
+  silence when paused or when a person has taken over; handover when the monthly
+  allowance or per-conversation cap is reached; an honest fallback and a
+  *needs attention* flag when the provider is down; 80% usage warning in the
+  activity feed.
+- **Usage and cost**: every model request records tokens and estimated cost
+  (from `OPENAI_PRICE_*`), rolled up per month and shown on the Billing page.
+- **Knowledge Base**: add, view, edit and delete entries; upload .txt, .md,
+  .pdf and .docx (≤ 5 MB, type checked by content, text extracted on the server,
+  file not kept); automatic chunking and indexing; **"Test what your AI employee
+  finds"** shows the exact passages it would use. Onboarding policies are
+  indexed too.
+- **AI Inbox**: three panes (conversation list with status filters /
+  conversation / customer, orders, requests and previous conversations), clear
+  "talking to the AI" vs "talking to your team (name) — AI is silent" indicator,
+  **Take over**, reply (which takes over automatically), **Hand back to AI**,
+  **Mark resolved**, knowledge-source references on AI answers, auto-refresh.
+- **Maintenance cron**: `/api/cron/jobs` (secret-protected) applies each
+  business's retention setting and drains the job queue.
+- Fixes found while testing: the inbox list query was ambiguous (two customer
+  foreign keys) and failed; React 19 reset `<select>` fields after a failed form
+  submission, so every form with a select now remounts with the submitted
+  values.
+
+## 2. Files created or modified
+
+New: `src/lib/ai/*` (engine), `src/lib/ai-employee/actions.ts`,
+`src/lib/knowledge/*`, `src/lib/inbox/actions.ts`, `src/lib/jobs/runner.ts`,
+`src/app/api/cron/jobs/route.ts`, `src/components/{ai-employee,knowledge,inbox}/*`,
+`src/integration/turn.int.test.ts`, `e2e/tests/phase2.spec.ts`,
+`e2e/stack/fake-openai.mjs`, migration `20260925000100_phase2_ai_conversations.sql`,
+`supabase/tests/20_phase2.sql`.
+Rewritten: AI Employee, Knowledge Base and Inbox pages. Updated: onboarding
+policy step (now indexes), Billing page (usage/cost), `next.config.ts` (6 MB
+action bodies for uploads), `vercel.json` (daily cron), docs.
+
+## 3. Database changes
+
+- `conversations.preview_user_id` (+ check that previews have an owner); RLS so
+  preview chats are visible only to the person who ran them.
+- Trigger keeping `message_count`, `last_message_at` and the `new → ai_handling`
+  status in step with messages.
+- `conversation_messages.tool_names`.
+- `ai_employees.draft_saved_at` (+ trigger), so "tested since the last change"
+  is exact.
+- `search_knowledge_chunks(business, query, limit)` — ranked, any-word
+  full-text search scoped to one business (service role only).
+- `purge_expired_conversations()` — retention (service role only).
+
+## 4. Working functionality
+
+Everything in section 1, verified end to end against real Supabase Auth,
+PostgREST with RLS, and the real OpenAI SDK talking to a deterministic fake
+Responses endpoint. With a real `OPENAI_API_KEY` and `OPENAI_MODEL` the same
+code path talks to OpenAI.
+
+## 5. Required credentials
+
+`OPENAI_API_KEY`, `OPENAI_MODEL` (required for the AI), `OPENAI_PRICE_*`
+(optional, for cost estimates), `CRON_SECRET` (retention job), plus the Phase 1
+Supabase values.
+
+## 6. Tests performed
+
+- `npm test` — 62 unit tests (+22): agent loop (tool round-trips, refusing
+  tools that weren't offered, tool crashes reported as failures, loop limit,
+  provider errors), tool schemas are strict and validated server-side (extra
+  fields like a `business_id` are rejected), system-prompt rules and ordering,
+  chunking, upload type sniffing, audit redaction.
+- `npm run test:db` — 84 SQL checks (+16): counters, preview privacy,
+  knowledge search isolation, chunks can't point at another business's
+  documents, retention, draft timestamps.
+- Integration (`src/integration`, 9 tests, live mode against the stack):
+  answers only from the business's own knowledge with sources, usage and cost
+  recorded, tool audit; safety rules and only that business's tools sent to the
+  model; silent while paused; escalation creates a ticket and stops the AI;
+  lead capture with emails masked in the audit log; provider outage fallback;
+  usage-limit handover; cross-business and wrong-channel conversations refused;
+  empty/oversized messages rejected without calling the model.
+- Playwright — 22 scenarios (+7): editing with validation, preview with
+  knowledge sources and simulated escalation, previews kept out of inbox and
+  analytics, publish → activate → pause, restore a version, knowledge add /
+  inspect / upload / reject a fake PDF / delete, inbox take over → reply → hand
+  back → resolve, every dashboard page loads, cron secret enforced.
+- Typecheck, lint and production build clean.
+
+## 7. Remaining limitations
+
+- Customers can't reach the AI yet: the storefront widget and its public chat
+  API are Phase 4. Live conversations in the inbox will come from there.
+- No product, inventory or order tools until Shopify is connected (Phase 3–4);
+  the AI says it can't check live store data rather than guessing.
+- Knowledge retrieval is keyword-based (full-text). Semantic (vector) search is
+  a possible later upgrade.
+- Only the text of uploads is kept; scanned (image-only) PDFs aren't read.
+- Escalation notifications are in-app (inbox badge, activity feed); email/SMS
+  alerts to the team need an email provider.
+- Tests use a scripted model. Real-model behaviour (tone, how well it follows
+  the rules) should be checked with your key in the preview before going live.
+- The daily cron is the Vercel Hobby limit; on Pro it can run hourly.
+
+## 8. Next phase
+
+Phase 3: Shopify app, OAuth with expiring offline tokens, product/variant/
+inventory sync, orders and fulfillments, webhooks via the job queue, compliance
+webhooks, and the Integrations page going live.

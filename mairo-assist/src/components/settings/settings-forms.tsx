@@ -7,15 +7,15 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { saveBusinessProfile, saveSupportSettings } from "@/lib/business/actions";
 import { INDUSTRIES } from "@/lib/validation/business";
-import type { FormState } from "@/lib/validation/form";
+import { type FormState, withNonce } from "@/lib/validation/form";
 
 const initial: FormState = {};
 
 export function BusinessProfileForm({ defaults }: { defaults: { name: string; websiteUrl: string; industry: string; description: string } }) {
-  const [state, action] = useActionState(saveBusinessProfile, initial);
+  const [state, action] = useActionState(withNonce(saveBusinessProfile), initial);
   const v = state.values ?? defaults;
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form key={state.nonce ?? 0} action={action} className="space-y-4" noValidate>
       {state.message && <Alert tone={state.ok ? "success" : "danger"}>{state.message}</Alert>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Business name" htmlFor="name" errors={state.errors?.name}>
@@ -46,10 +46,10 @@ export function SupportSettingsForm({
   defaults: { supportEmail: string; escalationEmail: string; timezone: string; retentionDays: string };
   timezones: string[];
 }) {
-  const [state, action] = useActionState(saveSupportSettings, initial);
+  const [state, action] = useActionState(withNonce(saveSupportSettings), initial);
   const v = state.values ?? defaults;
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form key={state.nonce ?? 0} action={action} className="space-y-4" noValidate>
       {state.message && <Alert tone={state.ok ? "success" : "danger"}>{state.message}</Alert>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Customer support email" htmlFor="supportEmail" errors={state.errors?.supportEmail} hint="Shared with customers when they ask how to reach you.">

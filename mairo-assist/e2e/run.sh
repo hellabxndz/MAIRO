@@ -10,4 +10,5 @@ if curl -sf http://localhost:3100/ >/dev/null; then echo "Port 3100 is already i
 node node_modules/next/dist/bin/next start --port 3100 >"${E2E_APP_LOG:-/tmp/mairo-assist-e2e-app.log}" 2>&1 & APP=$!
 trap 'kill $APP 2>/dev/null; bash e2e/stack/stop.sh' EXIT
 for i in $(seq 1 60); do curl -sf http://localhost:3100/ >/dev/null && break; sleep 0.5; done
+npx vitest run --config vitest.integration.config.mts
 npx playwright test "$@"

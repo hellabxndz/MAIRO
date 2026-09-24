@@ -14,13 +14,13 @@ exchanges and refunds for the merchant to approve.
 
 ## Status
 
-Built in phases (see [docs/PHASES.md](docs/PHASES.md)). **Phase 1 is complete.**
+Built in phases (see [docs/PHASES.md](docs/PHASES.md)). **Phases 1 and 2 are complete.**
 
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Setup, landing page, auth, database, multi-tenancy, onboarding, dashboard | ✅ Done |
-| 2 | AI employee settings, knowledge base, AI conversations, inbox | Next |
-| 3 | Shopify OAuth, product/inventory sync, customers and orders | Planned |
+| 2 | AI employee settings, knowledge base, AI conversations, inbox | ✅ Done |
+| 3 | Shopify OAuth, product/inventory sync, customers and orders | Next |
 | 4 | Storefront chat widget (theme app extension), recommendations, verified order tracking | Planned |
 | 5 | Support tickets, returns/exchanges, approval center | Planned |
 | 6 | Analytics charts, subscriptions, usage metering, billing | Planned |
@@ -31,6 +31,7 @@ Built in phases (see [docs/PHASES.md](docs/PHASES.md)). **Phase 1 is complete.**
 - **Next.js 16** (App Router, Server Actions, `proxy.ts`), React 19, TypeScript
 - **Tailwind CSS v4**, shadcn/ui-style components (`src/components/ui`), Lucide icons, Geist font
 - **Supabase**: Postgres with row-level security, Supabase Auth (`@supabase/ssr`)
+- **OpenAI Responses API** (server-only) behind a provider interface, with a Zod-validated tool layer
 - **Zod** for every input
 - Tests: **Vitest** (unit), SQL test suite (RLS/isolation), **Playwright** (end-to-end against a real Auth/PostgREST stack)
 
@@ -73,7 +74,20 @@ PKCE `code` links too.)
 For production email volume, configure a custom SMTP provider under
 **Project Settings → Auth → SMTP** — Supabase's built-in sender is rate limited.
 
-### 4. Run
+### 4. Add OpenAI (for the AI employee)
+
+Set `OPENAI_API_KEY` and `OPENAI_MODEL` (any current model that supports
+function calling in the Responses API). Optionally set the `OPENAI_PRICE_*`
+values from OpenAI's pricing page so the Billing page can estimate AI cost per
+business. Without OpenAI, everything else works and the preview chat explains
+that the AI engine isn't configured.
+
+### 5. Schedule maintenance
+
+Set `CRON_SECRET` in Vercel. `vercel.json` runs `/api/cron/jobs` daily to
+apply each business's conversation-retention setting and drain the job queue.
+
+### 6. Run
 
 ```bash
 npm run dev        # http://localhost:3100
@@ -86,8 +100,8 @@ accounts aren't available yet.
 
 ```bash
 npm test           # unit tests (Vitest)
-npm run test:db    # applies all migrations to a throwaway Postgres and runs the RLS / isolation suite (68 checks)
-npm run test:e2e   # full end-to-end run (see below)
+npm run test:db    # applies all migrations to a throwaway Postgres and runs the RLS / isolation suite (84 checks)
+npm run test:e2e   # integration + end-to-end run (see below)
 npm run typecheck
 npm run lint
 ```
@@ -99,10 +113,13 @@ untested AI employee can't be switched on, and that duplicate webhooks are
 recorded once.
 
 `test:e2e` starts a local Supabase-compatible stack (Postgres + GoTrue + PostgREST
-+ an SMTP catcher, see `e2e/stack/`), builds and starts the app against it, and
-drives it in Chromium: sign-up with real email verification, the full
++ an SMTP catcher + a deterministic fake of the OpenAI Responses API, see
+`e2e/stack/`), runs the AI integration suite (`src/integration`) against it, then
+builds and starts the app and drives it in Chromium: sign-up with real email verification, the full
 onboarding, team invites and role changes, permission denials, password change
-and reset, forged-cookie tenant switching, and mobile layouts.
+and reset, forged-cookie tenant switching, mobile layouts, AI employee editing,
+preview chats, publishing/versions/activation, the knowledge base and uploads,
+and the inbox with human takeover.
 
 ## Deploying to Vercel
 

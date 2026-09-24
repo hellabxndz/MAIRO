@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AI_GOALS, AI_NAME_SUGGESTIONS, INDUSTRIES, SELLS } from "@/lib/validation/business";
-import type { FormState } from "@/lib/validation/form";
+import { type FormState, withNonce } from "@/lib/validation/form";
 import { cn } from "@/lib/utils";
 
 const initial: FormState = {};
@@ -32,10 +32,10 @@ export function BusinessInfoForm({
   businessId?: string;
   defaults?: { name?: string; websiteUrl?: string; industry?: string; description?: string };
 }) {
-  const [state, action] = useActionState(saveBusinessInfo, initial);
+  const [state, action] = useActionState(withNonce(saveBusinessInfo), initial);
   const v = state.values ?? defaults ?? {};
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form key={state.nonce ?? 0} action={action} className="space-y-5" noValidate>
       <FormError state={state} />
       {businessId && <input type="hidden" name="businessId" value={businessId} />}
       <Field label="Business name" htmlFor="name" errors={state.errors?.name}>
@@ -90,9 +90,9 @@ function ChoiceCard({
 }
 
 export function SellsForm({ defaults }: { defaults: string[] }) {
-  const [state, action] = useActionState(saveSells, initial);
+  const [state, action] = useActionState(withNonce(saveSells), initial);
   return (
-    <form action={action} className="space-y-5">
+    <form key={state.nonce ?? 0} action={action} className="space-y-5">
       <FormError state={state} />
       <div className="grid gap-3 sm:grid-cols-2">
         {SELLS.map((s) => (
@@ -107,9 +107,9 @@ export function SellsForm({ defaults }: { defaults: string[] }) {
 }
 
 export function GoalsForm({ defaults }: { defaults: string[] }) {
-  const [state, action] = useActionState(saveGoals, initial);
+  const [state, action] = useActionState(withNonce(saveGoals), initial);
   return (
-    <form action={action} className="space-y-5">
+    <form key={state.nonce ?? 0} action={action} className="space-y-5">
       <FormError state={state} />
       <p className="text-sm text-fg-muted">Choose as many as you like — you can change these later.</p>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -124,11 +124,11 @@ export function GoalsForm({ defaults }: { defaults: string[] }) {
 }
 
 export function AiNameForm({ current }: { current?: string }) {
-  const [state, action] = useActionState(saveAiName, initial);
+  const [state, action] = useActionState(withNonce(saveAiName), initial);
   const isSuggested = current ? (AI_NAME_SUGGESTIONS as readonly string[]).includes(current) : true;
   const [choice, setChoice] = useState(state.values?.choice ?? (current && !isSuggested ? "custom" : current ?? "Nova"));
   return (
-    <form action={action} className="space-y-5">
+    <form key={state.nonce ?? 0} action={action} className="space-y-5">
       <FormError state={state} />
       <div className="grid gap-3 sm:grid-cols-4">
         {[...AI_NAME_SUGGESTIONS, "custom"].map((name) => (
@@ -160,10 +160,10 @@ export function AiNameForm({ current }: { current?: string }) {
 }
 
 export function PoliciesForm({ defaults }: { defaults: { shipping: string; returns: string; refunds: string; instructions: string } }) {
-  const [state, action] = useActionState(savePolicies, initial);
+  const [state, action] = useActionState(withNonce(savePolicies), initial);
   const v = state.values ?? defaults;
   return (
-    <form action={action} className="space-y-5">
+    <form key={state.nonce ?? 0} action={action} className="space-y-5">
       <FormError state={state} />
       <Field label="Shipping policy" htmlFor="shipping" errors={state.errors?.shipping} hint="Where you ship, how long it takes, what it costs.">
         <Textarea id="shipping" name="shipping" defaultValue={v.shipping} placeholder="We ship within the US in 3–5 business days. Free shipping over $75." />
