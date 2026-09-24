@@ -49,3 +49,6 @@ export function callbackUrl() {
 export function webhookUrl() {
   return `${appUrl()}/api/webhooks/shopify`;
 }
+
+/** Cookie binding an OAuth attempt to the browser that started it. */
+export const STATE_COOKIE = "ma_shopify_state";

@@ -124,7 +124,7 @@ export async function loadShopifyConnection(businessId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("shopify_connections")
-    .select("id, shop_domain, shop_name, status, validated_at, last_sync_at, last_sync_status, last_error")
+    .select("id, shop_domain, shop_name, status, validated_at, last_sync_at, last_sync_status, last_error, products_synced, orders_synced, customer_data_enabled, currency")
     .eq("business_id", businessId)
     .order("created_at", { ascending: false })
     .limit(1)
