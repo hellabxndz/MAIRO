@@ -50,9 +50,11 @@ cp .env.example .env.local
 1. Create a project at [supabase.com](https://supabase.com).
 2. Put the project URL, publishable key and secret key in `.env.local`
    (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`).
-3. Apply the migrations in `supabase/migrations/` in order — either with the
-   Supabase CLI (`supabase link` then `supabase db push`) or by pasting each file
-   into the SQL editor.
+3. Set up the database: for a brand-new project, paste
+   `supabase/setup_all.sql` into the SQL editor and run it once. (It's generated
+   from `supabase/migrations/` by `scripts/build-setup-sql.sh`.) Later updates:
+   apply only the new migration files, or use the Supabase CLI (`supabase link`
+   then `supabase db push`).
 
 ### 3. Configure Supabase Auth
 

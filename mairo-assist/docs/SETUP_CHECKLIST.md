@@ -20,17 +20,10 @@ differ slightly; if a screen doesn't match, send a screenshot.
    - **Project URL**
    - **Publishable key** (older projects call it the *anon* key)
    - **Secret key** (older projects call it the *service_role* key). **Never share this one publicly.**
-4. Open **SQL Editor**. For each file below, open it on GitHub (branch
-   `claude/mairo-assist-saas-cambkf`, folder `mairo-assist/supabase/migrations/`),
-   copy the whole file, paste it into a new query, and click **Run**. Keep this order:
-   1. `20260924000100_core_tenancy.sql`
-   2. `20260924000200_ai_employee_knowledge.sql`
-   3. `20260924000300_commerce.sql`
-   4. `20260924000400_conversations_support.sql`
-   5. `20260924000500_growth_billing_analytics.sql`
-   6. `20260925000100_phase2_ai_conversations.sql`
-
-   Each should say "Success". If one shows an error, stop and send a screenshot.
+4. Open **SQL Editor → New query**. On GitHub (branch `claude/mairo-assist-saas-cambkf`),
+   open `mairo-assist/supabase/setup_all.sql`, click **Copy raw file**, paste it into
+   the query and click **Run**. It sets up the whole database in one go and should
+   say "Success". If it shows an error, stop and send a screenshot.
 5. Open **Authentication → Sign In / Providers → Email**: make sure **Confirm email** is on.
 6. Leave the URL settings for now. You'll fill them in after step 3, once you have your web address.
 
