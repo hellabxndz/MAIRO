@@ -20,6 +20,8 @@ const SIGNUP_ERRORS: Record<string, string> = {
   email_address_not_authorized: "We can't send email to that address yet. Please try again later or contact support.",
   email_address_invalid: "That email address can't be used. Please check it and try again.",
   signup_disabled: "New sign-ups are paused right now. Please try again later.",
+  user_already_exists: "An account with this email already exists. Sign in instead, or reset your password.",
+  email_exists: "An account with this email already exists. Sign in instead, or reset your password.",
 };
 
 export async function signUpAction(_prev: FormState, form: FormData): Promise<FormState> {
