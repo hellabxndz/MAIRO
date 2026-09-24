@@ -29,13 +29,16 @@ export async function drainJobs(worker: string, budgetMs = 40_000) {
   return totals;
 }
 
+/** Marks a continuation call, as opposed to the scheduled cron run. */
+export const KICK_HEADER = "x-mairo-continue";
+
 /** Ask a fresh function invocation to keep draining the queue. */
 export async function kickJobRunner() {
   const secret = process.env.CRON_SECRET;
   if (!secret) return;
   try {
     // Only the request needs to arrive; the run itself continues on its own.
-    await fetch(`${appUrl()}/api/cron/jobs`, { headers: { authorization: `Bearer ${secret}` }, signal: AbortSignal.timeout(2_000) });
+    await fetch(`${appUrl()}/api/cron/jobs`, { headers: { authorization: `Bearer ${secret}`, [KICK_HEADER]: "1" }, signal: AbortSignal.timeout(2_000) });
   } catch (e) {
     if (!(e instanceof Error && e.name === "TimeoutError")) log.warn("jobs.kick_failed", { error: e instanceof Error ? e.message : String(e) });
   }

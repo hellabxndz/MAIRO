@@ -114,7 +114,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps<"/das
           )}
           {connected && !connection?.customer_data_enabled && (
             <p className="text-xs text-fg-subtle">
-              Customer names and emails aren&apos;t synced until Shopify approves this app for protected customer data. Orders still sync without them.
+              Until Shopify approves this app for protected customer data, orders sync without names or emails, and order changes arrive with the daily sync or when you click Sync now (product and stock changes still arrive instantly).
             </p>
           )}
           {connection?.last_error && (connection.status !== "active" || connection.last_sync_status === "failed") && (
