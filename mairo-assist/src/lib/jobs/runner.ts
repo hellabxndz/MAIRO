@@ -1,16 +1,26 @@
 import "server-only";
 import { log } from "@/lib/log";
+import { handleShopifyWebhook, handleSyncOrders, handleSyncProducts } from "@/lib/shopify/jobs";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-type Job = { id: string; type: string; payload: Record<string, unknown>; business_id: string | null; attempts: number };
-type Handler = (job: Job) => Promise<void>;
+export type Job = { id: string; type: string; payload: Record<string, unknown>; business_id: string | null; attempts: number };
+/**
+ * A handler either finishes (returns nothing) or asks to continue later with
+ * a new payload — long syncs run in slices so no single run hits the
+ * function time limit.
+ */
+export type JobResult = void | { continueWith: Record<string, unknown>; delaySeconds?: number };
+type Handler = (job: Job) => Promise<JobResult>;
 
 /**
- * Job handlers by type. Shopify sync and webhook processing register here in
- * Phase 3. A job with no handler fails (and eventually dead-letters) rather
- * than being silently marked done.
+ * Job handlers by type. A job with no handler fails (and eventually
+ * dead-letters) rather than being silently marked done.
  */
-const HANDLERS: Record<string, Handler> = {};
+const HANDLERS: Record<string, Handler> = {
+  "shopify.sync_products": handleSyncProducts,
+  "shopify.sync_orders": handleSyncOrders,
+  "shopify.webhook": handleShopifyWebhook,
+};
 
 export async function runDueJobs(worker: string, limit = 20) {
   const admin = createAdminClient();
@@ -22,7 +32,24 @@ export async function runDueJobs(worker: string, limit = 20) {
     const handler = HANDLERS[job.type];
     try {
       if (!handler) throw new Error(`No handler for job type "${job.type}"`);
-      await handler(job);
+      const result = await handler(job);
+      if (result) {
+        // Continue in a fresh slice; attempts reset because this slice succeeded.
+        await admin
+          .from("background_jobs")
+          .update({
+            status: "queued",
+            payload: result.continueWith,
+            run_at: new Date(Date.now() + (result.delaySeconds ?? 0) * 1000).toISOString(),
+            attempts: 0,
+            locked_at: null,
+            locked_by: null,
+            last_error: null,
+          })
+          .eq("id", job.id);
+        succeeded++;
+        continue;
+      }
       await admin.from("background_jobs").update({ status: "succeeded", completed_at: new Date().toISOString(), locked_at: null, locked_by: null, last_error: null }).eq("id", job.id);
       succeeded++;
     } catch (e) {
