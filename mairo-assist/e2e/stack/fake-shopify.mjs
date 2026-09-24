@@ -145,6 +145,10 @@ function graphql(shop, body) {
     case "OrderById":
       return { data: { order: store.orders.find((o) => o.id === v.id) ?? null } };
     case "CreateWebhook":
+      // Like Shopify: order topics need protected customer data approval.
+      if (String(v.topic).startsWith("ORDERS_")) {
+        return { data: { webhookSubscriptionCreate: { webhookSubscription: null, userErrors: [{ field: ["topic"], message: "This app is not approved to subscribe to webhook topics containing protected customer data. See https://shopify.dev/docs/apps/launch/protected-customer-data for more details." }] } } };
+      }
       store.webhooks.push(v.topic);
       return { data: { webhookSubscriptionCreate: { webhookSubscription: { id: `gid://shopify/WebhookSubscription/${store.webhooks.length}` }, userErrors: [] } } };
   }

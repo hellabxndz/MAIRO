@@ -71,19 +71,29 @@ async function syncFailed(connectionId: string, e: unknown): Promise<JobResult> 
   throw e;
 }
 
-/** Subscribe to the webhooks we handle. Existing subscriptions are fine ("already taken" isn't an error). */
+/**
+ * Subscribe to the webhooks we handle. Existing subscriptions are fine.
+ * Order topics need Shopify's protected customer data approval; until the
+ * app has it, Shopify refuses them and orders are kept current by the
+ * scheduled and manual syncs instead. Returns the topics that were refused.
+ */
 export async function registerWebhooks(client: ShopifyClient) {
   const failures: string[] = [];
+  const needsApproval: string[] = [];
   for (const topic of WEBHOOK_TOPICS) {
     const data = await client.graphql<{ webhookSubscriptionCreate: { userErrors: { message: string }[] } }>(WEBHOOK_CREATE_MUTATION, {
       topic,
       url: webhookUrl(),
     });
     const errors = data.webhookSubscriptionCreate.userErrors.filter((u) => !/already been taken|already exists/i.test(u.message));
-    if (errors.length) failures.push(`${topic}: ${errors[0].message}`);
+    if (!errors.length) continue;
+    if (errors.some((u) => /protected customer data/i.test(u.message))) needsApproval.push(topic);
+    else failures.push(`${topic}: ${errors[0].message}`);
   }
   if (failures.length) throw new ShopifyApiError(`Could not subscribe to store updates (${failures.join("; ")})`);
+  if (needsApproval.length) log.info("shopify.webhooks_need_approval", { shop: client.connection.shop_domain, topics: needsApproval });
   await setConnection(client.connection.id, { webhooks_registered_at: new Date().toISOString() });
+  return needsApproval;
 }
 
 export async function handleSyncProducts(job: Job): Promise<JobResult> {
@@ -94,8 +104,8 @@ export async function handleSyncProducts(job: Job): Promise<JobResult> {
   try {
     if (!job.payload.started_at) {
       await setConnection(connectionId, { last_sync_status: "running", last_error: null });
-      const { data: conn } = await createAdminClient().from("shopify_connections").select("webhooks_registered_at").eq("id", connectionId).single();
-      if (!conn?.webhooks_registered_at) await registerWebhooks(client);
+      // Each full sync re-checks subscriptions, so topics Shopify approves later get picked up.
+      await registerWebhooks(client);
     }
     const cursor = typeof job.payload.cursor === "string" ? job.payload.cursor : null;
     const slice = await syncProductsSlice(client, { cursor, startedAt });
