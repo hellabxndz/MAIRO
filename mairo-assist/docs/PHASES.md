@@ -14,24 +14,21 @@ base with uploads and retrieval; conversations and the inbox with human
 takeover; retention. (Retrieval uses Postgres full-text search; vector
 embeddings are a later enhancement behind the same tool.)
 
-## Phase 3 — Shopify
+## Phase 3 — Shopify ✅
 
-- Shopify app (Partner/Dev Dashboard), OAuth authorization-code grant with HMAC
-  verification and state, **expiring offline tokens with refresh** (required for
-  new public apps), encrypted token storage, validation before "Connected".
-- Initial sync of shop, products, variants, inventory via GraphQL Admin API
-  (bulk operations for large catalogs), cost-based rate-limit handling.
-- Webhooks (products, inventory, orders, fulfillments, `app/uninstalled`) with
-  HMAC verification, dedupe on delivery ID, job queue, retries.
-- Mandatory compliance webhooks (`customers/data_request`, `customers/redact`,
-  `shop/redact`); protected customer data request; disconnect/reconnect.
-- Cron-driven job runner.
+OAuth (authorization-code grant, HMAC, single-use browser-bound state,
+expiring offline tokens with rotating refresh), encrypted token storage,
+validation before "Connected"; resumable product/variant/inventory and
+60-day order sync through the job queue; webhooks with HMAC, dedupe and
+retries; the three privacy webhooks; disconnect/reconnect; and read-only AI
+product tools (search, details, live availability). Bulk operations were not
+needed: paged syncs run in resumable slices instead.
 
 ## Phase 4 — Storefront
 
 - Theme app extension (app embed block) for the chat widget; public widget API
   with per-shop rate limits; no secrets in browser code.
-- Product search/recommendation tools with real images, prices, sizes, links.
+- Product cards (images) in the widget; product tools themselves shipped in Phase 3.
 - Secure order verification (one-time code to the order email) and
   order/fulfillment/tracking tools.
 
@@ -323,3 +320,155 @@ Supabase values.
 Phase 3: Shopify app, OAuth with expiring offline tokens, product/variant/
 inventory sync, orders and fulfillments, webhooks via the job queue, compliance
 webhooks, and the Integrations page going live.
+
+---
+
+# Phase 3 report
+
+## 1. Features implemented
+
+- **Connect Shopify** (Integrations page and onboarding step 5): the merchant
+  types their store address and approves read-only access on Shopify's own
+  screen. The callback checks Shopify's HMAC signature and timestamp, and a
+  single-use state that expires in 10 minutes and is bound to the browser
+  (cookie), the signed-in user, the business and the shop. The user's
+  `integrations.manage` permission is re-checked at the callback.
+- **Tokens**: expiring offline tokens (`expiring=1`, 60-minute access, 90-day
+  refresh). Both are stored AES-256-GCM encrypted with the connection ID as
+  associated data. Refresh happens automatically before expiry or after a 401,
+  under a short database lease so two workers never spend the same (rotating)
+  refresh token. A rejected refresh marks the store **Needs reconnecting**.
+- **"Connected" means verified**: the status turns active only after a real
+  API call with the new token succeeds (enforced by a database constraint).
+- **Sync**: products, variants and inventory (all pages), then orders updated in
+  the last 60 days, with line items linked to products and fulfillments with
+  every tracking number. Syncs run as background jobs in resumable slices, so no
+  single run hits a time limit. Only one sync per store can be queued. Products
+  removed in Shopify are marked deleted after a full pass. Untracked inventory
+  is stored as "unknown", never as a number. Each sync records counts, status
+  and errors.
+- **Webhooks** (`/api/webhooks/shopify`): HMAC over the raw body, stored once
+  per `X-Shopify-Webhook-Id` (retries are ignored), processed through the job
+  queue with retries. Topics: products create/update/delete, inventory levels,
+  orders create/updated/cancelled, and `app/uninstalled`. Subscriptions are
+  created automatically at the first sync.
+- **Privacy webhooks**: `customers/data_request` opens a high-priority support
+  ticket telling the merchant what to send; `customers/redact` deletes the
+  customer's conversations and leads and erases their details from customers
+  and orders (the customer is never re-filled by later syncs); `shop/redact`
+  removes anything left from the store.
+- **Customer details**: order sync leaves out names and emails until Shopify
+  approves the app for protected customer data (`SHOPIFY_CUSTOMER_DATA=approved`
+  adds the `read_customers` scope). The Integrations page says which applies.
+- **Disconnect / uninstall**: credentials and everything synced from the store
+  (products, orders, Shopify customers) are deleted; conversations are kept.
+  Uninstalling in Shopify does the same via `app/uninstalled`. **Reconnect**
+  and **Sync now** are available.
+- **AI product tools** (on when a store is connected and the plan includes
+  product questions): `search_products` (published products only),
+  `get_product_details` (options, variants, prices) and `check_availability`,
+  which re-reads the product from Shopify live (falling back to the last sync,
+  and saying so). Availability is reported as in stock / purchasable without
+  tracking / purchasable with no stock on hand / sold out / unknown, never a
+  guess. Order questions still get "not available in chat yet" (Phase 4 adds
+  customer verification first).
+- **Job runner**: handlers can continue in slices; a run drains the queue
+  within a time budget and then triggers itself again if work remains, instead
+  of waiting for the daily cron.
+
+## 2. Files created or modified
+
+New: `src/lib/shopify/{oauth,config,mappers,client,sync,jobs,actions}.ts`,
+`src/lib/ai/product-tools.ts`, `src/lib/jobs/drain.ts`,
+`src/app/api/shopify/{install,callback}/route.ts`,
+`src/app/api/webhooks/shopify/route.ts`,
+`src/components/integrations/shopify-forms.tsx`,
+`src/lib/shopify/shopify.test.ts`, `supabase/tests/30_phase3.sql`,
+`e2e/tests/phase3.spec.ts`, `e2e/stack/fake-shopify.mjs`, migration
+`20260926000100_phase3_shopify.sql`.
+Updated: job runner and cron route, AI tools/prompt/turn, Integrations page,
+onboarding step 5, inbox and preview tool labels, fake OpenAI, e2e stack,
+`setup_all.sql`, docs, `.env.example`.
+
+## 3. Database changes
+
+- `shopify_oauth_states.return_to` (must be a path on this site).
+- `product_variants.inventory_item_gid` (+ index) for inventory webhooks.
+- `fulfillments.tracking` (all tracking numbers/links).
+- `shopify_connections.webhooks_registered_at`, `customer_data_enabled`,
+  `products_synced`, `orders_synced`.
+- Unique index allowing one queued/running sync per store and kind.
+- `shopify_credentials.refreshing_until` (token refresh lease).
+
+**Run `supabase/migrations/20260926000100_phase3_shopify.sql` in the Supabase
+SQL editor** (the live database already has the earlier migrations).
+
+## 4. Working functionality
+
+Everything in section 1, verified end to end against a local fake Shopify
+store that signs its redirects and webhooks exactly like Shopify, and issues
+rotating refresh tokens. With real credentials the same code talks to
+`https://<shop>.myshopify.com` (the fake-store override is refused on
+production deployments).
+
+## 5. Required credentials
+
+- `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET` (the app's Client ID and secret)
+- `ENCRYPTION_KEY` (32 random bytes, base64) — needed before any store connects
+- `CRON_SECRET` (already set) — also used to continue long syncs
+- Optional: `SHOPIFY_API_VERSION` (default 2026-07), `SHOPIFY_SCOPES`,
+  `SHOPIFY_CUSTOMER_DATA=approved` once Shopify approves protected data access
+
+In the Shopify app settings: App URL `https://<your-app>/api/shopify/install`,
+redirect URL `https://<your-app>/api/shopify/callback`, and all three
+compliance webhooks → `https://<your-app>/api/webhooks/shopify`.
+
+## 6. Tests performed
+
+- `npm test` — 89 unit tests (+24): shop-address normalization and
+  rejection, query and webhook HMAC (tampering, wrong secret, reordering),
+  timestamp freshness, authorize URL, token exchange/refresh parsing and
+  `invalid_grant`, mappers (unsafe links dropped, untracked stock not counted,
+  cancelled orders, tracking lists, REST ID → GID), availability wording.
+- `npm run test:db` — 14 new SQL checks: active requires validation, one live
+  store per business and per shop, domain format, OAuth return path, one
+  pending sync per store, members see only their own store data, nobody reads
+  credentials or OAuth states, nobody edits synced data directly.
+- Playwright — 30 scenarios (+6): connect (with invalid address), full
+  sync (products, variants, orders, tracking; no customer details without
+  approval; tokens encrypted), AI answers from the catalog with a live stock
+  check and hides unpublished products, webhooks (bad signature refused,
+  duplicate ignored, inventory update and product deletion applied, unknown
+  shop ignored, customer erasure deletes their conversations and details, data
+  request opens a ticket), expired token refreshed with rotation, a store can't be
+  connected to two businesses, forged callback refused, declined approval
+  changes nothing, disconnect deletes store data, reconnect, `app/uninstalled`.
+- Typecheck, lint and production build clean.
+- Found by these tests and fixed: PostgREST rejects `or=` filters on
+  UPDATE/DELETE, which silently broke token refresh; writes now use plain
+  filters. Also a disconnect confirmation that disappeared on re-render.
+
+## 7. Remaining limitations
+
+- Customers still can't reach the AI: the storefront widget is Phase 4. Order
+  lookup, tracking and returns in chat come with Phase 4–5 (they need customer
+  verification first).
+- Orders are limited to the last 60 days (Shopify's default without the
+  `read_all_orders` approval).
+- Names and emails on orders need Shopify's protected customer data approval
+  (requested in the Partner Dashboard). Until then orders sync without them.
+- `customers/data_request` creates a ticket; the merchant sends the data. An
+  automatic export is a later improvement.
+- The app is not embedded in Shopify admin; a merchant installing from
+  Shopify is sent to Integrations to confirm with one click. App Store
+  listing would need the embedded experience and review (Phase 7).
+- Very large catalogs sync in slices of ~500 products per run; the first sync
+  of tens of thousands of products takes a while.
+- One store per business (as the database enforces); multiple stores is an
+  Enterprise feature for later.
+
+## 8. Next phase
+
+Phase 4: the storefront chat widget (theme app extension), its public API
+with per-shop rate limits, product cards, and secure order verification with
+order and tracking tools.

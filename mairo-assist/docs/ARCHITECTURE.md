@@ -91,10 +91,14 @@ client (`lib/supabase/admin.ts`, server-only) can touch them.
 `background_jobs` is a Postgres queue: `claim_background_jobs()` uses
 `FOR UPDATE SKIP LOCKED`, recovers jobs from crashed workers, and
 `fail_background_job()` retries with exponential backoff before dead-lettering.
-Jobs carry an `idempotency_key`. `/api/cron/jobs` (daily on Vercel Hobby;
-more often on Pro) drains it and runs retention. Handlers for Shopify sync and
-webhooks register in `lib/jobs/runner.ts` in Phase 3; a job with no handler
-fails and dead-letters instead of being silently marked done. Webhooks are
+Jobs carry an `idempotency_key`. Handlers (Shopify syncs and webhooks)
+register in `lib/jobs/runner.ts`; a job with no handler fails and
+dead-letters instead of being silently marked done. A handler may return
+`continueWith` to run the next slice of a long sync as a fresh job run.
+`drainJobs()` runs due jobs within a time budget and, if work remains, calls
+`/api/cron/jobs` again (authenticated with `CRON_SECRET`) so the queue keeps
+moving between the daily cron runs. It is kicked after webhooks, connects and
+"Sync now". Webhooks are
 deduplicated on the provider's delivery ID (`integration_webhooks` unique key).
 
 ## Billing decision
@@ -174,3 +178,27 @@ customer message ─▶ runTurn (lib/ai/turn.ts)
 - Shopify `customers/redact`, `customers/data_request` and `shop/redact`
   compliance webhooks are implemented with the Shopify integration (Phase 3);
   `customers.redacted_at` and `conversations.content_redacted_at` exist for it.
+
+## Shopify
+
+- **OAuth**: authorization-code grant. The state is 32 random bytes, stored
+  only as a SHA-256 hash with the business, user, shop, return path and a
+  10-minute expiry, claimed once, and also held in an httpOnly cookie scoped to
+  `/api/shopify`, so a callback only completes in the browser that started it.
+  The callback verifies Shopify's HMAC and timestamp before anything else.
+- **Tokens**: expiring offline tokens; AES-256-GCM with the connection ID as
+  associated data (a ciphertext copied to another row won't decrypt).
+  Refresh tokens rotate, so refreshing takes a 30-second lease
+  (`shopify_credentials.refreshing_until`) and other workers wait for the
+  new token.
+- **API client** (`lib/shopify/client.ts`): scoped to one connection and
+  business; handles 401 (one forced refresh, then "needs reconnecting"),
+  429/5xx with backoff, GraphQL `THROTTLED` using the reported restore rate,
+  and `ACCESS_DENIED`.
+- **Sync**: `shopify.sync_products` → `shopify.sync_orders`, each in slices of
+  ten 50-item pages. Upserts are keyed on `(business_id, shopify_gid)`.
+- **Webhooks**: verified on the raw body, stored in `integration_webhooks`
+  (unique delivery ID), processed by `shopify.webhook` jobs. Data topics
+  re-read the object through GraphQL rather than trusting the payload.
+- **Test override**: `SHOPIFY_TEST_API_BASE_URL` routes calls to the local fake
+  store in e2e; it is ignored when `VERCEL_ENV=production`.

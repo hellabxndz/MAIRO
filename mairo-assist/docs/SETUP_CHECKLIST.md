@@ -75,9 +75,36 @@ differ slightly; if a screen doesn't match, send a screenshot.
 4. On **Overview**, click **Activate AI**.
 5. Tell me how it went, including anything confusing or broken.
 
+## ☐ 6. Connect Shopify (30 min)
+
+1. **Supabase → SQL Editor**: open
+   `mairo-assist/supabase/migrations/20260926000100_phase3_shopify.sql` on
+   GitHub, copy all of it, paste, **Run**. It should say "Success".
+2. **Encryption key**: on your computer, open PowerShell and run:
+   `$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)`
+   Copy the result. In Vercel add `ENCRYPTION_KEY` = that value (mark it
+   **Sensitive**). Don't paste it anywhere else, and never change it later
+   (connected stores would need reconnecting).
+3. **Create the app**: Shopify **Dev Dashboard** (from the Partner Dashboard →
+   Apps) → **Create app** → name it "Mairo Assist". In its configuration:
+   - App URL: `https://mairo-assist.vercel.app/api/shopify/install`
+   - Allowed redirection URL: `https://mairo-assist.vercel.app/api/shopify/callback`
+   - Scopes: `read_products`, `read_inventory`, `read_orders`
+   - Compliance webhooks (customer data request, customer erasure, shop
+     erasure): all three → `https://mairo-assist.vercel.app/api/webhooks/shopify`
+   - Release/save a version.
+4. Copy the app's **Client ID** and **Client secret** into Vercel as
+   `SHOPIFY_API_KEY` and `SHOPIFY_API_SECRET` (secret marked **Sensitive**).
+   **Redeploy**.
+5. **Development store**: Partner Dashboard → **Stores → Add store → Development
+   store**. Add a few products (with sizes and stock) so there's something to sync.
+6. In Mairo Assist: **Integrations** → type `your-dev-store.myshopify.com` →
+   **Connect Shopify** → approve. Within a minute you should see products and
+   counts; then ask the AI preview "do you sell …?".
+
 ## Later (before real customers)
 
 - ☐ Custom email sender (Resend or Postmark) connected under **Supabase → Auth → SMTP**
 - ☐ Your own domain (e.g. `assist.yourbrand.com`) pointed at the Vercel project
 - ☐ Privacy and Terms pages reviewed by a lawyer
-- ☐ Next build phase: Shopify connection (needs step 1 done)
+- ☐ Shopify protected customer data request (Partner Dashboard → your app → API access), then set `SHOPIFY_CUSTOMER_DATA=approved`

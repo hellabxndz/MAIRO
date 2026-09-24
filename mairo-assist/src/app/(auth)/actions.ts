@@ -14,6 +14,16 @@ const NOT_CONFIGURED: FormState = {
 };
 const TOO_MANY: FormState = { message: "Too many attempts. Please wait a few minutes and try again." };
 
+const SIGNUP_ERRORS: Record<string, string> = {
+  weak_password: "That password is too easy to guess. Try a longer one.",
+  over_email_send_rate_limit: "We can't send more verification emails right now. Please try again in an hour.",
+  email_address_not_authorized: "We can't send email to that address yet. Please try again later or contact support.",
+  email_address_invalid: "That email address can't be used. Please check it and try again.",
+  signup_disabled: "New sign-ups are paused right now. Please try again later.",
+  user_already_exists: "An account with this email already exists. Sign in instead, or reset your password.",
+  email_exists: "An account with this email already exists. Sign in instead, or reset your password.",
+};
+
 export async function signUpAction(_prev: FormState, form: FormData): Promise<FormState> {
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const parsed = signUpSchema.safeParse({
@@ -37,8 +47,7 @@ export async function signUpAction(_prev: FormState, form: FormData): Promise<Fo
   });
   if (error) {
     log.warn("auth.signup_failed", { code: error.code, status: error.status });
-    const weak = error.code === "weak_password";
-    return { message: weak ? "That password is too easy to guess. Try a longer one." : "We couldn't create your account. Please try again.", values };
+    return { message: SIGNUP_ERRORS[error.code ?? ""] ?? "We couldn't create your account. Please try again.", values };
   }
   // With email confirmation off, Supabase signs the user straight in.
   if (data.session) redirect(next);

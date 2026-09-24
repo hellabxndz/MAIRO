@@ -4,6 +4,7 @@ import { documentsByCategory, searchKnowledge } from "@/lib/knowledge/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolOutcome } from "./agent";
 import { parseArguments, type ToolSpec } from "./tool-spec";
+import { checkAvailability, getProductDetails, searchProducts } from "./product-tools";
 import { ALL_TOOLS, captureLead, escalateToHuman, getBusinessPolicy, POLICY_CATEGORIES, searchKnowledge as searchKnowledgeSpec } from "./tools";
 
 export type ToolContext = {
@@ -147,6 +148,12 @@ async function run(ctx: ToolContext, name: string, input: unknown): Promise<Tool
       ]);
       return { status: "success", output: { result: "Saved. The team can follow up. This is not a marketing sign-up." } };
     }
+    case "search_products":
+      return searchProducts(ctx.businessId, input as { query: string; max_price: number | null });
+    case "get_product_details":
+      return getProductDetails(ctx.businessId, input as { product_id: string });
+    case "check_availability":
+      return checkAvailability(ctx.businessId, input as { product_id: string; variant: string | null });
   }
   return { status: "denied", output: { error: "Unknown tool." } };
 }

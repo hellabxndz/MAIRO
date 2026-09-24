@@ -16,10 +16,19 @@ const hasTool = (body, name) => (body.tools ?? []).some((t) => t.name === name);
 function reply(body) {
   const input = body.input ?? [];
   const last = input.at(-1);
+  const userText = String([...input].reverse().find((i) => i.role === "user")?.content ?? "").toLowerCase();
   if (last?.type === "function_call_output") {
     let out = {};
     try { out = JSON.parse(last.output); } catch {}
     if (out.error) return { text: "Sorry, I couldn't do that right now. I can connect you with the team." };
+    if (Array.isArray(out.results) && out.results[0]?.product_id) {
+      if (/(stock|available)/.test(userText) && hasTool(body, "check_availability")) {
+        return { call: { name: "check_availability", arguments: { product_id: out.results[0].product_id, variant: /size (\w+)/.exec(userText)?.[1] ?? null } } };
+      }
+      return { text: `We have ${out.results.map((r) => `${r.title} (${r.price})`).join(", ")}.` };
+    }
+    if (Array.isArray(out.variants)) return { text: `${out.product}: ${out.variants.map((v) => `size ${v.variant} is ${v.availability.replaceAll("_", " ")}`).join("; ")} (checked ${out.checked}).` };
+    if (Array.isArray(out.results) && !out.results.length && /product/.test(out.note ?? "")) return { text: "I couldn't find that product in the store." };
     if (out.result) return { text: out.result.startsWith("PREVIEW") ? "A person from the team will follow up with you here." : "Thanks! A person from the team will follow up with you here." };
     if (Array.isArray(out.results) && out.results.length) return { text: `Here's what I found: ${out.results[0].text}` };
     return { text: "I don't have that information, but I can connect you with the team." };
@@ -31,6 +40,10 @@ function reply(body) {
   const email = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.exec(text)?.[0];
   if (email && /(contact|notify|email me)/.test(text) && hasTool(body, "capture_lead")) {
     return { call: { name: "capture_lead", arguments: { email, name: null, interest: "Restock notification" } } };
+  }
+  if (/(boot|tote|bag|sample|buy|sell|recommend|stock|available)/.test(text) && hasTool(body, "search_products")) {
+    const query = /(boot|tote|bag|sample)/.exec(text)?.[1] ?? text.slice(0, 60);
+    return { call: { name: "search_products", arguments: { query, max_price: null } } };
   }
   if (/(return|refund|shipping|policy|size|sizing|hours)/.test(text) && hasTool(body, "search_knowledge")) {
     return { call: { name: "search_knowledge", arguments: { query: text.slice(0, 120) } } };

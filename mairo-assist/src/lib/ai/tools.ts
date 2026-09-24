@@ -44,7 +44,39 @@ export const captureLead = {
     .strict(),
 } satisfies ToolSpec;
 
-export const ALL_TOOLS = [searchKnowledge, getBusinessPolicy, escalateToHuman, captureLead] as const;
+export const searchProducts = {
+  name: "search_products",
+  description:
+    "Search the store's synced product catalog. Use for any question about what the store sells, product recommendations, or prices. Only recommend products this returns.",
+  schema: z
+    .object({
+      query: z.string().min(2).max(200).describe("What the customer is looking for, e.g. 'waterproof hiking boots'"),
+      max_price: z.number().positive().nullable().describe("Upper price limit if the customer gave one, else null"),
+    })
+    .strict(),
+} satisfies ToolSpec;
+
+export const getProductDetails = {
+  name: "get_product_details",
+  description: "Get full details for one product from search_products: description, options (sizes, colors), variants and prices.",
+  schema: z.object({ product_id: z.uuid().describe("The product_id from search_products") }).strict(),
+} satisfies ToolSpec;
+
+export const checkAvailability = {
+  name: "check_availability",
+  description:
+    "Check whether a product (optionally a specific variant such as a size or color) can be bought right now. Checks the store live when possible. Never state stock without calling this.",
+  schema: z
+    .object({
+      product_id: z.uuid().describe("The product_id from search_products"),
+      variant: z.string().max(200).nullable().describe("Variant wording the customer used, e.g. 'medium blue', or null for all variants"),
+    })
+    .strict(),
+} satisfies ToolSpec;
+
+export const PRODUCT_TOOL_NAMES = [searchProducts.name, getProductDetails.name, checkAvailability.name] as const;
+
+export const ALL_TOOLS = [searchKnowledge, getBusinessPolicy, escalateToHuman, captureLead, searchProducts, getProductDetails, checkAvailability] as const;
 export type ToolName = (typeof ALL_TOOLS)[number]["name"];
 
 /** Map a policy topic to knowledge-base categories. */

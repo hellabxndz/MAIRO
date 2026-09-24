@@ -12,6 +12,9 @@ const TOOL_LABELS: Record<string, string> = {
   get_business_policy: "Read a policy",
   escalate_to_human: "Handed over to a person",
   capture_lead: "Saved a lead",
+  search_products: "Searched products",
+  get_product_details: "Looked up a product",
+  check_availability: "Checked availability",
 };
 
 export function PreviewChat({

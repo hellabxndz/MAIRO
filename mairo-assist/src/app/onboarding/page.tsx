@@ -1,4 +1,4 @@
-import { Check, CircleDashed, Lock, ShoppingBag, Store } from "lucide-react";
+import { Check, CircleDashed, Lock, ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,6 +6,7 @@ import { AiNameForm, BusinessInfoForm, GoalsForm, PoliciesForm, SellsForm } from
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConnectShopifyForm } from "@/components/integrations/shopify-forms";
 import { WidgetPreview } from "@/components/widget/widget-preview";
 import { requireUser } from "@/lib/auth/session";
 import { isOpenAIConfigured, isShopifyConfigured } from "@/lib/env";
@@ -56,6 +57,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   const config = parseAiConfig(employee?.draft_config);
   const policy = (title: string) => docs?.find((d) => d.title === title)?.content ?? "";
   const aiName = employee?.name ?? "Your AI employee";
+  const shopifyError = typeof sp.shopify_error === "string" ? sp.shopify_error.replace(/[^a-z_]/g, "").slice(0, 40) : null;
 
   return (
     <Shell step={step} reached={settings.onboarding_completed_at ? TOTAL_STEPS : reached}>
@@ -71,7 +73,7 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
       {step === 5 && (
         <div className="space-y-5">
           {shopify?.status === "active" ? (
-            <Alert tone="success" title="Shopify connected">{shopify.shop_name ?? shopify.shop_domain}</Alert>
+            <Alert tone="success" title="Shopify connected">{shopify.shop_name ?? shopify.shop_domain} — products and recent orders are syncing.</Alert>
           ) : (
             <div className="rounded-2xl border border-line bg-white/[0.02] p-5">
               <div className="flex items-start gap-4">
@@ -86,13 +88,18 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
                   </p>
                 </div>
               </div>
-              <Button className="mt-5 w-full sm:w-auto" disabled>
-                <Store aria-hidden /> Connect Shopify
-              </Button>
+              <div className="mt-5">
+                {isShopifyConfigured() && ctx.permissions.has("integrations.manage") ? (
+                  <ConnectShopifyForm returnTo="/onboarding?step=5" defaultShop={shopify?.shop_domain} label={shopify?.status === "reauth_required" ? "Reconnect Shopify" : "Connect Shopify"} />
+                ) : null}
+              </div>
+              {shopifyError && <Alert tone="danger" className="mt-3">We couldn&apos;t connect the store ({shopifyError.replaceAll("_", " ")}). Please try again, or connect later from Integrations.</Alert>}
               <p className="mt-2 text-xs text-fg-subtle">
-                {isShopifyConfigured()
-                  ? "The Shopify connection is being finalized and will be enabled in an upcoming release."
-                  : "Shopify isn't configured on this deployment yet."}{" "}
+                {!isShopifyConfigured()
+                  ? "Shopify isn't configured on this deployment yet. "
+                  : !ctx.permissions.has("integrations.manage")
+                    ? "Only people allowed to manage integrations can connect the store. "
+                    : ""}
                 You can skip for now and connect later from Integrations.
               </p>
             </div>
