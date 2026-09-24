@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Mairo Assist is a separate app with its own lint config.
+    "mairo-assist/**",
   ]),
 ]);
 
