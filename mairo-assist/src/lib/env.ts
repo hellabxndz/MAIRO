@@ -32,6 +32,7 @@ const schema = z.object({
   STRIPE_SECRET_KEY: optional,
   STRIPE_WEBHOOK_SECRET: optional,
   CRON_SECRET: optional,
+  AUTH_GOOGLE_ENABLED: optional,
 });
 
 type Env = z.infer<typeof schema>;
@@ -61,6 +62,11 @@ export function isSupabaseConfigured() {
 
 export function isSupabaseAdminConfigured() {
   return isSupabaseConfigured() && Boolean(supabaseSecretKey());
+}
+
+/** "Continue with Google" is shown only once the provider is set up in Supabase. */
+export function isGoogleAuthEnabled() {
+  return isSupabaseConfigured() && env().AUTH_GOOGLE_ENABLED === "true";
 }
 
 export function isOpenAIConfigured() {

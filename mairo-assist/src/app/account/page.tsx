@@ -22,10 +22,14 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
   const user = await requireUser("/account");
   const sp = await searchParams;
   const supabase = await createClient();
-  const [{ data: profile }, sessionsResult] = await Promise.all([
+  const [{ data: profile }, sessionsResult, { data: authUser }] = await Promise.all([
     supabase.from("users").select("full_name, email").eq("id", user.id).single(),
     supabase.rpc("list_my_sessions"),
+    supabase.auth.getUser(),
   ]);
+  const providers = (authUser.user?.app_metadata?.providers as string[] | undefined) ?? ["email"];
+  const hasPassword = providers.includes("email");
+  const usesGoogle = providers.includes("google");
 
   const listed = !sessionsResult.error;
   const sessions: SessionRow[] = (sessionsResult.data ?? []).map(
@@ -59,9 +63,21 @@ export default async function AccountPage({ searchParams }: PageProps<"/account"
         <Card>
           <CardHeader>
             <CardTitle>Password</CardTitle>
-            <CardDescription>Changing it signs out your other devices.</CardDescription>
+            <CardDescription>
+              {hasPassword ? "Changing it signs out your other devices." : "You sign in with Google, so there's no password to change."}
+            </CardDescription>
           </CardHeader>
-          <CardContent><PasswordForm /></CardContent>
+          <CardContent>
+            {hasPassword ? (
+              <PasswordForm />
+            ) : (
+              <p className="text-sm text-fg-muted">
+                Want to sign in with an email and password too? Use{" "}
+                <Link href="/forgot-password" className="text-fg underline">Forgot password</Link> to set one.
+              </p>
+            )}
+            {usesGoogle && hasPassword && <p className="mt-3 text-xs text-fg-subtle">You can also sign in with Google.</p>}
+          </CardContent>
         </Card>
         <Card>
           <CardHeader>
