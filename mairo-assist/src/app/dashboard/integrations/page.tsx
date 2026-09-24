@@ -55,6 +55,7 @@ export default async function IntegrationsPage({ searchParams }: PageProps<"/das
   const live = connected || connection?.status === "pending" || connection?.status === "reauth_required";
   const canManage = ctx.permissions.has("integrations.manage");
   const errorCode = typeof sp.shopify_error === "string" ? sp.shopify_error : null;
+  const disconnected = normalizeShopDomain(sp.disconnected);
   const justConnected = sp.shopify === "connected" && connected;
   const prefill = normalizeShopDomain(sp.shop) ?? (connection?.status === "reauth_required" ? connection.shop_domain : undefined);
 
@@ -64,6 +65,11 @@ export default async function IntegrationsPage({ searchParams }: PageProps<"/das
       {justConnected && (
         <Alert tone="success" title="Store connected">
           We&apos;re syncing your products and recent orders now. Large catalogs can take a few minutes.
+        </Alert>
+      )}
+      {disconnected && !live && (
+        <Alert tone="success" title="Store disconnected">
+          {disconnected} was disconnected and its synced data was deleted. To fully revoke access, also uninstall the app in your Shopify admin.
         </Alert>
       )}
       {errorCode && <Alert tone="danger">{ERRORS[errorCode] ?? "The store couldn't be connected. Please try again."}</Alert>}

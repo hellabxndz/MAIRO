@@ -43,7 +43,6 @@ export function SyncNowButton() {
 export function DisconnectShopifyButton({ shop }: { shop: string }) {
   const [state, action] = useActionState(disconnectShopify, {} as FormState);
   const [confirming, setConfirming] = useState(false);
-  if (state.ok) return <Alert tone="success">{state.message}</Alert>;
   return (
     <div className="space-y-2">
       {confirming ? (

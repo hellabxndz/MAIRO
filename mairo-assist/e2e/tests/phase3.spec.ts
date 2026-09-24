@@ -169,6 +169,19 @@ test.describe.serial("Phase 3", () => {
       .poll(async () => (await rest(`products?select=deleted_at&business_id=eq.${businessId}&shopify_gid=eq.gid://shopify/Product/102`))[0]?.deleted_at, { timeout: 20_000 })
       .toBeTruthy();
 
+    // Privacy: Shopify asks us to erase a customer.
+    const [cust] = await rest("customers", { method: "POST", body: JSON.stringify({ business_id: businessId, shopify_gid: "gid://shopify/Customer/77", email: "erase.me@example.com", name: "Erase Me" }) });
+    const [conv] = await rest("conversations", { method: "POST", body: JSON.stringify({ business_id: businessId, customer_id: cust.id, channel: "widget" }) });
+    await webhook("customers/redact", { shop_domain: SHOP, customer: { id: 77, email: "erase.me@example.com" }, orders_to_redact: [] });
+    await expect.poll(async () => (await rest(`customers?select=email,name,redacted_at&id=eq.${cust.id}`))[0], { timeout: 20_000 }).toMatchObject({ email: null, name: null });
+    expect(await rest(`conversations?select=id&id=eq.${conv.id}`)).toEqual([]);
+
+    // A data request becomes a ticket for the merchant.
+    await webhook("customers/data_request", { shop_domain: SHOP, customer: { id: 78, email: "ask@example.com" }, orders_requested: [5001] });
+    await expect
+      .poll(async () => (await rest(`support_tickets?select=subject&business_id=eq.${businessId}&subject=eq.${encodeURIComponent("Customer data request from Shopify")}`)).length, { timeout: 20_000 })
+      .toBe(1);
+
     // Unknown shops are acknowledged but ignored.
     const other = await webhook("products/update", { id: 101 }, { shop: "nobody.myshopify.com" });
     expect(other.status).toBe(200);
@@ -227,7 +240,7 @@ test.describe.serial("Phase 3", () => {
     await page.goto("/dashboard/integrations");
     await page.getByRole("button", { name: "Disconnect" }).click();
     await page.getByRole("button", { name: "Disconnect store" }).click();
-    await expect(page.getByText(`${SHOP} was disconnected.`)).toBeVisible();
+    await expect(page.getByText(`${SHOP} was disconnected and its synced data was deleted.`)).toBeVisible();
     const conn = await connection(businessId);
     expect(conn.status).toBe("disconnected");
     expect(await rest(`shopify_credentials?select=connection_id&connection_id=eq.${conn.id}`)).toEqual([]);

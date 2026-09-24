@@ -72,16 +72,20 @@ async function accessToken(conn: Connection, force = false): Promise<string> {
       throw new ShopifyReauthRequired("The store's access expired and can't be renewed");
     }
 
-    // Try to take the refresh lease.
-    const leaseUntil = new Date(Date.now() + 30_000).toISOString();
-    const { data: lease } = await createAdminClient()
-      .from("shopify_credentials")
-      .update({ refreshing_until: leaseUntil })
-      .eq("connection_id", conn.id)
-      .eq("access_token_enc", creds.access_token_enc)
-      .or(`refreshing_until.is.null,refreshing_until.lt."${new Date().toISOString()}"`)
-      .select("connection_id")
-      .maybeSingle();
+    // Try to take the refresh lease (free, or left behind by a crashed worker).
+    // Two plain conditional updates: PostgREST rejects or= filters on writes.
+    const takeLease = (free: "none" | "stale") => {
+      const q = createAdminClient()
+        .from("shopify_credentials")
+        .update({ refreshing_until: new Date(Date.now() + 30_000).toISOString() })
+        .eq("connection_id", conn.id)
+        .eq("access_token_enc", creds.access_token_enc);
+      return (free === "none" ? q.is("refreshing_until", null) : q.lt("refreshing_until", new Date().toISOString()))
+        .select("connection_id")
+        .maybeSingle();
+    };
+    let { data: lease } = await takeLease("none");
+    if (!lease) ({ data: lease } = await takeLease("stale"));
 
     if (!lease) {
       // Someone else is refreshing (or just did): wait and re-read.

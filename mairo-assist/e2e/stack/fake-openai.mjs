@@ -41,7 +41,7 @@ function reply(body) {
   if (email && /(contact|notify|email me)/.test(text) && hasTool(body, "capture_lead")) {
     return { call: { name: "capture_lead", arguments: { email, name: null, interest: "Restock notification" } } };
   }
-  if (/(boot|tote|bag|sell|recommend|stock|available)/.test(text) && hasTool(body, "search_products")) {
+  if (/(boot|tote|bag|sample|buy|sell|recommend|stock|available)/.test(text) && hasTool(body, "search_products")) {
     const query = /(boot|tote|bag|sample)/.exec(text)?.[1] ?? text.slice(0, 60);
     return { call: { name: "search_products", arguments: { query, max_price: null } } };
   }

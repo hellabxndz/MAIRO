@@ -434,15 +434,19 @@ compliance webhooks → `https://<your-app>/api/webhooks/shopify`.
   store per business and per shop, domain format, OAuth return path, one
   pending sync per store, members see only their own store data, nobody reads
   credentials or OAuth states, nobody edits synced data directly.
-- Playwright — E2E_COUNT scenarios (+6): connect (with invalid address), full
+- Playwright — 30 scenarios (+6): connect (with invalid address), full
   sync (products, variants, orders, tracking; no customer details without
   approval; tokens encrypted), AI answers from the catalog with a live stock
   check and hides unpublished products, webhooks (bad signature refused,
   duplicate ignored, inventory update and product deletion applied, unknown
-  shop ignored), expired token refreshed with rotation, a store can't be
+  shop ignored, customer erasure deletes their conversations and details, data
+  request opens a ticket), expired token refreshed with rotation, a store can't be
   connected to two businesses, forged callback refused, declined approval
   changes nothing, disconnect deletes store data, reconnect, `app/uninstalled`.
 - Typecheck, lint and production build clean.
+- Found by these tests and fixed: PostgREST rejects `or=` filters on
+  UPDATE/DELETE, which silently broke token refresh; writes now use plain
+  filters. Also a disconnect confirmation that disappeared on re-render.
 
 ## 7. Remaining limitations
 

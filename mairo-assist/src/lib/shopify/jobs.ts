@@ -336,8 +336,9 @@ async function customerRedact(businessId: string, p: Record<string, unknown>): P
   const customerIds = [...ids];
 
   if (customerIds.length) {
-    const list = `(${customerIds.join(",")})`;
-    await must(admin.from("conversations").delete().eq("business_id", businessId).or(`customer_id.in.${list},verified_customer_id.in.${list}`));
+    // Separate deletes: PostgREST rejects or= filters on writes.
+    await must(admin.from("conversations").delete().eq("business_id", businessId).in("customer_id", customerIds));
+    await must(admin.from("conversations").delete().eq("business_id", businessId).in("verified_customer_id", customerIds));
     await must(admin.from("leads").delete().eq("business_id", businessId).in("customer_id", customerIds));
     await must(admin.from("orders").update({ email: null, customer_id: null }).eq("business_id", businessId).in("customer_id", customerIds));
     await must(

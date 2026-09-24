@@ -140,5 +140,6 @@ export async function disconnectShopify(): Promise<FormState> {
   await recordAudit({ businessId: ctx.business.id, actorUserId: ctx.user.id, action: "shopify.disconnected", targetType: "shopify_connection", targetId: conn.id, metadata: { shop: conn.shop_domain } });
   await recordActivity({ businessId: ctx.business.id, type: "shopify.disconnected", summary: `Disconnected ${conn.shop_domain}` });
   revalidatePath("/dashboard", "layout");
-  return { ok: true, message: `${conn.shop_domain} was disconnected. To fully revoke access, also uninstall the app in your Shopify admin.` };
+  // The page re-renders without the store, so it shows the confirmation itself.
+  redirect(`/dashboard/integrations?disconnected=${encodeURIComponent(conn.shop_domain)}`);
 }
