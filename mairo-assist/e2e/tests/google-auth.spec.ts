@@ -13,16 +13,11 @@ test("sign-up and sign-in offer Google, and the hand-off goes to Google via Supa
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
 
   await page.goto("/login?next=%2Fdashboard%2Fteam");
-  let googleUrl: URL | null = null;
-  await page.route("https://accounts.google.com/**", async (route) => {
-    googleUrl = new URL(route.request().url());
-    await route.fulfill({ status: 200, contentType: "text/html", body: "<h1>Google (test double)</h1>" });
-  });
+  // Redirect targets can't be intercepted, so watch for the request instead.
+  const toGoogle = page.waitForRequest((req) => req.url().startsWith("https://accounts.google.com/"));
   await page.getByRole("button", { name: "Continue with Google" }).click();
-  await expect(page.getByRole("heading", { name: "Google (test double)" })).toBeVisible();
+  const url = new URL((await toGoogle).url());
 
-  expect(googleUrl).not.toBeNull();
-  const url = googleUrl!;
   expect(url.searchParams.get("client_id")).toBe("e2e-google-client");
   expect(url.searchParams.get("redirect_uri")).toBe("http://127.0.0.1:54321/auth/v1/callback");
   expect(url.searchParams.get("prompt")).toBe("select_account");
