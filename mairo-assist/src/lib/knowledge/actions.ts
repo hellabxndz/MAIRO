@@ -22,9 +22,8 @@ async function allowed(p: Permission): Promise<BusinessContext | null> {
 const DENIED: FormState = { message: "Only owners and admins can change the knowledge base." };
 
 async function withinDocumentLimit(ctx: BusinessContext) {
-  if (!ctx.billingEnforced) return true;
   const { count } = await createAdminClient().from("knowledge_documents").select("id", { count: "exact", head: true }).eq("business_id", ctx.business.id);
-  return (count ?? 0) < (ctx.plan?.limits.knowledgeDocuments ?? 0);
+  return (count ?? 0) < ctx.plan.limits.knowledgeDocuments;
 }
 
 const entrySchema = z.object({
@@ -53,7 +52,7 @@ export async function saveKnowledgeEntry(_prev: FormState, form: FormData): Prom
       .maybeSingle();
     if (error || !data) return { message: "We couldn't save that entry.", values: raw };
   } else {
-    if (!(await withinDocumentLimit(ctx))) return { message: "You've reached your plan's knowledge base limit.", values: raw };
+    if (!(await withinDocumentLimit(ctx))) return { message: "You've reached your plan's knowledge base limit. Upgrade your plan to add more.", values: raw };
     const { data, error } = await admin
       .from("knowledge_documents")
       .insert({ ...parsed.data, business_id: ctx.business.id, source_type: "manual", status: "processing", created_by: ctx.user.id })
@@ -75,7 +74,7 @@ export async function uploadKnowledgeFile(_prev: FormState, form: FormData): Pro
   const category = z.enum(KNOWLEDGE_CATEGORIES).safeParse(str(form, "category"));
   if (!(file instanceof File) || file.size === 0) return { errors: { file: ["Choose a file"] } };
   if (!category.success) return { errors: { category: ["Choose a type"] } };
-  if (!(await withinDocumentLimit(ctx))) return { message: "You've reached your plan's knowledge base limit." };
+  if (!(await withinDocumentLimit(ctx))) return { message: "You've reached your plan's knowledge base limit. Upgrade your plan to add more." };
 
   const extracted = await extractText(file.name, new Uint8Array(await file.arrayBuffer()));
   if (!extracted.ok) return { errors: { file: [extracted.error] } };

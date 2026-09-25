@@ -1,10 +1,9 @@
 import "server-only";
 import { recordActivity } from "@/lib/audit";
-import { entitledPlan, PLANS, usageStatus, type Plan } from "@/lib/billing/plans";
+import { effectivePlan, periodStart, usageStatus, type Plan } from "@/lib/billing/plans";
 import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { billingIsEnforced } from "@/lib/tenancy/context";
 import { parseAiConfig, type AiEmployeeConfig } from "@/lib/validation/ai-employee";
 import { runAgent } from "./agent";
 import { estimateCostUsd, getProvider, LIMITS } from "./config";
@@ -39,7 +38,7 @@ type AiContext = {
   business: { id: string; name: string; description: string | null; website_url: string | null; ai_goals: string[] };
   employee: { id: string; name: string; status: string; config: AiEmployeeConfig };
   supportEmail: string | null;
-  plan: Plan | null;
+  plan: Plan;
   storeConnected: boolean;
 };
 
@@ -65,7 +64,7 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
     business,
     employee: { id: employee.id, name: mode === "live" && published ? published.name : employee.name, status: employee.status, config },
     supportEmail: settings?.support_email ?? null,
-    plan: billingIsEnforced() ? entitledPlan(sub) : PLANS.pro,
+    plan: effectivePlan(sub),
     storeConnected: Boolean(shop),
   };
 }
@@ -79,9 +78,6 @@ export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "emp
   return enabled;
 }
 
-function periodStart(now = new Date()) {
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
-}
 
 async function insertMessage(row: {
   business_id: string;
@@ -224,6 +220,9 @@ export async function runTurn(opts: {
       tool_names: result.toolCalls.map((t) => t.name),
     });
 
+    // One credit per reply a customer receives. Preview tests are free.
+    if (opts.mode === "live") await admin.rpc("record_ai_response", { p_business_id: opts.businessId, p_period_start: period });
+
     if (opts.mode === "preview") {
       await admin.from("ai_employees").update({ tested_at: new Date().toISOString() }).eq("id", ctx.employee.id).eq("business_id", opts.businessId);
     }
@@ -241,19 +240,18 @@ export async function runTurn(opts: {
 }
 
 async function overAllowance(ctx: AiContext, businessId: string) {
-  if (!ctx.plan) return true;
   const admin = createAdminClient();
   const period = periodStart();
   const { data: usage } = await admin
     .from("usage_counters")
-    .select("conversations, model_requests, limit_warning_sent_at")
+    .select("ai_responses, model_requests, limit_warning_sent_at")
     .eq("business_id", businessId)
     .eq("period_start", period)
     .maybeSingle();
-  const status = usageStatus(ctx.plan, { conversations: usage?.conversations ?? 0, aiRequests: usage?.model_requests ?? 0 });
+  const status = usageStatus(ctx.plan, { aiResponses: usage?.ai_responses ?? 0, aiRequests: usage?.model_requests ?? 0 });
   if (status.warning && !usage?.limit_warning_sent_at) {
     await admin.from("usage_counters").update({ limit_warning_sent_at: new Date().toISOString() }).eq("business_id", businessId).eq("period_start", period);
-    await recordActivity({ businessId, type: "usage_warning", summary: `Your AI employee has used ${Math.round(status.ratio * 100)}% of this month's allowance.` });
+    await recordActivity({ businessId, type: "usage_warning", summary: `Your AI employee has used ${Math.round(status.ratio * 100)}% of this month's AI responses.` });
   }
   return status.exceeded && status.behavior === "handoff_to_human";
 }

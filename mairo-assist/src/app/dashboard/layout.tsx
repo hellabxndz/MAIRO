@@ -1,9 +1,10 @@
-import { UserRound } from "lucide-react";
+import { Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 import { BusinessSwitcher } from "@/components/dashboard/business-switcher";
 import { NAV_ITEMS } from "@/components/dashboard/nav-items";
 import { DesktopSidebar, MobileNav } from "@/components/dashboard/sidebar";
 import { ViewToggle } from "@/components/dashboard/view-toggle";
+import { ButtonLink } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { requireBusiness } from "@/lib/tenancy/context";
 import { ROLE_LABELS } from "@/lib/tenancy/permissions";
@@ -24,7 +25,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const displayName = profile?.full_name || profile?.email || ctx.user.email;
 
+  // Everyone who can see billing can explore plans; only the top plans don't need the nudge.
+  const showUpgrade = ctx.permissions.has("billing.view");
+  const upgradeLabel = ctx.plan.key === "pro" || ctx.plan.key === "enterprise" ? "Plans" : "Upgrade Plan";
+
   const footer = (
+    <div className="space-y-2">
+      {showUpgrade && (
+        <ButtonLink href="/dashboard/upgrade" size="sm" className="w-full" data-testid="nav-upgrade">
+          <Sparkles aria-hidden /> {upgradeLabel}
+        </ButtonLink>
+      )}
     <div className="flex items-center gap-2">
       <Link href="/account" className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-white/5">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/10">
@@ -39,6 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <button className="rounded-lg px-2 py-1.5 text-xs text-fg-muted hover:bg-white/5 hover:text-fg">Sign out</button>
       </form>
     </div>
+    </div>
   );
 
   return (
@@ -52,7 +64,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             current={{ id: ctx.business.id, name: ctx.business.name, roleLabel: ROLE_LABELS[ctx.role] }}
             businesses={ctx.memberships.map((m) => ({ id: m.business.id, name: m.business.name, roleLabel: ROLE_LABELS[m.role] }))}
           />
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            {showUpgrade && ctx.plan.key === "free" && (
+              <ButtonLink href="/dashboard/upgrade" size="sm" variant="secondary" className="hidden sm:inline-flex">
+                <Sparkles aria-hidden /> Upgrade
+              </ButtonLink>
+            )}
             <ViewToggle view={profile?.dashboard_view === "advanced" ? "advanced" : "simple"} />
           </div>
         </header>

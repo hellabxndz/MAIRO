@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { onboard, signIn, signUp, uniqueEmail } from "./helpers";
+import { onboard, setPlan, signIn, signUp, uniqueEmail } from "./helpers";
 
 /*
  * Phase 2 end-to-end: AI employee editing, preview against the (fake) OpenAI
@@ -28,6 +28,8 @@ test.describe.serial("Phase 2", () => {
   test("owner edits the AI employee and tests it in preview", async ({ page }) => {
     await signUp(page, owner.name, owner.email);
     await onboard(page, "Phase Two Denim");
+    // Hand-off to a person is a Growth feature; these tests exercise it.
+    await setPlan("Phase Two Denim", "growth");
     await page.goto("/dashboard/ai-employee");
     await expect(page.getByRole("heading", { name: "Nova" })).toBeVisible();
 
@@ -199,7 +201,7 @@ test.describe.serial("Phase 2", () => {
       "/dashboard", "/dashboard/inbox", "/dashboard/inbox?status=needs_attention", "/dashboard/orders", "/dashboard/approvals",
       "/dashboard/customers", "/dashboard/customers?q=casey", "/dashboard/products", "/dashboard/products?q=jeans",
       "/dashboard/ai-employee", "/dashboard/knowledge", "/dashboard/analytics", "/dashboard/analytics?range=custom&from=2026-01-01&to=2026-02-01",
-      "/dashboard/integrations", "/dashboard/team", "/dashboard/billing", "/dashboard/settings", "/account",
+      "/dashboard/integrations", "/dashboard/team", "/dashboard/billing", "/dashboard/upgrade", "/dashboard/settings", "/account",
     ]) {
       await page.goto(path);
       await expect(page.getByText("Something went wrong"), path).toHaveCount(0);

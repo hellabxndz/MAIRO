@@ -30,12 +30,13 @@ export async function signUpAction(_prev: FormState, form: FormData): Promise<Fo
     fullName: str(form, "fullName"),
     email: str(form, "email"),
     password: str(form, "password"),
+    confirmPassword: str(form, "confirmPassword"),
   });
   const values = { fullName: str(form, "fullName"), email: str(form, "email") };
   if (!parsed.success) return { errors: fieldErrors(parsed.error), values };
   if (!(await rateLimit(`signup:${await clientKey()}`, 5, 3600))) return { ...TOO_MANY, values };
 
-  const next = safeNextPath(str(form, "next"), "/onboarding");
+  const next = safeNextPath(str(form, "next"), "/onboarding/plan");
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,

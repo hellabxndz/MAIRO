@@ -27,18 +27,26 @@ export function SignUpForm({ next }: { next?: string }) {
     <form action={action} className="space-y-4" noValidate>
       {state.message && <Alert tone="danger">{state.message}</Alert>}
       <input type="hidden" name="next" value={next ?? ""} />
-      <Field label="Your name" htmlFor="fullName" errors={state.errors?.fullName}>
+      <Field label="Full name" htmlFor="fullName" errors={state.errors?.fullName}>
         <Input id="fullName" name="fullName" autoComplete="name" required defaultValue={state.values?.fullName} aria-invalid={invalid(state, "fullName")} />
       </Field>
-      <Field label="Work email" htmlFor="email" errors={state.errors?.email}>
+      <Field label="Business email" htmlFor="email" errors={state.errors?.email}>
         <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state.values?.email} aria-invalid={invalid(state, "email")} />
       </Field>
       <Field label="Password" htmlFor="password" errors={state.errors?.password} hint="At least 10 characters, with a letter and a number.">
         <Input id="password" name="password" type="password" autoComplete="new-password" required aria-invalid={invalid(state, "password")} />
       </Field>
+      <Field label="Confirm password" htmlFor="confirmPassword" errors={state.errors?.confirmPassword}>
+        <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required aria-invalid={invalid(state, "confirmPassword")} />
+      </Field>
       <SubmitButton className="w-full" size="lg" pendingText="Creating your account…">
-        Create account
+        Create Free Account
       </SubmitButton>
+      <p className="text-center text-sm text-fg-muted">
+        No credit card required.
+        <br />
+        Your Free plan never expires.
+      </p>
       <p className="text-center text-xs text-fg-subtle">
         By creating an account you agree to our <Link href="/terms" className="underline hover:text-fg">Terms</Link> and{" "}
         <Link href="/privacy" className="underline hover:text-fg">Privacy Policy</Link>.

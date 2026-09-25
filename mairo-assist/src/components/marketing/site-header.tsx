@@ -37,9 +37,10 @@ export function SiteHeader() {
         </nav>
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <Link href="/login" className="rounded-xl px-3 py-2 text-sm text-fg-muted hover:text-fg">Log in</Link>
-          <ButtonLink href="/signup" size="sm">Get Started</ButtonLink>
+          <ButtonLink href="/start" size="sm">Start Free</ButtonLink>
         </div>
-        <button type="button" className="ml-auto rounded-xl p-2 text-fg-muted md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <ButtonLink href="/start" size="sm" className="ml-auto md:hidden">Start Free</ButtonLink>
+        <button type="button" className="rounded-xl p-2 text-fg-muted md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
@@ -54,7 +55,7 @@ export function SiteHeader() {
           </ul>
           <div className="grid grid-cols-2 gap-2">
             <ButtonLink href="/login" variant="secondary">Log in</ButtonLink>
-            <ButtonLink href="/signup">Get Started</ButtonLink>
+            <ButtonLink href="/start">Start Free</ButtonLink>
           </div>
         </nav>
       )}

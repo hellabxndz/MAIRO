@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PlanOverview } from "@/components/billing/plan-overview";
 import { AiStatusControl } from "@/components/dashboard/ai-status-control";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { Alert } from "@/components/ui/alert";
@@ -20,6 +21,7 @@ import { StatusDot } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { loadCredits } from "@/lib/billing/credits";
 import { loadAiEmployee, loadOverviewMetrics, loadRecentActivity, loadShopifyConnection } from "@/lib/dashboard/metrics";
 import { createClient } from "@/lib/supabase/server";
 import { requireBusiness } from "@/lib/tenancy/context";
@@ -36,13 +38,14 @@ export default async function OverviewPage({ searchParams }: PageProps<"/dashboa
   const sp = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: settings }, employee, shopify, metrics, activity] = await Promise.all([
+  const [{ data: profile }, { data: settings }, employee, shopify, metrics, activity, credits] = await Promise.all([
     supabase.from("users").select("full_name, dashboard_view").eq("id", ctx.user.id).single(),
     supabase.from("business_settings").select("onboarding_step, onboarding_completed_at").eq("business_id", ctx.business.id).single(),
     loadAiEmployee(ctx.business.id),
     loadShopifyConnection(ctx.business.id),
     loadOverviewMetrics(ctx),
     loadRecentActivity(ctx.business.id),
+    loadCredits(ctx.business.id),
   ]);
 
   const advanced = profile?.dashboard_view === "advanced";
@@ -59,7 +62,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/dashboa
   return (
     <div className="space-y-6">
       {sp.denied === "1" && <Alert tone="warning">You don&apos;t have access to that page. Ask an owner if you need it.</Alert>}
-      {sp.welcome === "1" && <Alert tone="success" title="Setup saved">Welcome to your AI employee&apos;s control center.</Alert>}
+      {sp.welcome === "1" && <Alert tone="success" title="You're all set">Welcome to your AI employee&apos;s control center.</Alert>}
       {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
 
       <section className="glass glow-ring relative overflow-hidden rounded-2xl p-5 sm:p-7">
@@ -88,6 +91,8 @@ export default async function OverviewPage({ searchParams }: PageProps<"/dashboa
           <AiStatusControl status={status} canActivate={canActivate} canToggle={ctx.permissions.has("ai.toggle")} />
         </div>
       </section>
+
+      <PlanOverview credits={credits} canSeePlans={ctx.permissions.has("billing.view")} />
 
       {(!settings?.onboarding_completed_at || !employee || (shopify?.status !== "active" && ctx.permissions.has("integrations.view"))) && (
         <Card>

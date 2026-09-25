@@ -53,12 +53,10 @@ export async function inviteMember(_prev: FormState, form: FormData): Promise<Fo
   ]);
   if (existing) return { message: "That person is already on your team.", values: raw };
 
-  if (ctx.billingEnforced) {
-    if (!hasPlanFeature(ctx, "team_access")) return { message: "Team access is included from the Pro plan.", values: raw };
-    const seats = ctx.plan?.limits.seats ?? 1;
-    if ((memberCount ?? 0) + (pendingCount ?? 0) >= seats) {
-      return { message: `Your plan includes ${seats} seats. Remove a member or upgrade to invite more.`, values: raw };
-    }
+  if (!hasPlanFeature(ctx, "team_access")) return { message: "Team members are included from the Pro plan. Upgrade to invite your team.", values: raw };
+  const seats = ctx.plan.limits.seats;
+  if ((memberCount ?? 0) + (pendingCount ?? 0) >= seats) {
+    return { message: `Your plan includes ${seats} seats. Remove a member or upgrade to invite more.`, values: raw };
   }
 
   // Replace any earlier pending invite for this email.

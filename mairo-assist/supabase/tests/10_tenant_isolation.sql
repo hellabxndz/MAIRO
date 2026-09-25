@@ -78,7 +78,7 @@ set role service_role;
 insert into public.products (business_id, shopify_gid, title) values (:'biz_b', 'gid://shopify/Product/1', 'B secret jeans');
 insert into public.customers (business_id, email, name) values (:'biz_b', 'buyer@example.com', 'Buyer');
 insert into public.conversations (business_id, status) values (:'biz_a', 'new'), (:'biz_b', 'new');
-insert into public.subscriptions (business_id, plan_key, status, provider) values (:'biz_a', 'growth', 'active', 'manual');
+update public.subscriptions set plan_key = 'growth', provider = 'manual' where business_id = :'biz_a';
 insert into public.shopify_connections (id, business_id, shop_domain, status)
   values ('10000000-0000-0000-0000-000000000001', :'biz_a', 'acme.myshopify.com', 'pending');
 insert into public.shopify_credentials (connection_id, business_id, access_token_enc)

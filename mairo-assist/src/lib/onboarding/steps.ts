@@ -1,12 +1,12 @@
 export const ONBOARDING_STEPS = [
-  { n: 1, key: "business", title: "Your business", question: "What is your business called?" },
+  { n: 1, key: "business", title: "Your business", question: "What's your business name and website?" },
   { n: 2, key: "sells", title: "What you sell", question: "What does your business sell?" },
   { n: 3, key: "goals", title: "AI goals", question: "What would you like your AI employee to help with?" },
-  { n: 4, key: "name", title: "Name your AI", question: "What should we call your AI employee?" },
+  { n: 4, key: "name", title: "Customize your AI", question: "What should we call your AI employee?" },
   { n: 5, key: "shopify", title: "Connect Shopify", question: "Connect your Shopify store" },
   { n: 6, key: "policies", title: "Policies", question: "Teach your AI employee your policies" },
-  { n: 7, key: "preview", title: "Preview", question: "Preview and test your AI employee" },
-  { n: 8, key: "activate", title: "Activate", question: "Put your AI employee to work" },
+  { n: 7, key: "preview", title: "Test your AI", question: "Test your AI employee" },
+  { n: 8, key: "activate", title: "Activate", question: "Activate your AI employee" },
 ] as const;
 
 export const TOTAL_STEPS = ONBOARDING_STEPS.length;

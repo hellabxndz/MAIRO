@@ -3,6 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { recordAudit } from "@/lib/audit";
+import { publishAiEmployee } from "@/lib/ai-employee/actions";
+import { choosePlan } from "@/lib/billing/actions";
+import { clearPlanIntent, readPlanIntent, setPlanIntent } from "@/lib/billing/intent";
+import { isPlanKey } from "@/lib/billing/plans";
+import { setAiStatus } from "@/lib/dashboard/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/auth/session";
 import { ACTIVE_BUSINESS_COOKIE, authorize, PermissionError } from "@/lib/tenancy/context";
 import { reindexDocument } from "@/lib/knowledge/service";
@@ -94,7 +100,54 @@ export async function saveBusinessInfo(_prev: FormState, form: FormData): Promis
     secure: process.env.NODE_ENV === "production",
     path: "/",
   });
+  // Every new business starts on Free (a database trigger adds the subscription).
+  // If a paid plan was picked, offer checkout now that there's a business to bill.
+  const intent = await readPlanIntent();
+  if (intent && intent !== "free") redirect("/onboarding/payment");
+  await clearPlanIntent();
   goTo(2);
+}
+
+/** "Choose Your Plan": remember the choice and start business setup. Nothing is charged here. */
+export async function selectPlanIntent(form: FormData): Promise<void> {
+  await requireUser("/onboarding/plan");
+  const plan = str(form, "plan");
+  if (!isPlanKey(plan) || plan === "enterprise") redirect("/onboarding/plan");
+  await setPlanIntent(plan);
+  redirect("/onboarding");
+}
+
+/** Keep Free instead of paying for the plan picked earlier. */
+export async function continueWithFree(): Promise<void> {
+  await clearPlanIntent();
+  redirect("/onboarding?step=2");
+}
+
+/** Go to secure checkout for the plan picked earlier; setup continues afterwards. */
+export async function payForChosenPlan(prev: FormState, form: FormData): Promise<FormState> {
+  // The choice is being acted on now, so it's no longer pending.
+  await clearPlanIntent();
+  // choosePlan redirects to Stripe on success; reaching the return means it didn't.
+  return choosePlan(prev, form);
+}
+
+/** Final step: publish the tested draft and switch the AI employee on. */
+export async function activateFromOnboarding(): Promise<FormState> {
+  const ctx = await managerContext();
+  if (!ctx) return DENIED;
+  const { data: employee } = await createAdminClient()
+    .from("ai_employees")
+    .select("tested_at, published_version_id, draft_saved_at")
+    .eq("business_id", ctx.business.id)
+    .maybeSingle();
+  if (!employee?.tested_at) return { message: "Send your AI employee a test message first (previous step)." };
+  if (!employee.published_version_id) {
+    const pub = await publishAiEmployee("Initial setup");
+    if (!pub.ok) return { message: pub.message };
+  }
+  const res = await setAiStatus("active");
+  if (!res.ok) return { message: res.message };
+  goTo(await saveProgress(ctx.business.id, 8));
 }
 
 export async function saveSells(_prev: FormState, form: FormData): Promise<FormState> {

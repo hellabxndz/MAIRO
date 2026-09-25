@@ -29,7 +29,6 @@ const schema = z.object({
   SHOPIFY_API_SECRET: optional,
   SHOPIFY_API_VERSION: optional,
   SHOPIFY_SCOPES: optional,
-  BILLING_PROVIDER: z.enum(["none", "stripe", "shopify"]).optional().default("none"),
   STRIPE_SECRET_KEY: optional,
   STRIPE_WEBHOOK_SECRET: optional,
   CRON_SECRET: optional,

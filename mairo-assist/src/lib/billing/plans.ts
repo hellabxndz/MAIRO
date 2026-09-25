@@ -5,7 +5,7 @@
  * the PLAN_PRICE_* env overrides) and every surface follows.
  */
 
-export const PLAN_KEYS = ["starter", "growth", "pro", "enterprise"] as const;
+export const PLAN_KEYS = ["free", "starter", "growth", "pro", "enterprise"] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
 export const FEATURES = [
@@ -34,9 +34,12 @@ export const FEATURES = [
 export type Feature = (typeof FEATURES)[number];
 
 export type PlanLimits = {
-  /** Customer conversations per billing period. */
-  conversationsPerMonth: number;
-  /** Model requests per billing period (a conversation makes several). */
+  /**
+   * AI responses ("credits") per calendar month: one per reply the AI sends a
+   * customer. This is the allowance merchants see. Preview tests are free.
+   */
+  aiResponsesPerMonth: number;
+  /** Model requests per month (a reply can take several). A cost guard, not shown. */
   aiRequestsPerMonth: number;
   /** Team seats including the owner. */
   seats: number;
@@ -67,14 +70,8 @@ export type Plan = {
   selfServe: boolean;
 };
 
-const STARTER_FEATURES: Feature[] = [
-  "website_assistant",
-  "product_questions",
-  "basic_support",
-  "custom_personality",
-  "customer_inbox",
-  "basic_analytics",
-];
+const FREE_FEATURES: Feature[] = ["website_assistant", "product_questions", "basic_support"];
+const STARTER_FEATURES: Feature[] = [...FREE_FEATURES, "custom_personality", "customer_inbox", "basic_analytics"];
 const GROWTH_FEATURES: Feature[] = [
   ...STARTER_FEATURES,
   "sales_assistance",
@@ -107,6 +104,28 @@ function priceOverride(key: PlanKey, fallback: number) {
 }
 
 export const PLANS: Record<PlanKey, Plan> = {
+  free: {
+    key: "free",
+    name: "Free",
+    tagline: "Free forever. No credit card required.",
+    monthlyPriceCents: 0,
+    priceIsStartingAt: false,
+    customPricing: false,
+    highlights: [
+      "100 AI responses monthly",
+      "Basic AI website assistant",
+      "Basic Shopify integration",
+      "Product questions",
+      "Basic product recommendations",
+      "Basic customer support",
+      "1 AI employee",
+    ],
+    features: FREE_FEATURES,
+    limits: { aiResponsesPerMonth: 100, aiRequestsPerMonth: 800, seats: 1, stores: 1, knowledgeDocuments: 10 },
+    overLimit: "handoff_to_human",
+    warnAt: 0.8,
+    selfServe: true,
+  },
   starter: {
     key: "starter",
     name: "Starter",
@@ -115,15 +134,16 @@ export const PLANS: Record<PlanKey, Plan> = {
     priceIsStartingAt: false,
     customPricing: false,
     highlights: [
-      "AI website assistant",
-      "Basic product questions",
-      "Basic customer support",
+      "1,000 AI responses monthly",
+      "Everything in Free",
+      "Enhanced product assistance",
       "Custom AI personality",
-      "Customer inbox",
+      "Full customer inbox",
       "Basic analytics",
     ],
+    inherits: "free",
     features: STARTER_FEATURES,
-    limits: { conversationsPerMonth: 1000, aiRequestsPerMonth: 5000, seats: 1, stores: 1, knowledgeDocuments: 25 },
+    limits: { aiResponsesPerMonth: 1000, aiRequestsPerMonth: 8000, seats: 1, stores: 1, knowledgeDocuments: 25 },
     overLimit: "handoff_to_human",
     warnAt: 0.8,
     selfServe: true,
@@ -137,15 +157,17 @@ export const PLANS: Record<PlanKey, Plan> = {
     customPricing: false,
     inherits: "starter",
     highlights: [
-      "AI sales assistance",
-      "Shopify order lookup",
+      "5,000 AI responses monthly",
+      "Everything in Starter",
+      "Advanced AI sales assistance",
       "Order tracking",
       "Customer profiles",
-      "Return and exchange requests",
-      "Human escalation",
+      "Return requests",
+      "Exchange requests",
+      "Enhanced analytics",
     ],
     features: GROWTH_FEATURES,
-    limits: { conversationsPerMonth: 3000, aiRequestsPerMonth: 15000, seats: 1, stores: 1, knowledgeDocuments: 100 },
+    limits: { aiResponsesPerMonth: 5000, aiRequestsPerMonth: 40000, seats: 1, stores: 1, knowledgeDocuments: 100 },
     overLimit: "handoff_to_human",
     warnAt: 0.8,
     selfServe: true,
@@ -159,15 +181,16 @@ export const PLANS: Record<PlanKey, Plan> = {
     customPricing: false,
     inherits: "growth",
     highlights: [
+      "15,000 AI responses monthly",
+      "Everything in Growth",
       "Advanced automation",
-      "More AI usage",
       "Advanced analytics",
-      "Team access",
+      "Multiple employees",
       "Priority support",
       "Expanded customization",
     ],
     features: PRO_FEATURES,
-    limits: { conversationsPerMonth: 8000, aiRequestsPerMonth: 40000, seats: 10, stores: 1, knowledgeDocuments: 500 },
+    limits: { aiResponsesPerMonth: 15000, aiRequestsPerMonth: 120000, seats: 10, stores: 1, knowledgeDocuments: 500 },
     overLimit: "handoff_to_human",
     warnAt: 0.8,
     selfServe: true,
@@ -181,15 +204,15 @@ export const PLANS: Record<PlanKey, Plan> = {
     customPricing: true,
     inherits: "pro",
     highlights: [
+      "Custom credits",
+      "Everything in Pro",
       "Multiple stores",
       "Custom workflows",
-      "Higher usage limits",
       "Advanced integrations",
       "Dedicated onboarding",
-      "Custom support arrangements",
     ],
     features: ENTERPRISE_FEATURES,
-    limits: { conversationsPerMonth: 25000, aiRequestsPerMonth: 125000, seats: 50, stores: 10, knowledgeDocuments: 5000 },
+    limits: { aiResponsesPerMonth: 50000, aiRequestsPerMonth: 400000, seats: 50, stores: 10, knowledgeDocuments: 5000 },
     overLimit: "allow_with_overage",
     warnAt: 0.8,
     selfServe: false,
@@ -207,10 +230,31 @@ const ENTITLED_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export type SubscriptionState = { plan_key: string; status: string } | null | undefined;
 
-/** The plan a business is currently entitled to, or null (no paid plan). */
+/** The plan a subscription entitles to right now, or null. */
 export function entitledPlan(sub: SubscriptionState): Plan | null {
   if (!sub || !isPlanKey(sub.plan_key) || !ENTITLED_STATUSES.has(sub.status)) return null;
   return PLANS[sub.plan_key];
+}
+
+/**
+ * The plan that applies to a business: its entitled plan, or Free. A lapsed
+ * or unpaid subscription falls back to Free, never to nothing, so a business
+ * keeps its AI employee (within Free's allowance) whatever happens to billing.
+ */
+export function effectivePlan(sub: SubscriptionState): Plan {
+  return entitledPlan(sub) ?? PLANS.free;
+}
+
+/** Plans a business can buy online (Enterprise is arranged with sales). */
+export const PAID_SELF_SERVE: PlanKey[] = ["starter", "growth", "pro"];
+
+export function isPaidSelfServe(value: unknown): value is "starter" | "growth" | "pro" {
+  return typeof value === "string" && (PAID_SELF_SERVE as string[]).includes(value);
+}
+
+/** Features a plan adds over another (for "what you'd unlock" lists). */
+export function addedFeatures(plan: Plan, over: Plan): Feature[] {
+  return plan.features.filter((f) => !over.features.includes(f));
 }
 
 export function hasFeature(sub: SubscriptionState, feature: Feature) {
@@ -223,6 +267,7 @@ export function minimumPlanFor(feature: Feature): Plan {
 }
 
 export function formatPlanPrice(plan: Plan) {
+  if (plan.monthlyPriceCents === 0) return "$0";
   const dollars = plan.monthlyPriceCents / 100;
   const amount = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -232,13 +277,13 @@ export function formatPlanPrice(plan: Plan) {
   return plan.priceIsStartingAt ? `From ${amount}` : amount;
 }
 
-export type UsageState = { conversations: number; aiRequests: number };
+export type UsageState = { aiResponses: number; aiRequests: number };
 
 /** Allowance status used for warnings and the configured over-limit behavior. */
 export function usageStatus(plan: Plan, usage: UsageState) {
-  const convRatio = usage.conversations / plan.limits.conversationsPerMonth;
+  const respRatio = usage.aiResponses / plan.limits.aiResponsesPerMonth;
   const reqRatio = usage.aiRequests / plan.limits.aiRequestsPerMonth;
-  const ratio = Math.max(convRatio, reqRatio);
+  const ratio = Math.max(respRatio, reqRatio);
   return {
     ratio,
     warning: ratio >= plan.warnAt && ratio < 1,
@@ -246,3 +291,38 @@ export function usageStatus(plan: Plan, usage: UsageState) {
     behavior: ratio >= 1 ? plan.overLimit : null,
   } as const;
 }
+
+/** Calendar-month allowance period (UTC), as stored in usage_counters.period_start. */
+export function periodStart(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+}
+
+/** When the monthly allowance next resets: the first of next month, 00:00 UTC. */
+export function nextReset(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+}
+
+/** Human-readable feature names for plan comparisons. */
+export const FEATURE_LABELS: Record<Feature, string> = {
+  website_assistant: "AI website assistant",
+  product_questions: "Product questions and recommendations",
+  basic_support: "Customer support answers",
+  custom_personality: "Custom AI personality",
+  customer_inbox: "Full customer inbox",
+  basic_analytics: "Analytics",
+  sales_assistance: "Advanced AI sales assistance",
+  shopify_order_lookup: "Shopify order lookup",
+  order_tracking: "Order tracking",
+  customer_profiles: "Customer profiles",
+  return_exchange_requests: "Return and exchange requests",
+  human_escalation: "Hand-off to your team",
+  advanced_automation: "Advanced automation",
+  advanced_analytics: "Advanced analytics",
+  team_access: "Multiple team members",
+  priority_support: "Priority support",
+  expanded_customization: "Expanded customization",
+  multiple_stores: "Multiple stores",
+  custom_workflows: "Custom workflows",
+  advanced_integrations: "Advanced integrations",
+  dedicated_onboarding: "Dedicated onboarding",
+};

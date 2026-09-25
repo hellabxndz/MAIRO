@@ -12,7 +12,7 @@ export const NAV_ITEMS = [
   { href: "/dashboard/analytics", label: "Analytics", icon: "analytics", permission: "analytics.view" },
   { href: "/dashboard/integrations", label: "Integrations", icon: "integrations", permission: "integrations.view" },
   { href: "/dashboard/team", label: "Team", icon: "team", permission: "team.view" },
-  { href: "/dashboard/billing", label: "Billing", icon: "billing", permission: "billing.view" },
+  { href: "/dashboard/billing", label: "Billing & Usage", icon: "billing", permission: "billing.view" },
   { href: "/dashboard/settings", label: "Settings", icon: "settings", permission: "business.update" },
 ] as const satisfies readonly { href: string; label: string; icon: string; permission: Permission }[];
 
