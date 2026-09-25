@@ -11,7 +11,7 @@ import { randomToken } from "@/lib/security/tokens";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorize, PermissionError, type BusinessContext } from "@/lib/tenancy/context";
 import { str, type FormState } from "@/lib/validation/form";
-import { isPaidSelfServe, isPlanKey, PLANS } from "./plans";
+import { isPaidSelfServe, isPlanKey } from "./plans";
 import { applyStripeSubscription } from "./service";
 import {
   cancelAtPeriodEnd,
@@ -73,7 +73,8 @@ export async function choosePlan(_prev: FormState, form: FormData): Promise<Form
       return stripeFailure(e);
     }
     revalidatePath("/dashboard", "layout");
-    return { ok: true, message: "Your paid plan will end at the close of this billing period, then you'll be on Free. You won't be charged again." };
+    // The page re-renders with the new state, so it shows the confirmation itself.
+    redirect("/dashboard/upgrade?changed=downgrade");
   }
 
   if (!isPaidSelfServe(target)) return { message: "Choose a plan." };
@@ -85,22 +86,25 @@ export async function choosePlan(_prev: FormState, form: FormData): Promise<Form
 
   // Existing subscriber: change the plan in place (prorated, only if paid).
   if (onStripe) {
+    let changed: string;
     try {
       const sub = await retrieveSubscription(current!.provider_subscription_id!);
       if (planForPrice(sub.items.data[0]?.price.id) === target) {
         if (sub.cancel_at_period_end) await applyStripeSubscription(ctx.business.id, await cancelAtPeriodEnd(sub.id, false));
-        revalidatePath("/dashboard", "layout");
-        return { ok: true, message: `You're on ${PLANS[target].name}.` };
+        changed = target;
+      } else {
+        const updated = await changeSubscriptionPlan(sub, target, `change-${sub.id}-${target}-${randomToken(8)}`);
+        const plan = await applyStripeSubscription(ctx.business.id, updated);
+        if (plan !== target) {
+          return { message: "The payment for this change didn't go through, so your plan wasn't changed. Update your payment method under Manage billing." };
+        }
+        changed = target;
       }
-      const updated = await changeSubscriptionPlan(sub, target, `change-${sub.id}-${target}-${randomToken(8)}`);
-      const plan = await applyStripeSubscription(ctx.business.id, updated);
-      revalidatePath("/dashboard", "layout");
-      return plan === target
-        ? { ok: true, message: `You're now on ${PLANS[target].name}. Your AI employee, store and conversations are unchanged.` }
-        : { message: "The payment for this change didn't go through, so your plan wasn't changed. Update your payment method under Manage billing." };
     } catch (e) {
       return stripeFailure(e);
     }
+    revalidatePath("/dashboard", "layout");
+    redirect(`/dashboard/upgrade?changed=${changed}`);
   }
 
   // First purchase: Stripe Checkout. Nothing changes until Stripe confirms payment.

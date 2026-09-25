@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { latestLink, onboard, PASSWORD, signIn, signUp, uniqueEmail } from "./helpers";
+import { latestLink, onboard, PASSWORD, setPlan, signIn, signUp, uniqueEmail } from "./helpers";
 
 /*
  * Phase 1 end-to-end: real Supabase Auth (GoTrue), real PostgREST + RLS,
@@ -24,11 +24,11 @@ test.describe.serial("Phase 1", () => {
     for (const id of ["what-is", "features", "how-it-works", "demo", "pricing", "faq"]) {
       await expect(page.locator(`#${id}`)).toBeAttached();
     }
-    for (const price of ["$149", "$299", "$499", "From $999"]) {
+    for (const price of ["$149", "$299", "$499", "Starting at$999"]) {
       await expect(page.locator("#pricing")).toContainText(price);
     }
     await expect(page.getByText("Your Next Employee")).toBeVisible();
-    await expect(page.getByRole("link", { name: /Hire Your AI Employee/ })).toBeVisible();
+    await expect(page.locator("section", { hasText: "Your Next Employee" }).getByRole("link", { name: /Start Free/ })).toBeVisible();
 
     await page.getByRole("button", { name: "“Do you have these jeans in size 32?”" }).click();
     await expect(page.getByText("Let me check that for you.")).toBeVisible();
@@ -98,6 +98,10 @@ test.describe.serial("Phase 1", () => {
 
   test("owner invites a support agent", async ({ page }) => {
     await signIn(page, owner.email);
+    // Team members are a Pro feature: Free shows an upgrade path instead of the form.
+    await page.goto("/dashboard/team");
+    await expect(page.getByText("Team members are included from the Pro plan.")).toBeVisible();
+    await setPlan("Acme Denim", "pro");
     await page.goto("/dashboard/team");
     await page.getByLabel("Email").fill(agent.email);
     await page.getByLabel("Role").selectOption("support_agent");
@@ -135,7 +139,7 @@ test.describe.serial("Phase 1", () => {
     const nav = page.getByRole("navigation", { name: "Dashboard" }).first();
     await expect(nav.getByRole("link", { name: "AI Inbox" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Customers" })).toBeVisible();
-    for (const hidden of ["Billing", "Settings", "Team", "Analytics", "Integrations"]) {
+    for (const hidden of ["Billing & Usage", "Settings", "Team", "Analytics", "Integrations"]) {
       await expect(nav.getByRole("link", { name: hidden, exact: true })).toHaveCount(0);
     }
     // No activation control for agents, and no analytics-derived metrics.
@@ -143,7 +147,8 @@ test.describe.serial("Phase 1", () => {
     await expect(page.getByText("AI-assisted revenue")).toHaveCount(0);
 
     // Direct URL access is refused server-side.
-    for (const url of ["/dashboard/billing", "/dashboard/settings", "/dashboard/team", "/dashboard/analytics"]) {
+    await expect(page.getByTestId("nav-upgrade")).toHaveCount(0);
+    for (const url of ["/dashboard/billing", "/dashboard/upgrade", "/dashboard/settings", "/dashboard/team", "/dashboard/analytics"]) {
       await page.goto(url);
       await expect(page).toHaveURL(/\/dashboard\?denied=1/);
     }
@@ -163,7 +168,7 @@ test.describe.serial("Phase 1", () => {
     await agentPage.goto("/dashboard/analytics");
     await expect(agentPage.getByRole("heading", { name: "Analytics" })).toBeVisible();
     await agentPage.goto("/dashboard/billing");
-    await expect(agentPage.getByRole("heading", { name: "Billing" })).toBeVisible();
+    await expect(agentPage.getByRole("heading", { name: "Billing & usage" })).toBeVisible();
     // Admins still can't manage the team.
     await agentPage.goto("/dashboard/team");
     await expect(agentPage.getByRole("heading", { name: "Invite a teammate" })).toHaveCount(0);

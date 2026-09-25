@@ -102,6 +102,33 @@ differ slightly; if a screen doesn't match, send a screenshot.
    **Connect Shopify** → approve. Within a minute you should see products and
    counts; then ask the AI preview "do you sell …?".
 
+## ☐ 7. Free plan and paid plans (Stripe)
+
+1. **Supabase → SQL Editor**: run
+   `mairo-assist/supabase/migrations/20260927000100_free_plan.sql`. Every
+   business (including ones you already have) is put on the Free plan.
+2. Free works right away: new sign-ups get 100 AI responses a month and nothing
+   is charged.
+3. **To sell paid plans** (optional, can be done later):
+   1. Create a **Stripe** account, and stay in **Test mode** at first.
+   2. **Products → Add product** three times: Starter $149/month, Growth
+      $299/month, Pro $499/month (recurring, monthly). Copy each **price ID**
+      (`price_...`).
+   3. **Developers → Webhooks → Add endpoint**:
+      `https://mairo-assist.vercel.app/api/webhooks/stripe`, with the events
+      `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+      `customer.subscription.updated`, `customer.subscription.deleted`,
+      `invoice.paid`, `invoice.payment_failed`. Copy the **signing secret**
+      (`whsec_...`).
+   4. **Settings → Billing → Customer portal**: turn it on (used by "Manage billing").
+   5. In Vercel, add `STRIPE_SECRET_KEY` (`sk_test_...`, Sensitive),
+      `STRIPE_WEBHOOK_SECRET` (Sensitive), `STRIPE_PRICE_STARTER`,
+      `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_PRO`, then **Redeploy**.
+   6. Test with card `4242 4242 4242 4242`. When it all works, repeat with
+      **live** keys and prices.
+4. Your own business is on Free after the migration. To give yourself a paid
+   plan without paying, ask me for the one-line SQL.
+
 ## Later (before real customers)
 
 - ☐ Custom email sender (Resend or Postmark) connected under **Supabase → Auth → SMTP**

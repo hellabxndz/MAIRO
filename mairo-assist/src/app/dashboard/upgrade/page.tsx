@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { loadCredits } from "@/lib/billing/credits";
-import { addedFeatures, FEATURE_LABELS, isPlanKey, PLAN_KEYS, PLAN_LIST } from "@/lib/billing/plans";
+import { addedFeatures, FEATURE_LABELS, isPlanKey, PLAN_KEYS, PLAN_LIST, PLANS } from "@/lib/billing/plans";
 import { isStripeConfigured } from "@/lib/billing/stripe";
 import { requireBusiness } from "@/lib/tenancy/context";
 import { formatDate } from "@/lib/utils";
@@ -35,12 +35,19 @@ export default async function UpgradePage({ searchParams }: PageProps<"/dashboar
   const stripeReady = isStripeConfigured();
   const highlighted = isPlanKey(sp.plan) ? sp.plan : null;
   const checkout = typeof sp.checkout === "string" ? CHECKOUT[sp.checkout] : undefined;
+  const changed = typeof sp.changed === "string" ? sp.changed : null;
   const rank = (k: string) => PLAN_KEYS.indexOf(k as (typeof PLAN_KEYS)[number]);
 
   return (
     <div className="space-y-6">
       <PageHeader title="Plans" description="Your current plan, your AI credits, and everything you can unlock." />
       {checkout && <Alert tone={checkout.tone}>{checkout.text}</Alert>}
+      {changed === "downgrade" && (
+        <Alert tone="info">Your paid plan will end at the close of this billing period, then you&apos;ll be on Free. You won&apos;t be charged again.</Alert>
+      )}
+      {changed && isPlanKey(changed) && (
+        <Alert tone="success">You&apos;re now on {PLANS[changed].name}. Your AI employee, store and conversations are unchanged.</Alert>
+      )}
 
       <Card>
         <CardContent className="grid gap-6 pt-5 sm:grid-cols-3">

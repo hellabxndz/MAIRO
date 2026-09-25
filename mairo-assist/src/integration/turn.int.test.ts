@@ -17,6 +17,8 @@ async function makeBusiness(name: string, policy: string) {
   const id = randomUUID();
   await must(admin.from("businesses").insert({ id, name, slug: `${name.toLowerCase().replace(/\W+/g, "-")}-${id.slice(0, 6)}`, ai_goals: ["customer_support", "lead_collection"] }));
   await must(admin.from("business_settings").insert({ business_id: id, onboarding_step: 9, support_email: "help@example.com" }));
+  // New businesses start on Free (trigger); these tests use Growth features like hand-off.
+  await must(admin.from("subscriptions").update({ plan_key: "growth", provider: "manual" }).eq("business_id", id));
   const employeeId = randomUUID();
   await must(admin.from("ai_employees").insert({ id: employeeId, business_id: id, name: "Nova", draft_config: {} }));
   const versionId = randomUUID();
@@ -142,6 +144,30 @@ describe("live AI turns", () => {
     expect(r).toMatchObject({ status: "fallback", reason: "usage_limit" });
     expect((await messagesOf(conv)).at(-1)?.content).toBe(LIMIT_REPLY);
     expect(await conversationOf(conv)).toMatchObject({ handled_by: "human", status: "needs_attention" });
+  });
+
+  it("uses one credit per live AI reply", async () => {
+    const period = new Date().toISOString().slice(0, 8) + "01";
+    const before = (await admin.from("usage_counters").select("ai_responses").eq("business_id", a.id).eq("period_start", period).maybeSingle()).data?.ai_responses ?? 0;
+    const conv = await newConversation(a.id);
+    const r = await runTurn({ businessId: a.id, conversationId: conv, mode: "live", customerText: "Hello there" });
+    expect(r.status).toBe("replied");
+    const after = (await admin.from("usage_counters").select("ai_responses").eq("business_id", a.id).eq("period_start", period).single()).data!.ai_responses;
+    expect(after).toBe(before + 1);
+  });
+
+  it("a Free business gets 100 responses a month, then hands over to the team", async () => {
+    const period = new Date().toISOString().slice(0, 8) + "01";
+    const c = await makeBusiness("Gamma Free", "Returns within 14 days.");
+    await must(admin.from("subscriptions").update({ plan_key: "free", provider: "none" }).eq("business_id", c.id));
+    await must(admin.from("usage_counters").upsert({ business_id: c.id, period_start: period, ai_responses: 99 }));
+    const first = await runTurn({ businessId: c.id, conversationId: await newConversation(c.id), mode: "live", customerText: "Hi" });
+    expect(first.status).toBe("replied");
+    const conv = await newConversation(c.id);
+    const second = await runTurn({ businessId: c.id, conversationId: conv, mode: "live", customerText: "Hi again" });
+    expect(second).toMatchObject({ status: "fallback", reason: "usage_limit" });
+    expect(await conversationOf(conv)).toMatchObject({ handled_by: "human" });
+    await admin.from("businesses").delete().eq("id", c.id);
   });
 
   it("refuses conversations from another business or the wrong channel", async () => {

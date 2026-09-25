@@ -24,10 +24,11 @@ export async function latestLink(to: string, opts: { after?: number; match?: Reg
 export async function signUp(page: Page, name: string, email: string, next?: string) {
   const started = Date.now();
   await page.goto(next ? `/signup?next=${encodeURIComponent(next)}` : "/signup");
-  await page.getByLabel("Your name").fill(name);
-  await page.getByLabel("Work email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByLabel("Full name").fill(name);
+  await page.getByLabel("Business email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await page.getByLabel("Confirm password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Create Free Account" }).click();
   await expect(page).toHaveURL(/\/verify-email/);
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
   const link = await latestLink(email, { after: started });
@@ -45,6 +46,10 @@ export async function signIn(page: Page, email: string, password = PASSWORD, exp
 /** Complete all eight onboarding steps with sensible answers. */
 export async function onboard(page: Page, businessName: string) {
   await expect(page).toHaveURL(/\/onboarding/);
+  if (page.url().includes("/onboarding/plan")) {
+    await expect(page.getByRole("heading", { name: "Start Free. Upgrade Whenever You're Ready." })).toBeVisible();
+    await page.getByTestId("free-plan-offer").getByRole("button", { name: "Continue With Free" }).click();
+  }
   await page.getByLabel("Business name").fill(businessName);
   await page.getByLabel("Website").fill("example-store.com");
   await page.getByLabel("Industry").selectOption("Apparel & fashion");
@@ -73,10 +78,24 @@ export async function onboard(page: Page, businessName: string) {
   await page.getByLabel("Instructions for your AI employee").fill("Speak casually. Do not invent shipping dates.");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page.getByRole("heading", { name: "Preview and test your AI employee" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Test your AI employee" })).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page.getByRole("heading", { name: "Put your AI employee to work" })).toBeVisible();
-  await page.getByRole("button", { name: "Go to my dashboard" }).click();
+  await expect(page.getByRole("heading", { name: "Activate your AI employee" })).toBeVisible();
+  await page.getByRole("button", { name: "Skip for now — go to my dashboard" }).click();
   await expect(page).toHaveURL(/\/dashboard/);
+}
+
+/** Put a business on a plan directly (as our team would for a manual/comped plan). Tests only. */
+export async function setPlan(businessName: string, plan: "free" | "starter" | "growth" | "pro") {
+  const rest = process.env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1";
+  const key = process.env.SUPABASE_SECRET_KEY!;
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+  const [biz] = await (await fetch(`${rest}/businesses?select=id&name=eq.${encodeURIComponent(businessName)}`, { headers })).json();
+  const res = await fetch(`${rest}/subscriptions?business_id=eq.${biz.id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(plan === "free" ? { plan_key: "free", provider: "none" } : { plan_key: plan, provider: "manual" }),
+  });
+  if (!res.ok) throw new Error(`setPlan failed: ${res.status} ${await res.text()}`);
 }

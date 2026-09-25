@@ -472,3 +472,82 @@ compliance webhooks → `https://<your-app>/api/webhooks/shopify`.
 Phase 4: the storefront chat widget (theme app extension), its public API
 with per-shop rate limits, product cards, and secure order verification with
 order and tracking tools.
+
+---
+
+# Free plan and self-serve billing report
+
+## 1. Features implemented
+- **Landing page**: new hero ("Your Business Never Stops. Neither Should Your AI
+  Employee."), a glowing **Start Free** as the main call to action (also in the
+  header, visible on mobile), **Explore Plans** smooth-scrolling to pricing,
+  and the three Free promises under the buttons. Pricing shows all five plans
+  (Free first, "Free Forever"; Growth "Most Popular"; Enterprise "Starting at
+  $999"), plus a full feature comparison table.
+- **Start Free routing** (`/start`): signed out → sign-up; signed in without a
+  business → plan step; with a business → dashboard (paid plan → upgrade page).
+  It creates nothing, so repeated clicks can't duplicate anything.
+- **Sign-up**: "Your AI Employee Starts Here.", Full name / Business email /
+  Password / Confirm password, **Create Free Account**, "No credit card
+  required. Your Free plan never expires." A plan picked on the pricing page is
+  carried through sign-up and email verification.
+- **Choose Your Plan** step after registration: "Welcome to Mairo Assist! /
+  Let's get your AI employee ready.", "Start Free. Upgrade Whenever You're
+  Ready.", a prominent Free offer with **Continue With Free**, and all five
+  plans.
+- **Free plan is automatic**: every new business gets exactly one Free
+  subscription (database trigger), so there are 100 credits from the start. No
+  payment details are asked for.
+- **Paid plan during sign-up**: after the business is created (still on Free),
+  a confirmation page offers secure checkout or "Continue With Free instead".
+  The plan activates only after Stripe confirms payment.
+- **Onboarding**: step 7 now runs a real test chat (it previously said this was
+  unavailable), and step 8 has **Activate your AI employee** (publishes the
+  tested setup and switches it on), then the dashboard.
+- **Dashboard**: "Welcome to Mairo Assist!" card with current plan (Free
+  Forever), AI credits (e.g. 100 / 100 remaining), the real next reset date and
+  **Explore Upgrades**, plus "Unlock More From Your AI Employee." with Starter,
+  Growth and Pro cards.
+- **Upgrade Plan** button in the dashboard navigation (and header on Free),
+  opening a **Plans** page: current plan, credits, reset date, what each plan
+  adds over yours, and upgrade / switch / downgrade buttons. **Billing & Usage**
+  shows credits, token usage and invoices.
+- **Stripe billing**: Checkout for the first purchase, verified activation,
+  prorated in-place plan changes that only apply if paid, downgrade at period
+  end, Billing Portal, signed and deduplicated webhooks, invoices recorded.
+- **Real plan enforcement**: the old "everyone gets Pro during early access"
+  rule is gone. Credits, team access (Pro), hand-off to a person (Growth) and
+  knowledge base size follow the actual plan.
+
+## 2. Database changes (`20260927000100_free_plan.sql`)
+- `subscriptions`: `free` plan and `none` provider allowed; Free ⇔ no provider
+  enforced; trigger adds Free for every new business; existing businesses
+  backfilled.
+- `usage_counters.ai_responses` + `record_ai_response()` (service only) and
+  `business_credit_usage()` (members read their own credits).
+- `billing_checkouts` (Stripe session ↔ business; server-only).
+
+## 3. Tests
+- Unit: 95 (plans, credits and reset dates, Stripe signature and encoding).
+- SQL: 11 new checks (one Free subscription per business, no duplicates, Free
+  never tied to a provider, credits isolated per business and not writable by
+  members, checkout records server-only).
+- Integration: each live reply uses one credit; a Free business hands off after
+  100 responses.
+- Playwright: 37 scenarios, including landing and pricing, the full Free
+  sign-up → plan → onboarding → activation → Free dashboard, paid plan from the
+  pricing page through a fake Stripe (declined card, then paid; charged only
+  after confirmation), cancel at checkout, upgrade from the dashboard with
+  settings preserved, in-place switch, downgrade and cancellation webhook,
+  forged webhook refused, and mobile layout (Start Free visible, plans stacked
+  Free first, no sideways scrolling).
+
+## 4. Limitations
+- Customers can't reach the AI yet (the storefront widget is Phase 4), so
+  live credits won't be used until then. Preview tests are free.
+- Paid plans can be bought only once the Stripe settings are added; until then
+  the Plans page says so and nothing is charged.
+- Enterprise is arranged by contacting sales (`NEXT_PUBLIC_SALES_EMAIL`).
+- Shopify Billing (required for an App Store listing) is still Phase 7.
+- Onboarding keeps its existing 8 steps (business, what you sell, goals, name
+  your AI, Shopify, policies, test, activate), which cover the 7 steps asked for.

@@ -111,10 +111,39 @@ directly and are not billed through Shopify (e.g. an off-App-Store custom
 distribution or future non-Shopify stores).
 
 A business has exactly one `subscriptions` row with exactly one `provider`, so
-it can never be billed twice for the same plan. Until the payment flows are
-tested, `BILLING_ENFORCED=false`: nobody is charged, and every business gets Pro
-features. Plan prices, features and allowances are defined once in
-`lib/billing/plans.ts`.
+it can never be billed twice for the same plan. Plan prices, features and
+allowances are defined once in `lib/billing/plans.ts`.
+
+**Free plan.** A database trigger gives every new business a Free subscription
+(`plan_key 'free'`, `provider 'none'`, never charged); existing businesses were
+backfilled. A check constraint ties Free to "no provider" and every paid plan
+to one. The plan that applies is `effectivePlan(subscription)`: the paid plan
+while Stripe reports it active, trialing or past due, otherwise Free — a lapsed
+payment never locks a business out of its AI employee.
+
+**Credits.** One credit = one AI reply sent to a customer
+(`usage_counters.ai_responses`, incremented by `record_ai_response()` after a
+live reply). Preview tests are free. Allowances reset on the 1st of each month
+(UTC). Model requests are also capped (8× responses) as a cost guard. When
+credits run out, conversations are handed to the team.
+
+**Stripe (self-serve paid plans).** Direct REST calls, no SDK.
+- First purchase: Checkout Session in subscription mode, recorded in
+  `billing_checkouts` (session ↔ business). The plan is written only after the
+  session is fetched from Stripe and shows `complete` and `paid`, on the return
+  URL (`/api/billing/return`) or by the `checkout.session.completed` webhook,
+  whichever comes first. Both are idempotent.
+- Plan changes for subscribers: subscription update with
+  `proration_behavior=always_invoice` and `payment_behavior=pending_if_incomplete`,
+  so an upgrade only applies if Stripe collects the prorated payment.
+- Downgrade to Free: `cancel_at_period_end`. `customer.subscription.deleted`
+  moves the business back to Free.
+- Webhooks: `Stripe-Signature` verified on the raw body (5-minute tolerance),
+  deduplicated on event ID, matched to a business by our stored subscription
+  ID (never by client-supplied metadata alone).
+- Plan changes never touch AI settings, the store connection or conversations.
+
+Shopify Billing API is still the route for an App Store listing (Phase 7).
 
 ## AI architecture
 
