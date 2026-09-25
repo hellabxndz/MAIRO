@@ -111,6 +111,27 @@ test.describe.serial("Start Free", () => {
     await expect(page.locator('[data-testid^="plan-card-"]')).toHaveCount(5);
     await page.getByTestId("free-plan-offer").getByRole("button", { name: "Continue With Free" }).click();
 
+    // First-run welcome: the AI employee "joins the team", once.
+    await expect(page).toHaveURL(/\/onboarding\/welcome/);
+    await expect(page.getByText("Activating Your AI Employee…")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your New Employee Has Officially Joined the Team." })).toBeVisible();
+    await expect(page.getByText("Available 24/7. Ready to help your customers. Powered by Mairo Assist.")).toBeVisible();
+    await expect(page.getByTestId("welcome").getByText("Your AI Employee", { exact: true })).toBeVisible();
+    await expect(page.getByText("Activating Your AI Employee…")).toBeHidden();
+    // Honest status: it isn't live until setup is done.
+    await expect(page.getByText("Setup in progress")).toBeVisible();
+    const planCard = page.getByTestId("welcome-plan");
+    for (const t of ["Free Forever", "100 AI Responses Every Month", "$0/month", "No Credit Card Required"]) await expect(planCard).toContainText(t);
+    await page.screenshot({ path: "test-results/welcome.png" });
+
+    await page.getByRole("button", { name: "Explore All Plans" }).click();
+    const plans = page.getByRole("dialog", { name: "All plans" });
+    await expect(plans.locator('[data-testid^="plan-card-"]')).toHaveCount(5);
+    await expect(plans.getByText("Your Free plan stays active while you look.")).toBeVisible();
+    await plans.getByRole("button", { name: "Continue With Free" }).click();
+    await expect(plans).toBeHidden();
+    await page.getByRole("button", { name: "Set Up My AI Employee" }).click();
+
     await setUpBusiness(page, "Free Forever Goods");
     await finishOnboarding(page);
 
@@ -127,6 +148,10 @@ test.describe.serial("Start Free", () => {
     // Exactly one Free subscription, never charged.
     const { subs } = await subscriptionOf("Free Forever Goods");
     expect(subs).toEqual([{ plan_key: "free", status: "active", provider: "none", provider_subscription_id: null, cancel_at_period_end: false }]);
+
+    // The welcome never replays.
+    await page.goto("/onboarding/welcome");
+    await expect(page).not.toHaveURL(/\/onboarding\/welcome/);
 
     // Start Free again while signed in goes straight to the dashboard (nothing new is created).
     await page.goto("/start");
@@ -153,7 +178,13 @@ test.describe.serial("Start Free", () => {
     await expect(page.getByText("You picked Growth.")).toBeVisible();
     await signUp(page, paid.name, paid.email, "/onboarding/plan?plan=growth");
     await expect(page).toHaveURL(/\/onboarding\/plan\?plan=growth/);
+    // With reduced motion the welcome appears in its final state at once.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.getByTestId("plan-card-growth").getByRole("button", { name: "Choose Growth" }).click();
+    await expect(page.getByRole("heading", { name: "Your New Employee Has Officially Joined the Team." })).toBeVisible({ timeout: 1500 });
+    await expect(page.getByText("Activating Your AI Employee…")).toBeHidden();
+    await expect(page.getByText("You picked Growth — you'll confirm it after setting up your business.")).toBeVisible();
+    await page.getByRole("button", { name: "Set Up My AI Employee" }).click();
     await setUpBusiness(page, "Growth Mode Co");
 
     // The business exists and is on Free until payment is confirmed.
