@@ -23,6 +23,11 @@ const deny = new Set();
 const stores = new Map();
 
 const token = (p) => `${p}_${randomBytes(12).toString("hex")}`;
+const APP_URL = process.env.APP_URL ?? "http://localhost:3100";
+/** Shops named "approved-…" behave as if Shopify approved protected customer data. */
+const approved = (shop) => shop.startsWith("approved-");
+const grantScopes = (shop, requested) => (requested ?? "").split(",").filter((s) => s && (approved(shop) || s !== "read_customers")).join(",");
+const withoutCustomer = (o) => { const { email, customer, ...rest } = o; void email; void customer; return rest; };
 
 function variant(id, title, { price, qty, tracked = true, available = true }) {
   return {
@@ -101,7 +106,12 @@ function seed(shop) {
       },
     ],
     webhooks: [],
+    scriptTags: [],
   };
+  for (const o of store.orders) {
+    o.email = "buyer@example.com";
+    o.customer = { id: "gid://shopify/Customer/77", email: "buyer@example.com", firstName: "Bea", lastName: "Buyer", numberOfOrders: 1, amountSpent: { amount: "120.00", currencyCode: "USD" } };
+  }
   stores.set(shop, store);
   return store;
 }
@@ -140,13 +150,30 @@ function graphql(shop, body) {
       return { data: { inventoryItem: null } };
     }
     case "OrdersPage":
-      if (/customer\s*\{/.test(q)) return { errors: [{ message: "Access denied for customer field.", extensions: { code: "ACCESS_DENIED" } }] };
-      return { data: { orders: page(store.orders) } };
-    case "OrderById":
-      return { data: { order: store.orders.find((o) => o.id === v.id) ?? null } };
+    case "OrderById": {
+      const wantsCustomer = /customer\s*\{/.test(q);
+      if (wantsCustomer && !approved(shop)) return { errors: [{ message: "Access denied for customer field.", extensions: { code: "ACCESS_DENIED" } }] };
+      const shape = (o) => (wantsCustomer ? o : withoutCustomer(o));
+      if (op === "OrdersPage") {
+        const r = page(store.orders);
+        return { data: { orders: { ...r, nodes: r.nodes.map(shape) } } };
+      }
+      const o = store.orders.find((x) => x.id === v.id);
+      return { data: { order: o ? shape(o) : null } };
+    }
+    case "WidgetScriptTags":
+      return { data: { scriptTags: { nodes: store.scriptTags } } };
+    case "AddWidget": {
+      const tag = { id: `gid://shopify/ScriptTag/${store.scriptTags.length + 1}${Date.now() % 1000}`, src: v.input.src };
+      store.scriptTags.push(tag);
+      return { data: { scriptTagCreate: { scriptTag: { id: tag.id }, userErrors: [] } } };
+    }
+    case "RemoveWidget":
+      store.scriptTags = store.scriptTags.filter((t) => t.id !== v.id);
+      return { data: { scriptTagDelete: { deletedScriptTagId: v.id, userErrors: [] } } };
     case "CreateWebhook":
       // Like Shopify: order topics need protected customer data approval.
-      if (String(v.topic).startsWith("ORDERS_")) {
+      if (String(v.topic).startsWith("ORDERS_") && !approved(shop)) {
         return { data: { webhookSubscriptionCreate: { webhookSubscription: null, userErrors: [{ field: ["topic"], message: "This app is not approved to subscribe to webhook topics containing protected customer data. See https://shopify.dev/docs/apps/launch/protected-customer-data for more details." }] } } };
       }
       store.webhooks.push(v.topic);
@@ -161,7 +188,8 @@ http
     req.on("data", (c) => (raw += c));
     req.on("end", () => {
       const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
-      const body = raw ? JSON.parse(raw) : {};
+      let body = {};
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = {}; }
 
       if (url.pathname === "/__requests") return json(res, 200, requests);
       if (url.pathname === "/__expire") {
@@ -205,18 +233,46 @@ http
         if (body.grant_type === "refresh_token") {
           if (refresh.get(body.refresh_token) !== shop) return json(res, 400, { error: "invalid_grant" });
           refresh.delete(body.refresh_token); // rotation: the old refresh token stops working
-          scope = "read_products,read_inventory,read_orders";
+          scope = grantScopes(shop, "read_products,read_inventory,read_orders,write_script_tags,read_customers");
         } else {
           const c = codes.get(body.code);
           codes.delete(body.code);
           if (!c || c.shop !== shop) return json(res, 400, { error: "invalid_request" });
-          scope = c.scope;
+          scope = grantScopes(shop, c.scope);
         }
         const at = token("shpat");
         const rt = token("shprt");
         access.set(at, { shop, valid: true });
         refresh.set(rt, shop);
         return json(res, 200, { access_token: at, scope, expires_in: 3600, refresh_token: rt, refresh_token_expires_in: 7_776_000 });
+      }
+
+      // Storefront home page: loads every script tag the app added, like Shopify does.
+      if (path === "/" && req.method === "GET") {
+        const store = seed(shop);
+        const scripts = store.scriptTags
+          .map((t) => {
+            const src = new URL(t.src);
+            // The app proxy lives under /shops/<shop>/ on this fake host.
+            src.searchParams.set("proxy", `/shops/${shop}${src.searchParams.get("proxy") ?? "/apps/mairo-assist"}`);
+            return `<script async src="${src}"></script>`;
+          })
+          .join("");
+        return res.writeHead(200, { "content-type": "text/html" }).end(`<!doctype html><html><head><title>${store.name}</title></head><body><h1>${store.name}</h1><p>Storefront</p>${scripts}</body></html>`);
+      }
+
+      // App Proxy: /apps/mairo-assist/* → the app's /api/proxy/*, signed like Shopify.
+      const proxied = /^\/apps\/mairo-assist(\/.*)?$/.exec(path);
+      if (proxied) {
+        const params = { ...Object.fromEntries(url.searchParams), shop, logged_in_customer_id: "", path_prefix: "/apps/mairo-assist", timestamp: String(Math.floor(Date.now() / 1000)) };
+        const grouped = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("");
+        const signature = createHmac("sha256", SECRET).update(grouped).digest("hex");
+        const target = new URL(`${APP_URL}/api/proxy${proxied[1] ?? ""}`);
+        for (const [k, val] of Object.entries({ ...params, signature })) target.searchParams.set(k, val);
+        fetch(target, { method: req.method, headers: { "content-type": req.headers["content-type"] ?? "application/json" }, body: req.method === "POST" ? raw : undefined })
+          .then(async (r) => res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json" }).end(await r.text()))
+          .catch(() => res.writeHead(502).end());
+        return;
       }
 
       if (/^\/admin\/api\/[\w-]+\/graphql\.json$/.test(path) && req.method === "POST") {

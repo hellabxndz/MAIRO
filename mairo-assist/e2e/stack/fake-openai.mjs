@@ -21,6 +21,17 @@ function reply(body) {
     let out = {};
     try { out = JSON.parse(last.output); } catch {}
     if (out.error) return { text: "Sorry, I couldn't do that right now. I can connect you with the team." };
+    if (out.verified === true) {
+      const orderNo = [...input].reverse().map((i) => /#?(\d{4,})/.exec(String(i.content ?? ""))?.[1]).find(Boolean);
+      if (orderNo && hasTool(body, "get_order_status")) return { call: { name: "get_order_status", arguments: { order_number: orderNo } } };
+    }
+    if (out.verified === false) return { text: out.result };
+    if (out.order) {
+      const s = out.order.shipments?.[0];
+      const t = s?.tracking?.[0];
+      return { text: `Order ${out.order.number} is ${s?.status ?? out.order.status}${t ? ` — ${t.company} tracking ${t.number}` : ""}.` };
+    }
+    if (typeof out.result === "string" && out.result.startsWith("If that order number")) return { text: "I've emailed a 6-digit code to the address on that order. Please type it here." };
     if (Array.isArray(out.results) && out.results[0]?.product_id) {
       if (/(stock|available)/.test(userText) && hasTool(body, "check_availability")) {
         return { call: { name: "check_availability", arguments: { product_id: out.results[0].product_id, variant: /size (\w+)/.exec(userText)?.[1] ?? null } } };
@@ -34,6 +45,14 @@ function reply(body) {
     return { text: "I don't have that information, but I can connect you with the team." };
   }
   const text = String(last?.content ?? "").toLowerCase();
+  if (/^\s*\d{6}\s*$/.test(text) && hasTool(body, "verify_order_code")) {
+    return { call: { name: "verify_order_code", arguments: { code: text.trim() } } };
+  }
+  const orderEmail = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.exec(text)?.[0];
+  const orderNo = /#?(\d{4,})/.exec(text)?.[1];
+  if (/order/.test(text) && orderEmail && orderNo && hasTool(body, "request_order_verification")) {
+    return { call: { name: "request_order_verification", arguments: { order_number: orderNo, email: orderEmail } } };
+  }
   if (/(person|human|agent)/.test(text) && hasTool(body, "escalate_to_human")) {
     return { call: { name: "escalate_to_human", arguments: { reason: "Customer asked for a person" } } };
   }

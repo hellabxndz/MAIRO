@@ -18,7 +18,7 @@
   var proxy = "/apps/mairo-assist";
   try {
     var p = new URL(script.src).searchParams.get("proxy");
-    if (p && /^\/[A-Za-z0-9/_-]+$/.test(p)) proxy = p;
+    if (p && /^\/[A-Za-z0-9/_.-]+$/.test(p)) proxy = p;
   } catch (e) {}
   var API = proxy.replace(/\/+$/, "");
 

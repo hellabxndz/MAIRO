@@ -4,6 +4,7 @@ import { documentsByCategory, searchKnowledge } from "@/lib/knowledge/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolOutcome } from "./agent";
 import { parseArguments, type ToolSpec } from "./tool-spec";
+import { getOrderStatus, requestOrderVerification, verifyOrderCode } from "./order-tools";
 import { checkAvailability, getProductDetails, searchProducts } from "./product-tools";
 import { ALL_TOOLS, captureLead, escalateToHuman, getBusinessPolicy, POLICY_CATEGORIES, searchKnowledge as searchKnowledgeSpec } from "./tools";
 
@@ -154,6 +155,12 @@ async function run(ctx: ToolContext, name: string, input: unknown): Promise<Tool
       return getProductDetails(ctx.businessId, input as { product_id: string });
     case "check_availability":
       return checkAvailability(ctx.businessId, input as { product_id: string; variant: string | null });
+    case "request_order_verification":
+      return requestOrderVerification(ctx, input as { order_number: string; email: string });
+    case "verify_order_code":
+      return verifyOrderCode(ctx, input as { code: string });
+    case "get_order_status":
+      return getOrderStatus(ctx, input as { order_number: string });
   }
   return { status: "denied", output: { error: "Unknown tool." } };
 }

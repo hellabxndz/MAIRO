@@ -9,7 +9,8 @@ import { runAgent, type ProductCard } from "./agent";
 import { estimateCostUsd, getProvider, LIMITS } from "./config";
 import { buildInstructions } from "./prompt";
 import { definitionOf } from "./tool-spec";
-import { PRODUCT_TOOL_NAMES } from "./tools";
+import { ORDER_TOOL_NAMES, PRODUCT_TOOL_NAMES } from "./tools";
+import { isMailConfigured } from "@/lib/mail";
 import { enabledSpecs, executeTool } from "./tools-server";
 import type { AgentItem, AiProvider } from "./types";
 
@@ -41,6 +42,8 @@ type AiContext = {
   supportEmail: string | null;
   plan: Plan;
   storeConnected: boolean;
+  /** Customers can look up their orders: store shares customer emails and email sending works. */
+  orderLookupReady: boolean;
 };
 
 async function loadContext(businessId: string, mode: "live" | "preview"): Promise<AiContext | null> {
@@ -54,7 +57,7 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
       .maybeSingle(),
     admin.from("business_settings").select("support_email").eq("business_id", businessId).single(),
     admin.from("subscriptions").select("plan_key, status").eq("business_id", businessId).maybeSingle(),
-    admin.from("shopify_connections").select("id").eq("business_id", businessId).eq("status", "active").maybeSingle(),
+    admin.from("shopify_connections").select("id, customer_data_enabled").eq("business_id", businessId).eq("status", "active").maybeSingle(),
   ]);
   if (!business || business.status === "suspended" || !employee) return null;
 
@@ -67,12 +70,14 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
     supportEmail: settings?.support_email ?? null,
     plan: effectivePlan(sub),
     storeConnected: Boolean(shop),
+    orderLookupReady: Boolean(shop?.customer_data_enabled) && isMailConfigured(),
   };
 }
 
-export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee" | "storeConnected">): Set<string> {
+export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee" | "storeConnected" | "orderLookupReady">): Set<string> {
   const enabled = new Set<string>(["search_knowledge", "get_business_policy"]);
   if (ctx.storeConnected && ctx.plan?.features.includes("product_questions")) PRODUCT_TOOL_NAMES.forEach((n) => enabled.add(n));
+  if (ctx.storeConnected && ctx.orderLookupReady && ctx.plan?.features.includes("order_tracking")) ORDER_TOOL_NAMES.forEach((n) => enabled.add(n));
   const esc = ctx.employee.config.escalation;
   if (ctx.plan?.features.includes("human_escalation") && (esc.escalateOnRequest || esc.offerHumanWhenUpset)) enabled.add("escalate_to_human");
   if (ctx.business.ai_goals.includes("lead_collection")) enabled.add("capture_lead");
@@ -198,6 +203,7 @@ export async function runTurn(opts: {
       leadCapture: enabled.has("capture_lead"),
       storeConnected: ctx.storeConnected,
       products: enabled.has("search_products"),
+      orders: enabled.has("get_order_status"),
     },
     supportEmail: ctx.supportEmail,
     mode: opts.mode,
