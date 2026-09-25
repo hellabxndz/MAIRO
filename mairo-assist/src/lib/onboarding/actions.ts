@@ -100,6 +100,8 @@ export async function saveBusinessInfo(_prev: FormState, form: FormData): Promis
     secure: process.env.NODE_ENV === "production",
     path: "/",
   });
+  // Setup has started, so the first-run welcome is done for good.
+  await markWelcomeSeen();
   // Every new business starts on Free (a database trigger adds the subscription).
   // If a paid plan was picked, offer checkout now that there's a business to bill.
   const intent = await readPlanIntent();
@@ -114,6 +116,27 @@ export async function selectPlanIntent(form: FormData): Promise<void> {
   const plan = str(form, "plan");
   if (!isPlanKey(plan) || plan === "enterprise") redirect("/onboarding/plan");
   await setPlanIntent(plan);
+  // First time only: welcome the new AI employee before setup starts.
+  redirect((await welcomeSeen()) ? "/onboarding" : "/onboarding/welcome");
+}
+
+/** Whether this person has already seen the first-run welcome (stored on their login, so it follows them across devices). */
+export async function welcomeSeen(): Promise<boolean> {
+  const { data } = await (await createClient()).auth.getUser();
+  return Boolean(data.user?.user_metadata?.welcome_seen_at);
+}
+
+/** Record that the welcome was shown, so it never replays. */
+export async function markWelcomeSeen(): Promise<void> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  if (!data.user || data.user.user_metadata?.welcome_seen_at) return;
+  await supabase.auth.updateUser({ data: { welcome_seen_at: new Date().toISOString() } });
+}
+
+/** "Set Up My AI Employee": continue to business setup. */
+export async function finishWelcome(): Promise<void> {
+  await markWelcomeSeen();
   redirect("/onboarding");
 }
 

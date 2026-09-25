@@ -49,6 +49,11 @@ export async function onboard(page: Page, businessName: string) {
   if (page.url().includes("/onboarding/plan")) {
     await expect(page.getByRole("heading", { name: "Start Free. Upgrade Whenever You're Ready." })).toBeVisible();
     await page.getByTestId("free-plan-offer").getByRole("button", { name: "Continue With Free" }).click();
+    await expect(page).toHaveURL(/\/onboarding\/welcome/);
+    // Skip jumps straight to the end state (the button fades out once the animation is over).
+    await page.getByRole("button", { name: "Skip" }).click({ timeout: 2500 }).catch(() => {});
+    await expect(page.getByRole("heading", { name: "Your New Employee Has Officially Joined the Team." })).toBeVisible();
+    await page.getByRole("button", { name: "Set Up My AI Employee" }).click();
   }
   await page.getByLabel("Business name").fill(businessName);
   await page.getByLabel("Website").fill("example-store.com");

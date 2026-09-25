@@ -125,3 +125,53 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * First-run welcome: the AI employee "materializes", then the welcome copy
+ * appears. Sequenced with CSS delays so nothing waits on JavaScript; Skip and
+ * reduced-motion jump straight to the final state.
+ */
+@layer components {
+  .welcome-stage .w-materialize { animation: w-materialize 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .welcome-stage .w-ring { animation: w-spin 14s linear infinite; }
+  .welcome-stage .w-ring-rev { animation: w-spin 22s linear infinite reverse; }
+  .welcome-stage .w-core { animation: w-breathe 3.2s ease-in-out 1.8s infinite; }
+  .welcome-stage .w-scan { animation: w-scan 1.6s ease-in-out 0.2s 1 both; }
+  .welcome-stage .w-particle { animation: w-drift var(--dur, 6s) ease-in-out var(--delay, 0s) infinite; }
+  .welcome-stage .w-loading { animation: w-out 0.4s ease 2.1s both; }
+  .welcome-stage .w-joined { animation: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 2.3s both; }
+  .welcome-stage .w-joined-late { animation: fade-up 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 2.7s both; }
+  .welcome-stage .w-skip { animation: w-out 0.3s ease 3.2s both; }
+  .welcome-stage .w-progress { animation: w-progress 2.1s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+  /* Skipped, or the visitor prefers less motion: show the end state at once. */
+  .welcome-stage[data-skipped="true"] .w-materialize,
+  .welcome-stage[data-skipped="true"] .w-joined,
+  .welcome-stage[data-skipped="true"] .w-joined-late { animation: none; opacity: 1; transform: none; filter: none; }
+  .welcome-stage[data-skipped="true"] .w-loading { animation: none; opacity: 0; visibility: hidden; }
+  @media (prefers-reduced-motion: reduce) {
+    .welcome-stage * { animation-delay: 0s !important; }
+    .welcome-stage .w-loading { opacity: 0; visibility: hidden; }
+  }
+
+  @keyframes w-materialize {
+    0% { opacity: 0; transform: scale(0.6); filter: blur(14px) saturate(0.4); }
+    60% { opacity: 1; filter: blur(2px) saturate(1.2); }
+    100% { opacity: 1; transform: scale(1); filter: none; }
+  }
+  @keyframes w-spin { to { transform: rotate(360deg); } }
+  @keyframes w-breathe {
+    0%, 100% { box-shadow: 0 0 60px 10px rgb(124 92 255 / 0.45), 0 0 120px 30px rgb(58 160 255 / 0.25); }
+    50% { box-shadow: 0 0 80px 18px rgb(124 92 255 / 0.6), 0 0 160px 50px rgb(58 160 255 / 0.35); }
+  }
+  @keyframes w-scan {
+    from { transform: translateY(-110%); opacity: 0.9; }
+    to { transform: translateY(110%); opacity: 0; }
+  }
+  @keyframes w-drift {
+    0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+    50% { transform: translate(var(--dx, 6px), var(--dy, -18px)); opacity: 0.9; }
+  }
+  @keyframes w-out { to { opacity: 0; visibility: hidden; } }
+  @keyframes w-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}

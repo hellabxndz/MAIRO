@@ -551,3 +551,29 @@ order and tracking tools.
 - Shopify Billing (required for an App Store listing) is still Phase 7.
 - Onboarding keeps its existing 8 steps (business, what you sell, goals, name
   your AI, Shopify, policies, test, activate), which cover the 7 steps asked for.
+
+---
+
+# AI employee welcome report
+
+- **When**: once, right after choosing a plan on "Choose Your Plan" (before
+  business setup), at `/onboarding/welcome`.
+- **What**: the AI employee materializes in the center (electric-blue and
+  purple glow, rotating rings, a scan line, drifting particles) while
+  "Activating Your AI Employee…" shows for about two seconds. Then "Your New
+  Employee Has Officially Joined the Team." and "Available 24/7. Ready to help
+  your customers. Powered by Mairo Assist." appear, with the AI's name (or "Your
+  AI Employee"), the Free Forever plan card, **Set Up My AI Employee** and
+  **Explore All Plans** (an overlay with every plan that leaves Free active).
+- **Honest status**: a "Setup in progress — switches on once you finish setting
+  up" badge. The AI is only shown as active after onboarding and activation.
+- **Once only**: stored on the person's login (`welcome_seen_at` in their
+  account metadata) when setup starts, so it follows them across devices and
+  never replays. No database migration needed.
+- **Skip** at any time. With reduced motion the final state appears
+  immediately. It's CSS-driven, so nothing waits on the animation, and it's
+  responsive.
+- **Tests**: the Free journey watches the full sequence (loading text, then
+  the welcome, plan card, plans overlay) and checks it never replays. The paid
+  journey checks the reduced-motion version and the "You picked Growth" note.
+  Other suites use Skip. 37/37 Playwright scenarios pass.
