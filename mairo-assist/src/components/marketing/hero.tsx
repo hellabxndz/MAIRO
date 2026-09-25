@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, CheckCircle2, ClipboardCheck, PlayCircle, Truck } from "lucide-react";
+import { ArrowRight, Bot, Check, CheckCircle2, ClipboardCheck, Truck } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { JeansArt } from "./product-art";
 
@@ -18,18 +18,28 @@ export function Hero() {
             Neither Should Your AI Employee.
           </h1>
           <p className="mx-auto max-w-xl text-lg text-fg-muted lg:mx-0">
-            Meet your new AI sales and customer service assistant. Turn customer questions into sales, manage orders, and
-            provide support around the clock.
+            Meet your AI-powered sales and customer service employee. Answer customer questions, recommend products, and help
+            manage your business — all from one platform.
           </p>
           <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <ButtonLink href="/signup" size="lg">
-              Get Started <ArrowRight aria-hidden />
+            <ButtonLink
+              href="/start"
+              size="lg"
+              className="h-14 px-8 text-base shadow-[0_0_0_1px_rgb(124_92_255/0.5),0_12px_48px_-8px_rgb(124_92_255/0.95),0_0_80px_-20px_rgb(56_189_248/0.8)]"
+            >
+              Start Free <ArrowRight aria-hidden />
             </ButtonLink>
-            <ButtonLink href="#demo" size="lg" variant="secondary">
-              <PlayCircle aria-hidden /> Watch Demo
+            <ButtonLink href="#pricing" size="lg" variant="secondary" className="h-14 px-7 text-base">
+              Explore Plans
             </ButtonLink>
           </div>
-          <p className="text-xs text-fg-subtle">Built for Shopify stores · You approve every refund, return and exchange</p>
+          <ul className="flex flex-col items-center gap-x-5 gap-y-1.5 text-sm text-fg-muted sm:flex-row sm:justify-center lg:justify-start" aria-label="Free plan">
+            {["Free Forever", "No Credit Card Required", "100 Free AI Responses Every Month"].map((t) => (
+              <li key={t} className="flex items-center gap-1.5">
+                <Check className="size-4 text-success" aria-hidden /> {t}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <HeroConsole />

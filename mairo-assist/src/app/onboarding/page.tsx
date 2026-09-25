@@ -7,7 +7,8 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConnectShopifyForm } from "@/components/integrations/shopify-forms";
-import { WidgetPreview } from "@/components/widget/widget-preview";
+import { PreviewChat } from "@/components/ai-employee/preview-chat";
+import { ActivateForm } from "@/components/onboarding/activate-form";
 import { requireUser } from "@/lib/auth/session";
 import { isOpenAIConfigured, isShopifyConfigured } from "@/lib/env";
 import { continueFrom, skipShopify } from "@/lib/onboarding/actions";
@@ -57,10 +58,16 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   const config = parseAiConfig(employee?.draft_config);
   const policy = (title: string) => docs?.find((d) => d.title === title)?.content ?? "";
   const aiName = employee?.name ?? "Your AI employee";
+  const checkout = typeof sp.checkout === "string" ? sp.checkout : null;
   const shopifyError = typeof sp.shopify_error === "string" ? sp.shopify_error.replace(/[^a-z_]/g, "").slice(0, 40) : null;
 
   return (
     <Shell step={step} reached={settings.onboarding_completed_at ? TOTAL_STEPS : reached}>
+      {checkout === "success" && <Alert tone="success" title="Payment confirmed" className="mb-5">Your paid plan is active. Let&apos;s finish setting up.</Alert>}
+      {checkout === "pending" && <Alert tone="info" className="mb-5">Your payment is still being confirmed. Your plan will update automatically — carry on with setup.</Alert>}
+      {(checkout === "canceled" || checkout === "failed") && (
+        <Alert tone="warning" className="mb-5">No payment was made, so you&apos;re on Free. You can upgrade any time from your dashboard.</Alert>
+      )}
       {step === 1 && (
         <BusinessInfoForm
           businessId={business.id}
@@ -126,20 +133,29 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
         />
       )}
       {step === 7 && (
-        <div className="grid gap-6 md:grid-cols-[1fr_340px]">
+        <div className="grid gap-6 md:grid-cols-[1fr_360px]">
           <div className="space-y-4">
-            <p className="text-sm text-fg-muted">This is how {aiName} will appear to your customers.</p>
-            <Alert tone="warning" title="Live test conversations aren't available yet">
-              {isOpenAIConfigured()
-                ? "Test chats with your AI employee arrive with the AI conversation release. "
-                : "The AI engine isn't configured on this deployment yet. "}
-              Your AI employee will stay off until you&apos;ve tested it — we never switch on an untested assistant.
-            </Alert>
+            <p className="text-sm text-fg-muted">
+              Ask {aiName} something a customer would — about your products, shipping or returns. It answers from your store and the
+              policies you just added. Test messages are free and never reach customers.
+            </p>
+            {employee?.tested_at ? (
+              <Alert tone="success" title="Tested">{aiName} has answered a test message. Keep testing, or continue.</Alert>
+            ) : (
+              <Alert tone="info" title="Send at least one test message">We only switch on an AI employee that you&apos;ve tested.</Alert>
+            )}
             <form action={continueFrom.bind(null, 7)} className="flex justify-end pt-2">
               <Button type="submit" size="lg">Continue</Button>
             </form>
           </div>
-          <WidgetPreview name={aiName} welcomeMessage={config.welcomeMessage} brandColor={config.brandColor} businessName={business.name} />
+          <PreviewChat
+            name={aiName}
+            welcomeMessage={config.welcomeMessage}
+            brandColor={config.brandColor}
+            initialMessages={[]}
+            enabled={isOpenAIConfigured()}
+            disabledReason={isOpenAIConfigured() ? undefined : "The AI engine isn't configured on this deployment yet (OPENAI_API_KEY and OPENAI_MODEL)."}
+          />
         </div>
       )}
       {step === 8 && (
@@ -149,16 +165,22 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
             <Checklist done={(docs?.length ?? 0) > 0} label="Policies added to the knowledge base" optional />
             <Checklist done={shopify?.status === "active"} label="Shopify store connected" />
             <Checklist done={Boolean(employee?.tested_at)} label="Tested in preview" />
-            <Checklist done={Boolean(employee?.published_version_id)} label="Configuration published" />
+            <Checklist done={employee?.status === "active"} label="AI employee activated" />
             <Checklist done={false} label="Chat widget switched on in your Shopify theme editor (App embeds → Mairo Assist)" />
           </ul>
-          <Alert tone="info" title="What happens next">
-            Your AI employee is <strong className="text-fg">paused</strong> until every required step above is done. Once
-            it&apos;s tested and published, you&apos;ll switch it on from your dashboard and enable the chat widget in your
-            Shopify theme editor.
-          </Alert>
+          {employee?.status === "active" ? (
+            <Alert tone="success" title={`${aiName} is active`}>Your AI employee is switched on.</Alert>
+          ) : (
+            <ActivateForm canActivate={Boolean(employee?.tested_at)} aiName={aiName} />
+          )}
+          <p className="text-xs text-fg-subtle">
+            Customers reach your AI employee through the chat widget on your store, which you switch on in your Shopify theme editor.
+            You can pause it any time from your dashboard.
+          </p>
           <form action={continueFrom.bind(null, 8)} className="flex justify-end">
-            <Button type="submit" size="lg">Go to my dashboard</Button>
+            <Button type="submit" size="lg" variant={employee?.status === "active" ? "primary" : "ghost"}>
+              {employee?.status === "active" ? "Go to my dashboard" : "Skip for now — go to my dashboard"}
+            </Button>
           </form>
         </div>
       )}

@@ -13,11 +13,14 @@ export const passwordSchema = z
   .max(72, "Use at most 72 characters")
   .refine((v) => /[a-zA-Z]/.test(v) && /[0-9]/.test(v), "Include at least one letter and one number");
 
-export const signUpSchema = z.object({
-  fullName: z.string().trim().min(1, "Enter your name").max(120),
-  email: emailSchema,
-  password: passwordSchema,
-});
+export const signUpSchema = z
+  .object({
+    fullName: z.string().trim().min(1, "Enter your name").max(120),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().max(72),
+  })
+  .refine((v) => v.password === v.confirmPassword, { path: ["confirmPassword"], message: "Passwords don't match" });
 
 export const signInSchema = z.object({
   email: emailSchema,

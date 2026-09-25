@@ -6,7 +6,7 @@ import { aiNameSchema, businessInfoSchema, goalsSchema, sellsSchema } from "./bu
 
 describe("auth validation", () => {
   it("normalizes email and enforces password strength", () => {
-    const ok = signUpSchema.safeParse({ fullName: " Ana ", email: " Ana@Example.COM ", password: "longenough1" });
+    const ok = signUpSchema.safeParse({ fullName: " Ana ", email: " Ana@Example.COM ", password: "longenough1", confirmPassword: "longenough1" });
     expect(ok.success && ok.data.email).toBe("ana@example.com");
     expect(signUpSchema.safeParse({ fullName: "A", email: "a@b.co", password: "short1" }).success).toBe(false);
     expect(signUpSchema.safeParse({ fullName: "A", email: "a@b.co", password: "onlyletterszz" }).success).toBe(false);
