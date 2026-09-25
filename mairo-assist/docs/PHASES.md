@@ -24,7 +24,7 @@ retries; the three privacy webhooks; disconnect/reconnect; and read-only AI
 product tools (search, details, live availability). Bulk operations were not
 needed: paged syncs run in resumable slices instead.
 
-## Phase 4 — Storefront
+## Phase 4 — Storefront ✅
 
 - Theme app extension (app embed block) for the chat widget; public widget API
   with per-shop rate limits; no secrets in browser code.
@@ -577,3 +577,87 @@ order and tracking tools.
   the welcome, plan card, plans overlay) and checks it never replays. The paid
   journey checks the reduced-motion version and the "You picked Growth" note.
   Other suites use Skip. 37/37 Playwright scenarios pass.
+
+---
+
+# Phase 4 report
+
+## 1. Features implemented
+- **Storefront chat widget** (`public/widget.js`): plain JavaScript in a Shadow
+  DOM, so store CSS can't break it and untrusted text is never inserted as
+  HTML. It has:
+  - the AI's name, welcome message, brand color and position, and an "AI
+    assistant" label
+  - product cards with image, price and a View link
+  - a typing indicator
+  - "You're now chatting with the team" after a takeover
+  - conversations that persist per browser
+  - full-screen layout on phones, Esc to close, and reduced-motion support
+  It shows only while the AI employee is active.
+- **One-click install**: the **Chat Widget** dashboard page adds the widget to
+  the store through Shopify's script tag API (no theme edits and no Shopify
+  CLI), and can remove it again. Disconnecting the store also removes it. A
+  checklist shows each requirement:
+  - store connected
+  - permission granted
+  - App Proxy working (checked by calling the store's proxy for real)
+  - AI active
+  - widget installed
+- **Secure chat API over Shopify's App Proxy** (`/api/proxy/config`,
+  `/api/proxy/messages`):
+  - every request is verified with Shopify's proxy signature and timestamp,
+    and must belong to an active store connection
+  - the browser holds a random secret, and only its hash is stored, so nobody
+    else can read that chat
+  - rate limits apply per browser and per store
+- **Background replies**: the customer's message is saved immediately and the
+  AI replies in the background. The widget polls, which also delivers replies
+  from the team. Each live reply uses one credit, and running out hands the
+  chat to the team.
+- **Order lookup with verification** (Growth plan and above; needs protected
+  customer data and email configured):
+  - the customer gives an order number and email, and a 6-digit code goes to
+    the email on the order, via Resend
+  - the reply is the same whether or not the order exists, so nothing leaks
+  - codes are hashed, expire in 10 minutes, and allow 5 attempts
+  - verification lasts 30 minutes and covers only orders on that email
+  - status, items, shipments and tracking are refreshed live from Shopify
+  - when it isn't available, the AI says so and offers the team
+- **Product cards** from the product tools are stored with the AI message
+  (`conversation_messages.attachments`).
+
+## 2. Database changes (`20260928000100_phase4_widget.sql`)
+- `shopify_connections.script_tag_gid` and `widget_installed_at`
+- visitor lookup index on `conversations`
+- `conversations.verified_email_hash`
+- `order_verifications.order_id` and `email_hash`
+
+## 3. Tests
+- Unit: App Proxy signature (valid, tampered, wrong secret, unsigned, repeated
+  keys), order number parsing, visitor secret validation and hashing.
+- Playwright, 43/43. The fake Shopify now serves a storefront that loads the
+  app's script tags and an App Proxy that signs requests like Shopify; its
+  "approved-" shops share customer data. The fake Resend endpoint sits on the
+  mail sink. Covered:
+  - connect, activate, the widget checklist (with the real proxy check) and
+    install
+  - a shopper chatting on the storefront with product cards, one credit used,
+    and the chat surviving a reload
+  - order verification: code emailed, wrong code refused, right code shows
+    tracking, a wrong email sends nothing
+  - team takeover reaching the shopper, with the AI going silent
+  - unsigned requests refused and chats private to each browser
+  - mobile full-screen chat
+  - removing the widget from the store
+- Fixed from testing: the closed chat panel was still displayed because its
+  CSS overrode the `hidden` attribute.
+
+## 4. Limitations
+- Order lookup stays off until Shopify approves protected customer data and
+  Resend is set up.
+- Returns, exchanges and refund requests in chat, and the approval center,
+  are Phase 5.
+- The widget polls (every 1.5 s while waiting, 6 s otherwise) rather than
+  using push.
+- Script tags work for directly installed apps. An App Store listing would
+  use a theme app extension instead (Phase 7).

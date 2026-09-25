@@ -5,11 +5,12 @@ import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseAiConfig, type AiEmployeeConfig } from "@/lib/validation/ai-employee";
-import { runAgent } from "./agent";
+import { runAgent, type ProductCard } from "./agent";
 import { estimateCostUsd, getProvider, LIMITS } from "./config";
 import { buildInstructions } from "./prompt";
 import { definitionOf } from "./tool-spec";
-import { PRODUCT_TOOL_NAMES } from "./tools";
+import { ORDER_TOOL_NAMES, PRODUCT_TOOL_NAMES } from "./tools";
+import { isMailConfigured } from "@/lib/mail";
 import { enabledSpecs, executeTool } from "./tools-server";
 import type { AgentItem, AiProvider } from "./types";
 
@@ -18,6 +19,7 @@ export type StoredMessage = {
   sender_type: "customer" | "ai" | "human" | "system";
   content: string;
   sources: { id: string; title: string; category: string }[];
+  attachments?: ProductCard[];
   tool_names: string[];
   created_at: string;
 };
@@ -32,7 +34,7 @@ export const FALLBACK_REPLY =
   "Sorry — I'm having trouble answering right now. I've let the team know, and someone will get back to you here.";
 export const LIMIT_REPLY = "Thanks for your patience — I'm passing this conversation to the team, and a person will reply here.";
 
-const MESSAGE_COLUMNS = "id, sender_type, content, sources, tool_names, created_at";
+const MESSAGE_COLUMNS = "id, sender_type, content, sources, attachments, tool_names, created_at";
 
 type AiContext = {
   business: { id: string; name: string; description: string | null; website_url: string | null; ai_goals: string[] };
@@ -40,6 +42,8 @@ type AiContext = {
   supportEmail: string | null;
   plan: Plan;
   storeConnected: boolean;
+  /** Customers can look up their orders: store shares customer emails and email sending works. */
+  orderLookupReady: boolean;
 };
 
 async function loadContext(businessId: string, mode: "live" | "preview"): Promise<AiContext | null> {
@@ -53,7 +57,7 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
       .maybeSingle(),
     admin.from("business_settings").select("support_email").eq("business_id", businessId).single(),
     admin.from("subscriptions").select("plan_key, status").eq("business_id", businessId).maybeSingle(),
-    admin.from("shopify_connections").select("id").eq("business_id", businessId).eq("status", "active").maybeSingle(),
+    admin.from("shopify_connections").select("id, customer_data_enabled").eq("business_id", businessId).eq("status", "active").maybeSingle(),
   ]);
   if (!business || business.status === "suspended" || !employee) return null;
 
@@ -66,12 +70,14 @@ async function loadContext(businessId: string, mode: "live" | "preview"): Promis
     supportEmail: settings?.support_email ?? null,
     plan: effectivePlan(sub),
     storeConnected: Boolean(shop),
+    orderLookupReady: Boolean(shop?.customer_data_enabled) && isMailConfigured(),
   };
 }
 
-export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee" | "storeConnected">): Set<string> {
+export function enabledToolNames(ctx: Pick<AiContext, "plan" | "business" | "employee" | "storeConnected" | "orderLookupReady">): Set<string> {
   const enabled = new Set<string>(["search_knowledge", "get_business_policy"]);
   if (ctx.storeConnected && ctx.plan?.features.includes("product_questions")) PRODUCT_TOOL_NAMES.forEach((n) => enabled.add(n));
+  if (ctx.storeConnected && ctx.orderLookupReady && ctx.plan?.features.includes("order_tracking")) ORDER_TOOL_NAMES.forEach((n) => enabled.add(n));
   const esc = ctx.employee.config.escalation;
   if (ctx.plan?.features.includes("human_escalation") && (esc.escalateOnRequest || esc.offerHumanWhenUpset)) enabled.add("escalate_to_human");
   if (ctx.business.ai_goals.includes("lead_collection")) enabled.add("capture_lead");
@@ -85,10 +91,24 @@ async function insertMessage(row: {
   sender_type: StoredMessage["sender_type"];
   content: string;
   sources?: StoredMessage["sources"];
+  attachments?: unknown[];
   tool_names?: string[];
 }): Promise<StoredMessage> {
   const { data, error } = await createAdminClient().from("conversation_messages").insert(row).select(MESSAGE_COLUMNS).single();
   if (error || !data) throw new Error("Could not save message");
+  return data as StoredMessage;
+}
+
+async function savedMessage(businessId: string, conversationId: string, id: string): Promise<StoredMessage> {
+  const { data } = await createAdminClient()
+    .from("conversation_messages")
+    .select(MESSAGE_COLUMNS)
+    .eq("id", id)
+    .eq("business_id", businessId)
+    .eq("conversation_id", conversationId)
+    .eq("sender_type", "customer")
+    .single();
+  if (!data) throw new Error("Saved message not found");
   return data as StoredMessage;
 }
 
@@ -112,6 +132,8 @@ export async function runTurn(opts: {
   mode: "live" | "preview";
   customerText: string;
   provider?: AiProvider | null;
+  /** The customer's message was already saved (storefront chat saves it before replying in the background). */
+  savedMessageId?: string;
 }): Promise<TurnResult> {
   const text = opts.customerText.trim();
   if (!text) return { status: "rejected", reason: "empty", message: "Type a message first." };
@@ -140,7 +162,9 @@ export async function runTurn(opts: {
   const ctx = await loadContext(opts.businessId, opts.mode);
   if (!ctx) return { status: "rejected", reason: "not_found", message: "Set up your AI employee first." };
 
-  const customer = await insertMessage({ business_id: opts.businessId, conversation_id: opts.conversationId, sender_type: "customer", content: text });
+  const customer = opts.savedMessageId
+    ? await savedMessage(opts.businessId, opts.conversationId, opts.savedMessageId)
+    : await insertMessage({ business_id: opts.businessId, conversation_id: opts.conversationId, sender_type: "customer", content: text });
 
   // A person owns this conversation: the AI stays silent.
   if (conversation.handled_by === "human") return { status: "skipped", customer, reason: "human_handling" };
@@ -179,6 +203,7 @@ export async function runTurn(opts: {
       leadCapture: enabled.has("capture_lead"),
       storeConnected: ctx.storeConnected,
       products: enabled.has("search_products"),
+      orders: enabled.has("get_order_status"),
     },
     supportEmail: ctx.supportEmail,
     mode: opts.mode,
@@ -217,6 +242,7 @@ export async function runTurn(opts: {
       sender_type: "ai",
       content: result.text.slice(0, 8000),
       sources: result.sources,
+      attachments: result.cards,
       tool_names: result.toolCalls.map((t) => t.name),
     });
 

@@ -34,6 +34,9 @@ const TOOL_LABELS: Record<string, string> = {
   search_products: "Searched products",
   get_product_details: "Looked up a product",
   check_availability: "Checked availability",
+  request_order_verification: "Sent an order verification code",
+  verify_order_code: "Verified the customer",
+  get_order_status: "Looked up an order",
 };
 const label = (s: string) => STATUSES.find((x) => x.value === s)?.label ?? s;
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] ?? null : v);

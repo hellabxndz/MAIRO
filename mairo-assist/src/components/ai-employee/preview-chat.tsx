@@ -15,6 +15,9 @@ const TOOL_LABELS: Record<string, string> = {
   search_products: "Searched products",
   get_product_details: "Looked up a product",
   check_availability: "Checked availability",
+  request_order_verification: "Sent an order verification code",
+  verify_order_code: "Verified the customer",
+  get_order_status: "Looked up an order",
 };
 
 export function PreviewChat({

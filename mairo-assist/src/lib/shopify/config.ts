@@ -5,7 +5,7 @@ export { isShopifyConfigured };
 
 /** Scopes requested at install. Customer scopes are added only when protected data access is approved. */
 export function shopifyScopes(): string[] {
-  const base = (env().SHOPIFY_SCOPES ?? "read_products,read_inventory,read_orders")
+  const base = (env().SHOPIFY_SCOPES ?? "read_products,read_inventory,read_orders,write_script_tags")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
@@ -52,3 +52,14 @@ export function webhookUrl() {
 
 /** Cookie binding an OAuth attempt to the browser that started it. */
 export const STATE_COOKIE = "ma_shopify_state";
+
+/** Where the storefront reaches Mairo Assist: https://<shop>/<prefix>/<subpath> (App Proxy). */
+export function proxyPath() {
+  const raw = process.env.SHOPIFY_PROXY_PATH ?? "/apps/mairo-assist";
+  return /^\/[a-z]+\/[a-z0-9_-]+$/i.test(raw) ? raw : "/apps/mairo-assist";
+}
+
+/** The widget script the store loads (added to the store as a script tag). */
+export function widgetScriptUrl() {
+  return `${appUrl()}/widget.js?proxy=${encodeURIComponent(proxyPath())}`;
+}

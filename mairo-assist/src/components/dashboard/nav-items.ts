@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { href: "/dashboard/ai-employee", label: "AI Employee", icon: "ai", permission: "ai.view" },
   { href: "/dashboard/knowledge", label: "Knowledge Base", icon: "knowledge", permission: "knowledge.view" },
   { href: "/dashboard/analytics", label: "Analytics", icon: "analytics", permission: "analytics.view" },
+  { href: "/dashboard/widget", label: "Chat Widget", icon: "widget", permission: "integrations.view" },
   { href: "/dashboard/integrations", label: "Integrations", icon: "integrations", permission: "integrations.view" },
   { href: "/dashboard/team", label: "Team", icon: "team", permission: "team.view" },
   { href: "/dashboard/billing", label: "Billing & Usage", icon: "billing", permission: "billing.view" },

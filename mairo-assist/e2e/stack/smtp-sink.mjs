@@ -61,6 +61,19 @@ net
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://x");
+    // A stand-in for Resend's API (POST /emails) so app emails land here too.
+    if (req.method === "POST" && url.pathname === "/emails") {
+      let raw = "";
+      req.on("data", (c) => (raw += c));
+      req.on("end", () => {
+        const b = JSON.parse(raw || "{}");
+        if (req.headers.authorization !== "Bearer re_e2e") return res.writeHead(401).end();
+        const to = (Array.isArray(b.to) ? b.to : [b.to]).map((t) => String(t).toLowerCase());
+        messages.push({ to, subject: b.subject ?? "", body: `${b.text ?? ""}\n${b.html ?? ""}`, at: Date.now() });
+        res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ id: `email_${messages.length}` }));
+      });
+      return;
+    }
     const to = url.searchParams.get("to")?.toLowerCase();
     const list = to ? messages.filter((m) => m.to.includes(to)) : messages;
     res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(list));

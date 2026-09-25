@@ -74,9 +74,47 @@ export const checkAvailability = {
     .strict(),
 } satisfies ToolSpec;
 
+export const requestOrderVerification = {
+  name: "request_order_verification",
+  description:
+    "Start a secure order lookup: sends a one-time code to the email on the customer's order. Ask the customer for their order number and the email they used first. Never share order details before verify_order_code succeeds.",
+  schema: z
+    .object({
+      order_number: z.string().min(1).max(30).describe("Order number, e.g. 1001 or #1001"),
+      email: z.email().max(320).describe("Email address the customer says is on the order"),
+    })
+    .strict(),
+} satisfies ToolSpec;
+
+export const verifyOrderCode = {
+  name: "verify_order_code",
+  description: "Check the 6-digit code the customer received by email. Only after this succeeds may you look up their order.",
+  schema: z.object({ code: z.string().min(4).max(12).describe("The code exactly as the customer typed it") }).strict(),
+} satisfies ToolSpec;
+
+export const getOrderStatus = {
+  name: "get_order_status",
+  description:
+    "Get the status, items, shipping and tracking of a verified customer's order. Only works after verify_order_code succeeded in this conversation, and only for orders on the verified email.",
+  schema: z.object({ order_number: z.string().min(1).max(30) }).strict(),
+} satisfies ToolSpec;
+
+export const ORDER_TOOL_NAMES = [requestOrderVerification.name, verifyOrderCode.name, getOrderStatus.name] as const;
+
 export const PRODUCT_TOOL_NAMES = [searchProducts.name, getProductDetails.name, checkAvailability.name] as const;
 
-export const ALL_TOOLS = [searchKnowledge, getBusinessPolicy, escalateToHuman, captureLead, searchProducts, getProductDetails, checkAvailability] as const;
+export const ALL_TOOLS = [
+  searchKnowledge,
+  getBusinessPolicy,
+  escalateToHuman,
+  captureLead,
+  searchProducts,
+  getProductDetails,
+  checkAvailability,
+  requestOrderVerification,
+  verifyOrderCode,
+  getOrderStatus,
+] as const;
 export type ToolName = (typeof ALL_TOOLS)[number]["name"];
 
 /** Map a policy topic to knowledge-base categories. */

@@ -5,16 +5,22 @@ export type ToolOutcome = {
   output: unknown;
   status: "success" | "denied" | "invalid_input" | "error";
   sources?: { id: string; title: string; category: string }[];
+  /** Products to show the customer as cards next to the reply. */
+  cards?: ProductCard[];
 };
+
+export type ProductCard = { type: "product"; id: string; title: string; price: string | null; url: string | null; image: string | null };
 
 export type AgentResult = {
   text: string;
   toolCalls: { name: string; status: ToolOutcome["status"] }[];
   sources: { id: string; title: string; category: string }[];
+  cards: ProductCard[];
   usage: ProviderUsage[];
 };
 
 const MAX_TOOL_CALLS_PER_TURN = 8;
+const MAX_CARDS = 4;
 
 /**
  * The agent loop: ask the model, run any tools it requests (through the
@@ -34,6 +40,7 @@ export async function runAgent(opts: {
   const input: AgentItem[] = [...opts.history];
   const toolCalls: AgentResult["toolCalls"] = [];
   const sources = new Map<string, { id: string; title: string; category: string }>();
+  const cards = new Map<string, ProductCard>();
   const usage: ProviderUsage[] = [];
   const maxRounds = opts.maxRounds ?? 4;
 
@@ -50,7 +57,7 @@ export async function runAgent(opts: {
     usage.push(response.usage);
 
     if (response.functionCalls.length === 0 || lastRound) {
-      return { text: response.text.trim(), toolCalls, sources: [...sources.values()], usage };
+      return { text: response.text.trim(), toolCalls, sources: [...sources.values()], cards: [...cards.values()], usage };
     }
 
     for (const call of response.functionCalls) {
@@ -69,9 +76,10 @@ export async function runAgent(opts: {
       }
       toolCalls.push({ name: call.name, status: outcome.status });
       for (const s of outcome.sources ?? []) sources.set(s.id, s);
+      for (const c of outcome.cards ?? []) if (cards.size < MAX_CARDS && !cards.has(c.id)) cards.set(c.id, c);
       input.push({ type: "function_call_output", callId: call.callId, output: JSON.stringify(outcome.output) });
     }
   }
   // Unreachable: the last round always returns.
-  return { text: "", toolCalls, sources: [...sources.values()], usage };
+  return { text: "", toolCalls, sources: [...sources.values()], cards: [...cards.values()], usage };
 }

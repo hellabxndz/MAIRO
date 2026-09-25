@@ -23,7 +23,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "6mb" },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The storefront widget is loaded by merchants' stores; keep it fresh after deploys.
+      { source: "/widget.js", headers: [{ key: "Cache-Control", value: "public, max-age=300, must-revalidate" }] },
+    ];
   },
 };
 

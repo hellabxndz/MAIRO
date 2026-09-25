@@ -29,7 +29,7 @@ export type PromptContext = {
   business: { name: string; description: string | null; websiteUrl: string | null };
   config: AiEmployeeConfig;
   goals: string[];
-  capabilities: { knowledge: boolean; escalation: boolean; leadCapture: boolean; storeConnected: boolean; products?: boolean };
+  capabilities: { knowledge: boolean; escalation: boolean; leadCapture: boolean; storeConnected: boolean; products?: boolean; orders?: boolean };
   supportEmail: string | null;
   mode: "live" | "preview";
 };
@@ -80,7 +80,11 @@ Write plain text suitable for a small chat window. No markdown headings or table
     tools.push(
       "- For product questions and recommendations, use search_products and only mention products it returns, with their listed prices and links.",
       "- Use get_product_details for sizes, colors and other options. Use check_availability before saying anything is in stock, and describe availability exactly as it reports.",
-      "- Order lookups aren't available in this chat yet. If asked about an order, say so and offer to connect them with the team.",
+    );
+    tools.push(
+      ctx.capabilities.orders
+        ? "- For questions about a customer's order: ask for the order number and the email used, call request_order_verification, ask for the 6-digit code from their email, call verify_order_code, and only then use get_order_status. Never share or confirm anything about an order before verification succeeds."
+        : "- Order lookups aren't available in this chat yet. If asked about an order, say so and offer to connect them with the team.",
     );
   } else if (ctx.capabilities.storeConnected) {
     tools.push("- Product lookups aren't available on this plan. If asked about specific products, stock or prices, offer to connect them with the team.");
