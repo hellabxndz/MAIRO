@@ -66,7 +66,7 @@
   }
 
   var CSS =
-    ":host{all:initial}" +
+    ":host{all:initial}[hidden]{display:none!important}" +
     "*{box-sizing:border-box;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}" +
     ".wrap{position:fixed;bottom:20px;z-index:2147483000}" +
     ".wrap.right{right:20px}.wrap.left{left:20px}" +
@@ -101,7 +101,8 @@
     ".send{border:0;border-radius:12px;padding:0 14px;color:#fff;font-weight:600;cursor:pointer}.send:disabled{opacity:.5;cursor:default}" +
     ".foot{font-size:10px;color:#6f7898;text-align:center;padding:0 0 8px}" +
     ".err{font-size:12px;color:#f87171;padding:0 12px 8px}" +
-    "@media (max-width:480px){.wrap{bottom:14px}.wrap.right{right:14px}.wrap.left{left:14px}.panel{position:fixed;inset:0;width:100vw;max-width:none;height:100%;max-height:none;border-radius:0}}";
+    "@media (max-width:480px){.wrap{bottom:14px}.wrap.right{right:14px}.wrap.left{left:14px}.panel{position:fixed;inset:0;width:100vw;max-width:none;height:100%;max-height:none;border-radius:0}.wrap.open .bubble{display:none}}" +
+    ".ph{width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,#151b36,#1e2547);flex:none}";
 
   var BOT_SVG =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>';
@@ -163,7 +164,7 @@
             var go = el("span", { class: "go", text: "View" });
             go.style.background = color;
             var card = el(url ? "a" : "div", url ? { class: "card", href: url } : { class: "card" }, [
-              img ? el("img", { src: img, alt: "", loading: "lazy" }) : el("img", { alt: "" }),
+              img ? el("img", { src: img, alt: "", loading: "lazy" }) : el("div", { class: "ph" }),
               el("div", { class: "ct" }, [el("b", { text: c.title || "" }), el("span", { text: c.price || "" })]),
               url ? go : null,
             ]);
@@ -215,6 +216,7 @@
     function setOpen(open) {
       state.open = open;
       panel.hidden = !open;
+      wrap.classList.toggle("open", open);
       bubble.setAttribute("aria-expanded", String(open));
       if (open) {
         render();

@@ -22,7 +22,7 @@ function reply(body) {
     try { out = JSON.parse(last.output); } catch {}
     if (out.error) return { text: "Sorry, I couldn't do that right now. I can connect you with the team." };
     if (out.verified === true) {
-      const orderNo = [...input].reverse().map((i) => /#?(\d{4,})/.exec(String(i.content ?? ""))?.[1]).find(Boolean);
+      const orderNo = [...input].reverse().map((i) => /(?:#|order\s+)(\d{3,})/i.exec(String(i.content ?? ""))?.[1]).find(Boolean);
       if (orderNo && hasTool(body, "get_order_status")) return { call: { name: "get_order_status", arguments: { order_number: orderNo } } };
     }
     if (out.verified === false) return { text: out.result };

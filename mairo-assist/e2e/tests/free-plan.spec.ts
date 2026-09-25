@@ -57,7 +57,7 @@ async function finishOnboarding(page: Page) {
   await expect(page.getByRole("heading", { name: "Activate your AI employee" })).toBeVisible();
   await page.getByRole("button", { name: "Activate your AI employee" }).click();
   await expect(page).toHaveURL(/\/dashboard\?welcome=1/);
-  await expect(page.getByText("Nova is active.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nova is active." })).toBeVisible();
 }
 
 test.describe.serial("Start Free", () => {
@@ -231,7 +231,7 @@ test.describe.serial("Start Free", () => {
 
     // Existing setup is untouched and Pro features unlock immediately.
     await page.goto("/dashboard");
-    await expect(page.getByText("Nova is active.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Nova is active." })).toBeVisible();
     await page.goto("/dashboard/team");
     await expect(page.getByRole("heading", { name: "Invite a teammate" })).toBeVisible();
 

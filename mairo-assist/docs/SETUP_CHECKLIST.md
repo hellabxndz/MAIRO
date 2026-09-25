@@ -129,6 +129,29 @@ differ slightly; if a screen doesn't match, send a screenshot.
 4. Your own business is on Free after the migration. To give yourself a paid
    plan without paying, ask me for the one-line SQL.
 
+## ☐ 8. Put the chat on your store (Phase 4)
+
+1. **Supabase → SQL Editor**: run
+   `mairo-assist/supabase/migrations/20260928000100_phase4_widget.sql`.
+2. **Shopify Dev Dashboard → your app → Versions → Create version**, keeping
+   everything as before, plus:
+   - **Scopes**: `read_products,read_inventory,read_orders,write_script_tags`
+   - **App proxy**: Subpath prefix `apps`, Subpath `mairo-assist`,
+     Proxy URL `https://mairo-assist.vercel.app/api/proxy`
+   - **Release** it.
+3. In Mairo Assist → **Integrations**, click **Connect Shopify** again with the
+   same store address and approve (this grants the new permission).
+4. Make sure your AI employee is tested, published and **active**.
+5. Go to **Chat Widget**. When all checks are green, click **Turn on chat
+   widget**, then open your store: the chat bubble appears in the corner.
+6. **Order lookup in chat** (optional, later) needs both:
+   - Shopify's approval for protected customer data (Partner Dashboard → your
+     app → API access → Protected customer data), then set
+     `SHOPIFY_CUSTOMER_DATA=approved` in Vercel and reconnect the store.
+   - A **Resend** account with your domain verified: set `RESEND_API_KEY`
+     (Sensitive) and `MAIL_FROM` (e.g. `Your Store <help@yourdomain.com>`).
+   - It's included from the Growth plan.
+
 ## Later (before real customers)
 
 - ☐ Custom email sender (Resend or Postmark) connected under **Supabase → Auth → SMTP**
