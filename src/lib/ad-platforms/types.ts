@@ -134,6 +134,12 @@ export type CreatedCampaign = {
   /** The network's campaign id. */
   externalId: string;
   status: PlatformCampaignStatus;
+  /**
+   * TikTok only: the campaign was created through the Smart+ API, so its ad
+   * group, ad and every later change must go through Smart+ too. Stored on the
+   * platform campaign by the caller.
+   */
+  smartPlus?: boolean;
 };
 
 export type CreateAdGroupInput = {

@@ -1,4 +1,6 @@
+import { randomInt } from "node:crypto";
 import type { AdGoal } from "@/generated/prisma/enums";
+import { db } from "@/lib/db";
 import {
   EMPTY_METRICS,
   fail,
@@ -37,6 +39,7 @@ import {
   tiktokCta,
   tiktokDelivery,
   tiktokGender,
+  usesSmartPlus,
   US_LOCATION_ID,
 } from "./delivery";
 import { ensureIdentity, findTikTokCity, uploadImageByUrl, uploadVideoByUrl, waitForTikTokVideo } from "./media";
@@ -56,8 +59,33 @@ import { isSchedulable, wallClockInZone } from "@/lib/campaigns/schedule";
  * The objective TikTok is told, from the goal and whether there's a working
  * pixel event to optimise for — see tiktokDelivery in ./delivery.
  */
-export function tiktokObjectiveFor(goal: AdGoal, conversionEvent?: string | null): string {
+export function tiktokObjectiveFor(goal: AdGoal, conversionEvent?: string | null) {
   return tiktokDelivery(goal, conversionEvent ? { event: conversionEvent } : null).objective;
+}
+
+/**
+ * Smart+ create calls need a request id, which TikTok reads as an int64 and
+ * uses to drop a repeated request. Milliseconds plus six random digits: 19
+ * digits, safely below the int64 limit until the 2260s.
+ */
+function smartPlusRequestId(): string {
+  return `${Date.now()}${randomInt(100000, 1000000)}`;
+}
+
+/**
+ * Whether the campaign an id belongs to was built through Smart+, as recorded
+ * when it was created. Null when MAIRO has no record of it, which leaves the
+ * caller to decide.
+ */
+async function builtWithSmartPlus(
+  organizationId: string,
+  where: { externalCampaignId: string } | { externalAdGroupId: string }
+): Promise<boolean | null> {
+  const row = await db.platformCampaign.findFirst({
+    where: { platform: "TIKTOK", mairoCampaign: { organizationId }, ...where },
+    select: { tiktokSmartPlus: true },
+  });
+  return row ? row.tiktokSmartPlus : null;
 }
 
 /**
@@ -235,27 +263,38 @@ export const tiktokAdapter: AdPlatformAdapter = {
     const loaded = await credentialsOr<CreatedCampaign>(input.organizationId);
     if (!loaded.ok) return loaded.result;
 
+    const objective = tiktokObjectiveFor(input.goal, input.hasConversionTracking ? input.conversionEvent : null);
+    const smartPlus = usesSmartPlus(objective);
+    const budget = input.lifetimeBudgetCents
+      ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
+      : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) };
+
     try {
-      const res = await tiktokRequest<{ campaign_id: string }>("/campaign/create/", {
-        method: "POST",
-        accessToken: loaded.creds.accessToken,
-        body: {
-          advertiser_id: loaded.creds.externalAccountId,
-          campaign_name: input.name,
-          objective_type: tiktokObjectiveFor(input.goal, input.hasConversionTracking ? input.conversionEvent : null),
-          ...(input.lifetimeBudgetCents
-            ? { budget_mode: "BUDGET_MODE_TOTAL", budget: centsToUnits(input.lifetimeBudgetCents) }
-            : { budget_mode: "BUDGET_MODE_DAY", budget: centsToUnits(input.dailyBudgetCents) }),
-          // Paused unless explicitly told otherwise. A campaign with no ad
-          // group under it cannot spend anyway, but defaulting to live is how
-          // money gets spent by accident.
-          operation_status: input.activate ? "ENABLE" : "DISABLE",
-        },
-      });
+      const res = await tiktokRequest<{ campaign_id: string }>(
+        smartPlus ? "/smart_plus/campaign/create/" : "/campaign/create/",
+        {
+          method: "POST",
+          accessToken: loaded.creds.accessToken,
+          body: {
+            advertiser_id: loaded.creds.externalAccountId,
+            campaign_name: input.name,
+            objective_type: objective,
+            // Smart+ keeps the budget on the campaign and spreads it itself;
+            // the ad group beneath carries none.
+            ...(smartPlus ? { request_id: smartPlusRequestId(), budget_optimize_on: true } : {}),
+            ...budget,
+            // Paused unless explicitly told otherwise. A campaign with no ad
+            // group under it cannot spend anyway, but defaulting to live is how
+            // money gets spent by accident.
+            operation_status: input.activate ? "ENABLE" : "DISABLE",
+          },
+        }
+      );
 
       return ok({
         externalId: res.campaign_id,
         status: input.activate ? "ACTIVE" : "PAUSED",
+        smartPlus,
       });
     } catch (error) {
       return toFailure(input.organizationId, error, "Couldn't create the campaign on TikTok.");
@@ -281,6 +320,42 @@ export const tiktokAdapter: AdPlatformAdapter = {
       // has no radius targeting, so the town itself is the area.
       const city = audience?.geoLabel ? await findTikTokCity(a, audience.geoLabel, delivery.objective) : null;
       const ages = audience ? tiktokAgeGroups(audience.ageMin, audience.ageMax) : [];
+
+      // The campaign's own record decides, so a campaign created before the
+      // switch is finished the way it was started.
+      const smartPlus =
+        (await builtWithSmartPlus(input.organizationId, { externalCampaignId: input.externalCampaignId })) ??
+        usesSmartPlus(delivery.objective);
+      if (smartPlus) {
+        const res = await tiktokRequest<{ adgroup_id: string }>("/smart_plus/adgroup/create/", {
+          method: "POST",
+          accessToken: loaded.creds.accessToken,
+          body: {
+            advertiser_id: a.advertiserId,
+            campaign_id: input.externalCampaignId,
+            adgroup_name: input.name,
+            request_id: smartPlusRequestId(),
+            promotion_type: "WEBSITE",
+            placement_type: "PLACEMENT_TYPE_NORMAL",
+            placements: ["PLACEMENT_TIKTOK"],
+            // Smart+ takes the audience as one object rather than loose fields.
+            targeting_spec: {
+              location_ids: [city ?? US_LOCATION_ID],
+              ...(ages.length ? { age_groups: ages } : {}),
+              gender: tiktokGender(audience?.genders ?? 0),
+            },
+            optimization_goal: delivery.optimizationGoal,
+            billing_event: delivery.billingEvent,
+            bid_type: "BID_TYPE_NO_BID",
+            ...(delivery.optimizationGoal === "CONVERT" && input.conversion
+              ? { pixel_id: input.conversion.pixelId, optimization_event: delivery.optimizationEvent }
+              : {}),
+            operation_status: "DISABLE",
+            ...(await tiktokSchedule(a.accessToken, a.advertiserId, input.startAt, input.endAt)),
+          },
+        });
+        return ok({ externalId: res.adgroup_id });
+      }
 
       const res = await tiktokRequest<{ adgroup_id: string }>("/adgroup/create/", {
         method: "POST",
@@ -349,6 +424,37 @@ export const tiktokAdapter: AdPlatformAdapter = {
       }
       const coverId = await uploadImageByUrl(a, input.video.posterUrl, `${input.name}-cover`);
 
+      if (await builtWithSmartPlus(input.organizationId, { externalAdGroupId: input.externalAdGroupId })) {
+        // The same ad in Smart+'s shape: each part is a list TikTok can mix
+        // and test from. MAIRO gives it one of each. The cover goes as
+        // web_uri, which is the id the image upload returned.
+        const res = await tiktokRequest<{ smart_plus_ad_id?: string }>("/smart_plus/ad/create/", {
+          method: "POST",
+          accessToken: a.accessToken,
+          body: {
+            advertiser_id: a.advertiserId,
+            adgroup_id: input.externalAdGroupId,
+            ad_name: input.name.slice(0, 100),
+            creative_list: [
+              {
+                creative_info: {
+                  ad_format: "SINGLE_VIDEO",
+                  video_info: { video_id: videoId },
+                  image_info: [{ web_uri: coverId }],
+                  identity_type: "CUSTOMIZED_USER",
+                  identity_id: identityId,
+                },
+              },
+            ],
+            ad_text_list: [{ ad_text: text }],
+            call_to_action_list: [{ call_to_action: tiktokCta(input.creative.cta) }],
+            landing_page_url_list: [{ landing_page_url: input.destination.url }],
+          },
+        });
+        if (!res.smart_plus_ad_id) return fail("rejected", "TikTok accepted the ad but returned no ad id.");
+        return ok({ externalId: res.smart_plus_ad_id });
+      }
+
       const res = await tiktokRequest<{ ad_ids?: string[] }>("/ad/create/", {
         method: "POST",
         accessToken: a.accessToken,
@@ -395,7 +501,8 @@ export const tiktokAdapter: AdPlatformAdapter = {
         input.startAt,
         input.endAt
       );
-      await tiktokRequest("/adgroup/update/", {
+      const smartPlus = await builtWithSmartPlus(input.organizationId, { externalAdGroupId: input.externalAdGroupId });
+      await tiktokRequest(smartPlus ? "/smart_plus/adgroup/update/" : "/adgroup/update/", {
         method: "POST",
         accessToken: loaded.creds.accessToken,
         body: {
@@ -420,7 +527,8 @@ export const tiktokAdapter: AdPlatformAdapter = {
     if (!loaded.ok) return loaded.result;
 
     try {
-      await tiktokRequest("/campaign/update/", {
+      const smartPlus = await builtWithSmartPlus(input.organizationId, { externalCampaignId: input.externalCampaignId });
+      await tiktokRequest(smartPlus ? "/smart_plus/campaign/update/" : "/campaign/update/", {
         method: "POST",
         accessToken: loaded.creds.accessToken,
         body: {
@@ -503,7 +611,11 @@ async function setStatus(
   if (!loaded.ok) return loaded.result;
 
   try {
-    await tiktokRequest(`/${level}/status/update/`, {
+    const smartPlus = await builtWithSmartPlus(
+      organizationId,
+      level === "campaign" ? { externalCampaignId: externalId } : { externalAdGroupId: externalId }
+    );
+    await tiktokRequest(`${smartPlus ? "/smart_plus" : ""}/${level}/status/update/`, {
       method: "POST",
       accessToken: loaded.creds.accessToken,
       body: {

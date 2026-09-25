@@ -50,6 +50,20 @@ export function tiktokDelivery(goal: AdGoal, conversion: { event: string } | nul
   return { objective: "TRAFFIC", optimizationGoal: "CLICK", billingEvent: "CPC", optimizationEvent: null };
 }
 
+/**
+ * Whether campaigns for this objective are built through TikTok's Smart+ API.
+ *
+ * From 1 January 2027 TikTok stops accepting new "legacy manual" campaigns,
+ * ad groups and ads for the Sales, App Promotion and Lead Generation
+ * objectives through /campaign/create/, /adgroup/create/ and /ad/create/;
+ * those have to go through /smart_plus/… instead. Of what MAIRO creates, only
+ * website conversions is in that group. Traffic and reach are not affected and
+ * stay on the original endpoints.
+ */
+export function usesSmartPlus(objective: TikTokDelivery["objective"]): boolean {
+  return objective === "WEB_CONVERSIONS";
+}
+
 const AGE_BUCKETS: { key: string; min: number; max: number }[] = [
   { key: "AGE_18_24", min: 18, max: 24 },
   { key: "AGE_25_34", min: 25, max: 34 },

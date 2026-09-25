@@ -98,10 +98,16 @@ test-mode card before the first customer.
 in production, so TikTok advertising reports itself as unconfigured. Nothing
 TikTok-related can be sold until they are.
 
-**6. TikTok ads stop at the ad set.** A TikTok ad needs a video and MAIRO makes
-none, so a TikTok campaign gets a campaign and an audience but no ad. The
-dashboard says so. Either build video, or keep TikTok to the posting and
-organic side.
+**6. Run one real TikTok campaign of each kind.** TikTok video ads are built
+end to end, but only against a stand-in API (`npm run check:tiktok-ads`). Sales
+campaigns (website conversions) now go through TikTok's Smart+ endpoints,
+because TikTok stops accepting them on `/campaign|adgroup|ad/create/` from
+1 January 2027; traffic and reach stay on the original ones. The Smart+ field
+names come from TikTok's own SDK specs (Feb 2026), which list no allowed
+values, so the values reuse the original endpoints' (`WEB_CONVERSIONS`,
+`BUDGET_MODE_DAY`, …). One real sales launch and one traffic launch, then a
+pause and resume of each, confirm it. Reporting still reads
+`/report/integrated/get/` for both.
 
 **7. TikTok posting credentials.** Separate again — `TIKTOK_CLIENT_KEY` /
 `TIKTOK_CLIENT_SECRET`, plus TikTok's content audit before anything can post

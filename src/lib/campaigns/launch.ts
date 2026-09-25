@@ -341,6 +341,7 @@ export async function launchOne(input: {
     where: { id: input.platformCampaignId },
     data: {
       externalCampaignId: result.data.externalId,
+      tiktokSmartPlus: result.data.smartPlus ?? false,
       status: result.data.status === "ACTIVE" ? "ACTIVE" : "PENDING_REVIEW",
       connectionId: input.platform === "META" ? null : (creds?.connectionId ?? null),
       lastError: null,

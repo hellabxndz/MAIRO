@@ -1007,6 +1007,12 @@ model PlatformCampaign {
   /// Further ads in the same ad set, when the customer is testing versions.
   /// Switched on alongside externalAdId.
   extraExternalAdIds String[] @default([])
+  /// TikTok only: built through TikTok's Smart+ endpoints rather than the
+  /// original campaign/ad group/ad ones. Decided once, when the campaign is
+  /// created, and read back by every later call — Smart+ campaigns are paused,
+  /// resumed and re-budgeted through their own endpoints, and a campaign
+  /// started on one API cannot be finished or managed on the other.
+  tiktokSmartPlus Boolean @default(false)
 
   /// What Meta's ad review last said about this campaign's ads, in plain
   /// English (see src/lib/meta/ad-review.ts). Null until first checked.
