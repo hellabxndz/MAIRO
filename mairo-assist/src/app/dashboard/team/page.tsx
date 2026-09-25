@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { InviteForm } from "@/components/team/invite-form";
 import { LeaveButton, MemberActions } from "@/components/team/member-actions";
@@ -59,8 +60,11 @@ export default async function TeamPage() {
             <CardDescription>They&apos;ll get access to this business only.</CardDescription>
           </CardHeader>
           <CardContent>
-            {ctx.billingEnforced && !hasPlanFeature(ctx, "team_access") ? (
-              <Alert tone="info">Team access is included from the Pro plan.</Alert>
+            {!hasPlanFeature(ctx, "team_access") ? (
+              <Alert tone="info">
+                Team members are included from the Pro plan.{" "}
+                <Link href="/dashboard/upgrade" className="font-medium text-fg underline underline-offset-2">Explore upgrades</Link>
+              </Alert>
             ) : (
               <InviteForm />
             )}

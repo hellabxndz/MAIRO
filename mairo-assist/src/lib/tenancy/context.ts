@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser, type SessionUser } from "@/lib/auth/session";
-import { entitledPlan, PLANS, type Feature, type Plan } from "@/lib/billing/plans";
+import { effectivePlan, type Feature, type Plan } from "@/lib/billing/plans";
 import { createClient } from "@/lib/supabase/server";
 import { isRole, parseGrants, permissionsFor, type Permission, type Role } from "./permissions";
 
@@ -28,10 +28,8 @@ export type BusinessContext = {
   role: Role;
   permissions: Set<Permission>;
   memberships: Membership[];
-  /** Plan whose features apply right now (see billingEnforced). */
-  plan: Plan | null;
-  /** False until real billing is switched on; features are then not gated. */
-  billingEnforced: boolean;
+  /** Plan whose features and allowance apply right now (Free when nothing else is active). */
+  plan: Plan;
 };
 
 export class PermissionError extends Error {
@@ -58,10 +56,6 @@ export const listMemberships = cache(async (): Promise<Membership[]> => {
   });
 });
 
-export function billingIsEnforced() {
-  return process.env.BILLING_ENFORCED === "true";
-}
-
 /**
  * The business the user is working in. Resolved from the active-business
  * cookie, but ONLY if the user is actually a member — the cookie is a
@@ -85,7 +79,6 @@ export const getBusinessContext = cache(async (): Promise<BusinessContext | null
   const supabase = await createClient();
   const { data: planRows } = await supabase.rpc("business_plan", { p_business_id: active.business.id });
   const sub = Array.isArray(planRows) ? planRows[0] : null;
-  const enforced = billingIsEnforced();
 
   return {
     user,
@@ -93,10 +86,7 @@ export const getBusinessContext = cache(async (): Promise<BusinessContext | null
     role: active.role,
     permissions: permissionsFor(active.role, active.grants),
     memberships,
-    // Until billing is live, every business gets Pro features so nothing
-    // is locked behind a checkout that does not exist yet.
-    plan: enforced ? entitledPlan(sub) : PLANS.pro,
-    billingEnforced: enforced,
+    plan: effectivePlan(sub),
   };
 });
 
@@ -116,5 +106,5 @@ export async function authorize(permission: Permission): Promise<BusinessContext
 }
 
 export function hasPlanFeature(ctx: BusinessContext, feature: Feature) {
-  return ctx.plan?.features.includes(feature) ?? false;
+  return ctx.plan.features.includes(feature);
 }
