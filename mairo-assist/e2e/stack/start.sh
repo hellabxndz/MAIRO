@@ -15,7 +15,7 @@ STATE="${E2E_STATE_DIR:-$ROOT/.e2e}"
 CACHE="${E2E_CACHE_DIR:-$HOME/.cache/mairo-assist-e2e}"
 GOTRUE_VERSION="v2.180.0"
 POSTGREST_VERSION="v13.0.4"
-PG_PORT=54340; GOTRUE_PORT=9999; POSTGREST_PORT=54330; GATEWAY_PORT=54321; SMTP_PORT=54325; SMTP_HTTP_PORT=54326; FAKE_OPENAI_PORT=54327; FAKE_SHOPIFY_PORT=54328
+PG_PORT=54340; GOTRUE_PORT=9999; POSTGREST_PORT=54330; GATEWAY_PORT=54321; SMTP_PORT=54325; SMTP_HTTP_PORT=54326; FAKE_OPENAI_PORT=54327; FAKE_SHOPIFY_PORT=54328; FAKE_STRIPE_PORT=54329
 JWT_SECRET="e2e-super-secret-jwt-token-with-at-least-32-characters"
 
 bash "$ROOT/e2e/stack/stop.sh" >/dev/null 2>&1 || true
@@ -73,6 +73,8 @@ node e2e/stack/smtp-sink.mjs >"$STATE/logs/smtp.log" 2>&1 & echo $! >"$STATE/smt
 FAKE_OPENAI_PORT=$FAKE_OPENAI_PORT node e2e/stack/fake-openai.mjs >"$STATE/logs/fake-openai.log" 2>&1 & echo $! >"$STATE/fake-openai.pid"
 FAKE_SHOPIFY_PORT=$FAKE_SHOPIFY_PORT SHOPIFY_API_KEY=e2e-shopify-key SHOPIFY_API_SECRET=e2e-shopify-secret \
   node e2e/stack/fake-shopify.mjs >"$STATE/logs/fake-shopify.log" 2>&1 & echo $! >"$STATE/fake-shopify.pid"
+FAKE_STRIPE_PORT=$FAKE_STRIPE_PORT STRIPE_SECRET_KEY=sk_test_e2e STRIPE_WEBHOOK_SECRET=whsec_e2e \
+  node e2e/stack/fake-stripe.mjs >"$STATE/logs/fake-stripe.log" 2>&1 & echo $! >"$STATE/fake-stripe.pid"
 GATEWAY_PORT=$GATEWAY_PORT GOTRUE_PORT=$GOTRUE_PORT POSTGREST_PORT=$POSTGREST_PORT \
   node e2e/stack/gateway.mjs >"$STATE/logs/gateway.log" 2>&1 & echo $! >"$STATE/gateway.pid"
 (cd "$CACHE" && exec ./auth serve) >"$STATE/logs/gotrue.log" 2>&1 & echo $! >"$STATE/gotrue.pid"
@@ -110,6 +112,13 @@ SHOPIFY_API_KEY=e2e-shopify-key
 SHOPIFY_API_SECRET=e2e-shopify-secret
 SHOPIFY_TEST_API_BASE_URL=http://127.0.0.1:$FAKE_SHOPIFY_PORT
 E2E_FAKE_SHOPIFY=http://127.0.0.1:$FAKE_SHOPIFY_PORT
+STRIPE_SECRET_KEY=sk_test_e2e
+STRIPE_WEBHOOK_SECRET=whsec_e2e
+STRIPE_PRICE_STARTER=price_e2e_starter
+STRIPE_PRICE_GROWTH=price_e2e_growth
+STRIPE_PRICE_PRO=price_e2e_pro
+STRIPE_TEST_API_BASE_URL=http://127.0.0.1:$FAKE_STRIPE_PORT
+E2E_FAKE_STRIPE=http://127.0.0.1:$FAKE_STRIPE_PORT
 ENV
 
 for i in $(seq 1 40); do
