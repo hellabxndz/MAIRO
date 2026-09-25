@@ -14,6 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { authorize, PermissionError, type BusinessContext } from "@/lib/tenancy/context";
 import { str, type FormState } from "@/lib/validation/form";
 import { callbackUrl, credentials, isShopifyConfigured, shopBaseUrl, shopifyScopes, STATE_COOKIE } from "./config";
+import { removeWidget } from "@/lib/widget/install";
 import { enqueueSync, purgeStoreData } from "./jobs";
 import { authorizeUrl, normalizeShopDomain } from "./oauth";
 
@@ -128,6 +129,8 @@ export async function disconnectShopify(): Promise<FormState> {
     .maybeSingle();
   if (!conn) return { message: "No store is connected." };
 
+  // Take the chat widget off the store while we still have access (best effort).
+  await removeWidget(conn.id, ctx.business.id, ctx.user.id).catch((e) => log.warn("widget.remove_on_disconnect_failed", { error: String(e) }));
   await admin.from("shopify_credentials").delete().eq("connection_id", conn.id);
   const { error } = await admin
     .from("shopify_connections")
