@@ -1,5 +1,6 @@
 "use server";
 
+import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -27,6 +28,9 @@ function explainStripeError(error: unknown): string {
   // live data completely separate, so a live key genuinely cannot see a price
   // created in test mode. The ids look identical, which is what makes it
   // confusing.
+  if (/No such customer/i.test(raw)) {
+    return "Your billing record belongs to a Stripe account this site no longer uses. Try again — a fresh one is made automatically.";
+  }
   if (/No such price|resource_missing/i.test(raw)) {
     const mode = stripeMode();
     // Naming the mode the key is in turns this from a thing to go and check
@@ -72,11 +76,33 @@ async function originUrl(): Promise<string> {
 }
 
 /**
+ * Whether a saved customer id still names a live customer in the Stripe
+ * account this deployment's key belongs to.
+ *
+ * It stops doing so when the site moves to a different Stripe account (a new
+ * key), when the key switches between test and live mode, or when the
+ * customer is deleted in the dashboard. In every case the id is dead weight,
+ * and handing it to Stripe fails the checkout with "No such customer".
+ * Anything other than "that customer doesn't exist" is re-thrown: a network
+ * blip must not make MAIRO forget a customer who is real.
+ */
+async function customerStillExists(customerId: string): Promise<boolean> {
+  try {
+    const customer = await stripe().customers.retrieve(customerId);
+    return !("deleted" in customer && customer.deleted);
+  } catch (error) {
+    if (error instanceof Stripe.errors.StripeError && error.code === "resource_missing") return false;
+    throw error;
+  }
+}
+
+/**
  * Finds or creates the Stripe customer for an organization.
  *
  * The id is written back immediately so a second checkout never creates a
  * duplicate customer — which is how one business ends up with two
- * subscriptions and two invoices for the same month.
+ * subscriptions and two invoices for the same month. A saved id that this
+ * Stripe account doesn't recognise is replaced rather than reused.
  */
 async function customerIdFor(organizationId: string, email: string): Promise<string> {
   const organization = await db.organization.findUnique({
@@ -84,7 +110,9 @@ async function customerIdFor(organizationId: string, email: string): Promise<str
     select: { stripeCustomerId: true, name: true },
   });
   if (!organization) throw new Error("Organization not found");
-  if (organization.stripeCustomerId) return organization.stripeCustomerId;
+  if (organization.stripeCustomerId && (await customerStillExists(organization.stripeCustomerId))) {
+    return organization.stripeCustomerId;
+  }
 
   const customer = await stripe().customers.create({
     email,
@@ -223,6 +251,17 @@ export async function openBillingPortalAction(): Promise<void> {
   });
   if (!organization?.stripeCustomerId) {
     throw new Error("There's no billing account to manage yet.");
+  }
+
+  // A customer from a Stripe account this site no longer uses has nothing to
+  // manage here. Forget it, and send them back to the plans, where choosing
+  // one makes a customer in the current account.
+  if (!(await customerStillExists(organization.stripeCustomerId))) {
+    await db.organization.update({
+      where: { id: session.user.organizationId },
+      data: { stripeCustomerId: null },
+    });
+    redirect("/dashboard/billing");
   }
 
   const portal = await stripe().billingPortal.sessions.create({
