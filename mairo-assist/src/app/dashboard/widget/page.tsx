@@ -13,15 +13,27 @@ import { parseAiConfig } from "@/lib/validation/ai-employee";
 
 export const metadata: Metadata = { title: "Chat widget" };
 
-/** Ask the store's App Proxy for our own config: proves Shopify forwards chat requests to us. */
-async function proxyWorks(shop: string) {
+/**
+ * Ask the store's App Proxy for our own config: proves Shopify forwards chat
+ * requests to us. A password-protected store (every development store) answers
+ * with its password page instead, so then we can't tell from here.
+ */
+async function proxyStatus(shop: string): Promise<"ok" | "password" | "missing"> {
   try {
-    const res = await fetch(`${shopBaseUrl(shop)}${proxyPath()}/config`, { signal: AbortSignal.timeout(5000), headers: { Accept: "application/json" }, cache: "no-store" });
-    if (!res.headers.get("content-type")?.includes("application/json")) return false;
+    const res = await fetch(`${shopBaseUrl(shop)}${proxyPath()}/config`, {
+      signal: AbortSignal.timeout(5000),
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      redirect: "manual",
+    });
+    if (res.status >= 300 && res.status < 400 && /\/password/.test(res.headers.get("location") ?? "")) return "password";
+    if (!res.headers.get("content-type")?.includes("application/json")) {
+      return res.status === 401 && /password/i.test(await res.text().catch(() => "")) ? "password" : "missing";
+    }
     const body = (await res.json()) as { enabled?: unknown };
-    return typeof body.enabled === "boolean";
+    return typeof body.enabled === "boolean" ? "ok" : "missing";
   } catch {
-    return false;
+    return "missing";
   }
 }
 
@@ -34,12 +46,13 @@ export default async function WidgetPage() {
   ]);
   const connected = Boolean(conn);
   const hasScope = Boolean(conn && (conn.scopes as string[]).includes("write_script_tags"));
-  const proxyOk = conn ? await proxyWorks(conn.shop_domain) : false;
+  const proxy = conn ? await proxyStatus(conn.shop_domain) : "missing";
+  const proxyOk = proxy === "ok";
   const aiActive = employee?.status === "active";
   const installed = Boolean(conn?.widget_installed_at);
   const canManage = ctx.permissions.has("integrations.manage");
   const config = parseAiConfig(employee?.draft_config);
-  const live = installed && proxyOk && aiActive;
+  const live = installed && (proxyOk || proxy === "password") && aiActive;
 
   const steps = [
     { done: connected, label: "Shopify store connected", action: !connected && <Link href="/dashboard/integrations" className="underline">Connect in Integrations</Link> },
@@ -51,7 +64,12 @@ export default async function WidgetPage() {
     {
       done: proxyOk,
       label: "App proxy set up in your Shopify app (lets the chat reach Mairo Assist securely)",
-      action: connected && !proxyOk && (
+      action: connected && proxy === "password" ? (
+        <p className="text-xs text-fg-muted">
+          Your store is password-protected, so this can&apos;t be checked from here. Open your store (entering the store password) and check the chat bubble
+          appears — if it does, the proxy works.
+        </p>
+      ) : connected && !proxyOk && (
         <p className="text-xs text-fg-muted">
           In the Shopify Dev Dashboard, open your app&apos;s version settings → <strong>App proxy</strong>: prefix <code>apps</code>, subpath{" "}
           <code>{proxyPath().split("/")[2]}</code>, proxy URL <code>https://&lt;your Mairo Assist address&gt;/api/proxy</code>. Release the version, then reload this page.

@@ -258,7 +258,7 @@ http
             return `<script async src="${src}"></script>`;
           })
           .join("");
-        return res.writeHead(200, { "content-type": "text/html" }).end(`<!doctype html><html><head><title>${store.name}</title></head><body><h1>${store.name}</h1><p>Storefront</p>${scripts}</body></html>`);
+        return res.writeHead(200, { "content-type": "text/html" }).end(`<!doctype html><html><head><title>${store.name}</title><style>/* like Shopify's Dawn theme */ div:empty{display:none}</style></head><body><h1>${store.name}</h1><p>Storefront</p>${scripts}</body></html>`);
       }
 
       // App Proxy: /apps/mairo-assist/* → the app's /api/proxy/*, signed like Shopify.

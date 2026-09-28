@@ -109,7 +109,15 @@
 
   function start(cfg) {
     var color = validColor(cfg.brandColor);
-    var host = el("div", { id: "mairo-assist-widget" });
+    // A custom tag (not a <div>) with forced styles: themes' own CSS can't hide
+    // or move it. Shopify's Dawn theme, for one, hides every empty div, and this
+    // host looks empty to the page because the chat lives in its shadow root.
+    var host = document.createElement("mairo-assist-widget");
+    host.id = "mairo-assist-widget";
+    ["display:block", "position:static", "visibility:visible", "opacity:1", "transform:none", "filter:none", "contain:none", "width:0", "height:0", "margin:0", "padding:0", "border:0"].forEach(function (rule) {
+      var i = rule.indexOf(":");
+      host.style.setProperty(rule.slice(0, i), rule.slice(i + 1), "important");
+    });
     document.body.appendChild(host);
     var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
     root.appendChild(el("style", { text: CSS }));
