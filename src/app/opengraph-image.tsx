@@ -81,7 +81,7 @@ export default async function Image() {
         <div style={{ display: "flex", gap: 36, fontSize: 25, color: "#737373" }}>
           <span>Facebook</span>
           <span>Instagram</span>
-          <span>From $49/mo</span>
+          <span>From $149.99/mo</span>
         </div>
       </div>
     ),

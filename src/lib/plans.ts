@@ -90,7 +90,7 @@ export const PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 49,
+    priceMonthly: 149.99,
     tagline: "MAIRO builds your ads. You approve every change.",
     spendGuidance: "Best for trying paid ads for the first time",
     // Three at a time: enough for an offer, an evergreen campaign and a test,
@@ -112,7 +112,7 @@ export const PLANS: Plan[] = [
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 99,
+    priceMonthly: 239.99,
     tagline: "MAIRO handles the small changes for you.",
     spendGuidance: "Best for businesses advertising every month",
     featured: true,
@@ -134,7 +134,7 @@ export const PLANS: Plan[] = [
     // customer-facing part and is safe to change.
     tier: "SCALE",
     name: "Scale",
-    priceMonthly: 199,
+    priceMonthly: 499.99,
     tagline: "MAIRO runs your advertising day to day.",
     spendGuidance: "Best for businesses running ads all the time",
     limits: { campaigns: Infinity, creativesPerMonth: 100 },

@@ -65,9 +65,9 @@ console.log("\n— the pricing cards say the same thing the code does —");
   ok("Growth is called Growth", growth.name === "Growth", growth.name);
 
   const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
-  ok("Starter is $49", starterPlan.priceMonthly === 49, `$${starterPlan.priceMonthly}`);
-  ok("Growth is $99", growth.priceMonthly === 99, `$${growth.priceMonthly}`);
-  ok(`${TOP.name} is $199`, pro.priceMonthly === 199, `$${pro.priceMonthly}`);
+  ok("Starter is $149.99", starterPlan.priceMonthly === 149.99, `$${starterPlan.priceMonthly}`);
+  ok("Growth is $239.99", growth.priceMonthly === 239.99, `$${growth.priceMonthly}`);
+  ok(`${TOP.name} is $499.99`, pro.priceMonthly === 499.99, `$${pro.priceMonthly}`);
   // The ladder has to climb, whatever the numbers are changed to next.
   ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
 

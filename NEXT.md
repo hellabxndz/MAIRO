@@ -58,11 +58,11 @@ Hobby that interval is a day, so timeliness comes from the dashboard render
 path instead, and the cron is only the backstop for someone who books a launch
 and then doesn't visit.
 
-**5. Point Stripe at the new prices.** The plans are now Starter $49,
-Growth $99 and Scale $199 a month. `priceMonthly` in src/lib/plans.ts is only
+**5. Point Stripe at the new prices.** The plans are now Starter $149.99,
+Growth $239.99 and Scale $499.99 a month. `priceMonthly` in src/lib/plans.ts is only
 what the customer is *shown* — what they are charged is the Stripe Price
 behind `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH` and `STRIPE_PRICE_SCALE`.
-Each must be a $49 / $99 / $199 monthly recurring Price. If the ones in Vercel
+Each must be a $149.99 / $239.99 / $499.99 monthly recurring Price. If the ones in Vercel
 are for any other amount, create new Prices in Stripe (Product catalog → the
 plan → Add another price) and paste their `price_…` ids into those three
 variables, then redeploy. Until they match, the site advertises one number and
