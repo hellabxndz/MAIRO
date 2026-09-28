@@ -152,6 +152,32 @@ differ slightly; if a screen doesn't match, send a screenshot.
      (Sensitive) and `MAIL_FROM` (e.g. `Your Store <help@yourdomain.com>`).
    - It's included from the Growth plan.
 
+## ☐ 9. Email without a domain (Gmail)
+
+Password resets, sign-up confirmations and order codes can all send from your
+Gmail until you own a domain.
+
+1. **Gmail app password**: go to **myaccount.google.com → Security**, turn on
+   **2-Step Verification** if it's off, then search the page for **App
+   passwords**, create one named "Mairo Assist", and copy the 16-letter
+   password. Don't share it with anyone, including in chat.
+2. **Supabase → Authentication → Emails → SMTP Settings** → turn on custom SMTP:
+   - Sender email: your Gmail address · Sender name: `Mairo Assist`
+   - Host `smtp.gmail.com` · Port `465`
+   - Username: your Gmail address · Password: the app password
+   - **Save**. Then, under **Authentication → Rate limits**, the email limit can
+     be raised (e.g. 30/hour).
+3. **Vercel → Environment Variables** (for order codes in chat):
+   `MAIL_FROM` = your Gmail address, `SMTP_HOST` = `smtp.gmail.com`,
+   `SMTP_PORT` = `465`, `SMTP_USER` = your Gmail address,
+   `SMTP_PASSWORD` = the app password (**Sensitive**). **Redeploy**.
+4. Test: log out, click **Forgot password?**, and check your inbox.
+5. Once emails work, turn **Confirm email** back on in
+   **Supabase → Authentication → Sign In / Providers → Email**.
+
+Gmail sends up to ~500 emails a day. When you get a domain, switch Supabase
+and `RESEND_API_KEY` to Resend for a branded sender.
+
 ## Later (before real customers)
 
 - ☐ Custom email sender (Resend or Postmark) connected under **Supabase → Auth → SMTP**
