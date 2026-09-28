@@ -1,8 +1,6 @@
 import type { AdPlatform } from "@/generated/prisma/enums";
 import type { AdPlatformAdapter } from "./types";
 import { metaAdapter } from "./meta/adapter";
-import { tiktokAdapter } from "./tiktok/adapter";
-import { tiktokConfigured } from "./tiktok/client";
 
 // The list of networks MAIRO knows about, and how to reach each one.
 //
@@ -48,14 +46,17 @@ export const PLATFORMS: Record<AdPlatform, PlatformMeta> = {
       Boolean(process.env.META_APP_ID?.trim() && process.env.META_APP_SECRET?.trim()),
     connectPath: "/api/meta/connect",
   },
+  // Retired: MAIRO runs Meta only. The value stays in the enum so campaigns
+  // and connections created while TikTok was offered still load, and render
+  // as unavailable rather than breaking the page.
   TIKTOK: {
     platform: "TIKTOK",
     name: "TikTok",
     surfaces: "TikTok",
     accent: "#25F4EE",
-    implemented: true,
-    configured: tiktokConfigured,
-    connectPath: "/api/tiktok/connect",
+    implemented: false,
+    configured: () => false,
+    connectPath: "",
   },
   GOOGLE: {
     platform: "GOOGLE",
@@ -97,7 +98,6 @@ export const PLATFORMS: Record<AdPlatform, PlatformMeta> = {
 
 const ADAPTERS: Partial<Record<AdPlatform, AdPlatformAdapter>> = {
   META: metaAdapter,
-  TIKTOK: tiktokAdapter,
 };
 
 /**

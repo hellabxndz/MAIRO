@@ -4,17 +4,15 @@ import { getAdapter } from "./registry";
 import { EMPTY_METRICS, type DateRange, type PlatformMetrics } from "./types";
 import { aggregate } from "@/lib/budget/optimizer";
 
-// Reading how a campaign is doing, across however many networks it runs on.
+// Reading how a campaign is doing.
 //
 // This is the reporting half of the whole product: MAIRO builds the campaigns
 // so a business owner never opens Ads Manager, and this is what means they
-// never have to open TikTok Ads Manager either.
+// never have to open it to see results either.
 //
-// The rules from the Meta-only version still hold and now matter more.
-//
-// It must never take the page down. These are live calls to two other
-// companies' APIs with tokens that can expire or be revoked, and a dashboard
-// that white-screens because TikTok was slow is worse than one that says so.
+// It must never take the page down. These are live calls to another company's
+// API with tokens that can expire or be revoked, and a dashboard that
+// white-screens because Meta was slow is worse than one that says so.
 // Every failure is caught and returned as a value.
 //
 // No data is not zero. A campaign that has never been switched on has no
@@ -23,9 +21,9 @@ import { aggregate } from "@/lib/budget/optimizer";
 // difference is the difference between a customer thinking their ads failed
 // and knowing they haven't started.
 //
-// And a platform failing is not the report failing. If TikTok is unreachable
-// but Meta answers, the customer sees their Meta numbers and a note about
-// TikTok — not an empty page.
+// And a network failing is not the report failing: the customer sees a note
+// about it, not an empty page. A campaign left over from a retired network
+// (TikTok) has no adapter and is simply skipped.
 
 export type PlatformReport = {
   platform: AdPlatform;

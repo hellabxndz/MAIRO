@@ -148,7 +148,7 @@ export function StepAudience({
         )}
       </SubQuestion>
 
-      {mode === "advanced" && plan.service !== "tiktok" && (
+      {mode === "advanced" && (
         <SubQuestion title="Where should it show?" sub="Meta usually gets more for your money when it can choose.">
           <div className="grid gap-2.5 sm:grid-cols-2">
             <Choice selected={!plan.choosingPlacements} onClick={() => update({ choosingPlacements: false })}

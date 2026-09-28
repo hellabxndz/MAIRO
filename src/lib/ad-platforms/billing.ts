@@ -3,7 +3,7 @@ import type { AdPlatform } from "@/generated/prisma/enums";
 // Where the customer's ad money actually comes from, and how to get them to it.
 //
 // The one rule this whole module exists to respect: MAIRO never takes custody
-// of ad spend. The customer pays Meta, and later TikTok, directly from a card
+// of ad spend. The customer pays Meta directly from a card
 // on their own advertising account. That is what the Terms promise, it is what
 // keeps MAIRO from being a money transmitter, and nothing here moves a penny.
 //
@@ -96,14 +96,8 @@ export function metaAdsManagerUrl(adAccountId: string, campaignId?: string | nul
   return campaignId ? `${url}&selected_campaign_ids=${encodeURIComponent(campaignId)}` : url;
 }
 
-/** TikTok bills the advertiser account the same way; this is its equivalent. */
-export function tiktokBillingUrl(advertiserId: string): string {
-  return `https://ads.tiktok.com/i18n/account/payment?aadvid=${advertiserId}`;
-}
-
 export function billingUrlFor(platform: AdPlatform, accountId: string): string | null {
   if (platform === "META") return metaPaymentSettingsUrl(accountId);
-  if (platform === "TIKTOK") return tiktokBillingUrl(accountId);
   return null;
 }
 

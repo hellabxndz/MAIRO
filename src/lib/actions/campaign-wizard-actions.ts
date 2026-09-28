@@ -28,7 +28,9 @@ async function currentScope(): Promise<{ organizationId: string; userId: string 
   return { organizationId, userId: session.user.id };
 }
 
-const SERVICES = new Set(["meta", "tiktok", "multi"]);
+// Meta only. A draft saved while TikTok was offered is refused rather than
+// half-built.
+const SERVICES = new Set(["meta"]);
 /** A plan is small; anything near this is not one. */
 const MAX_DRAFT_BYTES = 64_000;
 

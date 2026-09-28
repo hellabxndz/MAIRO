@@ -48,7 +48,7 @@ export type AdChoice =
   | "INSTAGRAM_POST";
 
 export type CampaignPlan = {
-  service: "meta" | "tiktok" | "multi";
+  service: "meta";
   /** Who the campaign is for — the business, unless they said otherwise. */
   businessName: string;
   promotes: Promotes | null;
@@ -79,7 +79,7 @@ export type CampaignPlan = {
   dailyAmount: number;
   /** Dollars for the whole run. */
   lifetimeAmount: number;
-  /** Meta's share of a Meta + TikTok budget, in whole per cent. */
+  /** Meta's share of the budget, in whole per cent. Always 100 now MAIRO runs Meta only. */
   metaPercent: number;
   startOnDate: boolean;
   startLocal: string;

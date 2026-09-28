@@ -32,11 +32,10 @@ export async function GET() {
   ]);
 
   const meta = pixels.find((p) => p.platform === "META")?.externalPixelId ?? null;
-  const tiktok = pixels.find((p) => p.platform === "TIKTOK")?.externalPixelId ?? null;
 
   // A container with no pixel in it would import cleanly and measure nothing,
   // which is the worst outcome available: it looks done.
-  if (!meta && !tiktok) {
+  if (!meta) {
     return NextResponse.json(
       { error: "Set up a pixel first — there is nothing for the container to fire." },
       { status: 400 }
@@ -48,7 +47,6 @@ export async function GET() {
     businessName: organization?.name ?? "Your business",
     niche,
     metaPixelId: meta,
-    tiktokPixelId: tiktok,
   });
 
   await db.trackingProfile

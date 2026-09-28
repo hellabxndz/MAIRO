@@ -8,7 +8,7 @@ import { entitlementsForTier } from "@/lib/entitlements";
 import { planFor } from "@/lib/plans";
 import { PlatformCard, type ServiceStatus } from "@/components/mairo/campaign-parts";
 import { PageHeader } from "@/components/ui";
-import { MetaMark, TikTokMark, GoogleMark } from "@/components/mairo/marks";
+import { MetaMark, GoogleMark } from "@/components/mairo/marks";
 import { deleteCampaignDraftAction } from "@/lib/actions/campaign-wizard-actions";
 import { WIZARD_STEPS } from "@/lib/campaigns/plan";
 
@@ -40,7 +40,7 @@ function staleBuildCutoff(): Date {
   return new Date(Date.now() - BUILD_STALE_MS);
 }
 
-const SERVICE_NAME: Record<string, string> = { meta: "Meta", tiktok: "TikTok", multi: "Meta + TikTok" };
+const SERVICE_NAME: Record<string, string> = { meta: "Meta" };
 
 export default async function CreatePage() {
   const session = await auth();
@@ -59,7 +59,8 @@ export default async function CreatePage() {
     db.campaignDraft.findMany({
       // One stuck mid-build (the server stopped before it could say how the
       // build went) drops off after a while; Campaigns shows what it made.
-      where: { organizationId, OR: [{ step: { not: "BUILDING" } }, { updatedAt: { gte: staleBuildCutoff() } }] },
+      // Meta drafts only: TikTok was retired, and a TikTok draft can't be finished.
+      where: { organizationId, service: "meta", OR: [{ step: { not: "BUILDING" } }, { updatedAt: { gte: staleBuildCutoff() } }] },
       orderBy: { updatedAt: "desc" },
       take: 10,
       select: { id: true, label: true, service: true, step: true, updatedAt: true },
@@ -69,11 +70,8 @@ export default async function CreatePage() {
   const tier = organization?.subscriptionTier ?? "NONE";
   const plan = planFor(tier);
   const limits = await entitlementsForTier(tier);
-  const tiktokAllowed = limits.tiktok_ads;
-  const crossPlatform = limits.cross_platform_campaigns;
 
   const metaOn = connections.get("META")?.connected ?? false;
-  const tiktokOn = connections.get("TIKTOK")?.connected ?? false;
 
   // campaign_limit is a number, and Infinity is how an unlimited plan says so.
   const campaignsLine = Number.isFinite(limits.campaign_limit)
@@ -89,7 +87,7 @@ export default async function CreatePage() {
     <div>
       <PageHeader
         title="What should MAIRO run?"
-        description="Pick where you want to advertise. MAIRO builds the campaign, writes the ads and manages it from there — you approve before anything goes live."
+        description="MAIRO runs your Facebook and Instagram ads. It builds the campaign, writes the ads and manages it from there — you approve before anything goes live."
       />
 
       {drafts.length > 0 && (
@@ -136,7 +134,7 @@ export default async function CreatePage() {
           name="Meta Ads"
           tagline="Facebook and Instagram"
           icon={<MetaMark className={ICON} />}
-          recommended={!metaOn || !tiktokOn}
+          recommended
           capabilities={[
             "Campaigns built and managed by MAIRO",
             "Ad creative written for each placement",
@@ -146,52 +144,6 @@ export default async function CreatePage() {
           status={status(metaOn, "Meta")}
           planNote={campaignsLine}
           href="/dashboard/create/meta"
-        />
-
-        <PlatformCard
-          name="TikTok Ads"
-          tagline="TikTok"
-          icon={<TikTokMark className={ICON} />}
-          capabilities={[
-            "Campaigns built and managed by MAIRO",
-            "Creative written the way TikTok rewards",
-            "Audience targeting from what you sell",
-            "Budget moved toward what is working",
-          ]}
-          status={
-            tiktokAllowed
-              ? status(tiktokOn, "TikTok")
-              : { kind: "available", detail: `Not on ${plan.name}` }
-          }
-          planNote={tiktokAllowed ? campaignsLine : "Available on a higher plan"}
-          href={tiktokAllowed ? "/dashboard/create/tiktok" : "/dashboard/billing"}
-        />
-
-        <PlatformCard
-          name="Meta + TikTok"
-          tagline="One campaign, both networks"
-          icon={
-            <span className="flex items-center gap-1">
-              <MetaMark className="h-full w-1/2" />
-              <TikTokMark className="h-full w-1/2" />
-            </span>
-          }
-          recommended={metaOn && tiktokOn}
-          capabilities={[
-            "One campaign you control from MAIRO",
-            "Creative made for each network separately",
-            "Results from both in one place",
-            "Budget split by what each is returning",
-          ]}
-          status={
-            !crossPlatform
-              ? { kind: "available", detail: `Not on ${plan.name}` }
-              : metaOn && tiktokOn
-                ? { kind: "connected", detail: "Both connected" }
-                : { kind: "available", detail: "Needs both connected" }
-          }
-          planNote={crossPlatform ? campaignsLine : "Available on a higher plan"}
-          href={crossPlatform ? "/dashboard/create/multi" : "/dashboard/billing"}
         />
 
         {/* Where this is going. Dimmed, unclickable, and carrying no date. */}

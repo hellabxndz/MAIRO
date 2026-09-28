@@ -12,9 +12,8 @@ import type { AdGoal } from "@/generated/prisma/enums";
 //
 // So this is a catalogue of what to actually measure, per niche, and how to
 // recognise it happening on a website without the owner writing any code. Each
-// action names the Meta event and the TikTok event it maps to — the two
-// networks disagree about the vocabulary, and picking the wrong name is not a
-// cosmetic error: an event outside a network's standard list cannot be
+// action names the Meta event it maps to, and picking the wrong name is not a
+// cosmetic error: an event outside Meta's standard list cannot be
 // optimized towards and does not appear in the conversion column, so the
 // campaign quietly optimizes for nothing.
 
@@ -48,8 +47,6 @@ export type ConversionAction = {
   why: string;
   /** Meta's standard event name. Must be one of Meta's exact list. */
   metaEvent: MetaStandardEvent;
-  /** TikTok's standard event name. Must be one of TikTok's exact list. */
-  tiktokEvent: TikTokStandardEvent;
   detection: DetectionKind;
   /** For url_contains and click_selector: the phrase or selector. */
   match?: string;
@@ -82,27 +79,6 @@ export type MetaStandardEvent =
   | "Search"
   | "Donate";
 
-/**
- * TikTok's standard web events.
- *
- * Shorter than Meta's, and the gaps matter. TikTok has no Lead and no
- * Schedule, so both land on SubmitForm or Contact — which is the closest true
- * thing, not a workaround.
- */
-export type TikTokStandardEvent =
-  | "CompletePayment"
-  | "PlaceAnOrder"
-  | "SubmitForm"
-  | "Contact"
-  | "CompleteRegistration"
-  | "Subscribe"
-  | "AddToCart"
-  | "InitiateCheckout"
-  | "ViewContent"
-  | "Download"
-  | "Search"
-  | "ClickButton";
-
 export type Niche = {
   id: string;
   label: string;
@@ -122,7 +98,6 @@ const phoneCall: ConversionAction = {
   label: "Someone taps your phone number",
   why: "For a business that gets booked over the phone, this is the sale. Nothing else on the site will ever record one.",
   metaEvent: "Contact",
-  tiktokEvent: "Contact",
   detection: "phone_click",
   hasValue: false,
 };
@@ -132,7 +107,6 @@ const contactForm: ConversionAction = {
   label: "Someone sends you an enquiry",
   why: "Any form on the site being submitted — a quote request, a callback, a contact form.",
   metaEvent: "Lead",
-  tiktokEvent: "SubmitForm",
   detection: "form_submit",
   hasValue: false,
 };
@@ -142,7 +116,6 @@ const emailClick: ConversionAction = {
   label: "Someone taps your email address",
   why: "Smaller signal than a form, but it is a real person choosing to get in touch.",
   metaEvent: "Contact",
-  tiktokEvent: "Contact",
   detection: "email_click",
   hasValue: false,
 };
@@ -152,7 +125,6 @@ const purchase: ConversionAction = {
   label: "Someone buys",
   why: "The order total is sent with it, which is what makes ROAS a real number rather than a count.",
   metaEvent: "Purchase",
-  tiktokEvent: "CompletePayment",
   detection: "url_contains",
   match: "/thank-you",
   hasValue: true,
@@ -164,7 +136,6 @@ const addToCart: ConversionAction = {
   label: "Someone adds something to the basket",
   why: "Far more common than a purchase, so the networks learn from it much faster in the first weeks.",
   metaEvent: "AddToCart",
-  tiktokEvent: "AddToCart",
   detection: "datalayer_event",
   hasValue: true,
 };
@@ -174,7 +145,6 @@ const beginCheckout: ConversionAction = {
   label: "Someone starts checking out",
   why: "The step before the sale. A big gap between this and Purchase is a checkout problem, not an ads problem.",
   metaEvent: "InitiateCheckout",
-  tiktokEvent: "InitiateCheckout",
   detection: "url_contains",
   match: "/checkout",
   hasValue: true,
@@ -185,7 +155,6 @@ const booking: ConversionAction = {
   label: "Someone books an appointment",
   why: "The thing you actually want. Fires when they land on the booking confirmation page.",
   metaEvent: "Schedule",
-  tiktokEvent: "SubmitForm",
   detection: "url_contains",
   match: "/booking-confirmed",
   hasValue: false,
@@ -228,7 +197,6 @@ export const NICHES: Niche[] = [
         label: "Someone books a table",
         why: "Fires on the booking confirmation page, whichever booking system you use.",
         metaEvent: "Schedule",
-        tiktokEvent: "SubmitForm",
         detection: "url_contains",
         match: "/reservation",
         hasValue: false,
@@ -241,7 +209,6 @@ export const NICHES: Niche[] = [
         label: "Someone opens the menu",
         why: "Weak on its own, but it is the strongest early signal a restaurant site has.",
         metaEvent: "ViewContent",
-        tiktokEvent: "ViewContent",
         detection: "url_contains",
         match: "/menu",
         hasValue: false,
@@ -296,7 +263,6 @@ export const NICHES: Niche[] = [
         label: "Someone looks up where you are",
         why: "A strong intent signal for a business people physically visit.",
         metaEvent: "FindLocation",
-        tiktokEvent: "ClickButton",
         detection: "url_contains",
         match: "/find-us",
         hasValue: false,
@@ -319,7 +285,6 @@ export const NICHES: Niche[] = [
         label: "Someone signs up for a trial",
         why: "The way nearly every membership starts. Tracked without a value — putting a guess on it teaches the networks to chase the wrong people.",
         metaEvent: "StartTrial",
-        tiktokEvent: "CompleteRegistration",
         detection: "url_contains",
         match: "/trial",
         hasValue: false,
@@ -330,7 +295,6 @@ export const NICHES: Niche[] = [
         label: "Someone buys a membership",
         why: "Carries the real money, and confirms the trials are turning into members.",
         metaEvent: "Subscribe",
-        tiktokEvent: "Subscribe",
         detection: "url_contains",
         match: "/welcome",
         hasValue: true,
@@ -354,7 +318,6 @@ export const NICHES: Niche[] = [
         label: "Someone books a consultation",
         why: "The highest-intent thing that happens on a professional services site.",
         metaEvent: "Schedule",
-        tiktokEvent: "SubmitForm",
         detection: "url_contains",
         match: "/consultation",
         hasValue: false,
@@ -367,7 +330,6 @@ export const NICHES: Niche[] = [
         label: "Someone downloads a guide",
         why: "Early interest. Useful for building an audience to advertise to later.",
         metaEvent: "Lead",
-        tiktokEvent: "Download",
         detection: "click_selector",
         match: "a[href$='.pdf']",
         hasValue: false,
@@ -385,7 +347,6 @@ export const NICHES: Niche[] = [
         label: "Someone books a viewing",
         why: "The step that turns a browser into a buyer.",
         metaEvent: "Schedule",
-        tiktokEvent: "SubmitForm",
         detection: "url_contains",
         match: "/viewing",
         hasValue: false,
@@ -398,7 +359,6 @@ export const NICHES: Niche[] = [
         label: "Someone looks at a property",
         why: "Common enough that the networks learn from it quickly.",
         metaEvent: "ViewContent",
-        tiktokEvent: "ViewContent",
         detection: "url_contains",
         match: "/property",
         hasValue: false,
@@ -419,7 +379,6 @@ export const NICHES: Niche[] = [
         label: "Someone enrols",
         why: "Carries the fee, so this is what ROAS is built from.",
         metaEvent: "CompleteRegistration",
-        tiktokEvent: "CompleteRegistration",
         detection: "url_contains",
         match: "/enrolled",
         hasValue: true,
@@ -431,7 +390,6 @@ export const NICHES: Niche[] = [
         label: "Someone takes a free lesson",
         why: "The usual first step, and far more frequent than an enrolment.",
         metaEvent: "Lead",
-        tiktokEvent: "SubmitForm",
         detection: "url_contains",
         match: "/free",
         hasValue: false,
@@ -449,7 +407,6 @@ export const NICHES: Niche[] = [
         label: "Someone starts a free trial",
         why: "The top of the funnel, and frequent enough for the networks to learn from.",
         metaEvent: "StartTrial",
-        tiktokEvent: "CompleteRegistration",
         detection: "url_contains",
         match: "/welcome",
         hasValue: false,
@@ -460,7 +417,6 @@ export const NICHES: Niche[] = [
         label: "Someone subscribes",
         why: "The money. Sent with the plan value so ROAS is real.",
         metaEvent: "Subscribe",
-        tiktokEvent: "Subscribe",
         detection: "url_contains",
         match: "/subscribed",
         hasValue: true,

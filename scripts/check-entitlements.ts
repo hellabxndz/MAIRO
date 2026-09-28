@@ -30,59 +30,70 @@ async function main() {
 
   console.log("\n— defaults from the database —");
   const starter = await entitlementsForTier("STARTER");
-  ok("Starter: Meta yes, TikTok no", starter.meta_ads && !starter.tiktok_ads);
-  ok("Starter: no cross-platform", !starter.cross_platform_campaigns);
-  ok("Starter: no auto optimize", !starter.auto_optimize);
-  ok("Starter: 1 campaign", starter.campaign_limit === 1, `${starter.campaign_limit}`);
-
   const growth = await entitlementsForTier("GROWTH");
-  ok("Growth: TikTok yes", growth.tiktok_ads);
-  ok("Growth: cross-platform yes", growth.cross_platform_campaigns);
-  ok("Growth: growth mode yes", growth.tiktok_growth);
-  ok("Growth: auto optimize NO", !growth.auto_optimize);
+  const scale = await entitlementsForTier("SCALE");
 
-  const pro = await entitlementsForTier("SCALE");
-  ok(`${TOP.name}: auto optimize yes`, pro.auto_optimize);
-  ok(`${TOP.name}: 10 campaigns`, pro.campaign_limit === 10);
+  ok("every plan runs Meta", starter.meta_ads && growth.meta_ads && scale.meta_ads);
+  ok("Starter: 3 campaigns", starter.campaign_limit === 3, `${starter.campaign_limit}`);
+  ok("Starter: you approve everything (no auto optimize)", !starter.auto_optimize && !starter.autopilot);
+  ok("Starter: basic analytics", !starter.advanced_analytics);
+  ok("Starter: no posting", !starter.social_posting);
+
+  ok("Growth: 15 campaigns", growth.campaign_limit === 15, `${growth.campaign_limit}`);
+  ok("Growth: Assisted automation", growth.auto_optimize && !growth.autopilot);
+  ok("Growth: advanced analytics", growth.advanced_analytics);
+  ok("Growth: no posting", !growth.social_posting);
+
+  ok(`${TOP.name}: unlimited campaigns`, !Number.isFinite(scale.campaign_limit), `${scale.campaign_limit}`);
+  ok(`${TOP.name}: Autopilot`, scale.auto_optimize && scale.autopilot);
+  ok(`${TOP.name}: posts to Instagram`, scale.social_posting);
+
+  // The whole point of three plans: each step up buys something real.
+  ok("each plan gives more image credits than the last",
+    starter.studio_credits_monthly < growth.studio_credits_monthly &&
+      growth.studio_credits_monthly < scale.studio_credits_monthly);
+  ok("each plan costs more than the last",
+    planFor("STARTER").priceMonthly < planFor("GROWTH").priceMonthly &&
+      planFor("GROWTH").priceMonthly < TOP.priceMonthly);
 
   console.log("\n— a database edit overrides the code —");
   await db.planConfig.update({
     where: { tier: "STARTER" },
-    data: { entitlementsJson: JSON.stringify({ tiktok_ads: true, campaign_limit: 42 }) },
+    data: { entitlementsJson: JSON.stringify({ auto_optimize: true, campaign_limit: 42 }) },
   });
   const edited = await entitlementsForTier("STARTER");
-  ok("edited flag takes effect", edited.tiktok_ads === true);
+  ok("edited flag takes effect", edited.auto_optimize === true);
   ok("edited number takes effect", edited.campaign_limit === 42, `${edited.campaign_limit}`);
-  ok("flags absent from the row keep their compiled value", edited.meta_ads === true && edited.auto_optimize === false);
+  ok("flags absent from the row keep their compiled value", edited.meta_ads === true && edited.autopilot === false);
   await db.planConfig.update({
     where: { tier: "STARTER" },
     data: { entitlementsJson: JSON.stringify({}) },
   });
   const reverted = await entitlementsForTier("STARTER");
-  ok("an empty override falls back cleanly", reverted.campaign_limit === 1 && !reverted.tiktok_ads);
+  ok("an empty override falls back cleanly", reverted.campaign_limit === 3 && !reverted.auto_optimize);
 
   console.log("\n— a malformed row can't break the product —");
   await db.planConfig.update({ where: { tier: "STARTER" }, data: { entitlementsJson: "{not json" } });
   const broken = await entitlementsForTier("STARTER");
-  ok("garbage JSON falls back to the code", broken.campaign_limit === 1 && broken.meta_ads);
+  ok("garbage JSON falls back to the code", broken.campaign_limit === 3 && broken.meta_ads);
   await db.planConfig.update({
     where: { tier: "STARTER" },
     data: { entitlementsJson: JSON.stringify({}) },
   });
 
   console.log("\n— platform selection —");
-  ok("Starter picking TikTok is blocked, naming the flag",
-    checkPlatformSelection(["TIKTOK"], reverted).allowed === false);
-  const sel = checkPlatformSelection(["TIKTOK"], reverted);
-  ok("and the missing flag is tiktok_ads", !sel.allowed && sel.missing === "tiktok_ads");
-  ok("Starter picking Meta is fine", checkPlatformSelection(["META"], reverted).allowed);
-  ok("Growth picking both is fine", checkPlatformSelection(["META","TIKTOK"], growth).allowed);
+  ok("Meta is allowed on Starter", checkPlatformSelection(["META"], reverted).allowed);
+  // TikTok was retired. Even a plan edited to switch everything on can't
+  // launch there, because there's no adapter behind it.
+  ok("TikTok is refused on every plan", !checkPlatformSelection(["TIKTOK"], scale).allowed);
+  ok("so is Meta + TikTok", !checkPlatformSelection(["META", "TIKTOK"], scale).allowed);
 
   console.log("\n— resolving from an organization —");
-  const orgEnt = await entitlementsFor("org_a");   // GROWTH in the seeded data
-  ok("org_a (Growth) gets TikTok", orgEnt.tiktok_ads);
-  const orgB = await entitlementsFor("org_b");     // STARTER
-  ok("org_b (Starter) does not", !orgB.tiktok_ads);
+  // An organization that doesn't exist resolves as no plan at all, which
+  // must still give a working set of permissions rather than throwing.
+  const unknown = await entitlementsFor("org_does_not_exist");
+  const none = await entitlementsForTier("NONE");
+  ok("an unknown organization resolves as no plan", JSON.stringify(unknown) === JSON.stringify(none));
 
   console.log(bad === 0 ? "\nAll checks passed.\n" : `\n${bad} FAILED\n`);
 

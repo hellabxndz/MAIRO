@@ -107,7 +107,6 @@ export default async function TrackingPage() {
 
   const platforms: { platform: AdPlatform; name: string; allowed: boolean }[] = [
     { platform: "META", name: "Meta", allowed: entitlements.meta_ads },
-    { platform: "TIKTOK", name: "TikTok", allowed: entitlements.tiktok_ads },
   ];
 
   return (
@@ -188,7 +187,7 @@ export default async function TrackingPage() {
         1. Tell the ad networks when someone buys
       </h2>
       <p className="mb-4 max-w-3xl text-sm leading-relaxed text-neutral-400">
-        A pixel is a few lines of code on your website. Without one, Meta and TikTok have no
+        A pixel is a few lines of code on your website. Without one, Meta has no
         idea anybody ever bought anything — so they report no revenue, they can&rsquo;t
         optimise towards buyers, and every ROAS figure MAIRO shows you stays blank.
       </p>
@@ -244,7 +243,6 @@ export default async function TrackingPage() {
             label: a.label,
             why: a.why,
             metaEvent: a.metaEvent,
-            tiktokEvent: a.tiktokEvent,
             hasValue: a.hasValue,
             primary: Boolean(a.primary),
             detection: a.detection,

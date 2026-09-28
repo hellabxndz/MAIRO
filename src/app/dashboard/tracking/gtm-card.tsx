@@ -23,7 +23,6 @@ type Action = {
   label: string;
   why: string;
   metaEvent: string;
-  tiktokEvent: string;
   hasValue: boolean;
   primary: boolean;
   detection: string;
@@ -147,7 +146,7 @@ export function GtmCard({
               <p className="mt-1 text-xs leading-relaxed text-neutral-500">{a.why}</p>
               <p className="mt-1.5 text-[11px] text-neutral-600">
                 Fires {DETECTION_COPY[a.detection] ?? "when it happens"}
-                {a.match ? ` ${a.match}` : ""} · Meta {a.metaEvent} · TikTok {a.tiktokEvent}
+                {a.match ? ` ${a.match}` : ""} · Meta {a.metaEvent}
               </p>
             </div>
           ))}

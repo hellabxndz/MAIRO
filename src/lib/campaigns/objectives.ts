@@ -11,8 +11,6 @@ export type GoalOption = {
   description: string;
   /** The Meta campaign objective this becomes (see metaObjectiveFor). */
   metaObjective: string;
-  /** No TikTok equivalent is built for this goal. */
-  metaOnly: boolean;
 };
 
 export const GOAL_OPTIONS: GoalOption[] = [
@@ -21,14 +19,12 @@ export const GOAL_OPTIONS: GoalOption[] = [
     label: "Get More Sales",
     description: "Find people who are more likely to purchase your products or services.",
     metaObjective: "OUTCOME_SALES",
-    metaOnly: false,
   },
   {
     goal: "TRAFFIC",
     label: "Get More Website Visitors",
     description: "Bring more people to your website, store, or online destination.",
     metaObjective: "OUTCOME_TRAFFIC",
-    metaOnly: false,
   },
   {
     goal: "ENGAGEMENT",
@@ -36,28 +32,24 @@ export const GOAL_OPTIONS: GoalOption[] = [
     description:
       "Encourage people to message your business, or like, comment on and share your ad.",
     metaObjective: "OUTCOME_ENGAGEMENT",
-    metaOnly: true,
   },
   {
     goal: "LEADS",
     label: "Find Potential Customers",
     description: "Collect contact information from people interested in your business.",
     metaObjective: "OUTCOME_LEADS",
-    metaOnly: false,
   },
   {
     goal: "AWARENESS",
     label: "Get Your Business Noticed",
     description: "Introduce your business to more people and increase awareness.",
     metaObjective: "OUTCOME_AWARENESS",
-    metaOnly: false,
   },
   {
     goal: "APP_PROMOTION",
     label: "Get More App Users",
     description: "Encourage people to download or use your mobile application.",
     metaObjective: "OUTCOME_APP_PROMOTION",
-    metaOnly: true,
   },
 ];
 
@@ -136,11 +128,3 @@ export function recommendedGoal(input: {
   return input.hasActivePixel ? "SALES" : "TRAFFIC";
 }
 
-/**
- * The destinations a goal offers for a service. TikTok ads link to a website
- * only, so a campaign that includes TikTok offers only that.
- */
-export function destinationsForService(goal: AdGoal, service: "meta" | "tiktok" | "multi"): DestinationOption[] {
-  const all = destinationsFor(goal);
-  return service === "meta" ? all : all.filter((d) => d.type === "WEBSITE");
-}

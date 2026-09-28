@@ -9,7 +9,6 @@ import {
   normalizeCountry,
 } from "@/lib/tracking/hash";
 import { sendMetaConversions } from "@/lib/tracking/meta-pixel";
-import { sendTikTokConversions } from "@/lib/tracking/tiktok-pixel";
 
 // Orders in, conversions out.
 //
@@ -180,7 +179,7 @@ async function forwardAll(
   order: ForwardInput
 ): Promise<{ platform: AdPlatform; status: string; message: string | null }[]> {
   const pixels = await db.trackingPixel.findMany({ where: { organizationId } });
-  const platforms: AdPlatform[] = ["META", "TIKTOK"];
+  const platforms: AdPlatform[] = ["META"];
   const out: { platform: AdPlatform; status: string; message: string | null }[] = [];
 
   for (const platform of platforms) {
@@ -199,43 +198,26 @@ async function forwardAll(
     }
 
     try {
-      const result =
-        platform === "TIKTOK"
-          ? await sendTikTokConversions(pixel.externalPixelId, creds.accessToken, [
-              {
-                eventName: mapEventName(order.eventName ?? "Purchase", "TIKTOK"),
-                eventTime: order.occurredAt,
-                eventId: order.eventId,
-                valueCents: order.valueCents,
-                currency: order.currency,
-                hashedEmail: order.hashedEmail,
-                hashedPhone: order.hashedPhone,
-                clientIp: order.clientIp,
-                userAgent: order.userAgent,
-                ttclid: order.ttclid,
-                sourceUrl: order.sourceUrl,
-              },
-            ])
-          : await sendMetaConversions(pixel.externalPixelId, creds.accessToken, [
-              {
-                eventName: mapEventName(order.eventName ?? "Purchase", "META"),
-                eventTime: order.occurredAt,
-                eventId: order.eventId,
-                valueCents: order.valueCents,
-                currency: order.currency,
-                hashedEmail: order.hashedEmail,
-                hashedPhone: order.hashedPhone,
-                country: order.country,
-                clientIp: order.clientIp,
-                userAgent: order.userAgent,
-                // Meta wants its click id wrapped in a versioned, timestamped
-                // form rather than the bare parameter off the URL.
-                fbc: order.fbclid
-                  ? `fb.1.${Math.floor(order.occurredAt.getTime())}.${order.fbclid}`
-                  : null,
-                sourceUrl: order.sourceUrl,
-              },
-            ]);
+      const result = await sendMetaConversions(pixel.externalPixelId, creds.accessToken, [
+        {
+          eventName: order.eventName ?? "Purchase",
+          eventTime: order.occurredAt,
+          eventId: order.eventId,
+          valueCents: order.valueCents,
+          currency: order.currency,
+          hashedEmail: order.hashedEmail,
+          hashedPhone: order.hashedPhone,
+          country: order.country,
+          clientIp: order.clientIp,
+          userAgent: order.userAgent,
+          // Meta wants its click id wrapped in a versioned, timestamped
+          // form rather than the bare parameter off the URL.
+          fbc: order.fbclid
+            ? `fb.1.${Math.floor(order.occurredAt.getTime())}.${order.fbclid}`
+            : null,
+          sourceUrl: order.sourceUrl,
+        },
+      ]);
 
       // A network taking the event is not the same as it matching it to
       // anybody. Nothing identifying means nothing attributed, and saying so
@@ -259,25 +241,6 @@ async function forwardAll(
   return out;
 }
 
-/**
- * The two networks disagree about what a purchase is called.
- *
- * Meta's standard event is `Purchase`; TikTok's is `CompletePayment`. Sending
- * Meta's name to TikTok is accepted as a custom event, which cannot be
- * optimized towards and does not appear in the conversion column — so the
- * campaign quietly optimizes for nothing.
- */
-function mapEventName(name: string, platform: AdPlatform): string {
-  if (platform !== "TIKTOK") return name;
-  const map: Record<string, string> = {
-    Purchase: "CompletePayment",
-    AddToCart: "AddToCart",
-    InitiateCheckout: "InitiateCheckout",
-    Lead: "SubmitForm",
-    CompleteRegistration: "CompleteRegistration",
-  };
-  return map[name] ?? name;
-}
 
 async function upsertForward(
   eventId: string,

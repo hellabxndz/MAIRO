@@ -638,7 +638,7 @@ export function SimpleDashboard({
                 href: "/dashboard/integrations",
                 icon: ICONS.people,
                 title: "Connect an advertising account",
-                body: "Link Meta or TikTok so campaigns can go live in your own account.",
+                body: "Link Meta so campaigns can go live in your own account.",
               },
         ].map((a) => (
           <MairoCard key={a.title} href={a.href} className="p-5 sm:p-6">

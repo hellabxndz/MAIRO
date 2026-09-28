@@ -70,7 +70,7 @@ export default async function DashboardOverviewPage() {
 
   // Live figures from every connected network. This runs after the queries
   // above rather than alongside them because it needs what they return, and it
-  // is written never to throw — a slow or unhappy Meta or TikTok must not cost
+  // is written never to throw — a slow or unhappy Meta must not cost
   // the client their whole dashboard.
   const performance = await fetchOrganizationPerformance(organizationId);
 
@@ -358,8 +358,8 @@ export default async function DashboardOverviewPage() {
           <Card className="border-amber-500/30 bg-amber-500/[0.06]">
             <p className="font-medium">Connect somewhere to advertise</p>
             <p className="mt-1 text-sm text-neutral-400">
-              MAIRO needs access to at least one ad account — Meta, TikTok, or both —
-              before it can launch anything.
+              MAIRO needs access to your Meta ad account before it can launch
+              anything.
             </p>
             <Link href="/dashboard/integrations" className={`${primaryButtonClass} mt-4`}>
               Choose where

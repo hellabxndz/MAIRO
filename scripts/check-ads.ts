@@ -53,7 +53,6 @@ import {
   parseStructuredProducts,
   priceToCents,
 } from "@/lib/catalog/scan";
-import { tiktokAdapter } from "@/lib/ad-platforms/tiktok/adapter";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
 
 let bad = 0;
@@ -160,15 +159,14 @@ console.log("\n— the enum Meta wants for the ad set's promoted object —");
 
 console.log("\n— where each network keeps the budget —");
 {
-  // Meta rejects an ad set budget under a campaign that has one; TikTok wants
-  // the ad group to carry it. Getting either backwards fails every launch.
+  // Meta rejects an ad set budget under a campaign that has one. Getting it
+  // backwards fails every launch.
   ok("Meta puts the budget on the campaign", metaAdapter.budgetLevel === "campaign");
-  ok("TikTok puts it on the ad group", tiktokAdapter.budgetLevel === "adgroup");
 }
 
 console.log("\n— every adapter still answers the whole interface —");
 {
-  for (const adapter of [metaAdapter, tiktokAdapter]) {
+  for (const adapter of [metaAdapter]) {
     for (const method of [
       "connectAccount", "getAccounts", "createCampaign", "createAdGroup", "createAd",
       "updateBudget", "pauseCampaign", "resumeCampaign", "getCampaignPerformance",

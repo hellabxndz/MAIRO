@@ -31,7 +31,6 @@ async function context() {
 /** Whether this business may track on this network at all. */
 async function platformAllowed(organizationId: string, platform: AdPlatform): Promise<boolean> {
   const ent = await entitlementsFor(organizationId);
-  if (platform === "TIKTOK") return ent.tiktok_ads;
   if (platform === "META") return ent.meta_ads;
   return false;
 }
@@ -43,10 +42,7 @@ export async function setUpPixelAction(platform: AdPlatform): Promise<TrackingRe
   if (!(await platformAllowed(ctx.organizationId, platform))) {
     return {
       ok: false,
-      error:
-        platform === "TIKTOK"
-          ? "TikTok is part of Growth. Starter covers Meta — you can track Meta sales on it."
-          : "That network isn't on your plan.",
+      error: "MAIRO sets up tracking for Meta only.",
     };
   }
 

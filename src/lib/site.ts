@@ -15,13 +15,11 @@ export const SITE_NAME = "MAIRO";
 /**
  * What MAIRO is, in one sentence, for search results and social previews.
  *
- * Both networks are named on purpose. The old description said only Meta,
- * which stopped being true the day TikTok shipped — and a description that
- * undersells the product is a worse problem than a missing one, because it is
- * the sentence a stranger decides on.
+ * Names Facebook and Instagram rather than "Meta", because those are the
+ * words a stranger searching for help with their ads actually uses.
  */
 export const SITE_DESCRIPTION =
-  "MAIRO plans, writes and runs your Meta and TikTok ads for you. No ads manager, no jargon — " +
+  "MAIRO plans, writes and runs your Facebook and Instagram ads for you. No ads manager, no jargon — " +
   "tell it what you sell and it handles the rest.";
 
 export function siteUrl(): string {

@@ -33,7 +33,6 @@ for (const g of GOAL_OPTIONS) {
 }
 ok("sales without tracking honestly runs as traffic", metaObjectiveFor("SALES", false) === "OUTCOME_TRAFFIC");
 ok("engagement is never downgraded", metaObjectiveFor("ENGAGEMENT", false) === "OUTCOME_ENGAGEMENT");
-ok("engagement and app are Meta-only", GOAL_OPTIONS.filter((g) => g.metaOnly).map((g) => g.goal).join() === "ENGAGEMENT,APP_PROMOTION");
 
 console.log("\n— only destinations each goal can actually build —");
 ok("sales goes to a website only", destinationsFor("SALES").map((d) => d.type).join() === "WEBSITE");
@@ -110,7 +109,7 @@ ok("at least 15 miles", widened.geoRadius === 15);
 ok("nationwide stays nationwide", restrictForSpecialCategory(normalizeAudience({})).geoRadius === null);
 
 console.log("\n— the review blocks what can't launch and only suggests the rest —");
-const facts: ReviewFacts = { metaConnected: true, pageChosen: true, tiktokConnected: false, funding: "funded", currency: "USD", metaPixelActive: true, hasApprovedCreative: true, landing: { ok: true, status: 200, finalUrl: "https://x.test/", mobileReady: true, hasMetaPixel: true, title: "x" } };
+const facts: ReviewFacts = { metaConnected: true, pageChosen: true, funding: "funded", currency: "USD", metaPixelActive: true, hasApprovedCreative: true, landing: { ok: true, status: 200, finalUrl: "https://x.test/", mobileReady: true, hasMetaPixel: true, title: "x" } };
 const ready: CampaignPlan = { ...base, goal: "SALES", destinationType: "WEBSITE", destinationValue: "https://x.test", dailyAmount: 20, promotes: "PRODUCT" };
 const idsOf = (p: CampaignPlan, f: ReviewFacts) => reviewFindings(p, f, now).map((x) => x.id);
 ok("a complete, tracked campaign is ready", reviewStatus(reviewFindings(ready, facts, now)) === "READY", idsOf(ready, facts).join());
@@ -121,7 +120,6 @@ ok("a page with no mobile setup is flagged", idsOf(ready, { ...facts, landing: {
 ok("a total budget without an end blocks", idsOf({ ...ready, budgetType: "LIFETIME" }, facts).includes("lifetime-no-end"));
 ok("under a dollar a day blocks", reviewStatus(reviewFindings({ ...ready, dailyAmount: 0.5 }, facts, now)) === "SETUP_REQUIRED");
 ok("political ads block", idsOf({ ...ready, specialAdCategory: "ISSUES_ELECTIONS_POLITICS" }, facts).includes("political"));
-ok("engagement on TikTok blocks", idsOf({ ...ready, service: "multi", goal: "ENGAGEMENT", destinationType: "POST_ENGAGEMENT" }, { ...facts, tiktokConnected: true }).includes("meta-only-goal"));
 ok("picking a post without choosing one blocks", idsOf({ ...ready, adChoice: "FACEBOOK_POST" }, facts).includes("no-post"));
 ok("a local business running nationwide is flagged", idsOf({ ...ready, audienceMode: "manual", promotes: "SERVICE", goal: "LEADS", destinationType: "PHONE_CALL", destinationValue: "5551234567" }, facts).includes("local-nationwide"));
 ok("paying for visits with working tracking is flagged", idsOf({ ...ready, goal: "TRAFFIC" }, facts).includes("traffic-vs-sales"));
@@ -154,8 +152,7 @@ ok("a vertical 20s MP4 is fine", checkVideo(vid).problems.length === 0 && checkV
 ok("an AVI is refused", checkVideo({ ...vid, type: "video/x-msvideo" }).problems.length > 0);
 ok("an ultra-wide video is refused", checkVideo({ ...vid, width: 2560, height: 1080 }).problems.length > 0);
 ok("a two-minute video gets a note", checkVideo({ ...vid, durationSec: 120 }).warnings.length > 0);
-ok("a 3-second video is fine for Meta but not TikTok", checkVideo({ ...vid, durationSec: 3 }).problems.length === 0 && checkVideo({ ...vid, durationSec: 3, forTikTok: true }).problems.length > 0);
-ok("TikTok needs 540p", checkVideo({ ...vid, width: 360, height: 640, forTikTok: true }).problems.length > 0);
+ok("a 3-second video is fine for Meta", checkVideo({ ...vid, durationSec: 3 }).problems.length === 0);
 ok("a tiny picture is refused", checkImage({ type: "image/png", bytes: 1e5, width: 400, height: 400 }).problems.length > 0);
 ok("only this business's own uploads are accepted", isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org1/video-x.mp4", "org1") && !isOwnUpload("https://abc.public.blob.vercel-storage.com/ad-media/org2/video-x.mp4", "org1") && !isOwnUpload("https://evil.test/ad-media/org1/v.mp4", "org1"));
 
@@ -187,7 +184,6 @@ ok("one picture can still test its words", (planAds({ ...ownPics, images: [pic(1
 ok("no pictures yet blocks", idsOf({ ...ownPics, images: [] }, facts).includes("no-pictures"));
 ok("more pictures than the budget tests well is only a note", idsOf({ ...ownPics, dailyAmount: 10 }, facts).includes("many-pictures") && reviewStatus(reviewFindings({ ...ownPics, dailyAmount: 10 }, facts, now)) !== "SETUP_REQUIRED");
 ok("own pictures don't trip \"no approved picture\"", !idsOf(ownPics, { ...facts, hasApprovedCreative: false }).includes("no-creative"));
-ok("own pictures aren't allowed on TikTok", idsOf({ ...ownPics, service: "tiktok" }, { ...facts, tiktokConnected: true }).includes("tiktok-video"));
 
 console.log("\n— a video ad is built the way Meta expects —");
 const videoAd = JSON.parse(String(metaAdCreativeParams({ ...creativeBase, videoId: "V1", destination: { type: "WEBSITE", url: "https://x.test" } }).object_story_spec));
@@ -249,13 +245,8 @@ ok("high frequency suggests refreshing", adv({ spendCents: 6000, purchases: 2, i
 ok("a paused campaign gets no advice", campaignAdvice({ objective: "SALES", metrics: m({}), liveSince: now, live: false, dailyBudgetCents: 2000, now }).length === 0);
 ok("advice never says MAIRO will raise the budget itself", adv({ spendCents: 6000, purchases: 3, roas: 3 }, 9).every((a) => !/MAIRO will raise|raising your budget now/i.test(a.detail)));
 
-console.log("\n— TikTok campaigns need a video and a website —");
-const tt: CampaignPlan = { ...ready, service: "tiktok", goal: "TRAFFIC", destinationType: "WEBSITE" };
-ok("a picture ad on TikTok blocks", idsOf({ ...tt, adChoice: "attached", studioAssetId: "a", copyOptions: options, chosenCopy: 0 }, { ...facts, tiktokConnected: true }).includes("tiktok-video"));
-ok("a phone destination on TikTok blocks", idsOf({ ...tt, destinationType: "PHONE_CALL", destinationValue: "5551234567" }, { ...facts, tiktokConnected: true }).includes("tiktok-website"));
-const ttVideo: CampaignPlan = { ...tt, adChoice: "video", video: { url: "u", posterUrl: "p", name: "n", width: 1080, height: 1920, durationSec: 20, bytes: 1 }, copyOptions: [{ ...options[0], primaryText: "x".repeat(140) }], chosenCopy: 0 };
-ok("a video to a website is fine, with a note about long text", !idsOf(ttVideo, { ...facts, tiktokConnected: true }).includes("tiktok-video") && idsOf(ttVideo, { ...facts, tiktokConnected: true }).includes("tiktok-text"));
-ok("Meta campaigns aren't held to TikTok's rules", !idsOf({ ...ready, adChoice: "attached", studioAssetId: "a", copyOptions: options, chosenCopy: 0 }, facts).some((id) => id.startsWith("tiktok")));
+console.log("\n— TikTok is gone from the review —");
+ok("no finding ever mentions TikTok", !reviewFindings({ ...ready, adChoice: "attached", studioAssetId: "a", copyOptions: options, chosenCopy: 0 }, facts, now).some((f) => /tiktok/i.test(f.id + f.title + f.detail)));
 
 console.log("\n— after connecting Meta, only ever back into the dashboard —");
 ok("a draft is a fine place to return to", safeReturnTo("/dashboard/create/meta?draft=abc&posts=1") === "/dashboard/create/meta?draft=abc&posts=1");

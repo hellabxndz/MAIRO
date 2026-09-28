@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Create your account",
   description:
-    "Start running Meta and TikTok ads in a few minutes. No ads manager, no jargon.",
+    "Start running Facebook and Instagram ads in a few minutes. No ads manager, no jargon.",
 };
 
 export default function Layout({ children }: LayoutProps<"/sign-up">) {

@@ -38,7 +38,6 @@ export async function resolveCampaignAds(input: {
   perDayCents: number;
   businessName: string;
   usesMeta: boolean;
-  usesTikTok: boolean;
 }): Promise<{ ok: true; ads: CampaignAdInput[] } | { ok: false; error: string }> {
   let parsed: WizardAd[];
   try {
@@ -63,10 +62,6 @@ export async function resolveCampaignAds(input: {
   for (const ad of parsed) {
     if (ad.kind === "EXISTING_AD" && !input.usesMeta) {
       return { ok: false, error: "Existing ads run on Meta only." };
-    }
-    // TikTok runs video only; a picture or an existing Meta ad can't go there.
-    if (input.usesTikTok && ad.kind !== "VIDEO") {
-      return { ok: false, error: "TikTok ads have to be videos. Upload a video for this campaign, or make it a Meta-only campaign." };
     }
 
     if (ad.kind === "EXISTING_AD") {

@@ -73,14 +73,14 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Tell MAIRO what you sell. It plans, writes and runs your Meta and TikTok
-            campaigns — no ads manager, no jargon.
+            Tell MAIRO what you sell. It plans, writes and runs your Facebook and
+            Instagram campaigns — no ads manager, no jargon.
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 36, fontSize: 25, color: "#737373" }}>
-          <span>Meta</span>
-          <span>TikTok</span>
+          <span>Facebook</span>
+          <span>Instagram</span>
           <span>From $49/mo</span>
         </div>
       </div>

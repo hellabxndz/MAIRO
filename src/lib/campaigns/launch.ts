@@ -33,18 +33,18 @@ import type { CreateAdInput } from "@/lib/ad-platforms/types";
 // Turning one Mairo campaign into real campaigns on real networks.
 //
 // The hard part here is not the API calls, it is what to do when some of them
-// work and some do not. A customer who picked Meta and TikTok and got a
-// half-launched campaign needs to be told exactly that, and the record needs
-// to match reality closely enough that retrying finishes the job instead of
-// creating a second campaign on the network that already succeeded.
+// work and some do not. A customer with a half-launched campaign — a campaign
+// but no ad set, say — needs to be told exactly that, and the record needs to
+// match reality closely enough that retrying finishes the job instead of
+// creating a second campaign on the network.
 //
 // So: the parent and all its children are written first, as DRAFT, before
 // anything is sent anywhere. Then each network is attempted, and each child
 // records its own outcome independently. A child that reaches its network gets
 // an external id and stops being a draft; one that fails keeps its budget, its
 // share, and the reason, and can be retried on its own. Nothing is rolled
-// back — a campaign that exists on Meta is not un-created because TikTok was
-// down, because it does exist, and pretending otherwise is how you end up with
+// back — a campaign that exists on Meta is not un-created because a later
+// step failed, because it does exist, and pretending otherwise is how you end up with
 // orphaned campaigns spending money outside the dashboard.
 
 export type LaunchOutcome = {
@@ -60,7 +60,7 @@ export type LaunchOutcome = {
      * How far the launch actually got.
      *
      * The distinction that matters: a campaign on its own delivers nothing.
-     * Meta and TikTok both need a campaign, an ad set beneath it and an ad
+     * Meta needs a campaign, an ad set beneath it and an ad
      * beneath that before a single impression can be served, and a product
      * that reports "launched" after the first of those three is lying by
      * omission — the customer sees a campaign in their dashboard, waits, and
@@ -88,7 +88,6 @@ export type CreateMairoCampaignInput = {
   objective: AdGoal;
   totalDailyBudgetCents: number;
   allocations: Allocation[];
-  tiktokGrowthMode?: boolean;
   /** Campaigns are created paused; this is here for a future "launch now". */
   activate?: boolean;
   /**
@@ -188,7 +187,6 @@ export async function createMairoCampaign(
       name: input.name,
       objective: input.objective,
       totalDailyBudgetCents: input.totalDailyBudgetCents,
-      tiktokGrowthMode: input.tiktokGrowthMode ?? false,
       startDate: input.startAt ?? null,
       startTimeZone: input.startTimeZone ?? null,
       endDate: input.endAt ?? null,
@@ -261,8 +259,8 @@ export async function createMairoCampaign(
  * Pushes one platform campaign to its network and records what happened.
  *
  * Exported because retrying a single failed platform is exactly this, and a
- * customer whose TikTok half failed should be able to retry that half without
- * touching the Meta campaign that already works.
+ * customer whose launch failed partway should be able to retry it without
+ * creating a second campaign.
  */
 export async function launchOne(input: {
   organizationId: string;
@@ -341,7 +339,6 @@ export async function launchOne(input: {
     where: { id: input.platformCampaignId },
     data: {
       externalCampaignId: result.data.externalId,
-      tiktokSmartPlus: result.data.smartPlus ?? false,
       status: result.data.status === "ACTIVE" ? "ACTIVE" : "PENDING_REVIEW",
       connectionId: input.platform === "META" ? null : (creds?.connectionId ?? null),
       lastError: null,
@@ -656,9 +653,7 @@ type OwnAdsOutcome =
  * Builds the ads the customer chose for this campaign, main one first.
  *
  * Null when the campaign has none of its own (it then follows the approved
- * creative, as before), or when none of its ads can run on this network — a
- * video or an existing Meta ad has no TikTok form, so TikTok's half of a
- * two-network campaign falls back the same way.
+ * creative, as before).
  *
  * The main ad has to succeed; a test version that fails is reported, not
  * fatal, because the campaign still has an ad to run.
@@ -672,20 +667,11 @@ async function buildCampaignAds(input: {
   name: string;
   destination: Destination;
 }): Promise<OwnAdsOutcome | null> {
-  const all = await db.campaignAd.findMany({
+  const ads = await db.campaignAd.findMany({
     where: { mairoCampaignId: input.mairoCampaignId },
     orderBy: { position: "asc" },
   });
-  // TikTok runs video only — every version of it, so a test runs there too.
-  // A campaign whose ads are all pictures or existing Meta ads can't run on
-  // TikTok, and says so rather than building an ad TikTok would refuse.
-  const ads = input.platform === "META" ? all : all.filter((a) => a.kind === "VIDEO");
-  if (ads.length === 0) {
-    if (input.platform === "TIKTOK" && all.length > 0) {
-      return { ok: false, blocker: "TikTok ads have to be videos. Upload a video for this campaign to run it on TikTok." };
-    }
-    return null;
-  }
+  if (ads.length === 0) return null;
   const business = await db.mairoCampaign.findUnique({
     where: { id: input.mairoCampaignId },
     select: { organization: { select: { name: true } } },
@@ -697,7 +683,7 @@ async function buildCampaignAds(input: {
 
   for (const [index, ad] of ads.entries()) {
     const name = index === 0 ? input.name : `${input.name} — version ${index + 1}`;
-    const built = await adInputFor(input.organizationId, ad, creds, input.platform);
+    const built = await adInputFor(input.organizationId, ad, creds);
     if (!built.ok) {
       if (index === 0) return { ok: false, blocker: built.blocker };
       failures.push(built.blocker);
@@ -734,27 +720,12 @@ type CampaignAdRow = Awaited<ReturnType<typeof db.campaignAd.findMany>>[number];
 async function adInputFor(
   organizationId: string,
   ad: CampaignAdRow,
-  creds: Awaited<ReturnType<typeof loadCredentials>>,
-  platform: AdPlatform = "META"
+  creds: Awaited<ReturnType<typeof loadCredentials>>
 ): Promise<
   | { ok: true; input: Pick<CreateAdInput, "creative" | "metaVideoId" | "reuseCreativeId" | "video"> }
   | { ok: false; blocker: string }
 > {
   const words = { headline: ad.headline, primaryText: ad.primaryText, cta: ad.callToAction };
-
-  // TikTok fetches the video and its cover itself, by address.
-  if (platform === "TIKTOK") {
-    if (ad.kind !== "VIDEO" || !ad.videoUrl || !ad.videoPosterUrl) {
-      return { ok: false, blocker: "TikTok ads have to be videos. Upload a video for this campaign in Create." };
-    }
-    return {
-      ok: true,
-      input: {
-        creative: { aspectRatio: "VERTICAL_9_16", ...words },
-        video: { url: ad.videoUrl, posterUrl: ad.videoPosterUrl },
-      },
-    };
-  }
 
   if (ad.kind === "EXISTING_AD") {
     if (!creds || !ad.sourceAdId) return { ok: false, blocker: "Connect Meta to run an existing ad." };
@@ -887,7 +858,7 @@ async function conversionTargetFor(
 
   return {
     pixelId: pixel.externalPixelId,
-    event: platform === "TIKTOK" ? action.tiktokEvent : action.metaEvent,
+    event: action.metaEvent,
   };
 }
 

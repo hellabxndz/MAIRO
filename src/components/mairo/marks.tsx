@@ -44,17 +44,6 @@ export function FacebookMark({ className = BOX }: MarkProps) {
   );
 }
 
-export function TikTokMark({ className = BOX }: MarkProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <path
-        d="M16.2 3h-2.7v11.4a2.35 2.35 0 1 1-1.9-2.3V9.3a5.2 5.2 0 1 0 4.6 5.15V9.1a6.2 6.2 0 0 0 3.6 1.15V7.5a3.55 3.55 0 0 1-3.6-3.4V3Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 export function GoogleMark({ className = BOX }: MarkProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
@@ -140,31 +129,6 @@ export function BrandMetaMark({ className = BOX }: MarkProps) {
     <span className={`block text-[#0081FB] ${className}`}>
       <MetaMark />
     </span>
-  );
-}
-
-export function BrandTikTokMark({ className = BOX }: MarkProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      {/* The offset cyan and red plates behind the white glyph are the whole
-          identity — drawn as two shifted copies rather than as three paths. */}
-      <g transform="translate(-0.9,0.7)">
-        <path
-          d="M16.2 3h-2.7v11.4a2.35 2.35 0 1 1-1.9-2.3V9.3a5.2 5.2 0 1 0 4.6 5.15V9.1a6.2 6.2 0 0 0 3.6 1.15V7.5a3.55 3.55 0 0 1-3.6-3.4V3Z"
-          fill="#25F4EE"
-        />
-      </g>
-      <g transform="translate(0.9,-0.4)">
-        <path
-          d="M16.2 3h-2.7v11.4a2.35 2.35 0 1 1-1.9-2.3V9.3a5.2 5.2 0 1 0 4.6 5.15V9.1a6.2 6.2 0 0 0 3.6 1.15V7.5a3.55 3.55 0 0 1-3.6-3.4V3Z"
-          fill="#FE2C55"
-        />
-      </g>
-      <path
-        d="M16.2 3h-2.7v11.4a2.35 2.35 0 1 1-1.9-2.3V9.3a5.2 5.2 0 1 0 4.6 5.15V9.1a6.2 6.2 0 0 0 3.6 1.15V7.5a3.55 3.55 0 0 1-3.6-3.4V3Z"
-        fill="#ffffff"
-      />
-    </svg>
   );
 }
 

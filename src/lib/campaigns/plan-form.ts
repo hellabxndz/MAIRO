@@ -66,14 +66,7 @@ export function planFormEntries(
   put("budgetType", plan.budgetType);
   if (plan.budgetType === "LIFETIME") put("lifetimeBudget", plan.lifetimeAmount.toFixed(2));
 
-  if (plan.service === "meta") put("platforms", "META");
-  if (plan.service === "tiktok") put("platforms", "TIKTOK");
-  if (plan.service === "multi") {
-    put("platforms", "META");
-    put("platforms", "TIKTOK");
-    put("percents", plan.metaPercent);
-    put("percents", 100 - plan.metaPercent);
-  }
+  put("platforms", "META");
 
   put("destinationType", plan.destinationType);
   if (plan.destinationType === "WEBSITE" || plan.destinationType === "PHONE_CALL" || plan.destinationType === "APP") {

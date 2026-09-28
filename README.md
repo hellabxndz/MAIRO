@@ -92,89 +92,22 @@ Client sign-up and the dashboard work without this — you'll just see a
 6. Make sure the Meta user connecting has admin access to a Business Manager
    with at least one ad account.
 
-### 5b. Set up your TikTok app (optional)
+### 5b. Networks
 
-TikTok is optional in the strictest sense: leave `TIKTOK_APP_ID` and
-`TIKTOK_APP_SECRET` unset and it simply isn't offered. The platform registry
-reports it as unconfigured, the campaign form doesn't show it, and nothing
-attempts a call that cannot succeed. Everything else works exactly as before.
+MAIRO runs Facebook and Instagram ads through Meta, and nothing else. TikTok
+was built once and retired; its code is gone, but the `TIKTOK` enum value and
+the columns and tables that referenced it are kept so existing rows still load
+(the database is never dropped out from under old records). A campaign left
+over from TikTok shows in the list but is not fetched or managed.
 
-To switch it on:
-
-1. Create an app at <https://business-api.tiktok.com/portal>, under a TikTok
-   Business Center account.
-2. Copy the **App ID** and **Secret** into `TIKTOK_APP_ID` and
-   `TIKTOK_APP_SECRET`.
-3. Register the redirect URL. It must match byte-for-byte what the app
-   resolves to — `https://<your-domain>/api/tiktok/callback`, no trailing
-   slash. On Vercel this is derived from the production domain automatically;
-   set `TIKTOK_REDIRECT_URI` only to override that.
-4. Request the advertising scopes (`advertiser_read`, `campaign_create`,
-   `campaign_update`, `adgroup_create`, `ad_create`, `reporting`). Until
-   TikTok approves them, only accounts added as testers on the app can
-   connect — the same shape of restriction as Meta's App Review.
-5. Spark Ads (promoting a post already on the business's profile) need
-   `video_list` on top. It is requested separately, only when a customer asks
-   for it, so a first-time connection shows the smallest consent screen it can.
-
-### 5c. Set up TikTok posting (optional, and separate)
-
-Advertising on TikTok and posting to TikTok are two different registrations,
-and this trips people up. `TIKTOK_APP_ID`/`TIKTOK_APP_SECRET` above are the
-Business API — buying placements against an advertiser id. Posting a video to
-the customer's own profile is the Open API, with its own app, its own
-credentials, its own consent screen, and tokens that are rejected by the other
-one. A customer who wants both authorizes twice, and the integrations page
-tells them so.
-
-Leave `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET` unset and the posting card
-reports itself as unconfigured. Advertising is unaffected.
-
-To switch it on:
-
-1. Create an app at <https://developers.tiktok.com/> and add **Login Kit** and
-   **Content Posting API**.
-2. Copy the **Client key** and **Client secret** into `TIKTOK_CLIENT_KEY` and
-   `TIKTOK_CLIENT_SECRET`.
-3. Register `https://<your-domain>/api/tiktok/creator/callback` as a redirect
-   URI, byte-for-byte, no trailing slash. Override with
-   `TIKTOK_CREATOR_REDIRECT_URI` if the derived value is wrong.
-4. Request the `video.upload` and `video.publish` scopes. With only
-   `video.upload`, MAIRO puts videos in the customer's TikTok drafts and the
-   product says "send to my TikTok drafts" rather than "post" — which is the
-   truth, and the difference a customer would otherwise discover by opening
-   TikTok and finding nothing there.
-5. Apply for TikTok's **content posting audit**. Until it passes, TikTok forces
-   everything an unaudited app posts to private regardless of what the request
-   asks for. `TIKTOK_CONTENT_AUDITED` is what tells MAIRO the audit is through;
-   leave it unset until it actually is, or the product will promise a public
-   post and deliver a private one.
-
-### 5d. Setting a customer's TikTok up for them
-
-"MAIRO sets up your TikTok" is a worked queue at `/aios/account-setups`, not an
-integration, and it is worth knowing why: no platform has an API that registers
-a user account. Account creation is exactly where TikTok runs its identity, age
-and anti-abuse checks, and it is deliberately not automatable.
-
-So a customer on Growth or above fills in what they want the account called,
-and somebody works the queue: registers it, converts it to a Business account,
-sets up the Business Center and advertiser, and hands the login over. The
-status and the note set on that page are what the customer reads on their own
-integrations page, so the note is written for them rather than for us.
-
-There is no password field on that screen and there should never be one. The
-account belongs to the customer, and the Terms say MAIRO never stores a
-platform login.
-
-### 5e. Measuring sales (pixels and orders)
+### 5c. Measuring sales (pixels and orders)
 
 ROAS was a dash on every dashboard before this, and the reason was never said
 out loud: without a pixel the ad networks do not know anybody bought anything,
 so they report no revenue and there is nothing to divide by. `/dashboard/tracking`
 is where a customer fixes that, and it has two halves that do different jobs.
 
-**The pixel** tells Meta or TikTok that a sale happened. MAIRO creates it on
+**The pixel** tells Meta that a sale happened. MAIRO creates it on
 the customer's own ad account through the Marketing API, adopting one that is
 already there in preference to making a second — a business that has advertised
 before usually has a pixel with months of history, and splitting that in two
@@ -189,7 +122,7 @@ connection the customer already made.
 **The order feed** tells MAIRO what was actually sold. Each organization gets
 a URL at `/api/orders/<token>` that their shop posts to — Shopify's order
 webhook, a WooCommerce webhook, or anything that can POST JSON. Those orders
-are relayed server-side to Meta's Conversions API and TikTok's Events API,
+are relayed server-side to Meta's Conversions API,
 which recovers most of the conversions the browser loses to ad blockers and
 iOS privacy settings, and they are kept as the record the networks' own claims
 are checked against.
@@ -216,7 +149,7 @@ signature going bad means something is wrong.
 agreement between browser and server, and the ROAS comparison, including the
 division-by-zero cases that would otherwise show a customer "Infinity".
 
-### 5f. Tag Manager, and what counts as a conversion
+### 5d. Tag Manager, and what counts as a conversion
 
 Two problems sit between "here is your pixel code" and a business measuring
 anything, and `/dashboard/tracking` now solves both.
@@ -246,9 +179,7 @@ there is no checkout and never will be, so the container would fire nothing
 while looking installed. `src/lib/tracking/niches.ts` is a catalogue of what
 each kind of business actually converts on — a table booking for a restaurant,
 a tap on the phone number for a trade, a free trial for a gym — with the Meta
-and TikTok standard event each maps to. The two networks disagree about the
-vocabulary and the gaps are real: TikTok has no Lead and no Schedule, so both
-land on SubmitForm. An event outside a network's standard list cannot be
+standard event each maps to. An event outside Meta's standard list cannot be
 optimized towards and never appears in the conversion column, so the check
 script validates every one against the published lists.
 
@@ -264,7 +195,7 @@ Exactly one action per niche is marked primary: it is what the campaign
 optimizes towards, so two would leave the product unable to answer "which one"
 and none would make it silently pick the first.
 
-### 5g. Letting MAIRO install the tags itself
+### 5e. Letting MAIRO install the tags itself
 
 The container file is one import away from done. `GOOGLE_CLIENT_ID` and
 `GOOGLE_CLIENT_SECRET` remove that step: MAIRO connects to the customer's
@@ -309,11 +240,10 @@ There is deliberately no base-URL override in the shipped client: an
 environment variable that redirects where a customer's Google bearer token is
 sent is not worth the testing convenience.
 
-### 5h. What a launch actually creates
+### 5f. What a launch actually creates
 
-Until this, `launchOne` called `createCampaign` and stopped. On both Meta and
-TikTok a campaign with no ad set and no ad **cannot serve a single
-impression** — so every campaign MAIRO had ever launched was an empty shell,
+Until this, `launchOne` called `createCampaign` and stopped. On Meta a
+campaign with no ad set and no ad **cannot serve a single impression** — so every campaign MAIRO had ever launched was an empty shell,
 and the dashboard showed it as created. That is the worst shape a gap can
 take, because it looks finished.
 
@@ -324,8 +254,7 @@ launch on its own:
 - **The budget was set twice.** The campaign carries `daily_budget`, and
   `createAdGroup` set one as well. Meta rejects an ad set budget under a
   campaign that has one. Each adapter now declares a `budgetLevel` — `campaign`
-  for Meta, `adgroup` for TikTok, which wants it the other way round — and the
-  launcher obeys rather than guessing.
+  for Meta — and the launcher obeys rather than guessing.
 - **`LEAD_GENERATION` was the wrong optimization goal.** It means one of Meta's
   instant forms, which lives on Facebook and which MAIRO never creates; asking
   for it on a campaign that sends people to a website produces an ad set that
@@ -357,9 +286,6 @@ running on the customer's money with a placeholder in it. It is a line scanner
 rather than a regex for a reason worth remembering: the regex version used
 `\z` for end-of-string, which JavaScript does not have (it matches a literal
 "z"), so the last section of every concept silently failed to parse.
-
-TikTok still stops at the ad set — `createAd` needs a video and MAIRO produces
-none. The campaigns page says so rather than leaving it to be discovered.
 
 ### 6. Create your OWNER account
 
@@ -406,13 +332,12 @@ src/app/onboarding/       Client intake wizard
 src/app/dashboard/        Client-facing app
 src/app/aios/             Owner-facing app
 src/app/api/meta/         Meta OAuth connect/callback routes
-src/app/api/tiktok/       TikTok OAuth connect/callback routes
 src/app/api/agents/chat/  Streaming Claude chat endpoint (used by both dashboards)
 ```
 
 ## Adding an advertising network
 
-Meta and TikTok are reached through one interface, `AdPlatformAdapter` in
+Meta is reached through one interface, `AdPlatformAdapter` in
 `src/lib/ad-platforms/types.ts`. Nothing above that layer knows which network
 it is talking to: the campaign form renders from `selectablePlatforms()`, the
 dashboard groups by whatever platforms a campaign has, and the optimizer
@@ -430,15 +355,9 @@ a network can be retired without orphaning the rows that reference it.
 
 ## What's stubbed vs. real
 
-- **Campaign creation is real on both networks** — live Graph API calls to
-  Meta and live Business API calls to TikTok. Both create the top-level
-  **Campaign** object and an ad group/ad set, paused by default.
-- **Publishing finished creatives is not.** Both networks require the asset to
-  exist in their own media library first (a hash on Meta, a processed
-  `video_id` on TikTok), and MAIRO has no asset pipeline yet. `createAd`
-  reports this honestly rather than posting an ad with nothing in it — see the
-  note in each adapter.
-- **No network call is ever faked.** If TikTok isn't configured, or an account
+- **Campaign creation is real** — live Graph API calls to Meta create the
+  campaign, ad set and ad, paused by default.
+- **No network call is ever faked.** If Meta isn't configured, or an account
   isn't connected, the adapter returns a typed failure that says which, and
   the dashboard shows a dash rather than a zero. A campaign that did not reach
   a network is never recorded as if it had; the whole product rests on the

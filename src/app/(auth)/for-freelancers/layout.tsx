@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "For freelancers",
   description:
-    "Run Meta and TikTok ads for all your clients from one login. MAIRO handles the campaigns; you keep the relationship.",
+    "Run Facebook and Instagram ads for all your clients from one login. MAIRO handles the campaigns; you keep the relationship.",
 };
 
 export default function Layout({ children }: LayoutProps<"/for-freelancers">) {

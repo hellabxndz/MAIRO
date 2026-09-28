@@ -75,7 +75,7 @@ function useScreenContext() {
         prompts: [
           "I own a jewellery company. What kind of picture should I make?",
           "What style should I use for a hoodie ad?",
-          "Which format is best for TikTok?",
+          "Which format is best for Instagram Reels?",
           "Why does this one look weak?",
         ],
       };

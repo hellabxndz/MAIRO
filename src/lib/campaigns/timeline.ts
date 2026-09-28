@@ -135,7 +135,7 @@ export function campaignTimeline(input: TimelineInput): TimelineStep[] {
           : "MAIRO will write the ads for this campaign.",
       detail:
         input.creativeCount > 0
-          ? "Each one is written for the network it runs on — what works on TikTok is not what works on Facebook. You can read every one, change any of them, and ask for more."
+          ? "Each one is written for where it runs — a Story is not a Feed post. You can read every one, change any of them, and ask for more."
           : "Concepts, headlines, body copy and calls to action, written per network. You approve them before anything runs.",
     },
     {

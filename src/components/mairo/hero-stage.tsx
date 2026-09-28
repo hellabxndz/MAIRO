@@ -506,7 +506,7 @@ const PROMPTS = [
   "Turn this photo of my product into an ad",
   "Find people most likely to book a table",
   "Tell me why my cost per click went up",
-  "Run the same campaign on TikTok as well",
+  "Run the same campaign on Instagram Stories too",
 ];
 
 /**

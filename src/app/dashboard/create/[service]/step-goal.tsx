@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { AdDestination, AdGoal, MessageChannel } from "@/generated/prisma/enums";
 import type { CampaignPlan } from "@/lib/campaigns/plan";
-import { GOAL_OPTIONS, destinationsForService, goalOption } from "@/lib/campaigns/objectives";
+import { GOAL_OPTIONS, destinationsFor, goalOption } from "@/lib/campaigns/objectives";
 import { Choice, Note, Question, SubQuestion, TextField } from "./wizard-parts";
 
 const CHANNELS: { value: MessageChannel; label: string; sub: string }[] = [
@@ -28,11 +28,9 @@ export function StepGoal({
   businessPhone: string | null;
   mode: "simple" | "advanced";
 }) {
-  const metaOnlyBlocked = plan.service !== "meta";
-
   function chooseGoal(goal: AdGoal) {
     // A destination the new goal can't use is cleared rather than kept.
-    const allowed = destinationsForService(goal, plan.service).map((d) => d.type);
+    const allowed = destinationsFor(goal).map((d) => d.type);
     const keep = plan.destinationType && allowed.includes(plan.destinationType);
     update({ goal, ...(keep ? {} : { destinationType: allowed.length === 1 ? allowed[0] : null, destinationValue: allowed[0] === "WEBSITE" ? plan.website : "" }) });
   }
@@ -55,9 +53,8 @@ export function StepGoal({
             selected={plan.goal === g.goal}
             onClick={() => chooseGoal(g.goal)}
             label={g.label}
-            sub={g.metaOnly && metaOnlyBlocked ? `${g.description} Meta only.` : g.description}
+            sub={g.description}
             badge={g.goal === recommended ? "AI Recommended" : null}
-            disabled={g.metaOnly && metaOnlyBlocked}
             note={mode === "advanced" ? `Meta objective: ${g.metaObjective}` : null}
           />
         ))}
@@ -86,14 +83,10 @@ export function StepGoal({
       {plan.goal && (
         <SubQuestion
           title="Where would you like people to go when they interact with your advertisement?"
-          sub={
-            plan.service === "meta"
-              ? `Only destinations that work for "${goalOption(plan.goal).label}" are shown.`
-              : "TikTok ads send people to a website, so that's the destination for this campaign."
-          }
+          sub={`Only destinations that work for "${goalOption(plan.goal).label}" are shown.`}
         >
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {destinationsForService(plan.goal, plan.service).map((d) => (
+            {destinationsFor(plan.goal).map((d) => (
               <Choice
                 key={d.type}
                 selected={plan.destinationType === d.type}

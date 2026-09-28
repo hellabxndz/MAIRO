@@ -1,25 +1,11 @@
 import type { AdPlatform, CreativeAspect } from "@/generated/prisma/enums";
 
-// What makes an ad work on one network and fail on another.
+// The brief the creative director writes to, per network.
 //
-// The requirement this file exists to satisfy is a single sentence — do not
-// use the same creative on Meta and TikTok — but the reason is worth writing
-// down, because "resize it to 9:16" is the wrong reading of it and the easy
-// mistake to make.
-//
-// A Meta ad and a TikTok ad are different objects. A Meta ad is allowed to
-// look like an advertisement: it sits in a feed among other advertisements,
-// the audience has scrolled past a thousand of them, and production value
-// reads as credibility. A TikTok ad is competing with entertainment, from
-// accounts the viewer chose to follow, and anything that announces itself as
-// an ad in the first second is swiped away before the second one. The whole
-// discipline of TikTok creative is the first three seconds; everything else is
-// downstream of whether the hook held.
-//
-// So this is not a formatting layer. It is two different sets of instructions
-// to the writer, and the hook is a first-class field rather than the opening
-// line of the body copy — because on TikTok the hook IS the ad, and because
-// hook variations are the unit that creative testing compares.
+// MAIRO runs Meta only now (TikTok was retired), so there is one real spec.
+// It stays a lookup rather than a constant so a future network gets its own
+// instructions rather than Meta's — an ad written for one feed is not an ad
+// for another.
 
 export type PlatformCreativeSpec = {
   platform: AdPlatform;
@@ -53,28 +39,6 @@ const META_SPEC: PlatformCreativeSpec = {
   ].join("\n"),
 };
 
-const TIKTOK_SPEC: PlatformCreativeSpec = {
-  platform: "TIKTOK",
-  aspects: ["VERTICAL_9_16"],
-  placements: ["TikTok For You feed"],
-  hookVariations: 3,
-  direction: [
-    "This is for TikTok, and TikTok is not a feed of advertising — it is a feed of entertainment that this ad has to survive in.",
-    "",
-    "Vertical 9:16, full screen, always. Never a letterboxed landscape video and never a repurposed square.",
-    "",
-    "The first one to three seconds decide everything. If the opening frame reads as an advertisement it is gone before anyone hears a word of it. Open on a person, a problem, a result, or something that does not make sense yet — never on a logo, never on a product on a white background, and never on the words 'introducing' or 'at [business] we'.",
-    "",
-    "Shoot it like someone made it on their phone, because the ads that work here were. Hand-held, natural light, real room, real person talking to camera. A creator-style piece to camera, an unboxing, a demonstration of the thing actually working, a before-and-after — these outperform anything that looks produced.",
-    "Pace it fast. A cut every two or three seconds. Nothing lingers.",
-    "Assume the sound is off for the first moment and burn the subtitles in.",
-    "If there is a voiceover, write it as somebody talking, not as copy being read.",
-    "",
-    "Write several genuinely different opening hooks, not the same sentence reworded — a question, a claim, a problem, a result. They are what gets tested against each other.",
-    "The written copy matters far less than on Meta. Short, plain, one idea.",
-  ].join("\n"),
-};
-
 const GENERIC_SPEC = (platform: AdPlatform): PlatformCreativeSpec => ({
   platform,
   aspects: ["SQUARE_1_1"],
@@ -85,22 +49,8 @@ const GENERIC_SPEC = (platform: AdPlatform): PlatformCreativeSpec => ({
 
 export function creativeSpecFor(platform: AdPlatform): PlatformCreativeSpec {
   if (platform === "META") return META_SPEC;
-  if (platform === "TIKTOK") return TIKTOK_SPEC;
   return GENERIC_SPEC(platform);
 }
-
-/**
- * Extra direction for a business with no TikTok following.
- *
- * The thing worth saying to this customer is that it does not matter, and
- * saying it is part of the product — a small business owner who thinks they
- * need an audience before they can advertise on TikTok will not try.
- */
-export const GROWTH_MODE_DIRECTION = [
-  "",
-  "This business has little or no TikTok following, which changes nothing about whether the ad can work — TikTok shows paid content based on what someone watches, not on who they follow. Do not write anything that assumes an existing audience, do not reference their other posts, and do not ask viewers to 'check out our page'.",
-  "Write it so it stands completely on its own to somebody who has never heard of this business, and so it would also work as an organic post if they wanted to put it on their profile.",
-].join("\n");
 
 /**
  * The system-prompt addition for one platform.
@@ -109,10 +59,7 @@ export const GROWTH_MODE_DIRECTION = [
  * changed independently — the direction is the part that will be tuned as ads
  * run and their figures come back.
  */
-export function creativeDirectionFor(
-  platform: AdPlatform,
-  options: { growthMode?: boolean } = {}
-): string {
+export function creativeDirectionFor(platform: AdPlatform): string {
   const spec = creativeSpecFor(platform);
   const parts = [spec.direction];
 
@@ -121,10 +68,6 @@ export function creativeDirectionFor(
       "",
       `Write ${spec.hookVariations} distinct opening hooks under a **Hooks** heading, numbered, one line each.`
     );
-  }
-
-  if (options.growthMode && platform === "TIKTOK") {
-    parts.push(GROWTH_MODE_DIRECTION);
   }
 
   return parts.join("\n");

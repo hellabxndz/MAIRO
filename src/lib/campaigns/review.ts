@@ -18,7 +18,6 @@ export type CampaignReview = {
 
 /** Gathers what the account can actually tell us, then applies the rules. */
 export async function reviewCampaign(organizationId: string, plan: CampaignPlan): Promise<CampaignReview> {
-  const usesMeta = plan.service !== "tiktok";
   const url = plan.destinationType === "WEBSITE" ? normalizeUrl(plan.destinationValue) : null;
 
   const [connections, metaAccount, pixel, creative, billing, landing] = await Promise.all([
@@ -31,14 +30,13 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
     db.creativeRequest.count({
       where: { organizationId, status: { in: ["APPROVED", "DELIVERED"] }, images: { some: { isFinal: true } } },
     }),
-    usesMeta ? fetchMetaBillingStatus(organizationId) : Promise.resolve(null),
+    fetchMetaBillingStatus(organizationId),
     url ? probeLandingPage(url) : Promise.resolve(null),
   ]);
 
   const facts: ReviewFacts = {
     metaConnected: Boolean(connections.get("META")?.connected),
     pageChosen: Boolean(metaAccount?.pageId),
-    tiktokConnected: Boolean(connections.get("TIKTOK")?.connected),
     funding: billing?.state ?? "unknown",
     currency: billing?.currency ?? null,
     metaPixelActive: pixel ? canOptimizeTowards(pixel.status) : false,

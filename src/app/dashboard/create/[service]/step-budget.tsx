@@ -1,17 +1,10 @@
 "use client";
 
 import { inputClass } from "@/components/ui";
-import { recommendAllocation } from "@/lib/budget/allocation";
 import { DAILY_PRESETS, dollars, plannedSpend, type CampaignPlan } from "@/lib/campaigns/plan";
 import { Choice, DateChoice, Note, Question, SubQuestion } from "./wizard-parts";
 
-/** Meta's share MAIRO suggests for a Meta + TikTok campaign with this goal. */
-export function recommendedMetaPercent(plan: CampaignPlan): number {
-  if (!plan.goal) return 60;
-  return recommendAllocation(["META", "TIKTOK"], plan.goal, 10000).find((a) => a.platform === "META")?.percent ?? 60;
-}
-
-/** Step 4 — how much, split how, and for how long. */
+/** Step 4 — how much, and for how long. */
 export function StepBudget({
   plan,
   update,
@@ -21,8 +14,7 @@ export function StepBudget({
 }) {
   const spend = plannedSpend(plan);
   const preset = (DAILY_PRESETS as readonly number[]).includes(plan.dailyAmount);
-  const networks = plan.service === "meta" ? "Meta" : plan.service === "tiktok" ? "TikTok" : "Meta and TikTok";
-  const recommended = recommendedMetaPercent(plan);
+  const networks = "Meta";
 
   return (
     <Question title="How much would you like to spend on advertising?">
@@ -61,23 +53,6 @@ export function StepBudget({
             onChange={(e) => update({ lifetimeAmount: Math.max(0, Number(e.target.value) || 0) })} className={`${inputClass} w-32`} />
           <span>in total</span>
         </label>
-      )}
-
-      {plan.service === "multi" && (
-        <SubQuestion title="How should it be split?" sub={`MAIRO suggests ${recommended}% Meta for this goal. Adjust if you know better.`}>
-          <input type="range" min={10} max={90} step={5} value={plan.metaPercent} aria-label="Meta share"
-            onChange={(e) => update({ metaPercent: Number(e.target.value) })} className="w-full max-w-md accent-[#6c9eff]" />
-          <p className="mt-2 text-[13px] text-white">
-            Meta {plan.metaPercent}% · {dollars(Math.round((spend.perDayCents * plan.metaPercent) / 100))}/day &nbsp;·&nbsp;
-            TikTok {100 - plan.metaPercent}% · {dollars(spend.perDayCents - Math.round((spend.perDayCents * plan.metaPercent) / 100))}/day
-          </p>
-          {plan.metaPercent !== recommended && (
-            <button type="button" onClick={() => update({ metaPercent: recommended })}
-              className="mt-2 text-[12px] text-muted underline underline-offset-4 hover:text-white">
-              Use MAIRO&rsquo;s suggestion
-            </button>
-          )}
-        </SubQuestion>
       )}
 
       <SubQuestion title="When would you like it to run?">

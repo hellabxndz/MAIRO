@@ -1,6 +1,5 @@
 import type { ConversionAction, Niche } from "@/lib/tracking/niches";
 import { metaPixelSnippet } from "@/lib/tracking/meta-pixel";
-import { tiktokPixelSnippet } from "@/lib/tracking/tiktok-pixel";
 
 // Builds a Google Tag Manager container the customer can import in one click.
 //
@@ -89,7 +88,6 @@ export type ContainerInput = {
   businessName: string;
   niche: Niche;
   metaPixelId: string | null;
-  tiktokPixelId: string | null;
 };
 
 /**
@@ -255,33 +253,18 @@ function buildTrigger(action: ConversionAction, triggerId: string): Trigger {
  * copy of a sale and the one MAIRO relays server-side are counted as two
  * sales. A doubled ROAS is the one wrong number a customer acts on.
  */
-function eventTagHtml(
-  platform: "META" | "TIKTOK",
-  action: ConversionAction
-): string {
+function eventTagHtml(action: ConversionAction): string {
   const value = action.hasValue
     ? `,{value: {{MAIRO - Order value}}, currency: '{{MAIRO - Currency}}'}`
     : ",{}";
 
-  if (platform === "META") {
-    return `<script>
+  return `<script>
   // ${action.label} → Meta ${action.metaEvent}. Added by MAIRO.
   (function () {
     if (typeof fbq !== 'function') return;
     var id = {{MAIRO - Order id}};
     var opts = id ? { eventID: 'mairo_' + String(id).replace(/[^A-Za-z0-9_-]/g, '') } : {};
     fbq('track', '${action.metaEvent}'${value}, opts);
-  })();
-</script>`;
-  }
-
-  return `<script>
-  // ${action.label} → TikTok ${action.tiktokEvent}. Added by MAIRO.
-  (function () {
-    if (typeof ttq === 'undefined') return;
-    var id = {{MAIRO - Order id}};
-    var opts = id ? { event_id: 'mairo_' + String(id).replace(/[^A-Za-z0-9_-]/g, '') } : {};
-    ttq.track('${action.tiktokEvent}'${value}, opts);
   })();
 </script>`;
 }
@@ -327,24 +310,14 @@ export function buildContainer(input: ContainerInput): GtmContainer {
   let nextTagId = 1;
   let nextTriggerId = 1;
 
-  // Base pixels, on every page. Without these the event tags have no fbq or
-  // ttq to call and silently do nothing.
+  // The base pixel, on every page. Without it the event tags have no fbq to
+  // call and silently do nothing.
   if (input.metaPixelId) {
     tags.push(
       htmlTag(
         String(nextTagId++),
         "MAIRO - Meta pixel (all pages)",
         metaPixelSnippet(input.metaPixelId),
-        [ALL_PAGES_TRIGGER]
-      )
-    );
-  }
-  if (input.tiktokPixelId) {
-    tags.push(
-      htmlTag(
-        String(nextTagId++),
-        "MAIRO - TikTok pixel (all pages)",
-        tiktokPixelSnippet(input.tiktokPixelId),
         [ALL_PAGES_TRIGGER]
       )
     );
@@ -359,17 +332,7 @@ export function buildContainer(input: ContainerInput): GtmContainer {
         htmlTag(
           String(nextTagId++),
           `MAIRO - Meta ${action.metaEvent} (${action.label})`,
-          eventTagHtml("META", action),
-          [triggerId]
-        )
-      );
-    }
-    if (input.tiktokPixelId) {
-      tags.push(
-        htmlTag(
-          String(nextTagId++),
-          `MAIRO - TikTok ${action.tiktokEvent} (${action.label})`,
-          eventTagHtml("TIKTOK", action),
+          eventTagHtml(action),
           [triggerId]
         )
       );

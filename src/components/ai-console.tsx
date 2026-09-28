@@ -51,7 +51,7 @@ const SCRIPT: Step[] = [
   {
     id: "budget",
     label: "Splitting the budget",
-    value: "Meta $14/day · TikTok $6/day · reviewed every morning",
+    value: "Facebook + Instagram · $20/day · reviewed every morning",
   },
   {
     id: "creative",

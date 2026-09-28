@@ -67,7 +67,7 @@ const capabilities = [
     eyebrow: "Launch",
     title: "Straight into\nyour ad account.",
     body:
-      "Approved campaigns are created in your own Meta and TikTok ad accounts through their APIs. Always paused. Nothing spends a penny until you switch it on yourself.",
+      "Approved campaigns are created in your own Meta ad account through its API. Always paused. Nothing spends a penny until you switch it on yourself.",
     panel: "Campaigns",
     table: true,
   },
@@ -302,7 +302,7 @@ export default function Home() {
                           <span className="tabular-nums text-neutral-300">$17.00</span>
                         </div>
                         <div className="flex justify-between text-neutral-500">
-                          <span>On Meta + TikTok</span>
+                          <span>On Facebook + Instagram</span>
                           <span className="text-emerald-300/90">Yes</span>
                         </div>
                         <p className="pt-3 text-xs leading-relaxed text-neutral-600">
@@ -332,9 +332,10 @@ export default function Home() {
                 plan in plans.ts cannot leave this paragraph calling it
                 something else. */}
             <p className="leading-relaxed text-neutral-400">
-              {PLANS[0].name} runs your ads on Facebook and Instagram. {PLANS[1].name} adds
-              TikTok. {PLANS[2].name} adds full Autopilot and posts to your own feed. Every
-              plan creates as many campaigns as your business needs. Cancel whenever.
+              Every plan runs your ads on Facebook and Instagram. {PLANS[0].name} builds them
+              and you approve every change. {PLANS[1].name} lets MAIRO make the small fixes
+              itself. {PLANS[2].name} adds full Autopilot and posts to your Instagram. Cancel
+              whenever.
             </p>
           </Reveal>
 
@@ -361,7 +362,7 @@ export default function Home() {
                 <div>
                   <p className="text-[14px] text-white">Your advertising budget</p>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-neutral-400">
-                    Paid to Meta and TikTok directly, from your own account, at whatever you
+                    Paid to Meta directly, from your own account, at whatever you
                     set. Mairo never takes custody of it — it decides how it gets used.
                   </p>
                 </div>

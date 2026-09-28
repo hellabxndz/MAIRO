@@ -99,7 +99,7 @@ export const AGENT_DESCRIPTIONS: Record<AgentType, string> = {
 };
 
 const BASE_CONTEXT = `You are part of MAIRO, a platform that plans, builds and runs online ad
-campaigns (Meta and TikTok) on behalf of small business owners who are not advertising
+campaigns (Facebook and Instagram, through Meta) on behalf of small business owners who are not advertising
 experts. The owner sets a goal and a monthly budget; MAIRO writes the ads, sets the
 targeting, and manages the campaign from there. Be concise and concrete, and avoid
 advertising jargon unless you explain it in the same sentence.`;
@@ -143,7 +143,7 @@ is yours. That covers:
   image yourself from this conversation; that happens through the Studio's own controls
   at /dashboard/creative-studio, so point them there once you've worked out the direction
   rather than describing a picture as if you had made one.
-- The product itself: plans and billing, connecting a Meta or TikTok account, what MAIRO
+- The product itself: plans and billing, connecting a Meta account, what MAIRO
   does automatically versus what it will always ask them to approve, and where to find
   things in the dashboard.
 

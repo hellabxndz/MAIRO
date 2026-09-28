@@ -15,7 +15,6 @@
     "db:seed": "tsx prisma/seed.ts",
     "check:budget": "tsx scripts/check-budget-math.ts",
     "check:entitlements": "tsx scripts/check-entitlements.ts",
-    "check:tiktok": "tsx scripts/check-tiktok-posting.ts",
     "check:tracking": "tsx scripts/check-tracking.ts",
     "check:gtm": "tsx scripts/check-gtm.ts",
     "check:ads": "tsx scripts/check-ads.ts",
@@ -33,7 +32,6 @@
     "check:analytics": "tsx scripts/check-analytics.ts",
     "check:creative-studio": "tsx scripts/check-creative-studio.ts",
     "check:campaign-wizard": "tsx scripts/check-campaign-wizard.ts",
-    "check:tiktok-ads": "tsx scripts/check-tiktok-ads.ts",
     "check:google": "tsx scripts/check-google-sign-in.ts"
   },
   "dependencies": {

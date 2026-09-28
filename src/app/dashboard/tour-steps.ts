@@ -50,7 +50,7 @@ export const OWNER_TOUR: Step[] = [
     target: "nav:/dashboard/integrations",
     title: "Where you advertise",
     body:
-      "Links MAIRO to your own Facebook, Instagram and TikTok ad accounts. Until one is connected you can plan and design, but nothing can go live.",
+      "Links MAIRO to your own Facebook and Instagram ad account. Until one is connected you can plan and design, but nothing can go live.",
   },
   {
     target: "nav:/dashboard/agents",

@@ -9,7 +9,7 @@ import type { SubscriptionTier } from "@/generated/prisma/enums";
 //
 // What a plan *allows* is no longer decided here. That moved to
 // entitlements.ts, in one vocabulary of flags, because "can this customer use
-// TikTok" was about to become a tier comparison scattered across the campaign
+// autopilot" was about to become a tier comparison scattered across the campaign
 // form, the creative generator, the analytics page and the optimizer. The
 // limits below stay because the pricing cards render them.
 //
@@ -82,48 +82,48 @@ export type Plan = {
 export const TRIAL_DAYS = 7;
 
 export const PLANS: Plan[] = [
+  // Three plans, one network. MAIRO runs Meta (Facebook and Instagram) only,
+  // so the plans can't differ by where the ads go; they differ by how much
+  // MAIRO does on its own and how much it can make. Every line below that
+  // separates one plan from another is something the product enforces — a
+  // limit in entitlements.ts or a flag it checks — not a promise in copy.
   {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 199,
-    tagline: "Your advertising department, on Meta.",
-    spendGuidance: "Best for businesses starting paid advertising",
-    // Unlimited rather than one. A cap of one campaign made the product worse
-    // at the thing it is for: a business with a summer sale and an evergreen
-    // offer has two campaigns, and charging them to have a second one taught
-    // them to cram both into one and get worse results. Creative generation
-    // still has a monthly ceiling, because each one costs real money to make.
-    limits: { campaigns: Infinity, creativesPerMonth: 20 },
-    headline: "Facebook and Instagram",
+    priceMonthly: 49,
+    tagline: "MAIRO builds your ads. You approve every change.",
+    spendGuidance: "Best for trying paid ads for the first time",
+    // Three at a time: enough for an offer, an evergreen campaign and a test,
+    // and the clearest reason to move up once they're working.
+    limits: { campaigns: 3, creativesPerMonth: 10 },
+    headline: "Facebook & Instagram ads",
     features: [
-      "Meta advertising — Facebook and Instagram",
-      "AI strategy built from your business",
-      "AI campaign builder",
-      "AI creative generation",
-      "Your Mairo assistant, unlimited questions",
-      "Campaign analytics in plain English",
-      "Assisted automation — Mairo handles the small changes",
-      "Unlimited campaigns, subject to fair use",
+      "Facebook and Instagram ads, built for you",
+      "AI campaign builder with a safety review before launch",
+      "AI-written ad text, three versions to choose from",
+      "Use your own pictures, videos or past posts",
+      "Your MAIRO assistant, unlimited questions",
+      "Results in plain English",
+      "Spend Protection: caps and a pause switch",
+      "Up to 3 campaigns at a time",
+      "50 AI image credits a month (about 10 pictures)",
     ],
   },
   {
     tier: "GROWTH",
     name: "Growth",
-    priceMonthly: 399,
-    tagline: "Meta and TikTok, from one place.",
-    spendGuidance: "Best for businesses advertising on more than one network",
+    priceMonthly: 99,
+    tagline: "MAIRO handles the small changes for you.",
+    spendGuidance: "Best for businesses advertising every month",
     featured: true,
-    limits: { campaigns: Infinity, creativesPerMonth: 60 },
-    headline: "Adds TikTok",
+    limits: { campaigns: 15, creativesPerMonth: 30 },
+    headline: "Adds Assisted automation",
     inherits: "Starter",
     features: [
-      "TikTok ads alongside Meta, from one campaign",
-      "Mairo sets up your TikTok account for you",
-      "Advanced analytics, every metric explained",
-      "More creative generation",
-      "Creative performance intelligence",
-      "AI budget recommendations",
-      "Priority AI processing",
+      "Assisted automation: MAIRO makes small, reversible fixes without asking",
+      "Advanced analytics: every ad's results, side by side",
+      "Up to 15 campaigns at a time",
+      "150 AI image credits a month (about 30 pictures)",
     ],
   },
   {
@@ -131,26 +131,21 @@ export const PLANS: Plan[] = [
     // are keyed off it in the environment, so renaming the enum would leave
     // every existing subscriber matching no STRIPE_PRICE_* variable and the
     // webhook would read that as having no plan at all. `name` is the only
-    // customer-facing part and is safe to change — everything that says it out
-    // loud reads it from here rather than hard-coding it, so this line is the
-    // single place the plan is named.
+    // customer-facing part and is safe to change.
     tier: "SCALE",
     name: "Scale",
-    priceMonthly: 699,
-    tagline: "Let Mairo run the budget.",
-    spendGuidance: "Best for businesses running advertising continuously",
-    limits: { campaigns: Infinity, creativesPerMonth: 150 },
+    priceMonthly: 199,
+    tagline: "MAIRO runs your advertising day to day.",
+    spendGuidance: "Best for businesses running ads all the time",
+    limits: { campaigns: Infinity, creativesPerMonth: 100 },
     headline: "Adds Autopilot",
     inherits: "Growth",
     features: [
-      "Full Autopilot — Mairo manages campaigns inside your limits",
-      "Custom optimisation rules",
-      "Higher creative limits",
-      "Multiple businesses from one account",
-      "Advanced reporting",
-      "Mairo posts to your Instagram and TikTok for you",
+      "Full Autopilot: MAIRO manages budgets and targeting inside your limits",
+      "MAIRO posts to your Instagram for you",
+      "Unlimited campaigns",
+      "400 AI image credits a month (about 80 pictures)",
       "Priority support",
-      "Future advertising platforms as they land",
     ],
   },
 ];
@@ -184,7 +179,7 @@ export const FREELANCER_PLANS: Plan[] = [
       "6 creative requests a month per client",
       "Switch between clients from one login",
       "MAIRO AI on every client, in that client's context",
-      "Meta + TikTok, with separate ad accounts per client",
+      "Facebook and Instagram ads, with a separate ad account per client",
     ],
   },
   {
@@ -218,9 +213,11 @@ export function isFreelancerTier(tier: SubscriptionTier): boolean {
 //
 // This is a switch, and it is deliberately off by default.
 //
-// While off, NONE is treated as Starter: everyone gets a working product for
-// free. That is how MAIRO shipped, and it is what the Meta App Review
-// submission tells the reviewer to expect — "billing is not yet enabled, so
+// While off, NONE is treated as Growth: everyone gets a working product for
+// free. Growth rather than Starter because Starter now caps live campaigns at
+// three, and the Meta App Review test account already has more than that — a
+// cap would stop the reviewer building the campaign the screencast shows. It is
+// also what the submission tells the reviewer to expect — "billing is not yet enabled, so
 // this account has full access". Turning enforcement on before that review
 // completes would put a paywall in front of a reviewer we promised wouldn't
 // see one, which is a rejection.
@@ -229,7 +226,7 @@ export function isFreelancerTier(tier: SubscriptionTier): boolean {
 // without a subscription can still sign up, look around, and talk to the AI —
 // but cannot run campaigns or spend a creative request, which are the two
 // things that cost real money to serve.
-const DEFAULT_TIER: SubscriptionTier = "STARTER";
+const DEFAULT_TIER: SubscriptionTier = "GROWTH";
 
 export function billingEnforced(): boolean {
   return process.env.BILLING_ENFORCED?.trim() === "1";

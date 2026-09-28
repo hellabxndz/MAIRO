@@ -9,7 +9,7 @@
 // not sense: a tag whose firingTriggerId names a trigger that is not in the
 // file is accepted and then does nothing, forever, with no error anywhere.
 //
-// An event name outside a network's standard list. Meta and TikTok both accept
+// An event name outside Meta's standard list. Meta accepts
 // anything as a *custom* event, which cannot be optimized towards and does not
 // appear in the conversion column — so the campaign optimizes for nothing and
 // the dashboard looks fine.
@@ -47,11 +47,6 @@ const META_STANDARD = new Set([
   "Subscribe", "SubmitApplication", "AddToCart", "InitiateCheckout", "ViewContent",
   "FindLocation", "Search", "Donate", "AddPaymentInfo", "AddToWishlist", "CustomizeProduct",
 ]);
-const TIKTOK_STANDARD = new Set([
-  "CompletePayment", "PlaceAnOrder", "SubmitForm", "Contact", "CompleteRegistration",
-  "Subscribe", "AddToCart", "InitiateCheckout", "ViewContent", "Download", "Search",
-  "ClickButton", "AddPaymentInfo", "AddToWishlist",
-]);
 
 console.log("\n— every niche is coherent —");
 {
@@ -72,7 +67,6 @@ console.log("\n— every niche is coherent —");
       ok(`${niche.id}/${a.id}: unique within the niche`, !actionIds.has(a.id));
       actionIds.add(a.id);
       ok(`${niche.id}/${a.id}: real Meta event`, META_STANDARD.has(a.metaEvent), a.metaEvent);
-      ok(`${niche.id}/${a.id}: real TikTok event`, TIKTOK_STANDARD.has(a.tiktokEvent), a.tiktokEvent);
       if (a.detection === "url_contains" || a.detection === "click_selector") {
         ok(`${niche.id}/${a.id}: has something to match on`, Boolean(a.match));
       }
@@ -134,7 +128,6 @@ console.log("\n— the container GTM will actually import —");
     businessName: "Marlow & Co",
     niche,
     metaPixelId: "111222333444555",
-    tiktokPixelId: "CABC123DEF456",
   }) as Record<string, never>;
 
   const version = container.containerVersion as unknown as {
@@ -174,14 +167,14 @@ console.log("\n— the container GTM will actually import —");
   const missing = referenced.filter((r) => !declared.has(r) && !builtIn.has(r));
   ok("every variable a tag uses is declared", missing.length === 0, missing.join(", "));
 
-  ok("base pixels fire on all pages",
-    version.tag.filter((t) => t.firingTriggerId.includes("2147479553")).length === 2);
-  ok("both pixel ids are in the file",
-    html.includes("111222333444555") && html.includes("CABC123DEF456"));
+  ok("the base pixel fires on all pages",
+    version.tag.filter((t) => t.firingTriggerId.includes("2147479553")).length === 1);
+  ok("the pixel id is in the file", html.includes("111222333444555"));
+  ok("no TikTok tags at all", !version.tag.some((t) => t.name.includes("TikTok")) && !html.includes("ttq"));
 
-  // One tag per network per action, plus the two base tags.
-  ok("a tag per network per conversion",
-    version.tag.length === niche.actions.length * 2 + 2, `${version.tag.length}`);
+  // One tag per action, plus the base tag.
+  ok("a tag per conversion",
+    version.tag.length === niche.actions.length + 1, `${version.tag.length}`);
 
   ok("every tag is named so the customer can tell them apart",
     version.tag.every((t) => t.name.startsWith("MAIRO - ")));
@@ -198,18 +191,16 @@ console.log("\n— the container GTM will actually import —");
   })());
 }
 
-console.log("\n— a container for a business with one network only —");
+console.log("\n— a trades business —");
 {
   const niche = nicheById("home_services");
   const metaOnly = buildContainer({
     businessName: "Bolt Plumbing",
     niche,
     metaPixelId: "999",
-    tiktokPixelId: null,
   }) as unknown as { containerVersion: { tag: { name: string }[] } };
 
   const names = metaOnly.containerVersion.tag.map((t) => t.name);
-  ok("no TikTok tags when there is no TikTok pixel", !names.some((n) => n.includes("TikTok")));
   ok("one Meta tag per action, plus the base",
     names.length === niche.actions.length + 1, `${names.length}`);
   // A trades business converts on the phone. If this ever stopped being the

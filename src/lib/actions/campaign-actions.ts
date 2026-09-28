@@ -39,11 +39,12 @@ import { blankLeadForm, ensureLeadForm, leadFormUrl } from "@/lib/leads/forms";
 import { pushFormToMeta } from "@/lib/leads/meta-form";
 import { searchPlaces, type Place } from "@/lib/meta/places";
 import { FACEBOOK_POST_ID, INSTAGRAM_MEDIA_ID } from "@/lib/campaigns/sales-source";
-import { goalOption, supportsDestination } from "@/lib/campaigns/objectives";
+import { supportsDestination } from "@/lib/campaigns/objectives";
 import { appStoreUrl, META_APP_ID } from "@/lib/campaigns/destination";
 import { siteUrl } from "@/lib/site";
 
-const PLATFORM_VALUES = ["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"] as const;
+// MAIRO runs Meta only. Anything else arriving from a form is refused here.
+const PLATFORM_VALUES = ["META"] as const;
 
 const createCampaignSchema = z.object({
   name: z.string().min(1),
@@ -52,7 +53,6 @@ const createCampaignSchema = z.object({
   platforms: z.array(z.enum(PLATFORM_VALUES)).min(1, "Pick at least one place to advertise."),
   /** Whole per cent per platform, in the same order as `platforms`. */
   percents: z.array(z.coerce.number().min(0).max(100)),
-  tiktokGrowthMode: z.boolean().default(false),
   /**
    * When to start, as the wall-clock time the customer typed plus the zone
    * their browser is in. Both or neither — a time with no zone is not a time,
@@ -122,7 +122,7 @@ export type CampaignActionState =
       /**
        * Set when the plan is what stopped this, rather than the input. The
        * form opens the upgrade modal on this instead of showing a red error —
-       * a customer clicking TikTok on Starter is expressing intent to buy, not
+       * a customer reaching for a locked feature is expressing intent to buy, not
        * making a mistake.
        */
       upgradeNeeded?: EntitlementFlag;
@@ -154,7 +154,6 @@ export async function createCampaignAction(
     dailyBudget: formData.get("dailyBudget"),
     platforms: formData.getAll("platforms"),
     percents: formData.getAll("percents"),
-    tiktokGrowthMode: formData.get("tiktokGrowthMode") === "on",
     startLocal: formData.get("startLocal"),
     startTimeZone: formData.get("startTimeZone"),
     destinationType: formData.get("destinationType"),
@@ -201,7 +200,7 @@ export async function createCampaignAction(
     return { error: "Pick which Instagram post to run, or choose another way to make the ad." };
   }
 
-  const { name, objective, dailyBudget, platforms, percents, tiktokGrowthMode } = parsed.data;
+  const { name, objective, dailyBudget, platforms, percents } = parsed.data;
   const totalDailyBudgetCents = Math.round(dailyBudget * 100);
 
   // When they want it to begin. Empty means "as soon as Meta approves it",
@@ -246,13 +245,6 @@ export async function createCampaignAction(
   if (newPath && !supportsDestination(objective, requestedDestination)) {
     return { error: "That goal can't send people there. Pick one of the destinations offered for it." };
   }
-  if (goalOption(objective).metaOnly && platforms.some((p) => p !== "META")) {
-    return { error: `"${goalOption(objective).label}" runs on Meta only. Choose a Meta campaign for it.` };
-  }
-  // TikTok ads link to a website; there's no call, message or form ad there.
-  if (platforms.includes("TIKTOK") && (parsed.data.destinationType ?? "WEBSITE") !== "WEBSITE") {
-    return { error: "TikTok ads send people to a website. Choose a website as the destination, or make this a Meta-only campaign." };
-  }
 
   // A total budget is spent by an end date, so it needs one — and both networks
   // refuse a lifetime budget without it.
@@ -274,9 +266,6 @@ export async function createCampaignAction(
   const permission = checkPlatformSelection(platforms as AdPlatform[], entitlements);
   if (!permission.allowed) {
     return { upgradeNeeded: permission.missing };
-  }
-  if (tiktokGrowthMode && !entitlements.tiktok_growth) {
-    return { upgradeNeeded: "tiktok_growth" };
   }
 
   // An archived campaign has been retired, so it doesn't hold a slot.
@@ -409,7 +398,6 @@ export async function createCampaignAction(
       perDayCents: totalDailyBudgetCents,
       businessName: organization.name,
       usesMeta: platforms.includes("META"),
-      usesTikTok: platforms.includes("TIKTOK"),
     });
     if (!resolved.ok) return { error: resolved.error };
     ads = resolved.ads;
@@ -445,7 +433,6 @@ export async function createCampaignAction(
     objective,
     totalDailyBudgetCents,
     allocations,
-    tiktokGrowthMode,
     startAt,
     startTimeZone: startAt || endAt ? startTimeZone : null,
     endAt,

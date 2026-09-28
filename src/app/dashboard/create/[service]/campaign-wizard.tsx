@@ -48,8 +48,6 @@ const LAUNCH_INDEX = STEPS.findIndex((s) => s.id === "launch");
 
 const NETWORK: Record<CampaignPlan["service"], string> = {
   meta: "Meta",
-  tiktok: "TikTok",
-  multi: "Meta and TikTok",
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -318,7 +316,7 @@ export function CampaignWizard(props: Props) {
           {missing.length > 0 && (
             <div className="mb-8 rounded-xl border p-5" style={{ borderColor: "rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.05)" }}>
               <p className="text-[14px] text-white">
-                Connect your {missing.map((p) => (p === "META" ? "Facebook & Instagram" : "TikTok")).join(" and ")} account to make this campaign
+                Connect your Facebook &amp; Instagram account to make this campaign
               </p>
               <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">
                 You can plan everything now — it saves as you go — but MAIRO can&rsquo;t create the campaign until the account is
@@ -330,11 +328,6 @@ export function CampaignWizard(props: Props) {
                     className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
                     Connect Facebook &amp; Instagram
                   </button>
-                )}
-                {missing.includes("TIKTOK") && (
-                  <Link href="/dashboard/integrations" className="rounded-full border px-4 py-2 text-[12.5px] text-white/90" style={{ borderColor: "var(--mairo-line)" }}>
-                    Connect TikTok
-                  </Link>
                 )}
               </div>
             </div>
@@ -366,7 +359,7 @@ export function CampaignWizard(props: Props) {
             >
               <PlanSummary plan={plan} mode={mode} detailed />
 
-              {plan.service !== "tiktok" && <AdPreview plan={plan} />}
+              <AdPreview plan={plan} />
 
               {mode === "advanced" && (
                 <label className="mt-6 block max-w-lg">
@@ -493,7 +486,6 @@ function blockedBecause(
       return null;
     case "goal": {
       if (!plan.goal) return "Choose what the ad should accomplish.";
-      if (goalOption(plan.goal).metaOnly && plan.service !== "meta") return "That goal runs on Meta only.";
       if (!plan.destinationType) return "Choose where people go.";
       if (plan.destinationType === "WEBSITE" && !plan.destinationValue.trim()) return "Add the page people should visit.";
       if (plan.destinationType === "PHONE_CALL" && !plan.destinationValue.trim()) return "Add the number people should call.";
@@ -594,10 +586,10 @@ function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mod
     ["People go to", destination ? `${destination.label}${plan.destinationValue.trim() && plan.destinationType !== "DIRECT_MESSAGE" ? ` — ${plan.destinationValue.trim()}` : ""}` : null],
     ["Audience", audience],
     ...(plan.specialAdCategory ? [["Special category", SPECIAL_LABEL[plan.specialAdCategory]] as [string, string]] : []),
-    ...(plan.service !== "tiktok" && (mode === "advanced" || plan.choosingPlacements)
+    ...(mode === "advanced" || plan.choosingPlacements
       ? [["Shows on", plan.choosingPlacements ? PLACEMENT_OPTIONS.filter((p) => plan.placements.includes(p.value)).map((p) => p.label).join(", ") || "—" : "Where Meta finds it works best"] as [string, string]]
       : []),
-    ["Budget", `${budget}${plan.service === "multi" ? ` · Meta ${plan.metaPercent}% / TikTok ${100 - plan.metaPercent}%` : ""}`],
+    ["Budget", budget],
     ["When", when],
     ["Planned spend", spend.maxCents !== null ? `Up to ${dollars(spend.maxCents)}` : `About ${dollars(spend.per30DaysCents)} per 30 days`],
     ...(hasOwnWords(plan) && runningCopy(plan).length > 0

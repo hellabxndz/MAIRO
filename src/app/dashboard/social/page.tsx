@@ -38,11 +38,11 @@ export default async function SocialPage() {
       <div>
         <PageHeader
           title="Your social posts"
-          description="MAIRO writes and publishes to your own Instagram and TikTok."
+          description="MAIRO writes and publishes to your own Instagram."
         />
         <PlanLock
           title={`MAIRO posting for you comes with ${topPlan.name}`}
-          body={`Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On ${topPlan.name}, MAIRO posts your approved creatives to your Instagram and TikTok for you.`}
+          body={`Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On ${topPlan.name}, MAIRO posts your approved creatives to your Instagram for you.`}
         />
       </div>
     );
@@ -223,23 +223,6 @@ export default async function SocialPage() {
           </div>
         </div>
       )}
-
-      {/* TikTok posting already exists and lives with the rest of the TikTok
-          setup, so this points at it rather than building a second half of the
-          same screen in a different place. */}
-      <Card className="mt-8 border-white/[0.06] bg-white/[0.015]">
-        <p className="text-sm text-white">TikTok posts</p>
-        <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-400">
-          MAIRO posts videos to your TikTok too. That one lives with your TikTok setup,
-          because connecting a creator account is its own thing.
-        </p>
-        <Link
-          href="/dashboard/integrations"
-          className="mt-4 inline-flex text-xs text-neutral-400 underline decoration-white/20 underline-offset-4 transition hover:text-white"
-        >
-          Open TikTok posting
-        </Link>
-      </Card>
     </div>
   );
 }

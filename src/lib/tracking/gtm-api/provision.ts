@@ -175,8 +175,7 @@ export async function provisionContainer(
   ]);
 
   const meta = pixels.find((p) => p.platform === "META")?.externalPixelId ?? null;
-  const tiktok = pixels.find((p) => p.platform === "TIKTOK")?.externalPixelId ?? null;
-  if (!meta && !tiktok) {
+  if (!meta) {
     return fail("rejected", "Set up a pixel first — there is nothing for the tags to fire.");
   }
 
@@ -185,7 +184,6 @@ export async function provisionContainer(
     businessName: organization?.name ?? "Your business",
     niche,
     metaPixelId: meta,
-    tiktokPixelId: tiktok,
   }) as unknown as BuiltContainer;
 
   try {

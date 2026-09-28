@@ -1,11 +1,10 @@
 import type { FundingState } from "@/lib/ad-platforms/billing";
 import type { CampaignPlan } from "@/lib/campaigns/plan";
 import { LOW_DAILY_CENTS, MIN_DAILY_CENTS, dollars, plannedSpend } from "@/lib/campaigns/plan";
-import { goalOption, supportsDestination } from "@/lib/campaigns/objectives";
+import { supportsDestination } from "@/lib/campaigns/objectives";
 import type { LandingProbe } from "@/lib/campaigns/landing-probe";
 import { checkCopy, maxTestAds, unsupportedNumbers } from "@/lib/campaigns/ad-copy";
 import { hasOwnWords, runningCopy } from "@/lib/campaigns/plan";
-import { TIKTOK_TEXT_MAX } from "@/lib/ad-platforms/tiktok/delivery";
 
 // The checks run before a campaign is built. Each one is a rule MAIRO can
 // actually verify from the plan and the account, not a score. Blocking issues
@@ -31,7 +30,6 @@ export type ReviewStatus = "READY" | "IMPROVEMENTS" | "SETUP_REQUIRED";
 export type ReviewFacts = {
   metaConnected: boolean;
   pageChosen: boolean;
-  tiktokConnected: boolean;
   funding: FundingState;
   /** The ad account's billing currency, when Meta said. */
   currency: string | null;
@@ -50,8 +48,8 @@ export function reviewStatus(findings: Finding[]): ReviewStatus {
 export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date = new Date()): Finding[] {
   const out: Finding[] = [];
   const add = (f: Finding) => out.push(f);
-  const usesMeta = plan.service !== "tiktok";
-  const usesTikTok = plan.service !== "meta";
+  // Every campaign runs on Meta; the flag stays so each Meta rule reads as one.
+  const usesMeta = true;
 
   // --- Account ------------------------------------------------------------
   if (usesMeta && !facts.metaConnected) {
@@ -59,9 +57,6 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
   }
   if (usesMeta && facts.metaConnected && !facts.pageChosen) {
     add({ id: "no-page", severity: "blocking", area: "Account", title: "No Facebook Page is chosen", detail: "Every Meta ad is published by a Page. Choose one on the Meta connection screen.", fix: null });
-  }
-  if (usesTikTok && !facts.tiktokConnected) {
-    add({ id: "tiktok-not-connected", severity: "blocking", area: "Account", title: "Your TikTok account isn't connected", detail: "Connect TikTok under Integrations, or run this campaign on Meta only.", fix: null });
   }
   if (usesMeta && facts.metaConnected && (facts.funding === "no_payment_method" || facts.funding === "out_of_credit")) {
     add({ id: "no-funding", severity: "recommendation", area: "Account", title: "Meta can't charge your ad account yet", detail: "The campaign will be built, but it can't run until your Meta ad account has a payment method. Your MAIRO subscription doesn't pay for ads.", fix: null });
@@ -77,10 +72,6 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
   if (!plan.goal) {
     add({ id: "no-goal", severity: "blocking", area: "Destination", title: "No goal is chosen", detail: "Pick what you want the ad to do.", fix: "goal" });
     return out;
-  }
-  const goal = goalOption(plan.goal);
-  if (goal.metaOnly && usesTikTok) {
-    add({ id: "meta-only-goal", severity: "blocking", area: "Destination", title: `"${goal.label}" runs on Meta only`, detail: "Start a Meta campaign for this goal, or choose a different goal.", fix: "goal" });
   }
   if (!plan.destinationType || !supportsDestination(plan.goal, plan.destinationType)) {
     add({ id: "no-destination", severity: "blocking", area: "Destination", title: "Choose where people go", detail: "Pick where someone lands when they tap the ad.", fix: "goal" });
@@ -144,9 +135,6 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
   } else if (spend.perDayCents < LOW_DAILY_CENTS) {
     add({ id: "budget-low", severity: "recommendation", area: "Budget", title: "This budget is on the small side", detail: `At ${dollars(spend.perDayCents)} a day it can take weeks to learn what works. ${dollars(LOW_DAILY_CENTS)} a day or more gives faster, clearer results.`, fix: "budget" });
   }
-  if (plan.service === "multi" && (plan.metaPercent < 10 || plan.metaPercent > 90)) {
-    add({ id: "lopsided-split", severity: "recommendation", area: "Budget", title: "One network gets almost nothing", detail: "With under 10% of the budget, one side won't get enough delivery to compare. Consider running just one network.", fix: "budget" });
-  }
 
   // --- Advertisement --------------------------------------------------------
   const post = plan.adChoice === "FACEBOOK_POST" || plan.adChoice === "INSTAGRAM_POST";
@@ -202,19 +190,6 @@ export function reviewFindings(plan: CampaignPlan, facts: ReviewFacts, now: Date
     }
     if (plan.testing && pictures <= 1 && words.length > cap) {
       add({ id: "test-too-big", severity: "blocking", area: "Budget", title: "Too many versions for this budget", detail: `At this budget MAIRO can fairly test ${cap} version${cap === 1 ? "" : "s"} — each needs about $5 a day. Run fewer, or raise the budget.`, fix: "ad" });
-    }
-  }
-  // TikTok: video ads that link to a website, and nothing else.
-  if (plan.service !== "meta") {
-    if (plan.destinationType && plan.destinationType !== "WEBSITE") {
-      add({ id: "tiktok-website", severity: "blocking", area: "Destination", title: "TikTok ads link to a website", detail: "TikTok has no call, message or form ads, so a campaign that runs there needs a website as its destination.", fix: "goal" });
-    }
-    if (plan.adChoice !== "video") {
-      add({ id: "tiktok-video", severity: "blocking", area: "Advertisement", title: "TikTok needs a video", detail: "TikTok only runs video ads. Upload a video — vertical, 9 to 30 seconds works best.", fix: "ad" });
-    }
-    const long = runningCopy(plan).some((w) => w.primaryText.trim().length > TIKTOK_TEXT_MAX);
-    if (long) {
-      add({ id: "tiktok-text", severity: "recommendation", area: "Advertisement", title: "TikTok shows 100 characters of text", detail: "The text is longer than TikTok allows, so MAIRO trims it at a word there. Shorter text also reads better on a video.", fix: "ad" });
     }
   }
   if (!post && !ownVisual && !facts.hasApprovedCreative) {

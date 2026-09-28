@@ -31,7 +31,7 @@ const ok = (n: string, c: boolean, x = "") => {
   } else console.log(`  ok   ${n}`);
 };
 
-console.log("\n— posting is Pro only —");
+console.log(`\n— posting is ${TOP.name} only —`);
 {
   ok("no plan: no", !DEFAULT_ENTITLEMENTS.NONE.social_posting);
   ok("Starter: no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
@@ -65,9 +65,9 @@ console.log("\n— the pricing cards say the same thing the code does —");
   ok("Growth is called Growth", growth.name === "Growth", growth.name);
 
   const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
-  ok("Starter is $199", starterPlan.priceMonthly === 199, `$${starterPlan.priceMonthly}`);
-  ok("Growth is $399", growth.priceMonthly === 399, `$${growth.priceMonthly}`);
-  ok(`${TOP.name} is $699`, pro.priceMonthly === 699, `$${pro.priceMonthly}`);
+  ok("Starter is $49", starterPlan.priceMonthly === 49, `$${starterPlan.priceMonthly}`);
+  ok("Growth is $99", growth.priceMonthly === 99, `$${growth.priceMonthly}`);
+  ok(`${TOP.name} is $199`, pro.priceMonthly === 199, `$${pro.priceMonthly}`);
   // The ladder has to climb, whatever the numbers are changed to next.
   ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
 
@@ -90,20 +90,13 @@ console.log("\n— the pricing cards say the same thing the code does —");
   ok("Growth no longer promises posting", !growthPromises);
   ok(
     `${TOP.name}'s card promises it`,
-    pro.features.some((f) => /posts to your Instagram and TikTok/i.test(f))
+    pro.features.some((f) => /posts to your Instagram/i.test(f))
   );
-  // Growth used to carry a bullet saying posting lived on Pro. That is now a
-  // comparison row on every card — "Posts to your own feed: No" against Pro's
-  // "Instagram + TikTok" — which says it in the one place a reader is already
-  // comparing, and is derived from the entitlement rather than written by
-  // hand. Asserted in the comparison block below, not here.
-
-  // TikTok account setup is a different feature and stays on Growth. Easy to
-  // sweep along with posting by accident — they were adjacent bullets.
+  // TikTok was retired. A card still mentioning it would sell something the
+  // product can't do.
   ok(
-    "Growth keeps TikTok account setup",
-    DEFAULT_ENTITLEMENTS.GROWTH.tiktok_account_setup &&
-      growth.features.some((f) => /sets up your TikTok/i.test(f))
+    "no card mentions TikTok",
+    !PLANS.some((p) => [p.headline, p.tagline, ...p.features].some((f) => /tiktok/i.test(f)))
   );
 }
 
@@ -164,28 +157,29 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
     );
   }
 
-  // The one row that separates Starter from Growth.
-  ok("Starter runs ads on Meta only", starter["Runs ads on"] === "Meta", starter["Runs ads on"]);
-  ok("Growth adds TikTok", growth["Runs ads on"] === "Meta + TikTok", growth["Runs ads on"]);
-  ok("and they differ", starter["Runs ads on"] !== growth["Runs ads on"]);
+  // Every plan runs the same networks now; the difference is how much MAIRO
+  // does on its own.
+  ok(
+    "every plan runs Facebook + Instagram",
+    [starter, growth, pro].every((c) => c["Runs ads on"] === "Facebook + Instagram"),
+  );
+  ok("Starter: you approve every change", starter["MAIRO works on its own"] === "You approve every change", starter["MAIRO works on its own"]);
+  ok("Growth: Assisted", growth["MAIRO works on its own"] === "Assisted", growth["MAIRO works on its own"]);
+  ok(`${TOP.name}: Autopilot`, pro["MAIRO works on its own"] === "Autopilot", pro["MAIRO works on its own"]);
 
-  // The one that separates Growth from Pro.
+  // The one that separates Growth from the top plan.
   ok("Growth does not post for you", growth["Posts to your own feed"] === "No");
   ok(
     `${TOP.name} does`,
-    pro["Posts to your own feed"] === "Instagram + TikTok",
+    pro["Posts to your own feed"] === "Instagram",
     pro["Posts to your own feed"]
   );
 
-  // Campaigns are uncapped on every client plan now — a cap of one taught
-  // businesses to cram a sale and an evergreen offer into a single campaign
-  // and get worse results from both. The card must say so in a word, never as
-  // the string "Infinity".
-  ok(
-    "campaigns read as unlimited on every plan",
-    [starter, growth, pro].every((c) => c["Campaigns at once"] === "Unlimited"),
-    [starter, growth, pro].map((c) => c["Campaigns at once"]).join(" / "),
-  );
+  // Campaign caps climb, and the top plan says "Unlimited" in a word — never
+  // as the string "Infinity".
+  ok("Starter runs 3 campaigns", starter["Campaigns at once"] === "3", starter["Campaigns at once"]);
+  ok("Growth runs 15", growth["Campaigns at once"] === "15", growth["Campaigns at once"]);
+  ok(`${TOP.name} is unlimited`, pro["Campaigns at once"] === "Unlimited", pro["Campaigns at once"]);
   ok(
     "and never leak the sentinel",
     ![starter, growth, pro].some((c) => /Infinity/.test(c["Campaigns at once"])),
@@ -209,8 +203,8 @@ console.log("\n— the upgrade prompt has wording for the flag —");
 {
   ok("social_posting is labelled", Boolean(FLAG_LABELS.social_posting));
   ok(
-    "and the label names both networks",
-    /instagram/i.test(FLAG_LABELS.social_posting) && /tiktok/i.test(FLAG_LABELS.social_posting),
+    "and the label names Instagram",
+    /instagram/i.test(FLAG_LABELS.social_posting) && !/tiktok/i.test(FLAG_LABELS.social_posting),
     FLAG_LABELS.social_posting
   );
 }

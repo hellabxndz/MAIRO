@@ -9,13 +9,6 @@ import {
   metaPixelSnippet,
   metaPurchaseSnippet,
 } from "@/lib/tracking/meta-pixel";
-import {
-  createTikTokPixel,
-  fetchTikTokPixel,
-  listTikTokPixels,
-  tiktokPixelSnippet,
-  tiktokPurchaseSnippet,
-} from "@/lib/tracking/tiktok-pixel";
 
 // Getting a business tracking their sales, on whichever networks they use.
 //
@@ -70,10 +63,7 @@ function statusFrom(lastFiredAt: Date | null): PixelStatus {
   return ageHours <= STALE_AFTER_HOURS ? "ACTIVE" : "NO_EVENTS";
 }
 
-function snippetsFor(platform: AdPlatform, pixelId: string) {
-  if (platform === "TIKTOK") {
-    return { baseSnippet: tiktokPixelSnippet(pixelId), purchaseSnippet: tiktokPurchaseSnippet() };
-  }
+function snippetsFor(_platform: AdPlatform, pixelId: string) {
   return { baseSnippet: metaPixelSnippet(pixelId), purchaseSnippet: metaPurchaseSnippet() };
 }
 
@@ -91,6 +81,8 @@ export async function ensurePixel(
   platform: AdPlatform,
   businessName: string
 ): Promise<PlatformResult<PixelSnapshot>> {
+  // MAIRO tracks for Meta only; TikTok advertising was retired.
+  if (platform !== "META") return fail("unavailable", "MAIRO sets up tracking for Meta only.");
   const existing = await db.trackingPixel.findUnique({
     where: { organizationId_platform: { organizationId, platform } },
   });
@@ -100,7 +92,7 @@ export async function ensurePixel(
   if (!creds || creds.status !== "CONNECTED") {
     return fail(
       "not_connected",
-      `Connect ${platform === "TIKTOK" ? "TikTok" : "Meta"} first — the pixel is created on your advertising account.`
+      "Connect Meta first — the pixel is created on your advertising account."
     );
   }
 
@@ -110,11 +102,7 @@ export async function ensurePixel(
     const found = await listExisting(platform, creds.externalAccountId, creds.accessToken);
     const adopted = found[0] ?? null;
 
-    const pixel =
-      adopted ??
-      (platform === "TIKTOK"
-        ? await createTikTokPixel(creds.externalAccountId, creds.accessToken, name)
-        : await createMetaPixel(creds.externalAccountId, creds.accessToken, name));
+    const pixel = adopted ?? (await createMetaPixel(creds.externalAccountId, creds.accessToken, name));
 
     const row = await db.trackingPixel.create({
       data: {
@@ -136,10 +124,8 @@ export async function ensurePixel(
   }
 }
 
-async function listExisting(platform: AdPlatform, accountId: string, token: string) {
-  return platform === "TIKTOK"
-    ? listTikTokPixels(accountId, token)
-    : listMetaPixels(accountId, token);
+async function listExisting(_platform: AdPlatform, accountId: string, token: string) {
+  return listMetaPixels(accountId, token);
 }
 
 type PixelRow = {
@@ -187,10 +173,8 @@ export async function refreshPixelStatus(
   if (!creds || creds.status !== "CONNECTED") return;
 
   try {
-    const pixel =
-      platform === "TIKTOK"
-        ? await fetchTikTokPixel(creds.externalAccountId, creds.accessToken, row.externalPixelId)
-        : await fetchMetaPixel(row.externalPixelId, creds.accessToken);
+    if (platform !== "META") return;
+    const pixel = await fetchMetaPixel(row.externalPixelId, creds.accessToken);
 
     if (!pixel) {
       await db.trackingPixel.update({
@@ -260,10 +244,8 @@ export async function adoptPixel(
   }
 
   try {
-    const pixel =
-      platform === "TIKTOK"
-        ? await fetchTikTokPixel(creds.externalAccountId, creds.accessToken, trimmed)
-        : await fetchMetaPixel(trimmed, creds.accessToken);
+    if (platform !== "META") return fail("unavailable", "MAIRO tracks for Meta only.");
+    const pixel = await fetchMetaPixel(trimmed, creds.accessToken);
 
     if (!pixel) {
       return fail("rejected", "That pixel isn't on the advertising account you connected.");

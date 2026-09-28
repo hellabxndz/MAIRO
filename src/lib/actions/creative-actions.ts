@@ -40,7 +40,7 @@ export type SuggestionResult =
 export async function suggestIdeaAction(input: {
   type: "IMAGE" | "VIDEO" | "COPY" | "CAROUSEL";
   referenceImage?: string | null;
-  platform?: "META" | "TIKTOK" | null;
+  platform?: "META" | null;
 }): Promise<SuggestionResult> {
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not authenticated" };

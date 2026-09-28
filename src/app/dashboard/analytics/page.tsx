@@ -22,13 +22,13 @@ import { MetricTile } from "@/components/mairo/metric-tile";
 // per-platform table makes them do the addition, which is the job they hired
 // MAIRO to stop doing.
 //
-// Every figure on this page comes from a live call to Meta or TikTok. Nothing
+// Every figure on this page comes from a live call to Meta. Nothing
 // here is generated, sampled, or filled in — a metric MAIRO could not read is
 // shown as a dash, never as a zero and never as a plausible-looking number.
 
 export const maxDuration = 30;
 
-type Filter = "all" | "meta" | "tiktok";
+type Filter = "all" | "meta";
 
 function money(cents: number | null): string {
   return cents === null ? NO_VALUE : formatMoney(cents / 100);
@@ -42,10 +42,6 @@ function ratio(value: number | null): string {
 function percent(value: number | null): string {
   return value === null ? NO_VALUE : `${(value * 100).toFixed(2)}%`;
 }
-function seconds(value: number | null): string {
-  return value === null ? NO_VALUE : `${value.toFixed(1)}s`;
-}
-
 export default async function AnalyticsPage({
   searchParams,
 }: {
@@ -57,7 +53,7 @@ export default async function AnalyticsPage({
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const params = await searchParams;
   const filter: Filter =
-    params.platform === "meta" ? "meta" : params.platform === "tiktok" ? "tiktok" : "all";
+    params.platform === "meta" ? "meta" : "all";
   const rangeKey: RangeKey = parseRange(params.range);
   const period = rangeInfo(rangeKey);
 
@@ -76,7 +72,7 @@ export default async function AnalyticsPage({
   ]);
 
   const selected: AdPlatform | null =
-    filter === "meta" ? "META" : filter === "tiktok" ? "TIKTOK" : null;
+    filter === "meta" ? "META" : null;
 
   const shown: PlatformMetrics =
     selected === null
@@ -100,7 +96,6 @@ export default async function AnalyticsPage({
   ) => (since ? compare(current, prev, metric(key).direction, since) : undefined);
 
   const available = report.byPlatform.map((p) => p.platform);
-  const tiktokReport = report.byPlatform.find((p) => p.platform === "TIKTOK");
 
   return (
     <div>
@@ -152,14 +147,6 @@ export default async function AnalyticsPage({
               label="Meta"
               active={filter === "meta"}
               platform="META"
-            />
-          )}
-          {available.includes("TIKTOK") && (
-            <FilterTab
-              href={`/dashboard/analytics?platform=tiktok${rangeKey === "all" ? "" : `&range=${rangeKey}`}`}
-              label="TikTok"
-              active={filter === "tiktok"}
-              platform="TIKTOK"
             />
           )}
         </div>
@@ -265,44 +252,10 @@ export default async function AnalyticsPage({
             </Card>
           )}
 
-          {/* TikTok's own vocabulary. Meta reports none of this and never
-              will, so it lives in its own block rather than as columns of
-              dashes across a shared table. */}
-          {(selected === "TIKTOK" || (selected === null && tiktokReport?.hasData)) &&
-            entitlements.advanced_analytics && (
-              <Card className="mt-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <PlatformIcon platform="TIKTOK" className="h-4 w-4 text-neutral-400" />
-                  <h2 className="text-sm uppercase tracking-[0.16em] text-neutral-400">
-                    TikTok video and profile
-                  </h2>
-                </div>
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
-                  <Figure label="Video views" value={count(tiktokReport?.metrics.videoViews ?? null)} />
-                  <Figure label="2-second views" value={count(tiktokReport?.metrics.videoViews2s ?? null)} />
-                  <Figure label="6-second views" value={count(tiktokReport?.metrics.videoViews6s ?? null)} />
-                  <Figure
-                    label="Average watch time"
-                    value={seconds(tiktokReport?.metrics.averageWatchTimeSeconds ?? null)}
-                  />
-                  <Figure
-                    label="Completion rate"
-                    value={percent(tiktokReport?.metrics.videoCompletionRate ?? null)}
-                  />
-                  <Figure label="Profile visits" value={count(tiktokReport?.metrics.profileVisits ?? null)} />
-                  <Figure label="Followers gained" value={count(tiktokReport?.metrics.followersGained ?? null)} />
-                  <Figure label="Likes" value={count(tiktokReport?.metrics.likes ?? null)} />
-                  <Figure label="Comments" value={count(tiktokReport?.metrics.comments ?? null)} />
-                  <Figure label="Shares" value={count(tiktokReport?.metrics.shares ?? null)} />
-                </div>
-              </Card>
-            )}
-
           {!entitlements.advanced_analytics && (
             <Card className="mt-6">
               <p className="text-sm text-neutral-400">
-                Per-platform breakdowns, creative-level figures and TikTok&rsquo;s video
-                metrics are part of Growth.{" "}
+                Ad-by-ad breakdowns and creative-level figures are part of Growth.{" "}
                 <Link href="/dashboard/billing" className="text-sky-300 underline underline-offset-4">
                   See plans
                 </Link>
@@ -376,29 +329,6 @@ function PlatformRow({ report }: { report: PlatformReport }) {
       {report.unavailable && (
         <p className="mt-2 text-xs text-amber-200/70">{report.unavailable}</p>
       )}
-    </div>
-  );
-}
-
-function Figure({
-  label,
-  value,
-  large = false,
-}: {
-  label: string;
-  value: string;
-  large?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</p>
-      <p
-        className={`mt-1.5 font-light tabular-nums text-white ${
-          large ? "text-2xl" : "text-base"
-        }`}
-      >
-        {value}
-      </p>
     </div>
   );
 }

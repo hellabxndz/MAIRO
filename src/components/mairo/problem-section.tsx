@@ -15,7 +15,7 @@ import { Reveal } from "@/components/reveal";
 
 const SCATTERED: { name: string; kind: string }[] = [
   { name: "Meta Ads Manager", kind: "Platform" },
-  { name: "TikTok Ads Manager", kind: "Platform" },
+  { name: "Instagram", kind: "Another app" },
   { name: "An agency", kind: "Retainer" },
   { name: "A freelancer", kind: "Hourly" },
   { name: "A designer", kind: "Per asset" },
@@ -103,7 +103,7 @@ export function ProblemSection() {
               </h3>
               <p className="mt-5 max-w-2xl text-[14.5px] leading-relaxed text-white/70">
                 One login. One bill. One thing to ask when you want to know how it is going.
-                The advertising budget still goes to Meta and TikTok directly — Mairo decides
+                The advertising budget still goes to Meta directly — Mairo decides
                 how it gets used, and shows you every decision.
               </p>
             </div>

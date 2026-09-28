@@ -3,7 +3,6 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { entitlementsForTier } from "@/lib/entitlements";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { CampaignWizard } from "./campaign-wizard";
 import { assistantNameOf } from "@/lib/ai/agents";
@@ -14,24 +13,21 @@ import { creditCosts } from "@/lib/creative-studio/pricing";
 import { viewMode } from "@/lib/view-mode";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { isWizardStep, newPlan, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
-import { recommendAllocation } from "@/lib/budget/allocation";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 
-// One route for every service on the create screen.
+// The Create wizard's route.
 //
-// Three services, one wizard. What changes between them is which networks the
-// campaign runs on and which goals are open to it — nothing else — so three
-// routes would be three copies of the same seven questions, and the third one
-// would be the one that quietly stops matching.
+// MAIRO runs Meta only. The old TikTok and Meta+TikTok addresses redirect
+// here rather than 404, so a bookmark or an old link still lands somewhere
+// that works.
 
 export const dynamic = "force-dynamic";
 
-const SERVICES: Record<string, { name: string; platforms: AdPlatform[]; needs: "tiktok_ads" | "cross_platform_campaigns" | null }> = {
-  meta: { name: "Meta", platforms: ["META"], needs: null },
-  tiktok: { name: "TikTok", platforms: ["TIKTOK"], needs: "tiktok_ads" },
-  multi: { name: "Meta and TikTok", platforms: ["META", "TIKTOK"], needs: "cross_platform_campaigns" },
+const SERVICES: Record<string, { name: string; platforms: AdPlatform[] }> = {
+  meta: { name: "Meta", platforms: ["META"] },
 };
+const RETIRED = new Set(["tiktok", "multi"]);
 
 export default async function CreateServicePage({
   params,
@@ -41,6 +37,7 @@ export default async function CreateServicePage({
   searchParams: Promise<{ draft?: string | string[]; posts?: string; connected?: string }>;
 }) {
   const { service: slug } = await params;
+  if (RETIRED.has(slug)) redirect("/dashboard/create/meta");
   const service = SERVICES[slug];
   if (!service) notFound();
   const { draft: draftParam, posts: postsParam, connected: connectedParam } = await searchParams;
@@ -85,13 +82,6 @@ export default async function CreateServicePage({
   ]);
   if (!organization) redirect("/sign-in");
 
-  // The plan check happens here as well as in the action. Not belt and braces:
-  // the action's refusal is the one that protects the data, but arriving at a
-  // seven-question flow only to be told at the end that the plan does not cover
-  // it is a worse way to find out than not being able to start.
-  const limits = await entitlementsForTier(organization.subscriptionTier);
-  if (service.needs && !limits[service.needs]) redirect("/dashboard/billing");
-
   // A draft opened under another service's address goes to its own.
   if (draft && draft.service !== slug && SERVICES[draft.service]) {
     redirect(`/dashboard/create/${draft.service}?draft=${draft.id}`);
@@ -109,7 +99,8 @@ export default async function CreateServicePage({
     messageChannel: organization.defaultMessageChannel,
     // Filled in by the browser, which knows where the customer is.
     timeZone: "",
-    metaPercent: recommendAllocation(["META", "TIKTOK"], "TRAFFIC", 10000).find((a) => a.platform === "META")?.percent ?? 60,
+    // Every campaign is Meta, so all of the budget goes there.
+    metaPercent: 100,
   });
 
   // A saved draft over today's defaults, so a field added since it was saved

@@ -3,7 +3,6 @@ import { MairoButton, MairoCard } from "@/components/mairo";
 import { CreativeThumbs, RisingLine, Sparkline, AudiencePlot } from "@/components/mairo/card-visuals";
 import {
   BrandMetaMark,
-  BrandTikTokMark,
   BrandInstagramMark,
 } from "@/components/mairo/marks";
 import { MairoSceneWide, MairoSceneNarrow } from "@/components/mairo/scene";
@@ -217,9 +216,6 @@ function CampaignCard() {
       <div className="mt-4 flex items-center gap-2.5">
         <PlatformTile>
           <BrandMetaMark />
-        </PlatformTile>
-        <PlatformTile>
-          <BrandTikTokMark />
         </PlatformTile>
         <PlatformTile>
           <BrandInstagramMark />
@@ -470,7 +466,7 @@ export function MairoHero() {
 
               <p className="mx-auto mt-5 max-w-lg text-[14.5px] leading-relaxed text-muted sm:text-[15px]">
                 An AI advertising system that builds creatives, launches campaigns, and helps
-                optimize performance across Meta and TikTok.
+                optimize performance across Facebook and Instagram.
               </p>
 
               {/* One CTA, not two. The second used to say "Watch a 2-min demo"

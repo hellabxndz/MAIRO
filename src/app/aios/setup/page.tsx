@@ -89,18 +89,6 @@ const CHECKS: { name: string; label: string; why: string; optional?: true }[] = 
     why: "The other half of the Google OAuth client. Both must be set for the button to appear.",
     optional: true,
   },
-  {
-    name: "TIKTOK_APP_ID",
-    label: "TikTok app ID",
-    why: "From the approved app at business-api.tiktok.com. With the secret, turns TikTok ads on.",
-    optional: true,
-  },
-  {
-    name: "TIKTOK_APP_SECRET",
-    label: "TikTok app secret",
-    why: "The other half of the TikTok app. Until both are set, TikTok isn't offered to customers.",
-    optional: true,
-  },
 ];
 
 export default async function SetupPage() {

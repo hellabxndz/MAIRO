@@ -20,13 +20,12 @@ const geistMono = Geist_Mono({
 // preview card — every share, in every app — renders as a broken image while
 // the page itself looks fine.
 //
-// The title says both networks now. It said "Meta ads" alone, which stopped
-// being true the day TikTok shipped, and the one sentence a stranger decides
-// on should not undersell the product.
+// The title names Facebook and Instagram, the words a stranger actually
+// searches for, rather than "Meta".
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "MAIRO — Meta and TikTok ads that run themselves",
+    default: "MAIRO — Facebook & Instagram ads that run themselves",
     // Every other page appends to this rather than replacing it, so a tab
     // reads "Pricing · MAIRO" instead of a bare word with no owner.
     template: `%s · ${SITE_NAME}`,
@@ -36,13 +35,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: "MAIRO — Meta and TikTok ads that run themselves",
+    title: "MAIRO — Facebook & Instagram ads that run themselves",
     description: SITE_DESCRIPTION,
     url: siteUrl(),
   },
   twitter: {
     card: "summary_large_image",
-    title: "MAIRO — Meta and TikTok ads that run themselves",
+    title: "MAIRO — Facebook & Instagram ads that run themselves",
     description: SITE_DESCRIPTION,
   },
   alternates: { canonical: "/" },

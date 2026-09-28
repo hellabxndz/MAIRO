@@ -24,7 +24,8 @@ function money(n: number): string {
 }
 
 function creativesLine(n: number): string {
-  return Number.isFinite(n) ? `${n} AI creatives a month` : "Unlimited AI creatives";
+  // Written ad concepts, not pictures — those are the image credits above.
+  return Number.isFinite(n) ? `${n} AI-written ad concepts a month` : "Unlimited AI-written ad concepts";
 }
 
 export default async function BillingPage({ searchParams }: PageProps<"/dashboard/billing">) {
@@ -54,7 +55,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         description={
           TRIAL_DAYS > 0 && !subscribed
             ? `Every plan starts with a ${TRIAL_DAYS}-day free trial. Stripe takes your card, and you can cancel before it ends at no charge.`
-            : "Change or cancel any time. Your ad spend is paid to Meta and TikTok directly — never through this."
+            : "Change or cancel any time. Your ad spend is paid to Meta directly — never through this."
         }
       />
 
@@ -183,7 +184,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
 
       <p className="mt-8 max-w-2xl text-xs leading-relaxed text-neutral-500">
         Payment is handled by Stripe; MAIRO never sees your card. Your plan pays for MAIRO. What your ads
-        cost is separate and goes straight from you to Meta or TikTok.
+        cost is separate and goes straight from you to Meta.
       </p>
     </div>
   );

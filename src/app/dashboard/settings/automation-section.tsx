@@ -38,7 +38,7 @@ export type AutoOptimizeValues = {
   platforms: AdPlatform[];
 };
 
-const SELECTABLE: AdPlatform[] = ["META", "TIKTOK"];
+const SELECTABLE: AdPlatform[] = ["META"];
 
 export function AutomationSection({
   values,
@@ -327,7 +327,7 @@ export function AutomationSection({
                       className="sr-only"
                     />
                     <PlatformIcon platform={platform} className="h-3.5 w-3.5" />
-                    {platform === "META" ? "Meta" : "TikTok"}
+                    {platform === "META" ? "Meta" : platform}
                   </label>
                 );
               })}

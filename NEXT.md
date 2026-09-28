@@ -58,33 +58,27 @@ Hobby that interval is a day, so timeliness comes from the dashboard render
 path instead, and the cron is only the backstop for someone who books a launch
 and then doesn't visit.
 
-**5. Create all three new prices in Stripe.** The pricing page now says
-$39.99 / $129.99 / $249.99, and `priceMonthly` in src/lib/plans.ts is only what
-the customer is *shown* — what they are charged is the Stripe Price behind
-`STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH` and `STRIPE_PRICE_SCALE`, all of
-which still point at the old ones ($49 / $99 / $199). Until new Prices exist
-and those three variables point at them, the site advertises one number and
-the card is charged another — on every plan, not just one.
+**5. Point Stripe at the new prices.** The plans are now Starter $49,
+Growth $99 and Scale $199 a month. `priceMonthly` in src/lib/plans.ts is only
+what the customer is *shown* — what they are charged is the Stripe Price
+behind `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH` and `STRIPE_PRICE_SCALE`.
+Each must be a $49 / $99 / $199 monthly recurring Price. If the ones in Vercel
+are for any other amount, create new Prices in Stripe (Product catalog → the
+plan → Add another price) and paste their `price_…` ids into those three
+variables, then redeploy. Until they match, the site advertises one number and
+the card is charged another.
 
 Existing subscribers stay on the price they signed up at unless their
 subscriptions are migrated, which is a separate decision and a deliberate one.
 
-**6. Run `npm run plans:sync` against production once.** PlanConfig exists so
-pricing can be changed without a deploy, and every in-app billing screen
-prefers a row in it over the compiled plan. `seedPlanConfig()` only ever
-inserts — deliberately, so re-running it can't stamp on a price someone edited
-— which means a deployment seeded when the top plan was "Pro" at $199 goes on
-serving Pro and $199 on those screens no matter how many times the code is
-fixed and redeployed. The landing page renders the compiled plans and is
-unaffected, so the symptom is the marketing page and the billing page
-disagreeing with each other.
-
-`npm run plans:sync` prints a diff and changes nothing; `-- --write` applies
-it. Run it after any pricing or naming change.
+**6. Old plan rows are cleared on deploy.** PlanConfig overrides the compiled
+plans, so rows seeded under the old pricing would have kept the old prices and
+limits on every in-app screen. The `meta_only_plan_reset` migration deletes
+them, and the code defaults apply. After any *later* pricing change, run
+`npm run plans:sync` (prints a diff) and `-- --write` to apply it.
 
 **7. Meta App Review needs two more permissions.** `instagram_basic` and
-`instagram_content_publish` were added to the OAuth scopes for Pro-plan
-Instagram posting. Both are review-gated, so until they clear, only accounts
+`instagram_content_publish` are needed for Scale-plan Instagram posting. Both are review-gated, so until they clear, only accounts
 added as testers can post — the rest get a permission error from Meta. Worth
 submitting in the same round as the ads permissions rather than after.
 
@@ -92,26 +86,11 @@ submitting in the same round as the ads permissions rather than after.
 changes in the database has never fired with a real event. Worth doing with a
 test-mode card before the first customer.
 
-## Needed before selling the TikTok features
+## TikTok (retired)
 
-**5. TikTok credentials.** `TIKTOK_APP_ID` / `TIKTOK_APP_SECRET` were never set
-in production, so TikTok advertising reports itself as unconfigured. Nothing
-TikTok-related can be sold until they are.
-
-**6. Run one real TikTok campaign of each kind.** TikTok video ads are built
-end to end, but only against a stand-in API (`npm run check:tiktok-ads`). Sales
-campaigns (website conversions) now go through TikTok's Smart+ endpoints,
-because TikTok stops accepting them on `/campaign|adgroup|ad/create/` from
-1 January 2027; traffic and reach stay on the original ones. The Smart+ field
-names come from TikTok's own SDK specs (Feb 2026), which list no allowed
-values, so the values reuse the original endpoints' (`WEB_CONVERSIONS`,
-`BUDGET_MODE_DAY`, …). One real sales launch and one traffic launch, then a
-pause and resume of each, confirm it. Reporting still reads
-`/report/integrated/get/` for both.
-
-**7. TikTok posting credentials.** Separate again — `TIKTOK_CLIENT_KEY` /
-`TIKTOK_CLIENT_SECRET`, plus TikTok's content audit before anything can post
-publicly rather than to drafts.
+MAIRO no longer runs TikTok. The `TIKTOK_*` variables in Vercel can be deleted,
+and the pending app on TikTok's developer portal can be withdrawn. The enum
+value and old tables stay so existing rows still load.
 
 ## Smaller, whenever
 
@@ -123,7 +102,7 @@ sitemap and canonical links all point at it automatically.
 
 ## Standing caveat
 
-Nothing in this repo has run against live Meta, TikTok, Google or Anthropic
+Nothing in this repo has run against live Meta, Google or Anthropic
 from the development container — there are no credentials in it. Everything is
 verified by construction, by the `npm run check:*` scripts, and against mock
 servers. The first real connection to each is where surprises will show up.

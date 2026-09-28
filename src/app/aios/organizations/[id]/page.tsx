@@ -218,7 +218,7 @@ export default async function OrganizationDetailPage({
             ]}
           />
           <p className="mt-4 border-t border-white/10 pt-3 text-xs text-neutral-600">
-            Nothing here is sent to Meta or TikTok. A campaign still running on a
+            Nothing here is sent to Meta. A campaign still running on a
             network is refused rather than deleted — stop it there first, or it keeps
             spending with nothing left able to stop it.
           </p>

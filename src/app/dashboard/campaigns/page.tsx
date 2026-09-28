@@ -26,9 +26,8 @@ import { siteUrl } from "@/lib/site";
 import { metaAdsManagerUrl } from "@/lib/ad-platforms/billing";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
 
-// Each row's figures are live calls to Meta and TikTok. See the note in
-// src/app/dashboard/page.tsx — same reason, same budget, now doubled because
-// there are two networks to ask.
+// Each row's figures are live calls to Meta. See the note in
+// src/app/dashboard/page.tsx — same reason, same budget.
 export const maxDuration = 30;
 
 const statusTone = {
@@ -126,17 +125,12 @@ export default async function CampaignsPage() {
   const unlimitedCampaigns = !Number.isFinite(entitlements.campaign_limit);
   const atLimit = !unlimitedCampaigns && activeCount >= entitlements.campaign_limit;
 
-  // The plan to sell if they reach for something they don't have. Asked for by
-  // capability rather than named, so changing which plan includes TikTok
-  // changes this automatically.
+  // The next plan up, named in the upgrade prompts.
   const upgradeTarget =
     PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ??
     PLANS[PLANS.length - 1];
 
   const planContext: PlanContext = {
-    tiktokAllowed: entitlements.tiktok_ads,
-    crossPlatformAllowed: entitlements.cross_platform_campaigns,
-    growthModeAllowed: entitlements.tiktok_growth,
     currentPlanName: plan.name,
     currentPlanPrice: plan.priceMonthly,
     upgradePlanName: upgradeTarget.name,
@@ -158,7 +152,7 @@ export default async function CampaignsPage() {
     <div>
       <PageHeader
         title="Campaigns"
-        description="One campaign, however many places it runs. MAIRO handles the rest."
+        description="Your Facebook and Instagram campaigns. MAIRO handles the rest."
         action={
           <Badge tone={atLimit ? "yellow" : "neutral"}>
             {unlimitedCampaigns
@@ -260,7 +254,6 @@ export default async function CampaignsPage() {
                     <p className="mt-1 text-xs text-neutral-500">
                       {campaign.objective.toLowerCase().replace("_", " ")} ·{" "}
                       {formatMoney(campaign.totalDailyBudgetCents / 100)} a day
-                      {campaign.tiktokGrowthMode && " · Growth Mode"}
                     </p>
                   </div>
                   <Badge tone={statusTone[campaign.status]}>

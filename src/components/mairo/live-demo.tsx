@@ -25,8 +25,8 @@ const TYPED =
 const STRATEGY = [
   "Meta conversion campaign",
   "Meta retargeting campaign",
-  "TikTok creative testing",
-  "UGC-style TikTok advertisements",
+  "Instagram Reels creative testing",
+  "UGC-style Stories advertisements",
   "Product-focused Meta advertisements",
 ];
 
@@ -141,8 +141,8 @@ export function LiveDemo() {
         {step >= 2 && (
           <div className="mairo-in grid gap-3 sm:grid-cols-3">
             <Cell label="Goal" value="Online purchases" />
-            <Cell label="Meta" value="$1,300" />
-            <Cell label="TikTok" value="$700" />
+            <Cell label="Facebook" value="$1,100" />
+            <Cell label="Instagram" value="$900" />
           </div>
         )}
 

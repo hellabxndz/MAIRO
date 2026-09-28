@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { can, entitlementsFor } from "@/lib/entitlements";
+import { can } from "@/lib/entitlements";
 import { planFor } from "@/lib/plans";
 import { splitBudget } from "@/lib/budget/allocation";
 import {
@@ -46,9 +46,6 @@ export type CampaignRecommendation = {
 export async function buildRecommendations(
   organizationId: string
 ): Promise<CampaignRecommendation[]> {
-  const entitlements = await entitlementsFor(organizationId);
-  if (!entitlements.cross_platform_campaigns) return [];
-
   const [report, campaigns] = await Promise.all([
     fetchOrganizationPerformance(organizationId),
     db.mairoCampaign.findMany({
@@ -238,7 +235,7 @@ const autoOptimizeSchema = z.object({
   maxBudgetShiftPercent: z.coerce.number().min(1).max(100),
   minRoas: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   maxCpa: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
-  platforms: z.array(z.enum(["META", "TIKTOK", "GOOGLE", "SNAPCHAT", "PINTEREST", "LINKEDIN"])),
+  platforms: z.array(z.enum(["META"])),
 });
 
 export type AutoOptimizeState = { error?: string; saved?: boolean } | undefined;

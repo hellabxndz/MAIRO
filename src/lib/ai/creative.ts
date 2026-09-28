@@ -27,8 +27,6 @@ export type CreativeConceptInput = {
    * this shipped comes back as the same kind of ad it was.
    */
   platform?: AdPlatform | null;
-  /** TikTok Growth Mode: written for a business with no following yet. */
-  growthMode?: boolean;
   brief: string;
   businessName: string;
   /** A data URL, as stored on CreativeRequest.referenceImage. */
@@ -94,10 +92,9 @@ export async function generateCreativeConcept(
     "Write plainly. No buzzwords, no 'elevate your brand', no em-dash-heavy ad-speak. Be specific about this business rather than generic about advertising.",
     "",
     // The platform direction goes last, so it has the final word over the
-    // generic structure above. A TikTok ad's shape is genuinely different from
-    // a Meta one's, and the instruction that says so should not be buried
-    // above six lines of house style it needs to override.
-    creativeDirectionFor(input.platform ?? "META", { growthMode: input.growthMode }),
+    // generic structure above; the instruction specific to where the ad runs
+    // should not be buried above six lines of house style it needs to override.
+    creativeDirectionFor(input.platform ?? "META"),
   ].join("\n");
 
   const { text } = await generateText({
