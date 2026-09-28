@@ -18,7 +18,7 @@ function present(name: string): boolean {
   return Boolean(process.env[name]?.trim());
 }
 
-const CHECKS: { name: string; label: string; why: string }[] = [
+const CHECKS: { name: string; label: string; why: string; optional?: true }[] = [
   {
     name: "META_APP_ID",
     label: "Meta App ID",
@@ -58,6 +58,48 @@ const CHECKS: { name: string; label: string; why: string }[] = [
       "Encrypts the Meta access tokens at rest. Without it they are stored in plain " +
       "text, and anyone who obtained a copy of the database could spend your clients' " +
       "ad budgets. Generate with: openssl rand -base64 32",
+  },
+  {
+    name: "CRON_SECRET",
+    label: "Cron secret",
+    why:
+      "Lets the nightly and scheduled jobs run. Without it, campaigns booked for a " +
+      "later start only begin when the customer next opens the dashboard, and the " +
+      "overnight checks never run.",
+  },
+  {
+    name: "BLOB_READ_WRITE_TOKEN",
+    label: "File storage",
+    why: "Stores the pictures and videos customers upload for their ads. Without it the upload buttons are hidden.",
+  },
+  {
+    name: "OPENAI_API_KEY",
+    label: "AI image key",
+    why: "Makes ad pictures in Creative Studio and Create. Without it, customers can only upload their own.",
+  },
+  {
+    name: "AUTH_GOOGLE_ID",
+    label: "Google sign-in: client ID",
+    why: "With the secret below, shows Continue with Google on the sign-in and sign-up pages.",
+    optional: true,
+  },
+  {
+    name: "AUTH_GOOGLE_SECRET",
+    label: "Google sign-in: client secret",
+    why: "The other half of the Google OAuth client. Both must be set for the button to appear.",
+    optional: true,
+  },
+  {
+    name: "TIKTOK_APP_ID",
+    label: "TikTok app ID",
+    why: "From the approved app at business-api.tiktok.com. With the secret, turns TikTok ads on.",
+    optional: true,
+  },
+  {
+    name: "TIKTOK_APP_SECRET",
+    label: "TikTok app secret",
+    why: "The other half of the TikTok app. Until both are set, TikTok isn't offered to customers.",
+    optional: true,
   },
 ];
 
@@ -176,7 +218,9 @@ export default async function SetupPage() {
             >
               <div className="max-w-lg">
                 <div className="flex items-center gap-3">
-                  <Badge tone={r.ok ? "green" : "red"}>{r.ok ? "SET" : "MISSING"}</Badge>
+                  <Badge tone={r.ok ? "green" : r.optional ? "neutral" : "red"}>
+                    {r.ok ? "SET" : r.optional ? "NOT SET · OPTIONAL" : "MISSING"}
+                  </Badge>
                   <span className="text-sm text-white">{r.label}</span>
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-neutral-500">{r.why}</p>
