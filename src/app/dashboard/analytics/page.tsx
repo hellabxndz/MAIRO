@@ -303,7 +303,7 @@ export default async function AnalyticsPage({
               <p className="text-sm text-neutral-400">
                 Per-platform breakdowns, creative-level figures and TikTok&rsquo;s video
                 metrics are part of Growth.{" "}
-                <Link href="/dashboard/settings#billing" className="text-sky-300 underline underline-offset-4">
+                <Link href="/dashboard/billing" className="text-sky-300 underline underline-offset-4">
                   See plans
                 </Link>
               </p>

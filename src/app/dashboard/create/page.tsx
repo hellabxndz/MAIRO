@@ -164,7 +164,7 @@ export default async function CreatePage() {
               : { kind: "available", detail: `Not on ${plan.name}` }
           }
           planNote={tiktokAllowed ? campaignsLine : "Available on a higher plan"}
-          href={tiktokAllowed ? "/dashboard/create/tiktok" : "/dashboard/plan"}
+          href={tiktokAllowed ? "/dashboard/create/tiktok" : "/dashboard/billing"}
         />
 
         <PlatformCard
@@ -191,7 +191,7 @@ export default async function CreatePage() {
                 : { kind: "available", detail: "Needs both connected" }
           }
           planNote={crossPlatform ? campaignsLine : "Available on a higher plan"}
-          href={crossPlatform ? "/dashboard/create/multi" : "/dashboard/plan"}
+          href={crossPlatform ? "/dashboard/create/multi" : "/dashboard/billing"}
         />
 
         {/* Where this is going. Dimmed, unclickable, and carrying no date. */}

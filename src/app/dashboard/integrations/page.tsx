@@ -92,7 +92,7 @@ export default async function IntegrationsPage({
         <div className="mb-6 rounded-2xl border border-sky-400/20 bg-sky-400/[0.05] p-4">
           <p className="text-sm text-sky-200">
             TikTok is part of {upgradeTarget.name}.{" "}
-            <Link href="/dashboard/settings#billing" className="underline underline-offset-4">
+            <Link href="/dashboard/billing" className="underline underline-offset-4">
               Upgrade to connect it
             </Link>
             .
@@ -160,7 +160,7 @@ export default async function IntegrationsPage({
                 <div className="flex items-center gap-3">
                   {!meta.implemented ? null : !permitted ? (
                     <Link
-                      href="/dashboard/settings#billing"
+                      href="/dashboard/billing"
                       className="rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20"
                     >
                       Included in {upgradeTarget.name}
@@ -299,7 +299,7 @@ function StartFromZero({
                 Meta — Facebook and Instagram — and everything MAIRO does to run it.
               </p>
               <Link
-                href="/dashboard/settings#billing"
+                href="/dashboard/billing"
                 className="mt-3 inline-block rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20"
               >
                 See {upgradeName}
@@ -422,7 +422,7 @@ function PostingCard({
             Facebook and Instagram — and everything MAIRO does to run it.
           </p>
           <Link
-            href="/dashboard/settings#billing"
+            href="/dashboard/billing"
             className="mt-3 inline-block rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20"
           >
             See {upgradeName}

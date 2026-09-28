@@ -147,7 +147,7 @@ export const PRIMARY_NAV: NavEntry[] = [
 
 /** Bottom of the sidebar. The things you go to occasionally, on purpose. */
 export const SECONDARY_NAV: NavEntry[] = [
-  { href: "/dashboard/plan", label: "Billing", icon: <Icon d={I.billing} /> },
+  { href: "/dashboard/billing", label: "Billing", icon: <Icon d={I.billing} /> },
   { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} /> },
   { href: "/dashboard/account", label: "Account", icon: <Icon d={I.account} /> },
 ];
@@ -297,7 +297,7 @@ export function AppShell({
 
         {showUpgrade && (
           <Link
-            href="/dashboard/plan"
+            href="/dashboard/billing"
             className="mb-4 block rounded-2xl border p-4 text-center transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
             style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
           >

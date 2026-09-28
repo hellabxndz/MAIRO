@@ -104,7 +104,7 @@ export function DeleteCampaign({
         <div className="mt-4 border-t border-white/10 pt-4">
           <p className="text-xs text-neutral-400">Or don&apos;t choose between them:</p>
           <Link
-            href="/dashboard/settings#billing"
+            href="/dashboard/billing"
             className={`mt-2 ${primaryButtonClass}`}
           >
             Keep this one and run {upgrade.campaigns} — {upgrade.name}, ${upgrade.price}/mo

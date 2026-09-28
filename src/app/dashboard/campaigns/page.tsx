@@ -211,7 +211,7 @@ export default async function CampaignsPage() {
                 this is the other half of the same decision and should not be
                 the quieter of the two. */}
             <Link
-              href="/dashboard/settings#billing"
+              href="/dashboard/billing"
               className={primaryButtonClass}
             >
               {upgradeTarget.name} runs {upgradeTarget.limits.campaigns} — ${upgradeTarget.priceMonthly}/mo

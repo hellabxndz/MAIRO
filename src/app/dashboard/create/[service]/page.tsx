@@ -90,7 +90,7 @@ export default async function CreateServicePage({
   // seven-question flow only to be told at the end that the plan does not cover
   // it is a worse way to find out than not being able to start.
   const limits = await entitlementsForTier(organization.subscriptionTier);
-  if (service.needs && !limits[service.needs]) redirect("/dashboard/plan");
+  if (service.needs && !limits[service.needs]) redirect("/dashboard/billing");
 
   // A draft opened under another service's address goes to its own.
   if (draft && draft.service !== slug && SERVICES[draft.service]) {

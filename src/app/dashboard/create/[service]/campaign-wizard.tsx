@@ -409,7 +409,7 @@ export function CampaignWizard(props: Props) {
               {state?.upgradeNeeded && (
                 <p className="mt-5 rounded-xl border px-4 py-3 text-[13px] text-amber-200/90" style={{ borderColor: "rgba(251,191,36,0.25)" }}>
                   Your plan doesn&rsquo;t include this.{" "}
-                  <Link href="/dashboard/plan" className="underline underline-offset-4">See plans</Link>
+                  <Link href="/dashboard/billing" className="underline underline-offset-4">See plans</Link>
                 </p>
               )}
             </Question>

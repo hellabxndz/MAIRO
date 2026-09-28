@@ -182,7 +182,7 @@ export async function readinessFor(
       done: paid,
       label: `Choose a plan`,
       detail: `MAIRO builds and runs the campaigns for you — the ${planName} plan is where that starts. This is separate from what you spend on the ads themselves.`,
-      href: "/dashboard/settings#billing",
+      href: "/dashboard/billing",
     },
     {
       id: "business",

@@ -155,7 +155,7 @@ async function createCheckoutUrl(input: {
   const origin = await originUrl();
 
   // Come back to the screen that is actually yours. A freelancer who paid and
-  // landed on /dashboard/settings would either be bounced back to /clients
+  // landed on a business's dashboard page would either be bounced back to /clients
   // (no client open) or shown some client's business settings — neither of
   // which is the account that just bought anything.
   //
@@ -176,7 +176,7 @@ async function createCheckoutUrl(input: {
     ? "/clients"
     : sellingOnline
       ? "/dashboard/sales-setup"
-      : "/dashboard/settings";
+      : "/dashboard/billing";
 
   const checkout = await stripe().checkout.sessions.create({
     mode: "subscription",
@@ -227,7 +227,7 @@ export async function openBillingPortalAction(): Promise<void> {
 
   const portal = await stripe().billingPortal.sessions.create({
     customer: organization.stripeCustomerId,
-    return_url: `${await originUrl()}/dashboard/settings`,
+    return_url: `${await originUrl()}/dashboard/billing`,
   });
   redirect(portal.url);
 }

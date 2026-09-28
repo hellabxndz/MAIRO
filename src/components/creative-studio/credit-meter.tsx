@@ -48,7 +48,7 @@ export function CreditMeter({
       {wouldExceed && (
         <p className="mt-2 text-[11.5px] text-amber-300">
           Not enough left for this.{" "}
-          <Link href="/dashboard/settings#billing" className="underline underline-offset-2 hover:text-white">
+          <Link href="/dashboard/billing" className="underline underline-offset-2 hover:text-white">
             Move up a plan
           </Link>{" "}
           for more, or wait for the reset on the 1st.

@@ -141,7 +141,7 @@ export function UpgradeModal({
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse">
             <Link
-              href="/dashboard/settings#billing"
+              href="/dashboard/billing"
               className={`${primaryButtonClass} flex-1 justify-center text-center`}
             >
               Upgrade to {copy.upgradePlanName}

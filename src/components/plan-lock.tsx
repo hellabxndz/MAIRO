@@ -57,7 +57,7 @@ export function PlanLock({
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <Link
-          href="/dashboard/settings#billing"
+          href="/dashboard/billing"
           className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110"
         >
           Choose a plan
