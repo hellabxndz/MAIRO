@@ -55,12 +55,57 @@ const FILLED = {
   ),
 };
 
-/** The kinds of businesses Mairo is built for. Each tag says who, never a result. */
-const WHO = [
-  { src: "/landing/card-1.webp", alt: "A boxing coach training in a gym", v: "Gyms", k: "& fitness coaches", pos: "30% 40%" },
-  { src: "/landing/card-2.webp", alt: "A black running shoe on concrete", v: "Stores", k: "& online shops", pos: "45% 50%" },
-  { src: "/landing/card-3.webp", alt: "A woman in sunglasses", v: "Brands", k: "& boutiques", pos: "35% 40%" },
-  { src: "/landing/card-4.webp", alt: "A skincare serum bottle", v: "Beauty", k: "& skincare", pos: "70% 50%" },
+/**
+ * The kinds of businesses Mairo is built for, each with the sort of ad Mairo
+ * would write for them. Marked as examples — nobody's real ad or result.
+ */
+const WHO: { v: string; k: string; icon: ReactNode; glow: string; ad: string; cta: string }[] = [
+  {
+    v: "Gyms",
+    k: "& fitness coaches",
+    glow: "rgba(124,77,255,0.55)",
+    ad: "Your first class is free",
+    cta: "Book",
+    icon: (
+      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
+    ),
+  },
+  {
+    v: "Stores",
+    k: "& online shops",
+    glow: "rgba(59,130,246,0.5)",
+    ad: "New arrivals are in",
+    cta: "Shop now",
+    icon: (
+      <>
+        <path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8z" />
+        <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+      </>
+    ),
+  },
+  {
+    v: "Brands",
+    k: "& boutiques",
+    glow: "rgba(236,72,153,0.45)",
+    ad: "The summer edit",
+    cta: "Shop",
+    icon: (
+      <>
+        <path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0l-8.5-8.1z" />
+        <circle cx="8" cy="8" r="1.4" />
+      </>
+    ),
+  },
+  {
+    v: "Beauty",
+    k: "& skincare",
+    glow: "rgba(20,184,166,0.45)",
+    ad: "Meet your new serum",
+    cta: "Try it",
+    icon: (
+      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" />
+    ),
+  },
 ];
 
 function Icon({ d }: { d: ReactNode }) {
@@ -283,15 +328,30 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Who it's for — pictures of the kinds of businesses Mairo is built for. */}
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Who it's for — the kinds of businesses Mairo is built for, each with an example of the ad it would write. */}
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {WHO.map((c) => (
-            <div key={c.src} className="relative aspect-[2.3/1] overflow-hidden rounded-2xl border border-white/10">
-              <Image src={c.src} alt={c.alt} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" style={{ objectPosition: c.pos }} />
-              <span className="absolute right-[5%] top-[11%] rounded-xl border border-white/10 bg-[#171428]/90 px-3 py-1.5 text-center backdrop-blur-md">
-                <span className="block bg-gradient-to-r from-[#d8b4fe] to-[#a78bfa] bg-clip-text text-[16px] font-extrabold leading-tight text-transparent">{c.v}</span>
-                <span className="block text-[10px] text-white/85">{c.k}</span>
-              </span>
+            <div key={c.v} className="relative flex min-h-[150px] flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0a0d1c] p-5">
+              <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full blur-3xl" style={{ background: c.glow }} />
+              <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:22px_22px]" />
+              <div className="relative flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden>
+                    {c.icon}
+                  </svg>
+                </span>
+                <span>
+                  <span className="block bg-gradient-to-r from-[#d8b4fe] to-[#a78bfa] bg-clip-text text-[18px] font-extrabold leading-tight text-transparent">{c.v}</span>
+                  <span className="block text-[12px] text-white/75">{c.k}</span>
+                </span>
+              </div>
+              <div className="relative mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2 backdrop-blur-sm">
+                <span className="min-w-0">
+                  <span className="block text-[9.5px] uppercase tracking-[0.14em] text-white/45">Example ad</span>
+                  <span className="block text-[12.5px] leading-snug font-medium text-white/90">{c.ad}</span>
+                </span>
+                <span className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/85">{c.cta}</span>
+              </div>
             </div>
           ))}
         </div>
