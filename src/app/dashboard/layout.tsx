@@ -59,6 +59,9 @@ const ENQUIRIES_NAV = {
 // would send them to a screen they were not ready for and lose the answer they
 // had just given.
 const ALWAYS_REACHABLE = [
+  // The first-campaign checklist, which is where connecting Meta starts for
+  // a business that came through the free plan.
+  "/dashboard/launch",
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",
@@ -111,8 +114,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // cannot see past this screen at all.
   const exploring = await isExploring();
   if (!intake) redirect("/onboarding");
+
+  // The free plan comes before the dashboard. A business that came through it
+  // reviews and approves its plan, then subscribes; only then does the full
+  // platform open. Billing and the launch checklist stay reachable so paying
+  // and continuing always work.
+  const journey = active?.actingAsClient
+    ? null
+    : await db.strategyPlan.findUnique({ where: { organizationId }, select: { status: true, activatedAt: true } });
+  if (journey && !journey.activatedAt) {
+    if (journey.status !== "APPROVED") redirect("/plan");
+    const paid = organization ? hasActivePlan(organization) : false;
+    if (!["/dashboard/launch", "/dashboard/billing"].some((p) => pathname.startsWith(p))) {
+      redirect(paid ? "/dashboard/launch" : "/plan/activate");
+    }
+  }
+
   if (!metaAccount && !exploring && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
-    redirect("/dashboard/meta?required=1");
+    redirect(journey ? "/dashboard/launch" : "/dashboard/meta?required=1");
   }
 
   const mode = await viewMode();
@@ -201,7 +220,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
 
-      {!metaAccount && (
+      {!metaAccount && !pathname.startsWith("/dashboard/launch") && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-amber-200">
             You&apos;re looking around without a Meta account connected. Plans and

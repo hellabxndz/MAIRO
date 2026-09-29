@@ -214,7 +214,9 @@ export async function readinessFor(
     {
       id: "creative",
       owner: "you",
-      done: Boolean(creative),
+      // An ad built into a campaign counts too: it was chosen and confirmed in
+      // Create (their own photos, a video, a post), not only in Creative Studio.
+      done: Boolean(creative) || Boolean(campaign),
       label: "Approve an ad",
       detail:
         "Send a photo of what you sell and MAIRO writes the ad around it. Nothing runs until you are happy with one.",

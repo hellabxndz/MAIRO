@@ -34,6 +34,9 @@ const intakeSchema = z.object({
   brandVoice: z.string().optional(),
   competitors: z.string().optional(),
   notes: z.string().optional(),
+  offering: z.string().max(200).optional(),
+  currentOffer: z.string().max(200).optional(),
+  customerLocation: z.string().max(120).optional(),
 });
 
 export type OnboardingState = { error?: string } | undefined;
@@ -59,6 +62,9 @@ export async function completeOnboardingAction(
     brandVoice: formData.get("brandVoice") || undefined,
     competitors: formData.get("competitors") || undefined,
     notes: formData.get("notes") || undefined,
+    offering: formData.get("offering") || undefined,
+    currentOffer: formData.get("currentOffer") || undefined,
+    customerLocation: formData.get("customerLocation") || undefined,
   });
 
   if (!parsed.success) {
@@ -118,6 +124,9 @@ export async function completeOnboardingAction(
       brandVoice: data.brandVoice,
       competitors: data.competitors,
       notes: data.notes,
+      offering: data.offering?.trim() || null,
+      currentOffer: data.currentOffer?.trim() || null,
+      customerLocation: data.customerLocation?.trim() || null,
     },
     update: {
       primaryGoal: data.primaryGoal,
@@ -126,8 +135,17 @@ export async function completeOnboardingAction(
       brandVoice: data.brandVoice,
       competitors: data.competitors,
       notes: data.notes,
+      offering: data.offering?.trim() || null,
+      currentOffer: data.currentOffer?.trim() || null,
+      customerLocation: data.customerLocation?.trim() || null,
     },
   });
+
+  // A business signing itself up gets the free plan next: Mairo writes it,
+  // they review, change and approve it, and only then choose a subscription.
+  // A freelancer's client keeps the old path — its freelancer already pays.
+  // A lead form's questions are asked after activation, from the launch checklist.
+  if (!organization.parentId) redirect("/plan");
 
   const month = currentMonthKey();
 

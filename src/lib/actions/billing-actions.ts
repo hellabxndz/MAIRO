@@ -206,12 +206,20 @@ async function createCheckoutUrl(input: {
       ? "/dashboard/sales-setup"
       : "/dashboard/billing";
 
+  // A business coming from its approved free plan returns to the step that
+  // turns that plan into its first campaign, or back to its plan if it
+  // cancels — never to a screen that starts over.
+  const journey = isFreelancerTier(tier)
+    ? null
+    : await db.strategyPlan.findUnique({ where: { organizationId }, select: { status: true, activatedAt: true } });
+  const fromPlan = journey?.status === "APPROVED" && !journey.activatedAt;
+
   const checkout = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceIdFor(tier), quantity: 1 }],
-    success_url: `${origin}${home}?subscribed=1`,
-    cancel_url: `${origin}${home}?checkout=cancelled`,
+    success_url: fromPlan ? `${origin}/dashboard/launch?subscribed=1` : `${origin}${home}?subscribed=1`,
+    cancel_url: fromPlan ? `${origin}/plan/activate?checkout=cancelled` : `${origin}${home}?checkout=cancelled`,
     // Carried onto the subscription so the webhook can identify the
     // organization without a lookup, and without trusting anything the client
     // sent us.

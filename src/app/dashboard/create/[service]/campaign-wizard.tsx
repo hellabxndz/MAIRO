@@ -64,6 +64,8 @@ type Props = {
   businessPhone: string | null;
   /** The customer asked MAIRO to wait for Approve before anything goes live. */
   autoLaunchHeld: boolean;
+  /** Where to go once it's built; the Campaigns page unless it came from the approved plan. */
+  afterLaunchHref?: string;
   mode: "simple" | "advanced";
   studio: StudioProps;
   /** This campaign's networks that are connected right now. */
@@ -225,8 +227,8 @@ export function CampaignWizard(props: Props) {
     if (attempt === 0 || pending) return;
     // Finished: released only now, so a retry after an error is possible.
     launching.current = false;
-    if (!state?.error && !state?.upgradeNeeded) router.push("/dashboard/campaigns");
-  }, [attempt, pending, state, router]);
+    if (!state?.error && !state?.upgradeNeeded) router.push(props.afterLaunchHref ?? "/dashboard/campaigns");
+  }, [attempt, pending, state, router, props.afterLaunchHref]);
 
   // Follows what they said they're advertising on the first screen.
   const recommended = recommendedGoal({ promotes: plan.promotes, defaultDestination, hasActivePixel: pixelActive });
@@ -392,7 +394,9 @@ export function CampaignWizard(props: Props) {
                 <p className="mt-2">
                   MAIRO builds the campaign in your own {NETWORK[plan.service]} ad account, switched off.{" "}
                   {autoLaunchHeld
-                    ? "It then waits: nothing runs until you press Approve on the Campaigns page, because you've asked MAIRO to hold before going live."
+                    ? props.afterLaunchHref
+                      ? "It then waits: you'll see it beside your approved plan, and nothing runs until you press Launch Campaign."
+                      : "It then waits: nothing runs until you press Approve on the Campaigns page, because you've asked MAIRO to hold before going live."
                     : `Once the ad is ready and ${NETWORK[plan.service]} can charge your payment method, MAIRO switches it on — that's when spending starts. You can pause it any time.`}
                 </p>
               </div>

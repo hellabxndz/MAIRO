@@ -252,6 +252,7 @@ model Organization {
   weeklyReports        WeeklyReport[]
   reportSettings       ReportSettings?
   learnings            MairoLearning[]
+  strategyPlan         StrategyPlan?
   intelligenceReport   IntelligenceReport?
   profitSettings       ProfitSettings?
 
@@ -376,6 +377,10 @@ model OnboardingIntake {
   offering           String?
   /// What makes it different from competitors.
   differentiator     String?
+  /// The offer running now, if any, in their words ("20% off first visit").
+  currentOffer       String?
+  /// Where their customers are, in their words ("Austin, TX").
+  customerLocation   String?
 
   completedAt DateTime @default(now())
 }
@@ -851,6 +856,11 @@ model MairoCampaign {
   name      String
   objective AdGoal
   status    CampaignStatus @default(DRAFT)
+
+  /// When a person pressed Launch on this campaign. An account that asked
+  /// MAIRO to hold before going live still has this one switched on once the
+  /// network finishes reviewing it — they already said yes to it.
+  launchApprovedAt DateTime?
 
   /// Where this campaign's ad sends people, and the value it needs.
   ///
@@ -2474,4 +2484,68 @@ model MairoLearning {
 
   @@unique([organizationId, key])
   @@index([organizationId, active])
+}
+
+// --- Free plan: review, revise, approve --------------------------------
+
+enum StrategyPlanStatus {
+  DRAFT
+  REVISING
+  APPROVED
+}
+
+/// The advertising plan MAIRO writes for free after business setup.
+///
+/// The business reviews it, asks MAIRO to change it or edits it by hand, and
+/// approves it before choosing a subscription. After payment it becomes the
+/// first campaign. Changing it before payment returns it to DRAFT; once the
+/// subscription is active it is locked and the campaign is built from the
+/// approved snapshot.
+model StrategyPlan {
+  id                   String             @id @default(cuid())
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId       String             @unique
+  status               StrategyPlanStatus @default(DRAFT)
+  /// 0 is the original plan; each revision adds one.
+  version              Int                @default(0)
+  /// The plan as it stands now (StrategyContent JSON).
+  planJson             String             @db.Text
+  approvedAt           DateTime?
+  approvedVersion      Int?
+  /// Exactly what was approved. Never edited afterwards.
+  approvedSnapshotJson String?            @db.Text
+  /// When the subscription was confirmed and the plan locked.
+  activatedAt          DateTime?
+  /// The Create draft prefilled from the approved plan.
+  campaignDraftId      String?
+  /// The campaign built from it.
+  campaignId           String?
+  launchedAt           DateTime?
+  /// When the post-launch welcome was dismissed.
+  welcomedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  revisions StrategyPlanRevision[]
+}
+
+model StrategyPlanRevision {
+  id          String       @id @default(cuid())
+  plan        StrategyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId      String
+  version     Int
+  /// original | ai | edit | suggestion | undo
+  kind        String
+  /// What the business asked for, in their words (AI revisions).
+  request     String?      @db.Text
+  summary     String
+  /// PlanChange[] JSON: section, previous, updated, reason.
+  changesJson String       @db.Text
+  /// The whole plan after this revision.
+  planJson    String       @db.Text
+  /// "you" or "mairo".
+  requestedBy String
+  createdAt   DateTime     @default(now())
+
+  @@unique([planId, version])
 }

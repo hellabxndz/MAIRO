@@ -8,7 +8,10 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
+  // The free plan's review and activation screens (/plan, /plan/activate).
+  const isPlan = pathname === "/plan" || pathname.startsWith("/plan/");
   const isProtected =
+    isPlan ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/aios");
@@ -26,7 +29,7 @@ export default auth((req) => {
   }
 
   if (
-    (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) &&
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding") || isPlan) &&
     session.user.role === "OWNER"
   ) {
     return NextResponse.redirect(new URL("/aios", req.nextUrl.origin));
@@ -42,5 +45,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/aios/:path*"],
+  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/aios/:path*", "/plan/:path*"],
 };

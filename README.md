@@ -405,6 +405,28 @@ plain version without an API key.
   clients automatically.
 - The monthly report moved to `/dashboard/reports/monthly`.
 
+### 5j. Free plan, approval and the first campaign
+
+One journey from sign-up to a live first campaign. The free stage creates the strategy; the paid stage activates it.
+
+**Free (before payment)** — `/plan`
+- After business setup (which now also asks what to advertise, any current offer and where customers are), Mairo reads the website (Business Analyzer) and writes the **Mairo Advertising Plan**: goal, Facebook/Instagram, budget, audience, campaign type, product, offer, creative strategy, concepts, hooks, retargeting, website recommendations, budget split and structure.
+- **Ask Mairo** changes it in plain words ("Change my budget to $35/day"). The reply lists every change with Previous / Updated / Reason, changed sections are highlighted, and **Undo Change** reverts it. Questions are answered without changing anything. Without an AI key, Mairo reads common requests (budget, platforms, ages, location, goal, product, offer) and says plainly when it can't.
+- **Edit** buttons on Budget, Audience, Platforms, Goal, Product, Offer and Campaign Type. Dependent parts (split, retargeting, structure, campaign type) update with the reason shown — never silently. Tradeoffs come as a **Mairo Suggestion** with *Use Mairo Recommendation* / *Keep My Choice*; the business's choice wins.
+- **Version history**: Original Plan, Revision 1, 2… with what changed, why, who asked, and "Go back to this version".
+- States `DRAFT` / `REVISING` / `APPROVED` (`StrategyPlan`); approval stores `approvedAt`, `approvedVersion` and an untouched `approvedSnapshotJson`. Any change before payment returns it to draft.
+- Until approved and paid, `/dashboard/*` redirects to `/plan` or `/plan/activate` (billing and the launch checklist stay reachable). `/plan/activate` shows the approved summary, the plans, and a sample-data demo. While `BILLING_ENFORCED` is off, it says so and continues without payment.
+
+**Paid** — `/dashboard/launch`
+- Activation locks the plan and turns on "hold before going live" for that business. Stripe returns to `/dashboard/launch?subscribed=1` (it waits honestly if the webhook hasn't arrived).
+- Checklist: Strategy Approved → Subscription Active → Connect Facebook & Instagram → Select Ad Account → Verify Payment Method (asked of Meta; "unknown" never counts as done) → Review Audience → Confirm Budget → Generate Final Creatives → Pre-Launch Check → Build Campaign → Final Approval → Launch.
+- **Turn My Plan Into a Campaign** opens Create with a draft prefilled from the approved snapshot; the campaign is built switched off and Create returns here.
+- **Approved plan beside real campaign**, row by row, with differences highlighted and explained (e.g. retargeting ad sets are suggested later, never added automatically; sales aren't shown as tracked without the Pixel).
+- Nothing goes live until **Launch Campaign** is pressed after agreeing to the daily budget. A press is recorded (`MairoCampaign.launchApprovedAt`), so a campaign still in Meta's review goes live when it clears.
+- After launch: LIVE, "Welcome to your full Mairo dashboard", and a *Collecting data* note for the first 72 hours instead of any invented numbers.
+
+Mairo runs Meta only, so the plan uses Facebook and Instagram. Freelancer client workspaces keep the previous onboarding path. `npm run check:strategy-plan` checks the plan rules.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

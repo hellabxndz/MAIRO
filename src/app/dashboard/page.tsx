@@ -39,6 +39,8 @@ import { contributionOf, DEFAULT_PROFIT_INPUTS, estimateProfit, productEconomics
 import { loadBrain } from "@/lib/business/brain";
 import { parseReport, reportIsFresh, WEEKDAYS } from "@/lib/reports/weekly";
 import { WeeklyReportCard } from "@/components/reports/weekly-card";
+import { FirstCampaignCard } from "@/components/strategy/journey-card";
+import { firstCampaignState } from "@/lib/strategy/first-campaign";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -115,6 +117,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     db.reportSettings.findUnique({ where: { organizationId } }),
   ]);
   const latestData = latestReport ? parseReport(latestReport.dataJson) : null;
+  // A business that came through the free plan: its first campaign's state.
+  const firstCampaign = await firstCampaignState(organizationId);
   const weeklyCard = (
     <WeeklyReportCard
       report={
@@ -155,6 +159,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
 
   const alerts = (
     <>
+      {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
       {/* MAIRO acted on its own, so it says so — before the customer finds a
           live campaign they did not press anything to start. */}
       {launched.launched && (
@@ -173,7 +178,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
         </Card>
       )}
 
-      <ReadinessPanel
+      {/* The launch checklist covers the same steps for a plan-journey business. */}
+      {!(firstCampaign && !firstCampaign.launched) && <ReadinessPanel
         readiness={readiness}
         autoLaunch={autoLaunch}
         action={
@@ -181,7 +187,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
             ? { url: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Open Meta billing" }
             : null
         }
-      />
+      />}
 
       {/* Ads that cannot be paid for outrank everything, including an
           optimization: there is no point tuning a budget split on a campaign

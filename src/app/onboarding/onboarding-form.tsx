@@ -218,6 +218,48 @@ export function OnboardingForm() {
         ) : null}
       </div>
 
+      {needs !== "website" && (
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Website (optional)</label>
+          <input name="website" className={inputClass} placeholder="yourbusiness.com" />
+          <p className="text-xs text-neutral-500">
+            MAIRO reads it to make your free plan about your business, not a template.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium">What do you want to advertise?</label>
+        <input
+          name="offering"
+          maxLength={200}
+          className={inputClass}
+          placeholder="e.g. Teeth whitening, or our summer collection"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Any offer right now? (optional)</label>
+          <input
+            name="currentOffer"
+            maxLength={200}
+            className={inputClass}
+            placeholder="e.g. 20% off your first visit"
+          />
+          <p className="text-xs text-neutral-500">Only one you really run — ads can&apos;t promise one you don&apos;t.</p>
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Where are your customers?</label>
+          <input
+            name="customerLocation"
+            maxLength={120}
+            className={inputClass}
+            placeholder="e.g. Austin, TX — or all of the US"
+          />
+        </div>
+      </div>
+
       <div className="space-y-1">
         <label className="text-sm font-medium">Who are you trying to reach?</label>
         <textarea
@@ -255,7 +297,7 @@ export function OnboardingForm() {
         disabled={pending}
         className="w-full rounded-lg bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
       >
-        {pending ? "Building your plan..." : "Build my plan"}
+        {pending ? "Saving..." : "Build my free plan"}
       </button>
     </form>
   );

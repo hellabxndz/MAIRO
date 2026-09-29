@@ -84,6 +84,11 @@ export default async function CreateServicePage({
   // The Business Brain fills anything the signup answers left empty, so a
   // business that analyzed its website doesn't type its own description again.
   const brain = brainFacts((await loadBrain(organizationId)).profile);
+  // A draft made from the approved free plan goes back to the launch review
+  // once it's built, where the plan and the campaign are compared.
+  const fromPlan = draft
+    ? Boolean(await db.strategyPlan.findFirst({ where: { organizationId, campaignDraftId: draft.id }, select: { id: true } }))
+    : false;
   if (!organization) redirect("/sign-in");
 
   // A draft opened under another service's address goes to its own.
@@ -127,7 +132,13 @@ export default async function CreateServicePage({
         All services
       </Link>
 
+      {fromPlan && (
+        <p className="mb-6 rounded-xl border border-violet/30 bg-violet/[0.06] px-4 py-3 text-[13.5px] text-white/90">
+          Prefilled from your approved plan. Check each step, confirm your location, and make your final creatives — the campaign is built switched off, and nothing spends until you press Launch Campaign.
+        </p>
+      )}
       <CampaignWizard
+        afterLaunchHref={fromPlan ? "/dashboard/launch" : undefined}
         initialPlan={initialPlan}
         initialDraftId={draft?.id ?? null}
         initialStep={initialStep}

@@ -42,6 +42,7 @@ import { FACEBOOK_POST_ID, INSTAGRAM_MEDIA_ID } from "@/lib/campaigns/sales-sour
 import { supportsDestination } from "@/lib/campaigns/objectives";
 import { appStoreUrl, META_APP_ID } from "@/lib/campaigns/destination";
 import { siteUrl } from "@/lib/site";
+import { linkBuiltCampaign } from "@/lib/strategy/campaign";
 
 // MAIRO runs Meta only. Anything else arriving from a form is refused here.
 const PLATFORM_VALUES = ["META"] as const;
@@ -472,6 +473,9 @@ export async function createCampaignAction(
   // it is released so the customer can fix the problem and build again.
   if (claimedDraft) {
     if (failures.length < outcome.results.length) {
+      // A draft made from the approved free plan: the plan now points at the
+      // campaign, so the launch review can compare the two.
+      await linkBuiltCampaign(organizationId, claimedDraft, outcome.mairoCampaignId);
       await db.campaignDraft.deleteMany({ where: { id: claimedDraft, organizationId } });
       revalidatePath("/dashboard/create");
     } else {
@@ -832,6 +836,10 @@ export async function approveCampaignAction(
     select: { id: true },
   });
   if (!owned) return { error: "Campaign not found." };
+
+  // Recorded, so a campaign still in Meta's review goes live when it clears
+  // even on an account that asked MAIRO to hold.
+  await db.mairoCampaign.update({ where: { id: owned.id }, data: { launchApprovedAt: new Date() } });
 
   const outcome = await maybeGoLive(organizationId, {
     onlyCampaignId: mairoCampaignId,

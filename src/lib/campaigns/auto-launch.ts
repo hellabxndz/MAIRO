@@ -94,16 +94,17 @@ export async function maybeGoLive(
   // Cheap when there is nothing to do: one indexed read that returns no rows.
   await finishHalfBuilt(organizationId);
 
-  if (org.autoLaunchHeld && !opts.approvedByPerson) {
-    return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
-  }
+  // Held means nothing goes live that a person hasn't said yes to. A campaign
+  // somebody already pressed Launch or Approve on has been said yes to — it
+  // was only waiting for Meta's review — so it still goes live when ready.
+  const heldForPerson = org.autoLaunchHeld && !opts.approvedByPerson;
 
   // Is there anything to do at all? Asked before the funding check, which is a
   // network round trip to Meta and not worth spending on an account with
   // nothing waiting.
   const waiting = await db.platformCampaign.findMany({
     where: {
-      mairoCampaign: { organizationId },
+      mairoCampaign: { organizationId, ...(heldForPerson ? { launchApprovedAt: { not: null } } : {}) },
       // Scoped when a person approved one campaign. Without this, approving
       // one would also switch on every other campaign that happened to be
       // ready — which is a surprising way to start spending money.
@@ -119,7 +120,9 @@ export async function maybeGoLive(
       },
     },
   });
-  if (waiting.length === 0) return NOTHING;
+  if (waiting.length === 0) {
+    return heldForPerson ? { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." } : NOTHING;
+  }
 
   // Anything booked for later is not this run's business. Reported rather than
   // skipped silently, so a customer who wonders why a finished campaign is
