@@ -142,7 +142,7 @@ export const PLANS: Plan[] = [
     inherits: "Growth",
     features: [
       "Full Autopilot: MAIRO manages budgets and targeting inside your limits",
-      "MAIRO posts to your Instagram for you",
+      "MAIRO plans, writes and posts to your Instagram — photos, carousels and Reels, on a schedule you approve",
       "Unlimited campaigns",
       "400 AI image credits a month (about 80 pictures)",
       "Priority support",

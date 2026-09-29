@@ -19,7 +19,8 @@ import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
-import { FREE_NAV } from "./free-nav";
+import { FREE_NAV, SOCIAL_NAV } from "./free-nav";
+import { can } from "@/lib/entitlements";
 import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
 
 // Enquiries is the one destination that is not shown to everybody, because
@@ -85,7 +86,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
-  const [organization, intake, metaAccount, seenTour, leadForm] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour, leadForm, socialPosting] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -99,6 +100,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
+    can(organizationId, "social_posting"),
   ]);
 
   // Whether this business collects enquiries at all. The rule itself, and why
@@ -171,7 +173,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userName={session.user.name ?? ""}
       showUpgrade={organization?.subscriptionTier !== "AGENCY"}
       assistantName={assistantNameOf(organization?.assistantName)}
-      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(unpaid ? FREE_NAV(approved) : [])]}
+      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? [SOCIAL_NAV] : []), ...(unpaid ? FREE_NAV(approved) : [])]}
       locked={unpaid ? LOCKED_NAV : []}
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />

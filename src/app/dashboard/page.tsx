@@ -15,6 +15,7 @@ import { readinessFor } from "@/lib/readiness";
 import { ReadinessPanel } from "@/components/readiness-panel";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { maybeRunSpendProtection } from "@/lib/protection/run";
+import { publishDuePosts } from "@/lib/instagram/scheduler";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { refreshDecisions } from "@/lib/decisions/run";
 import { change, loadOverview, parseRange } from "@/lib/dashboard/overview";
@@ -69,6 +70,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const launched = await maybeGoLive(organizationId);
   // Spend limits, checked here too: the scheduled run is only daily.
   await maybeRunSpendProtection(organizationId).catch(() => undefined);
+  // Approved Instagram posts that are due go out when the business opens MAIRO.
+  await publishDuePosts({ organizationId, limit: 2, budgetMs: 8_000 }).catch(() => undefined);
 
   const [organization, connections] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),

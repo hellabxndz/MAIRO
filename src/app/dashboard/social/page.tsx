@@ -2,13 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { Card, PageHeader, Badge } from "@/components/ui";
 import { activeOrganizationId } from "@/lib/active-org";
 import { entitlementsFor } from "@/lib/entitlements";
 import { PlanLock } from "@/components/plan-lock";
-import { PostForm, type PostableImage } from "./post-form";
+import { SocialStudio, type PostView } from "./social-studio";
 import { findInstagramAccount, POSTS_PER_DAY, postsInLastDay } from "@/lib/instagram/publish";
-import { parseAdCopy } from "@/lib/meta/creative-copy";
+import { mediaLibrary } from "@/lib/instagram/library";
+import { publishDuePosts } from "@/lib/instagram/scheduler";
+import type { MediaType } from "@/lib/instagram/social-logic";
+import { describeStart, localInputValue, wallClockInZone } from "@/lib/campaigns/schedule";
+import { executionAllowed } from "@/lib/billing/execution";
 import { planFor } from "@/lib/plans";
 
 // MAIRO posting on the customer's own profiles.
@@ -19,8 +23,9 @@ import { planFor } from "@/lib/plans";
 // So the page is built to make that obvious rather than smooth — you see the
 // picture, you see the exact words, and nothing happens until you press post.
 
-// Reading the Instagram account is a Graph call, and it happens on load.
-export const maxDuration = 30;
+// Reading the Instagram account is a Graph call, and anything due is
+// published on load.
+export const maxDuration = 60;
 
 export default async function SocialPage() {
   const session = await auth();
@@ -38,54 +43,52 @@ export default async function SocialPage() {
       <div>
         <PageHeader
           title="Your social posts"
-          description="MAIRO writes and publishes to your own Instagram."
+          description="MAIRO plans, writes and posts to your own Instagram."
         />
         <PlanLock
           title={`MAIRO posting for you comes with ${topPlan.name}`}
-          body={`Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On ${topPlan.name}, MAIRO posts your approved creatives to your Instagram for you.`}
+          body={`Ads reach people who don't follow you yet. Your own feed is what they check before they buy — and keeping it alive is the job nobody has time for. On ${topPlan.name}, MAIRO plans your week, writes the captions and posts photos, carousels and Reels to your Instagram on the schedule you approve.`}
         />
       </div>
     );
   }
 
-  // Everything this page can publish: approved creatives with a final picture.
-  const [requests, posts, igAccount, todayCount] = await Promise.all([
-    db.creativeRequest.findMany({
-      where: {
-        organizationId,
-        status: { in: ["APPROVED", "DELIVERED"] },
-        images: { some: { isFinal: true } },
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 12,
-      include: { images: { where: { isFinal: true }, orderBy: { version: "desc" }, take: 1 } },
-    }),
+  // Anything already due goes out now, rather than waiting for the daily run.
+  await publishDuePosts({ organizationId, budgetMs: 15_000, limit: 3 }).catch(() => null);
+
+  const [library, posts, igAccount, todayCount, org, allowed] = await Promise.all([
+    mediaLibrary(organizationId),
     db.instagramPost.findMany({
       where: { organizationId },
-      orderBy: { createdAt: "desc" },
-      take: 10,
+      orderBy: [{ scheduledFor: "asc" }, { createdAt: "desc" }],
+      take: 60,
     }),
     findInstagramAccount(organizationId),
     postsInLastDay(organizationId),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
+    executionAllowed(organizationId),
   ]);
-
-  const images: PostableImage[] = requests.flatMap((request) => {
-    const image = request.images[0];
-    if (!image) return [];
-    // The caption starts as the ad copy MAIRO already wrote for this creative,
-    // because writing one from scratch is the step people stall on. It is a
-    // starting point in an editable box, not something published unread.
-    const copy = parseAdCopy(request.aiConcept);
-    const suggested = [copy.primaryText, copy.headline].filter(Boolean).join("\n\n");
-    return [
-      {
-        imageId: image.id,
-        imageData: image.imageData,
-        brief: request.brief,
-        suggested: suggested || request.brief,
-      },
-    ];
+  const zone = org?.timezone || "America/New_York";
+  const view = (p: (typeof posts)[number]): PostView => ({
+    id: p.id,
+    status: p.status,
+    mediaType: (p.mediaType as MediaType) ?? "IMAGE",
+    caption: p.caption,
+    previewUrl: p.previewUrl,
+    whenLabel: p.scheduledFor ? describeStart(p.scheduledFor, zone) : "As soon as it's approved",
+    whenLocal: p.scheduledFor ? localInputValue(p.scheduledFor, zone) : "",
+    error: p.error,
   });
+  const suggested = posts.filter((p) => p.status === "SUGGESTED").map(view);
+  const upcoming = posts.filter((p) => p.status === "SCHEDULED" || p.status === "CREATED").map(view);
+  const history = posts
+    .filter((p) => p.status === "PUBLISHED" || p.status === "FAILED")
+    .sort((x, y) => (y.postedAt ?? y.updatedAt).getTime() - (x.postedAt ?? x.updatedAt).getTime())
+    .slice(0, 15);
+  // The daily posting run is at 09:00 UTC; shown in the business's own time.
+  const now = new Date();
+  const runAt = wallClockInZone(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 0)), zone).slice(11, 16);
+  const tzLabel = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(now).find((x) => x.type === "timeZoneName")?.value ?? zone;
 
   const connected = igAccount.ok && igAccount.data;
   const atDailyLimit = todayCount >= POSTS_PER_DAY;
@@ -94,7 +97,7 @@ export default async function SocialPage() {
     <div>
       <PageHeader
         title="Your social posts"
-        description="MAIRO writes and publishes to your own Instagram. Nothing goes out until you press post."
+        description="MAIRO plans, writes and posts photos, carousels and Reels to your own Instagram. Nothing goes out that you haven't approved."
         action={
           connected ? (
             <Badge tone="green">
@@ -147,27 +150,19 @@ export default async function SocialPage() {
         </Card>
       )}
 
-      {images.length === 0 ? (
-        <EmptyState
-          title="Nothing approved to post yet"
-          description="MAIRO posts the creatives you've already approved. Make one on the Creatives page and it shows up here."
-        />
-      ) : (
-        connected &&
-        !atDailyLimit && (
-          <Card className="mb-8">
-            <PostForm images={images} />
-          </Card>
-        )
-      )}
+      <p className="mb-6 max-w-3xl text-[13px] leading-relaxed text-muted">
+        Approved posts go out at MAIRO&rsquo;s first check after their time: every morning at about {runAt} ({tzLabel}), and whenever you open this page. A post scheduled for the afternoon is published at the next of those checks.
+      </p>
 
-      {posts.length > 0 && (
+      <SocialStudio library={library} suggested={suggested} upcoming={upcoming} canPost={Boolean(connected) && !atDailyLimit && allowed} timeZoneLabel={tzLabel} />
+
+      {history.length > 0 && (
         <div className="mt-8">
           <p className="mb-4 text-sm uppercase tracking-[0.16em] text-neutral-400">
             What MAIRO has posted
           </p>
           <div className="space-y-3">
-            {posts.map((post) => (
+            {history.map((post) => (
               <Card key={post.id}>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <p className="max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">

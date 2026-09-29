@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publishDuePosts } from "@/lib/instagram/scheduler";
 import { db } from "@/lib/db";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 
@@ -84,9 +85,16 @@ export async function GET(req: Request) {
     }
   }
 
+  // Scale's approved Instagram posts whose time has come.
+  const social = await publishDuePosts({ limit: 8, budgetMs: 25_000 }).catch((error) => {
+    console.error("Instagram posting run failed:", error);
+    return null;
+  });
+
   return NextResponse.json({
     checked: organizationIds.length,
     launched,
+    social,
     errors: errors.length > 0 ? errors : undefined,
   });
 }

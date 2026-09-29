@@ -13,3 +13,10 @@ export function FREE_NAV(approved: boolean): NavEntry[] {
     { href: approved ? "/plan/activate" : "/plan", label: "Pricing", icon: icon("M3.5 10.5l7-7h6v6l-7 7z M13 7h.01") },
   ];
 }
+
+/** Scale: MAIRO's Instagram posting. */
+export const SOCIAL_NAV: NavEntry = {
+  href: "/dashboard/social",
+  label: "Instagram posts",
+  icon: icon("M6 3h8a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3z M10 13.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z M14.3 5.8h.01"),
+};
