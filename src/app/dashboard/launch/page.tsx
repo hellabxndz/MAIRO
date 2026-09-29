@@ -47,12 +47,13 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
   }
 
   const { plan } = journey;
-  const stage = journey.next === "live" ? "Launch" : journey.next === "review" || journey.next === "waiting" ? "Launch" : "Build campaign";
+  const step = journey.next === "build" || journey.next === "connect" ? 5 : 6;
+  const skipped = journey.steps.find((s) => s.id === "connect")?.state === "done" ? [] : [3];
 
   if (journey.next === "live") {
     return (
       <div className="mx-auto max-w-[900px]">
-        <JourneySteps current="Launch" />
+        <JourneySteps step={7} paid />
         <div className={`${card} mt-6 p-6 sm:p-8`}>
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
             <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> Live
@@ -90,19 +91,25 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      <JourneySteps current={stage} />
+      <JourneySteps step={step} paid skipped={skipped} />
 
       {(welcome === "1" || subscribed === "1") && (
-        <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-5">
-          <p className="text-[17px] font-semibold text-white">Welcome to Mairo. Your full advertising platform is now unlocked.</p>
-          <p className="mt-1 text-[13.5px] text-muted">Everything below starts from the plan you approved — nothing to fill in again.</p>
+        <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-6">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Welcome to full Mairo</p>
+          <p className="mt-1 text-[19px] font-semibold text-white">Your plan is active.</p>
+          <p className="mt-1 text-[14px] text-muted">Your approved strategy is ready to become a real campaign. Everything is prefilled from your plan — nothing to answer again.</p>
+          {journey.next === "build" && (
+            <form action={buildFromPlanAction} className="mt-4">
+              <button type="submit" className="min-h-[46px] rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">Build My Campaign</button>
+            </form>
+          )}
         </div>
       )}
 
       <div className="mt-6">
         <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Let&rsquo;s turn your plan into a real campaign</p>
         <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Your strategy is already complete.</h1>
-        <p className="mt-1.5 text-[14.5px] text-muted">Now Mairo needs a few things before it can build it.</p>
+        <p className="mt-1.5 text-[14.5px] text-muted">Confirm a few things and Mairo builds it — paused, for your final review.</p>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -120,13 +127,13 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
 
           {journey.next === "build" && (
             <div className={`${card} p-6`}>
-              <p className="text-[17px] font-semibold text-white">{journey.draftId ? "Finish building your campaign" : "Turn My Plan Into a Campaign"}</p>
+              <p className="text-[17px] font-semibold text-white">{journey.draftId ? "Finish building your campaign" : "Build My Campaign"}</p>
               <p className="mt-1 text-[13.5px] text-muted">
                 Mairo opens the campaign builder with your approved plan already filled in. You confirm the location, make the final creatives from your hooks, check the budget, and Mairo runs its pre-launch check. It&rsquo;s built in your ad account switched off — nothing spends until you press Launch.
               </p>
               <form action={buildFromPlanAction} className="mt-4">
                 <button type="submit" className="min-h-[46px] rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
-                  {journey.draftId ? "Continue building" : "Turn My Plan Into a Campaign"}
+                  {journey.draftId ? "Continue building" : "Build My Campaign"}
                 </button>
               </form>
             </div>
@@ -135,7 +142,8 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
           {(journey.next === "review" || journey.next === "waiting") && journey.comparison && journey.campaign && (
             <div className={`${card} p-6`}>
               <p className="text-[17px] font-semibold text-white">Your campaign is ready.</p>
-              <p className="mt-1 text-[13.5px] text-muted">Mairo created everything based on the plan you approved. Check it against your plan before it goes live.</p>
+              <p className="mt-0.5 text-[14px] font-medium text-emerald-300">Nothing is live yet.</p>
+              <p className="mt-1 text-[13.5px] text-muted">Mairo built it in your ad account, paused, from the plan you approved. Review the budget, audience, creative, platform, objective and placements before it goes live.</p>
               {journey.campaign.lastError && (
                 <p className="mt-3 rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">Meta said: {journey.campaign.lastError}</p>
               )}

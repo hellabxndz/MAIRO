@@ -1,6 +1,7 @@
 import type { AdPlatform } from "@/generated/prisma/enums";
 import type { AdPlatformAdapter } from "./types";
 import { metaAdapter } from "./meta/adapter";
+import { executionBlock } from "@/lib/billing/execution";
 
 // The list of networks MAIRO knows about, and how to reach each one.
 //
@@ -107,8 +108,33 @@ const ADAPTERS: Partial<Record<AdPlatform, AdPlatformAdapter>> = {
  * whose adapter has been removed, and the dashboard should render it as
  * unavailable rather than crash.
  */
+/**
+ * The writes that build, change or switch on real advertising. Each is
+ * refused unless the account may use paid execution (see billing/execution).
+ * Pausing, reading and connecting are never gated.
+ */
+const PAID_WRITES = ["createCampaign", "createAdGroup", "createAd", "updateSchedule", "updateBudget", "resumeCampaign", "updateAdGroupTargeting"] as const;
+
+function guarded(adapter: AdPlatformAdapter): AdPlatformAdapter {
+  return new Proxy(adapter, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (typeof value !== "function" || !(PAID_WRITES as readonly (string | symbol)[]).includes(prop)) return value;
+      return async (input: { organizationId?: string }) => {
+        const block = input?.organizationId ? await executionBlock(input.organizationId) : "Missing account.";
+        if (block) return { ok: false, error: { kind: "rejected", message: block } };
+        return (value as (i: unknown) => unknown).call(target, input);
+      };
+    },
+  });
+}
+
+const GUARDED: Partial<Record<AdPlatform, AdPlatformAdapter>> = Object.fromEntries(
+  Object.entries(ADAPTERS).map(([k, a]) => [k, a ? guarded(a) : a]),
+);
+
 export function getAdapter(platform: AdPlatform): AdPlatformAdapter | null {
-  return ADAPTERS[platform] ?? null;
+  return GUARDED[platform] ?? null;
 }
 
 /** Every network a customer can actually pick today. */

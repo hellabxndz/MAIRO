@@ -134,6 +134,7 @@ export async function createStrategy(organizationId: string): Promise<{ ok: true
   if (existing) return { ok: true, ai: true };
   const input = await strategyInputFor(organizationId);
   if (!input) return { ok: false, error: "Finish your business setup first." };
+  await db.organization.update({ where: { id: organizationId }, data: { paymentRequired: true } });
   const { plan, ai } = await generateStrategy(input);
   const planJson = JSON.stringify(plan);
   try {
@@ -265,7 +266,7 @@ export async function approve(organizationId: string, expectedVersion: number): 
 export async function activateIfPaid(organizationId: string): Promise<StrategyPlan | null> {
   const [row, org] = await Promise.all([
     db.strategyPlan.findUnique({ where: { organizationId } }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true, subscriptionStatus: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } }),
   ]);
   if (!row || !org) return row;
   if (row.activatedAt || row.status !== "APPROVED" || !hasActivePlan(org)) return row;

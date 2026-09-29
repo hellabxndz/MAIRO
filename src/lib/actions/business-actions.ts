@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -65,6 +66,8 @@ export async function saveBrainAction(input: Record<string, unknown>): Promise<S
 export async function buildCampaignFromBrainAction(): Promise<void> {
   const ctx = await context();
   if (!ctx) redirect("/sign-in");
+  // Building a campaign is paid; a free-plan business chooses a plan first.
+  if (await executionBlock(ctx.organizationId)) redirect("/plan/activate");
   const [brain, org] = await Promise.all([
     loadBrain(ctx.organizationId),
     db.organization.findUnique({

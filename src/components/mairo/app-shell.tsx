@@ -235,8 +235,11 @@ export function AppShell({
   notifications,
   assistantName,
   footer,
+  locked = [],
 }: {
   children: ReactNode;
+  /** Nav destinations shown with a lock: the account hasn't subscribed yet. */
+  locked?: string[];
   mode: ViewMode;
   businessName: string;
   /** Whose account this is, for the chip in the top right. */
@@ -292,6 +295,12 @@ export function AppShell({
         {item.icon}
       </span>
       {item.label}
+      {locked.includes(item.href) && (
+        <svg viewBox="0 0 16 16" className="ml-auto h-3.5 w-3.5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" aria-label="Locked">
+          <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
+          <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+        </svg>
+      )}
     </Link>
   );
 

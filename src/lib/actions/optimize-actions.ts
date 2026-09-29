@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -129,6 +130,8 @@ export async function applyRecommendationAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { error: blocked };
 
   const parsed = z
     .object({ recommendationId: z.string().min(1) })

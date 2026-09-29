@@ -8,6 +8,10 @@ export const RETURN_COOKIE = "mairo_meta_return";
 
 export function safeReturnTo(value: string | null | undefined): string | null {
   if (!value) return null;
+  // The free plan's subscription step, where connecting happens before paying.
+  if (value === "/plan/activate" || value.startsWith("/plan/activate?")) {
+    return /[\r\n\\]/.test(value) ? null : value;
+  }
   if (!value.startsWith("/dashboard/") || value.startsWith("//") || value.includes("\\") || /[\r\n]/.test(value)) {
     return null;
   }

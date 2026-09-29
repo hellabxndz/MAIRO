@@ -191,9 +191,10 @@ function parseEntitlements(raw: string, fallback: Entitlements): Entitlements {
  * off, NONE is treated as Growth so the product works for everyone, which is
  * what the Meta App Review submission promises the reviewer will see.
  */
-function effectiveTier(tier: SubscriptionTier): SubscriptionTier {
-  // Growth, not Starter: see DEFAULT_TIER in plans.ts for why.
-  if (tier === "NONE" && !billingEnforced()) return "GROWTH";
+function effectiveTier(tier: SubscriptionTier, paymentRequired = false): SubscriptionTier {
+  // Growth, not Starter: see DEFAULT_TIER in plans.ts for why. A business
+  // that signed up through the free plan never gets this: it has to pay.
+  if (tier === "NONE" && !billingEnforced() && !paymentRequired) return "GROWTH";
   return tier;
 }
 
@@ -202,8 +203,8 @@ function effectiveTier(tier: SubscriptionTier): SubscriptionTier {
  *
  * A missing row is normal, not an error — see the note at the top.
  */
-export async function entitlementsForTier(tier: SubscriptionTier): Promise<Entitlements> {
-  const resolved = effectiveTier(tier);
+export async function entitlementsForTier(tier: SubscriptionTier, paymentRequired = false): Promise<Entitlements> {
+  const resolved = effectiveTier(tier, paymentRequired);
   const fallback = DEFAULT_ENTITLEMENTS[resolved];
 
   const row = await db.planConfig
@@ -218,9 +219,13 @@ export async function entitlementsForTier(tier: SubscriptionTier): Promise<Entit
 export async function entitlementsFor(organizationId: string): Promise<Entitlements> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { subscriptionTier: true },
+    select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true },
   });
-  return entitlementsForTier(org?.subscriptionTier ?? "NONE");
+  // Nothing paid for is unlocked on a free-plan account without a live subscription.
+  if (org?.paymentRequired && !["active", "trialing"].includes(org.subscriptionStatus ?? "")) {
+    return entitlementsForTier("NONE", true);
+  }
+  return entitlementsForTier(org?.subscriptionTier ?? "NONE", org?.paymentRequired ?? false);
 }
 
 /** Convenience for the common "may they?" question. */

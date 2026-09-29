@@ -31,15 +31,20 @@ export default async function PlanPage() {
 
   if (!loaded) {
     return (
-      <JourneyFrame current="Your free plan">
+      <JourneyFrame step={2}>
         <PlanBuilder website={org.website} />
       </JourneyFrame>
     );
   }
 
-  const input = await strategyInputFor(organizationId);
+  const [input, meta] = await Promise.all([
+    strategyInputFor(organizationId),
+    db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true } }),
+  ]);
+  const connected = meta?.status === "CONNECTED";
+  const approved = loaded.row.status === "APPROVED";
   return (
-    <JourneyFrame current={loaded.row.status === "APPROVED" ? "Activate" : "Your free plan"} wide>
+    <JourneyFrame step={approved ? (connected ? 4 : 3) : 2} wide>
       <PlanReview
         plan={loaded.plan}
         version={loaded.row.version}
@@ -47,6 +52,7 @@ export default async function PlanPage() {
         revisions={loaded.revisions}
         businessName={org.name}
         purchaseTracking={input?.purchaseTracking ?? false}
+        connected={connected}
       />
     </JourneyFrame>
   );

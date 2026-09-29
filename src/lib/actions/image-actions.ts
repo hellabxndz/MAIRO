@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -16,6 +17,9 @@ async function loadOwnedRequest(creativeRequestId: string) {
 
   const organizationId =
     (await activeOrganizationId()) ?? session.user.organizationId;
+
+  // Making the ad's picture is paid execution.
+  if (await executionBlock(organizationId)) return null;
 
   return db.creativeRequest.findFirst({
     where: { id: creativeRequestId, organizationId: organizationId },

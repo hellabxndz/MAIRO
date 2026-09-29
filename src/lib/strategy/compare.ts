@@ -93,7 +93,7 @@ export function compareWithPlan(plan: StrategyContent, real: RealCampaign, ctx: 
 
   rows.push({
     key: "goal",
-    label: "Goal",
+    label: "Objective",
     approved: GOAL_LABEL[plan.goal],
     real: GOAL_LABEL[real.objective],
     status: plan.goal === real.objective ? "same" : "different",

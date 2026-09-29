@@ -42,6 +42,7 @@ import {
   strategyInputFor,
 } from "@/lib/strategy/store";
 import { draftFromApprovedPlan } from "@/lib/strategy/campaign";
+import { executionBlock } from "@/lib/billing/execution";
 
 // What the free plan's review screen and the launch journey call.
 
@@ -328,7 +329,7 @@ export async function buildFromPlanAction(): Promise<void> {
   const ctx = await context();
   if (!ctx) redirect("/sign-in");
   const row = await activateIfPaid(ctx.organizationId);
-  if (!row?.activatedAt) redirect("/plan/activate");
+  if (!row?.activatedAt || (await executionBlock(ctx.organizationId))) redirect("/plan/activate");
   const draftId = await draftFromApprovedPlan(ctx.organizationId, ctx.userId);
   if (!draftId) redirect("/dashboard/launch");
   redirect(`/dashboard/create/meta?draft=${draftId}`);
@@ -340,10 +341,10 @@ export async function launchPlanCampaignAction(): Promise<{ ok: true; launched: 
   if (!ctx) return { ok: false, error: "Not signed in." };
   const [row, org] = await Promise.all([
     db.strategyPlan.findUnique({ where: { organizationId: ctx.organizationId } }),
-    db.organization.findUnique({ where: { id: ctx.organizationId }, select: { subscriptionTier: true, subscriptionStatus: true } }),
+    db.organization.findUnique({ where: { id: ctx.organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } }),
   ]);
   if (!row?.campaignId) return { ok: false, error: "The campaign hasn't been built yet." };
-  if (!org || !hasActivePlan(org)) return { ok: false, error: "Your subscription isn't active." };
+  if (!org || !hasActivePlan(org)) return { ok: false, error: "Choose a Mairo plan first — your subscription isn't active, so nothing can be launched." };
   const owned = await db.mairoCampaign.updateMany({
     where: { id: row.campaignId, organizationId: ctx.organizationId },
     data: { launchApprovedAt: new Date() },

@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -83,6 +84,9 @@ async function context(): Promise<
     };
   }
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  // Creative generation is paid execution.
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { ok: false, error: blocked };
   return { ok: true, organizationId, userId: session.user.id };
 }
 

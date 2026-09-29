@@ -44,7 +44,7 @@ export default async function AssistantPage({
       name: true,
       assistantName: true,
       subscriptionTier: true,
-      subscriptionStatus: true,
+      subscriptionStatus: true, paymentRequired: true,
     },
   });
   if (!org) redirect("/sign-in");

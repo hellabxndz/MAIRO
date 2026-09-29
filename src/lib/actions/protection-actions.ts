@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -74,6 +75,9 @@ export async function pauseCampaignAction(mairoCampaignId: string): Promise<{ er
 export async function resumeCampaignAction(mairoCampaignId: string): Promise<{ error?: string } | undefined> {
   const organizationId = await scope();
   if (!organizationId) return { error: "Not signed in." };
+  // Switching delivery back on is paid execution; pausing never is.
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { error: blocked };
   const owned = await db.mairoCampaign.findFirst({ where: { id: mairoCampaignId, organizationId }, select: { name: true } });
   if (!owned) return { error: "Campaign not found." };
   // A limit the customer set isn't overridden by a click elsewhere.

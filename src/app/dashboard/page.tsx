@@ -40,6 +40,8 @@ import { loadBrain } from "@/lib/business/brain";
 import { parseReport, reportIsFresh, WEEKDAYS } from "@/lib/reports/weekly";
 import { WeeklyReportCard } from "@/components/reports/weekly-card";
 import { FirstCampaignCard } from "@/components/strategy/journey-card";
+import { FreeHome } from "@/components/strategy/free-access";
+import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
 
 // Results are read live from Meta on every load, so this page is only as fast
@@ -52,6 +54,11 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const days = parseRange((await searchParams).range);
+
+  // A free-plan account that hasn't subscribed: its plan, its next step, and
+  // what unlocks with a subscription. Nothing below runs for it.
+  const free = await freeHomeState(organizationId);
+  if (free) return <FreeHome {...free} />;
 
   // Before anything is read, anything that is ready goes live.
   //

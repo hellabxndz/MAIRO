@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -129,6 +130,8 @@ export async function requestCreativeAction(
   if (reference.error) return { error: reference.error };
 
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { error: blocked };
   const month = currentMonthKey();
 
   const organization = await db.organization.findUnique({

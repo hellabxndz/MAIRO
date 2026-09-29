@@ -41,7 +41,7 @@ export default async function CreativeStudioPage({
 
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { name: true, assistantName: true, subscriptionTier: true, subscriptionStatus: true },
+    select: { name: true, assistantName: true, subscriptionTier: true, subscriptionStatus: true, paymentRequired: true },
   });
   if (!org) redirect("/sign-in");
 

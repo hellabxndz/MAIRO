@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -148,6 +149,11 @@ export async function createCampaignAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  // Building a real campaign is paid execution — checked here, and again
+  // before every write to Meta.
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { error: blocked };
 
   const parsed = createCampaignSchema.safeParse({
     name: formData.get("name"),
@@ -836,6 +842,8 @@ export async function approveCampaignAction(
     select: { id: true },
   });
   if (!owned) return { error: "Campaign not found." };
+  const blocked = await executionBlock(organizationId);
+  if (blocked) return { error: blocked };
 
   // Recorded, so a campaign still in Meta's review goes live when it clears
   // even on an account that asked MAIRO to hold.

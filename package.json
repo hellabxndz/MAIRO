@@ -37,6 +37,7 @@
     "check:intelligence": "tsx scripts/check-intelligence.ts",
     "check:weekly-report": "tsx scripts/check-weekly-report.ts",
     "check:strategy-plan": "tsx scripts/check-strategy-plan.ts",
+    "check:payment-gate": "tsx scripts/check-payment-gate.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

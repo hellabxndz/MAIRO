@@ -47,7 +47,7 @@ export async function loadJourney(organizationId: string, opts: { checkFunding: 
   if (!plan) return null;
 
   const [org, meta, pixel, draft, campaign, leadForm] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true, subscriptionStatus: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true, metaAdAccountId: true, pageId: true, pageName: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     row.campaignDraftId ? db.campaignDraft.findFirst({ where: { id: row.campaignDraftId, organizationId }, select: { id: true, step: true } }) : null,
@@ -81,19 +81,19 @@ export async function loadJourney(organizationId: string, opts: { checkFunding: 
   const add = (id: string, label: string, done: boolean, detail: string | null = null, href: string | null = null, unknown = false) =>
     raw.push({ id, label, done, detail, href, unknown });
 
-  add("strategy", "Strategy Approved", true, `Revision ${row.approvedVersion ?? 0}, approved ${row.approvedAt?.toLocaleDateString("en-US", { month: "short", day: "numeric" }) ?? ""}`, "/plan");
-  add("subscription", "Subscription Active", paid, billingEnforced() ? null : "Full access while Mairo is in launch — nothing to pay yet", "/dashboard/billing");
-  add("connect", "Connect Facebook & Instagram", connected, connected ? null : "Sign in with Facebook so Mairo can build the campaign in your own ad account.", "/api/meta/connect?returnTo=%2Fdashboard%2Flaunch");
+  add("strategy", "Business Plan Approved", true, `Revision ${row.approvedVersion ?? 0}, approved ${row.approvedAt?.toLocaleDateString("en-US", { month: "short", day: "numeric" }) ?? ""}`, "/plan");
   add(
-    "account",
-    "Select Ad Account",
-    connected && Boolean(meta?.metaAdAccountId) && Boolean(meta?.pageId),
-    connected ? `${meta?.metaAdAccountId}${meta?.pageName ? ` · Page: ${meta.pageName}` : " · no Page chosen yet"}` : null,
-    "/dashboard/meta",
+    "connect",
+    "Ad Account Connected",
+    connected && Boolean(meta?.metaAdAccountId),
+    connected ? `${meta?.metaAdAccountId}${meta?.pageName ? ` · Page: ${meta.pageName}` : " · choose a Page on the Meta screen"}` : "Sign in with Facebook so Mairo can build in your own ad account.",
+    connected ? "/dashboard/meta" : "/api/meta/connect?returnTo=%2Fdashboard%2Flaunch",
   );
+  add("selected", "Mairo Plan Selected", paid, null, "/dashboard/billing");
+  add("subscription", "Subscription Active", paid, org?.subscriptionStatus === "trialing" ? "Free trial — the first charge is after the trial" : null, "/dashboard/billing");
   add(
     "funding",
-    "Verify Payment Method",
+    "Meta Payment Method Verified",
     funding?.done ?? false,
     !connected ? null : funding ? (funding.done ? "Meta can charge your ad account" : funding.unknown ? "Mairo couldn't confirm this with Meta just now — it will check again" : funding.detail) : null,
     funding?.href ?? "/dashboard/meta",
@@ -102,12 +102,15 @@ export async function loadJourney(organizationId: string, opts: { checkFunding: 
   if (plan.campaignType === "LEAD_FORM") {
     add("leadform", "Write Your Lead Form Questions", Boolean(leadForm), leadForm ? null : "The questions people answer inside the ad.", "/dashboard/leads?setup=1");
   }
-  add("audience", "Review Audience", past("audience"), "Confirm the location with Meta's place search", null);
-  add("budget", "Confirm Budget", past("budget"), null, null);
-  add("creatives", "Generate Final Creatives", past("ad"), "From your approved concepts and hooks", null);
-  add("check", "Run Pre-Launch Check", past("review"), "Mairo's Ad Score and Meta's rules", null);
-  add("build", "Build Campaign", built, built ? "Built in your ad account, switched off" : null, null);
-  add("approval", "Final Approval", Boolean(campaign?.launchApprovedAt), null, null);
+  add("goal", "Confirm campaign goal", past("goal"), null, null);
+  add("audience", "Confirm audience", past("audience"), "Confirm the location with Meta's place search", null);
+  add("creatives", "Generate / approve creatives", past("ad"), "From your approved concepts and hooks", null);
+  add("budget", "Confirm ad budget", past("budget"), null, null);
+  add("split", "Confirm platform split", past("budget"), null, null);
+  add("placements", "Confirm placements", past("budget"), null, null);
+  add("check", "Run Pre-Launch Ad Score", past("review"), null, null);
+  add("build", "Build Campaign", built, built ? "Built in your ad account, paused" : null, null);
+  add("approval", "Final Review", Boolean(campaign?.launchApprovedAt), null, null);
   add("launch", "Launch", launched, null, null);
 
   let currentSet = false;

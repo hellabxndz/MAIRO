@@ -80,8 +80,10 @@ export type Readiness = {
 export function hasActivePlan(org: {
   subscriptionTier: string;
   subscriptionStatus: string | null;
+  /** Signed up through the free plan: always needs a subscription. */
+  paymentRequired?: boolean;
 }): boolean {
-  if (!billingEnforced()) return true;
+  if (!billingEnforced() && !org.paymentRequired) return true;
   if (org.subscriptionTier === "NONE") return false;
   // Stripe's own words. past_due and unpaid are deliberately not here — a
   // failed card means the plan stops working, which is the point of charging.
@@ -112,7 +114,7 @@ export async function readinessFor(
   const [org, intake, meta, creative, campaign, stalled] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { subscriptionTier: true, subscriptionStatus: true, website: true },
+      select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true, website: true },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({

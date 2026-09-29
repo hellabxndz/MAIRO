@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { db } from "@/lib/db";
 import { stripe, tierForPriceId } from "@/lib/stripe/client";
+import { STOPPED_STATUSES, stopUnpaidExecution } from "@/lib/billing/stop-unpaid";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -129,9 +130,17 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     );
   }
 
+  const before = await db.organization.findUnique({ where: { id: organizationId }, select: { hasPaid: true } });
+  const paidNow = subscription.status === "active";
+  const live = subscription.status === "active" || subscription.status === "trialing";
+
   await db.organization.update({
     where: { id: organizationId },
     data: {
+      // A successful payment is recorded for good; a live subscription lifts
+      // any earlier stop.
+      ...(paidNow ? { hasPaid: true } : {}),
+      ...(live ? { executionStoppedAt: null, executionStoppedReason: null } : {}),
       stripeSubscriptionId: finished ? null : subscription.id,
       subscriptionStatus: subscription.status,
       // Left untouched when the price is unrecognised, rather than reset.
@@ -139,6 +148,18 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
+
+  // Never paid, and now failed or ended — the trial ran out and the card was
+  // declined, or it was cancelled before any payment. Stop everything, and
+  // cancel a subscription Stripe would otherwise keep retrying.
+  if (!before?.hasPaid && STOPPED_STATUSES.includes(subscription.status)) {
+    if (subscription.status === "past_due" || subscription.status === "unpaid") {
+      await stripe()
+        .subscriptions.cancel(subscription.id)
+        .catch((error) => console.error(`Couldn't cancel unpaid subscription ${subscription.id}:`, error));
+    }
+    await stopUnpaidExecution(organizationId);
+  }
 }
 
 /**

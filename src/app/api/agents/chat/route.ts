@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       name: true,
       assistantName: true,
       subscriptionTier: true,
-      subscriptionStatus: true,
+      subscriptionStatus: true, paymentRequired: true,
     },
   });
   if (!org || !hasActivePlan(org)) {

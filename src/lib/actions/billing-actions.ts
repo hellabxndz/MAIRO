@@ -218,7 +218,7 @@ async function createCheckoutUrl(input: {
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceIdFor(tier), quantity: 1 }],
-    success_url: fromPlan ? `${origin}/dashboard/launch?subscribed=1` : `${origin}${home}?subscribed=1`,
+    success_url: fromPlan ? `${origin}/plan/activate?subscribed=1` : `${origin}${home}?subscribed=1`,
     cancel_url: fromPlan ? `${origin}/plan/activate?checkout=cancelled` : `${origin}${home}?checkout=cancelled`,
     // Carried onto the subscription so the webhook can identify the
     // organization without a lookup, and without trusting anything the client

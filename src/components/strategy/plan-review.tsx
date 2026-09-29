@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   approvePlanNowAction,
   askMairoAction,
   editPlanAction,
-  getStartedAction,
   restoreVersionAction,
   undoChangeAction,
   acceptSuggestionAction,
@@ -65,6 +65,8 @@ export function PlanReview(props: {
   revisions: RevisionView[];
   businessName: string;
   purchaseTracking: boolean;
+  /** Whether an ad account is already connected. */
+  connected: boolean;
 }) {
   const router = useRouter();
   const [plan, setPlan] = useState(props.plan);
@@ -204,6 +206,9 @@ export function PlanReview(props: {
           <h1 className="mt-1 text-[clamp(26px,3.4vw,36px)] font-semibold tracking-[-0.02em]">Your Mairo Advertising Plan</h1>
           <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
             Review the strategy Mairo created for your business. You can change anything before moving forward.
+          </p>
+          <p className="mt-3 max-w-[680px] rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-[13px] text-white/80">
+            Your free plan shows you how Mairo would advertise your business. A subscription is required before Mairo builds or launches the real campaign.
           </p>
         </div>
         <StatusBadge status={status} version={version} />
@@ -506,13 +511,26 @@ export function PlanReview(props: {
         {status === "APPROVED" ? (
           <div>
             <p className="text-[22px] font-semibold text-emerald-300">Plan Approved ✓</p>
-            <p className="mt-1 text-[15px] text-white/90">Your Mairo strategy is ready. Next, activate your account to turn this plan into a real campaign.</p>
-            <form action={getStartedAction} className="mt-5">
-              <button type="submit" className={`${primary} min-h-[48px] px-7 text-[15px]`}>Get Started With Mairo</button>
-            </form>
-            <p className="mt-3 max-w-[560px] text-[13px] text-muted">
-              Choose your subscription, unlock the full platform, and let Mairo build this campaign inside your ad account.
-            </p>
+            <p className="mt-1 text-[15px] text-white/90">Your advertising strategy is ready.</p>
+            {props.connected ? (
+              <>
+                <p className="mt-4 text-[14px] text-white/90">Your ad account is connected. Choose a Mairo plan to activate your strategy.</p>
+                <Link href="/plan/activate" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
+                  Choose a Mairo Plan
+                </Link>
+                <p className="mt-3 max-w-[560px] text-[13px] text-muted">After subscribing, Mairo will build the real campaign for you to review.</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
+                <p className="mt-1 text-[14px] text-white/90">Connect your advertising account so Mairo knows where your campaign will eventually run.</p>
+                {/* A full page load: this hands off to Facebook's sign-in. */}
+                <a href="/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
+                  Connect My Ad Account
+                </a>
+                <p className="mt-3 max-w-[560px] text-[13px] text-muted">Connecting your account does not launch anything or spend money.</p>
+              </>
+            )}
             <p className="mt-4 text-[12px] text-faint">Changed your mind about something? You can still ask Mairo or edit a section — you&rsquo;ll just approve the plan again.</p>
           </div>
         ) : (

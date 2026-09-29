@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { loadBrain } from "@/lib/business/brain";
 import { fixElement } from "@/lib/ai/ad-score";
@@ -114,6 +115,8 @@ export async function writeAdCopyAction(
 ): Promise<{ ok: true; options: CopyOption[] } | { ok: false; error: string }> {
   const scope = await currentScope();
   if (!scope) return { ok: false, error: "Not signed in." };
+  const blocked = await executionBlock(scope.organizationId);
+  if (blocked) return { ok: false, error: blocked };
   if (!SERVICES.has(plan?.service)) return { ok: false, error: "That campaign can't be written for." };
   const promotes = PROMOTES_OPTIONS.find((o) => o.value === plan.promotes)?.label ?? "";
   // The Business Brain's voice and lessons, so every version sounds like

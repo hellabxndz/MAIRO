@@ -184,6 +184,19 @@ model Organization {
   /// the dashboard reporting it as a surprise.
   autoLaunchedAt DateTime?
 
+  /// A business that signed itself up through the free plan. For these,
+  /// building, changing budgets, launching and creative generation always
+  /// need a paid (or trialing) subscription, whatever BILLING_ENFORCED says.
+  /// Older accounts, and the Meta App Review account, follow BILLING_ENFORCED.
+  paymentRequired        Boolean   @default(false)
+  /// Whether a payment has ever gone through. A subscription that ends or
+  /// fails before this is true never paid — its ads are stopped.
+  hasPaid                Boolean   @default(false)
+  /// When MAIRO stopped everything because the trial ended unpaid (or was
+  /// cancelled before any payment), and why. Cleared by a new subscription.
+  executionStoppedAt     DateTime?
+  executionStoppedReason String?
+
   // A freelancer's clients hang off their workspace.
   //
   // Deliberately a parent link rather than a User-to-Organization join table.

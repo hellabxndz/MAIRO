@@ -427,6 +427,15 @@ One journey from sign-up to a live first campaign. The free stage creates the st
 
 Mairo runs Meta only, so the plan uses Facebook and Instagram. Freelancer client workspaces keep the previous onboarding path. `npm run check:strategy-plan` checks the plan rules.
 
+**Paid line (updated)** — FREE shows what Mairo would do; PAID is Mairo doing it.
+- Order: approve plan → **Connect My Ad Account** (connecting creates and spends nothing) → **Choose your Mairo plan** (`/plan/activate`: plan details, "Your Mairo Setup" summary, Continue to Payment) → Stripe → "Welcome to full Mairo" → **Build My Campaign** → paused build → final review → **Launch Campaign**.
+- Businesses that sign up through the free plan get `Organization.paymentRequired`. For them, paid execution needs a live subscription (`active`, or `trialing` — a card is collected at checkout) **whatever `BILLING_ENFORCED` says**. Older accounts, including the Meta App Review account, still follow `BILLING_ENFORCED`.
+- Enforced on the server (`src/lib/billing/execution.ts`): the Meta adapter refuses create campaign / ad set / ad, budget, schedule, targeting and switch-on writes, and the build, launch, resume, Decisions, optimization, creative-generation and publishing actions refuse too. Pausing is never blocked.
+- Before subscribing, the dashboard shows Home (free), Business Brain, Integrations, Billing and Settings; every other area shows a locked preview with **Choose a Plan**.
+- **Trial that ends unpaid:** if the first charge after the 7-day trial fails (or the trial is cancelled before any payment), the Stripe webhook pauses every running campaign, withdraws launch approvals, cancels the subscription and locks execution; the plan, business details and connections are kept. A daily sweep repeats this in case a webhook is missed. `Organization.hasPaid` makes sure paying customers are never affected.
+- `npm run check:payment-gate` checks the lock.
+
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

@@ -1,5 +1,6 @@
 "use server";
 
+import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -41,6 +42,8 @@ export async function approveDecisionsAction(input: {
 }): Promise<ApproveResult> {
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
+  const blocked = await executionBlock(ctx.organizationId);
+  if (blocked) return { ok: false, error: blocked };
   const ids = z.array(z.string().min(1).max(64)).min(1).max(10).safeParse(input.decisionIds);
   if (!ids.success) return { ok: false, error: "Nothing to approve." };
 

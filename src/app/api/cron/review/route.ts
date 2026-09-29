@@ -6,6 +6,7 @@ import { detectAll } from "@/lib/notifications/detect";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
+import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -86,5 +87,12 @@ export async function GET(req: Request) {
 
   const texts = await sweepSmsNotifications();
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly });
+  // Backstop for a missed Stripe webhook: never-paid subscriptions that ended
+  // or failed still have nothing running.
+  const unpaid = await stopUnpaidSweep().catch((error) => {
+    console.error("Unpaid sweep failed:", error);
+    return null;
+  });
+
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid });
 }

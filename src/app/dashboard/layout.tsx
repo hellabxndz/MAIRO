@@ -19,6 +19,8 @@ import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
+import { FREE_NAV } from "./free-nav";
+import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
 
 // Enquiries is the one destination that is not shown to everybody, because
 // most businesses do not collect them and an empty inbox in the sidebar is
@@ -89,7 +91,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       select: {
         name: true,
         subscriptionTier: true,
-        subscriptionStatus: true,
+        subscriptionStatus: true, paymentRequired: true,
         assistantName: true,
       },
     }),
@@ -115,22 +117,29 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const exploring = await isExploring();
   if (!intake) redirect("/onboarding");
 
-  // The free plan comes before the dashboard. A business that came through it
-  // reviews and approves its plan, then subscribes; only then does the full
-  // platform open. Billing and the launch checklist stay reachable so paying
-  // and continuing always work.
+  // FREE shows what Mairo would do; PAID is Mairo doing it. A business that
+  // signed up through the free plan and hasn't subscribed gets its plan, its
+  // business, connected accounts and pricing; every page that runs real
+  // advertising shows a locked preview instead. The server refuses those
+  // actions too (billing/execution) — this is the screen, not the lock.
   const journey = active?.actingAsClient
     ? null
     : await db.strategyPlan.findUnique({ where: { organizationId }, select: { status: true, activatedAt: true } });
-  if (journey && !journey.activatedAt) {
-    if (journey.status !== "APPROVED") redirect("/plan");
-    const paid = organization ? hasActivePlan(organization) : false;
-    if (!["/dashboard/launch", "/dashboard/billing"].some((p) => pathname.startsWith(p))) {
-      redirect(paid ? "/dashboard/launch" : "/plan/activate");
-    }
+  const paid = organization ? hasActivePlan(organization) : false;
+  const unpaid = Boolean(organization?.paymentRequired) && !paid && !active?.actingAsClient;
+  const approved = journey?.status === "APPROVED";
+  let lockedHere = false;
+  if (unpaid) {
+    if (pathname.startsWith("/dashboard/launch")) redirect(approved ? "/plan/activate" : "/plan");
+    lockedHere = !isFreePage(pathname);
+  } else if (journey && !journey.activatedAt) {
+    // Paid, not yet turned into a campaign: the plan must be approved, then
+    // the launch checklist takes over.
+    if (!approved) redirect("/plan");
+    if (!["/dashboard/launch", "/dashboard/billing"].some((p) => pathname.startsWith(p))) redirect("/dashboard/launch");
   }
 
-  if (!metaAccount && !exploring && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
+  if (!unpaid && !metaAccount && !exploring && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
     redirect(journey ? "/dashboard/launch" : "/dashboard/meta?required=1");
   }
 
@@ -162,7 +171,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userName={session.user.name ?? ""}
       showUpgrade={organization?.subscriptionTier !== "AGENCY"}
       assistantName={assistantNameOf(organization?.assistantName)}
-      extraNav={collectsLeads ? [ENQUIRIES_NAV] : []}
+      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(unpaid ? FREE_NAV(approved) : [])]}
+      locked={unpaid ? LOCKED_NAV : []}
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />
       }
@@ -198,7 +208,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           dashboard; it is still available on demand from Account. */}
       <Tour
         steps={OWNER_TOUR}
-        autoStart={Boolean(intake) && pathname === "/dashboard"}
+        autoStart={Boolean(intake) && pathname === "/dashboard" && !unpaid}
         alreadySeen={seenTour}
       />
 
@@ -220,7 +230,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
 
-      {!metaAccount && !pathname.startsWith("/dashboard/launch") && (
+      {!metaAccount && !unpaid && !pathname.startsWith("/dashboard/launch") && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-amber-200">
             You&apos;re looking around without a Meta account connected. Plans and
@@ -234,7 +244,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </div>
       )}
-      {children}
+      {lockedHere ? <LockedArea pathname={pathname} approved={approved} /> : children}
 
       {/* MAIRO, reachable from every screen. Mounted here rather than per page
           for the same reason the tour is: it has to be available wherever
