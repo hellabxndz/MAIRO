@@ -530,8 +530,10 @@ Premium dark design built only from Mairo's own UI, charts, icons and platform l
 ### Scale: Instagram posting
 
 `/dashboard/social` (sidebar: **Instagram posts**, Scale only).
-- **Let MAIRO plan your week:** MAIRO picks from the business's approved pictures and videos (least recently posted first), writes captions from the Business Brain (plain ad copy without an AI key), and suggests times. Suggestions are never posted until approved; a new plan replaces unapproved suggestions.
-- **Make a post:** Photo, Carousel (2–10 pictures) or Reel (a campaign video); post now or schedule up to 75 days ahead in the business's timezone. Only media made or approved in MAIRO can be posted.
+- **Asked first:** Scale businesses see "Let MAIRO post on your Instagram feed?" (dashboard card and the Instagram page). Nothing is planned before a yes; "Not now" is asked again after 30 days (`Organization.instagramOptInAt` / `instagramDeclinedAt`).
+- **Preview, then approve, then post:** every post — MAIRO's suggestions and the business's own — is shown as it will look on their feed (their @name, the exact JPEG Instagram will get, carousels swipeable, Reels framed, the caption). **Approve & post now** publishes immediately; **Approve for <time>** posts at the suggested time. Nothing is posted without that approval.
+- **MAIRO plans the week:** picks from the business's approved pictures and videos (least recently posted first), writes captions from the Business Brain (plain ad copy without an AI key), and suggests times. A new plan replaces unapproved suggestions.
+- **Make a post:** Photo, Carousel (2–10 pictures) or Reel (a campaign video), to post once approved or at a chosen time up to 75 days ahead in the business's timezone. Only media made or approved in MAIRO can be posted.
 - **Publishing:** approved posts go out at the first check after their time — the daily 09:00 UTC run (`/api/cron/launch`), and whenever the business opens the Social page or the dashboard. On a Vercel plan with hourly crons, schedule `/api/cron/launch` hourly for exact times. Pictures are served to Instagram as JPEG, fitted (never cropped) to 4:5–1.91:1, via `/api/social/media/<post>/<n>`. Reels still processing are finished at the next check. Instagram's 25-posts-a-day limit is respected.
 - Requires Scale, a live subscription, an Instagram Business/Creator account linked to the Facebook Page, and Meta's approval of `instagram_content_publish` (also listed in `META_SCOPES` if that is set).
 - `npm run check:social-scheduler` checks it against a simulated Instagram API.

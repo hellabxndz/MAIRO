@@ -6,7 +6,8 @@ import { toInstagramJpeg } from "@/lib/instagram/jpeg";
 // Where Instagram fetches a scheduled post's pictures from. Instagram only
 // takes a public https address, only JPEG for feed pictures, and only
 // 4:5–1.91:1 shapes — so each picture is converted here on the way out.
-// Only pictures of approved posts are served, by the post's unguessable id.
+// Only pictures of posts in MAIRO's own queue are served, by the post's
+// unguessable id.
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ postId:
   if (!Number.isInteger(i) || i < 0 || i > 9) return new NextResponse("Not found", { status: 404 });
 
   const post = await db.instagramPost.findUnique({ where: { id: postId }, select: { status: true, approvedAt: true, mediaRefs: true } });
-  if (!post || !post.approvedAt || !["SCHEDULED", "CREATED", "PUBLISHED"].includes(post.status)) {
+  // A post waiting for approval is served too: its preview shows exactly the
+  // picture Instagram will get.
+  const live = ["SCHEDULED", "CREATED", "PUBLISHED"].includes(post?.status ?? "") && post?.approvedAt;
+  if (!post || !(live || post.status === "SUGGESTED")) {
     return new NextResponse("Not found", { status: 404 });
   }
   const ref = post.mediaRefs[i];

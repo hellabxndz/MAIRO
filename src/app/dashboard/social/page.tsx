@@ -65,7 +65,7 @@ export default async function SocialPage() {
     }),
     findInstagramAccount(organizationId),
     postsInLastDay(organizationId),
-    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, instagramOptInAt: true } }),
     executionAllowed(organizationId),
   ]);
   const zone = org?.timezone || "America/New_York";
@@ -78,6 +78,9 @@ export default async function SocialPage() {
     whenLabel: p.scheduledFor ? describeStart(p.scheduledFor, zone) : "As soon as it's approved",
     whenLocal: p.scheduledFor ? localInputValue(p.scheduledFor, zone) : "",
     error: p.error,
+    images: p.mediaType === "REEL" ? [] : p.mediaRefs.map((_, i) => `/api/social/media/${p.id}/${i}`),
+    hasTime: Boolean(p.scheduledFor),
+    suggestedByMairo: p.suggestedByMairo,
   });
   const suggested = posts.filter((p) => p.status === "SUGGESTED").map(view);
   const upcoming = posts.filter((p) => p.status === "SCHEDULED" || p.status === "CREATED").map(view);
@@ -154,7 +157,15 @@ export default async function SocialPage() {
         Approved posts go out at MAIRO&rsquo;s first check after their time: every morning at about {runAt} ({tzLabel}), and whenever you open this page. A post scheduled for the afternoon is published at the next of those checks.
       </p>
 
-      <SocialStudio library={library} suggested={suggested} upcoming={upcoming} canPost={Boolean(connected) && !atDailyLimit && allowed} timeZoneLabel={tzLabel} />
+      <SocialStudio
+        library={library}
+        suggested={suggested}
+        upcoming={upcoming}
+        canPost={Boolean(connected) && !atDailyLimit && allowed}
+        timeZoneLabel={tzLabel}
+        username={(igAccount.ok && igAccount.data?.username) || "your_business"}
+        optedIn={Boolean(org?.instagramOptInAt)}
+      />
 
       {history.length > 0 && (
         <div className="mt-8">

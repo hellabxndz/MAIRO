@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
+  answerInstagramQuestionAction,
   approvePostsAction,
   createPostAction,
   discardPostAction,
@@ -11,6 +12,7 @@ import {
   updatePostAction,
   type SocialResult,
 } from "@/lib/actions/social-actions";
+import { InstagramPreview } from "./instagram-preview";
 import { CAPTION_MAX } from "@/lib/instagram/constants";
 import { CAROUSEL_MAX, MEDIA_LABEL, type MediaType } from "@/lib/instagram/social-logic";
 import type { MediaItem } from "@/lib/instagram/library";
@@ -28,6 +30,11 @@ export type PostView = {
   whenLabel: string;
   whenLocal: string;
   error: string | null;
+  /** Pictures as Instagram will receive them, for the preview. */
+  images: string[];
+  /** Whether a time was chosen (otherwise it posts once approved). */
+  hasTime: boolean;
+  suggestedByMairo: boolean;
 };
 
 const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
@@ -92,12 +99,16 @@ export function SocialStudio({
   upcoming,
   canPost,
   timeZoneLabel,
+  username,
+  optedIn,
 }: {
   library: MediaItem[];
   suggested: PostView[];
   upcoming: PostView[];
   canPost: boolean;
   timeZoneLabel: string;
+  username: string;
+  optedIn: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -107,7 +118,7 @@ export function SocialStudio({
   const [type, setType] = useState<MediaType>("IMAGE");
   const [picked, setPicked] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
-  const [mode, setMode] = useState<"now" | "schedule">("schedule");
+  const [mode, setMode] = useState<"now" | "schedule">("now");
   const [local, setLocal] = useState("");
 
   const kind = type === "REEL" ? "video" : "image";
@@ -138,43 +149,63 @@ export function SocialStudio({
 
   return (
     <div className="space-y-6">
-      {/* MAIRO plans the week */}
-      <div className={`${card} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
-        <div>
-          <p className="text-[15px] font-semibold text-white">Let MAIRO plan your week</p>
-          <p className="mt-1 text-[13px] text-muted">MAIRO picks from your approved pictures and videos, writes the captions and suggests times. You approve each post — nothing goes out before that.</p>
+      {!optedIn ? (
+        <div className="rounded-2xl border border-violet/35 bg-violet/[0.06] p-6">
+          <p className="text-[19px] font-semibold text-white">Let MAIRO post on your Instagram feed?</p>
+          <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-muted">
+            MAIRO plans posts from your approved pictures and videos, writes the captions, and shows you exactly how each one will look on your feed. Nothing is posted until you approve it.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" disabled={pending || !canPost} onClick={() => run(() => answerInstagramQuestionAction(true))} className={primary}>
+              {pending ? "Planning your first posts…" : "Yes, let MAIRO post"}
+            </button>
+            <button type="button" disabled={pending} onClick={() => run(() => answerInstagramQuestionAction(false))} className={secondary}>Not now</button>
+          </div>
+          {!canPost && <p className="mt-3 text-[12.5px] text-amber-200/90">Your Instagram needs to be ready first — see above.</p>}
         </div>
-        <button type="button" disabled={pending || !canPost} onClick={() => run(planWeekAction)} className={`${primary} shrink-0`}>
-          {pending ? "Working…" : suggested.length ? "Plan again" : "Plan my week"}
-        </button>
-      </div>
+      ) : (
+        <div className={`${card} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+          <div>
+            <p className="text-[15px] font-semibold text-white">MAIRO plans your posts</p>
+            <p className="mt-1 text-[13px] text-muted">MAIRO picks from your approved pictures and videos, writes the captions and suggests times. You see each post before it goes out.</p>
+          </div>
+          <button type="button" disabled={pending || !canPost} onClick={() => run(planWeekAction)} className={`${primary} shrink-0`}>
+            {pending ? "Working…" : suggested.some((s) => s.suggestedByMairo) ? "Plan again" : "Plan my week"}
+          </button>
+        </div>
+      )}
       <Notice result={result} />
 
       {suggested.length > 0 && (
         <section>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-[16px] font-semibold text-white">MAIRO&rsquo;s suggestions — waiting for you</h2>
-            <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction(suggested.map((s) => s.id)))} className={primary}>
-              Approve all
-            </button>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-[16px] font-semibold text-white">Waiting for your approval</h2>
+              <p className="text-[12.5px] text-muted">This is exactly how each post will look on your feed.</p>
+            </div>
+            {suggested.length > 1 && (
+              <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction(suggested.map((s) => s.id), "scheduled"))} className={secondary}>
+                Approve all at their times
+              </button>
+            )}
           </div>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {suggested.map((p) => (
-              <div key={p.id} className={card}>
-                <div className="flex items-start gap-3">
-                  <div className="w-20 shrink-0"><Thumb url={p.previewUrl} kind={p.mediaType === "REEL" ? "video" : "image"} /></div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{MEDIA_LABEL[p.mediaType]}</p>
-                    <p className="mt-1 text-[12.5px] text-white/80">{p.whenLabel}</p>
-                  </div>
-                </div>
-                {editing === p.id ? (
-                  <PostEditor post={p} onDone={() => { setEditing(null); router.refresh(); }} />
-                ) : (
-                  <p className="mt-3 line-clamp-6 whitespace-pre-wrap text-[13px] leading-relaxed text-white/85">{p.caption}</p>
-                )}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction([p.id]))} className={primary}>Approve</button>
+              <div key={p.id} className="min-w-0">
+                <InstagramPreview username={username} mediaType={p.mediaType} images={p.images} poster={p.previewUrl} caption={p.caption} />
+                <p className="mt-2 text-[12.5px] text-muted">
+                  {p.suggestedByMairo ? "MAIRO suggests posting" : "Your post —"} {p.hasTime ? p.whenLabel : "as soon as you approve"}
+                </p>
+                {editing === p.id && <PostEditor post={p} onDone={() => { setEditing(null); router.refresh(); }} />}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction([p.id], "now"))} className={primary}>
+                    Approve &amp; post now
+                  </button>
+                  {p.hasTime && (
+                    <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction([p.id], "scheduled"))} className={secondary}>
+                      Approve for {p.whenLabel.replace(/ [A-Z]{2,5}$/, "")}
+                    </button>
+                  )}
                   <button type="button" onClick={() => setEditing(editing === p.id ? null : p.id)} className={secondary}>{editing === p.id ? "Close" : "Edit"}</button>
                   <button type="button" disabled={pending} onClick={() => run(() => discardPostAction(p.id))} className={secondary}>Discard</button>
                 </div>
@@ -185,7 +216,7 @@ export function SocialStudio({
       )}
 
       {/* Make a post */}
-      <section className={card}>
+      {optedIn && <section className={card}>
         <h2 className="text-[16px] font-semibold text-white">Make a post</h2>
         <div role="tablist" aria-label="Post type" className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
           {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
@@ -229,8 +260,8 @@ export function SocialStudio({
         </label>
 
         <div className="mt-2 flex flex-wrap items-center gap-4 text-[13.5px]">
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "schedule"} onChange={() => setMode("schedule")} className="accent-[#7c5cff]" /> Schedule</label>
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "now"} onChange={() => setMode("now")} className="accent-[#7c5cff]" /> Post now</label>
+          <label className="flex items-center gap-2"><input type="radio" checked={mode === "now"} onChange={() => setMode("now")} className="accent-[#7c5cff]" /> Post as soon as I approve it</label>
+          <label className="flex items-center gap-2"><input type="radio" checked={mode === "schedule"} onChange={() => setMode("schedule")} className="accent-[#7c5cff]" /> Schedule for</label>
           {mode === "schedule" && (
             <span className="flex items-center gap-2">
               <input type="datetime-local" value={local} onChange={(e) => setLocal(e.target.value)} className={`${input} w-auto`} aria-label="When to post" />
@@ -242,13 +273,14 @@ export function SocialStudio({
         <button type="button" disabled={pending || !canPost || picked.length === 0 || !caption.trim() || (mode === "schedule" && !local)}
           onClick={() => run(async () => {
             const r = await createPostAction({ mediaType: type, refs: picked, caption, local: mode === "schedule" ? local : null });
-            if (r.ok) { setPicked([]); setCaption(""); setLocal(""); }
+            if (r.ok) { setPicked([]); setCaption(""); setLocal(""); window.scrollTo({ top: 0, behavior: "smooth" }); }
             return r;
           })}
           className={`${primary} mt-4`}>
-          {pending ? "Working…" : mode === "now" ? "Post to Instagram now" : "Schedule post"}
+          {pending ? "Working…" : "Preview post"}
         </button>
-      </section>
+        <p className="mt-2 text-[12px] text-faint">You&rsquo;ll see exactly how it looks on your feed before anything is posted.</p>
+      </section>}
 
       {upcoming.length > 0 && (
         <section>

@@ -12,6 +12,7 @@ import { db } from "../src/lib/db";
 import { feedCanvas, planSlots, validatePost, validateWhen, isDuePost } from "../src/lib/instagram/social-logic";
 import { toInstagramJpeg } from "../src/lib/instagram/jpeg";
 import { publishDuePosts, publishPost } from "../src/lib/instagram/scheduler";
+import { shouldAskInstagram } from "../src/lib/instagram/opt-in";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -106,6 +107,18 @@ async function main() {
     db.instagramPost.create({ data: { organizationId: orgId, caption: "Hello from the shop", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: past, ...data } as never });
 
   try {
+    await check("Scale is asked once; 'Not now' waits 30 days; a yes ends the question", async () => {
+      assert.equal(await shouldAskInstagram(orgId), true);
+      await db.organization.update({ where: { id: orgId }, data: { instagramDeclinedAt: new Date() } });
+      assert.equal(await shouldAskInstagram(orgId), false);
+      assert.equal(await shouldAskInstagram(orgId, new Date(Date.now() + 31 * 86_400_000)), true);
+      await db.organization.update({ where: { id: orgId }, data: { instagramOptInAt: new Date() } });
+      assert.equal(await shouldAskInstagram(orgId, new Date(Date.now() + 31 * 86_400_000)), false);
+      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH", instagramOptInAt: null, instagramDeclinedAt: null } });
+      assert.equal(await shouldAskInstagram(orgId), false, "Growth isn't asked");
+      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "SCALE" } });
+    });
+
     await check("a photo post is published, via a JPEG address Instagram can fetch", async () => {
       const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
       const r = await publishPost(p.id, { budgetMs: 5_000 });

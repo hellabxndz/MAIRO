@@ -9,7 +9,7 @@ import { can } from "@/lib/entitlements";
 import { planFor } from "@/lib/plans";
 import { executionBlock } from "@/lib/billing/execution";
 import { brainBrief, loadBrain } from "@/lib/business/brain";
-import { describeStart, instantFromLocal, wallClockInZone } from "@/lib/campaigns/schedule";
+import { instantFromLocal, wallClockInZone } from "@/lib/campaigns/schedule";
 import { writeCaptions } from "@/lib/ai/social-captions";
 import { mediaLibrary, ownsRefs } from "@/lib/instagram/library";
 import { publishPost } from "@/lib/instagram/scheduler";
@@ -65,34 +65,45 @@ export async function createPostAction(input: z.infer<typeof createSchema>): Pro
   if (!(await ownsRefs(ctx.organizationId, refs))) return { ok: false, error: "One of those pictures or videos isn't available to post." };
 
   const preview = (await mediaLibrary(ctx.organizationId)).find((m) => m.ref === refs[0])?.previewUrl ?? null;
-  const post = await db.instagramPost.create({
+  // Every post is shown as it will look on Instagram before anything is
+  // posted: this creates the preview, and approving it is what posts.
+  await db.instagramPost.create({
     data: {
       organizationId: ctx.organizationId,
       caption,
       mediaType,
       mediaRefs: refs,
       previewUrl: preview,
-      status: "SCHEDULED",
+      status: "SUGGESTED",
+      suggestedByMairo: false,
       scheduledFor: when,
-      approvedAt: new Date(),
     },
   });
   refresh();
+  return { ok: true, message: "Here's how it will look on your feed. Approve it and MAIRO posts it." };
+}
 
-  if (when) {
-    return { ok: true, message: `Scheduled for ${describeStart(when, ctx.timeZone)}.` };
-  }
-  const outcome = await publishPost(post.id, { budgetMs: 40_000 });
+/** "Let MAIRO post on your Instagram feed?" — yes plans the first posts; not now asks again later. */
+export async function answerInstagramQuestionAction(yes: boolean): Promise<SocialResult> {
+  const ctx = await context();
+  if ("error" in ctx) return { ok: false, error: ctx.error };
+  await db.organization.update({
+    where: { id: ctx.organizationId },
+    data: yes ? { instagramOptInAt: new Date(), instagramDeclinedAt: null } : { instagramDeclinedAt: new Date() },
+  });
   refresh();
-  if (outcome.status === "PUBLISHED") return { ok: true, message: outcome.message, permalink: outcome.permalink };
-  if (outcome.status === "FAILED") return { ok: false, error: outcome.message };
-  return { ok: true, message: "Instagram is still processing it — MAIRO publishes it at the next check." };
+  revalidatePath("/dashboard");
+  if (!yes) return { ok: true, message: "No problem — MAIRO won't post anything. You can say yes any time on this page." };
+  const planned = await planWeekAction();
+  return planned.ok ? { ok: true, message: "Great — here's what MAIRO would post first. Nothing goes out until you approve each one." } : planned;
 }
 
 /** MAIRO plans the next week: three posts with captions, for the business to approve. */
 export async function planWeekAction(): Promise<SocialResult> {
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
+  const optIn = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { instagramOptInAt: true } });
+  if (!optIn?.instagramOptInAt) return { ok: false, error: "Say yes to MAIRO posting on your Instagram feed first." };
 
   const [library, brain, recent] = await Promise.all([
     mediaLibrary(ctx.organizationId),
@@ -152,24 +163,53 @@ export async function planWeekAction(): Promise<SocialResult> {
   return { ok: true, message: `MAIRO planned ${drafts.length} post${drafts.length === 1 ? "" : "s"}. Nothing goes out until you approve ${drafts.length === 1 ? "it" : "them"}.` };
 }
 
-export async function approvePostsAction(ids: string[]): Promise<SocialResult> {
+/**
+ * Approving a previewed post. "now" posts it straight away; "scheduled"
+ * posts it at its chosen time (or at once if that time has passed).
+ */
+export async function approvePostsAction(ids: string[], mode: "now" | "scheduled" = "scheduled"): Promise<SocialResult> {
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const clean = z.array(z.string().max(64)).max(20).safeParse(ids);
   if (!clean.success || clean.data.length === 0) return { ok: false, error: "Nothing to approve." };
   const rows = await db.instagramPost.findMany({ where: { id: { in: clean.data }, organizationId: ctx.organizationId, status: "SUGGESTED" } });
+  if (rows.length === 0) return { ok: false, error: "That post has already been approved or removed." };
   for (const r of rows) {
     const problem = validatePost({ mediaType: r.mediaType as MediaType, refs: r.mediaRefs, caption: r.caption });
     if (problem) return { ok: false, error: problem };
   }
   const now = new Date();
   for (const r of rows) {
-    // A suggested time that has passed means "as soon as possible".
-    const when = r.scheduledFor && r.scheduledFor > now ? r.scheduledFor : null;
+    const when = mode === "now" ? null : r.scheduledFor && r.scheduledFor > now ? r.scheduledFor : null;
     await db.instagramPost.update({ where: { id: r.id }, data: { status: "SCHEDULED", approvedAt: now, scheduledFor: when } });
   }
   refresh();
-  return { ok: true, message: `Approved ${rows.length} post${rows.length === 1 ? "" : "s"}.` };
+
+  if (mode === "scheduled") {
+    const later = rows.filter((r) => r.scheduledFor && r.scheduledFor > now);
+    return {
+      ok: true,
+      message: later.length === rows.length
+        ? `Approved — MAIRO posts ${rows.length === 1 ? "it" : "them"} at the scheduled time${rows.length === 1 ? "" : "s"}.`
+        : `Approved ${rows.length} post${rows.length === 1 ? "" : "s"}.`,
+    };
+  }
+
+  // Post now: publish each straight away.
+  let posted = 0;
+  let permalink: string | null | undefined;
+  const problems: string[] = [];
+  for (const r of rows) {
+    const outcome = await publishPost(r.id, { budgetMs: 40_000 });
+    if (outcome.status === "PUBLISHED") {
+      posted++;
+      permalink = outcome.permalink;
+    } else if (outcome.status === "FAILED") problems.push(outcome.message);
+  }
+  refresh();
+  if (problems.length && posted === 0) return { ok: false, error: problems[0] };
+  if (posted === rows.length) return { ok: true, message: rows.length === 1 ? "Posted to your Instagram." : `Posted ${posted} posts to your Instagram.`, permalink };
+  return { ok: true, message: "Instagram is still processing — MAIRO finishes posting at the next check." };
 }
 
 const updateSchema = z.object({ id: z.string().max(64), caption: z.string().max(2400), local: z.string().max(20).nullable() });
