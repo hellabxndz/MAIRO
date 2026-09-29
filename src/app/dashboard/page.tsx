@@ -41,8 +41,8 @@ import { loadBrain } from "@/lib/business/brain";
 import { parseReport, reportIsFresh, WEEKDAYS } from "@/lib/reports/weekly";
 import { WeeklyReportCard } from "@/components/reports/weekly-card";
 import { FirstCampaignCard } from "@/components/strategy/journey-card";
-import { InstagramQuestion } from "@/components/strategy/instagram-question";
-import { shouldAskInstagram } from "@/lib/instagram/opt-in";
+import { SocialQuestion } from "@/components/strategy/social-question";
+import { socialQuestion } from "@/lib/instagram/opt-in";
 import { FreeHome } from "@/components/strategy/free-access";
 import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
@@ -63,8 +63,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const free = await freeHomeState(organizationId);
   if (free) return <FreeHome {...free} />;
 
-  // Scale: ask whether MAIRO may post on their Instagram feed.
-  const askInstagram = await shouldAskInstagram(organizationId);
+  // Scale: ask whether MAIRO may post on their Instagram feed, then their Facebook Page.
+  const askSocial = await socialQuestion(organizationId);
 
   // Before anything is read, anything that is ready goes live.
   //
@@ -175,7 +175,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const alerts = (
     <>
       {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
-      {askInstagram && <InstagramQuestion />}
+      {askSocial && <SocialQuestion network={askSocial} />}
       {/* MAIRO acted on its own, so it says so — before the customer finds a
           live campaign they did not press anything to start. */}
       {launched.launched && (

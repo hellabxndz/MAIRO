@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTransition, type ReactNode } from "react";
+import { Fragment, useTransition, type ReactNode } from "react";
 import { setViewMode } from "@/lib/actions/view-mode-actions";
 import type { ViewMode } from "@/lib/view-mode";
 
@@ -28,6 +28,8 @@ export type NavEntry = {
   href: string;
   label: string;
   icon: ReactNode;
+  /** A small heading shown above the first entry of a group, e.g. Scale's "Social". */
+  group?: string;
 };
 
 /* --------------------------------------------------------------- the icons */
@@ -315,7 +317,16 @@ export function AppShell({
           MAIRO
         </Link>
 
-        <nav className="flex flex-1 flex-col gap-0.5">{primary.map((i) => row(i, isActive(pathname, i.href)))}</nav>
+        <nav className="flex flex-1 flex-col gap-0.5">
+          {primary.map((i, n) => (
+            <Fragment key={i.href}>
+              {i.group && i.group !== primary[n - 1]?.group && (
+                <p className="mt-3 px-3 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">{i.group}</p>
+              )}
+              {row(i, isActive(pathname, i.href))}
+            </Fragment>
+          ))}
+        </nav>
 
         {/* One slim row rather than a card: on a short screen a tall card is
             what pushed Billing, Settings and Sign out out of reach. */}

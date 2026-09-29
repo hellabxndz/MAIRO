@@ -173,7 +173,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userName={session.user.name ?? ""}
       showUpgrade={organization?.subscriptionTier !== "AGENCY"}
       assistantName={assistantNameOf(organization?.assistantName)}
-      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? [SOCIAL_NAV] : []), ...(unpaid ? FREE_NAV(approved) : [])]}
+      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? SOCIAL_NAV : []), ...(unpaid ? FREE_NAV(approved) : [])]}
       locked={unpaid ? LOCKED_NAV : []}
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />

@@ -1,7 +1,8 @@
-// Checks Scale's Instagram posting: the rules (formats, carousels, timing,
-// Instagram's picture shapes), the JPEG conversion, and the publisher's
-// state machine against a simulated Instagram API — photos, carousels, a
-// Reel that is still processing, suggestions that must never post, and the
+// Checks Scale's Instagram and Facebook Page posting: the rules (formats,
+// carousels, timing, Instagram's picture shapes), the JPEG conversion, and the
+// publishers' state machines against a simulated Graph API — photos,
+// carousels and multi-photo posts, a Reel or video still processing,
+// suggestions that must never post, the Page-posting permission, and the
 // plan / subscription lock.
 //
 //   npm run check:social-scheduler   (needs DATABASE_URL; makes no network calls)
@@ -12,7 +13,7 @@ import { db } from "../src/lib/db";
 import { feedCanvas, planSlots, validatePost, validateWhen, isDuePost } from "../src/lib/instagram/social-logic";
 import { toInstagramJpeg } from "../src/lib/instagram/jpeg";
 import { publishDuePosts, publishPost } from "../src/lib/instagram/scheduler";
-import { shouldAskInstagram } from "../src/lib/instagram/opt-in";
+import { socialQuestion } from "../src/lib/instagram/opt-in";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -25,7 +26,9 @@ async function check(name: string, fn: () => Promise<void> | void) {
 type Call = { method: string; path: string; params: Record<string, string> };
 const calls: Call[] = [];
 let reelChecks = 0;
+let videoChecks = 0;
 let n = 0;
+let pagePosting = false;
 const realFetch = globalThis.fetch;
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
@@ -33,6 +36,7 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const method = (init?.method ?? "GET").toUpperCase();
   const path = url.pathname.replace(/^\/v[\d.]+/, "");
   const params = Object.fromEntries(url.searchParams.entries());
+  if (typeof init?.body === "string" && !init.body.startsWith("{")) Object.assign(params, Object.fromEntries(new URLSearchParams(init.body).entries()));
   calls.push({ method, path, params });
   const json = (o: unknown) => new Response(JSON.stringify(o), { status: 200, headers: { "content-type": "application/json" } });
   if (method === "GET" && params.fields?.startsWith("instagram_business_account")) return json({ instagram_business_account: { id: "ig1", username: "shop" } });
@@ -46,6 +50,14 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   }
   if (method === "POST" && path === "/ig1/media_publish") return json({ id: `m-${params.creation_id}` });
   if (method === "GET" && params.fields === "permalink") return json({ permalink: `https://instagram.com/p${path}` });
+  // Facebook Page posting.
+  if (method === "GET" && path === "/me/permissions") return json({ data: [{ permission: "ads_management", status: "granted" }, ...(pagePosting ? [{ permission: "pages_manage_posts", status: "granted" }] : [])] });
+  if (method === "GET" && path === "/page1" && params.fields === "access_token") return json({ access_token: "page-token" });
+  if (method === "POST" && path === "/page1/photos") return json(params.published === "false" ? { id: `u${++n}` } : { id: `ph${++n}`, post_id: `page1_${n}` });
+  if (method === "POST" && path === "/page1/feed") return json({ id: `page1_feed${++n}` });
+  if (method === "POST" && path === "/page1/videos") return json({ id: "vid1" });
+  if (method === "GET" && path === "/vid1") return json({ status: { video_status: ++videoChecks < 2 ? "processing" : "ready" }, permalink_url: "/page1/videos/vid1/" });
+  if (method === "GET" && params.fields === "permalink_url") return json({ permalink_url: `https://www.facebook.com${path}` });
   return json({});
 }) as typeof fetch;
 
@@ -62,6 +74,16 @@ async function main() {
     assert.match(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: " " }) ?? "", /caption/);
     assert.match(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: Array.from({ length: 31 }, (_, i) => `#t${i}`).join(" ") }) ?? "", /30 hashtags/);
     assert.match(validatePost({ mediaType: "IMAGE", refs: ["https://evil"], caption: "Hi" }) ?? "", /can't be posted/);
+  });
+
+  await check("Facebook rules: longer text, no hashtag cap, multi-photo wording", () => {
+    const tags = Array.from({ length: 31 }, (_, i) => `#t${i}`).join(" ");
+    assert.equal(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: tags, network: "FACEBOOK" }), null);
+    assert.equal(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: "x".repeat(3000), network: "FACEBOOK" }), null);
+    assert.match(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: "x".repeat(3000) }) ?? "", /2200/);
+    assert.match(validatePost({ mediaType: "IMAGE", refs: ["creative:a"], caption: "x".repeat(5001), network: "FACEBOOK" }) ?? "", /5000/);
+    assert.match(validatePost({ mediaType: "CAROUSEL", refs: ["studio:a"], caption: "Hi", network: "FACEBOOK" }) ?? "", /multi-photo/);
+    assert.match(validatePost({ mediaType: "REEL", refs: ["creative:a"], caption: "Hi", network: "FACEBOOK" }) ?? "", /one video/);
   });
 
   await check("timing: past and far-future times are refused", () => {
@@ -99,7 +121,7 @@ async function main() {
   await db.organization.create({ data: { id: orgId, name: "Social Test", subscriptionTier: "SCALE", subscriptionStatus: "active", hasPaid: true } });
   const demo = await db.metaAdAccount.findFirst({ where: { organizationId: "demo-org-local" } });
   if (!demo) throw new Error("Needs the local demo org's Meta connection (demo-org-local).");
-  await db.metaAdAccount.create({ data: { organizationId: orgId, metaAdAccountId: demo.metaAdAccountId, pageId: demo.pageId ?? "page1", pageName: demo.pageName, accessToken: demo.accessToken, tokenExpiresAt: demo.tokenExpiresAt, status: "CONNECTED" } });
+  await db.metaAdAccount.create({ data: { organizationId: orgId, metaAdAccountId: demo.metaAdAccountId, pageId: "page1", pageName: "Sunrise Coffee", accessToken: demo.accessToken, tokenExpiresAt: demo.tokenExpiresAt, status: "CONNECTED" } });
   const camp = await db.mairoCampaign.create({ data: { organizationId: orgId, name: "Video camp", objective: "LEADS", totalDailyBudgetCents: 2000 } });
   const ad = await db.campaignAd.create({ data: { mairoCampaignId: camp.id, position: 0, kind: "VIDEO", videoUrl: "https://blob.example/v.mp4" } });
   const past = new Date(Date.now() - 60_000);
@@ -107,15 +129,20 @@ async function main() {
     db.instagramPost.create({ data: { organizationId: orgId, caption: "Hello from the shop", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: past, ...data } as never });
 
   try {
-    await check("Scale is asked once; 'Not now' waits 30 days; a yes ends the question", async () => {
-      assert.equal(await shouldAskInstagram(orgId), true);
+    await check("Scale is asked about Instagram, then Facebook; 'Not now' waits 30 days; a yes ends it", async () => {
+      const later = new Date(Date.now() + 31 * 86_400_000);
+      assert.equal(await socialQuestion(orgId), "INSTAGRAM");
       await db.organization.update({ where: { id: orgId }, data: { instagramDeclinedAt: new Date() } });
-      assert.equal(await shouldAskInstagram(orgId), false);
-      assert.equal(await shouldAskInstagram(orgId, new Date(Date.now() + 31 * 86_400_000)), true);
+      assert.equal(await socialQuestion(orgId), "FACEBOOK", "Facebook comes once Instagram is answered");
+      await db.organization.update({ where: { id: orgId }, data: { facebookDeclinedAt: new Date() } });
+      assert.equal(await socialQuestion(orgId), null);
+      assert.equal(await socialQuestion(orgId, later), "INSTAGRAM");
       await db.organization.update({ where: { id: orgId }, data: { instagramOptInAt: new Date() } });
-      assert.equal(await shouldAskInstagram(orgId, new Date(Date.now() + 31 * 86_400_000)), false);
-      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH", instagramOptInAt: null, instagramDeclinedAt: null } });
-      assert.equal(await shouldAskInstagram(orgId), false, "Growth isn't asked");
+      assert.equal(await socialQuestion(orgId, later), "FACEBOOK");
+      await db.organization.update({ where: { id: orgId }, data: { facebookOptInAt: new Date() } });
+      assert.equal(await socialQuestion(orgId, later), null);
+      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH", instagramOptInAt: null, instagramDeclinedAt: null, facebookOptInAt: null, facebookDeclinedAt: null } });
+      assert.equal(await socialQuestion(orgId), null, "Growth isn't asked");
       await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "SCALE" } });
     });
 
@@ -180,6 +207,51 @@ async function main() {
       const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:l"] });
       assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "SCHEDULED");
       assert.match((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).error ?? "", /25 posts a day/);
+    });
+
+    const fb = (data: Record<string, unknown>) => mk({ network: "FACEBOOK", ...data });
+
+    await check("Facebook: without the Page-posting permission nothing is posted", async () => {
+      pagePosting = false;
+      const before = calls.length;
+      const p = await fb({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
+      const r = await publishPost(p.id, { budgetMs: 5_000 });
+      assert.equal(r.status, "FAILED");
+      assert.match(r.message, /permission to post on your Facebook Page/);
+      assert.ok(!calls.slice(before).some((c) => c.method === "POST"), "no posting calls");
+    });
+
+    await check("Facebook: a photo is posted as the Page (even past Instagram's daily limit)", async () => {
+      pagePosting = true;
+      const p = await fb({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
+      const r = await publishPost(p.id, { budgetMs: 5_000 });
+      assert.equal(r.status, "PUBLISHED");
+      const call = calls.find((c) => c.method === "POST" && c.path === "/page1/photos" && c.params.url?.includes(p.id));
+      assert.ok(call && call.params.access_token === "page-token" && call.params.message === "Hello from the shop" && call.params.published === "true");
+      const row = await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } });
+      assert.ok(row.mediaId?.startsWith("fb:page1_") && row.permalink?.startsWith("https://www.facebook.com/"));
+    });
+
+    await check("Facebook: a multi-photo post uploads each picture unpublished, then one post", async () => {
+      const p = await fb({ mediaType: "CAROUSEL", mediaRefs: ["creative:a", "studio:b", "creative:c"] });
+      const before = calls.length;
+      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "PUBLISHED");
+      const mine = calls.slice(before).filter((c) => c.method === "POST");
+      assert.equal(mine.filter((c) => c.path === "/page1/photos" && c.params.published === "false").length, 3);
+      const feed = mine.find((c) => c.path === "/page1/feed");
+      assert.ok(feed && JSON.parse(feed.params.attached_media).length === 3 && feed.params.message);
+    });
+
+    await check("Facebook: a video processing waits for the next check, then is live", async () => {
+      const p = await fb({ mediaType: "REEL", mediaRefs: [`video:${ad.id}`] });
+      const first = await publishPost(p.id, { budgetMs: 5_000 });
+      assert.equal(first.status, "CREATED");
+      assert.ok(calls.some((c) => c.path === "/page1/videos" && c.params.file_url === "https://blob.example/v.mp4"));
+      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "CREATED", "still processing");
+      const third = await publishPost(p.id, { budgetMs: 5_000 });
+      assert.equal(third.status, "PUBLISHED");
+      assert.equal(calls.filter((c) => c.path === "/page1/videos").length, 1, "the video is handed over once");
+      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).permalink, "https://www.facebook.com/page1/videos/vid1/");
     });
   } finally {
     await db.organization.deleteMany({ where: { id: { startsWith: TAG } } });

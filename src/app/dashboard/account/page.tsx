@@ -42,7 +42,8 @@ export default async function AccountPage() {
       entries: [
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
         { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad Mairo has made for you" },
-        { href: "/dashboard/social", label: "Your social posts", hint: "The unpaid half of your feed" },
+        { href: "/dashboard/social/instagram", label: "Instagram posts", hint: "MAIRO posting on your feed (Scale)" },
+        { href: "/dashboard/social/facebook", label: "Facebook posts", hint: "MAIRO posting on your Page (Scale)" },
         ...(showsEnquiries({ hasForm: Boolean(leadForm) })
           ? [{ href: "/dashboard/leads", label: "Enquiries", hint: "People who asked you to get in touch" }]
           : []),

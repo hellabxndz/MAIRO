@@ -53,7 +53,17 @@ const SCOPES = [
  * dashboard, and this is what turns that into a refusal at build-the-URL time
  * naming the bad value.
  */
-const KNOWN_SCOPES = new Set(SCOPES);
+const KNOWN_SCOPES = new Set([...SCOPES, "pages_manage_posts"]);
+
+/**
+ * Posting on the business's own Facebook Page (Scale).
+ *
+ * Deliberately not in SCOPES. It is asked for only when a Scale business says
+ * yes to "Let MAIRO post on your Facebook Page?", through a second, smaller
+ * dialog — so the everyday connect dialog (and the one recorded for App
+ * Review) is unchanged, and nobody is asked for a permission they never use.
+ */
+export const PAGE_POSTING_SCOPE = "pages_manage_posts";
 
 /**
  * The permissions the login dialog asks for.
@@ -88,13 +98,13 @@ export function metaScopes(): string[] {
     throw new Error(
       `META_SCOPES contains ${unknown.join(", ")}, which ${
         unknown.length === 1 ? "is not a permission" : "are not permissions"
-      } MAIRO uses. Valid values are ${SCOPES.join(", ")} — or unset META_SCOPES to ask for all of them.`
+      } MAIRO uses. Valid values are ${[...KNOWN_SCOPES].join(", ")} — or unset META_SCOPES to ask for the usual set.`
     );
   }
 
   // Order follows SCOPES rather than the env var, so the dialog reads the same
   // way whoever typed the list, and duplicates collapse.
-  return SCOPES.filter((s) => requested.includes(s));
+  return [...KNOWN_SCOPES].filter((s) => requested.includes(s));
 }
 
 function requireEnv(name: string): string {
@@ -144,7 +154,7 @@ export function metaRedirectUri(): string {
   );
 }
 
-export function buildMetaAuthUrl(state: string): string {
+export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean } = {}): string {
   const appId = requireEnv("META_APP_ID");
   const redirectUri = metaRedirectUri();
 
@@ -152,7 +162,11 @@ export function buildMetaAuthUrl(state: string): string {
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  url.searchParams.set("scope", metaScopes().join(","));
+  const scopes = opts.pagePosting ? [...new Set([...metaScopes(), PAGE_POSTING_SCOPE])] : metaScopes();
+  url.searchParams.set("scope", scopes.join(","));
+  // Asks again for a permission that was turned down before, rather than
+  // Facebook silently skipping it.
+  if (opts.pagePosting) url.searchParams.set("auth_type", "rerequest");
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

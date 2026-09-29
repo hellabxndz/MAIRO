@@ -28,7 +28,7 @@ import {
   DEFAULT_MESSAGE_CHANNEL,
 } from "@/lib/campaigns/destination";
 import { describeGraphError } from "@/lib/meta/client";
-import { metaScopes } from "@/lib/meta/oauth";
+import { buildMetaAuthUrl, metaScopes } from "@/lib/meta/oauth";
 import { metaAdapter, metaAdSetBody } from "@/lib/ad-platforms/meta/adapter";
 import {
   describePost,
@@ -684,6 +684,19 @@ console.log("\n— the permissions the login dialog asks for —");
   ok("and the refusal names the bad one", refused.includes("pages_show_lists"), refused);
 
   delete process.env.META_SCOPES;
+
+  // Facebook Page posting (Scale) is its own, later dialog — the everyday one
+  // (and the one recorded for App Review) must not grow a permission.
+  const hadApp = process.env.META_APP_ID;
+  process.env.META_APP_ID = hadApp || "123";
+  const everyday = new URL(buildMetaAuthUrl("s")).searchParams;
+  const posting = new URL(buildMetaAuthUrl("s", { pagePosting: true })).searchParams;
+  ok("the everyday connect doesn't ask to post on the Page", !everyday.get("scope")!.includes("pages_manage_posts") && !everyday.get("auth_type"));
+  ok("saying yes to Facebook posting asks for it, on top of the rest", posting.get("scope")!.split(",").includes("pages_manage_posts") && posting.get("scope")!.includes("ads_management") && posting.get("auth_type") === "rerequest");
+  process.env.META_SCOPES = "pages_manage_posts";
+  ok("and it's a name META_SCOPES accepts, for its own review round", metaScopes().join() === "pages_manage_posts");
+  delete process.env.META_SCOPES;
+  if (hadApp === undefined) delete process.env.META_APP_ID;
 }
 
 console.log("\n— a click has somewhere to go —");

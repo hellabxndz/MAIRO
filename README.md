@@ -527,13 +527,20 @@ a network can be retired without orphaning the rows that reference it.
 
 Premium dark design built only from Mairo's own UI, charts, icons and platform logos — no people or stock photos. Sections: hero with a floating sample dashboard and AI callouts, platform bar (only platforms Mairo actually works with; product statements instead of customer counts), How It Works (free plan → approve → connect → subscribe → build → approve → launch), business-type selector, the free-plan demo ("strategy only"), Mairo Decisions, Business Health, Simple / Advanced / Profit First preview, pricing, FAQ and the final call. Every figure is marked as sample or demo data. All calls to action go to `/sign-up`, which starts the free plan.
 
-### Scale: Instagram posting
+### Scale: Instagram and Facebook posting
 
-`/dashboard/social` (sidebar: **Instagram posts**, Scale only).
+Scale accounts get a **Social** section in the sidebar with **Instagram posts** (`/dashboard/social/instagram`) and **Facebook posts** (`/dashboard/social/facebook`); `/dashboard/social` opens Instagram. Both work the same way, below; the Facebook differences are listed after.
 - **Asked first:** Scale businesses see "Let MAIRO post on your Instagram feed?" (dashboard card and the Instagram page). Nothing is planned before a yes; "Not now" is asked again after 30 days (`Organization.instagramOptInAt` / `instagramDeclinedAt`).
 - **Preview, then approve, then post:** every post — MAIRO's suggestions and the business's own — is shown as it will look on their feed (their @name, the exact JPEG Instagram will get, carousels swipeable, Reels framed, the caption). **Approve & post now** publishes immediately; **Approve for <time>** posts at the suggested time. Nothing is posted without that approval.
 - **MAIRO plans the week:** picks from the business's approved pictures and videos (least recently posted first), writes captions from the Business Brain (plain ad copy without an AI key), and suggests times. A new plan replaces unapproved suggestions.
 - **Make a post:** Photo, Carousel (2–10 pictures) or Reel (a campaign video), to post once approved or at a chosen time up to 75 days ahead in the business's timezone. Only media made or approved in MAIRO can be posted.
 - **Publishing:** approved posts go out at the first check after their time — the daily 09:00 UTC run (`/api/cron/launch`), and whenever the business opens the Social page or the dashboard. On a Vercel plan with hourly crons, schedule `/api/cron/launch` hourly for exact times. Pictures are served to Instagram as JPEG, fitted (never cropped) to 4:5–1.91:1, via `/api/social/media/<post>/<n>`. Reels still processing are finished at the next check. Instagram's 25-posts-a-day limit is respected.
 - Requires Scale, a live subscription, an Instagram Business/Creator account linked to the Facebook Page, and Meta's approval of `instagram_content_publish` (also listed in `META_SCOPES` if that is set).
-- `npm run check:social-scheduler` checks it against a simulated Instagram API.
+- `npm run check:social-scheduler` checks both against a simulated Graph API.
+
+**Facebook Page posts:**
+- Asked on the dashboard once Instagram has been answered: "Let MAIRO post on your Facebook Page?" (`Organization.facebookOptInAt` / `facebookDeclinedAt`). Posts share the `InstagramPost` table with `network = "FACEBOOK"`.
+- Previews look like a Facebook post (Page name, text above the picture, multi-photo grid, Like / Comment / Share). Post types are Photo, Multi-photo (2–10 pictures) and Video; text up to 5,000 characters, no hashtag limit, and captions written in a Facebook style.
+- Posting needs `pages_manage_posts`. It is **not** in the everyday connect dialog (so App Review and `META_SCOPES` are unaffected). After a yes, the page shows **Allow posting on Facebook**, which goes to `/api/meta/connect?also=page_posts` — the usual permissions plus `pages_manage_posts`, with `auth_type=rerequest` — and comes back to the Facebook posts page. Until it's granted, previews can be seen but not approved. Reconnecting keeps the ad account and Page already chosen.
+- Publishing uses the Page's own token, read on demand and never stored or sent to the browser: a photo via `/{page}/photos`, a multi-photo post as unpublished photos attached to one `/{page}/feed` post, a video via `/{page}/videos` (finished at the next check once Facebook has processed it). Instagram's 25-a-day limit doesn't apply.
+- Until Meta approves `pages_manage_posts` in App Review, only people with a role on the Meta app can grant it.

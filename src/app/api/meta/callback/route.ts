@@ -10,6 +10,7 @@ import {
 } from "@/lib/meta/oauth";
 import { stopExploring } from "@/lib/explore-mode";
 import { saveMetaConnection } from "@/lib/meta/connection";
+import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { RETURN_COOKIE, safeReturnTo } from "@/lib/meta/return-to";
 
@@ -82,9 +83,17 @@ export async function GET(req: NextRequest) {
     // the first account when none qualify is deliberate: a connection to a
     // troubled account is still better than refusing to connect at all, and the
     // billing card on the Meta page names the problem either way.
-    const chosen = adAccounts.find((a) => a.account_status === 1) ?? adAccounts[0];
+    //
+    // Reconnecting (to grant one more permission, say) keeps the ad account
+    // and Page already chosen, while this login can still reach them.
+    const previous = await db.metaAdAccount.findUnique({ where: { organizationId }, select: { metaAdAccountId: true, pageId: true } });
+    const chosen =
+      adAccounts.find((a) => a.id === previous?.metaAdAccountId) ??
+      adAccounts.find((a) => a.account_status === 1) ??
+      adAccounts[0];
 
     const pages = await fetchPages(longLived.access_token);
+    const page = pages.find((p) => p.id === previous?.pageId) ?? pages[0];
 
     const tokenExpiresAt = longLived.expires_in
       ? new Date(Date.now() + longLived.expires_in * 1000)
@@ -98,8 +107,8 @@ export async function GET(req: NextRequest) {
       // page shows which one was picked and lets it be changed — an ad going
       // out under the wrong brand is not something to discover from a comment
       // notification.
-      pageId: pages[0]?.id ?? null,
-      pageName: pages[0]?.name ?? null,
+      pageId: page?.id ?? null,
+      pageName: page?.name ?? null,
       accessToken: longLived.access_token,
       tokenExpiresAt,
     });

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
-  answerInstagramQuestionAction,
+  answerSocialQuestionAction,
   approvePostsAction,
   createPostAction,
   discardPostAction,
@@ -13,13 +13,14 @@ import {
   type SocialResult,
 } from "@/lib/actions/social-actions";
 import { InstagramPreview } from "./instagram-preview";
-import { CAPTION_MAX } from "@/lib/instagram/constants";
-import { CAROUSEL_MAX, MEDIA_LABEL, type MediaType } from "@/lib/instagram/social-logic";
+import { FacebookPreview } from "./facebook-preview";
+import { CAROUSEL_MAX, captionMax, mediaLabel, type MediaType, type Network } from "@/lib/instagram/social-logic";
 import type { MediaItem } from "@/lib/instagram/library";
 
-// Scale's Instagram: let MAIRO plan the week, or make a post yourself — a
-// photo, a carousel or a Reel — and post it now or schedule it. Nothing
-// MAIRO suggests goes out until it's approved here.
+// Scale's Instagram and Facebook posting: let MAIRO plan the week, or make a
+// post yourself — a photo, a carousel (multi-photo on Facebook) or a Reel
+// (video) — and post it now or schedule it. Nothing goes out until it's
+// approved here, after seeing exactly how it will look.
 
 export type PostView = {
   id: string;
@@ -55,13 +56,13 @@ function Thumb({ url, kind }: { url: string | null; kind: "image" | "video" }) {
   );
 }
 
-function Notice({ result }: { result: SocialResult | null }) {
+function Notice({ result, network = "INSTAGRAM" }: { result: SocialResult | null; network?: Network }) {
   if (!result) return null;
   return result.ok ? (
     <p className="mt-3 rounded-lg bg-emerald-400/10 px-3 py-2 text-[13px] text-emerald-300">
       {result.message}
       {result.permalink && (
-        <a href={result.permalink} target="_blank" rel="noopener noreferrer" className="ml-2 underline underline-offset-4">See it on Instagram</a>
+        <a href={result.permalink} target="_blank" rel="noopener noreferrer" className="ml-2 underline underline-offset-4">See it on {network === "FACEBOOK" ? "Facebook" : "Instagram"}</a>
       )}
     </p>
   ) : (
@@ -69,14 +70,14 @@ function Notice({ result }: { result: SocialResult | null }) {
   );
 }
 
-function PostEditor({ post, onDone }: { post: PostView; onDone: () => void }) {
+function PostEditor({ post, onDone, network }: { post: PostView; onDone: () => void; network: Network }) {
   const [caption, setCaption] = useState(post.caption);
   const [local, setLocal] = useState(post.whenLocal);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<SocialResult | null>(null);
   return (
     <div className="mt-3 space-y-2">
-      <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={5} maxLength={CAPTION_MAX} className={input} aria-label="Caption" />
+      <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={5} maxLength={captionMax(network)} className={input} aria-label="Caption" />
       <div className="flex flex-wrap items-center gap-2">
         <input type="datetime-local" value={local} onChange={(e) => setLocal(e.target.value)} className={`${input} w-auto`} aria-label="When to post" />
         <button type="button" disabled={pending} className={secondary}
@@ -94,6 +95,8 @@ function PostEditor({ post, onDone }: { post: PostView; onDone: () => void }) {
 }
 
 export function SocialStudio({
+  network,
+  canAnswer,
   library,
   suggested,
   upcoming,
@@ -102,6 +105,9 @@ export function SocialStudio({
   username,
   optedIn,
 }: {
+  network: Network;
+  /** Whether the account is ready enough to say yes (posting may still need Facebook's OK). */
+  canAnswer: boolean;
   library: MediaItem[];
   suggested: PostView[];
   upcoming: PostView[];
@@ -121,6 +127,9 @@ export function SocialStudio({
   const [mode, setMode] = useState<"now" | "schedule">("now");
   const [local, setLocal] = useState("");
 
+  const facebook = network === "FACEBOOK";
+  const where = facebook ? "Page" : "feed";
+  const maxText = captionMax(network);
   const kind = type === "REEL" ? "video" : "image";
   const choices = library.filter((m) => m.kind === kind);
 
@@ -151,17 +160,17 @@ export function SocialStudio({
     <div className="space-y-6">
       {!optedIn ? (
         <div className="rounded-2xl border border-violet/35 bg-violet/[0.06] p-6">
-          <p className="text-[19px] font-semibold text-white">Let MAIRO post on your Instagram feed?</p>
+          <p className="text-[19px] font-semibold text-white">{facebook ? "Let MAIRO post on your Facebook Page?" : "Let MAIRO post on your Instagram feed?"}</p>
           <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-muted">
-            MAIRO plans posts from your approved pictures and videos, writes the captions, and shows you exactly how each one will look on your feed. Nothing is posted until you approve it.
+            MAIRO plans posts from your approved pictures and videos, writes the {facebook ? "text" : "captions"}, and shows you exactly how each one will look on your {where}. Nothing is posted until you approve it.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" disabled={pending || !canPost} onClick={() => run(() => answerInstagramQuestionAction(true))} className={primary}>
+            <button type="button" disabled={pending || !canAnswer} onClick={() => run(() => answerSocialQuestionAction(network, true))} className={primary}>
               {pending ? "Planning your first posts…" : "Yes, let MAIRO post"}
             </button>
-            <button type="button" disabled={pending} onClick={() => run(() => answerInstagramQuestionAction(false))} className={secondary}>Not now</button>
+            <button type="button" disabled={pending} onClick={() => run(() => answerSocialQuestionAction(network, false))} className={secondary}>Not now</button>
           </div>
-          {!canPost && <p className="mt-3 text-[12.5px] text-amber-200/90">Your Instagram needs to be ready first — see above.</p>}
+          {!canAnswer && <p className="mt-3 text-[12.5px] text-amber-200/90">{facebook ? "Your Facebook Page" : "Your Instagram"} needs to be ready first — see above.</p>}
         </div>
       ) : (
         <div className={`${card} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
@@ -169,19 +178,19 @@ export function SocialStudio({
             <p className="text-[15px] font-semibold text-white">MAIRO plans your posts</p>
             <p className="mt-1 text-[13px] text-muted">MAIRO picks from your approved pictures and videos, writes the captions and suggests times. You see each post before it goes out.</p>
           </div>
-          <button type="button" disabled={pending || !canPost} onClick={() => run(planWeekAction)} className={`${primary} shrink-0`}>
+          <button type="button" disabled={pending || !canAnswer} onClick={() => run(() => planWeekAction(network))} className={`${primary} shrink-0`}>
             {pending ? "Working…" : suggested.some((s) => s.suggestedByMairo) ? "Plan again" : "Plan my week"}
           </button>
         </div>
       )}
-      <Notice result={result} />
+      <Notice result={result} network={network} />
 
       {suggested.length > 0 && (
         <section>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-semibold text-white">Waiting for your approval</h2>
-              <p className="text-[12.5px] text-muted">This is exactly how each post will look on your feed.</p>
+              <p className="text-[12.5px] text-muted">This is exactly how each post will look on your {where}.{!canPost && facebook ? " Allow posting on Facebook (above) to approve them." : ""}</p>
             </div>
             {suggested.length > 1 && (
               <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction(suggested.map((s) => s.id), "scheduled"))} className={secondary}>
@@ -192,11 +201,15 @@ export function SocialStudio({
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {suggested.map((p) => (
               <div key={p.id} className="min-w-0">
-                <InstagramPreview username={username} mediaType={p.mediaType} images={p.images} poster={p.previewUrl} caption={p.caption} />
+                {facebook ? (
+                  <FacebookPreview pageName={username} mediaType={p.mediaType} images={p.images} poster={p.previewUrl} text={p.caption} />
+                ) : (
+                  <InstagramPreview username={username} mediaType={p.mediaType} images={p.images} poster={p.previewUrl} caption={p.caption} />
+                )}
                 <p className="mt-2 text-[12.5px] text-muted">
                   {p.suggestedByMairo ? "MAIRO suggests posting" : "Your post —"} {p.hasTime ? p.whenLabel : "as soon as you approve"}
                 </p>
-                {editing === p.id && <PostEditor post={p} onDone={() => { setEditing(null); router.refresh(); }} />}
+                {editing === p.id && <PostEditor network={network} post={p} onDone={() => { setEditing(null); router.refresh(); }} />}
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction([p.id], "now"))} className={primary}>
                     Approve &amp; post now
@@ -222,7 +235,7 @@ export function SocialStudio({
           {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
             <button key={t} role="tab" aria-selected={t === type} onClick={() => switchType(t)}
               className={`rounded-full px-4 py-1.5 text-[13px] ${t === type ? "bg-[#7c5cff] text-white" : "text-white/65 hover:text-white"}`}>
-              {MEDIA_LABEL[t]}
+              {mediaLabel(t, network)}
             </button>
           ))}
         </div>
@@ -254,9 +267,9 @@ export function SocialStudio({
         )}
 
         <label className="mt-4 block">
-          <span className="text-[13px] text-white">Caption</span>
-          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={5} maxLength={CAPTION_MAX} className={`${input} mt-1.5`} placeholder="What should the post say?" />
-          <span className="mt-1 block text-right text-[11.5px] text-faint">{caption.length} / {CAPTION_MAX}</span>
+          <span className="text-[13px] text-white">{facebook ? "Post text" : "Caption"}</span>
+          <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={5} maxLength={maxText} className={`${input} mt-1.5`} placeholder="What should the post say?" />
+          <span className="mt-1 block text-right text-[11.5px] text-faint">{caption.length} / {maxText}</span>
         </label>
 
         <div className="mt-2 flex flex-wrap items-center gap-4 text-[13.5px]">
@@ -272,14 +285,14 @@ export function SocialStudio({
 
         <button type="button" disabled={pending || !canPost || picked.length === 0 || !caption.trim() || (mode === "schedule" && !local)}
           onClick={() => run(async () => {
-            const r = await createPostAction({ mediaType: type, refs: picked, caption, local: mode === "schedule" ? local : null });
+            const r = await createPostAction({ network, mediaType: type, refs: picked, caption, local: mode === "schedule" ? local : null });
             if (r.ok) { setPicked([]); setCaption(""); setLocal(""); window.scrollTo({ top: 0, behavior: "smooth" }); }
             return r;
           })}
           className={`${primary} mt-4`}>
           {pending ? "Working…" : "Preview post"}
         </button>
-        <p className="mt-2 text-[12px] text-faint">You&rsquo;ll see exactly how it looks on your feed before anything is posted.</p>
+        <p className="mt-2 text-[12px] text-faint">You&rsquo;ll see exactly how it looks on your {where} before anything is posted.</p>
       </section>}
 
       {upcoming.length > 0 && (
@@ -292,10 +305,10 @@ export function SocialStudio({
                   <div className="w-16 shrink-0"><Thumb url={p.previewUrl} kind={p.mediaType === "REEL" ? "video" : "image"} /></div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">
-                      {MEDIA_LABEL[p.mediaType]} · {p.status === "CREATED" ? "Processing on Instagram" : p.whenLabel}
+                      {mediaLabel(p.mediaType, network)} · {p.status === "CREATED" ? `Processing on ${facebook ? "Facebook" : "Instagram"}` : p.whenLabel}
                     </p>
                     {editing === p.id ? (
-                      <PostEditor post={p} onDone={() => { setEditing(null); router.refresh(); }} />
+                      <PostEditor network={network} post={p} onDone={() => { setEditing(null); router.refresh(); }} />
                     ) : (
                       <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-[13px] text-white/85">{p.caption}</p>
                     )}

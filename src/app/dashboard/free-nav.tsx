@@ -14,9 +14,18 @@ export function FREE_NAV(approved: boolean): NavEntry[] {
   ];
 }
 
-/** Scale: MAIRO's Instagram posting. */
-export const SOCIAL_NAV: NavEntry = {
-  href: "/dashboard/social",
-  label: "Instagram posts",
-  icon: icon("M6 3h8a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3z M10 13.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z M14.3 5.8h.01"),
-};
+/** Scale: MAIRO posting on the business's own Instagram and Facebook Page. */
+export const SOCIAL_NAV: NavEntry[] = [
+  {
+    href: "/dashboard/social/instagram",
+    label: "Instagram posts",
+    group: "Social",
+    icon: icon("M6 3h8a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3z M10 13.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z M14.3 5.8h.01"),
+  },
+  {
+    href: "/dashboard/social/facebook",
+    label: "Facebook posts",
+    group: "Social",
+    icon: icon("M10 17.5a7.5 7.5 0 110-15 7.5 7.5 0 010 15z M11.2 17.4V11h2l.3-2.3h-2.3V7.4c0-.7.2-1.1 1.1-1.1h1.2V4.2a15 15 0 00-1.8-.1c-1.8 0-2.9 1.1-2.9 3v1.6H6.8V11h2v6.3"),
+  },
+];

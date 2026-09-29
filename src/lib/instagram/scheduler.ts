@@ -7,10 +7,12 @@ import { absoluteUrl } from "@/lib/site";
 import { findInstagramAccount, postsInLastDay, toFailure } from "./publish";
 import { POSTS_PER_DAY } from "./constants";
 import { videoUrl } from "./library";
+import { publishFacebookPost } from "@/lib/facebook/page-posting";
 import { MAX_ATTEMPTS, isDuePost, type MediaType } from "./social-logic";
 
 // Publishing Scale's approved Instagram posts — photos, carousels and Reels —
-// when their time comes.
+// when their time comes. Facebook Page posts share the same queue and
+// approval rules; their publishing calls are in lib/facebook/page-posting.
 //
 // Instagram publishes in steps: a "container" is created from the media, it
 // processes (seconds for a photo, a minute or more for a Reel), and only then
@@ -41,9 +43,11 @@ export async function publishPost(postId: string, opts: { budgetMs?: number } = 
   if (!post || !isDuePost(post)) return { status: "SCHEDULED", message: "Not due yet." };
 
   const organizationId = post.organizationId;
-  if (!(await can(organizationId, "social_posting"))) return fail(post.id, "Posting to Instagram needs the Scale plan.");
+  const facebook = post.network === "FACEBOOK";
+  if (!(await can(organizationId, "social_posting"))) return fail(post.id, `Posting to ${facebook ? "Facebook" : "Instagram"} needs the Scale plan.`);
   const blocked = await executionBlock(organizationId);
   if (blocked) return fail(post.id, blocked);
+  if (facebook) return publishFacebookPost(post);
   if (post.status === "SCHEDULED" && (await postsInLastDay(organizationId)) >= POSTS_PER_DAY) {
     await db.instagramPost.update({ where: { id: post.id }, data: { error: `Instagram's limit of ${POSTS_PER_DAY} posts a day is reached — this goes out at the next check.` } });
     return { status: "SCHEDULED", message: "Daily limit reached." };
@@ -146,7 +150,7 @@ export async function publishDuePosts(opts: { organizationId?: string; limit?: n
     const left = deadline - Date.now();
     if (left < 5_000) break;
     const outcome = await publishPost(r.id, { budgetMs: Math.min(left - 2_000, 20_000) }).catch((error) => {
-      console.error("Instagram publish failed:", r.id, error);
+      console.error("Social publish failed:", r.id, error);
       return { status: "SCHEDULED" as const, message: "error" };
     });
     if (outcome.status === "PUBLISHED") result.published++;

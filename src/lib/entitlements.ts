@@ -158,7 +158,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
 /** Human wording for each flag, used by the upgrade prompts. */
 export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   meta_ads: "Meta ads",
-  social_posting: "MAIRO posts to your Instagram",
+  social_posting: "MAIRO posts to your Instagram and Facebook Page",
   auto_optimize: "AI Assist",
   autopilot: "Full Autopilot",
   advanced_analytics: "Advanced analytics",

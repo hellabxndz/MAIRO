@@ -203,6 +203,10 @@ model Organization {
   instagramOptInAt    DateTime?
   /// They answered "Not now" — asked again later, never nagged.
   instagramDeclinedAt DateTime?
+  /// Scale: yes to "Let MAIRO post on your Facebook Page?". Needs the
+  /// pages_manage_posts permission, asked for only when they say yes.
+  facebookOptInAt     DateTime?
+  facebookDeclinedAt  DateTime?
 
   // A freelancer's clients hang off their workspace.
   //
@@ -1917,6 +1921,9 @@ model InstagramPost {
   /// the bytes itself and will not accept a data URL or an upload.
   sourceUrl String? @db.Text
 
+  /// INSTAGRAM or FACEBOOK (the business's Facebook Page). Same approval
+  /// flow either way; only the publishing calls differ.
+  network          String    @default("INSTAGRAM")
   /// IMAGE, CAROUSEL or REEL.
   mediaType        String    @default("IMAGE")
   /// Where each picture or the video comes from, in order: "creative:<id>"
@@ -1940,6 +1947,7 @@ model InstagramPost {
 
   @@index([organizationId, status])
   @@index([status, scheduledFor])
+  @@index([organizationId, network, status])
 }
 
 // --- AI Creative Studio ----------------------------------------------------

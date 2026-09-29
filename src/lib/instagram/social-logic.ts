@@ -1,12 +1,33 @@
 import { CAPTION_MAX } from "./constants";
 
-// The rules for Scale's Instagram posting, kept pure so
+// The rules for Scale's Instagram and Facebook posting, kept pure so
 // scripts/check-social-scheduler.ts can check each one.
 
 export const MEDIA_TYPES = ["IMAGE", "CAROUSEL", "REEL"] as const;
 export type MediaType = (typeof MEDIA_TYPES)[number];
 
 export const MEDIA_LABEL: Record<MediaType, string> = { IMAGE: "Photo", CAROUSEL: "Carousel", REEL: "Reel" };
+
+/** Where a post goes: the Instagram feed, or the business's Facebook Page. */
+export const NETWORKS = ["INSTAGRAM", "FACEBOOK"] as const;
+export type Network = (typeof NETWORKS)[number];
+export const NETWORK_NAME: Record<Network, string> = { INSTAGRAM: "Instagram", FACEBOOK: "Facebook" };
+
+/** What each kind of post is called on Facebook, where Reels are just videos. */
+const FACEBOOK_LABEL: Record<MediaType, string> = { IMAGE: "Photo", CAROUSEL: "Multi-photo", REEL: "Video" };
+export function mediaLabel(type: MediaType, network: Network = "INSTAGRAM"): string {
+  return network === "FACEBOOK" ? FACEBOOK_LABEL[type] : MEDIA_LABEL[type];
+}
+
+/** Facebook allows far longer posts; MAIRO keeps them readable. */
+export const FACEBOOK_TEXT_MAX = 5000;
+export function captionMax(network: Network = "INSTAGRAM"): number {
+  return network === "FACEBOOK" ? FACEBOOK_TEXT_MAX : CAPTION_MAX;
+}
+
+export function asNetwork(value: string | null | undefined): Network {
+  return value === "FACEBOOK" ? "FACEBOOK" : "INSTAGRAM";
+}
 
 /** Instagram's carousel limits. */
 export const CAROUSEL_MIN = 2;
@@ -29,21 +50,27 @@ export function refKind(ref: MediaRef): "image" | "video" | null {
   return null;
 }
 
-export function validatePost(input: { mediaType: MediaType; refs: MediaRef[]; caption: string }): string | null {
+export function validatePost(input: { mediaType: MediaType; refs: MediaRef[]; caption: string; network?: Network }): string | null {
   const caption = input.caption.trim();
-  if (!caption) return "The post needs a caption.";
-  if (caption.length > CAPTION_MAX) return `That caption is ${caption.length} characters and Instagram's limit is ${CAPTION_MAX}.`;
-  if ((caption.match(/#[\p{L}\p{N}_]+/gu) ?? []).length > 30) return "Instagram allows at most 30 hashtags in a post.";
+  const facebook = input.network === "FACEBOOK";
+  if (!caption) return facebook ? "The post needs some text." : "The post needs a caption.";
+  if (facebook) {
+    if (caption.length > FACEBOOK_TEXT_MAX) return `That post is ${caption.length} characters — keep it under ${FACEBOOK_TEXT_MAX}.`;
+  } else {
+    if (caption.length > CAPTION_MAX) return `That caption is ${caption.length} characters and Instagram's limit is ${CAPTION_MAX}.`;
+    if ((caption.match(/#[\p{L}\p{N}_]+/gu) ?? []).length > 30) return "Instagram allows at most 30 hashtags in a post.";
+  }
   const kinds = input.refs.map(refKind);
   if (kinds.some((k) => k === null)) return "One of those pictures can't be posted.";
   if (input.mediaType === "IMAGE") {
     if (input.refs.length !== 1 || kinds[0] !== "image") return "Pick one picture for a photo post.";
   } else if (input.mediaType === "CAROUSEL") {
-    if (input.refs.length < CAROUSEL_MIN || input.refs.length > CAROUSEL_MAX) return `A carousel takes ${CAROUSEL_MIN} to ${CAROUSEL_MAX} pictures.`;
-    if (kinds.some((k) => k !== "image")) return "Carousels here are pictures only.";
-    if (new Set(input.refs).size !== input.refs.length) return "Each picture can only be in the carousel once.";
+    const what = facebook ? "A multi-photo post" : "A carousel";
+    if (input.refs.length < CAROUSEL_MIN || input.refs.length > CAROUSEL_MAX) return `${what} takes ${CAROUSEL_MIN} to ${CAROUSEL_MAX} pictures.`;
+    if (kinds.some((k) => k !== "image")) return `${what} here is pictures only.`;
+    if (new Set(input.refs).size !== input.refs.length) return "Each picture can only be in the post once.";
   } else {
-    if (input.refs.length !== 1 || kinds[0] !== "video") return "Pick one video for a Reel.";
+    if (input.refs.length !== 1 || kinds[0] !== "video") return facebook ? "Pick one video." : "Pick one video for a Reel.";
   }
   return null;
 }
