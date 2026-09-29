@@ -288,7 +288,7 @@ export function AppShell({
       href={item.href}
       data-tour={`nav:${item.href}`}
       aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
+      className={`group relative flex items-center gap-3 rounded-xl px-3 py-[7px] text-[13px] transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
         active ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
       }`}
       style={
@@ -297,7 +297,7 @@ export function AppShell({
           : undefined
       }
     >
-      <span className={`h-[18px] w-[18px] shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>
+      <span className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>
         {item.icon}
       </span>
       {item.label}
@@ -308,41 +308,43 @@ export function AppShell({
     <div className="min-h-screen">
       {/* ---- Desktop sidebar ---- */}
       <aside
-        className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r px-3.5 py-5 lg:flex"
+        className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
         style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.86)" }}
       >
-        <Link href="/dashboard" className="mb-6 px-2 text-[15px] font-light tracking-[0.3em] text-white">
+        <Link href="/dashboard" className="mb-4 shrink-0 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
         </Link>
 
-        <nav className="flex flex-1 flex-col gap-1">{primary.map((i) => row(i, isActive(pathname, i.href)))}</nav>
+        <nav className="flex flex-1 flex-col gap-0.5">{primary.map((i) => row(i, isActive(pathname, i.href)))}</nav>
 
+        {/* One slim row rather than a card: on a short screen a tall card is
+            what pushed Billing, Settings and Sign out out of reach. */}
         {showUpgrade && (
           <Link
             href="/dashboard/billing"
-            className="mb-4 block rounded-2xl border p-4 text-center transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
+            className="mt-3 flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
             style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
           >
-            <span className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-xl text-blue-bright">
+            <span className="h-4 w-4 shrink-0 text-blue-bright">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden>
                 <path d="M3 14l1.6-8 4 3.4L10 4l1.4 5.4 4-3.4L17 14H3z" />
               </svg>
             </span>
-            <span className="block text-[13px] font-medium text-white">Upgrade plan</span>
-            <span className="mt-1 block text-[11px] leading-relaxed text-faint">
-              More features, higher limits.
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12.5px] font-medium text-white">Upgrade plan</span>
+              <span className="block truncate text-[10.5px] text-faint">More features, higher limits</span>
             </span>
             <span
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-[12px] font-medium text-white"
+              className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
               style={{ backgroundImage: "var(--mairo-ramp)" }}
+              aria-hidden
             >
-              Upgrade
-              <span aria-hidden>→</span>
+              →
             </span>
           </Link>
         )}
 
-        <div className="mt-4 space-y-1 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="mt-3 space-y-0.5 border-t pt-3" style={{ borderColor: "var(--mairo-line)" }}>
           {SECONDARY_NAV.map((i) => row(i, isActive(pathname, i.href)))}
           {footer}
         </div>

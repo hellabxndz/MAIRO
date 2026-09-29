@@ -151,7 +151,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <form action={signOutAction}>
           <button
             type="submit"
-            className="w-full rounded-xl px-3 py-2.5 text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
+            className="w-full rounded-xl px-3 py-[7px] text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
           >
             Sign out
           </button>
