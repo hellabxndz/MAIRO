@@ -52,14 +52,6 @@ const I = {
       <path d="M3.6 13.6l3.8-3.8 3.4 3.4 2.4-2 3.2 3.2" />
     </>
   ),
-  audiences: (
-    <>
-      <circle cx="7.6" cy="7" r="2.5" />
-      <circle cx="13.8" cy="8.4" r="1.9" />
-      <path d="M3.2 15.6c0-2.2 2-3.9 4.4-3.9s4.4 1.7 4.4 3.9" />
-      <path d="M13.4 12.3c1.9.3 3.4 1.6 3.4 3.3" />
-    </>
-  ),
   analytics: (
     <>
       <path d="M3 16h14" />
@@ -156,7 +148,6 @@ export const PRIMARY_NAV: NavEntry[] = [
   // link opens, which is a deliberate "make the better tool the one people
   // find" change, not a removal of the older one.
   { href: "/dashboard/creative-studio", label: "Creative Studio", icon: <Icon d={I.creatives} /> },
-  { href: "/dashboard/audiences", label: "Audiences", icon: <Icon d={I.audiences} /> },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
   { href: "/dashboard/reports", label: "Reports", icon: <Icon d={I.reports} /> },
   { href: "/dashboard/business", label: "Business Brain", icon: <Icon d={I.brain} /> },

@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
     },
   },
 
+  async redirects() {
+    return [
+      // Audiences was removed; old links and bookmarks land on the dashboard.
+      { source: "/dashboard/audiences", destination: "/dashboard", permanent: false },
+    ];
+  },
+
   async headers() {
     return [
       {

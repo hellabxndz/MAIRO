@@ -634,10 +634,10 @@ export function SimpleDashboard({
           },
           anyConnected
             ? {
-                href: "/dashboard/audiences",
+                href: "/dashboard/decisions",
                 icon: ICONS.people,
-                title: "Find new audiences",
-                body: "Let Mairo work out who your ads should be shown to.",
+                title: "Mairo Decisions",
+                body: "What Mairo thinks is worth changing, and why.",
               }
             : {
                 href: "/dashboard/integrations",

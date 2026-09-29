@@ -41,7 +41,6 @@ export default async function AccountPage() {
       title: "Your advertising",
       entries: [
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
-        { href: "/dashboard/audiences", label: "Audiences", hint: "Who your ads are shown to" },
         { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad Mairo has made for you" },
         { href: "/dashboard/social", label: "Your social posts", hint: "The unpaid half of your feed" },
         ...(showsEnquiries({ hasForm: Boolean(leadForm) })
