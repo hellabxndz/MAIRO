@@ -1,16 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { LandingNav } from "@/components/landing/landing-nav";
-import { DuskSky } from "@/components/landing/dusk-sky";
-import { DashboardMock, LaptopMock } from "@/components/landing/dashboard-mock";
-import { BrandInstagramMark, BrandMetaMark } from "@/components/mairo/marks";
+import { WatchDemo } from "@/components/landing/watch-demo";
+import { DashboardMock } from "@/components/landing/dashboard-mock";
+import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { PLANS, TRIAL_DAYS } from "@/lib/plans";
 
 // The marketing page.
 //
-// Dark, violet-lit, product-first: a city at dusk behind the headline, the
-// dashboard on a laptop, and every section showing the product rather than
+// Dark, violet-lit, product-first: the dashboard on a laptop in a room at dusk
+// behind the headline, and every section showing the product rather than
 // describing it.
 //
 // One rule above the design: nothing here claims what isn't true. No invented
@@ -19,8 +21,43 @@ import { PLANS, TRIAL_DAYS } from "@/lib/plans";
 // example. The places a page like this usually puts testimonials say instead
 // what a business can count on — until there are real customers to quote.
 
-const ACCENT = "bg-gradient-to-r from-[#7c5cff] to-[#a855f7]";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#c084fc] via-[#a78bfa] to-[#818cf8] bg-clip-text text-transparent";
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
+
+const ACCENT = "bg-gradient-to-r from-[#8b4dfb] to-[#5f2dfd]";
+const GRADIENT_TEXT = "bg-gradient-to-r from-[#e27bf5] via-[#9a6bff] to-[#6a5cff] bg-clip-text text-transparent";
+
+/** The feature strip's solid icons. */
+const FILLED = {
+  bolt: <path fill="currentColor" d="M13.5 2 4.5 13.5h6.2L9.5 22 19.5 9.8h-6.4z" />,
+  target: (
+    <g fill="none" stroke="currentColor" strokeWidth="2.2">
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+    </g>
+  ),
+  bars: (
+    <g fill="currentColor">
+      <rect x="4" y="13" width="4" height="8" rx="1.2" />
+      <rect x="10" y="8" width="4" height="13" rx="1.2" />
+      <rect x="16" y="3" width="4" height="18" rx="1.2" />
+    </g>
+  ),
+  user: (
+    <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4.5 21c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" />
+    </g>
+  ),
+};
+
+/** The kinds of businesses Mairo is built for. Each tag says who, never a result. */
+const WHO = [
+  { src: "/landing/card-1.webp", alt: "A boxing coach training in a gym", v: "Gyms", k: "& fitness coaches", pos: "30% 40%" },
+  { src: "/landing/card-2.webp", alt: "A black running shoe on concrete", v: "Stores", k: "& online shops", pos: "45% 50%" },
+  { src: "/landing/card-3.webp", alt: "A woman in sunglasses", v: "Brands", k: "& boutiques", pos: "35% 40%" },
+  { src: "/landing/card-4.webp", alt: "A skincare serum bottle", v: "Beauty", k: "& skincare", pos: "70% 50%" },
+];
 
 function Icon({ d }: { d: ReactNode }) {
   return (
@@ -135,115 +172,126 @@ const PROMISES = [
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#05050b] text-white">
+    <div className={`${jakarta.className} relative min-h-screen overflow-x-hidden bg-[#02060b] tracking-[0.005em] text-white`}>
       <LandingNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative isolate pt-16">
-        <DuskSky />
-        <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-5 pb-16 pt-14 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:pb-24 lg:pt-20">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-3.5 py-1.5 text-[12.5px] text-violet-100">
-              <span aria-hidden className="text-violet-300">✦</span> AI advertising for real businesses
+      <section className="relative isolate overflow-hidden pt-[72px] lg:min-h-[min(45vw,694px)]">
+        <div className="relative z-10 mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-12">
+          <div className="pt-8 lg:max-w-[640px] lg:pt-12">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#1a1830]/80 px-3.5 py-2 text-[13px] text-white/90">
+              <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-[#a78bfa]">
+                <path d="M8 0c.4 3.8 2.2 5.6 6 6-3.8.4-5.6 2.2-6 6-.4-3.8-2.2-5.6-6-6 3.8-.4 5.6-2.2 6-6z" transform="translate(0 2)" />
+              </svg>
+              AI Advertising for Real Businesses
             </span>
-            <h1 className="mt-6 text-[clamp(40px,5.2vw,66px)] font-semibold leading-[1] tracking-[-0.045em]">
+            <h1 className="mt-5 text-[clamp(42px,5.1vw,70px)] font-extrabold leading-[0.98] tracking-[-0.035em]">
               <span className="whitespace-nowrap">More customers,</span>
               <br />
               <span className={GRADIENT_TEXT}>less work.</span>
             </h1>
-            <p className="mt-6 max-w-[520px] text-[16.5px] leading-relaxed text-white/75">
+            <p className="mt-5 max-w-[610px] text-[16px] leading-[1.55] text-white/85 sm:text-[17px]">
               Mairo creates, launches, and optimizes your Facebook and Instagram ads with AI — so you can get more
               customers while you run your business.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/sign-up"
-                className={`${ACCENT} inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-[15px] font-medium shadow-[0_12px_40px_-10px_rgba(139,92,246,0.9)] transition hover:brightness-110`}
+                className={`${ACCENT} inline-flex h-[54px] items-center justify-center gap-2.5 rounded-full px-8 text-[15.5px] font-semibold shadow-[0_14px_40px_-10px_rgba(124,77,255,0.9)] transition hover:brightness-110`}
               >
-                Start free trial <span aria-hidden>→</span>
+                Get started free <span aria-hidden>→</span>
               </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2.5 rounded-full border border-white/20 bg-white/[0.03] px-6 py-3.5 text-[15px] text-white/90 transition hover:border-white/35"
-              >
-                <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] text-black">↓</span>
-                See how it works
-              </a>
+              <WatchDemo className="inline-flex h-[54px] items-center justify-center gap-3 rounded-full border border-white/25 bg-black/60 px-7 text-[15.5px] font-medium text-white transition hover:border-white/45" />
             </div>
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[12.5px] text-white/65">
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[12.5px] text-white/75">
               {[`${TRIAL_DAYS}-day free trial`, "Setup in minutes", "Works with your own Meta ad account"].map((t) => (
-                <li key={t} className="flex items-center gap-1.5">
-                  <span aria-hidden className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-500 text-[9px]">✓</span>
+                <li key={t} className="flex items-center gap-2">
+                  <span aria-hidden className="flex h-4 w-4 items-center justify-center rounded-full bg-[#5b4ff5]">
+                    <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2.5 6.2 5 8.5l4.5-5" />
+                    </svg>
+                  </span>
                   {t}
                 </li>
               ))}
             </ul>
           </div>
-          <LaptopMock />
+        </div>
+
+        {/* The room, the laptop, the city — faded into the page on the left. */}
+        <div className="relative -z-10 mt-10 aspect-[1224/988] w-full lg:absolute lg:right-0 lg:top-0 lg:mt-0 lg:w-[min(56%,860px)]">
+          <Image src="/landing/hero.webp" alt="" fill priority sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,#02060b_0%,rgba(2,6,11,0.55)_14%,transparent_32%)] max-lg:hidden" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,#02060b_0%,transparent_22%,transparent_70%,#02060b_100%)] lg:bg-[linear-gradient(180deg,rgba(2,6,11,0.55)_0%,transparent_14%,transparent_78%,#02060b_100%)]" />
+          <span className="absolute left-[19.5%] top-[67%] rounded-full border border-white/15 bg-black/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-white/60">
+            Example
+          </span>
         </div>
 
         {/* What it works with — stated as fact, not as endorsement. */}
-        <div className="relative mx-auto max-w-[1200px] px-5 pb-6 sm:px-8">
-          <div className="flex flex-col gap-5 border-t border-white/[0.07] pt-8 md:flex-row md:items-center md:gap-10">
-            <p className="shrink-0 text-[13px] leading-snug text-white/55">
+        <div className="relative z-10 mx-auto max-w-[1360px] px-5 pb-10 sm:px-8 lg:mt-14 lg:px-12">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-14">
+            <p className="shrink-0 text-[13.5px] leading-snug text-white/75">
               Works with the tools
               <br className="hidden md:block" /> you already use
             </p>
-            <ul className="flex flex-wrap items-center gap-x-9 gap-y-4 text-white/70">
-              <li className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
-                <span className="h-6 w-6"><BrandMetaMark /></span> Meta
+            <ul className="flex flex-wrap items-center gap-x-10 gap-y-5 text-white/85">
+              <li className="flex items-center gap-1.5 text-[24px] font-bold italic tracking-[-0.02em]">
+                <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7 fill-current">
+                  <path d="M15.3 3.6c-.1 0-.3 0-.4.1l-.6.2C13.9 2.7 13.3 2 12.4 2 10.5 2 9.6 4.4 9.3 5.6l-1.8.6c-.6.2-.6.2-.7.7L5.3 19.9 16.9 22l.6-.1-2.2-18.3zM12.9 4.4l-1.4.5c.3-1.1.8-2.1 1.5-2.4.2.4.2.9 0 1.9zm-1.5-2c.1 0 .2 0 .3.1-.9.4-1.8 1.4-2.2 3.5l-1.1.3c.3-1.3 1.2-3.9 3-3.9zm2.3 13.8c-.9.4-1.8.6-2.7.3-1.6-.5-1.8-1.9-1.4-2.4.2-.3 1.1-.4 1.6-.2.5.2 1.1.6 1.2.2.2-.5-.8-1.2-1.7-1.8-1.6-1.1-1.8-2.9-.4-4 1.1-.9 2.4-.7 3.1-.4l-.5 1.6c-.4-.2-1.2-.4-1.6.1-.3.4.3.9.9 1.3 1.2.8 2.3 1.6 2 3.2-.1.9-.7 1.6-1.5 2.1z" />
+                </svg>
+                shopify
               </li>
-              <li className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
-                <span className="h-5 w-5"><BrandInstagramMark /></span> Instagram
+              <li className="flex items-center gap-1.5 text-[24px] font-semibold tracking-[-0.02em]">
+                <span className="h-7 w-7"><MetaMark /></span> Meta
               </li>
-              <li className="text-[17px] font-semibold tracking-tight">Shopify</li>
-              <li className="text-[17px] font-semibold tracking-tight">Google Tag Manager</li>
-              <li className="text-[17px] font-semibold tracking-tight">stripe</li>
+              <li className="flex items-center gap-2 text-[24px] font-semibold tracking-[-0.02em]">
+                <span className="h-6 w-6"><InstagramMark /></span> Instagram
+              </li>
+              <li className="text-[25px] font-medium tracking-[-0.02em]">Google</li>
+              <li className="text-[25px] font-bold tracking-[-0.03em]">stripe</li>
             </ul>
           </div>
         </div>
       </section>
 
       {/* ── Four promises, one line each ─────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1200px] px-5 py-12 sm:px-8">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-white/[0.07]">
+      <section className="relative mx-auto max-w-[1360px] px-5 pb-12 pt-10 sm:px-8 lg:px-12 lg:pt-14">
+        <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-white/[0.08]">
           {[
-            { t: "Create ads with AI", b: "Ad words and images made for your business in seconds.", i: I.bolt },
-            { t: "Launch in minutes", b: "Mairo sets up and launches your campaigns.", i: I.target },
-            { t: "Get more customers", b: "Mairo checks your ads every day and says what to improve.", i: I.bars },
-            { t: "All in one place", b: "Facebook and Instagram ads, managed together.", i: I.user },
+            { t: "Create ads with AI", b: "Ad words and images made for your business in seconds.", i: FILLED.bolt },
+            { t: "Launch in minutes", b: "Mairo sets up and launches your campaigns.", i: FILLED.target },
+            { t: "Get more customers", b: "AI checks your ads every day and says what to improve.", i: FILLED.bars },
+            { t: "All in one place", b: "Facebook and Instagram ads, managed together.", i: FILLED.user },
           ].map((f) => (
-            <div key={f.t} className="flex gap-4 lg:px-6 lg:first:pl-0">
-              <Icon d={f.i} />
+            <div key={f.t} className="flex gap-4 lg:px-7 lg:first:pl-0">
+              <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl bg-[#111228] text-[#7c4dff] max-lg:h-12 max-lg:w-12">
+                <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>{f.i}</svg>
+              </span>
               <div>
-                <p className="text-[15px] font-medium">{f.t}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-white/55">{f.b}</p>
+                <p className="text-[15.5px] font-bold">{f.t}</p>
+                <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/65">{f.b}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Four product moments, in place of borrowed results. */}
-        <div className="mt-12 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[
-            { k: "Pre-launch score", v: "86/100", note: "Every campaign checked before a dollar is spent", tone: "from-[#1e1b4b] via-[#312e81] to-[#4c1d95]" },
-            { k: "Mairo Decisions", v: "3 today", note: "What's worth changing, in plain English", tone: "from-[#0f172a] via-[#1e3a8a] to-[#6d28d9]" },
-            { k: "Business Brain", v: "Your site, read", note: "Products, prices and voice — remembered", tone: "from-[#2e1065] via-[#581c87] to-[#9d174d]" },
-            { k: "One-Click Fix", v: "Fix this for me", note: "Ask why, then approve the fix", tone: "from-[#172554] via-[#312e81] to-[#86198f]" },
-          ].map((c) => (
-            <div key={c.k} className={`relative flex aspect-[4/3.2] flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br p-4 ${c.tone}`}>
-              <span className="self-end rounded-xl border border-white/15 bg-black/35 px-3 py-1.5 text-right backdrop-blur">
-                <span className="block text-[15px] font-semibold leading-tight sm:text-[18px]">{c.v}</span>
-                <span className="block text-[10.5px] text-white/70">{c.k}</span>
+        {/* Who it's for — pictures of the kinds of businesses Mairo is built for. */}
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {WHO.map((c) => (
+            <div key={c.src} className="relative aspect-[2.3/1] overflow-hidden rounded-2xl border border-white/10">
+              <Image src={c.src} alt={c.alt} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover" style={{ objectPosition: c.pos }} />
+              <span className="absolute right-[5%] top-[11%] rounded-xl border border-white/10 bg-[#171428]/90 px-3 py-1.5 text-center backdrop-blur-md">
+                <span className="block bg-gradient-to-r from-[#d8b4fe] to-[#a78bfa] bg-clip-text text-[16px] font-extrabold leading-tight text-transparent">{c.v}</span>
+                <span className="block text-[10px] text-white/85">{c.k}</span>
               </span>
-              <p className="max-w-[90%] text-[12.5px] leading-snug text-white/80">{c.note}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────── */}
-      <section id="how-it-works" className="relative mx-auto max-w-[1200px] scroll-mt-20 px-5 py-16 sm:px-8">
+      <section id="how-it-works" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead
           title="How Mairo works"
           sub="Go from idea to more customers in minutes. Mairo handles the heavy lifting."
@@ -264,7 +312,7 @@ export default function Home() {
       </section>
 
       {/* ── Everything you need ──────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1200px] px-5 py-16 sm:px-8">
+      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead title="Everything you need to grow, powered by AI" sub="One platform that runs your advertising for real businesses." />
         <div className="grid items-stretch gap-4 lg:grid-cols-[1.4fr_1fr]">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -305,7 +353,7 @@ export default function Home() {
       </section>
 
       {/* ── The dashboard ────────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1200px] px-5 py-16 sm:px-8">
+      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead
           title="A dashboard built to give you results"
           sub="See everything that matters, all in one place — read live from your own ad account."
@@ -319,7 +367,7 @@ export default function Home() {
       </section>
 
       {/* ── Mairo Decisions ──────────────────────────────────────────── */}
-      <section id="decisions" className="relative mx-auto max-w-[1200px] scroll-mt-20 px-5 py-16 sm:px-8">
+      <section id="decisions" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead
           title="Mairo's AI makes smarter decisions, so you get better results"
           sub="Every day Mairo looks at your campaigns and tells you what's worth changing — only when there's something real to act on. You approve, or let it act within your limits."
@@ -344,7 +392,7 @@ export default function Home() {
       </section>
 
       {/* ── What you can count on (instead of borrowed testimonials) ─── */}
-      <section className="relative mx-auto max-w-[1200px] px-5 py-16 sm:px-8">
+      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead
           title="You stay in control of every dollar"
           sub="Mairo is new, so there are no customer stories here yet — just what you can count on from day one."
@@ -364,7 +412,7 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ──────────────────────────────────────────────────── */}
-      <section id="pricing" className="relative mx-auto max-w-[1200px] scroll-mt-20 px-5 py-16 sm:px-8">
+      <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead
           title="Simple, transparent pricing"
           sub={`All the tools you need to get more customers. Every plan starts with a ${TRIAL_DAYS}-day free trial.`}
@@ -418,7 +466,7 @@ export default function Home() {
       </section>
 
       {/* ── Final call ───────────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1200px] px-5 pb-20 pt-10 sm:px-8">
+      <section className="relative mx-auto max-w-[1360px] px-5 pb-20 pt-10 sm:px-8 lg:px-12">
         <div className="relative overflow-hidden rounded-3xl border border-violet-400/25 bg-[radial-gradient(120%_140%_at_85%_0%,rgba(168,85,247,0.35),transparent_55%),linear-gradient(135deg,#120c2a,#07060f)] px-6 py-14 text-center sm:px-12">
           <h2 className="text-[clamp(32px,5vw,54px)] font-semibold leading-[1.05] tracking-[-0.035em]">
             Let Mairo run <span className={GRADIENT_TEXT}>your ads.</span>
@@ -438,7 +486,7 @@ export default function Home() {
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
       <footer className="border-t border-white/[0.06] px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-6 text-[13px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-[1360px] flex-col gap-6 text-[13px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="text-[18px] font-semibold tracking-[-0.03em] text-white">Mairo</span>
             <span>© {new Date().getFullYear()}</span>

@@ -101,19 +101,3 @@ export function DashboardMock({ compact = false, id = "dm" }: { compact?: boolea
     </div>
   );
 }
-
-/** The same dashboard, inside a laptop, tilted slightly away. */
-export function LaptopMock() {
-  return (
-    <div className="relative mx-auto w-full max-w-[640px] [perspective:1800px]">
-      <div className="origin-bottom [transform:rotateX(6deg)_rotateY(-10deg)]">
-        <div className="rounded-[14px] border border-white/15 bg-[#0b0b14] p-[7px] shadow-[0_40px_120px_-20px_rgba(124,92,255,0.45)]">
-          <div className="aspect-[16/10] rounded-[9px]">
-            <DashboardMock id="dm-laptop" />
-          </div>
-        </div>
-        <div className="mx-auto h-3 w-[108%] -translate-x-[3.7%] rounded-b-[18px] bg-gradient-to-b from-[#2a2a36] to-[#0e0e16] shadow-[0_20px_40px_rgba(0,0,0,0.6)]" />
-      </div>
-    </div>
-  );
-}

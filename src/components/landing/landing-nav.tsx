@@ -33,55 +33,60 @@ export function LandingNav() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        scrolled || open ? "border-b border-white/[0.06] bg-[#06060d]/85 backdrop-blur-md" : "bg-transparent"
+        scrolled || open ? "border-b border-white/[0.06] bg-[#02060b]/85 backdrop-blur-md" : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="text-[20px] font-semibold tracking-[-0.03em] text-white">
-          Mairo
-        </Link>
+      <nav className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
+        <div className="flex items-center gap-[clamp(40px,9vw,150px)]">
+          <Link href="/" className="text-[23px] font-bold tracking-[-0.03em] text-white">
+            Mairo
+          </Link>
 
-        <div className="hidden items-center gap-8 text-[14px] text-white/75 md:flex">
-          {LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="transition-colors hover:text-white">
-              {l.label}
-            </a>
-          ))}
-          <div className="relative" onMouseLeave={() => setResources(false)}>
-            <button
-              type="button"
-              onClick={() => setResources((v) => !v)}
-              onMouseEnter={() => setResources(true)}
-              aria-expanded={resources}
-              className="flex items-center gap-1 transition-colors hover:text-white"
-            >
-              Resources <span aria-hidden className="text-[10px]">▾</span>
-            </button>
-            {resources && (
-              <div className="absolute left-1/2 top-full w-60 -translate-x-1/2 pt-3">
-                <ul className="rounded-xl border border-white/10 bg-[#0c0c17] p-1.5 shadow-2xl">
-                  {RESOURCES.map((r) => (
-                    <li key={r.href}>
-                      <Link href={r.href} className="block rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/[0.05] hover:text-white">
-                        {r.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          <div className="hidden items-center gap-9 text-[14px] font-medium text-white/90 md:flex">
+            {LINKS.map((l) => (
+              <a key={l.href} href={l.href} className="transition-colors hover:text-white">
+                {l.label}
+              </a>
+            ))}
+            <div className="relative" onMouseLeave={() => setResources(false)}>
+              <button
+                type="button"
+                onClick={() => setResources((v) => !v)}
+                onMouseEnter={() => setResources(true)}
+                aria-expanded={resources}
+                className="flex items-center gap-1 transition-colors hover:text-white"
+              >
+                Resources
+                <svg aria-hidden viewBox="0 0 12 12" className="h-3 w-3 fill-none stroke-current" strokeWidth="1.6" strokeLinecap="round">
+                  <path d="m3 4.5 3 3 3-3" />
+                </svg>
+              </button>
+              {resources && (
+                <div className="absolute left-1/2 top-full w-60 -translate-x-1/2 pt-3">
+                  <ul className="rounded-xl border border-white/10 bg-[#0c0c17] p-1.5 shadow-2xl">
+                    {RESOURCES.map((r) => (
+                      <li key={r.href}>
+                        <Link href={r.href} className="block rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/[0.05] hover:text-white">
+                          {r.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link href="/sign-in" className="hidden rounded-full border border-white/15 px-4 py-2 text-[13px] text-white/85 transition hover:border-white/30 hover:text-white sm:inline-block">
+          <Link href="/sign-in" className="hidden rounded-full bg-white/[0.12] px-5 py-2.5 text-[13.5px] font-medium text-white/90 backdrop-blur transition hover:bg-white/20 hover:text-white sm:inline-block">
             Log in
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-full bg-gradient-to-r from-[#7c5cff] to-[#a855f7] px-4 py-2 text-[13px] font-medium text-white shadow-[0_8px_30px_-8px_rgba(139,92,246,0.8)] transition hover:brightness-110"
+            className="rounded-full bg-gradient-to-r from-[#8b4dfb] to-[#6d3dfd] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(124,77,255,0.9)] transition hover:brightness-110"
           >
-            Start free trial <span aria-hidden>→</span>
+            Get started free <span aria-hidden>→</span>
           </Link>
           <button
             type="button"
