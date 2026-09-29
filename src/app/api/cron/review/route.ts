@@ -5,6 +5,7 @@ import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
+import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -75,7 +76,15 @@ export async function GET(req: Request) {
     return null;
   });
 
+  // Weekly Reports for businesses whose delivery day it is. After Decisions,
+  // so each report reads this morning's Insights; before the text sweep,
+  // because the report's own notification is what carries its text.
+  const weekly = await generateDueWeeklyReports(new Date(), { limit: 3, budgetMs: 25_000 }).catch((error) => {
+    console.error("Weekly reports cron failed:", error);
+    return null;
+  });
+
   const texts = await sweepSmsNotifications();
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions });
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly });
 }

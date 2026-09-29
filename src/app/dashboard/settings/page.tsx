@@ -88,6 +88,20 @@ export default async function SettingsPage() {
         </div>
       </Card>
 
+      <Card className="mb-8" id="reports">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="mb-1 text-sm font-medium">Reports</h2>
+            <p className="max-w-xl text-sm text-neutral-400">
+              Your Mairo Weekly Report — which day it arrives, how you&rsquo;re told, and the view it opens in.
+            </p>
+          </div>
+          <Link href="/dashboard/settings/reports" className={secondaryButtonClass}>
+            Report settings
+          </Link>
+        </div>
+      </Card>
+
       <div className="mb-8">
         <BillingSection
           tier={organization.subscriptionTier}

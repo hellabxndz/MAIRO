@@ -81,6 +81,7 @@ enum NotificationKind {
   CREATIVE_FATIGUE
   CREATIVES_READY
   MONTHLY_REPORT
+  WEEKLY_REPORT
   PAYMENT_ISSUE
   ACCOUNT_DISCONNECTED
   MAIRO_ACTED
@@ -248,6 +249,9 @@ model Organization {
   decisions            MairoDecision[]
   activities           MairoActivity[]
   insights             MairoInsight[]
+  weeklyReports        WeeklyReport[]
+  reportSettings       ReportSettings?
+  learnings            MairoLearning[]
   intelligenceReport   IntelligenceReport?
   profitSettings       ProfitSettings?
 
@@ -2393,4 +2397,81 @@ model ProfitSettings {
   otherMonthlyCostsCents Int    @default(0)
 
   updatedAt DateTime @updatedAt
+}
+
+// --- Weekly Report --------------------------------------------------------------
+//
+// A summary layer over what Mairo already knows: the week's figures from the
+// ad networks, the Insights, Business Health, Mairo Activity and Decisions.
+// The report is written once, when it's generated, so history reads the way
+// the week actually looked (src/lib/reports/weekly.ts).
+
+model WeeklyReport {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// First and last day covered, inclusive (UTC dates).
+  weekStart   DateTime
+  weekEnd     DateTime
+  /// Everything the report shows, as it was on the day it was written.
+  dataJson    String   @db.Text
+  generatedAt DateTime @default(now())
+
+  /// Client reports an agency shares: approved first, then a link exists.
+  approvedAt DateTime?
+  shareToken String?   @unique
+
+  @@unique([organizationId, weekStart])
+  @@index([organizationId, weekStart])
+}
+
+model ReportSettings {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  weeklyEnabled  Boolean @default(true)
+  /// 0 Sunday … 6 Saturday, in the business's own time zone.
+  deliveryDay    Int     @default(1)
+  /// "simple", "advanced" or "profit".
+  preferredMode  String  @default("simple")
+  /// A card in the notification centre when it's ready.
+  inApp          Boolean @default(true)
+  onlyWhenActive Boolean @default(true)
+
+  /// Agency workspaces: how their client reports are branded and shared.
+  brandName    String?
+  brandLogoUrl String?
+  /// Leave Mairo's internal notes (what it learned, its approval trail) out of shared reports.
+  hideInternal Boolean @default(true)
+  /// Create a share link as soon as a client report is approved. Never sends anything.
+  autoApprove  Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Mairo Learning Memory: what Mairo has learned about this business from its
+/// own results, strong enough to act on. Weak signals are shown in the report
+/// and never saved.
+model MairoLearning {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// Same lesson, same key, so a finding confirmed again strengthens rather than duplicates.
+  key            String
+  category       String
+  statement      String             @db.Text
+  detail         String             @db.Text
+  evidenceJson   String             @db.Text
+  confidence     DecisionConfidence
+  timesSeen      Int                @default(1)
+  firstLearnedAt DateTime           @default(now())
+  lastSeenAt     DateTime           @default(now())
+  sourceReportId String?
+  /// The business can switch a lesson off.
+  active         Boolean            @default(true)
+
+  @@unique([organizationId, key])
+  @@index([organizationId, active])
 }

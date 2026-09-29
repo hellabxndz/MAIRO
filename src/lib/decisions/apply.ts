@@ -8,6 +8,7 @@ import { notify } from "@/lib/notifications/notify";
 import { describeChange, limitProblem } from "./guardrails";
 import { guardrailsFor } from "./gather";
 import type { DecisionChange } from "./types";
+import { learningsBrief } from "@/lib/reports/learnings";
 import { parseChanges } from "./store";
 
 // Carrying out a decision.
@@ -143,7 +144,7 @@ async function runChange(organizationId: string, c: DecisionChange): Promise<{ o
           businessName: campaign.organization.name,
           offering: facts.offering,
           targetAudience: facts.targetAudience,
-          differentiator: [facts.differentiator, facts.voice ? `Brand voice: ${facts.voice}` : ""].filter(Boolean).join(". "),
+          differentiator: [facts.differentiator, facts.voice ? `Brand voice: ${facts.voice}` : "", await learningsBrief(organizationId)].filter(Boolean).join(". "),
           advertising: `A fresh version of an ad that has been running. Current headline: "${based.headline ?? ""}". Current text: "${based.primaryText ?? ""}". Write new angles — do not repeat these.`,
           goal: campaign.objective,
           destination: campaign.destinationType,

@@ -6,6 +6,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader } from "@/components/ui";
 import { loadBrain } from "@/lib/business/brain";
 import { BusinessAnalyzer } from "@/components/business/analyzer-form";
+import { LearningMemory } from "@/components/business/learning-memory";
 import { buildCampaignFromBrainAction } from "@/lib/actions/business-actions";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { db } from "@/lib/db";
@@ -35,13 +36,14 @@ export default async function BusinessPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [brain, campaigns, performance] = await Promise.all([
+  const [brain, campaigns, performance, learningRows] = await Promise.all([
     loadBrain(organizationId),
     db.mairoCampaign.findMany({
       where: { organizationId, status: { not: "DRAFT" } },
       select: { id: true, name: true, objective: true },
     }),
     fetchOrganizationPerformance(organizationId).catch(() => null),
+    db.mairoLearning.findMany({ where: { organizationId }, orderBy: [{ active: "desc" }, { lastSeenAt: "desc" }], take: 20 }),
   ]);
   const p = brain.profile;
   const a = brain.analysis;
@@ -79,6 +81,18 @@ export default async function BusinessPage() {
         )}
         {a?.note && <p className="mt-3 text-[12.5px] text-amber-200/90">{a.note}</p>}
       </section>
+
+      <LearningMemory
+        items={learningRows.map((l) => ({
+          id: l.id,
+          statement: l.statement,
+          detail: l.detail,
+          confidence: l.confidence,
+          timesSeen: l.timesSeen,
+          lastSeen: l.lastSeenAt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          active: l.active,
+        }))}
+      />
 
       {!brain.analyzedAt ? (
         <p className="mt-8 max-w-2xl text-[13px] leading-relaxed text-muted">

@@ -365,6 +365,46 @@ runs at the end of each Decisions refresh, on the same snapshot.
   "estimated" and unknown until a margin is given. Break-even ROAS is 1 ÷
   (margin − fees − per-order costs ÷ AOV).
 
+### 5i. Automatic Weekly Report
+
+The Weekly Report (`src/lib/reports/weekly.ts`, table `WeeklyReport`) is a
+summary layer over the systems above. It adds no detection of its own. Each
+section comes from an existing system:
+
+- **Figures:** the ad adapters, for the week and the week before.
+- **What needs attention and next week's plan:** the open Insights.
+- **Health change:** Business Health, compared with last week's report.
+- **What Mairo changed:** Mairo Activity, the older optimizer and Spend
+  Protection.
+- **Estimated profit:** Profit First.
+
+The judgement is pure (`weekly-logic.ts`, asserted in
+`npm run check:weekly-report`):
+
+- The win needs at least three results and a cost below the account average.
+- Lessons need a gap of 25% or more.
+- Early signals are shown but never saved.
+
+The summary is written by the AI from the week's facts and falls back to a
+plain version without an API key.
+
+- **Mairo Learning Memory** (`MairoLearning`, shown on Business Brain). Saved
+  lessons feed the assistant's prompt and new ad versions
+  (`src/lib/reports/learnings.ts`). Any lesson can be switched off.
+- **Delivery.** `/api/cron/review` writes due reports on each business's
+  chosen day, in its own time zone. Opening Reports writes one if the cron
+  hasn't reached the business yet.
+  - In-app: a `WEEKLY_REPORT` notification.
+  - Text: the existing weekly-summary switch on a verified number. The old
+    Monday text summary now comes from the report.
+  - Email and push aren't offered because there's no sender for them.
+  - Settings are at `/dashboard/settings/reports`.
+- **Agencies.** Client reports need approval before a share link exists
+  (`/r/<token>`, client-facing, internal notes hidden by default). Branding
+  comes from the agency workspace's report settings. Nothing is sent to
+  clients automatically.
+- The monthly report moved to `/dashboard/reports/monthly`.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

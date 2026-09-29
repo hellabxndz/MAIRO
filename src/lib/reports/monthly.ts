@@ -349,7 +349,7 @@ export async function announceMonthlyReports(
         title: `Your ${report.label} report is ready`,
         body: report.summary,
         actionLabel: "Read the report",
-        actionHref: `/dashboard/reports?m=${key.year}-${String(key.month + 1).padStart(2, "0")}`,
+        actionHref: `/dashboard/reports/monthly?m=${key.year}-${String(key.month + 1).padStart(2, "0")}`,
         evidence: {
           spendCents: report.spendCents,
           revenueCents: report.revenueCents,

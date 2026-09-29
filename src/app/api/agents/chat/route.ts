@@ -1,5 +1,6 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
 import { assistantTools, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
+import { learningsBrief } from "@/lib/reports/learnings";
 import { brainBrief, loadBrain } from "@/lib/business/brain";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainBrief(brain.profile)}\n\n${ONE_CLICK_FIX_BRIEF}`;
+  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainBrief(brain.profile)}\n\n${await learningsBrief(threadOrgId)}\n\n${ONE_CLICK_FIX_BRIEF}`;
 
   return stream(threadId, system, messages, assistantTools(threadOrgId));
 }

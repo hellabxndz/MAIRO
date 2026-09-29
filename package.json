@@ -35,6 +35,7 @@
     "check:google": "tsx scripts/check-google-sign-in.ts",
     "check:decisions": "tsx scripts/check-decisions.ts",
     "check:intelligence": "tsx scripts/check-intelligence.ts",
+    "check:weekly-report": "tsx scripts/check-weekly-report.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

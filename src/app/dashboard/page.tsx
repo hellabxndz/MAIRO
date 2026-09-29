@@ -37,6 +37,8 @@ import { loadIntelligence } from "@/lib/intelligence/run";
 import { campaignJourney } from "@/lib/intelligence/timeline";
 import { contributionOf, DEFAULT_PROFIT_INPUTS, estimateProfit, productEconomics, type ProfitInputs } from "@/lib/intelligence/profit";
 import { loadBrain } from "@/lib/business/brain";
+import { parseReport, reportIsFresh, WEEKDAYS } from "@/lib/reports/weekly";
+import { WeeklyReportCard } from "@/components/reports/weekly-card";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -105,11 +107,25 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // about the state of an account.
   const mode = await dashboardMode();
   const advanced = mode === "advanced";
-  const [overview, fresh, intelligence] = await Promise.all([
+  const [overview, fresh, intelligence, latestReport, reportSettings] = await Promise.all([
     loadOverview(organizationId, days, { adBreakdown: advanced }),
     db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
     loadIntelligence(organizationId),
+    db.weeklyReport.findFirst({ where: { organizationId }, orderBy: { weekStart: "desc" } }),
+    db.reportSettings.findUnique({ where: { organizationId } }),
   ]);
+  const latestData = latestReport ? parseReport(latestReport.dataJson) : null;
+  const weeklyCard = (
+    <WeeklyReportCard
+      report={
+        latestReport && latestData
+          ? { id: latestReport.id, data: latestData, fresh: reportIsFresh(latestReport.generatedAt) }
+          : null
+      }
+      nextDay={WEEKDAYS[reportSettings?.deliveryDay ?? 1]}
+      enabled={reportSettings?.weeklyEnabled ?? true}
+    />
+  );
 
   // The campaign whose journey is shown: the one asked for, else the most
   // recent running one, else the most recent.
@@ -300,6 +316,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
       <div className="mx-auto max-w-[1440px]">
         {header}
         {alerts}
+        <div className="mb-4">{weeklyCard}</div>
         <ProfitFirstView
           report={profit}
           days={days}
@@ -330,6 +347,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
           <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
           <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
         </div>
+        <div className="mt-4">{weeklyCard}</div>
         <div className="mt-4">{table}</div>
         <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
           {chart}
@@ -367,6 +385,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
         actions={briefActions}
         pendingDecisions={overview.pendingCount}
       />
+      <div className="mt-4">{weeklyCard}</div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
         <KpiCard label="Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />

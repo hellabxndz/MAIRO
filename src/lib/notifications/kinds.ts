@@ -63,6 +63,14 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     severity: "INFO",
     sms: null,
   },
+  // The one report worth a text: short, weekly, and only for businesses that
+  // switched weekly texts on.
+  WEEKLY_REPORT: {
+    kind: "WEEKLY_REPORT",
+    label: "Weekly report",
+    severity: "INFO",
+    sms: "weekly-summary",
+  },
   PAYMENT_ISSUE: {
     kind: "PAYMENT_ISSUE",
     label: "Payment",

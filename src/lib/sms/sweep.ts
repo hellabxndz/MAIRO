@@ -26,9 +26,6 @@ import { sendSms } from "@/lib/sms/send";
 const EARLIEST_HOUR = 8;
 const LATEST_HOUR = 21;
 
-/** Which day the weekly summary goes out. 1 = Monday. */
-const SUMMARY_DAY = 1;
-
 export type SweepResult = {
   considered: number;
   attention: number;
@@ -49,14 +46,13 @@ export async function sweepSmsNotifications(
     where: {
       verifiedAt: { not: null },
       optedOutAt: null,
-      OR: [{ onNeedsAttention: true }, { onWeeklySummary: true }],
+      onNeedsAttention: true,
     },
     take: opts.limit ?? 50,
   });
 
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
-  const isSummaryDay = now.getDay() === SUMMARY_DAY;
 
   for (const pref of candidates) {
     result.considered += 1;
@@ -68,7 +64,9 @@ export async function sweepSmsNotifications(
     }
 
     const wantsAttention = pref.onNeedsAttention;
-    const wantsSummary = pref.onWeeklySummary && isSummaryDay;
+    // The weekly text is sent by the Weekly Report now (src/lib/reports/weekly.ts),
+    // on the business's chosen day and pointing at the report itself.
+    const wantsSummary = false;
     if (!wantsAttention && !wantsSummary) {
       result.skipped += 1;
       continue;

@@ -3,217 +3,101 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { PageHeader } from "@/components/ui";
-import { GlassPanel, HudLabel, MairoButton } from "@/components/mairo";
-import { assistantNameOf } from "@/lib/ai/agents";
-import {
-  lastCompleteMonth,
-  monthLabel,
-  monthlyReport,
-  type MonthKey,
-} from "@/lib/reports/monthly";
+import { ensureLatestWeeklyReport, parseReport, WEEKDAYS } from "@/lib/reports/weekly";
+import { usd } from "@/lib/reports/weekly-logic";
+import { generateWeeklyReportNowAction } from "@/lib/actions/report-actions";
 
-// The month, on one page, in a form somebody would forward.
-//
-// Every figure here is the platforms' own reporting for that month, and where
-// they reported nothing it says so. The one number with judgement in it — next
-// month's suggested budget — shows its reasoning underneath, because a budget
-// recommendation without a reason is just a bigger number.
+// Reports: every Weekly Report so far, newest first, with the monthly report
+// one click away. Opening this page writes the week's report if it's due and
+// the daily run hasn't reached this business yet.
 
-export const metadata = { title: "Monthly report — MAIRO" };
+export const metadata = { title: "Reports — MAIRO" };
+export const maxDuration = 60;
 
-function money(cents: number | null): string {
-  if (cents === null) return "—";
-  return (cents / 100).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-}
-
-/** `?m=2026-08`, or last complete month. */
-function parseMonth(raw: string | undefined): MonthKey {
-  const match = /^(\d{4})-(\d{2})$/.exec(raw ?? "");
-  if (!match) return lastCompleteMonth();
-  const year = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  if (month < 0 || month > 11) return lastCompleteMonth();
-  return { year, month };
-}
-
-function monthParam({ year, month }: MonthKey): string {
-  return `${year}-${String(month + 1).padStart(2, "0")}`;
-}
-
-function shift({ year, month }: MonthKey, by: number): MonthKey {
-  const d = new Date(year, month + by, 1);
-  return { year: d.getFullYear(), month: d.getMonth() };
-}
-
-export default async function ReportsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ m?: string }>;
-}) {
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ failed?: string }> }) {
+  const { failed } = await searchParams;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const { m } = await searchParams;
-  const key = parseMonth(m);
 
-  const [org, report] = await Promise.all([
-    db.organization.findUnique({
-      where: { id: organizationId },
-      select: { name: true, assistantName: true },
-    }),
-    monthlyReport(organizationId, key),
+  await ensureLatestWeeklyReport(organizationId).catch((error) => console.error("Weekly report on open failed:", error));
+  const [rows, settings] = await Promise.all([
+    db.weeklyReport.findMany({ where: { organizationId }, orderBy: { weekStart: "desc" }, take: 26 }),
+    db.reportSettings.findUnique({ where: { organizationId } }),
   ]);
-  const assistant = assistantNameOf(org?.assistantName);
+  const reports = rows.map((r) => ({ row: r, data: parseReport(r.dataJson) })).filter((r) => r.data);
+  const enabled = settings?.weeklyEnabled ?? true;
+  const day = WEEKDAYS[settings?.deliveryDay ?? 1];
 
-  const previous = shift(key, -1);
-  const next = shift(key, 1);
-  // Never offer a month that has not finished.
-  const latest = lastCompleteMonth();
-  const canGoForward = next.year < latest.year || (next.year === latest.year && next.month <= latest.month);
+  async function generateNow() {
+    "use server";
+    // Redirects to the new report on success; comes back here saying so on failure.
+    await generateWeeklyReportNowAction();
+    redirect("/dashboard/reports?failed=1");
+  }
 
   return (
-    <div>
-      <PageHeader
-        title={`Your ${report.label} report`}
-        description="What your advertising did last month, and what MAIRO suggests next."
-        action={
-          /* A plain anchor, not next/link. Link prefetches, and prefetching a
-             route that streams a file attachment meant every visit to this
-             page silently computed the whole report a second time — including
-             its live calls to the ad platforms — on a request that could never
-             resolve as an RSC payload. `download` also gives the file its name
-             when the browser saves it. */
-          <a
-            href={`/api/reports/${monthParam(key)}`}
-            download={`mairo-${monthParam(key)}.txt`}
-            className="inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[13px] text-white/85 transition-colors hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-            style={{ borderColor: "var(--mairo-line)" }}
-          >
-            Download
-          </a>
-        }
-      />
-
-      <nav className="mb-6 flex items-center gap-4" aria-label="Choose a month">
-        <Link
-          href={`/dashboard/reports?m=${monthParam(previous)}`}
-          className="text-[12.5px] text-muted transition-colors hover:text-white"
-        >
-          ← {monthLabel(previous)}
-        </Link>
-        {canGoForward && (
-          <Link
-            href={`/dashboard/reports?m=${monthParam(next)}`}
-            className="text-[12.5px] text-muted transition-colors hover:text-white"
-          >
-            {monthLabel(next)} →
+    <div className="mx-auto max-w-[1000px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Reports</h1>
+          <p className="mt-1 text-[14.5px] text-muted">
+            {enabled ? `Your Mairo Weekly Report arrives every ${day}.` : "Weekly reports are switched off."}{" "}
+            <Link href="/dashboard/settings/reports" className="text-violet-bright hover:text-white">
+              Report settings
+            </Link>
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <form action={generateNow}>
+            <button type="submit" className="min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white hover:brightness-110">
+              Create a report for the last 7 days
+            </button>
+          </form>
+          <Link href="/dashboard/reports/monthly" className="inline-flex min-h-[40px] items-center rounded-lg border border-white/12 px-4 text-[13px] text-white/85 hover:border-white/30">
+            Monthly report
           </Link>
-        )}
-      </nav>
+        </div>
+      </div>
 
-      {report.thin ? (
-        <GlassPanel className="px-6 py-14 text-center">
-          <h2 className="text-[16px] font-medium text-white">Nothing ran in {report.label}</h2>
-          <p className="mx-auto mt-2.5 max-w-md text-[13px] leading-relaxed text-muted">
-            There is no report for a month with no advertising in it. Once a campaign has been
-            live for a few days, this fills in on its own.
-          </p>
-          <div className="mt-6 flex justify-center">
-            <MairoButton href="/dashboard/create">Create a campaign</MairoButton>
-          </div>
-        </GlassPanel>
-      ) : (
-        <>
-          <GlassPanel lit className="p-5 sm:p-7">
-            <HudLabel className="mb-5">The month</HudLabel>
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-              <Figure label="Advertising spend" value={money(report.spendCents)} />
-              <Figure label="Revenue from ads" value={money(report.revenueCents)} />
-              <Figure
-                label="Return on ad spend"
-                value={report.roas === null ? "—" : `${report.roas.toFixed(2)}×`}
-              />
-              <Figure
-                label="Results"
-                value={report.purchases === null ? "—" : report.purchases.toLocaleString("en-US")}
-              />
-            </div>
-
-            <p className="mt-7 max-w-3xl text-[14px] leading-relaxed text-white/90">
-              {report.summary}
-            </p>
-          </GlassPanel>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <GlassPanel className="p-5 sm:p-6">
-              <HudLabel className="mb-5">What MAIRO did</HudLabel>
-              <dl className="space-y-3.5">
-                <Row label="Ads running this month" value={String(report.creativesTested)} />
-                <Row label="Campaigns paused" value={String(report.adsPaused)} />
-                <Row label="Changes MAIRO made" value={String(report.changesMade)} />
-                <Row label="Cost per result" value={money(report.costPerPurchaseCents)} />
-                <Row
-                  label="Best platform"
-                  value={
-                    report.bestPlatform
-                      ? `${report.bestPlatform.name} · ${money(report.bestPlatform.costPerPurchaseCents)}`
-                      : "Not enough to compare"
-                  }
-                />
-              </dl>
-            </GlassPanel>
-
-            <GlassPanel className="p-5 sm:p-6">
-              <HudLabel className="mb-5">Next month</HudLabel>
-              <p className="text-[28px] font-medium leading-none text-white">
-                {money(report.recommendedNextCents)}
-              </p>
-              <p className="mt-2 text-[11.5px] text-faint">Recommended advertising budget</p>
-              <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-muted">
-                {report.recommendationWhy}
-              </p>
-              <div className="mt-5 flex flex-wrap items-center gap-4">
-                <Link
-                  href={`/dashboard/agents?ask=${encodeURIComponent(`Talk me through my ${report.label} report.`)}`}
-                  className="text-[12.5px] text-blue-bright transition-colors hover:text-white"
-                >
-                  Ask {assistant} about this report →
-                </Link>
-              </div>
-            </GlassPanel>
-          </div>
-
-          <p className="mt-8 max-w-3xl text-[11.5px] leading-relaxed text-faint">
-            Figures come from the advertising platforms&rsquo; own reporting and may differ
-            slightly from what they show in their dashboards. Where a platform reported
-            nothing, this page shows a dash rather than a zero. MAIRO can&rsquo;t promise
-            sales, leads or a particular return.
-          </p>
-        </>
+      {failed && (
+        <p className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 text-[13px] text-amber-200">
+          Mairo couldn&rsquo;t write the report just now — usually Meta being slow. Try again in a minute.
+        </p>
       )}
-    </div>
-  );
-}
 
-function Figure({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[24px] font-medium leading-none text-white sm:text-[30px]">{value}</p>
-      <p className="mt-2 text-[11.5px] leading-snug text-faint">{label}</p>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className="text-right text-[13px] text-white">{value}</dd>
+      {reports.length === 0 ? (
+        <div className="mt-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-8 text-center">
+          <p className="text-[15px] text-white">No weekly reports yet</p>
+          <p className="mt-1 text-[13.5px] text-muted">The first one arrives on {day} once a campaign has been running, or create one now.</p>
+        </div>
+      ) : (
+        <ul className="mt-6 space-y-2.5">
+          {reports.map(({ row, data }) => {
+            const c = data!.glance.current;
+            return (
+              <li key={row.id}>
+                <Link href={`/dashboard/reports/weekly/${row.id}`} className="flex flex-col gap-3 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-4 transition hover:border-violet/40 sm:flex-row sm:items-center">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-semibold text-white">{data!.period.label}</span>
+                    <span className="block text-[12.5px] text-faint">
+                      {data!.attention.length ? `${data!.attention.length} thing${data!.attention.length === 1 ? "" : "s"} needed attention` : "No major issues"}
+                      {row.shareToken ? " · Shared with client" : ""}
+                    </span>
+                  </span>
+                  <span className="grid grid-cols-4 gap-4 text-[12px] sm:w-[420px]">
+                    <span><span className="block text-faint">Revenue</span><span className="tabular-nums text-white">{usd(c.revenueCents, true)}</span></span>
+                    <span><span className="block text-faint">Spend</span><span className="tabular-nums text-white">{usd(c.spendCents, true)}</span></span>
+                    <span><span className="block text-faint">ROAS</span><span className="tabular-nums text-white">{c.roas === null ? "—" : `${c.roas.toFixed(1)}x`}</span></span>
+                    <span><span className="block text-faint">Health</span><span className="tabular-nums text-white">{data!.health.now?.score ?? "—"}</span></span>
+                  </span>
+                  <span className="text-[13px] text-violet-bright">Open report →</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
