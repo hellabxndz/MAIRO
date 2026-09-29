@@ -4,6 +4,10 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { WatchDemo } from "@/components/landing/watch-demo";
+import { BusinessTypes } from "@/components/landing/business-types";
+import { DecisionExplainer } from "@/components/landing/decision-explainer";
+import { LiveFeed } from "@/components/landing/live-feed";
+import { Faq } from "@/components/faq";
 import { DashboardMock } from "@/components/landing/dashboard-mock";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
@@ -140,27 +144,30 @@ const FEATURES = [
   { title: "Real-time reporting", body: "Spend, customers, cost per customer and return — read live from Meta, in plain English.", icon: I.chart },
 ];
 
-const DECISIONS = [
+const FAQ = [
   {
-    tag: "Budget",
-    tone: "#818cf8",
-    title: "Move budget to a stronger campaign",
-    body: "“Spring sale” is getting purchases 38% cheaper than “New arrivals”. Mairo recommends moving $6/day across — your total stays the same.",
-    action: "Approve",
+    q: "Do I need any advertising experience?",
+    a: "No. Mairo asks plain questions about your business, builds the campaign, and explains every change in normal language. Advanced mode shows the full numbers when you want them.",
   },
   {
-    tag: "Creative",
-    tone: "#c084fc",
-    title: "Creative fatigue detected",
-    body: "People are seeing Creative #3 too often and fewer are clicking it — down 29% in 5 days. Mairo can write a fresh version to test.",
-    action: "Create replacement",
+    q: "Who pays for the ads themselves?",
+    a: "You pay Meta directly, from your own ad account, at whatever budget you set. Your Mairo plan is separate and never includes ad spend.",
   },
   {
-    tag: "Website",
-    tone: "#fbbf24",
-    title: "People click but don’t buy",
-    body: "120 clicks this week and no purchases. Mairo opened the page as a phone would — it isn’t set up for phones.",
-    action: "See the fix",
+    q: "Does Mairo change my campaigns without asking?",
+    a: "Only if you let it. In Manual mode nothing changes without your approval. In AI Assist and Full Autopilot, Mairo can make changes inside the limits you set — and new campaigns and any increase to your total budget always wait for your yes. Every change is logged with the reason.",
+  },
+  {
+    q: "Which platforms does Mairo work with?",
+    a: "Facebook and Instagram, through your own Meta ad account.",
+  },
+  {
+    q: "How does the free trial work?",
+    a: `Every plan starts with a ${TRIAL_DAYS}-day free trial. It asks for a card and charges nothing during the trial; cancel before it ends and you pay nothing.`,
+  },
+  {
+    q: "Can Mairo guarantee results?",
+    a: "No one honestly can. Mairo works from what you tell it and what your ad account reports, shows the data behind every recommendation, and tells you when it doesn't have enough data yet.",
   },
 ];
 
@@ -311,6 +318,15 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Choose your business type ────────────────────────────────── */}
+      <section id="business-types" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+        <SectionHead
+          title="Built for the way you do business."
+          sub="Choose your business type and see how Mairo would run your advertising."
+        />
+        <BusinessTypes />
+      </section>
+
       {/* ── Everything you need ──────────────────────────────────────── */}
       <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
         <SectionHead title="Everything you need to grow, powered by AI" sub="One platform that runs your advertising for real businesses." />
@@ -366,28 +382,82 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Mairo Decisions ──────────────────────────────────────────── */}
+      {/* ── See Mairo working (example feed) ─────────────────────────── */}
+      <section id="activity" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+          <div>
+            <h2 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.03em]">
+              See Mairo <span className={GRADIENT_TEXT}>working.</span>
+            </h2>
+            <p className="mt-4 max-w-md text-[16px] leading-relaxed text-white/65">
+              Your campaigns don&rsquo;t stop when you log out. Mairo keeps analyzing performance and looking for ways to improve your advertising.
+            </p>
+            <p className="mt-5 max-w-md text-[14px] leading-relaxed text-white/50">
+              Switch between <span className="text-white/80">Simple</span> and <span className="text-white/80">Advanced</span> — the same
+              finding, in plain words or in the numbers. It&rsquo;s the same switch you get inside Mairo.
+            </p>
+          </div>
+          <LiveFeed />
+        </div>
+      </section>
+
+      {/* ── Why Mairo made this decision ─────────────────────────────── */}
       <section id="decisions" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
-        <SectionHead
-          title="Mairo's AI makes smarter decisions, so you get better results"
-          sub="Every day Mairo looks at your campaigns and tells you what's worth changing — only when there's something real to act on. You approve, or let it act within your limits."
-        />
-        <div className="grid gap-4 md:grid-cols-3">
-          {DECISIONS.map((d) => (
-            <Panel key={d.title} className="flex flex-col p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full px-2.5 py-0.5 text-[11px] font-medium" style={{ color: d.tone, border: `1px solid ${d.tone}55` }}>
-                  {d.tag}
+        <div className="mx-auto max-w-[1080px]">
+          <h2 className="text-center text-[clamp(28px,4.4vw,48px)] font-semibold leading-[1.08] tracking-[-0.03em]">
+            Mairo doesn&rsquo;t just tell you what to do.
+            <br />
+            <span className={GRADIENT_TEXT}>It shows you why.</span>
+          </h2>
+          <div className="mt-10">
+            <DecisionExplainer />
+          </div>
+          <p className="mt-5 text-center text-[13.5px] text-white/55">Every Mairo recommendation shows the data behind the decision.</p>
+        </div>
+      </section>
+
+      {/* ── Mairo AI ─────────────────────────────────────────────────── */}
+      <section id="assistant" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.03em]">
+              Ask Mairo anything <span className={GRADIENT_TEXT}>about your ads.</span>
+            </h2>
+            <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-white/65">
+              Mairo&rsquo;s assistant answers from your own account&rsquo;s numbers, in plain English. When something needs fixing, it proposes
+              the fix — and nothing changes until you approve it.
+            </p>
+            <ul className="mt-6 space-y-2.5 text-[14.5px] text-white/80">
+              {["“Why did my sales drop yesterday?”", "“What should I do with an extra $500 this month?”", "“Which ad is working best, and why?”"].map((q) => (
+                <li key={q} className="flex items-center gap-3">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+                  {q}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Panel className="p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <p className="flex items-center gap-2 text-[13.5px] font-semibold">
+                <span className={`${ACCENT} flex h-7 w-7 items-center justify-center rounded-full text-[12px]`}>M</span>
+                Mairo
+              </p>
+              <span className="rounded-full border border-white/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.14em] text-white/55">Example</span>
+            </div>
+            <div className="mt-5 space-y-4">
+              <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-violet-500/20 px-4 py-2.5 text-[14px] text-white ring-1 ring-violet-400/30">
+                Why did my sales drop yesterday?
+              </p>
+              <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/[0.08] bg-black/25 px-4 py-3 text-[14px] leading-relaxed text-white/85">
+                You spent $84 yesterday and got 3 purchases, down from 6 the day before. Most of the drop came from Creative #2 — people are
+                seeing it more often and clicking it less. Creative #4 is still steady.
+                <span className="mt-3 block text-white/60">I can write a fresh version of Creative #2 for you to review.</span>
+                <span className={`${ACCENT} mt-3 inline-flex rounded-lg px-3 py-1.5 text-[12.5px] font-medium`} aria-hidden>
+                  Fix this for me →
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.12em] text-white/40">Example</span>
               </div>
-              <p className="mt-3 text-[15.5px] font-medium">{d.title}</p>
-              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-white/60">{d.body}</p>
-              <span className={`${ACCENT} mt-5 self-start rounded-full px-4 py-2 text-[12.5px] font-medium`} aria-hidden>
-                {d.action}
-              </span>
-            </Panel>
-          ))}
+            </div>
+          </Panel>
         </div>
       </section>
 
@@ -463,6 +533,14 @@ export default function Home() {
           <Link href="/for-freelancers" className="text-violet-300 hover:text-white">Running ads for clients? See the freelancer and agency plans →</Link>
         </p>
         <ResultsNote className="mt-3 max-w-3xl" />
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────── */}
+      <section id="faq" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.7fr_1.3fr]">
+          <SectionHead title="Questions, answered" sub="The things people ask before they start." />
+          <Faq items={FAQ} />
+        </div>
       </section>
 
       {/* ── Final call ───────────────────────────────────────────────── */}
