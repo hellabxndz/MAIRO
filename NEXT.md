@@ -58,18 +58,20 @@ Hobby that interval is a day, so timeliness comes from the dashboard render
 path instead, and the cron is only the backstop for someone who books a launch
 and then doesn't visit.
 
-**5. Point Stripe at the new prices.** The plans are now Starter $149.99,
-Growth $239.99 and Scale $499.99 a month. `priceMonthly` in src/lib/plans.ts is only
-what the customer is *shown* — what they are charged is the Stripe Price
-behind `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH` and `STRIPE_PRICE_SCALE`.
-Each must be a $149.99 / $239.99 / $499.99 monthly recurring Price. If the ones in Vercel
-are for any other amount, create new Prices in Stripe (Product catalog → the
-plan → Add another price) and paste their `price_…` ids into those three
-variables, then redeploy. Until they match, the site advertises one number and
-the card is charged another.
+**5. Stripe — done.** The site now runs on a new Stripe account (live mode,
+restricted `rk_live_` key without payout/transfer access). Starter $149.99,
+Growth $239.99 and Scale $499.99 exist as monthly prices, `/aios/setup` shows
+all three matching, the customer portal is configured, and the webhook listens
+for the four events the route handles. After any future price change, create a
+new Price rather than editing one, and point `STRIPE_PRICE_*` at it.
 
-Existing subscribers stay on the price they signed up at unless their
-subscriptions are migrated, which is a separate decision and a deliberate one.
+Organizations that went through checkout under the old account carry a
+customer id the new key can't see; checkout replaces it automatically.
+
+Studio and Agency have no Stripe prices yet, so they show "Not available yet".
+
+**Billing isn't enforced.** `BILLING_ENFORCED` is unset, so an account with no
+plan gets Growth free. Set it to `1` only once the Meta App Review is through.
 
 **6. Old plan rows are cleared on deploy.** PlanConfig overrides the compiled
 plans, so rows seeded under the old pricing would have kept the old prices and
@@ -82,9 +84,8 @@ them, and the code defaults apply. After any *later* pricing change, run
 added as testers can post — the rest get a permission error from Meta. Worth
 submitting in the same round as the ads permissions rather than after.
 
-**8. Prove the payment flow end to end.** Subscribe → Stripe webhook → plan
-changes in the database has never fired with a real event. Worth doing with a
-test-mode card before the first customer.
+**8. Payment flow proven — done.** A live trial checkout came back through
+the webhook and the account showed Starter on a free trial.
 
 ## TikTok (retired)
 
