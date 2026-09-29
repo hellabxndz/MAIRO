@@ -179,3 +179,17 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Landing: slow float for the AI callouts, and moving energy along the arcs. */
+@keyframes mairo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.mairo-float { animation: mairo-float 7s ease-in-out infinite; }
+@keyframes mairo-dash {
+  to { stroke-dashoffset: -600; }
+}
+.mairo-arc { stroke-dasharray: 3 12; animation: mairo-dash 26s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mairo-float, .mairo-arc { animation: none; }
+}

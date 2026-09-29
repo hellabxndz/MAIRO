@@ -522,3 +522,7 @@ a network can be retired without orphaning the rows that reference it.
 - **Creative asset generation** (actual images/video) isn't implemented —
   `CreativeRequest` is a queue your team (or the AIOS dashboard) works from
   manually today.
+
+### Landing page
+
+Premium dark design built only from Mairo's own UI, charts, icons and platform logos — no people or stock photos. Sections: hero with a floating sample dashboard and AI callouts, platform bar (only platforms Mairo actually works with; product statements instead of customer counts), How It Works (free plan → approve → connect → subscribe → build → approve → launch), business-type selector, the free-plan demo ("strategy only"), Mairo Decisions, Business Health, Simple / Advanced / Profit First preview, pricing, FAQ and the final call. Every figure is marked as sample or demo data. All calls to action go to `/sign-up`, which starts the free plan.

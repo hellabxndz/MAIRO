@@ -1,206 +1,104 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { LandingNav } from "@/components/landing/landing-nav";
-import { WatchDemo } from "@/components/landing/watch-demo";
-import { BusinessTypes } from "@/components/landing/business-types";
-import { DecisionExplainer } from "@/components/landing/decision-explainer";
-import { LiveFeed } from "@/components/landing/live-feed";
+import { HeroDashboard } from "@/components/landing/hero-dashboard";
+import { BusinessSelector } from "@/components/landing/business-selector";
+import { FreePlanDemo } from "@/components/landing/free-plan-demo";
+import { DashboardModes } from "@/components/landing/dashboard-modes";
 import { Faq } from "@/components/faq";
-import { DashboardMock } from "@/components/landing/dashboard-mock";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { PLANS, TRIAL_DAYS } from "@/lib/plans";
 
-// The marketing page.
+// The marketing page: a premium AI advertising company, not a crypto site.
+// Dark navy, violet and electric-blue light, glass cards, and Mairo's own
+// software as the only imagery — no people, no stock photos.
 //
-// Dark, violet-lit, product-first: the dashboard on a laptop in a room at dusk
-// behind the headline, and every section showing the product rather than
-// describing it.
-//
-// One rule above the design: nothing here claims what isn't true. No invented
-// customer counts, no borrowed results, no "no card required" when the trial
-// takes a card. Product pictures carry figures, and each one is marked as an
-// example. The places a page like this usually puts testimonials say instead
-// what a business can count on — until there are real customers to quote.
+// Two rules above the design:
+//   - Nothing claims what isn't true. No invented customer counts, ratings or
+//     revenue; every figure in a product picture is labelled as sample data;
+//     only platforms Mairo actually works with are shown.
+//   - FREE shows what Mairo would do (the plan); PAID is Mairo doing it
+//     (building, launching, optimizing). Nothing here implies a campaign runs
+//     before a subscription.
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
 
-const ACCENT = "bg-gradient-to-r from-[#8b4dfb] to-[#5f2dfd]";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#e27bf5] via-[#9a6bff] to-[#6a5cff] bg-clip-text text-transparent";
+const PRIMARY = "bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] shadow-[0_14px_44px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110";
+const GRADIENT_TEXT = "bg-gradient-to-r from-[#a86bff] via-[#8a6dff] to-[#4f86ff] bg-clip-text text-transparent";
+const GLASS = "border border-white/10 bg-white/[0.03] backdrop-blur-xl";
 
-/** The feature strip's solid icons. */
-const FILLED = {
-  bolt: <path fill="currentColor" d="M13.5 2 4.5 13.5h6.2L9.5 22 19.5 9.8h-6.4z" />,
-  target: (
-    <g fill="none" stroke="currentColor" strokeWidth="2.2">
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4.5" />
-      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
-    </g>
-  ),
-  bars: (
-    <g fill="currentColor">
-      <rect x="4" y="13" width="4" height="8" rx="1.2" />
-      <rect x="10" y="8" width="4" height="13" rx="1.2" />
-      <rect x="16" y="3" width="4" height="18" rx="1.2" />
-    </g>
-  ),
-  user: (
-    <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 21c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5" />
-    </g>
-  ),
-};
-
-/**
- * The kinds of businesses Mairo is built for, each with the sort of ad Mairo
- * would write for them. Marked as examples — nobody's real ad or result.
- */
-const WHO: { v: string; k: string; icon: ReactNode; glow: string; ad: string; cta: string }[] = [
-  {
-    v: "Gyms",
-    k: "& fitness coaches",
-    glow: "rgba(124,77,255,0.55)",
-    ad: "Your first class is free",
-    cta: "Book",
-    icon: (
-      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
-    ),
-  },
-  {
-    v: "Stores",
-    k: "& online shops",
-    glow: "rgba(59,130,246,0.5)",
-    ad: "New arrivals are in",
-    cta: "Shop now",
-    icon: (
-      <>
-        <path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8z" />
-        <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
-      </>
-    ),
-  },
-  {
-    v: "Brands",
-    k: "& boutiques",
-    glow: "rgba(236,72,153,0.45)",
-    ad: "The summer edit",
-    cta: "Shop",
-    icon: (
-      <>
-        <path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0l-8.5-8.1z" />
-        <circle cx="8" cy="8" r="1.4" />
-      </>
-    ),
-  },
-  {
-    v: "Beauty",
-    k: "& skincare",
-    glow: "rgba(20,184,166,0.45)",
-    ad: "Meet your new serum",
-    cta: "Try it",
-    icon: (
-      <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" />
-    ),
-  },
-];
-
-function Icon({ d }: { d: ReactNode }) {
+function Badge({ children }: { children: ReactNode }) {
   return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-500/10 text-violet-300">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden>
-        {d}
+    <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-medium text-white/90">
+      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-violet-300" fill="currentColor" aria-hidden>
+        <path d="M8 1l1.6 4.4L14 7l-4.4 1.6L8 13l-1.6-4.4L2 7l4.4-1.6z" />
       </svg>
+      {children}
     </span>
   );
 }
 
-const I = {
-  bolt: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />,
-  target: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="5" />
-      <circle cx="12" cy="12" r="1.5" />
-    </>
-  ),
-  bars: <path d="M5 20V10M12 20V4M19 20v-7" />,
-  user: (
-    <>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
-    </>
-  ),
-  spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />,
-  rocket: <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2m-2-3 3 3m-3-3c1-4 4-9 11-10-1 7-6 10-10 11m4-7a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />,
-  auto: <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4" />,
-  brain: <path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1" />,
-  chat: <path d="M4 5h16v11H9l-5 4z" />,
-  chart: <path d="M4 19h16M6 15l4-5 3 3 5-7" />,
-  shield: <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z" />,
-  eye: (
-    <>
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-      <circle cx="12" cy="12" r="3" />
-    </>
-  ),
-  lock: (
-    <>
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-    </>
-  ),
-};
-
-function SectionHead({ title, sub, action }: { title: ReactNode; sub: string; action?: ReactNode }) {
+function SectionHead({ badge, title, sub }: { badge?: string; title: ReactNode; sub?: string }) {
   return (
-    <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h2 className="text-[clamp(26px,3.6vw,38px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white">{title}</h2>
-        <p className="mt-2 text-[15px] text-white/60">{sub}</p>
-      </div>
-      {action}
+    <div className="mx-auto max-w-[760px] text-center">
+      {badge && <Badge>{badge}</Badge>}
+      <h2 className="mt-4 text-[clamp(30px,4.2vw,50px)] font-bold leading-[1.08] tracking-[-0.035em]">{title}</h2>
+      {sub && <p className="mx-auto mt-4 max-w-[620px] text-[16.5px] leading-relaxed text-white/65">{sub}</p>}
     </div>
   );
 }
 
-function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Check({ children }: { children: ReactNode }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.045] to-white/[0.015] ${className}`}>{children}</div>
+    <li className="flex items-center gap-2">
+      <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <path d="M3 8.5l3 3 7-7" />
+      </svg>
+      {children}
+    </li>
   );
 }
 
-const STEPS = [
-  { n: 1, title: "Connect your account", body: "Link your Facebook and Instagram ad account in a couple of clicks. Your account, your data.", icon: I.user },
-  { n: 2, title: "Tell Mairo your goal", body: "More sales, more leads, more bookings — and what you want to spend. Or paste your website and Mairo works it out.", icon: I.target },
-  { n: 3, title: "AI builds your ads", body: "Mairo writes the ads, sets up the audience and budget, and scores the campaign before any money is spent.", icon: I.spark },
-  { n: 4, title: "Mairo keeps improving it", body: "Every day Mairo checks your campaigns and tells you what to change — or makes small fixes itself, inside your limits.", icon: I.auto },
+const CALLOUTS = [
+  { text: "Mairo checks your ads every day.", pos: "left-[-9%] top-[-9%]", delay: "0s", icon: "M3 17l5-5 4 4 8-8M14 8h6v6" },
+  { text: "Create ads in minutes.", pos: "right-[-14%] top-[13%]", delay: "1.4s", icon: "M4 5h16v14H4zM4 15l5-4 4 3 3-2 4 3" },
+  { text: "Find more customers with AI targeting.", pos: "left-[-10%] bottom-[8%]", delay: "2.6s", icon: "M9 11a3 3 0 100-6 3 3 0 000 6zm-6 9c0-3 3-5 6-5s6 2 6 5M17 11a2.5 2.5 0 100-5M21 19c0-2.2-1.6-3.8-4-4.3" },
+  { text: "Get clear recommendations on what to do next.", pos: "right-[-12%] bottom-[-10%]", delay: "3.8s", icon: "M5 20V10M11 20V4M17 20v-8" },
 ];
 
-const FEATURES = [
-  { title: "AI ad creation", body: "Ad words in three angles, images from your own photos, and a new version whenever one wears out.", icon: I.spark },
-  { title: "Launch in minutes", body: "Seven plain questions and Mairo builds the campaign in your own Meta ad account.", icon: I.rocket },
-  { title: "Automatic optimization", body: "Pauses what's wasting money and moves budget to what works — only within the limits you set.", icon: I.auto },
-  { title: "Business Brain", body: "Paste your website once. Mairo remembers your products, prices and voice for every campaign.", icon: I.brain },
-  { title: "AI assistant", body: "Ask why sales dipped or what to do with $500, and get an answer from your own numbers.", icon: I.chat },
-  { title: "Real-time reporting", body: "Spend, customers, cost per customer and return — read live from Meta, in plain English.", icon: I.chart },
+const STEPS = [
+  { n: "01", title: "Tell Mairo your goal", body: "More sales, more leads, more bookings — just tell Mairo what you want.", icon: "M12 21a9 9 0 100-18 9 9 0 000 18zm0-5a4 4 0 100-8 4 4 0 000 8zm0-3a1 1 0 100-2 1 1 0 000 2z" },
+  { n: "02", title: "Mairo builds your plan", body: "A custom strategy, audience, budget and creative recommendations for your business — free.", icon: "M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h7" },
+  { n: "03", title: "Approve & activate", body: "Review your free plan, make changes with Mairo, connect your account, and choose your subscription.", icon: "M12 21a9 9 0 100-18 9 9 0 000 18zM8 12l3 3 5-6" },
+  { n: "04", title: "Mairo launches & optimizes", body: "After payment and your final approval of the campaign, Mairo launches it and keeps watching performance.", icon: "M5 20V10M11 20V4M17 20v-8" },
+];
+
+const HEALTH = [
+  { k: "Advertising Health", v: 88, c: "from-sky-400 to-blue-500" },
+  { k: "Creative Health", v: 72, c: "from-fuchsia-400 to-pink-500" },
+  { k: "Website Health", v: 81, c: "from-violet-400 to-fuchsia-500" },
+  { k: "Audience Health", v: 91, c: "from-emerald-400 to-teal-400" },
+  { k: "Budget Health", v: 79, c: "from-emerald-400 to-lime-400" },
 ];
 
 const FAQ = [
   {
+    q: "What do I get for free?",
+    a: "Business setup, a website analysis and a personalized advertising plan — goal, platforms, budget, audience, creative ideas and campaign structure — which you can change with Mairo or by hand and approve. It's strategy only: a Mairo subscription is needed before Mairo builds or launches a real campaign.",
+  },
+  {
     q: "Do I need any advertising experience?",
-    a: "No. Mairo asks plain questions about your business, builds the campaign, and explains every change in normal language. Advanced mode shows the full numbers when you want them.",
+    a: "No. Mairo asks plain questions about your business, writes the plan, and explains every recommendation in normal language. Advanced mode shows the full numbers when you want them.",
   },
   {
     q: "Who pays for the ads themselves?",
-    a: "You pay Meta directly, from your own ad account, at whatever budget you set. Your Mairo plan is separate and never includes ad spend.",
+    a: "You pay Meta directly, from your own ad account, at whatever budget you set. Your Mairo subscription is separate and never includes ad spend.",
   },
   {
     q: "Does Mairo change my campaigns without asking?",
-    a: "Only if you let it. In Manual mode nothing changes without your approval. In AI Assist and Full Autopilot, Mairo can make changes inside the limits you set — and new campaigns and any increase to your total budget always wait for your yes. Every change is logged with the reason.",
+    a: "Only if you let it. The first campaign is built paused and only goes live when you press Launch. In Manual mode nothing changes without your approval; in AI Assist and Full Autopilot, Mairo acts inside the limits you set, and every change is logged with the reason.",
   },
   {
     q: "Which platforms does Mairo work with?",
@@ -208,7 +106,7 @@ const FAQ = [
   },
   {
     q: "How does the free trial work?",
-    a: `Every plan starts with a ${TRIAL_DAYS}-day free trial. It asks for a card and charges nothing during the trial; cancel before it ends and you pay nothing.`,
+    a: `Paid plans start with a ${TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and the first charge is after the trial. If that payment doesn't go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved.`,
   },
   {
     q: "Can Mairo guarantee results?",
@@ -216,354 +114,310 @@ const FAQ = [
   },
 ];
 
-const PROMISES = [
-  { big: "You approve", title: "Nothing launches without you", body: "Mairo builds campaigns paused. New campaigns, and any rise in your total budget, always wait for your yes.", icon: I.shield },
-  { big: "Your numbers", title: "No borrowed results", body: "Every figure comes from your own ad account. Mairo compares your campaigns with themselves, never with made-up benchmarks.", icon: I.eye },
-  { big: "Your limits", title: "A ceiling it can't cross", body: "Set a daily maximum and the most Mairo may change in a day. Every change it makes is logged, with the reason.", icon: I.lock },
-];
+function money(n: number): string {
+  return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
+}
 
 export default function Home() {
   return (
-    <div className={`${jakarta.className} relative min-h-screen overflow-x-hidden bg-[#02060b] tracking-[0.005em] text-white`}>
+    <div className={`${jakarta.className} relative min-h-screen overflow-x-hidden bg-[#050814] text-white`}>
       <LandingNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative isolate overflow-hidden pt-[72px] lg:min-h-[min(45vw,694px)]">
-        <div className="relative z-10 mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-12">
-          <div className="pt-8 lg:max-w-[640px] lg:pt-12">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#1a1830]/80 px-3.5 py-2 text-[13px] text-white/90">
-              <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-[#a78bfa]">
-                <path d="M8 0c.4 3.8 2.2 5.6 6 6-3.8.4-5.6 2.2-6 6-.4-3.8-2.2-5.6-6-6 3.8-.4 5.6-2.2 6-6z" transform="translate(0 2)" />
-              </svg>
-              AI Advertising for Real Businesses
-            </span>
-            <h1 className="mt-5 text-[clamp(42px,5.1vw,70px)] font-extrabold leading-[0.98] tracking-[-0.035em]">
-              <span className="whitespace-nowrap">More customers,</span>
+      <section id="product" className="relative isolate scroll-mt-20 overflow-hidden pt-[104px] sm:pt-[120px]">
+        {/* Soft neon arcs behind the product. */}
+        <svg aria-hidden viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 -z-10 h-full w-full">
+          <defs>
+            <linearGradient id="arc-a" x1="0" x2="1">
+              <stop offset="0" stopColor="#8b5cf6" stopOpacity="0" />
+              <stop offset="0.5" stopColor="#8b5cf6" stopOpacity="0.9" />
+              <stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+            </linearGradient>
+            <radialGradient id="glow-a" cx="0.72" cy="0.42" r="0.5">
+              <stop offset="0" stopColor="#6d4dff" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#6d4dff" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="1200" height="800" fill="url(#glow-a)" />
+          <ellipse cx="860" cy="360" rx="430" ry="250" fill="none" stroke="url(#arc-a)" strokeWidth="1.6" transform="rotate(-14 860 360)" opacity="0.8" />
+          <ellipse cx="860" cy="360" rx="520" ry="300" fill="none" stroke="url(#arc-a)" strokeWidth="1" transform="rotate(-8 860 360)" opacity="0.45" />
+          <ellipse className="mairo-arc" cx="860" cy="360" rx="430" ry="250" fill="none" stroke="#a78bfa" strokeWidth="2" transform="rotate(-14 860 360)" opacity="0.5" />
+          <path d="M-40 640 C 300 520, 620 700, 1240 470" fill="none" stroke="url(#arc-a)" strokeWidth="1.2" opacity="0.5" />
+        </svg>
+
+        <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-14 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-6 lg:px-12">
+          <div className="min-w-0">
+            <Badge>AI Advertising Manager</Badge>
+            <h1 className="mt-6 text-[clamp(34px,3.75vw,60px)] font-extrabold leading-[1.05] tracking-[-0.045em]">
+              <span className="sm:whitespace-nowrap">Grow your business</span>
               <br />
-              <span className={GRADIENT_TEXT}>less work.</span>
+              <span className="sm:whitespace-nowrap">with AI advertising</span>
+              <br />
+              <span className={`${GRADIENT_TEXT} sm:whitespace-nowrap`}>that actually works.</span>
             </h1>
-            <p className="mt-5 max-w-[610px] text-[16px] leading-[1.55] text-white/85 sm:text-[17px]">
-              Mairo creates, launches, and optimizes your Facebook and Instagram ads with AI — so you can get more
-              customers while you run your business.
+            <p className="mt-6 max-w-[560px] text-[clamp(16px,1.35vw,19px)] leading-relaxed text-white/70">
+              Mairo creates, manages, and optimizes your Facebook and Instagram ads with AI — so you can get more customers and spend less time in Ads Manager.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/sign-up"
-                className={`${ACCENT} inline-flex h-[54px] items-center justify-center gap-2.5 rounded-full px-8 text-[15.5px] font-semibold shadow-[0_14px_40px_-10px_rgba(124,77,255,0.9)] transition hover:brightness-110`}
-              >
-                Get started free <span aria-hidden>→</span>
+              <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
+                Get Your Free Plan <span aria-hidden>→</span>
               </Link>
-              <WatchDemo className="inline-flex h-[54px] items-center justify-center gap-3 rounded-full border border-white/25 bg-black/60 px-7 text-[15.5px] font-medium text-white transition hover:border-white/45" />
+              <a href="#how-it-works" className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-full border border-white/12 bg-white/[0.03] px-7 text-[16px] font-medium text-white/90 backdrop-blur transition hover:border-white/30">
+                <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-white" aria-hidden><path d="M2 1.2v9.6L10.5 6z" /></svg>
+                See How It Works
+              </a>
             </div>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[12.5px] text-white/75">
-              {[`${TRIAL_DAYS}-day free trial`, "Setup in minutes", "Works with your own Meta ad account"].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <span aria-hidden className="flex h-4 w-4 items-center justify-center rounded-full bg-[#5b4ff5]">
-                    <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2.5 6.2 5 8.5l4.5-5" />
-                    </svg>
-                  </span>
-                  {t}
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px] text-white/70">
+              <Check>No credit card required</Check>
+              <Check>Personalized plan for your business</Check>
+              <Check>Takes less than 2 minutes</Check>
+            </ul>
+          </div>
+
+          {/* The floating dashboard with its AI callouts. */}
+          <div className="relative min-w-0 lg:[perspective:2000px]">
+            <div className="lg:w-[112%] lg:[transform:rotateY(-11deg)_rotateX(5deg)] lg:[transform-style:preserve-3d]">
+              <HeroDashboard />
+            </div>
+            {CALLOUTS.map((c) => (
+              <div
+                key={c.text}
+                className={`mairo-float absolute z-10 hidden max-w-[210px] items-center gap-3 rounded-2xl ${GLASS} bg-[#12143a]/80 px-4 py-3 shadow-[0_18px_50px_-18px_rgba(99,102,241,0.9)] xl:flex ${c.pos}`}
+                style={{ animationDelay: c.delay }}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4f7dff] to-[#8b4dfb]">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d={c.icon} />
+                  </svg>
+                </span>
+                <span className="text-[13px] font-medium leading-snug text-white">{c.text}</span>
+              </div>
+            ))}
+            {/* On smaller screens the callouts sit under the dashboard instead. */}
+            <ul className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:hidden">
+              {CALLOUTS.map((c) => (
+                <li key={c.text} className={`flex items-center gap-3 rounded-2xl ${GLASS} px-4 py-3 text-[13.5px] text-white/90`}>
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb]" />
+                  {c.text}
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* The room, the laptop, the city — faded into the page on the left. */}
-        <div className="relative -z-10 mt-10 aspect-[1224/988] w-full lg:absolute lg:right-0 lg:top-0 lg:mt-0 lg:w-[min(56%,860px)]">
-          <Image src="/landing/hero.webp" alt="" fill priority sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#02060b_0%,rgba(2,6,11,0.55)_14%,transparent_32%)] max-lg:hidden" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,#02060b_0%,transparent_22%,transparent_70%,#02060b_100%)] lg:bg-[linear-gradient(180deg,rgba(2,6,11,0.55)_0%,transparent_14%,transparent_78%,#02060b_100%)]" />
-          <span className="absolute left-[19.5%] top-[67%] rounded-full border border-white/15 bg-black/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-white/60">
-            Example
-          </span>
-        </div>
-
-        {/* What it works with — stated as fact, not as endorsement. */}
-        <div className="relative z-10 mx-auto max-w-[1360px] px-5 pb-10 sm:px-8 lg:mt-14 lg:px-12">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-14">
-            <p className="shrink-0 text-[13.5px] leading-snug text-white/75">
-              Works with the tools
-              <br className="hidden md:block" /> you already use
-            </p>
-            <ul className="flex flex-wrap items-center gap-x-10 gap-y-5 text-white/85">
-              <li className="flex items-center gap-1.5 text-[24px] font-bold italic tracking-[-0.02em]">
-                <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7 fill-current">
-                  <path d="M15.3 3.6c-.1 0-.3 0-.4.1l-.6.2C13.9 2.7 13.3 2 12.4 2 10.5 2 9.6 4.4 9.3 5.6l-1.8.6c-.6.2-.6.2-.7.7L5.3 19.9 16.9 22l.6-.1-2.2-18.3zM12.9 4.4l-1.4.5c.3-1.1.8-2.1 1.5-2.4.2.4.2.9 0 1.9zm-1.5-2c.1 0 .2 0 .3.1-.9.4-1.8 1.4-2.2 3.5l-1.1.3c.3-1.3 1.2-3.9 3-3.9zm2.3 13.8c-.9.4-1.8.6-2.7.3-1.6-.5-1.8-1.9-1.4-2.4.2-.3 1.1-.4 1.6-.2.5.2 1.1.6 1.2.2.2-.5-.8-1.2-1.7-1.8-1.6-1.1-1.8-2.9-.4-4 1.1-.9 2.4-.7 3.1-.4l-.5 1.6c-.4-.2-1.2-.4-1.6.1-.3.4.3.9.9 1.3 1.2.8 2.3 1.6 2 3.2-.1.9-.7 1.6-1.5 2.1z" />
-                </svg>
-                shopify
-              </li>
-              <li className="flex items-center gap-1.5 text-[24px] font-semibold tracking-[-0.02em]">
-                <span className="h-7 w-7"><MetaMark /></span> Meta
-              </li>
-              <li className="flex items-center gap-2 text-[24px] font-semibold tracking-[-0.02em]">
-                <span className="h-6 w-6"><InstagramMark /></span> Instagram
-              </li>
-              <li className="text-[25px] font-medium tracking-[-0.02em]">Google</li>
-              <li className="text-[25px] font-bold tracking-[-0.03em]">stripe</li>
-            </ul>
+        {/* ── Platform bar ──────────────────────────────────────────── */}
+        <div id="platforms" className="mx-auto mt-20 max-w-[1360px] px-5 sm:px-8 lg:px-12">
+          <div className={`flex flex-col gap-8 rounded-[28px] ${GLASS} px-6 py-7 sm:px-9 lg:flex-row lg:items-center lg:justify-between`}>
+            <div className="min-w-0">
+              <p className="text-[13px] text-white/55">Works with the platforms you already use</p>
+              <ul className="mt-4 flex flex-wrap items-center gap-x-9 gap-y-4 text-white/85">
+                <li className="flex items-center gap-2 text-[21px] font-semibold tracking-[-0.02em]"><span className="h-6 w-6"><MetaMark /></span> Meta</li>
+                <li className="flex items-center gap-2 text-[21px] font-semibold tracking-[-0.02em]"><span className="h-5 w-5"><InstagramMark /></span> Instagram</li>
+                <li className="text-[21px] font-bold italic tracking-[-0.02em]">shopify</li>
+                <li className="text-[19px] font-medium tracking-[-0.01em]">Google Tag Manager</li>
+                <li className="text-[22px] font-bold tracking-[-0.03em] text-[#8c86ff]">stripe</li>
+              </ul>
+            </div>
+            <dl className="grid shrink-0 grid-cols-1 gap-5 border-white/10 sm:grid-cols-3 lg:border-l lg:pl-9">
+              {[
+                ["Facebook + Instagram", "One dashboard"],
+                ["AI powered", "Checks your ads every day"],
+                ["Simple + Advanced", "Built for any experience level"],
+              ].map(([a, b]) => (
+                <div key={a}>
+                  <dt className="text-[16px] font-semibold text-white">{a}</dt>
+                  <dd className="mt-0.5 text-[12.5px] text-white/55">{b}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-        </div>
-      </section>
-
-      {/* ── Four promises, one line each ─────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1360px] px-5 pb-12 pt-10 sm:px-8 lg:px-12 lg:pt-14">
-        <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-white/[0.08]">
-          {[
-            { t: "Create ads with AI", b: "Ad words and images made for your business in seconds.", i: FILLED.bolt },
-            { t: "Launch in minutes", b: "Mairo sets up and launches your campaigns.", i: FILLED.target },
-            { t: "Get more customers", b: "AI checks your ads every day and says what to improve.", i: FILLED.bars },
-            { t: "All in one place", b: "Facebook and Instagram ads, managed together.", i: FILLED.user },
-          ].map((f) => (
-            <div key={f.t} className="flex gap-4 lg:px-7 lg:first:pl-0">
-              <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl bg-[#111228] text-[#7c4dff] max-lg:h-12 max-lg:w-12">
-                <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden>{f.i}</svg>
-              </span>
-              <div>
-                <p className="text-[15.5px] font-bold">{f.t}</p>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/65">{f.b}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Who it's for — the kinds of businesses Mairo is built for, each with an example of the ad it would write. */}
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {WHO.map((c) => (
-            <div key={c.v} className="relative flex min-h-[150px] flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0a0d1c] p-5">
-              <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full blur-3xl" style={{ background: c.glow }} />
-              <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:22px_22px]" />
-              <div className="relative flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-white">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden>
-                    {c.icon}
-                  </svg>
-                </span>
-                <span>
-                  <span className="block bg-gradient-to-r from-[#d8b4fe] to-[#a78bfa] bg-clip-text text-[18px] font-extrabold leading-tight text-transparent">{c.v}</span>
-                  <span className="block text-[12px] text-white/75">{c.k}</span>
-                </span>
-              </div>
-              <div className="relative mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2 backdrop-blur-sm">
-                <span className="min-w-0">
-                  <span className="block text-[9.5px] uppercase tracking-[0.14em] text-white/45">Example ad</span>
-                  <span className="block text-[12.5px] leading-snug font-medium text-white/90">{c.ad}</span>
-                </span>
-                <span className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-[11px] text-white/85">{c.cta}</span>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
       {/* ── How it works ─────────────────────────────────────────────── */}
-      <section id="how-it-works" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+      <section id="how-it-works" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-24 sm:px-8 lg:px-12">
         <SectionHead
-          title="How Mairo works"
-          sub="Go from idea to more customers in minutes. Mairo handles the heavy lifting."
-          action={<Link href="/sign-up" className="text-[14px] text-violet-300 hover:text-white">Start your free trial →</Link>}
+          badge="HOW IT WORKS"
+          title="From your goal to a live campaign."
+          sub="Mairo handles the strategy, creative, targeting, and optimization — so you don’t have to."
         />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s) => (
-            <Panel key={s.n} className="p-5">
-              <div className="flex items-center gap-3">
-                <span className={`${ACCENT} flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-semibold`}>{s.n}</span>
-                <Icon d={s.icon} />
+        <ol className="relative mt-14 grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-6">
+          {/* The timeline line on phones. */}
+          <span aria-hidden className="absolute bottom-6 left-[31px] top-6 w-px bg-gradient-to-b from-violet-500/60 via-violet-500/30 to-transparent lg:hidden" />
+          {STEPS.map((s, i) => (
+            <li key={s.n} className="relative flex gap-5 lg:flex-col lg:gap-0">
+              <div className="flex items-center gap-4">
+                <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7c4dff] to-[#4f6dff] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(124,77,255,0.85)]">
+                  {s.n}
+                </span>
+                {i < STEPS.length - 1 && (
+                  <svg aria-hidden viewBox="0 0 80 12" className="hidden h-3 flex-1 text-violet-400/70 lg:block">
+                    <path d="M0 6h74m-6-5l6 5-6 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                )}
               </div>
-              <p className="mt-4 text-[16px] font-medium">{s.title}</p>
-              <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/60">{s.body}</p>
-            </Panel>
+              <div className="lg:mt-6 lg:pr-6">
+                <svg viewBox="0 0 24 24" className="h-7 w-7 text-violet-300" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d={s.icon} />
+                </svg>
+                <p className="mt-3 text-[18px] font-semibold">{s.title}</p>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-white/60">{s.body}</p>
+              </div>
+            </li>
           ))}
+        </ol>
+        <p className="mx-auto mt-12 max-w-[900px] text-center text-[13px] leading-relaxed text-white/45">
+          Free plan → edit plan → approve plan → connect ad account → choose subscription → pay → Mairo builds the campaign → your final approval → launch.
+        </p>
+      </section>
+
+      {/* ── Built for your business ─────────────────────────────────── */}
+      <section id="business-types" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <SectionHead badge="BUILT FOR YOUR BUSINESS" title="See how Mairo would advertise your business." />
+        <div className="mt-10">
+          <BusinessSelector />
         </div>
       </section>
 
-      {/* ── Choose your business type ────────────────────────────────── */}
-      <section id="business-types" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+      {/* ── Free plan ────────────────────────────────────────────────── */}
+      <section id="free-plan" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-10 -z-10 mx-auto h-[420px] max-w-[900px] rounded-full bg-violet-600/15 blur-[120px]" />
         <SectionHead
-          title="Built for the way you do business."
-          sub="Choose your business type and see how Mairo would run your advertising."
+          badge="YOUR FREE PLAN"
+          title="See your advertising plan before you pay."
+          sub="Tell Mairo about your business and get a personalized advertising strategy for free."
         />
-        <BusinessTypes />
+        <div className="mt-12">
+          <FreePlanDemo />
+        </div>
+        <div className={`mx-auto mt-8 max-w-[860px] rounded-2xl ${GLASS} px-6 py-5 text-center`}>
+          <p className="text-[15px] font-semibold text-white">Your free plan is strategy only.</p>
+          <p className="mt-1 text-[14px] text-white/60">A Mairo subscription is required before a real campaign is created or launched. Mairo shows you the strategy for free — you subscribe when you want Mairo to actually do it.</p>
+        </div>
       </section>
 
-      {/* ── Everything you need ──────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
-        <SectionHead title="Everything you need to grow, powered by AI" sub="One platform that runs your advertising for real businesses." />
-        <div className="grid items-stretch gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <Panel key={f.title} className="p-5">
-                <Icon d={f.icon} />
-                <p className="mt-4 text-[15px] font-medium">{f.title}</p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">{f.body}</p>
-              </Panel>
-            ))}
+      {/* ── Mairo Decisions ──────────────────────────────────────────── */}
+      <section id="decisions" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+          <div>
+            <Badge>MAIRO DECISIONS</Badge>
+            <h2 className="mt-4 text-[clamp(30px,4vw,48px)] font-bold leading-[1.08] tracking-[-0.035em]">
+              Mairo doesn&rsquo;t just manage your ads.
+              <br />
+              <span className={GRADIENT_TEXT}>It explains what to do and why.</span>
+            </h2>
+            <p className="mt-5 max-w-[520px] text-[16px] leading-relaxed text-white/65">
+              Every recommendation comes with the numbers behind it and how sure Mairo is. You approve, ask why, or ignore it — and in Manual mode nothing changes without you.
+            </p>
           </div>
-          <Panel className="relative overflow-hidden p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-[14px] font-medium">Ad versions, written for you</p>
-              <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-white/55">Example</span>
+          <div className={`relative rounded-3xl ${GLASS} p-6 shadow-[0_40px_100px_-40px_rgba(124,77,255,0.8)] sm:p-8`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Mairo Decision</p>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">High Confidence</span>
+                <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-white/55">Demo</span>
+              </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <p className="mt-3 text-[22px] font-semibold leading-snug">Move $20/day from Creative #2 to Creative #4.</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                { a: "The benefit", h: "Lighter every mile", t: "from-[#312e81] to-[#7c3aed]" },
-                { a: "The problem", h: "No more sore feet", t: "from-[#1e3a8a] to-[#9333ea]" },
-                { a: "What's different", h: "Made to be worn daily", t: "from-[#581c87] to-[#db2777]" },
-                { a: "The offer", h: "Free returns, always", t: "from-[#0f172a] to-[#4f46e5]" },
-              ].map((v) => (
-                <div key={v.a} className="overflow-hidden rounded-xl border border-white/10">
-                  <div className={`h-24 bg-gradient-to-br ${v.t}`} />
-                  <div className="p-2.5">
-                    <p className="text-[10px] uppercase tracking-[0.1em] text-violet-300">{v.a}</p>
-                    <p className="mt-0.5 text-[12.5px] font-medium">{v.h}</p>
-                  </div>
+                ["Creative #2", "$46.21", "1.8x", "text-rose-300"],
+                ["Creative #4", "$24.30", "4.7x", "text-emerald-300"],
+              ].map(([n, cpa, roas, tone]) => (
+                <div key={n} className="rounded-2xl border border-white/[0.07] bg-[#0b0e22]/80 p-4">
+                  <p className="text-[13px] font-medium text-white">{n}</p>
+                  <p className="mt-2 text-[12px] text-white/50">CPA <span className={`ml-1 text-[15px] font-semibold ${tone}`}>{cpa}</span></p>
+                  <p className="text-[12px] text-white/50">ROAS <span className={`ml-1 text-[15px] font-semibold ${tone}`}>{roas}</span></p>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-[12.5px] leading-relaxed text-white/55">
-              Mairo writes only from what you tell it or what&rsquo;s on your website — never invented prices or offers.
-            </p>
-          </Panel>
-        </div>
-      </section>
-
-      {/* ── The dashboard ────────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
-        <SectionHead
-          title="A dashboard built to give you results"
-          sub="See everything that matters, all in one place — read live from your own ad account."
-          action={<Link href="/sign-up" className="text-[14px] text-violet-300 hover:text-white">Explore the dashboard →</Link>}
-        />
-        <div className="mx-auto max-w-[980px] rounded-2xl border border-white/10 bg-[#0b0b14] p-2 shadow-[0_40px_120px_-40px_rgba(124,92,255,0.5)]">
-          <div className="aspect-[4/3] rounded-xl sm:aspect-[16/9]">
-            <DashboardMock compact />
+            <p className="mt-5 text-[14px] text-white/75"><span className="text-white/45">Reason: </span>Creative #4 has produced purchases at a lower cost over the last 5 days.</p>
+            <p className="mt-2 text-[12.5px] text-white/45">Based on 5 days of data · 2,840 clicks · 64 purchases</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className={`${PRIMARY} rounded-full px-5 py-2.5 text-[13.5px] font-medium`}>Approve</span>
+              <span className="rounded-full border border-white/15 px-5 py-2.5 text-[13.5px] text-white/85">Ask Mairo Why</span>
+              <span className="rounded-full border border-white/15 px-5 py-2.5 text-[13.5px] text-white/85">Ignore</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── See Mairo working (example feed) ─────────────────────────── */}
-      <section id="activity" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
-          <div>
-            <h2 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.03em]">
-              See Mairo <span className={GRADIENT_TEXT}>working.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-[16px] leading-relaxed text-white/65">
-              Your campaigns don&rsquo;t stop when you log out. Mairo keeps analyzing performance and looking for ways to improve your advertising.
+      {/* ── Business Health ──────────────────────────────────────────── */}
+      <section id="health" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1fr_1.05fr]">
+          <div className={`order-2 rounded-3xl ${GLASS} p-6 sm:p-8 lg:order-1`}>
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-semibold">Business Health</p>
+              <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-white/55">Sample</span>
+            </div>
+            <p className="mt-3 text-[48px] font-bold leading-none tracking-[-0.03em]">
+              84<span className="text-[20px] font-medium text-white/45"> / 100</span>
             </p>
-            <p className="mt-5 max-w-md text-[14px] leading-relaxed text-white/50">
-              Switch between <span className="text-white/80">Simple</span> and <span className="text-white/80">Advanced</span> — the same
-              finding, in plain words or in the numbers. It&rsquo;s the same switch you get inside Mairo.
-            </p>
-          </div>
-          <LiveFeed />
-        </div>
-      </section>
-
-      {/* ── Why Mairo made this decision ─────────────────────────────── */}
-      <section id="decisions" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1080px]">
-          <h2 className="text-center text-[clamp(28px,4.4vw,48px)] font-semibold leading-[1.08] tracking-[-0.03em]">
-            Mairo doesn&rsquo;t just tell you what to do.
-            <br />
-            <span className={GRADIENT_TEXT}>It shows you why.</span>
-          </h2>
-          <div className="mt-10">
-            <DecisionExplainer />
-          </div>
-          <p className="mt-5 text-center text-[13.5px] text-white/55">Every Mairo recommendation shows the data behind the decision.</p>
-        </div>
-      </section>
-
-      {/* ── Mairo AI ─────────────────────────────────────────────────── */}
-      <section id="assistant" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
-          <div>
-            <h2 className="text-[clamp(28px,4vw,44px)] font-semibold leading-[1.08] tracking-[-0.03em]">
-              Ask Mairo anything <span className={GRADIENT_TEXT}>about your ads.</span>
-            </h2>
-            <p className="mt-4 max-w-lg text-[16px] leading-relaxed text-white/65">
-              Mairo&rsquo;s assistant answers from your own account&rsquo;s numbers, in plain English. When something needs fixing, it proposes
-              the fix — and nothing changes until you approve it.
-            </p>
-            <ul className="mt-6 space-y-2.5 text-[14.5px] text-white/80">
-              {["“Why did my sales drop yesterday?”", "“What should I do with an extra $500 this month?”", "“Which ad is working best, and why?”"].map((q) => (
-                <li key={q} className="flex items-center gap-3">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-                  {q}
+            <ul className="mt-6 space-y-4">
+              {HEALTH.map((h) => (
+                <li key={h.k}>
+                  <div className="flex justify-between text-[13.5px]">
+                    <span className="text-white/75">{h.k}</span>
+                    <span className="tabular-nums text-white">{h.v}</span>
+                  </div>
+                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                    <div className={`h-full rounded-full bg-gradient-to-r ${h.c}`} style={{ width: `${h.v}%` }} />
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
-          <Panel className="p-5 sm:p-6">
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-2 text-[13.5px] font-semibold">
-                <span className={`${ACCENT} flex h-7 w-7 items-center justify-center rounded-full text-[12px]`}>M</span>
-                Mairo
-              </p>
-              <span className="rounded-full border border-white/15 px-2.5 py-0.5 text-[10px] uppercase tracking-[0.14em] text-white/55">Example</span>
-            </div>
-            <div className="mt-5 space-y-4">
-              <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-violet-500/20 px-4 py-2.5 text-[14px] text-white ring-1 ring-violet-400/30">
-                Why did my sales drop yesterday?
-              </p>
-              <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/[0.08] bg-black/25 px-4 py-3 text-[14px] leading-relaxed text-white/85">
-                You spent $84 yesterday and got 3 purchases, down from 6 the day before. Most of the drop came from Creative #2 — people are
-                seeing it more often and clicking it less. Creative #4 is still steady.
-                <span className="mt-3 block text-white/60">I can write a fresh version of Creative #2 for you to review.</span>
-                <span className={`${ACCENT} mt-3 inline-flex rounded-lg px-3 py-1.5 text-[12.5px] font-medium`} aria-hidden>
-                  Fix this for me →
-                </span>
-              </div>
-            </div>
-          </Panel>
+          <div className="order-1 lg:order-2">
+            <Badge>BUSINESS HEALTH</Badge>
+            <h2 className="mt-4 text-[clamp(30px,4vw,48px)] font-bold leading-[1.08] tracking-[-0.035em]">
+              More than ad metrics.
+              <br />
+              <span className={GRADIENT_TEXT}>See the health of your entire advertising system.</span>
+            </h2>
+            <p className="mt-5 max-w-[520px] text-[16px] leading-relaxed text-white/65">
+              Your ads, creative, website, audience and budget, scored in one place so you can see what&rsquo;s holding results back.
+            </p>
+            <p className="mt-3 max-w-[520px] text-[13.5px] leading-relaxed text-white/45">
+              Business Health appears once a real campaign is running and there&rsquo;s enough data to measure — Mairo never fills it with guesses.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* ── What you can count on (instead of borrowed testimonials) ─── */}
-      <section className="relative mx-auto max-w-[1360px] px-5 py-16 sm:px-8 lg:px-12">
+      {/* ── Dashboard preview ────────────────────────────────────────── */}
+      <section id="dashboard" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
         <SectionHead
-          title="You stay in control of every dollar"
-          sub="Mairo is new, so there are no customer stories here yet — just what you can count on from day one."
+          badge="YOUR DASHBOARD"
+          title="Three ways to read the same results."
+          sub="Simple for a quick answer, Advanced for every metric, Profit First for what your ads actually earn."
         />
-        <div className="grid gap-4 md:grid-cols-3">
-          {PROMISES.map((p) => (
-            <Panel key={p.title} className="p-6">
-              <div className="flex items-start justify-between">
-                <p className={`text-[26px] font-semibold tracking-[-0.03em] ${GRADIENT_TEXT}`}>{p.big}</p>
-                <Icon d={p.icon} />
-              </div>
-              <p className="mt-4 text-[15px] font-medium">{p.title}</p>
-              <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/60">{p.body}</p>
-            </Panel>
-          ))}
+        <div className="mt-12">
+          <DashboardModes />
         </div>
       </section>
 
       {/* ── Pricing ──────────────────────────────────────────────────── */}
-      <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+      <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
         <SectionHead
-          title="Simple, transparent pricing"
-          sub={`All the tools you need to get more customers. Every plan starts with a ${TRIAL_DAYS}-day free trial.`}
+          badge="PRICING"
+          title="Start with your free plan. Subscribe when you're ready."
+          sub={`Your plan is free. A subscription is what lets Mairo build, launch and optimize it — and every paid plan starts with a ${TRIAL_DAYS}-day free trial.`}
         />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((plan) => (
             <div
               key={plan.tier}
-              className={`relative flex flex-col rounded-2xl border p-6 ${
-                plan.featured
-                  ? "border-violet-400/50 bg-gradient-to-b from-violet-500/[0.14] to-white/[0.02] shadow-[0_30px_80px_-30px_rgba(139,92,246,0.7)]"
-                  : "border-white/[0.08] bg-white/[0.025]"
+              className={`relative flex min-w-0 flex-col rounded-3xl p-6 transition hover:-translate-y-1 ${
+                plan.featured ? "border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.14] to-white/[0.02] shadow-[0_30px_80px_-30px_rgba(124,77,255,0.8)]" : GLASS
               }`}
             >
               {plan.featured && (
-                <span className={`${ACCENT} absolute -top-3 left-6 rounded-full px-3 py-1 text-[11px] font-medium`}>Most popular</span>
+                <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-3 py-1 text-[11px] font-medium">Most popular</span>
               )}
-              <p className="text-[16px] font-medium">{plan.name}</p>
+              <p className="text-[16px] font-semibold">{plan.name}</p>
               <p className="mt-1 text-[13px] text-white/55">{plan.headline}</p>
               <p className="mt-4 flex items-baseline gap-1">
-                <span className="text-[38px] font-semibold tracking-[-0.03em] tabular-nums">${plan.priceMonthly}</span>
+                <span className="text-[38px] font-bold tracking-[-0.03em] tabular-nums">{money(plan.priceMonthly)}</span>
                 <span className="text-[13px] text-white/50">/month</span>
               </p>
               <p className="mt-1 text-[13px] text-white/60">{plan.tagline}</p>
@@ -578,64 +432,77 @@ export default function Home() {
               </ul>
               <Link
                 href="/sign-up"
-                className={`mt-6 rounded-full py-3 text-center text-[14px] font-medium transition ${
-                  plan.featured ? `${ACCENT} hover:brightness-110` : "border border-white/15 hover:border-white/35"
-                }`}
+                className={`mt-6 rounded-full py-3 text-center text-[14px] font-medium ${plan.featured ? PRIMARY : "border border-white/15 transition hover:border-white/35"}`}
               >
-                Start free trial <span aria-hidden>→</span>
+                Get Your Free Plan First <span aria-hidden>→</span>
               </Link>
             </div>
           ))}
         </div>
-        <p className="mt-6 max-w-3xl text-[13px] leading-relaxed text-white/55">
-          Your plan pays for Mairo. Your advertising budget is separate — it goes straight from you to Meta, at whatever
-          you set. The trial asks for a card and charges nothing for {TRIAL_DAYS} days; cancel before then and you pay nothing.{" "}
+        <p className="mx-auto mt-6 max-w-3xl text-center text-[13px] leading-relaxed text-white/50">
+          Your subscription pays for Mairo. Your advertising budget is separate — it goes straight from you to Meta, at whatever you set.{" "}
           <Link href="/for-freelancers" className="text-violet-300 hover:text-white">Running ads for clients? See the freelancer and agency plans →</Link>
         </p>
-        <ResultsNote className="mt-3 max-w-3xl" />
+        <ResultsNote className="mx-auto mt-3 max-w-3xl text-center" />
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
-      <section id="faq" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.7fr_1.3fr]">
-          <SectionHead title="Questions, answered" sub="The things people ask before they start." />
+      <section id="faq" className="relative mx-auto max-w-[1100px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <SectionHead badge="FAQ" title="Questions, answered." />
+        <div className="mt-10">
           <Faq items={FAQ} />
         </div>
       </section>
 
       {/* ── Final call ───────────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-[1360px] px-5 pb-20 pt-10 sm:px-8 lg:px-12">
-        <div className="relative overflow-hidden rounded-3xl border border-violet-400/25 bg-[radial-gradient(120%_140%_at_85%_0%,rgba(168,85,247,0.35),transparent_55%),linear-gradient(135deg,#120c2a,#07060f)] px-6 py-14 text-center sm:px-12">
-          <h2 className="text-[clamp(32px,5vw,54px)] font-semibold leading-[1.05] tracking-[-0.035em]">
-            Let Mairo run <span className={GRADIENT_TEXT}>your ads.</span>
+      <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
+        <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.35),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.3),transparent_60%),linear-gradient(135deg,#0d0f2e,#060817)] px-6 py-16 text-center sm:px-12">
+          <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
+            Get your free personalized <span className={GRADIENT_TEXT}>advertising plan.</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-[15.5px] leading-relaxed text-white/70">
-            Tell Mairo what you&rsquo;re trying to accomplish. It builds the strategy, checks the campaign before money is
-            spent, watches it after launch, and tells you what should change.
+          <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
+            Tell Mairo about your business and see exactly how it would approach your advertising before you subscribe.
           </p>
-          <Link
-            href="/sign-up"
-            className={`${ACCENT} mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4 text-[15px] font-medium shadow-[0_12px_40px_-10px_rgba(139,92,246,0.9)] transition hover:brightness-110`}
-          >
-            Start your {TRIAL_DAYS}-day free trial <span aria-hidden>→</span>
+          <Link href="/sign-up" className={`${PRIMARY} mt-9 inline-flex min-h-[58px] items-center gap-2 rounded-full px-9 text-[16px] font-semibold`}>
+            Get Your Free Plan <span aria-hidden>→</span>
           </Link>
+          <ul className="mx-auto mt-7 flex max-w-[760px] flex-wrap justify-center gap-x-6 gap-y-2 text-[13.5px] text-white/70">
+            <Check>No credit card required</Check>
+            <Check>Personalized for your business</Check>
+            <Check>Edit the plan with Mairo</Check>
+            <Check>Pay only when you are ready to activate it</Check>
+          </ul>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] px-5 py-10 sm:px-8">
-        <div className="mx-auto flex max-w-[1360px] flex-col gap-6 text-[13px] text-white/45 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-[18px] font-semibold tracking-[-0.03em] text-white">Mairo</span>
-            <span>© {new Date().getFullYear()}</span>
+      <footer className="border-t border-white/[0.06] px-5 py-14 sm:px-8">
+        <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
+          <div className="col-span-2 sm:col-span-1">
+            <p className="text-[18px] font-light tracking-[0.34em] text-white">MAIRO</p>
+            <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-white/50">The AI advertising manager for Facebook and Instagram.</p>
+            <p className="mt-4 text-[12px] text-white/35">© {new Date().getFullYear()} Mairo</p>
           </div>
-          <div className="flex flex-wrap gap-x-7 gap-y-3">
-            <Link href="/for-freelancers" className="hover:text-white">For freelancers</Link>
-            <Link href="/privacy" className="hover:text-white">Privacy</Link>
-            <Link href="/terms" className="hover:text-white">Terms</Link>
-            <Link href="/data-deletion" className="hover:text-white">Data deletion</Link>
-            <Link href="/sign-in" className="hover:text-white">Log in</Link>
-          </div>
+          {[
+            { h: "Product", l: [["Features", "#product"], ["How It Works", "#how-it-works"], ["Pricing", "#pricing"], ["Integrations", "#platforms"]] },
+            { h: "Resources", l: [["Your free plan", "#free-plan"], ["FAQ", "#faq"], ["For freelancers & agencies", "/for-freelancers"]] },
+            { h: "Company", l: [["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
+          ].map((col) => (
+            <div key={col.h}>
+              <p className="text-[13px] font-semibold text-white">{col.h}</p>
+              <ul className="mt-4 space-y-2.5 text-[13px] text-white/55">
+                {col.l.map(([label, href]) => (
+                  <li key={label}>
+                    {href.startsWith("#") ? (
+                      <a href={href} className="hover:text-white">{label}</a>
+                    ) : (
+                      <Link href={href} className="hover:text-white">{label}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </footer>
     </div>

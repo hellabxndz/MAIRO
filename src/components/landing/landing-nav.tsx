@@ -7,13 +7,16 @@ import { useEffect, useState } from "react";
 // one call to action. On a phone the links fold into a menu.
 
 const LINKS = [
-  { href: "#how-it-works", label: "Product" },
+  { href: "#product", label: "Product" },
+  { href: "#how-it-works", label: "How It Works" },
   { href: "#pricing", label: "Pricing" },
 ];
 
 const RESOURCES = [
-  { href: "/for-freelancers", label: "For freelancers & agencies" },
+  { href: "#faq", label: "FAQ" },
+  { href: "#free-plan", label: "Your free plan" },
   { href: "#decisions", label: "How Mairo decides" },
+  { href: "/for-freelancers", label: "For freelancers & agencies" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ];
@@ -33,13 +36,13 @@ export function LandingNav() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        scrolled || open ? "border-b border-white/[0.06] bg-[#02060b]/85 backdrop-blur-md" : "bg-transparent"
+        scrolled || open ? "border-b border-white/[0.06] bg-[#050814]/80 backdrop-blur-md" : "bg-transparent"
       }`}
     >
       <nav className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
-        <div className="flex items-center gap-[clamp(40px,9vw,150px)]">
-          <Link href="/" className="text-[23px] font-bold tracking-[-0.03em] text-white">
-            Mairo
+        <div className="flex items-center gap-[clamp(40px,10vw,190px)]">
+          <Link href="/" className="text-[19px] font-light tracking-[0.34em] text-white">
+            MAIRO
           </Link>
 
           <div className="hidden items-center gap-9 text-[14px] font-medium text-white/90 md:flex">
@@ -79,14 +82,14 @@ export function LandingNav() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link href="/sign-in" className="hidden rounded-full bg-white/[0.12] px-5 py-2.5 text-[13.5px] font-medium text-white/90 backdrop-blur transition hover:bg-white/20 hover:text-white sm:inline-block">
-            Log in
+          <Link href="/sign-in" className="hidden rounded-full border border-white/12 bg-white/[0.03] px-5 py-2.5 text-[13.5px] font-medium text-white/90 backdrop-blur transition hover:border-white/30 hover:text-white sm:inline-block">
+            Sign In
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-full bg-gradient-to-r from-[#8b4dfb] to-[#6d3dfd] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(124,77,255,0.9)] transition hover:brightness-110"
+            className="rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(79,125,255,0.9)] transition hover:brightness-110"
           >
-            Get started free <span aria-hidden>→</span>
+            Get Started Free <span aria-hidden>→</span>
           </Link>
           <button
             type="button"
@@ -103,7 +106,7 @@ export function LandingNav() {
       {open && (
         <div className="border-t border-white/[0.06] px-5 pb-5 md:hidden">
           <ul className="space-y-1 pt-3">
-            {[...LINKS, ...RESOURCES, { href: "/sign-in", label: "Log in" }].map((l) => (
+            {[...LINKS, ...RESOURCES, { href: "/sign-in", label: "Sign In" }].map((l) => (
               <li key={l.href}>
                 <Link href={l.href} onClick={() => setOpen(false)} className="block rounded-lg px-2 py-2.5 text-[15px] text-white/85 hover:bg-white/[0.04]">
                   {l.label}
