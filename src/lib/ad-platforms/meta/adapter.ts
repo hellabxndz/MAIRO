@@ -11,7 +11,11 @@ import {
   type CreatedCampaign,
   type CreatedEntity,
   type CreativePerformance,
+  type DailyPerformance,
+  type DateRange,
   type PlatformAccount,
+  type PlatformMetrics,
+  type PublisherPerformance,
   type PlatformResult,
 } from "../types";
 import { loadCredentials, markConnectionProblem } from "../connections";
@@ -122,6 +126,8 @@ type MetaAction = { action_type: string; value: string };
 
 type MetaInsightRow = {
   campaign_id?: string;
+  date_start?: string;
+  publisher_platform?: string;
   ad_id?: string;
   spend?: string;
   impressions?: string;
@@ -507,6 +513,18 @@ export const metaAdapter: AdPlatformAdapter = {
     }
   },
 
+  async getDailyPerformance(input): Promise<PlatformResult<DailyPerformance[]>> {
+    const rows = await campaignInsights(input, { time_increment: "1" }, "Couldn't read Meta's day-by-day figures.");
+    if (!rows.ok) return rows;
+    return ok(groupRows(rows.data, (row) => row.date_start).map(([date, metrics]) => ({ date, metrics })));
+  },
+
+  async getPublisherBreakdown(input): Promise<PlatformResult<PublisherPerformance[]>> {
+    const rows = await campaignInsights(input, { breakdowns: "publisher_platform" }, "Couldn't read where Meta showed the ads.");
+    if (!rows.ok) return rows;
+    return ok(groupRows(rows.data, (row) => row.publisher_platform).map(([publisher, metrics]) => ({ publisher, metrics })));
+  },
+
   async pauseAd(input): Promise<PlatformResult<void>> {
     return setStatus(input.organizationId, input.externalAdId, "PAUSED");
   },
@@ -533,6 +551,85 @@ export const metaAdapter: AdPlatformAdapter = {
     }
   },
 };
+
+/**
+ * Campaign-level insights for a set of campaigns over a range, with extra
+ * parameters (a daily split, a breakdown). One call, paged by Meta only past
+ * a thousand rows — ten campaigns over ninety days is nine hundred.
+ */
+async function campaignInsights(
+  input: { organizationId: string; externalCampaignIds: string[]; range: DateRange },
+  extra: Record<string, string>,
+  failure: string
+): Promise<PlatformResult<MetaInsightRow[]>> {
+  const loaded = await credentialsOr<MetaInsightRow[]>(input.organizationId);
+  if (!loaded.ok) return loaded.result;
+  if (input.externalCampaignIds.length === 0) return ok([]);
+  try {
+    const res = await metaGraphRequest<{ data: MetaInsightRow[] }>(`/${loaded.creds.externalAccountId}/insights`, {
+      accessToken: loaded.creds.accessToken,
+      params: {
+        level: "campaign",
+        fields: "campaign_id,spend,impressions,reach,clicks,ctr,cpc,cpm,actions,action_values,purchase_roas",
+        filtering: JSON.stringify([{ field: "campaign.id", operator: "IN", value: input.externalCampaignIds }]),
+        time_range: JSON.stringify({
+          since: input.range.since.toISOString().slice(0, 10),
+          until: input.range.until.toISOString().slice(0, 10),
+        }),
+        limit: "1000",
+        ...extra,
+      },
+    });
+    return ok(res.data);
+  } catch (error) {
+    return toFailure(input.organizationId, error, failure);
+  }
+}
+
+/**
+ * Adds campaign rows up by a key (a day, a publisher), sorted by that key.
+ *
+ * Summed in Meta's own shape and then normalized once, so rates (CTR, CPC,
+ * CPM, ROAS) are recomputed from the totals rather than averaged. Done here
+ * rather than with the budget optimizer's aggregate(), which imports the
+ * adapter registry and so can't be imported by an adapter.
+ */
+function groupRows(rows: MetaInsightRow[], keyOf: (row: MetaInsightRow) => string | undefined): [string, PlatformMetrics][] {
+  const groups = new Map<string, MetaInsightRow[]>();
+  for (const row of rows) {
+    const key = keyOf(row);
+    if (key) groups.set(key, [...(groups.get(key) ?? []), row]);
+  }
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, parts]) => [key, normalizeInsights(sumRows(parts))]);
+}
+
+function sumRows(rows: MetaInsightRow[]): MetaInsightRow {
+  const total = (pick: (r: MetaInsightRow) => string | undefined) => {
+    const values = rows.map((r) => num(pick(r))).filter((v): v is number => v !== null);
+    return values.length === 0 ? null : values.reduce((a, b) => a + b, 0);
+  };
+  const actions = (pick: (r: MetaInsightRow) => MetaAction[] | undefined): MetaAction[] => {
+    const byType = new Map<string, number>();
+    for (const r of rows) for (const a of pick(r) ?? []) byType.set(a.action_type, (byType.get(a.action_type) ?? 0) + (num(a.value) ?? 0));
+    return [...byType.entries()].map(([action_type, value]) => ({ action_type, value: String(value) }));
+  };
+  const spend = total((r) => r.spend);
+  const impressions = total((r) => r.impressions);
+  const clicks = total((r) => r.clicks);
+  const reach = total((r) => r.reach);
+  const str = (v: number | null) => (v === null ? undefined : String(v));
+  return {
+    spend: str(spend),
+    impressions: str(impressions),
+    reach: str(reach),
+    clicks: str(clicks),
+    ctr: impressions && clicks !== null ? String((clicks / impressions) * 100) : undefined,
+    cpc: spend !== null && clicks ? String(spend / clicks) : undefined,
+    cpm: spend !== null && impressions ? String((spend / impressions) * 1000) : undefined,
+    actions: actions((r) => r.actions),
+    action_values: actions((r) => r.action_values),
+  };
+}
 
 function normalizeInsights(row: MetaInsightRow) {
   const spendCents = unitsToCents(row.spend);

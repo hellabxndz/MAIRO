@@ -351,6 +351,18 @@ export type CreativePerformance = {
   metrics: PlatformMetrics;
 };
 
+/** One day's figures, across the campaigns asked about. `date` is YYYY-MM-DD. */
+export type DailyPerformance = {
+  date: string;
+  metrics: PlatformMetrics;
+};
+
+/** Figures for one place the ads showed — on Meta, "facebook" or "instagram". */
+export type PublisherPerformance = {
+  publisher: string;
+  metrics: PlatformMetrics;
+};
+
 // --- the interface ---------------------------------------------------------
 
 export interface AdPlatformAdapter {
@@ -460,4 +472,25 @@ export interface AdPlatformAdapter {
     targeting: Record<string, unknown>;
     advantageAudience: boolean;
   }): Promise<PlatformResult<void>>;
+
+  /**
+   * The same figures as getCampaignPerformance, one row per day, added up
+   * across the campaigns. Days nothing delivered are absent, not zero-filled —
+   * the caller decides how to draw them.
+   *
+   * Optional: the Advanced dashboard's chart asks for it and leaves the chart
+   * out on a network that can't answer.
+   */
+  getDailyPerformance?(input: {
+    organizationId: string;
+    externalCampaignIds: string[];
+    range: DateRange;
+  }): Promise<PlatformResult<DailyPerformance[]>>;
+
+  /** The same figures split by where the ads showed (Facebook, Instagram…). */
+  getPublisherBreakdown?(input: {
+    organizationId: string;
+    externalCampaignIds: string[];
+    range: DateRange;
+  }): Promise<PlatformResult<PublisherPerformance[]>>;
 }

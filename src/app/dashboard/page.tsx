@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { viewMode } from "@/lib/view-mode";
-import { SimpleDashboard, firstNameFrom } from "@/components/mairo/simple-dashboard";
-import { assistantNameOf } from "@/lib/ai/agents";
+import { firstNameFrom } from "@/components/mairo/simple-dashboard";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, Badge, primaryButtonClass } from "@/components/ui";
-import { currentMonthKey, formatMonthKey } from "@/lib/utils/month";
-import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
+import { Card } from "@/components/ui";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
+import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import { buildRecommendations } from "@/lib/actions/optimize-actions";
 import { OptimizationCard } from "@/components/optimization-card";
-import { PlatformIcons } from "@/components/platform-icons";
-import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { readinessFor } from "@/lib/readiness";
@@ -20,31 +16,26 @@ import { ReadinessPanel } from "@/components/readiness-panel";
 import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
 import { maybeRunSpendProtection } from "@/lib/protection/run";
 import { ResultsNote } from "@/components/results-disclaimer";
-import { campaignHealth } from "@/lib/campaigns/health";
-import { organizationActions } from "@/lib/campaigns/action-log";
-import { MairoToday, type DoingItem } from "@/components/decisions/mairo-today";
 import { refreshDecisions } from "@/lib/decisions/run";
-import { decisionCounts } from "@/lib/decisions/store";
-import { activityTimeline } from "@/lib/activity/log";
-import { loadBrain } from "@/lib/business/brain";
+import { change, loadOverview, parseRange } from "@/lib/dashboard/overview";
+import { KpiCard, KPI_ICON } from "@/components/dashboard/overview/kpi-card";
+import { RangePicker, SourceChip } from "@/components/dashboard/overview/range-picker";
+import { PerformanceChart } from "@/components/dashboard/overview/performance-chart";
+import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
+import { InsightsList, Recommendations } from "@/components/dashboard/overview/insights";
+import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
+import { count, money as fmtMoney, PANEL, pct, roas } from "@/components/dashboard/overview/format";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
 // queried at once and Meta is having a slow moment.
 export const maxDuration = 30;
 
-const statusTone = {
-  DRAFT: "neutral",
-  IN_REVIEW: "yellow",
-  APPROVED: "blue",
-  ACTIVE: "green",
-  COMPLETE: "neutral",
-} as const;
-
-export default async function DashboardOverviewPage() {
+export default async function DashboardOverviewPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const days = parseRange((await searchParams).range);
 
   // Before anything is read, anything that is ready goes live.
   //
@@ -56,28 +47,11 @@ export default async function DashboardOverviewPage() {
   // Spend limits, checked here too: the scheduled run is only daily.
   await maybeRunSpendProtection(organizationId).catch(() => undefined);
 
-  const [organization, plan, connections, campaigns, creativeCount] = await Promise.all([
+  const [organization, connections] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId } }),
-    db.monthlyPlan.findUnique({
-      where: { organizationId_month: { organizationId, month: currentMonthKey() } },
-    }),
     connectionSummaries(organizationId),
-    db.mairoCampaign.findMany({
-      where: { organizationId, status: { not: "ARCHIVED" } },
-      include: { platformCampaigns: { select: { platform: true } } },
-    }),
-    db.creativeRequest.count({ where: { organizationId } }),
   ]);
-
   const connectedPlatforms = [...connections.values()].filter((c) => c.connected);
-  const anyConnected = connectedPlatforms.length > 0;
-
-
-  // Live figures from every connected network. This runs after the queries
-  // above rather than alongside them because it needs what they return, and it
-  // is written never to throw — a slow or unhappy Meta must not cost
-  // the client their whole dashboard.
-  const performance = await fetchOrganizationPerformance(organizationId);
 
   // Whether any campaign is worth suggesting a change to. Usually none are,
   // which is the correct answer for a campaign in its first week.
@@ -109,146 +83,40 @@ export default async function DashboardOverviewPage() {
   // amber boxes repeating each other reads as a product that is shouting.
   const fundingIsTheBlocker = readiness.next?.id === "funding";
 
-  const campaignCount = campaigns.length;
-  // Every network any campaign runs on, for the icon row.
-  const allPlatformsInUse = [
-    ...new Set(campaigns.flatMap((c) => c.platformCampaigns.map((p) => p.platform))),
-  ];
-
-  // Simple View is the same screen at a different depth, not a second product.
-  //
-  // Everything above this line — the auto-launch, the readiness list, the
-  // billing check, the live figures — has already run and is shared. The only
-  // thing the mode decides is how much of it to put on the screen, which is
-  // exactly the guarantee that the two views can never disagree about the
-  // state of an account.
-  // The account as a whole, and what MAIRO has actually changed. Both read the
-  // same way the campaign screen does, so the dashboard and a campaign can
-  // never describe the same state differently.
-  const anyLive = campaigns.some((c) => c.status === "ACTIVE");
-  const accountHealth = campaignHealth(performance.total, { live: anyLive, scope: "account" });
-  const actions = await organizationActions(organizationId, 6);
-
-  // What is going out and what is allowed to move it. Both read here rather
-  // than inside the dashboard component, so the figures on the card are the
-  // same rows the rest of the page was rendered from.
-  const [intake, automation, insights] = await Promise.all([
-    db.onboardingIntake.findUnique({
-      where: { organizationId },
-      select: { monthlyBudgetCents: true },
-    }),
-    db.autoOptimizeSettings.findUnique({
-      where: { organizationId },
-      select: { level: true },
-    }),
-    // Unread only, and at most two. A proactive card that stays after it has
-    // been read becomes furniture, and four at once is a feed.
-    db.notification.findMany({
-      where: { organizationId, readAt: null, dismissedAt: null },
-      orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
-      take: 2,
-    }),
-  ]);
-
-  const dailyCents = campaigns
-    .filter((c) => c.status === "ACTIVE")
-    .reduce((total, c) => total + c.totalDailyBudgetCents, 0);
-
-  // Mairo Today. The daily look runs here too when it's gone stale, so the
-  // decisions count is about this morning's numbers, not yesterday's.
+  // Mairo Decisions. The daily look runs here too when it's gone stale, so
+  // the insights are about this morning's numbers, not yesterday's.
   await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
-  const now = new Date();
-  const yesterdayDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 86_400_000);
-  const [counts, recentActivity, brain, spendGuard, yesterdayReport, activeChildren] = await Promise.all([
-    decisionCounts(organizationId),
-    activityTimeline(organizationId, 3),
-    loadBrain(organizationId),
-    db.spendProtection.findUnique({ where: { organizationId }, select: { stopLossCents: true, monthlyCapCents: true } }),
-    anyLive ? fetchOrganizationPerformance(organizationId, { since: yesterdayDate, until: yesterdayDate }).catch(() => null) : Promise.resolve(null),
-    db.platformCampaign.findMany({
-      where: { mairoCampaign: { organizationId }, status: "ACTIVE" },
-      select: { extraExternalAdIds: true },
-    }),
+
+  // Simple View and Advanced View are the same screen at a different depth,
+  // not two products: everything below is read once, and the mode only
+  // decides which of it goes on the screen — so the two can never disagree
+  // about the state of an account.
+  const [overview, mode, fresh] = await Promise.all([
+    loadOverview(organizationId, days),
+    viewMode(),
+    db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true } }),
   ]);
-  const liveCount = campaigns.filter((c) => c.status === "ACTIVE").length;
-  const testing = activeChildren.filter((c) => c.extraExternalAdIds.length > 0).length;
-  const checkedAt = organization?.decisionsCheckedAt ?? null;
-  const doing: DoingItem[] = [
-    { label: "Monitoring campaigns", on: liveCount > 0, status: liveCount > 0 ? `${liveCount} running, read from Meta on every visit` : "Nothing running yet" },
-    { label: "Testing creatives", on: testing > 0, status: testing > 0 ? `${testing} campaign${testing === 1 ? "" : "s"} testing more than one ad` : "No tests running — a Decision or the Create flow can add one" },
-    { label: "Watching budgets", on: Boolean(spendGuard?.stopLossCents || spendGuard?.monthlyCapCents || automation), status: spendGuard?.monthlyCapCents ? `Spend Protection on, monthly cap ${"$"}${Math.round(spendGuard.monthlyCapCents / 100)}` : spendGuard?.stopLossCents ? "Spend Protection is watching for spend without results" : "Set limits under Settings → Spend Protection" },
-    { label: "Checking audiences", on: liveCount > 0, status: liveCount > 0 ? "How often people see your ads is checked daily" : "Starts once a campaign is running" },
-    { label: "Analyzing your website", on: Boolean(brain.analyzedAt), status: brain.analyzedAt ? `Last analyzed ${brain.analyzedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Not yet — run the Business Analyzer" },
-    { label: "Searching for optimization opportunities", on: Boolean(checkedAt) && liveCount > 0, status: checkedAt ? `Last looked ${checkedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Starts once a campaign is running" },
-  ];
+
+  const now = new Date();
   const hour = Number(
     new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: organization?.timezone || "America/New_York" }).format(now),
   );
-  const mode = await viewMode();
-  const today = (
-    <MairoToday
-      firstName={firstNameFrom(session.user.name, "")}
-      hour={Number.isFinite(hour) ? hour : 9}
-      yesterday={yesterdayReport?.total ?? null}
-      total={performance.total}
-      health={accountHealth}
-      counts={counts}
-      marginPercent={brain.profile.profitMarginPercent}
-      doing={doing}
-      recent={recentActivity}
-      advanced={mode === "advanced"}
-    />
-  );
+  const greeting = `${Number.isFinite(hour) && hour < 12 ? "Good morning" : Number.isFinite(hour) && hour < 18 ? "Good afternoon" : "Good evening"}${
+    session.user.name ? `, ${firstNameFrom(session.user.name, "")}` : ""
+  } 👋`;
+  const checkedAt = fresh?.decisionsCheckedAt
+    ? fresh.decisionsCheckedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : null;
 
-  if (mode === "simple") {
-    return (
-      <>
-      <div className="mx-auto max-w-[1280px]">{today}</div>
-      <SimpleDashboard
-        hideGreeting
-        firstName={firstNameFrom(session.user.name, "")}
-        performance={performance}
-        campaigns={campaigns.map((c) => ({
-          id: c.id,
-          name: c.name,
-          status: c.status,
-          platforms: c.platformCampaigns.map((p) => p.platform),
-        }))}
-        notices={recommendations.map((r) => r.recommendation.headline)}
-        anyConnected={anyConnected}
-        health={accountHealth}
-        actions={actions}
-        assistantName={assistantNameOf(organization?.assistantName)}
-        spend={{
-          spentCents: performance.total.spendCents,
-          // Nothing running is not a daily budget of zero — it is no daily
-          // budget, which reads as a dash rather than as $0.
-          dailyCents: dailyCents > 0 ? dailyCents : null,
-          monthlyCents: intake?.monthlyBudgetCents ?? null,
-        }}
-        automationLevel={automation?.level ?? "MANUAL"}
-        insights={insights}
-        readiness={readiness}
-        monthlyPlan={plan ? { summary: plan.strategySummary } : null}
-        monthLabel={formatMonthKey(currentMonthKey())}
-      />
-      </>
-    );
-  }
+  const { current: t, previous: p } = overview;
+  const advanced = mode === "advanced";
 
-  return (
-    <div>
-      <PageHeader
-        title={`Welcome back, ${organization?.name}`}
-        description="Here's where things stand this month."
-      />
-
-      {today}
-
+  const alerts = (
+    <>
       {/* MAIRO acted on its own, so it says so — before the customer finds a
           live campaign they did not press anything to start. */}
       {launched.launched && (
-        <Card className="mb-8 border-emerald-400/25 bg-emerald-400/[0.05]">
+        <Card className="mb-6 border-emerald-400/25 bg-emerald-400/[0.05]">
           <p className="font-medium text-emerald-200">
             {launched.names.length === 1
               ? `MAIRO put ${launched.names[0]} live`
@@ -309,8 +177,8 @@ export default async function DashboardOverviewPage() {
         </div>
       )}
 
-      {/* An optimization worth acting on outranks everything else on this
-          page, so it sits above the numbers rather than below them. */}
+      {/* An optimization worth acting on outranks the numbers, so it sits
+          above them. */}
       {recommendations.length > 0 && (
         <div className="mb-6 space-y-4">
           {recommendations.map((item) => (
@@ -319,124 +187,118 @@ export default async function DashboardOverviewPage() {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-3">
-        <Card>
-          <p className="text-sm text-neutral-400">Where you advertise</p>
-          <p className="mt-2 flex items-center gap-3 text-lg font-medium">
-            {anyConnected ? (
-              <>
-                <PlatformIcons platforms={connectedPlatforms.map((c) => c.platform)} />
-                <Badge tone="green">Connected</Badge>
-              </>
-            ) : (
-              <Badge tone="red">Nothing connected</Badge>
-            )}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-neutral-400">Campaigns</p>
-          <p className="mt-2 flex items-center gap-3 text-2xl font-semibold">
-            {campaignCount}
-            <PlatformIcons platforms={allPlatformsInUse} />
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-neutral-400">Creative requests</p>
-          <p className="mt-2 text-2xl font-semibold">{creativeCount}</p>
-        </Card>
+      {overview.problems.map((problem) => (
+        <p key={problem.platform} className="mb-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 text-[13px] text-amber-200">
+          {problem.message}
+        </p>
+      ))}
+    </>
+  );
+
+  const chart = (
+    <section className={`${PANEL} p-5`}>
+      <h2 className="mb-3 text-[16px] font-semibold text-white">{advanced ? "Spend & purchases over time" : "Money spent vs sales"}</h2>
+      {overview.daily === null ? (
+        <p className="py-16 text-center text-[13px] text-muted">
+          {overview.campaigns.length === 0 ? "Your chart starts with your first campaign." : "Meta couldn't give a day-by-day split just now. Refresh to try again."}
+        </p>
+      ) : overview.daily.every((d) => !d.delivered) ? (
+        <p className="py-16 text-center text-[13px] text-muted">Nothing delivered in the last {days} days yet.</p>
+      ) : (
+        <PerformanceChart points={overview.daily} variant={advanced ? "spend-purchases" : "spend-sales"} />
+      )}
+    </section>
+  );
+
+  return (
+    <div className="mx-auto max-w-[1440px]">
+      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-[14px] text-muted">{greeting}</p>
+          <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
+            {advanced ? "Here’s how your ads are performing" : "Here’s how your ads are doing"}
+          </h1>
+          {!advanced && <p className="mt-1.5 text-[14.5px] text-muted">{summarySentence(t, p, days)}</p>}
+        </div>
+        <div className="flex flex-wrap gap-2.5 lg:shrink-0 lg:flex-nowrap">
+          <RangePicker days={days} since={overview.range.since} until={overview.range.until} />
+          <SourceChip />
+        </div>
+      </header>
+
+      {alerts}
+
+      <div className={`grid gap-3 ${advanced ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9" : "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"}`}>
+        {advanced ? (
+          <>
+            <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+            <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
+            <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
+            <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
+            <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
+            <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
+            <KpiCard compact label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.cart} />
+            <KpiCard compact label="Cost / purchase" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.users} />
+            <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+            <KpiCard label="Sales / Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />
+            <KpiCard label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.bag} />
+            <KpiCard label="Cost per sale" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="What you paid in ads, on average, for each sale." />
+            <KpiCard label="Return on ad spend" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.bars} hint="How many dollars came back for every $1 spent on ads." />
+            <KpiCard label="People reached" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added up across campaigns — someone who saw two campaigns counts twice." />
+          </>
+        )}
       </div>
 
-      <div className="mt-6">
-        <Card>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm uppercase tracking-[0.16em] text-neutral-400">
-              Total MAIRO performance
-            </p>
-            <Link href="/dashboard/analytics" className="text-xs text-neutral-400 underline underline-offset-4 hover:text-white">
-              Full breakdown
-            </Link>
-          </div>
-          {performance.hasData ? (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-5">
-              <Figure label="Spend" value={money(performance.total.spendCents)} />
-              <Figure label="Revenue" value={money(performance.total.revenueCents)} />
-              <Figure
-                label="ROAS"
-                value={
-                  performance.total.roas === null ? NO_VALUE : `${performance.total.roas.toFixed(2)}x`
-                }
-              />
-              <Figure
-                label="Purchases"
-                value={
-                  performance.total.purchases === null
-                    ? NO_VALUE
-                    : formatInteger(performance.total.purchases)
-                }
-              />
-              <Figure label="Cost per purchase" value={money(performance.total.costPerPurchaseCents)} />
-            </div>
-          ) : (
-            <p className="text-sm text-neutral-400">
-              No figures yet. Once a campaign has been running a day or so, they land here.
-            </p>
-          )}
-          {performance.problems.map((p) => (
-            <p key={p.platform} className="mt-4 text-xs text-amber-200/80">
-              {p.message}
-            </p>
-          ))}
-        </Card>
-      </div>
-
-      <div className="mt-8">
-        <Card>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm text-neutral-400">{formatMonthKey(currentMonthKey())} plan</p>
-              <p className="mt-1 text-lg font-medium">
-                {plan ? <Badge tone={statusTone[plan.status]}>{plan.status}</Badge> : "No plan yet"}
-              </p>
-            </div>
-            <Link href="/dashboard/plan" className={primaryButtonClass}>
-              View plan
-            </Link>
-          </div>
-          {plan && <p className="mt-4 line-clamp-3 text-sm text-neutral-400">{plan.strategySummary}</p>}
-          {/* Attached to the plan rather than parked at the bottom of the
-              screen: the plan is the thing that describes a month that has not
-              happened yet, so this is the claim that needs the qualifier. */}
-          <ResultsNote className="mt-4" />
-        </Card>
-      </div>
-
-      {!anyConnected && (
-        <div className="mt-8">
-          <Card className="border-amber-500/30 bg-amber-500/[0.06]">
-            <p className="font-medium">Connect somewhere to advertise</p>
-            <p className="mt-1 text-sm text-neutral-400">
-              MAIRO needs access to your Meta ad account before it can launch
-              anything.
-            </p>
-            <Link href="/dashboard/integrations" className={`${primaryButtonClass} mt-4`}>
-              Choose where
-            </Link>
-          </Card>
+      {advanced ? (
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+          {chart}
+          <section className={`${PANEL} p-5`}>
+            <InsightsList items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
+          </section>
+          <section className={`${PANEL} p-5`}>
+            <PlatformSplit publishers={overview.publishers} selectable />
+          </section>
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
+          {chart}
+          <section className={`${PANEL} p-5`}>
+            <PlatformSplit publishers={overview.publishers} />
+          </section>
         </div>
       )}
+
+      {!advanced && (
+        <div className="mt-4">
+          <Recommendations items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
+        </div>
+      )}
+
+      <div className="mt-4">
+        <CampaignTable rows={overview.campaigns} variant={advanced ? "advanced" : "simple"} range={overview.range} />
+      </div>
+
+      <ResultsNote className="mt-6" />
     </div>
   );
 }
 
-function money(cents: number | null): string {
-  return cents === null ? NO_VALUE : formatMoney(cents / 100);
-}
-
-function Figure({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</p>
-      <p className="mt-1.5 text-xl font-light tabular-nums text-white">{value}</p>
-    </div>
-  );
+/** The Simple view's one-line summary. Only says what the numbers show. */
+function summarySentence(t: PlatformMetrics, p: PlatformMetrics | null, days: number): string {
+  if (t.spendCents === null || t.spendCents === 0) return `Nothing has been spent on ads in the last ${days} days yet.`;
+  const spent = `You spent ${fmtMoney(t.spendCents)}`;
+  if (t.revenueCents !== null && t.revenueCents > 0) {
+    const move = change(t.revenueCents, p?.revenueCents);
+    const tail =
+      move === null || Math.abs(move) < 0.005
+        ? ""
+        : ` That’s a ${Math.abs(Math.round(move * 100))}% ${move > 0 ? "increase" : "drop"} from the period before.`;
+    return `${spent} and made ${fmtMoney(t.revenueCents)} in sales from your ads.${tail}`;
+  }
+  if (t.purchases) return `${spent} and got ${count(t.purchases)} purchase${t.purchases === 1 ? "" : "s"} from your ads.`;
+  return `${spent} in the last ${days} days. No sales have been tracked back to your ads yet.`;
 }
