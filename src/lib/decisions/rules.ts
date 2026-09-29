@@ -589,12 +589,21 @@ export function dataStatusOf(input: DecisionInput): DataStatus {
  * At most MAX_DECISIONS, and at most one per campaign per kind. An empty list
  * is a real answer.
  */
-export function decide(input: DecisionInput): DecisionRun {
-  const all = [
+/**
+ * Every finding the rules make, before the top few are picked as decisions.
+ * Mairo Intelligence reads these too, so a finding is detected once and a
+ * decision and an insight about it can never disagree.
+ */
+export function allDrafts(input: DecisionInput): DecisionDraft[] {
+  return [
     ...input.campaigns.flatMap((c) => PER_CAMPAIGN.flatMap((rule) => rule(c, input))),
     ...shiftBudget(input),
     ...scaleWinners(input),
   ];
+}
+
+export function decide(input: DecisionInput): DecisionRun {
+  const all = allDrafts(input);
 
   const seen = new Set<string>();
   const decisions = all

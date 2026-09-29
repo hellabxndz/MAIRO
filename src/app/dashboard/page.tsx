@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { viewMode } from "@/lib/view-mode";
+import { dashboardMode } from "@/lib/view-mode";
 import { firstNameFrom } from "@/components/mairo/simple-dashboard";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -22,16 +22,28 @@ import { KpiCard, KPI_ICON } from "@/components/dashboard/overview/kpi-card";
 import { RangePicker, SourceChip } from "@/components/dashboard/overview/range-picker";
 import { PerformanceChart } from "@/components/dashboard/overview/performance-chart";
 import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
-import { InsightsList, Recommendations } from "@/components/dashboard/overview/insights";
+import { InsightsList } from "@/components/dashboard/overview/insights";
 import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
-import { count, money as fmtMoney, PANEL, pct, roas } from "@/components/dashboard/overview/format";
+import { count, money as fmtMoney, PANEL, pct, PUBLISHER_NAME, roas } from "@/components/dashboard/overview/format";
+import { DashboardModeToggle } from "@/components/dashboard/overview/mode-toggle";
+import { MairoDecisionCard } from "@/components/decisions/decision-card";
+import { MorningBrief } from "@/components/intelligence/morning-brief";
+import { BusinessHealthScore } from "@/components/intelligence/business-health";
+import { OpportunityRadar } from "@/components/intelligence/opportunity-radar";
+import { EarlyWarnings } from "@/components/intelligence/early-warnings";
+import { CampaignTimeline } from "@/components/intelligence/campaign-timeline";
+import { ProfitFirstView } from "@/components/intelligence/profit-first";
+import { loadIntelligence } from "@/lib/intelligence/run";
+import { campaignJourney } from "@/lib/intelligence/timeline";
+import { contributionOf, DEFAULT_PROFIT_INPUTS, estimateProfit, productEconomics, type ProfitInputs } from "@/lib/intelligence/profit";
+import { loadBrain } from "@/lib/business/brain";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
 // queried at once and Meta is having a slow moment.
 export const maxDuration = 30;
 
-export default async function DashboardOverviewPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
+export default async function DashboardOverviewPage({ searchParams }: { searchParams: Promise<{ range?: string; journey?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -87,15 +99,27 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // the insights are about this morning's numbers, not yesterday's.
   await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
 
-  // Simple View and Advanced View are the same screen at a different depth,
-  // not two products: everything below is read once, and the mode only
-  // decides which of it goes on the screen — so the two can never disagree
+  // Simple, Advanced and Profit First are the same screen at different
+  // depths, not three products: everything below is read once, and the mode
+  // only decides which of it goes on the screen — so they can never disagree
   // about the state of an account.
-  const [overview, mode, fresh] = await Promise.all([
-    loadOverview(organizationId, days),
-    viewMode(),
-    db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true } }),
+  const mode = await dashboardMode();
+  const advanced = mode === "advanced";
+  const [overview, fresh, intelligence] = await Promise.all([
+    loadOverview(organizationId, days, { adBreakdown: advanced }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
+    loadIntelligence(organizationId),
   ]);
+
+  // The campaign whose journey is shown: the one asked for, else the most
+  // recent running one, else the most recent.
+  const params = await searchParams;
+  const journeyId =
+    overview.campaigns.find((c) => c.id === params.journey)?.id ??
+    overview.campaigns.find((c) => c.status === "ACTIVE")?.id ??
+    overview.campaigns[0]?.id ??
+    null;
+  const journey = mode === "profit" || !journeyId ? null : await campaignJourney(organizationId, journeyId).catch(() => null);
 
   const now = new Date();
   const hour = Number(
@@ -103,13 +127,15 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   );
   const greeting = `${Number.isFinite(hour) && hour < 12 ? "Good morning" : Number.isFinite(hour) && hour < 18 ? "Good afternoon" : "Good evening"}${
     session.user.name ? `, ${firstNameFrom(session.user.name, "")}` : ""
-  } 👋`;
+  }.`;
   const checkedAt = fresh?.decisionsCheckedAt
     ? fresh.decisionsCheckedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
     : null;
 
   const { current: t, previous: p } = overview;
-  const advanced = mode === "advanced";
+  const report = intelligence.report;
+  const briefActions = intelligence.insights.filter((i) => i.severity !== "INFO").slice(0, 2);
+  const journeyCampaigns = overview.campaigns.map((c) => ({ id: c.id, name: c.name }));
 
   const alerts = (
     <>
@@ -210,51 +236,102 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     </section>
   );
 
-  return (
-    <div className="mx-auto max-w-[1440px]">
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-[14px] text-muted">{greeting}</p>
-          <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
-            {advanced ? "Here’s how your ads are performing" : "Here’s how your ads are doing"}
-          </h1>
-          {!advanced && <p className="mt-1.5 text-[14.5px] text-muted">{summarySentence(t, p, days)}</p>}
-        </div>
-        <div className="flex flex-wrap gap-2.5 lg:shrink-0 lg:flex-nowrap">
+  const header = (
+    <header className="mb-6 space-y-4">
+      <div className="min-w-0">
+        <h1 className="text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
+          {mode === "profit" ? "Is your advertising making money?" : advanced ? "Here’s how your ads are performing" : "Here’s how your ads are doing"}
+        </h1>
+        {mode === "simple" && <p className="mt-1.5 text-[14.5px] text-muted">{summarySentence(t, p, days)}</p>}
+        {mode === "profit" && <p className="mt-1.5 text-[14.5px] text-muted">Revenue, estimated profit and break-even — the financial side of your ads.</p>}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <DashboardModeToggle mode={mode} />
+        <div className="flex flex-wrap gap-2.5">
           <RangePicker days={days} since={overview.range.since} until={overview.range.until} />
           <SourceChip />
         </div>
-      </header>
-
-      {alerts}
-
-      <div className={`grid gap-3 ${advanced ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9" : "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"}`}>
-        {advanced ? (
-          <>
-            <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
-            <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
-            <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
-            <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
-            <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
-            <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
-            <KpiCard compact label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.cart} />
-            <KpiCard compact label="Cost / purchase" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.users} />
-            <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
-          </>
-        ) : (
-          <>
-            <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
-            <KpiCard label="Sales / Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />
-            <KpiCard label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.bag} />
-            <KpiCard label="Cost per sale" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="What you paid in ads, on average, for each sale." />
-            <KpiCard label="Return on ad spend" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.bars} hint="How many dollars came back for every $1 spent on ads." />
-            <KpiCard label="People reached" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added up across campaigns — someone who saw two campaigns counts twice." />
-          </>
-        )}
       </div>
+    </header>
+  );
 
-      {advanced ? (
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+  const decisionsSection = (
+    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo decisions</h2>
+        <Link href="/dashboard/decisions" className="text-[12.5px] text-violet-bright hover:text-white">
+          View all{overview.pendingCount > 0 ? ` ${overview.pendingCount}` : ""} →
+        </Link>
+      </div>
+      {overview.insights.length === 0 ? (
+        <p className="mt-3 text-[13.5px] text-muted">
+          Nothing worth changing right now — Mairo looks again every day.{checkedAt ? ` Last looked ${checkedAt}.` : ""}
+        </p>
+      ) : (
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
+          {overview.insights.slice(0, 2).map((d) => (
+            <MairoDecisionCard key={d.id} decision={d} advanced={advanced} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  const timeline = <CampaignTimeline journey={journey} campaigns={journeyCampaigns} advanced={advanced} />;
+  const table = <CampaignTable rows={overview.campaigns} variant={advanced ? "advanced" : "simple"} range={overview.range} />;
+
+  if (mode === "profit") {
+    const [settingsRow, products, brain] = await Promise.all([
+      db.profitSettings.findUnique({ where: { organizationId } }),
+      db.product.findMany({ where: { organizationId }, orderBy: { updatedAt: "desc" }, take: 30, select: { id: true, title: true, priceCents: true, costCents: true } }),
+      loadBrain(organizationId),
+    ]);
+    const inputs: ProfitInputs = {
+      ...DEFAULT_PROFIT_INPUTS,
+      ...(settingsRow ?? {}),
+      brainMarginPercent: brain.profile.profitMarginPercent,
+    };
+    const profit = estimateProfit({ revenueCents: t.revenueCents, spendCents: t.spendCents, purchases: t.purchases }, inputs, days);
+    const row = (name: string, m: PlatformMetrics) => {
+      const f = { revenueCents: m.revenueCents, spendCents: m.spendCents, purchases: m.purchases };
+      return { name, revenueCents: m.revenueCents, spendCents: m.spendCents, ...contributionOf(f, inputs) };
+    };
+    return (
+      <div className="mx-auto max-w-[1440px]">
+        {header}
+        {alerts}
+        <ProfitFirstView
+          report={profit}
+          days={days}
+          settings={inputs}
+          platforms={(overview.publishers ?? []).map((pub) => row(PUBLISHER_NAME[pub.publisher] ?? pub.publisher, pub.metrics))}
+          campaigns={overview.campaigns.filter((c) => c.hasData && (c.metrics.spendCents ?? 0) > 0).map((c) => row(c.name, c.metrics))}
+          products={products.map((pr) => ({ ...pr, ...productEconomics(pr.priceCents, pr.costCents, inputs) }))}
+        />
+        <ResultsNote className="mt-6" />
+      </div>
+    );
+  }
+
+  if (advanced) {
+    return (
+      <div className="mx-auto max-w-[1440px]">
+        {header}
+        {alerts}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+          <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
+          <KpiCard compact label="Reach" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added across campaigns." />
+          <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
+          <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
+          <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
+          <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
+          <KpiCard compact label="Conversions" value={count(t.purchases ?? t.conversions)} change={change(t.purchases ?? t.conversions, p?.purchases ?? p?.conversions)} icon={KPI_ICON.cart} />
+          <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
+          <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+        </div>
+        <div className="mt-4">{table}</div>
+        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
           {chart}
           <section className={`${PANEL} p-5`}>
             <InsightsList items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
@@ -263,25 +340,58 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
             <PlatformSplit publishers={overview.publishers} selectable />
           </section>
         </div>
-      ) : (
-        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
-          {chart}
-          <section className={`${PANEL} p-5`}>
-            <PlatformSplit publishers={overview.publishers} />
-          </section>
-        </div>
-      )}
-
-      {!advanced && (
         <div className="mt-4">
-          <Recommendations items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
+          <BusinessHealthScore health={report?.health ?? null} />
         </div>
-      )}
-
-      <div className="mt-4">
-        <CampaignTable rows={overview.campaigns} variant={advanced ? "advanced" : "simple"} range={overview.range} />
+        <div className="mt-4">
+          <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
+        </div>
+        <div className="mt-4">
+          <EarlyWarnings insights={intelligence.insights} advanced />
+        </div>
+        <div className="mt-4">{timeline}</div>
+        <div className="mt-4">{decisionsSection}</div>
+        <ResultsNote className="mt-6" />
       </div>
+    );
+  }
 
+  return (
+    <div className="mx-auto max-w-[1440px]">
+      {header}
+      {alerts}
+      <MorningBrief
+        greeting={greeting}
+        brief={report?.brief ?? null}
+        frequency={fresh?.briefFrequency ?? "DAILY"}
+        actions={briefActions}
+        pendingDecisions={overview.pendingCount}
+      />
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+        <KpiCard label="Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />
+        <KpiCard label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.bag} />
+        <KpiCard label="Cost per sale" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="What you paid in ads, on average, for each sale." />
+        <KpiCard label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.bars} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+      </div>
+      <div className="mt-4">
+        <BusinessHealthScore health={report?.health ?? null} />
+      </div>
+      <div className="mt-4">{decisionsSection}</div>
+      <div className="mt-4">
+        <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
+        {chart}
+        <section className={`${PANEL} p-5`}>
+          <PlatformSplit publishers={overview.publishers} />
+        </section>
+      </div>
+      <div className="mt-4">{table}</div>
+      <div className="mt-4">
+        <EarlyWarnings insights={intelligence.insights} advanced={false} />
+      </div>
+      <div className="mt-4">{timeline}</div>
       <ResultsNote className="mt-6" />
     </div>
   );

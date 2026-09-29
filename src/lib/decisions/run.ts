@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
 import { gatherDecisionInput } from "./gather";
-import { decide } from "./rules";
+import { allDrafts, decide } from "./rules";
 import { effectiveLevel, expireStale, parseChanges, persistDrafts } from "./store";
 import { limitProblem, mayAutoApply } from "./guardrails";
 import { applyDecision } from "./apply";
 import type { DataStatus } from "./types";
+import { runIntelligence } from "@/lib/intelligence/run";
 
 // The daily look at an account: read the figures, apply the rules, keep the
 // decisions, and carry out the ones the customer has let MAIRO make itself.
@@ -73,6 +74,10 @@ export async function refreshDecisions(
       if (outcome.ok) autoApplied++;
     }
   }
+
+  // Mairo Intelligence reads the same snapshot: every finding (not only the
+  // few kept as decisions), health, the radar and the Morning Brief.
+  await runIntelligence(organizationId, input, allDrafts(input)).catch((error) => console.error(`Mairo Intelligence failed for ${organizationId}:`, error));
 
   const pendingCount = await db.mairoDecision.count({ where: { organizationId, status: "PENDING" } });
   return { ran: true, dataStatus: run.dataStatus, pending: pendingCount, autoApplied };

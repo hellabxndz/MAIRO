@@ -247,10 +247,15 @@ model Organization {
   businessBrain        BusinessBrain?
   decisions            MairoDecision[]
   activities           MairoActivity[]
+  insights             MairoInsight[]
+  intelligenceReport   IntelligenceReport?
+  profitSettings       ProfitSettings?
 
   /// When Mairo Decisions last looked at this account's campaigns, so a page
   /// load doesn't ask the ad networks again every time.
   decisionsCheckedAt DateTime?
+  /// How often the Morning Brief covers: yesterday (DAILY) or the last seven days (WEEKLY).
+  briefFrequency     BriefFrequency @default(DAILY)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -526,6 +531,8 @@ model Product {
   /// Integer cents, like every other amount in this schema. Null when the page
   /// showed no price — a real state for "call for a quote", and not zero.
   priceCents  Int?
+  /// What one unit costs the business, entered on Profit First. Null until they do.
+  costCents   Int?
   currency    String  @default("USD")
   imageUrl    String?
   /// Where the product is bought. This is what the ad links to.
@@ -2257,4 +2264,133 @@ model MairoActivity {
   createdAt DateTime @default(now())
 
   @@index([organizationId, createdAt])
+}
+
+// --- Mairo Intelligence -------------------------------------------------------
+//
+// One normalized record per thing Mairo noticed, shared by Business Health,
+// the Opportunity Radar, the Morning Brief, "Mairo found this before you did"
+// and the Campaign Timeline. Written by the same daily look that writes Mairo
+// Decisions (src/lib/intelligence/run.ts); a finding that comes with a change
+// Mairo can make links to its MairoDecision.
+
+enum BriefFrequency {
+  DAILY
+  WEEKLY
+}
+
+enum InsightCategory {
+  PERFORMANCE
+  CREATIVE
+  AUDIENCE
+  BUDGET
+  WEBSITE
+  TRACKING
+  PLATFORM
+}
+
+/// How much it matters. Most findings are not urgent, and are not labelled so.
+enum InsightSeverity {
+  INFO
+  OPPORTUNITY
+  ATTENTION
+  URGENT
+}
+
+enum InsightStatus {
+  /// Still true on the last look.
+  OPEN
+  /// No longer seen on a later look.
+  RESOLVED
+  /// The business said it didn't want to hear about it.
+  DISMISSED
+}
+
+model MairoInsight {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  mairoCampaignId String?
+  campaignName    String?
+  platform        AdPlatform?
+
+  /// The detector that found it, e.g. "creative-fatigue", "cpa-rising".
+  type       String
+  category   InsightCategory
+  severity   InsightSeverity
+  confidence DecisionConfidence
+
+  metric        String?
+  previousValue String?
+  currentValue  String?
+
+  title            String
+  happened         String  @db.Text
+  happenedAdvanced String  @db.Text
+  whyItMatters     String  @db.Text
+  recommendation   String  @db.Text
+  /// Why this recommendation, rather than another.
+  reason           String  @db.Text
+  /// What changes if the business approves it.
+  ifApproved       String  @db.Text
+  evidenceJson     String  @db.Text
+  /// Days, impressions, clicks and results the finding rests on.
+  basedOnJson      String  @db.Text
+  /// What doing something about it looks like, as a normalized action.
+  actionType       String?
+  actionLabel      String?
+  actionHref       String?
+  /// Opportunity Radar area, when it is one.
+  radarArea        String?
+  /// Shown on "Mairo found this before you did".
+  earlyWarning     Boolean @default(false)
+
+  /// The Mairo Decision carrying the change, when there is one.
+  decisionDedupeKey String?
+
+  status      InsightStatus @default(OPEN)
+  dedupeKey   String
+  firstSeenAt DateTime      @default(now())
+  lastSeenAt  DateTime      @default(now())
+  resolvedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, dedupeKey])
+  @@index([organizationId, status])
+  @@index([mairoCampaignId])
+}
+
+/// The last computed Business Health, Opportunity Radar and Morning Brief,
+/// so the dashboard reads them without asking Meta again.
+model IntelligenceReport {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reportJson     String       @db.Text
+  computedAt     DateTime
+  updatedAt      DateTime     @updatedAt
+}
+
+/// What a sale costs the business beyond advertising, for Profit First.
+/// Everything is optional: missing numbers mean profit is shown as unknown,
+/// never guessed.
+model ProfitSettings {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// Gross margin on what's sold, 0–100. Wins over price and cost when set.
+  averageMarginPercent   Float?
+  sellingPriceCents      Int?
+  productCostCents       Int?
+  averageOrderValueCents Int?
+  /// Per order.
+  shippingCostCents      Int    @default(0)
+  paymentFeePercent      Float  @default(2.9)
+  paymentFeeFixedCents   Int    @default(30)
+  /// Rent, software, wages — spread evenly across the month.
+  otherMonthlyCostsCents Int    @default(0)
+
+  updatedAt DateTime @updatedAt
 }

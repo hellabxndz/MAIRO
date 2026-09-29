@@ -324,6 +324,47 @@ platform's adapter carries it out. `pauseAd` and `updateAdGroupTargeting` are
 optional adapter methods, and rules that need them are skipped where an
 adapter doesn't have them.
 
+### 5h. Mairo Intelligence
+
+One insight engine (`src/lib/intelligence/`) feeds six dashboard features. It
+runs at the end of each Decisions refresh, on the same snapshot.
+
+- **Insights** (`detect.ts`, table `MairoInsight`). Every decision rule's
+  finding becomes a normalized Insight linked to its decision by dedupe key.
+  Early warnings the rules don't cover are added on top:
+  - cost per result rising
+  - audience fatigue
+  - conversion drop after the click
+  - sudden tracking drop
+  - close to the target CPA
+  - under-delivery
+  - retargeting potential
+  - Facebook vs Instagram cost gap
+  - broken or non-mobile landing pages
+  - no working pixel
+
+  Each Insight carries what happened, why it matters, the recommendation and
+  reason, what approving does, its evidence and what it's based on, a severity
+  and a confidence. Asserted in `npm run check:intelligence`.
+- **Business Health** (`score.ts`, `/dashboard/health`). Five areas start at
+  100 and lose points only for a named finding. An area with nothing to judge
+  shows "Not enough data yet", never a number.
+- **Opportunity Radar** (`score.ts`). Six areas rated from the open Insights.
+  No revenue predictions.
+- **Morning Brief** (`brief.ts`). Yesterday or the last 7 days
+  (`Organization.briefFrequency`), yesterday's winning ad, the top two
+  actions, and what Mairo is watching. It's cached in `IntelligenceReport`
+  and is ready to feed an email or push later.
+- **Mairo found this before you did.** The Insights marked as early warnings,
+  with Fix with Mairo, Show me why and Dismiss.
+- **Campaign Journey** (`timeline.ts`). Built from rows that already exist:
+  the campaign, its ads, decisions, activity, insights, Spend Protection and
+  the old optimizer. Shown on the dashboard and on a campaign's Timeline tab.
+- **Profit First** (`profit.ts`, table `ProfitSettings`, `Product.costCents`).
+  The dashboard's third view (cookie `mairo_lens`). Profit is always
+  "estimated" and unknown until a margin is given. Break-even ROAS is 1 ÷
+  (margin − fees − per-order costs ÷ AOV).
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

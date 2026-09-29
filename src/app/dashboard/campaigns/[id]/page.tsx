@@ -11,6 +11,9 @@ import { campaignHealth } from "@/lib/campaigns/health";
 import { campaignActions } from "@/lib/campaigns/action-log";
 import { describeAudience, normalizeAudience } from "@/lib/campaigns/audience";
 import { CampaignTimeline } from "@/components/mairo/campaign-timeline";
+import { CampaignTimeline as CampaignJourneyTimeline } from "@/components/intelligence/campaign-timeline";
+import { campaignJourney } from "@/lib/intelligence/timeline";
+import { viewMode } from "@/lib/view-mode";
 import {
   CampaignMetric,
   CampaignHealthPanel,
@@ -297,9 +300,17 @@ export default async function CampaignPage({
 
       {/* ---- Timeline ---- */}
       {tab === "timeline" && (
-        <GlassPanel className="p-5 sm:p-6">
-          <CampaignTimeline steps={steps} />
-        </GlassPanel>
+        <div className="space-y-5">
+          <GlassPanel className="p-5 sm:p-6">
+            <CampaignTimeline steps={steps} />
+          </GlassPanel>
+          {/* What Mairo has done since launch, day by day. */}
+          <CampaignJourneyTimeline
+            journey={await campaignJourney(organizationId, campaign.id).catch(() => null)}
+            campaigns={[]}
+            advanced={(await viewMode()) === "advanced"}
+          />
+        </div>
       )}
 
       {/* ---- Creatives ---- */}

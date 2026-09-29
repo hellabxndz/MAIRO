@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { parseViewMode, VIEW_MODE_COOKIE } from "@/lib/view-mode";
+import { DASHBOARD_LENS_COOKIE, parseViewMode, VIEW_MODE_COOKIE } from "@/lib/view-mode";
 
 /**
  * Switches between Simple and Advanced.
@@ -25,6 +25,8 @@ export async function setViewMode(next: string): Promise<void> {
     sameSite: "lax",
     httpOnly: false,
   });
+  // Choosing Simple or Advanced leaves Profit First.
+  jar.delete(DASHBOARD_LENS_COOKIE);
   // The layout reads the cookie during render, so every dashboard screen has
   // to be re-rendered rather than just the one the toggle was clicked on.
   revalidatePath("/dashboard", "layout");

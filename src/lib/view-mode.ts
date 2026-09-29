@@ -29,3 +29,19 @@ export async function viewMode(): Promise<ViewMode> {
   const jar = await cookies();
   return parseViewMode(jar.get(VIEW_MODE_COOKIE)?.value);
 }
+
+/**
+ * The dashboard's third view, Profit First. Separate from the Simple/Advanced
+ * cookie because it only changes the dashboard: every other screen keeps the
+ * app-wide mode. Picking Simple or Advanced turns it off.
+ */
+export const DASHBOARD_LENS_COOKIE = "mairo_lens";
+
+export type DashboardMode = ViewMode | "profit";
+
+/** The dashboard's view for this request. Server components only. */
+export async function dashboardMode(): Promise<DashboardMode> {
+  const jar = await cookies();
+  if (jar.get(DASHBOARD_LENS_COOKIE)?.value === "profit") return "profit";
+  return parseViewMode(jar.get(VIEW_MODE_COOKIE)?.value);
+}

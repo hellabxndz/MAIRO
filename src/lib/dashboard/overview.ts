@@ -55,6 +55,8 @@ export type CampaignRow = {
   thumbnailUrl: string | null;
   metrics: PlatformMetrics;
   hasData: boolean;
+  /** Each ad's figures for the period, when the ad breakdown was asked for. */
+  ads: { label: string; metrics: PlatformMetrics }[] | null;
 };
 
 export type Overview = {
@@ -73,7 +75,7 @@ export type Overview = {
   problems: OrganizationReport["problems"];
 };
 
-export async function loadOverview(organizationId: string, days: RangeDays): Promise<Overview> {
+export async function loadOverview(organizationId: string, days: RangeDays, opts: { adBreakdown?: boolean } = {}): Promise<Overview> {
   const { current, previous } = periodsFor(days);
 
   const [campaigns, now, before, pending, pendingCount] = await Promise.all([
@@ -95,7 +97,11 @@ export async function loadOverview(organizationId: string, days: RangeDays): Pro
     db.mairoDecision.count({ where: { organizationId, status: "PENDING" } }),
   ]);
 
-  const [daily, publishers] = await Promise.all([dailySeries(organizationId, campaigns, current), publisherSplit(organizationId, campaigns, current)]);
+  const [daily, publishers, adRows] = await Promise.all([
+    dailySeries(organizationId, campaigns, current),
+    publisherSplit(organizationId, campaigns, current),
+    opts.adBreakdown ? adBreakdown(organizationId, campaigns, current) : Promise.resolve(new Map<string, { label: string; metrics: PlatformMetrics }[]>()),
+  ]);
 
   const reports = new Map(now.campaigns.map((c) => [c.mairoCampaignId, c]));
   const rows: CampaignRow[] = campaigns.map((c) => {
@@ -113,6 +119,7 @@ export async function loadOverview(organizationId: string, days: RangeDays): Pro
       thumbnailUrl: safeImage(firstAd?.imageUrl ?? firstAd?.videoPosterUrl ?? null),
       metrics: report?.total ?? EMPTY_METRICS,
       hasData: report?.hasData ?? false,
+      ads: opts.adBreakdown ? (adRows.get(c.id) ?? []) : null,
     };
   });
 
@@ -168,6 +175,32 @@ async function publisherSplit(organizationId: string, campaigns: CampaignWithChi
   return result.data
     .filter((p) => (p.metrics.spendCents ?? 0) > 0 || (p.metrics.impressions ?? 0) > 0)
     .sort((a, b) => (b.metrics.spendCents ?? 0) - (a.metrics.spendCents ?? 0));
+}
+
+/** Each campaign's ads for the period, labelled as the rest of Mairo labels them. One call per campaign. */
+async function adBreakdown(
+  organizationId: string,
+  campaigns: { id: string; platformCampaigns: { platform: string; externalCampaignId: string | null; externalAdId: string | null; extraExternalAdIds: string[] }[] }[],
+  range: DateRange,
+): Promise<Map<string, { label: string; metrics: PlatformMetrics }[]>> {
+  const adapter = getAdapter("META");
+  const out = new Map<string, { label: string; metrics: PlatformMetrics }[]>();
+  if (!adapter) return out;
+  await Promise.all(
+    campaigns.slice(0, 12).map(async (c) => {
+      const child = c.platformCampaigns.find((p) => p.platform === "META" && p.externalCampaignId);
+      if (!child) return;
+      const r = await adapter.getCreativePerformance({ organizationId, externalCampaignId: child.externalCampaignId!, range });
+      if (!r.ok) return;
+      const ids = [child.externalAdId, ...child.extraExternalAdIds].filter((x): x is string => Boolean(x));
+      const byId = new Map(r.data.map((row) => [row.externalAdId, row.metrics]));
+      out.set(
+        c.id,
+        ids.map((id, i) => ({ label: `Creative #${i + 1}`, metrics: byId.get(id) ?? EMPTY_METRICS })),
+      );
+    }),
+  );
+  return out;
 }
 
 /** Only https images are drawn; anything else is left as a placeholder. */
