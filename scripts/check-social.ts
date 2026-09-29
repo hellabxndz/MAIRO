@@ -164,8 +164,8 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
     [starter, growth, pro].every((c) => c["Runs ads on"] === "Facebook + Instagram"),
   );
   ok("Starter: you approve every change", starter["MAIRO works on its own"] === "You approve every change", starter["MAIRO works on its own"]);
-  ok("Growth: Assisted", growth["MAIRO works on its own"] === "Assisted", growth["MAIRO works on its own"]);
-  ok(`${TOP.name}: Autopilot`, pro["MAIRO works on its own"] === "Autopilot", pro["MAIRO works on its own"]);
+  ok("Growth: AI Assist", growth["MAIRO works on its own"] === "AI Assist", growth["MAIRO works on its own"]);
+  ok(`${TOP.name}: Full Autopilot`, pro["MAIRO works on its own"] === "Full Autopilot", pro["MAIRO works on its own"]);
 
   // The one that separates Growth from the top plan.
   ok("Growth does not post for you", growth["Posts to your own feed"] === "No");

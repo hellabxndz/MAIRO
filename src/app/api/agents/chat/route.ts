@@ -1,4 +1,6 @@
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
+import { assistantTools, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
+import { brainBrief, loadBrain } from "@/lib/business/brain";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hasActivePlan, readinessBrief, readinessFor } from "@/lib/readiness";
@@ -113,7 +115,7 @@ export async function POST(req: Request) {
   // it does not. An assistant that has not been told its own blind spots fills
   // them in confidently, and a confident guess about somebody's own business
   // is the fastest way to lose them.
-  const memory = await memoryProfile(threadOrgId);
+  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrain(threadOrgId)]);
 
   await recordUserMessage(threadId, messages);
 
@@ -124,9 +126,9 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}`;
+  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainBrief(brain.profile)}\n\n${ONE_CLICK_FIX_BRIEF}`;
 
-  return stream(threadId, system, messages);
+  return stream(threadId, system, messages, assistantTools(threadOrgId));
 }
 
 /** Store what they just asked, so the thread survives a reload. */
@@ -137,11 +139,17 @@ async function recordUserMessage(threadId: string, messages: UIMessage[]) {
 }
 
 /** The model call and the reply row, shared by both kinds of thread. */
-function stream(threadId: string, system: string, messages: UIMessage[]) {
+function stream(
+  threadId: string,
+  system: string,
+  messages: UIMessage[],
+  tools?: ReturnType<typeof assistantTools>,
+) {
   const result = streamText({
     model: agentModel,
     system,
-    messages: convertToModelMessages(messages),
+    messages: convertToModelMessages(messages, { ignoreIncompleteToolCalls: true }),
+    ...(tools ? { tools, stopWhen: stepCountIs(4) } : {}),
     onFinish: async ({ text }) => {
       // An empty completion isn't worth a row, and storing one makes the
       // thread look like the agent replied with silence next time it loads.

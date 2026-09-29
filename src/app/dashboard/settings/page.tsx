@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader } from "@/components/ui";
+import { Card, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
 import { AutomationSection } from "./automation-section";
@@ -72,6 +73,21 @@ export default async function SettingsPage() {
         />
       </Card>
 
+      <Card className="mb-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="mb-1 text-sm font-medium">Business Brain</h2>
+            <p className="max-w-xl text-sm text-neutral-400">
+              What Mairo remembers about your business — products, prices, brand voice, who to reach, and which offers
+              worked. Every campaign starts from it.
+            </p>
+          </div>
+          <Link href="/dashboard/settings/business-brain" className={secondaryButtonClass}>
+            Open Business Brain
+          </Link>
+        </div>
+      </Card>
+
       <div className="mb-8">
         <BillingSection
           tier={organization.subscriptionTier}
@@ -110,7 +126,7 @@ export default async function SettingsPage() {
         />
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 scroll-mt-24" id="automation">
         <AutomationSection
           allowed={entitlements.auto_optimize}
           autopilotAllowed={entitlements.autopilot}
@@ -127,6 +143,10 @@ export default async function SettingsPage() {
             minRoas: autoOptimize?.minRoas ?? null,
             maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
             platforms: autoOptimize?.platforms ?? [],
+            maxDailyDecreasePercent: autoOptimize?.maxDailyDecreasePercent ?? 30,
+            requireApprovalNewCreatives: autoOptimize?.requireApprovalNewCreatives ?? true,
+            requireApprovalAudience: autoOptimize?.requireApprovalAudience ?? true,
+            requireApprovalPlatformShift: autoOptimize?.requireApprovalPlatformShift ?? true,
           }}
         />
       </div>

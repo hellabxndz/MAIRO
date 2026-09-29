@@ -117,10 +117,10 @@ export const PLANS: Plan[] = [
     spendGuidance: "Best for businesses advertising every month",
     featured: true,
     limits: { campaigns: 15, creativesPerMonth: 30 },
-    headline: "Adds Assisted automation",
+    headline: "Adds AI Assist",
     inherits: "Starter",
     features: [
-      "Assisted automation: MAIRO makes small, reversible fixes without asking",
+      "AI Assist: MAIRO makes small, reversible fixes without asking",
       "Advanced analytics: every ad's results, side by side",
       "Up to 15 campaigns at a time",
       "150 AI image credits a month (about 30 pictures)",
@@ -138,7 +138,7 @@ export const PLANS: Plan[] = [
     tagline: "MAIRO runs your advertising day to day.",
     spendGuidance: "Best for businesses running ads all the time",
     limits: { campaigns: Infinity, creativesPerMonth: 100 },
-    headline: "Adds Autopilot",
+    headline: "Adds Full Autopilot",
     inherits: "Growth",
     features: [
       "Full Autopilot: MAIRO manages budgets and targeting inside your limits",

@@ -4,6 +4,7 @@ import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
+import { refreshAllDecisions } from "@/lib/decisions/run";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -66,7 +67,15 @@ export async function GET(req: Request) {
   // businesses whose month had advertising in it.
   const reports = await announceMonthlyReports();
 
+  // Mairo Decisions' daily look, oldest-checked accounts first. Kept small so
+  // the run fits in maxDuration; anyone not reached today is refreshed when
+  // they next open the dashboard.
+  const decisions = await refreshAllDecisions(10).catch((error) => {
+    console.error("Mairo Decisions cron failed:", error);
+    return null;
+  });
+
   const texts = await sweepSmsNotifications();
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts });
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions });
 }

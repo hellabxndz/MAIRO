@@ -1148,3 +1148,97 @@ async function pageIdFor(organizationId: string, platform: AdPlatform): Promise<
   });
   return connection?.pageId ?? null;
 }
+
+/**
+ * Who a campaign's ad set should reach, in Meta's shape, from what is stored
+ * on the campaign now.
+ *
+ * The launch builds the same thing inline; this is for changing the audience
+ * of an ad set that already exists (Mairo Decisions), so the two can't drift.
+ */
+export async function metaTargetingForCampaign(
+  mairoCampaignId: string,
+  platformCampaignId: string,
+): Promise<{ targeting: Record<string, unknown>; advantageAudience: boolean }> {
+  const [audience, options] = await Promise.all([
+    audienceFor(mairoCampaignId),
+    deliveryOptionsFor(mairoCampaignId, platformCampaignId),
+  ]);
+  return {
+    targeting: {
+      ...metaTargeting(options.specialAdCategory ? restrictForSpecialCategory(audience) : audience),
+      ...metaPlacementTargeting(options.placements),
+    },
+    advantageAudience: options.advantageAudience && !options.specialAdCategory,
+  };
+}
+
+/**
+ * Builds one more ad in a campaign that is already running, from a CampaignAd
+ * row, and switches it on when the campaign is on.
+ *
+ * Used when a customer approves a new version (Mairo Decisions). The row has
+ * to exist first; if the network refuses, the caller removes it, so a version
+ * never shows in MAIRO that isn't really running.
+ */
+export async function addCampaignAd(input: {
+  organizationId: string;
+  mairoCampaignId: string;
+  platform: AdPlatform;
+  campaignAdId: string;
+}): Promise<{ ok: true; externalAdId: string } | { ok: false; error: string }> {
+  const adapter = getAdapter(input.platform);
+  if (!adapter) return { ok: false, error: `MAIRO can't add ads on ${platformName(input.platform)}.` };
+
+  const [child, ad, campaign] = await Promise.all([
+    db.platformCampaign.findUnique({
+      where: { mairoCampaignId_platform: { mairoCampaignId: input.mairoCampaignId, platform: input.platform } },
+    }),
+    db.campaignAd.findUnique({ where: { id: input.campaignAdId } }),
+    db.mairoCampaign.findUnique({
+      where: { id: input.mairoCampaignId },
+      select: { name: true, organization: { select: { name: true } } },
+    }),
+  ]);
+  if (!child?.externalAdGroupId || !child.externalCampaignId) {
+    return { ok: false, error: "This campaign hasn't finished launching, so there's nowhere to add an ad yet." };
+  }
+  if (!ad || ad.mairoCampaignId !== input.mairoCampaignId || !campaign) {
+    return { ok: false, error: "That ad version couldn't be found." };
+  }
+
+  const destination = await destinationFor(input.organizationId, input.mairoCampaignId);
+  if (!destination) return { ok: false, error: "The campaign has no destination to send people to." };
+
+  const creds = input.platform === "META" ? await loadCredentials(input.organizationId, "META") : null;
+  const built = await adInputFor(input.organizationId, ad, creds);
+  if (!built.ok) return { ok: false, error: built.blocker };
+
+  const created = await adapter.createAd({
+    organizationId: input.organizationId,
+    externalAdGroupId: child.externalAdGroupId,
+    name: `${campaign.name} — version ${ad.position + 1}`,
+    destination,
+    displayName: campaign.organization.name,
+    ...built.input,
+  });
+  if (!created.ok) return { ok: false, error: created.error.message };
+
+  // Ads are created switched off. On a running campaign the new one joins the
+  // others; on a paused one it waits with them.
+  if (child.status === "ACTIVE") {
+    const on = await adapter.resumeCampaign({
+      organizationId: input.organizationId,
+      externalCampaignId: child.externalCampaignId,
+      externalAdGroupId: child.externalAdGroupId,
+      externalAdId: created.data.externalId,
+    });
+    if (!on.ok) return { ok: false, error: on.error.message };
+  }
+
+  await db.platformCampaign.update({
+    where: { id: child.id },
+    data: { extraExternalAdIds: [...child.extraExternalAdIds, created.data.externalId] },
+  });
+  return { ok: true, externalAdId: created.data.externalId };
+}

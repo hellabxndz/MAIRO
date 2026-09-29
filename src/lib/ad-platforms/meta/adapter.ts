@@ -485,7 +485,14 @@ export const metaAdapter: AdPlatformAdapter = {
           params: {
             level: "ad",
             fields: "ad_id,spend,impressions,reach,clicks,ctr,cpc,cpm,actions,action_values,purchase_roas",
-            date_preset: "maximum",
+            ...(input.range
+              ? {
+                  time_range: JSON.stringify({
+                    since: input.range.since.toISOString().slice(0, 10),
+                    until: input.range.until.toISOString().slice(0, 10),
+                  }),
+                }
+              : { date_preset: "maximum" }),
           },
         }
       );
@@ -497,6 +504,32 @@ export const metaAdapter: AdPlatformAdapter = {
       );
     } catch (error) {
       return toFailure(input.organizationId, error, "Couldn't read Meta creative performance.");
+    }
+  },
+
+  async pauseAd(input): Promise<PlatformResult<void>> {
+    return setStatus(input.organizationId, input.externalAdId, "PAUSED");
+  },
+
+  async updateAdGroupTargeting(input): Promise<PlatformResult<void>> {
+    const loaded = await credentialsOr<void>(input.organizationId);
+    if (!loaded.ok) return loaded.result;
+    try {
+      // The same shape createAdGroup sends, Advantage+ audience stated either
+      // way, because newer API versions refuse an ad set that leaves it unsaid.
+      await metaGraphRequest(`/${input.externalAdGroupId}`, {
+        method: "POST",
+        accessToken: loaded.creds.accessToken,
+        body: {
+          targeting: {
+            ...input.targeting,
+            targeting_automation: { advantage_audience: input.advantageAudience ? 1 : 0 },
+          },
+        },
+      });
+      return ok(undefined);
+    } catch (error) {
+      return toFailure(input.organizationId, error, "Couldn't change who the ad reaches on Meta.");
     }
   },
 };

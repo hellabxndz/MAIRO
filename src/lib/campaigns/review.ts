@@ -9,10 +9,15 @@ import { reviewFindings, reviewStatus, type Finding, type ReviewFacts, type Revi
 import { hasOwnWords, runningCopy } from "@/lib/campaigns/plan";
 import { ctaLabel } from "@/lib/campaigns/ad-copy";
 import { reviewCreative } from "@/lib/ai/review";
+import { creativeImageUrl, scoreCopyWithAi } from "@/lib/ai/ad-score";
+import { scoreCampaign, type AdScore } from "@/lib/score/rules";
+import { loadBrain } from "@/lib/business/brain";
 
 export type CampaignReview = {
   status: ReviewStatus;
   findings: Finding[];
+  /** The Pre-Launch Ad Score, built from the same facts. */
+  score: AdScore;
   checkedAt: string;
 };
 
@@ -45,9 +50,24 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
   };
 
   const findings = reviewFindings(plan, facts);
-  const safety = await copySafety(plan);
+  const brain = (await loadBrain(organizationId)).profile;
+  // The safety check and the quality read run side by side; either failing
+  // leaves the other standing, and the score falls back to reading structure.
+  const [safety, ai] = await Promise.all([
+    copySafety(plan),
+    scoreCopyWithAi({
+      plan,
+      brandVoice: brain.brandVoice,
+      offers: brain.offers,
+      imageUrl: creativeImageUrl(plan, organizationId),
+    }).catch((error) => {
+      console.error("Ad score AI read failed:", error);
+      return null;
+    }),
+  ]);
   if (safety) findings.push(safety);
-  return { status: reviewStatus(findings), findings, checkedAt: new Date().toISOString() };
+  const score = scoreCampaign({ plan, facts, findings, ai, brain: { brandVoice: brain.brandVoice, offers: brain.offers } });
+  return { status: reviewStatus(findings), findings, score, checkedAt: new Date().toISOString() };
 }
 
 /**

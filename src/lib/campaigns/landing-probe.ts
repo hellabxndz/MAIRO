@@ -120,12 +120,12 @@ export async function probeLandingPage(rawUrl: string): Promise<LandingProbe> {
   return { ok: false, reason: "unreachable", message: "The page redirected too many times." };
 }
 
-async function readCapped(res: Response): Promise<string> {
+async function readCapped(res: Response, maxBytes = MAX_BYTES): Promise<string> {
   const reader = res.body?.getReader();
   if (!reader) return "";
   const chunks: Uint8Array[] = [];
   let total = 0;
-  while (total < MAX_BYTES) {
+  while (total < maxBytes) {
     const { done, value } = await reader.read();
     if (done || !value) break;
     chunks.push(value);
@@ -133,4 +133,50 @@ async function readCapped(res: Response): Promise<string> {
   }
   await reader.cancel().catch(() => {});
   return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
+export type PublicPage =
+  | { ok: true; html: string; finalUrl: string; status: number; bytes: number }
+  | { ok: false; message: string };
+
+/**
+ * Reads a public web page's HTML, with the same safety as the probe above:
+ * each redirect hop is checked to resolve to a public address first.
+ *
+ * Used by the Business Analyzer, which reads a few pages of a business's own
+ * site. The URL is still customer input, so it gets the same treatment.
+ */
+export async function fetchPublicPage(rawUrl: string, maxBytes = MAX_BYTES): Promise<PublicPage> {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { ok: false, message: "That isn't a web address MAIRO can open." };
+  }
+  const signal = AbortSignal.timeout(TIMEOUT_MS);
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!(await publicHost(url))) return { ok: false, message: "MAIRO can only read public web pages." };
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        redirect: "manual",
+        signal,
+        headers: {
+          "user-agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MAIRO-analyzer",
+          accept: "text/html",
+        },
+      });
+    } catch {
+      return { ok: false, message: "The site didn't answer. It may be down, or blocking automated visits." };
+    }
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      url = new URL(res.headers.get("location")!, url);
+      continue;
+    }
+    if (res.status >= 400) return { ok: false, message: `The site answered with an error (${res.status}).` };
+    const html = await readCapped(res, maxBytes);
+    return { ok: true, html, finalUrl: url.toString(), status: res.status, bytes: html.length };
+  }
+  return { ok: false, message: "The site redirected too many times." };
 }

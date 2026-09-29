@@ -159,7 +159,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
 export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   meta_ads: "Meta ads",
   social_posting: "MAIRO posts to your Instagram",
-  auto_optimize: "Assisted automation",
+  auto_optimize: "AI Assist",
   autopilot: "Full Autopilot",
   advanced_analytics: "Advanced analytics",
 };
@@ -318,7 +318,7 @@ export function planComparison(
   const e = DEFAULT_ENTITLEMENTS[tier];
   const limits = planFor(tier).limits;
 
-  const works = e.autopilot ? "Autopilot" : e.auto_optimize ? "Assisted" : e.meta_ads ? "You approve every change" : "—";
+  const works = e.autopilot ? "Full Autopilot" : e.auto_optimize ? "AI Assist" : e.meta_ads ? "You approve every change" : "—";
 
   return [
     { label: "Runs ads on", value: e.meta_ads ? "Facebook + Instagram" : "Nothing yet", muted: !e.meta_ads },

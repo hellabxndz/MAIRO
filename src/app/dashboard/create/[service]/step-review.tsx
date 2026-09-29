@@ -3,6 +3,9 @@
 import type { CampaignReview } from "@/lib/campaigns/review";
 import type { Finding, ReviewStep } from "@/lib/campaigns/review-rules";
 import { Question } from "./wizard-parts";
+import type { CampaignPlan } from "@/lib/campaigns/plan";
+import type { PlanEdit } from "@/lib/score/edits";
+import { AdScoreCard } from "@/components/score/ad-score-card";
 
 const STATUS_COPY = {
   READY: { title: "Ready to launch", body: "Your campaign passed Mairo's preparation checks.", color: "var(--color-live, #34d399)" },
@@ -17,12 +20,18 @@ export function StepReview({
   checking,
   onRecheck,
   onFix,
+  plan,
+  advanced,
+  onApply,
 }: {
   review: CampaignReview | null;
   error: string | null;
   checking: boolean;
   onRecheck: () => void;
   onFix: (step: ReviewStep) => void;
+  plan: CampaignPlan;
+  advanced: boolean;
+  onApply: (edits: PlanEdit[]) => void;
 }) {
   const blocking = review?.findings.filter((f) => f.severity === "blocking") ?? [];
   const suggestions = review?.findings.filter((f) => f.severity === "recommendation") ?? [];
@@ -30,13 +39,14 @@ export function StepReview({
   return (
     <Question
       title="Your Campaign Review"
-      sub="Checked against your account, your page and Meta's rules — not a score. Passing doesn't guarantee results; it means nothing avoidable is in the way."
+      sub="Mairo checks the whole campaign against your account, your page and Meta's rules before any money is spent. Passing doesn't guarantee results; it means nothing avoidable is in the way."
     >
       {checking && <p className="text-[13px] text-muted"><span className="mairo-think">Checking your campaign…</span></p>}
       {error && <p className="text-[13px] text-amber-200/90">{error}</p>}
 
       {review && !checking && (
         <>
+          {review.score && <div className="mb-6"><AdScoreCard score={review.score} plan={plan} advanced={advanced} onApply={onApply} /></div>}
           <div className="rounded-xl border p-5" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
             <p className="flex items-center gap-2 text-[17px] font-medium text-white">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATUS_COPY[review.status].color }} aria-hidden />

@@ -22,6 +22,11 @@ import { maybeRunSpendProtection } from "@/lib/protection/run";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { campaignHealth } from "@/lib/campaigns/health";
 import { organizationActions } from "@/lib/campaigns/action-log";
+import { MairoToday, type DoingItem } from "@/components/decisions/mairo-today";
+import { refreshDecisions } from "@/lib/decisions/run";
+import { decisionCounts } from "@/lib/decisions/store";
+import { activityTimeline } from "@/lib/activity/log";
+import { loadBrain } from "@/lib/business/brain";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -149,9 +154,58 @@ export default async function DashboardOverviewPage() {
     .filter((c) => c.status === "ACTIVE")
     .reduce((total, c) => total + c.totalDailyBudgetCents, 0);
 
-  if ((await viewMode()) === "simple") {
+  // Mairo Today. The daily look runs here too when it's gone stale, so the
+  // decisions count is about this morning's numbers, not yesterday's.
+  await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
+  const now = new Date();
+  const yesterdayDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 86_400_000);
+  const [counts, recentActivity, brain, spendGuard, yesterdayReport, activeChildren] = await Promise.all([
+    decisionCounts(organizationId),
+    activityTimeline(organizationId, 3),
+    loadBrain(organizationId),
+    db.spendProtection.findUnique({ where: { organizationId }, select: { stopLossCents: true, monthlyCapCents: true } }),
+    anyLive ? fetchOrganizationPerformance(organizationId, { since: yesterdayDate, until: yesterdayDate }).catch(() => null) : Promise.resolve(null),
+    db.platformCampaign.findMany({
+      where: { mairoCampaign: { organizationId }, status: "ACTIVE" },
+      select: { extraExternalAdIds: true },
+    }),
+  ]);
+  const liveCount = campaigns.filter((c) => c.status === "ACTIVE").length;
+  const testing = activeChildren.filter((c) => c.extraExternalAdIds.length > 0).length;
+  const checkedAt = organization?.decisionsCheckedAt ?? null;
+  const doing: DoingItem[] = [
+    { label: "Monitoring campaigns", on: liveCount > 0, status: liveCount > 0 ? `${liveCount} running, read from Meta on every visit` : "Nothing running yet" },
+    { label: "Testing creatives", on: testing > 0, status: testing > 0 ? `${testing} campaign${testing === 1 ? "" : "s"} testing more than one ad` : "No tests running — a Decision or the Create flow can add one" },
+    { label: "Watching budgets", on: Boolean(spendGuard?.stopLossCents || spendGuard?.monthlyCapCents || automation), status: spendGuard?.monthlyCapCents ? `Spend Protection on, monthly cap ${"$"}${Math.round(spendGuard.monthlyCapCents / 100)}` : spendGuard?.stopLossCents ? "Spend Protection is watching for spend without results" : "Set limits under Settings → Spend Protection" },
+    { label: "Checking audiences", on: liveCount > 0, status: liveCount > 0 ? "How often people see your ads is checked daily" : "Starts once a campaign is running" },
+    { label: "Analyzing your website", on: Boolean(brain.analyzedAt), status: brain.analyzedAt ? `Last analyzed ${brain.analyzedAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Not yet — run the Business Analyzer" },
+    { label: "Searching for optimization opportunities", on: Boolean(checkedAt) && liveCount > 0, status: checkedAt ? `Last looked ${checkedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "Starts once a campaign is running" },
+  ];
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: organization?.timezone || "America/New_York" }).format(now),
+  );
+  const mode = await viewMode();
+  const today = (
+    <MairoToday
+      firstName={firstNameFrom(session.user.name, "")}
+      hour={Number.isFinite(hour) ? hour : 9}
+      yesterday={yesterdayReport?.total ?? null}
+      total={performance.total}
+      health={accountHealth}
+      counts={counts}
+      marginPercent={brain.profile.profitMarginPercent}
+      doing={doing}
+      recent={recentActivity}
+      advanced={mode === "advanced"}
+    />
+  );
+
+  if (mode === "simple") {
     return (
+      <>
+      <div className="mx-auto max-w-[1280px]">{today}</div>
       <SimpleDashboard
+        hideGreeting
         firstName={firstNameFrom(session.user.name, "")}
         performance={performance}
         campaigns={campaigns.map((c) => ({
@@ -178,6 +232,7 @@ export default async function DashboardOverviewPage() {
         monthlyPlan={plan ? { summary: plan.strategySummary } : null}
         monthLabel={formatMonthKey(currentMonthKey())}
       />
+      </>
     );
   }
 
@@ -187,6 +242,8 @@ export default async function DashboardOverviewPage() {
         title={`Welcome back, ${organization?.name}`}
         description="Here's where things stand this month."
       />
+
+      {today}
 
       {/* MAIRO acted on its own, so it says so — before the customer finds a
           live campaign they did not press anything to start. */}

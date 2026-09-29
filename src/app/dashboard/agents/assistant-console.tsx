@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
+import { FixThisForMe, proposedFixIds } from "@/components/decisions/fix-this-for-me";
 import { DefaultChatTransport, type UIMessage } from "ai";
 
 // The full conversation with your assistant.
@@ -146,7 +147,8 @@ export function AssistantConsole({
               // like the product talking to itself.
               const marker = raw.lastIndexOf("\n\n(Context: ");
               const text = marker === -1 ? raw : raw.slice(0, marker);
-              if (!text) return null;
+              const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
+              if (!text && fixIds.length === 0) return null;
 
               if (m.role === "user") {
                 return (
@@ -168,6 +170,7 @@ export function AssistantConsole({
                     <div className="whitespace-pre-wrap text-[14px] leading-relaxed text-white/90">
                       {text}
                     </div>
+                    {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                   </div>
                 </div>
               );

@@ -287,6 +287,43 @@ rather than a regex for a reason worth remembering: the regex version used
 `\z` for end-of-string, which JavaScript does not have (it matches a literal
 "z"), so the last section of every concept silently failed to parse.
 
+### 5g. Mairo's four AI features
+
+- **Pre-Launch Ad Score** (`src/lib/score/`, Create → AI Review). A 0–100 score
+  from 15 checks, grouped into Creative, Hook, Offer, Audience, Landing Page and
+  Campaign Setup, each with recommendations. *Fix with AI* rewrites one element
+  (`src/lib/ai/ad-score.ts`) and shows a before/after; nothing changes until the
+  customer applies it, and the review runs again. A blocking problem caps the
+  score at 45. With no `ANTHROPIC_API_KEY`, the words are scored on structure
+  only and the card says so.
+- **Business Analyzer + Business Brain** (`/dashboard/business`,
+  `/dashboard/settings/business-brain`, `src/lib/business/`). Reads the home
+  page plus up to three shop, pricing or services pages through the same
+  public-address check as the landing probe. Prices the AI reports are kept
+  only if they appear on the page. Fields the business edits by hand are never
+  overwritten by a later scan. *Build This Campaign* saves the recommendation
+  as a Create draft; nothing launches from there.
+- **Mairo Decisions** (`/dashboard/decisions`, `src/lib/decisions/`). Pure
+  rules (`rules.ts`, asserted in `npm run check:decisions`) over each
+  campaign's last 3 days, the 4 before and the last 7, per ad as well. They
+  never fire in the learning period. Changes go through `apply.ts`: limits are
+  checked even on approval, the network is called first, and activity is
+  recorded only after it accepts. Automatic application follows
+  `src/lib/automation/levels.ts` plus the approval switches in Settings.
+  Refreshed daily by `/api/cron/review`, and on page load when older than six
+  hours. Retargeting decisions aren't produced: MAIRO can't build retargeting
+  audiences yet.
+- **One-Click Fix** (`src/lib/ai/assistant-tools.ts`). The assistant reads real
+  figures through `diagnose_campaigns` and can only propose the Decisions
+  engine's own fixes (`propose_fix`). Those fixes open the same approval panel.
+- **Mairo Activity** (`/dashboard/activity`) merges decision changes, the
+  older optimizer and Spend Protection into one timeline.
+
+Decisions are network-agnostic. A change names its platform and that
+platform's adapter carries it out. `pauseAd` and `updateAdGroupTargeting` are
+optional adapter methods, and rules that need them are skipped where an
+adapter doesn't have them.
+
 ### 6. Create your OWNER account
 
 Public sign-up always creates a `CLIENT` account (a business owner). To get

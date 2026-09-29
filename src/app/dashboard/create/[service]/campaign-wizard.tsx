@@ -25,6 +25,7 @@ import { StepBudget } from "./step-budget";
 import { StepBusiness } from "./step-business";
 import { StepGoal } from "./step-goal";
 import { StepReview } from "./step-review";
+import { applyEdits } from "@/lib/score/edits";
 import { Question } from "./wizard-parts";
 
 // The Create wizard: seven plain questions, one screen each, with what's been
@@ -350,7 +351,24 @@ export function CampaignWizard(props: Props) {
             />
           )}
           {current === "review" && (
-            <StepReview review={reviewStale ? null : review} error={reviewError} checking={checking} onRecheck={() => void runReview(plan)} onFix={fix} />
+            <StepReview
+              review={reviewStale ? null : review}
+              error={reviewError}
+              checking={checking}
+              onRecheck={() => void runReview(plan)}
+              onFix={fix}
+              plan={plan}
+              advanced={mode === "advanced"}
+              onApply={(edits) => {
+                // An approved fix changes the plan; the score and checks run
+                // again on what will actually launch.
+                const next = applyEdits(plan, edits);
+                setPlan(next);
+                setConfirmed(false);
+                void saveDraft("review", next);
+                void runReview(next);
+              }}
+            />
           )}
           {current === "launch" && (
             <Question

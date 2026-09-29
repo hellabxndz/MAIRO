@@ -73,6 +73,23 @@ const I = {
       <path d="M7.5 11h5M7.5 13.5h3.5" />
     </>
   ),
+  decisions: (
+    <>
+      <path d="M10 2.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L10 12.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" />
+    </>
+  ),
+  activity: (
+    <>
+      <path d="M2.8 10h3.4l2-5 3.6 10 2-5h3.4" />
+    </>
+  ),
+  brain: (
+    <>
+      <path d="M7.4 4.2a2.6 2.6 0 0 0-4.2 2.4 2.8 2.8 0 0 0 .4 5.2 2.6 2.6 0 0 0 4.3 2.4" />
+      <path d="M12.6 4.2a2.6 2.6 0 0 1 4.2 2.4 2.8 2.8 0 0 1-.4 5.2 2.6 2.6 0 0 1-4.3 2.4" />
+      <path d="M10 3.6v12.8" />
+    </>
+  ),
   mairo: (
     <>
       <circle cx="10" cy="10" r="6.6" />
@@ -126,9 +143,10 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 
 /* ----------------------------------------------------------------- the map */
 
-/** The eight day-to-day destinations. Desktop sidebar, in this order. */
+/** The day-to-day destinations. Desktop sidebar, in this order. */
 export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
+  { href: "/dashboard/decisions", label: "Decisions", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
   // Points at the new AI Creative Studio, the primary place to make an ad
@@ -141,6 +159,8 @@ export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard/audiences", label: "Audiences", icon: <Icon d={I.audiences} /> },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
   { href: "/dashboard/reports", label: "Reports", icon: <Icon d={I.reports} /> },
+  { href: "/dashboard/business", label: "Business Brain", icon: <Icon d={I.brain} /> },
+  { href: "/dashboard/activity", label: "Mairo Activity", icon: <Icon d={I.activity} /> },
   { href: "/dashboard/agents", label: "Mairo AI", icon: <Icon d={I.mairo} /> },
   { href: "/dashboard/integrations", label: "Integrations", icon: <Icon d={I.integrations} /> },
 ];
@@ -157,11 +177,13 @@ export const SECONDARY_NAV: NavEntry[] = [
 // action the product exists for belongs. Account came off this bar to make room
 // for Analytics and moved to the top bar instead — dropping it entirely would
 // have stranded anyone on a phone with no way to reach settings or sign out.
+// Decisions took Analytics' place: it's what somebody opens the app on a phone
+// to do, and the dashboard links through to the full figures.
 const MOBILE_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
   { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
-  { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
+  { href: "/dashboard/decisions", label: "Decisions", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/agents", label: "Mairo", icon: <Icon d={I.mairo} /> },
 ];
 

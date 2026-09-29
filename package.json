@@ -32,7 +32,10 @@
     "check:analytics": "tsx scripts/check-analytics.ts",
     "check:creative-studio": "tsx scripts/check-creative-studio.ts",
     "check:campaign-wizard": "tsx scripts/check-campaign-wizard.ts",
-    "check:google": "tsx scripts/check-google-sign-in.ts"
+    "check:google": "tsx scripts/check-google-sign-in.ts",
+    "check:decisions": "tsx scripts/check-decisions.ts",
+    "check:business": "tsx scripts/check-business.ts",
+    "check:ad-score": "tsx scripts/check-ad-score.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

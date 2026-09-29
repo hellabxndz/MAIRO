@@ -87,6 +87,16 @@ submitting in the same round as the ads permissions rather than after.
 **8. Payment flow proven — done.** A live trial checkout came back through
 the webhook and the account showed Starter on a free trial.
 
+**9. Watch the first real Mairo Decisions.** The rules are tested against
+constructed figures (`npm run check:decisions`), not yet against a live
+account's. Before anyone switches on AI Assist or Full Autopilot, check the
+first week of decisions on a real campaign. Every automatic change is in
+Mairo Activity.
+
+**10. The AI features need `ANTHROPIC_API_KEY`.** Without it, the Ad Score
+falls back to structure-only scoring, the Business Analyzer saves page facts
+only, and Fix with AI and One-Click Fix explain that they're unavailable.
+
 ## TikTok (retired)
 
 MAIRO no longer runs TikTok. The `TIKTOK_*` variables in Vercel can be deleted,

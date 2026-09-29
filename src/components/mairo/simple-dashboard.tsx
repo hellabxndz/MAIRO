@@ -240,6 +240,8 @@ function HeroOrb() {
 
 export type SimpleDashboardProps = {
   firstName: string;
+  /** Mairo Today above already says good morning. */
+  hideGreeting?: boolean;
   performance: OrganizationReport;
   campaigns: { id: string; name: string; status: string; platforms: string[] }[];
   notices: string[];
@@ -284,6 +286,7 @@ function statusTone(status: string): { dot: string; text: string } {
 
 export function SimpleDashboard({
   firstName,
+  hideGreeting = false,
   performance,
   campaigns,
   notices,
@@ -314,10 +317,12 @@ export function SimpleDashboard({
       <GlassPanel lit className="overflow-hidden p-6 sm:p-8">
         <div className="flex items-center gap-8">
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] text-muted">
-              {greeting()}
-              {firstName ? `, ${firstName}` : ""}
-            </p>
+            {!hideGreeting && (
+              <p className="text-[13px] text-muted">
+                {greeting()}
+                {firstName ? `, ${firstName}` : ""}
+              </p>
+            )}
 
             <h1 className="mt-2.5 text-[clamp(26px,4.4vw,40px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white">
               Let Mairo{" "}

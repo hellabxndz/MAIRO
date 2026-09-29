@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { loadBrain } from "@/lib/business/brain";
+import { fixElement } from "@/lib/ai/ad-score";
+import { applyEdits, type FixResult } from "@/lib/score/edits";
+import type { FixKind } from "@/lib/score/rules";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
@@ -112,12 +116,20 @@ export async function writeAdCopyAction(
   if (!scope) return { ok: false, error: "Not signed in." };
   if (!SERVICES.has(plan?.service)) return { ok: false, error: "That campaign can't be written for." };
   const promotes = PROMOTES_OPTIONS.find((o) => o.value === plan.promotes)?.label ?? "";
+  // The Business Brain's voice and lessons, so every version sounds like
+  // this business and leans away from offers that didn't work before.
+  const brain = (await loadBrain(scope.organizationId)).profile;
+  const lessons = [
+    brain.brandVoice ? `Brand voice: ${brain.brandVoice}.` : "",
+    brain.successfulOffers.length ? `Offers that worked before: ${brain.successfulOffers.join("; ")}.` : "",
+    brain.unsuccessfulOffers.length ? `Offers that didn't work (avoid): ${brain.unsuccessfulOffers.join("; ")}.` : "",
+  ].filter(Boolean).join(" ");
   try {
     const options = await writeAdCopyOptions({
       businessName: String(plan.businessName ?? "").slice(0, 200),
       offering: String(plan.offering ?? "").slice(0, 1000),
       targetAudience: String(plan.targetAudience ?? "").slice(0, 1000),
-      differentiator: String(plan.differentiator ?? "").slice(0, 1000),
+      differentiator: [String(plan.differentiator ?? "").slice(0, 1000), lessons].filter(Boolean).join(" "),
       advertising: [promotes, String(plan.promotesDetail ?? "").slice(0, 200)].filter(Boolean).join(" — "),
       goal: plan.goal ? goalOption(plan.goal).label : "Get results",
       destination: plan.destinationType ?? null,
@@ -239,4 +251,41 @@ function ownCreativeUrl(plan: CampaignPlan, organizationId: string): string | nu
   if (!url) return null;
   if (plan.adChoice === "attached") return /^https:\/\//.test(url) ? url : null;
   return isOwnUpload(url, organizationId) ? url : null;
+}
+
+/**
+ * "Fix with AI" on one Pre-Launch Ad Score recommendation. Returns the edit
+ * and a before/after; the wizard applies it only when the customer approves.
+ */
+export async function fixWithAiAction(plan: CampaignPlan, kind: FixKind): Promise<FixResult> {
+  const scope = await currentScope();
+  if (!scope || !SERVICES.has(plan?.service)) return { ok: false, kind, error: "That campaign can't be fixed here." };
+  const brain = (await loadBrain(scope.organizationId)).profile;
+  return fixElement({ plan, kind, brand: { brandVoice: brain.brandVoice, offers: brain.offers, usps: brain.usps } });
+}
+
+/**
+ * "Fix Everything With Mairo": every fixable recommendation, worked out one
+ * after another on the plan as each fix would leave it, so two fixes to the
+ * same words build on each other. Nothing is applied here — the customer
+ * approves the list.
+ */
+export async function fixEverythingAction(plan: CampaignPlan, kinds: FixKind[]): Promise<FixResult[]> {
+  const scope = await currentScope();
+  if (!scope || !SERVICES.has(plan?.service)) return [];
+  const brain = (await loadBrain(scope.organizationId)).profile;
+  const brand = { brandVoice: brain.brandVoice, offers: brain.offers, usps: brain.usps };
+  const unique = [...new Set(kinds)].slice(0, 10);
+  // Whole-text rewrites before the opening line, so the hook is written on
+  // the finished text rather than replaced by it.
+  const order: FixKind[] = ["primaryText", "offer", "hook", "headline", "cta", "variation", "audience", "placements", "budget", "landing"];
+  unique.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const results: FixResult[] = [];
+  let working = plan;
+  for (const kind of unique) {
+    const r = await fixElement({ plan: working, kind, brand });
+    results.push(r);
+    if (r.ok) working = applyEdits(working, r.edits);
+  }
+  return results;
 }

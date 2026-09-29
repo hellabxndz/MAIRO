@@ -15,6 +15,7 @@ import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { isWizardStep, newPlan, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
+import { brainFacts, loadBrain } from "@/lib/business/brain";
 
 // The Create wizard's route.
 //
@@ -80,6 +81,9 @@ export default async function CreateServicePage({
     viewMode(),
     connectionSummaries(organizationId),
   ]);
+  // The Business Brain fills anything the signup answers left empty, so a
+  // business that analyzed its website doesn't type its own description again.
+  const brain = brainFacts((await loadBrain(organizationId)).profile);
   if (!organization) redirect("/sign-in");
 
   // A draft opened under another service's address goes to its own.
@@ -93,9 +97,9 @@ export default async function CreateServicePage({
     service: slug as CampaignPlan["service"],
     businessName: organization.name,
     website: organization.website,
-    offering: intake?.offering ?? null,
-    targetAudience: intake?.targetAudience ?? null,
-    differentiator: intake?.differentiator ?? null,
+    offering: intake?.offering || brain.offering || null,
+    targetAudience: intake?.targetAudience || brain.targetAudience || null,
+    differentiator: intake?.differentiator || brain.differentiator || null,
     messageChannel: organization.defaultMessageChannel,
     // Filled in by the browser, which knows where the customer is.
     timeZone: "",

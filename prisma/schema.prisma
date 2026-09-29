@@ -138,9 +138,9 @@ model Organization {
   ///
   /// The default every campaign starts from, not a rule — a campaign can send
   /// people somewhere else without changing what the business normally does.
-  defaultDestination AdDestination @default(WEBSITE)
+  defaultDestination    AdDestination  @default(WEBSITE)
   /// The number a tap-to-call ad rings, in E.164 (+15551234567).
-  phone              String?
+  phone                 String?
   /// Which inbox a message ad opens, when defaultDestination is DIRECT_MESSAGE.
   ///
   /// Stored for the same reason phone is: it is the detail that answer needs to
@@ -241,9 +241,16 @@ model Organization {
   products             Product[]
   creativeStudioAssets CreativeStudioAsset[]
   creativeCreditLedger CreativeCreditLedger[]
-  spendProtection  SpendProtection?
-  protectionEvents ProtectionEvent[]
+  spendProtection      SpendProtection?
+  protectionEvents     ProtectionEvent[]
   campaignDrafts       CampaignDraft[]
+  businessBrain        BusinessBrain?
+  decisions            MairoDecision[]
+  activities           MairoActivity[]
+
+  /// When Mairo Decisions last looked at this account's campaigns, so a page
+  /// load doesn't ask the ad networks again every time.
+  decisionsCheckedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -269,16 +276,16 @@ model SmsPreference {
 
   /// When a code sent to this number was entered correctly. Null means the
   /// number is claimed but unproven, and nothing is ever sent to it.
-  verifiedAt DateTime?
+  verifiedAt      DateTime?
   /// The code most recently sent, and when it stops being accepted.
-  verifyCode String?
+  verifyCode      String?
   verifyExpiresAt DateTime?
 
   /// When this person agreed to be texted, and the exact wording they agreed
   /// to. The wording is stored because it changes over time and consent is to
   /// what was on the screen that day, not to whatever the screen says now.
   consentAt   DateTime?
-  consentText String?  @db.Text
+  consentText String?   @db.Text
 
   /// When they stopped it — from the settings screen or by replying STOP.
   /// Set rather than deleted, so a number that opted out cannot be re-added
@@ -320,7 +327,7 @@ model Notification {
   /// One line, in the customer's language.
   title String
   /// The detail, already written from this account's own numbers.
-  body  String  @db.Text
+  body  String @db.Text
 
   /// Where to go about it, when there is somewhere to go.
   actionLabel String?
@@ -841,11 +848,11 @@ model MairoCampaign {
   /// month, a sale page the next — and making them edit their business
   /// profile to change one ad would be absurd. Null falls back to the
   /// organization's own answer.
-  destinationType  AdDestination @default(WEBSITE)
+  destinationType  AdDestination    @default(WEBSITE)
   destinationUrl   String?
   destinationPhone String?
   /// Which inbox, when destinationType is DIRECT_MESSAGE. Ignored otherwise.
-  messageChannel   MessageChannel @default(MESSENGER)
+  messageChannel   MessageChannel   @default(MESSENGER)
   /// Where the form lives, when destinationType is LEAD_FORM.
   leadFormDelivery LeadFormDelivery @default(HOSTED_PAGE)
 
@@ -858,16 +865,16 @@ model MairoCampaign {
   /// Meta's own id for the place, from its targeting search. Null means the
   /// whole country, which is right for a shop that posts everywhere and wrong
   /// for everyone else — so it is asked rather than assumed.
-  geoKey      String?
+  geoKey    String?
   /// What that place is called, so the campaign can say it back to them.
-  geoLabel    String?
+  geoLabel  String?
   /// How far around it to advertise, in miles. Meta's own unit here.
-  geoRadius   Int?
-  ageMin      Int @default(18)
-  ageMax      Int @default(65)
+  geoRadius Int?
+  ageMin    Int     @default(18)
+  ageMax    Int     @default(65)
   /// 0 everyone, 1 men, 2 women — Meta's own numbering, kept so nothing has to
   /// translate it twice.
-  genders     Int @default(0)
+  genders   Int     @default(0)
 
   /// The one number the customer entered. The children's budgets are derived
   /// from this and their allocation percentages, and are kept summing to it.
@@ -905,12 +912,12 @@ model MairoCampaign {
   /// The Instagram post to run, as its media id.
   boostInstagramMediaId String?
   /// Where the Meta ad shows. Empty lets Meta choose, which is its advice.
-  placements            MetaPlacement[] @default([])
+  placements            MetaPlacement[]    @default([])
   /// Set when the ad falls in one of Meta's special categories.
   specialAdCategory     SpecialAdCategory?
   /// Whether Meta may widen the audience beyond what was chosen (Advantage+ audience).
-  advantageAudience     Boolean         @default(false)
-  budgetType            BudgetType      @default(DAILY)
+  advantageAudience     Boolean            @default(false)
+  budgetType            BudgetType         @default(DAILY)
   /// The whole run's budget when budgetType is LIFETIME.
   lifetimeBudgetCents   Int?
   /// The advertised app's Meta app id, for app campaigns.
@@ -971,9 +978,9 @@ model CampaignAd {
   sourceAdName      String?
 
   /// The words the customer chose. Null on an existing ad.
-  headline      String?
-  primaryText   String? @db.Text
-  callToAction  String?
+  headline     String?
+  primaryText  String? @db.Text
+  callToAction String?
 
   createdAt DateTime @default(now())
 
@@ -1012,7 +1019,7 @@ model PlatformCampaign {
   /// created, and read back by every later call — Smart+ campaigns are paused,
   /// resumed and re-budgeted through their own endpoints, and a campaign
   /// started on one API cannot be finished or managed on the other.
-  tiktokSmartPlus Boolean @default(false)
+  tiktokSmartPlus    Boolean  @default(false)
 
   /// What Meta's ad review last said about this campaign's ads, in plain
   /// English (see src/lib/meta/ad-review.ts). Null until first checked.
@@ -1024,8 +1031,8 @@ model PlatformCampaign {
   /// Whole per cent of the parent's budget. Siblings always sum to 100; that
   /// is enforced in src/lib/budget/allocation.ts rather than by the database,
   /// because the check spans rows.
-  budgetPercent    Int
-  dailyBudgetCents Int
+  budgetPercent       Int
+  dailyBudgetCents    Int
   /// This network's share of a total-budget campaign. Null for daily budgets.
   lifetimeBudgetCents Int?
 
@@ -1175,6 +1182,15 @@ model AutoOptimizeSettings {
   /// The networks MAIRO is allowed to touch. Empty means none.
   platforms AdPlatform[]
 
+  /// How much MAIRO may cut a budget in one day, whole per cent.
+  maxDailyDecreasePercent      Int     @default(30)
+  /// Guardrails that hold a change for approval even when the automation
+  /// level would otherwise allow it. New campaigns always need approval and
+  /// have no switch — see ALWAYS_NEEDS_APPROVAL in src/lib/automation/levels.ts.
+  requireApprovalNewCreatives  Boolean @default(true)
+  requireApprovalAudience      Boolean @default(true)
+  requireApprovalPlatformShift Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -1197,13 +1213,13 @@ model SpendProtection {
 
   /// A campaign that spends this much without a single result is flagged.
   /// Null switches the check off.
-  stopLossCents  Int?             @default(5000)
-  stopLossAction ProtectionAction @default(NOTIFY)
+  stopLossCents   Int?             @default(5000)
+  stopLossAction  ProtectionAction @default(NOTIFY)
   /// Account-wide spend for the calendar month. Reaching it pauses every
   /// running MAIRO campaign. Null switches it off.
   monthlyCapCents Int?
   /// Warn when month-to-date spend passes this share of the cap.
-  warnAtPercent   Int  @default(80)
+  warnAtPercent   Int              @default(80)
   /// When the limits were last checked, so a page load doesn't recheck them
   /// every time.
   checkedAt       DateTime?
@@ -1215,7 +1231,7 @@ model SpendProtection {
 /// Every warning and pause Spend Protection made, and every resume after one,
 /// with the figures it was based on. The audit trail for "why did it stop?".
 model ProtectionEvent {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
   organizationId  String
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   mairoCampaignId String?
@@ -1223,9 +1239,9 @@ model ProtectionEvent {
   kind            String
   /// NOTIFIED, PAUSED or RESUMED.
   action          String
-  message         String   @db.Text
+  message         String       @db.Text
   amountCents     Int?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime     @default(now())
 
   @@index([organizationId, createdAt])
   @@index([mairoCampaignId])
@@ -1941,9 +1957,9 @@ enum CreativeStylePreset {
 /// and everything made from it. The unit the library and the "generate 4
 /// variations" grid are both built from.
 model CreativeStudioAsset {
-  id             String       @id @default(cuid())
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
   /// Who asked for it, for the activity trail. Not a hard relation — a user
   /// can be removed from an organization without taking its creatives with it.
   createdByUserId String?
@@ -2055,7 +2071,7 @@ model CreativeCreditLedger {
 
   kind    CreativeStudioActionKind
   credits Int
-  status  CreativeCreditStatus @default(RESERVED)
+  status  CreativeCreditStatus     @default(RESERVED)
 
   /// Which asset/version this spend paid for. Null while RESERVED — the
   /// version does not exist yet, the model has not answered.
@@ -2077,14 +2093,168 @@ model CreativeCreditPricing {
   id String @id @default("default")
 
   /// gpt-image "medium" quality — the default for a first generation.
-  standardCost Int @default(5)
+  standardCost  Int @default(5)
   /// "high" quality — noticeably better, costs roughly 4x more to produce.
-  premiumCost Int @default(15)
+  premiumCost   Int @default(15)
   /// One natural-language change to an existing image.
-  editCost Int @default(5)
+  editCost      Int @default(5)
   /// Cost of ONE image within a "generate N variations" batch — the batch's
   /// total is this times N, computed at call time, never stored as a flat fee.
   variationCost Int @default(4)
 
   updatedAt DateTime @updatedAt
+}
+
+/// What MAIRO knows about a business, in one editable place.
+///
+/// Filled by the Business Analyzer from the business's own website, and
+/// edited by the business under Settings > Business Brain. Every campaign,
+/// ad and recommendation reads from it, so the business answers once.
+///
+/// The profile is JSON validated by src/lib/business/brain.ts rather than a
+/// column per field: it is read and written as a whole, and a new field is a
+/// code change rather than a migration.
+model BusinessBrain {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// The editable profile. See BrainProfile in src/lib/business/brain.ts.
+  profileJson  String   @db.Text
+  /// Fields the business typed themselves. A fresh analysis never overwrites
+  /// them — what somebody corrected by hand is more reliable than a scan.
+  editedFields String[] @default([])
+
+  /// The last full analysis, with the sections that aren't part of the
+  /// profile (conversion issues, the recommended strategy).
+  analysisJson String?   @db.Text
+  analyzedUrl  String?
+  analyzedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DecisionCategory {
+  NEEDS_ATTENTION
+  GROWTH
+  CREATIVE
+  BUDGET
+  AUDIENCE
+  RETARGETING
+  WEBSITE
+  TESTING
+}
+
+enum DecisionStatus {
+  /// Waiting for the business to decide.
+  PENDING
+  /// Carried out, by a person approving it or by MAIRO within its limits.
+  APPLIED
+  REJECTED
+  /// Set aside without an answer. Kept out of the history.
+  IGNORED
+  /// The situation it described has passed.
+  EXPIRED
+  /// Approved, but the network refused. Nothing was left half-changed.
+  FAILED
+}
+
+enum DecisionConfidence {
+  HIGH
+  MEDIUM
+  EARLY
+}
+
+enum DecisionRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// One thing MAIRO noticed and what it would do about it.
+///
+/// Written only from the account's own figures (src/lib/decisions/rules.ts),
+/// and only when there is something worth doing — an account with nothing to
+/// change has no decisions, not filler. Network-agnostic: the changes name a
+/// platform and an adapter carries them out, so a network added later uses
+/// the same cards, approvals and history.
+model MairoDecision {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  mairoCampaignId String?
+  platform        AdPlatform?
+
+  /// The rule that produced it, e.g. "pause-ad", "shift-budget".
+  kind     String
+  category DecisionCategory
+  urgent   Boolean          @default(false)
+
+  title           String
+  /// What MAIRO noticed, in plain words.
+  noticed         String @db.Text
+  /// The same, with the advertising terms, for Advanced mode.
+  noticedAdvanced String @db.Text
+  whyItMatters    String @db.Text
+  recommendation  String @db.Text
+  /// What could change, without promising a number.
+  impact          String @db.Text
+
+  risk       DecisionRisk
+  confidence DecisionConfidence
+
+  /// The figures behind it: [{ label, value, metric? }].
+  evidenceJson     String  @db.Text
+  /// What would change: see DecisionChange in src/lib/decisions/types.ts.
+  changesJson      String  @db.Text
+  /// The automation action it counts as, for the guardrails.
+  automationAction String?
+
+  status    DecisionStatus @default(PENDING)
+  /// Same situation, same key: re-running the rules updates rather than duplicates.
+  dedupeKey String
+  /// "daily" from the scheduled check, "assistant" from a One-Click Fix.
+  source    String         @default("daily")
+
+  /// What was actually done, with the before and after of each change.
+  resultJson  String?   @db.Text
+  decidedAt   DateTime?
+  decidedById String?
+  /// True when MAIRO carried it out itself under AI Assist or Full Autopilot.
+  automatic   Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, dedupeKey])
+  @@index([organizationId, status, createdAt])
+}
+
+/// Everything MAIRO did to an account, with the reason. Append-only.
+///
+/// The audit trail for "what did the AI do with my money?". A row is written
+/// only after a network accepted the change, so nothing here describes a
+/// change that didn't happen.
+model MairoActivity {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  mairoCampaignId String?
+  decisionId      String?
+
+  /// "Reduced a budget", "Paused an ad"…
+  action      String
+  /// One sentence of what changed.
+  summary     String  @db.Text
+  reason      String  @db.Text
+  before      String?
+  after       String?
+  /// True when MAIRO did it on its own; false when a person approved it.
+  automatic   Boolean @default(false)
+  actorUserId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
 }

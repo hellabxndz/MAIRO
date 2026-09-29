@@ -236,6 +236,10 @@ const autoOptimizeSchema = z.object({
   minRoas: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   maxCpa: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   platforms: z.array(z.enum(["META"])),
+  maxDailyDecreasePercent: z.coerce.number().min(1).max(100).default(30),
+  requireApprovalNewCreatives: z.boolean(),
+  requireApprovalAudience: z.boolean(),
+  requireApprovalPlatformShift: z.boolean(),
 });
 
 export type AutoOptimizeState = { error?: string; saved?: boolean } | undefined;
@@ -271,6 +275,11 @@ export async function saveAutoOptimizeAction(
     minRoas: formData.get("minRoas") ?? "",
     maxCpa: formData.get("maxCpa") ?? "",
     platforms: formData.getAll("platforms"),
+    maxDailyDecreasePercent: formData.get("maxDailyDecreasePercent") ?? 30,
+    // A checkbox that isn't ticked isn't sent at all, so absence is "off".
+    requireApprovalNewCreatives: formData.get("requireApprovalNewCreatives") === "on",
+    requireApprovalAudience: formData.get("requireApprovalAudience") === "on",
+    requireApprovalPlatformShift: formData.get("requireApprovalPlatformShift") === "on",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the limits and try again." };
@@ -294,6 +303,10 @@ export async function saveAutoOptimizeAction(
         ? null
         : Math.round(Number(parsed.data.maxCpa) * 100),
     platforms: parsed.data.platforms as AdPlatform[],
+    maxDailyDecreasePercent: parsed.data.maxDailyDecreasePercent,
+    requireApprovalNewCreatives: parsed.data.requireApprovalNewCreatives,
+    requireApprovalAudience: parsed.data.requireApprovalAudience,
+    requireApprovalPlatformShift: parsed.data.requireApprovalPlatformShift,
   };
 
   await db.autoOptimizeSettings.upsert({

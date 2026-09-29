@@ -437,4 +437,27 @@ export interface AdPlatformAdapter {
     externalCampaignId: string;
     range?: DateRange;
   }): Promise<PlatformResult<CreativePerformance[]>>;
+
+  /**
+   * Switches one ad off, leaving its campaign and the other ads running.
+   *
+   * Optional, like the one below: a network without ad-level control leaves
+   * it out, and Mairo Decisions simply doesn't offer the changes that need it
+   * there rather than pretending to make them.
+   */
+  pauseAd?(input: { organizationId: string; externalAdId: string }): Promise<PlatformResult<void>>;
+
+  /**
+   * Replaces who an existing ad group reaches.
+   *
+   * `targeting` is in the network's own shape, built by the same function the
+   * launch uses, so a change and a fresh launch can't describe an audience
+   * differently.
+   */
+  updateAdGroupTargeting?(input: {
+    organizationId: string;
+    externalAdGroupId: string;
+    targeting: Record<string, unknown>;
+    advantageAudience: boolean;
+  }): Promise<PlatformResult<void>>;
 }

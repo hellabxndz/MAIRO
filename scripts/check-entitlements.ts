@@ -40,7 +40,7 @@ async function main() {
   ok("Starter: no posting", !starter.social_posting);
 
   ok("Growth: 15 campaigns", growth.campaign_limit === 15, `${growth.campaign_limit}`);
-  ok("Growth: Assisted automation", growth.auto_optimize && !growth.autopilot);
+  ok("Growth: AI Assist", growth.auto_optimize && !growth.autopilot);
   ok("Growth: advanced analytics", growth.advanced_analytics);
   ok("Growth: no posting", !growth.social_posting);
 

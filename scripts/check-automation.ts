@@ -110,7 +110,7 @@ check(
   "every action has a label and says why it is or is not safe",
   ACTIONS.every((a) => a.label.trim().length > 0 && a.detail.trim().length > 0),
 );
-check("levelInfo returns the right one", levelInfo("AUTOPILOT").label === "Autopilot");
+check("levelInfo returns the right one", levelInfo("AUTOPILOT").label === "Full Autopilot");
 
 console.log("\n— the budget guardrail asks the level, not a stale flag —");
 // The real enforcement path, with a proposal that is fine on every other

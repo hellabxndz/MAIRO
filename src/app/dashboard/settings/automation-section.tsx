@@ -36,6 +36,10 @@ export type AutoOptimizeValues = {
   minRoas: number | null;
   maxCpa: number | null;
   platforms: AdPlatform[];
+  maxDailyDecreasePercent: number;
+  requireApprovalNewCreatives: boolean;
+  requireApprovalAudience: boolean;
+  requireApprovalPlatformShift: boolean;
 };
 
 const SELECTABLE: AdPlatform[] = ["META"];
@@ -237,6 +241,27 @@ export function AutomationSection({
             </Field>
 
             <Field
+              label="Maximum automatic decrease per day"
+              hint="The most MAIRO may cut a campaign's budget in one day, as a share of it."
+            >
+              <div className="relative">
+                <input
+                  name="maxDailyDecreasePercent"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step={1}
+                  required
+                  defaultValue={values.maxDailyDecreasePercent}
+                  className={`${inputClass} pr-8`}
+                />
+                <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-500">
+                  %
+                </span>
+              </div>
+            </Field>
+
+            <Field
               label="Most of a budget MAIRO may move in a day"
               hint="A share of the campaign's own budget. The total never changes — this caps how much of it moves at once."
             >
@@ -293,6 +318,8 @@ export function AutomationSection({
             </Field>
           </div>
 
+          <GuardrailSettings values={values} />
+
           <fieldset>
             <legend className="text-xs font-medium text-neutral-400">
               Platforms MAIRO may optimize
@@ -342,10 +369,11 @@ export function AutomationSection({
             </p>
             <ul className="mt-2.5 space-y-1.5 text-xs leading-relaxed text-neutral-500">
               <li>
-                It moves budget <span className="text-neutral-300">between</span> the
-                platforms in a campaign. It never raises the campaign&rsquo;s total.
+                It moves budget <span className="text-neutral-300">between</span> your
+                campaigns and pauses ads that spend without results. It never raises your total
+                without asking.
               </li>
-              <li>It never takes a platform below 10% — a platform at zero can&rsquo;t recover.</li>
+              <li>It never takes a campaign below $5 a day — a campaign starved of budget can&rsquo;t recover.</li>
               <li>
                 It acts only on campaigns with enough evidence to be worth acting on, which
                 in practice means a couple of hundred clicks or twenty-odd purchases.
@@ -386,5 +414,43 @@ function Field({
       {children}
       <p className="text-[11px] leading-relaxed text-neutral-500">{hint}</p>
     </div>
+  );
+}
+
+/**
+ * The approval switches: changes that wait for the customer even when the
+ * automation level would allow them. New campaigns are always held, and the
+ * switch for them is shown on and locked so nobody wonders.
+ */
+export function GuardrailSettings({ values }: { values: AutoOptimizeValues }) {
+  const rows: { name: keyof AutoOptimizeValues; label: string; hint: string }[] = [
+    { name: "requireApprovalNewCreatives", label: "Require approval for new creatives", hint: "New ad versions wait for you before they run." },
+    { name: "requireApprovalAudience", label: "Require approval before changing who sees your ads", hint: "Audience changes restart Meta's learning, so they wait by default." },
+    { name: "requireApprovalPlatformShift", label: "Require approval before moving money between ad networks", hint: "Applies once you advertise on more than one network." },
+  ];
+  return (
+    <fieldset className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <legend className="px-1 text-xs font-medium text-neutral-400">Guardrails — always ask me first</legend>
+      <ul className="mt-2 space-y-3">
+        <li className="flex items-start gap-3">
+          <input type="checkbox" checked disabled className="mt-0.5 h-4 w-4 accent-sky-400" aria-label="Require approval for new campaigns (always on)" />
+          <span>
+            <span className="text-sm text-white">Require approval for new campaigns</span>
+            <span className="mt-0.5 block text-xs text-neutral-500">Always on. Mairo never starts spending on a new campaign without you.</span>
+          </span>
+        </li>
+        {rows.map((r) => (
+          <li key={r.name}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" name={r.name} defaultChecked={Boolean(values[r.name])} className="mt-0.5 h-4 w-4 accent-sky-400" />
+              <span>
+                <span className="text-sm text-white">{r.label}</span>
+                <span className="mt-0.5 block text-xs text-neutral-500">{r.hint}</span>
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </fieldset>
   );
 }

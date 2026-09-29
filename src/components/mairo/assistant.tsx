@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
+import { FixThisForMe, proposedFixIds } from "@/components/decisions/fix-this-for-me";
 import { DefaultChatTransport, type UIMessage } from "ai";
 
 // MAIRO, reachable from anywhere in the dashboard.
@@ -257,7 +258,8 @@ export function MairoAssistant({
                     // project compiles to.
                     const marker = raw.lastIndexOf("\n\n(Context: ");
                     const text = marker === -1 ? raw : raw.slice(0, marker);
-                    if (!text) return null;
+                    const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
+                    if (!text && fixIds.length === 0) return null;
                     return (
                       <div
                         key={m.id}
@@ -276,6 +278,7 @@ export function MairoAssistant({
                           }
                         >
                           {text}
+                          {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                         </div>
                       </div>
                     );
