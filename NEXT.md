@@ -29,9 +29,8 @@ index, the chat page, and the API, which answers 402), and "choose a plan" is
 the first outstanding step on the dashboard checklist. Both are invisible while
 the variable is off, by design.
 
-**4. Set CRON_SECRET in Vercel.** Both crons in `vercel.json` refuse every
-request without it — including Vercel's own, if the variable is missing. Mark
-it **Secret**, not Config.
+**4. CRON_SECRET — set.** Both crons in `vercel.json` refuse every request
+without it — including Vercel's own. Keep it marked **Secret**, not Config.
 
 `/api/cron/launch` fires scheduled campaign starts; until the secret is set, a
 campaign booked for Friday 6am starts whenever the customer next opens the
@@ -79,10 +78,15 @@ limits on every in-app screen. The `meta_only_plan_reset` migration deletes
 them, and the code defaults apply. After any *later* pricing change, run
 `npm run plans:sync` (prints a diff) and `-- --write` to apply it.
 
-**7. Meta App Review needs two more permissions.** `instagram_basic` and
-`instagram_content_publish` are needed for Scale-plan Instagram posting. Both are review-gated, so until they clear, only accounts
-added as testers can post — the rest get a permission error from Meta. Worth
-submitting in the same round as the ads permissions rather than after.
+**7. Meta App Review, round 2: the posting permissions.** Scale's Instagram
+and Facebook posting need `instagram_basic`, `instagram_content_publish`,
+`pages_read_engagement` and `pages_manage_posts`. All are review-gated, so
+until they clear only people with a role on the Meta app can post.
+`pages_manage_posts` is asked for in its own dialog (the Facebook posts page's
+"Allow posting on Facebook"), never in the everyday connect, so round 1 is
+unaffected. Before recording round 2, set the review account's organization to
+Scale in `/aios/organizations/<id>` — the Social pages are Scale-only, and with
+billing off everyone else gets Growth.
 
 **8. Payment flow proven — done.** A live trial checkout came back through
 the webhook and the account showed Starter on a free trial.
@@ -93,9 +97,8 @@ account's. Before anyone switches on AI Assist or Full Autopilot, check the
 first week of decisions on a real campaign. Every automatic change is in
 Mairo Activity.
 
-**10. The AI features need `ANTHROPIC_API_KEY`.** Without it, the Ad Score
-falls back to structure-only scoring, the Business Analyzer saves page facts
-only, and Fix with AI and One-Click Fix explain that they're unavailable.
+**10. `ANTHROPIC_API_KEY` — set.** Powers the Ad Score, Business Analyzer,
+Fix with AI, One-Click Fix and the social post captions.
 
 ## TikTok (retired)
 
