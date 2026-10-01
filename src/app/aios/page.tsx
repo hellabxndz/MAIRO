@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
+import Link from "next/link";
 import { Card, PageHeader, Badge } from "@/components/ui";
+import { metaIntelligenceSummary } from "@/lib/meta-intelligence";
 
 export default async function AiosOverviewPage() {
   const [orgCount, campaignCount, activeCampaigns, pendingCreatives, connectedMeta] =
@@ -10,6 +12,8 @@ export default async function AiosOverviewPage() {
       db.creativeRequest.count({ where: { status: { in: ["REQUESTED", "IN_PROGRESS"] } } }),
       db.metaAdAccount.count({ where: { status: "CONNECTED" } }),
     ]);
+
+  const metaIntel = await metaIntelligenceSummary().catch(() => null);
 
   const recentOrgs = await db.organization.findMany({
     orderBy: { createdAt: "desc" },
@@ -41,6 +45,18 @@ export default async function AiosOverviewPage() {
           <p className="mt-2 text-2xl font-semibold">{pendingCreatives}</p>
         </Card>
       </div>
+
+      {metaIntel && (
+        <Link href="/aios/meta-intelligence" className="mt-6 block">
+          <Card className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-neutral-400">Meta Intelligence</p>
+              <p className="mt-1 text-[15px] text-white">{metaIntel.open} open Meta updates · {metaIntel.alerts} unread alerts</p>
+            </div>
+            {metaIntel.critical > 0 ? <Badge tone="red">{metaIntel.critical} critical</Badge> : <Badge tone="green">No critical updates</Badge>}
+          </Card>
+        </Link>
+      )}
 
       <div className="mt-8">
         <h2 className="mb-4 font-medium">Newest organizations</h2>

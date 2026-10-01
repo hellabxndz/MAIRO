@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && node scripts/migrate-deploy.mjs && next build",
+    "vercel-build": "prisma generate && node scripts/migrate-deploy.mjs && tsx scripts/check-meta-contract.ts && next build",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
@@ -42,6 +42,8 @@
     "check:social-manager": "tsx scripts/check-social-manager.ts",
     "check:mission": "tsx scripts/check-mission.ts",
     "check:engine": "tsx scripts/check-engine.ts",
+    "check:meta-contract": "tsx scripts/check-meta-contract.ts",
+    "check:meta-intelligence": "tsx scripts/check-meta-intelligence.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

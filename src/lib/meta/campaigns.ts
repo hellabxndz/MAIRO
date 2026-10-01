@@ -1,16 +1,10 @@
-import { metaGraphRequest } from "@/lib/meta/client";
+import { metaGraphPaginate, metaGraphRequest } from "@/lib/meta/client";
 import type { AdGoal, SpecialAdCategory } from "@/generated/prisma/enums";
+import { metaCapabilities, objectiveCapability } from "@/lib/meta-intelligence/capabilities";
 
-// Maps MAIRO's simplified client-facing goal to a Meta campaign objective.
+// MAIRO's simplified client-facing goal → a Meta campaign objective. The
+// values live in metaCapabilities (Meta Intelligence), not here.
 // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/#odax
-const OBJECTIVE_MAP: Record<AdGoal, string> = {
-  LEADS: "OUTCOME_LEADS",
-  SALES: "OUTCOME_SALES",
-  AWARENESS: "OUTCOME_AWARENESS",
-  TRAFFIC: "OUTCOME_TRAFFIC",
-  APP_PROMOTION: "OUTCOME_APP_PROMOTION",
-  ENGAGEMENT: "OUTCOME_ENGAGEMENT",
-};
 
 /**
  * The objective to create the campaign with.
@@ -39,14 +33,10 @@ export function metaObjectiveFor(
 ): string {
   // An instant form collects the lead inside the ad. That is OUTCOME_LEADS
   // whatever the customer picked from MAIRO's own list and whether or not a
-  // pixel exists — there is nothing offsite to track, so the degrade below
-  // does not apply and would break the ad set if it did.
-  if (usesInstantForm) return OBJECTIVE_MAP.LEADS;
-
-  if (!hasConversionTracking && (goal === "SALES" || goal === "LEADS")) {
-    return OBJECTIVE_MAP.TRAFFIC;
-  }
-  return OBJECTIVE_MAP[goal];
+  // pixel exists — there is nothing offsite to track, so the degrade does not
+  // apply and would break the ad set if it did. Both rules live in
+  // metaCapabilities.objectiveRules.
+  return objectiveCapability(goal, hasConversionTracking, usesInstantForm).value;
 }
 
 export type CreateMetaCampaignInput = {
@@ -104,7 +94,7 @@ export function metaCampaignBody(input: {
     // Declared, never inferred: an ad in a special category that isn't
     // declared is rejected, and so is one declared without its country.
     special_ad_categories: input.specialAdCategory ? [input.specialAdCategory] : [],
-    ...(input.specialAdCategory ? { special_ad_category_country: ["US"] } : {}),
+    ...(input.specialAdCategory ? { special_ad_category_country: [...metaCapabilities.targetingRules.specialAdCategories.countries] } : {}),
     ...(input.lifetimeBudgetCents
       ? { lifetime_budget: input.lifetimeBudgetCents }
       : { daily_budget: input.dailyBudgetCents }),
@@ -123,7 +113,7 @@ export function metaCampaignBody(input: {
     // the most results it can, no cap to name. It is the only strategy that is
     // correct without asking a small business owner to pick a bid, which is
     // exactly the question this product exists not to ask.
-    bid_strategy: "LOWEST_COST_WITHOUT_CAP",
+    bid_strategy: metaCapabilities.delivery.bidStrategy.value,
   };
 }
 
@@ -144,14 +134,11 @@ export async function listMetaCampaigns(
   adAccountId: string,
   accessToken: string
 ): Promise<MetaCampaign[]> {
-  const res = await metaGraphRequest<{ data: MetaCampaign[] }>(
-    `/${adAccountId}/campaigns`,
-    {
-      accessToken,
-      params: { fields: "id,name,objective,status" },
-    }
-  );
-  return res.data;
+  // Every page, not just the first 25.
+  return metaGraphPaginate<MetaCampaign>(`/${adAccountId}/campaigns`, {
+    accessToken,
+    params: { fields: "id,name,objective,status", limit: 100 },
+  });
 }
 
 export type MetaInsights = {

@@ -1,4 +1,5 @@
 import type { MetaPlacement } from "@/generated/prisma/enums";
+import { placementTargeting } from "@/lib/meta-intelligence/capabilities";
 
 // Where a Meta ad shows, as four choices instead of Ads Manager's dozen.
 //
@@ -28,26 +29,6 @@ export function isPlacement(value: string): value is MetaPlacement {
  * ones as they appear.
  */
 export function metaPlacementTargeting(placements: MetaPlacement[]): Record<string, string[]> {
-  if (placements.length === 0) return {};
-  const chosen = new Set(placements);
-
-  const facebook = [
-    chosen.has("FACEBOOK_FEED") && "feed",
-    chosen.has("STORIES") && "story",
-    chosen.has("REELS") && "facebook_reels",
-  ].filter((p): p is string => Boolean(p));
-  const instagram = [
-    chosen.has("INSTAGRAM_FEED") && "stream",
-    chosen.has("STORIES") && "story",
-    chosen.has("REELS") && "reels",
-  ].filter((p): p is string => Boolean(p));
-
-  return {
-    publisher_platforms: [
-      ...(facebook.length > 0 ? ["facebook"] : []),
-      ...(instagram.length > 0 ? ["instagram"] : []),
-    ],
-    ...(facebook.length > 0 ? { facebook_positions: facebook } : {}),
-    ...(instagram.length > 0 ? { instagram_positions: instagram } : {}),
-  };
+  // The positions each choice maps to live in metaCapabilities.placements.
+  return placementTargeting(placements);
 }

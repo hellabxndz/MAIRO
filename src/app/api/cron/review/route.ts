@@ -8,6 +8,7 @@ import { refreshAllDecisions } from "@/lib/decisions/run";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 import { pauseSocialSweep } from "@/lib/social/pause";
+import { runAllPlatformIntelligence } from "@/lib/platform-intelligence/registry";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -102,5 +103,14 @@ export async function GET(req: Request) {
     return null;
   });
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid, socialPaused });
+  // Meta Intelligence: check Meta's official sources for changes, analyse
+  // what's new, and watch API versions, error spikes and deprecations. Last,
+  // with a small budget: it never touches a customer's campaign, so a slow
+  // night here costs nothing but a day's delay.
+  const platformIntelligence = await runAllPlatformIntelligence(12_000).catch((error) => {
+    console.error("Platform intelligence cron failed:", error);
+    return null;
+  });
+
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence });
 }

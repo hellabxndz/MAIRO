@@ -184,6 +184,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
               ["Retargeting", plan.tactics.retargeting],
               ["Testing", plan.tactics.testing],
               ["Improving it", plan.tactics.optimization],
+              ...(e?.metaTools?.length ? [["Meta tools MAIRO may use", e.metaTools.map((t) => t.name).join(", ")]] : []),
             ].map(([k, v]) => (
               <div key={k} className="min-w-0">
                 <dt className="text-[11px] font-medium uppercase tracking-[0.14em] text-faint">{k}</dt>

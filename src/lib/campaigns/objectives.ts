@@ -1,4 +1,7 @@
 import type { AdDestination, AdGoal } from "@/generated/prisma/enums";
+import { metaCapabilities } from "@/lib/meta-intelligence/capabilities";
+
+const objective = (goal: AdGoal) => metaCapabilities.campaignObjectives[goal].value;
 
 // The six things a campaign can be for, in the customer's words, each tied to
 // the Meta objective it actually launches with and to the destinations MAIRO
@@ -18,38 +21,38 @@ export const GOAL_OPTIONS: GoalOption[] = [
     goal: "SALES",
     label: "Get More Sales",
     description: "Find people who are more likely to purchase your products or services.",
-    metaObjective: "OUTCOME_SALES",
+    metaObjective: objective("SALES"),
   },
   {
     goal: "TRAFFIC",
     label: "Get More Website Visitors",
     description: "Bring more people to your website, store, or online destination.",
-    metaObjective: "OUTCOME_TRAFFIC",
+    metaObjective: objective("TRAFFIC"),
   },
   {
     goal: "ENGAGEMENT",
     label: "Get More Messages & Engagement",
     description:
       "Encourage people to message your business, or like, comment on and share your ad.",
-    metaObjective: "OUTCOME_ENGAGEMENT",
+    metaObjective: objective("ENGAGEMENT"),
   },
   {
     goal: "LEADS",
     label: "Find Potential Customers",
     description: "Collect contact information from people interested in your business.",
-    metaObjective: "OUTCOME_LEADS",
+    metaObjective: objective("LEADS"),
   },
   {
     goal: "AWARENESS",
     label: "Get Your Business Noticed",
     description: "Introduce your business to more people and increase awareness.",
-    metaObjective: "OUTCOME_AWARENESS",
+    metaObjective: objective("AWARENESS"),
   },
   {
     goal: "APP_PROMOTION",
     label: "Get More App Users",
     description: "Encourage people to download or use your mobile application.",
-    metaObjective: "OUTCOME_APP_PROMOTION",
+    metaObjective: objective("APP_PROMOTION"),
   },
 ];
 

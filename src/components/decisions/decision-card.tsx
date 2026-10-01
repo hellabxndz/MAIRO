@@ -32,6 +32,8 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
   const guideOnly = decision.changes.every((c) => c.type === "guide");
   const guide = decision.changes.find((c) => c.type === "guide");
   const creative = decision.kind === "creative-fatigue" && !guideOnly;
+  // Meta Intelligence: a new Meta capability — Approve / Learn more / Not now.
+  const metaTry = decision.changes.find((c) => c.type === "try-meta-feature");
   // Amounts the owner can change before approving: a budget, a radius.
   const modifiable = !creative && decision.changes.some((c) => c.type === "set-budget" || (c.type === "widen-audience" && c.to.geoRadius !== null));
   const tone = CATEGORY_TONE[decision.category];
@@ -154,13 +156,23 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
             {creative ? "Create replacement" : "Approve"}
           </button>
         )}
+        {metaTry?.type === "try-meta-feature" && (
+          <Link href={metaTry.learnMoreHref} className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            Learn more
+          </Link>
+        )}
         {modifiable && (
           <button type="button" disabled={pending} onClick={() => setOpen("modify")}
             className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
             Modify
           </button>
         )}
-        {creative || guideOnly ? (
+        {metaTry ? (
+          <button type="button" disabled={pending} onClick={() => act(ignoreDecisionAction, "Not now")}
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            Not now
+          </button>
+        ) : creative || guideOnly ? (
           <button type="button" disabled={pending} onClick={() => act(ignoreDecisionAction, "Ignored")}
             className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
             Ignore

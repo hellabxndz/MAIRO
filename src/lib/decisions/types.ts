@@ -58,6 +58,8 @@ export type CampaignSnapshot = {
   prior: PlatformMetrics | null;
   week: PlatformMetrics | null;
   ads: AdSnapshot[];
+  /** Meta Feature Registry keys the campaign was built with (Meta Intelligence). */
+  metaFeatures?: string[];
   audience: {
     geoKey: string | null;
     geoLabel: string | null;
@@ -139,6 +141,17 @@ export type DecisionChange =
       campaignName: string;
       from: { geoRadius: number | null; ageMin: number; ageMax: number };
       to: { geoRadius: number | null; ageMin: number; ageMax: number };
+    }
+  | {
+      /**
+       * Meta Intelligence: the owner says yes to MAIRO considering a newly
+       * validated Meta capability in their NEXT campaign. Approving records
+       * consent only — no live campaign is touched.
+       */
+      type: "try-meta-feature";
+      featureKey: string;
+      featureName: string;
+      learnMoreHref: string;
     }
   | {
       /** Nothing MAIRO can change on its own — a place to go and act. */

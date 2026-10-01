@@ -1,7 +1,25 @@
-// The version Meta's own current Node SDK targets. META_GRAPH_API_VERSION
-// overrides it, e.g. to roll back to v21.0 without a code change.
-const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION || "v24.0";
-const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
+import { AsyncLocalStorage } from "node:async_hooks";
+import { DEFAULT_GRAPH_API_VERSION } from "@/lib/meta-intelligence/capabilities";
+
+// The version MAIRO builds against (metaCapabilities, tracked by Meta
+// Intelligence's API version registry). META_GRAPH_API_VERSION overrides it,
+// e.g. to roll back without a code change.
+const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_API_VERSION;
+const GRAPH_HOST = "https://graph.facebook.com";
+
+/**
+ * Meta Intelligence's test harness: a transport (and optionally an API
+ * version) for every Graph call made inside withGraphTransport(). Scoped to
+ * that async context only — a contract test running a stubbed Meta, or a
+ * sandbox run trying a candidate version, can never affect a customer's
+ * request running at the same moment.
+ */
+type Transport = { fetch: typeof fetch; version?: string; record?: boolean };
+const transport = new AsyncLocalStorage<Transport>();
+
+export function withGraphTransport<T>(t: Transport, fn: () => Promise<T>): Promise<T> {
+  return transport.run(t, fn);
+}
 
 export class MetaApiError extends Error {
   constructor(
@@ -38,7 +56,9 @@ export async function metaGraphRequest<T = unknown>(
   path: string,
   { method = "GET", accessToken, params = {}, body, formParams }: MetaRequestOptions = {}
 ): Promise<T> {
-  const url = new URL(`${GRAPH_BASE}${path}`);
+  const ctx = transport.getStore();
+  const version = ctx?.version ?? GRAPH_VERSION;
+  const url = new URL(`${GRAPH_HOST}/${version}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
@@ -58,7 +78,7 @@ export async function metaGraphRequest<T = unknown>(
     contentType = "application/x-www-form-urlencoded";
   }
 
-  const res = await fetch(url.toString(), {
+  const res = await (ctx?.fetch ?? fetch)(url.toString(), {
     method,
     headers: contentType ? { "Content-Type": contentType } : undefined,
     body: requestBody,
@@ -68,6 +88,14 @@ export async function metaGraphRequest<T = unknown>(
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {
+    // Meta Intelligence watches every Graph error: an unfamiliar one spreading
+    // across accounts is often the first sign Meta changed something. Fire and
+    // forget — monitoring can never break or slow the request it watches.
+    if (ctx?.record !== false) {
+      void import("@/lib/meta-intelligence/errors/monitor")
+        .then((m) => m.recordMetaError({ status: res.status, body: json, path, method, apiVersion: version, accessToken }))
+        .catch(() => undefined);
+    }
     throw new MetaApiError(describeGraphError(json, res.status), res.status, json);
   }
 
@@ -131,4 +159,33 @@ export function describeGraphError(body: unknown, status: number): string {
 
 export function graphApiVersion() {
   return GRAPH_VERSION;
+}
+
+/**
+ * Every page of a Graph list, following paging.next — but only back to Graph
+ * itself, and at most `maxPages`, so a misbehaving cursor can't loop forever
+ * or send the token anywhere else.
+ */
+export async function metaGraphPaginate<T>(
+  path: string,
+  options: MetaRequestOptions & { maxPages?: number } = {}
+): Promise<T[]> {
+  const out: T[] = [];
+  const maxPages = options.maxPages ?? 10;
+  let page = await metaGraphRequest<{ data?: T[]; paging?: { next?: string; cursors?: { after?: string } } }>(path, options);
+  for (let i = 0; ; i++) {
+    out.push(...(page.data ?? []));
+    const after = page.paging?.cursors?.after;
+    const next = page.paging?.next;
+    if (!next || !after || i + 1 >= maxPages) break;
+    let nextUrl: URL;
+    try {
+      nextUrl = new URL(next);
+    } catch {
+      break;
+    }
+    if (nextUrl.origin !== GRAPH_HOST) break;
+    page = await metaGraphRequest(path, { ...options, params: { ...(options.params ?? {}), after } });
+  }
+  return out;
 }

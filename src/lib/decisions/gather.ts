@@ -150,6 +150,7 @@ export async function gatherDecisionInput(organizationId: string, now = new Date
       prior: figures.prior ?? null,
       week: figures.week ?? null,
       ads,
+      metaFeatures: c.metaFeatures,
       audience: {
         geoKey: c.geoKey,
         geoLabel: c.geoLabel,

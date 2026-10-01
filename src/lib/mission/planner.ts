@@ -10,6 +10,7 @@ import { socialAccess } from "@/lib/social/access";
 import { socialLearnings } from "@/lib/social/manager";
 import { SEQUENCES } from "@/lib/social/goals";
 import { runStrategyEngine } from "@/lib/engine";
+import { metaKnowledgeBrief } from "@/lib/meta-intelligence/knowledge-base/store";
 import { justifyAction, type EngineStrategy } from "@/lib/engine/core";
 import {
   CUSTOMER_ACTIONS,
@@ -320,6 +321,7 @@ export async function buildMissionPlan(organizationId: string, input: PlanInput,
           `Meta connected: ${f.metaConnected}. pixelActive: ${f.pixelActive}. scale: ${f.scale}. Media available: ${f.media.images} pictures, ${f.media.videos} videos.`,
           f.campaigns.length ? `Existing campaigns: ${f.campaigns.map((c) => `${c.name} (${c.objective}, ${c.status})`).join("; ")}` : "No campaigns yet.",
           f.learnings.length ? `What MAIRO has learned from their results:\n- ${f.learnings.join("\n- ")}` : "",
+          await metaKnowledgeBrief().catch(() => ""),
           f.notes.length ? `What they've told MAIRO:\n- ${f.notes.map((n) => `${n.kind}: ${n.text}`).join("\n- ")}` : "",
           f.unavailable.length ? `Unavailable — never promote: ${f.unavailable.join("; ")}` : "",
           `\nPrimary goal: ${missionGoal(goal).label}${input.goal === "RECOMMEND" ? " (MAIRO's recommendation for this business)" : ""}.`,
@@ -380,6 +382,7 @@ function engineBrief(e: EngineStrategy): string {
     e.launch ? `- Launch stages: ${e.launch.filter((s) => s.include).map((s) => s.stage).join(", ")} (skip the rest).` : "",
     e.promotion ? `- Promotion: ${e.promotion.introduce} Mention it about ${e.promotion.mentionsPerWeek}× a week.${e.promotion.restraint ? ` ${e.promotion.restraint}` : ""}` : "",
     e.learningsApplied.length ? `- From their own results: ${e.learningsApplied.join(" ")}` : "",
+    e.metaTools?.length ? `- Meta tools MAIRO may use (validated for this goal and account): ${e.metaTools.map((t) => t.name).join(", ")}. Don't promise others.` : "",
   ]
     .filter(Boolean)
     .join("\n");

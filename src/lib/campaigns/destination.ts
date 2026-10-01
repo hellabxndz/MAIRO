@@ -1,4 +1,5 @@
 import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
+import { metaCapabilities } from "@/lib/meta-intelligence/capabilities";
 
 // Where a click goes, and whether MAIRO has what it needs to send it there.
 //
@@ -224,23 +225,7 @@ export const CHANNEL_LABELS: Record<MessageChannel, string> = {
 export const CHANNEL_META: Record<
   MessageChannel,
   { destinationType: string; cta: string; appDestination: string }
-> = {
-  MESSENGER: {
-    destinationType: "MESSENGER",
-    cta: "MESSAGE_PAGE",
-    appDestination: "MESSENGER",
-  },
-  INSTAGRAM: {
-    destinationType: "INSTAGRAM_DIRECT",
-    cta: "INSTAGRAM_MESSAGE",
-    appDestination: "INSTAGRAM_DIRECT",
-  },
-  WHATSAPP: {
-    destinationType: "WHATSAPP",
-    cta: "WHATSAPP_MESSAGE",
-    appDestination: "WHATSAPP",
-  },
-};
+> = metaCapabilities.messageChannels;
 
 /**
  * What the business itself has to supply for a destination to work.

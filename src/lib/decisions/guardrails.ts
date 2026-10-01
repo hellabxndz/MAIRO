@@ -88,7 +88,8 @@ export function mayAutoApply(
   changes: DecisionChange[],
   switches: ApprovalSwitches,
 ): boolean {
-  if (changes.length === 0 || changes.some((c) => c.type === "guide")) return false;
+  // A guide needs a person; trying a new Meta capability always needs the owner's yes.
+  if (changes.length === 0 || changes.some((c) => c.type === "guide" || c.type === "try-meta-feature")) return false;
   const action = actionFor(changes);
   if (!action || !mayDoAutomatically(level, action)) return false;
   if (switches.requireApprovalNewCreatives && changes.some((c) => c.type === "new-ad-variation")) return false;
@@ -111,6 +112,8 @@ export function describeChange(c: DecisionChange): { label: string; before: stri
         `${a.geoRadius !== null ? `${a.geoRadius} miles, ` : ""}ages ${a.ageMin}–${a.ageMax}`;
       return { label: `${c.campaignName} — audience`, before: place(c.from), after: place(c.to) };
     }
+    case "try-meta-feature":
+      return { label: `${c.featureName} — your next campaign`, before: "Not used", after: "MAIRO may use it when it fits your goal" };
     case "guide":
       return { label: c.label, before: null, after: null };
   }

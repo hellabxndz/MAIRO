@@ -41,13 +41,22 @@ const ADJUST: Record<EngineInsight["attribute"], (winner: string) => string> = {
   offer: (w) => (/without/i.test(w) ? "MAIRO keeps offers out of most ads and saves them for real promotions." : "MAIRO features your offer more in new ads — without making every ad a sale."),
   audience: (w) => `MAIRO favours ${w} when it sets up or adjusts audiences.`,
   cta: (w) => `MAIRO uses "${w}" as the main button in new ads.`,
+  "meta-feature": (w) => (/^without /i.test(w) ? `MAIRO leaves ${w.replace(/^without /i, "")} off in your next campaigns.` : `MAIRO keeps using ${w.replace(/^with /i, "")} in your next campaigns.`),
 };
 
 function sum(items: Item[]) {
   return items.reduce((a, b) => ({ spend: a.spend + b.spend, results: a.results + b.results }), { spend: 0, results: 0 });
 }
 
-export type MeasuredInsight = EngineInsight & { evidence: Evidence[]; key: string };
+export type MeasuredInsight = EngineInsight & { evidence: Evidence[]; key: string; /** Exact keys this lesson replaces (default: every other lesson about the same attribute). */ retires?: string[] };
+
+/** Meta's optional automation tools whose effect is compared per business. */
+export const COMPARED_META_FEATURES: { featureKey: string; name: string }[] = [
+  { featureKey: "advantage_plus.audience", name: "Advantage+ audience" },
+  { featureKey: "advantage_plus.placements", name: "Advantage+ placements" },
+];
+
+const slug = (s: string) => s.replace(/[^a-z0-9]+/g, "-");
 
 /** Best-against-worst for one attribute, or nothing if the data can't support it. */
 export function compareGroups(attribute: EngineInsight["attribute"], groups: Group[], word: string, opts: { minItems?: number } = {}): MeasuredInsight | null {
@@ -129,6 +138,22 @@ export function engineInsights(campaigns: CampaignSnapshot[], objective?: AdGoal
       // Audiences are set per campaign, so one campaign per side is enough.
       compareGroups("audience", group(list.map((c) => [`people aged ${c.audience.ageMin}–${c.audience.ageMax}${c.audience.ageMax >= 65 ? "+" : ""}`, item(goal, c.week)] as [string, Item | null]).filter((e): e is [string, Item] => e[1] !== null)), word, { minItems: 1 }),
     ];
+    // Meta tools: campaigns built with a tool against campaigns without it, for
+    // this business. A tool that helps one business can hurt another.
+    for (const f of COMPARED_META_FEATURES) {
+      const camp = list.filter((c) => Array.isArray(c.metaFeatures));
+      const m = compareGroups(
+        "meta-feature",
+        group(camp.map((c) => [c.metaFeatures!.includes(f.featureKey) ? `With ${f.name}` : `Without ${f.name}`, item(goal, c.week)] as [string, Item | null]).filter((e): e is [string, Item] => e[1] !== null)),
+        word,
+        { minItems: 1 },
+      );
+      if (m && !seen.has(`meta-feature:${f.featureKey}`)) {
+        seen.add(`meta-feature:${f.featureKey}`);
+        const side = /^with /i.test(m.winner) ? "with" : "without";
+        out.push({ ...m, key: `engine:meta-feature:${side}-${slug(f.featureKey)}`, retires: [`engine:meta-feature:${side === "with" ? "without" : "with"}-${slug(f.featureKey)}`] });
+      }
+    }
     for (const c of candidates) {
       // The goal's own result speaks first; another objective doesn't overrule it.
       if (c && !seen.has(c.attribute)) {

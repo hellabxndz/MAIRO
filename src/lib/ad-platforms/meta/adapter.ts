@@ -24,6 +24,7 @@ import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { isSchedulable, metaStartTime } from "@/lib/campaigns/schedule";
 import { CHANNEL_META, type Destination } from "@/lib/campaigns/destination";
+import { metaCapabilities, optimizationCapability } from "@/lib/meta-intelligence/capabilities";
 import { findInstagramAccount } from "@/lib/instagram/publish";
 import {
   createAdCreative,
@@ -48,7 +49,7 @@ import {
 // same thing. The interface is for the code that runs campaigns; connecting
 // Meta stays where it is.
 
-function toFailureKind(error: MetaApiError) {
+export function toFailureKind(error: MetaApiError) {
   // Meta signals a dead token with 190, and permission problems with 200/10.
   const code = (error.body as { error?: { code?: number } } | null)?.error?.code;
   if (code === 190 || error.status === 401) return "not_connected" as const;
@@ -159,10 +160,11 @@ function actionValue(actions: MetaAction[] | undefined, types: string[]): number
   return null;
 }
 
-const PURCHASE_TYPES = ["omni_purchase", "purchase", "offsite_conversion.fb_pixel_purchase"];
-const LEAD_TYPES = ["lead", "onsite_conversion.lead_grouped", "offsite_conversion.fb_pixel_lead"];
-const BOOKING_TYPES = ["schedule_total", "omni_schedule", "offsite_conversion.fb_pixel_schedule"];
-const CONTACT_TYPES = ["contact_total", "onsite_conversion.messaging_conversation_started_7d", "click_to_call_native_call_placed"];
+// Which insight action types count as each result: metaCapabilities.insightActions.
+const PURCHASE_TYPES = metaCapabilities.insightActions.purchases;
+const LEAD_TYPES = metaCapabilities.insightActions.leads;
+const BOOKING_TYPES = metaCapabilities.insightActions.bookings;
+const CONTACT_TYPES = metaCapabilities.insightActions.contacts;
 
 /** Adds up several action types that each count once (messages + calls + contacts). */
 function actionSum(actions: MetaAction[] | undefined, types: string[]): number | null {
@@ -641,7 +643,7 @@ function sumRows(rows: MetaInsightRow[]): MetaInsightRow {
   };
 }
 
-function normalizeInsights(row: MetaInsightRow) {
+export function normalizeInsights(row: MetaInsightRow) {
   const spendCents = unitsToCents(row.spend);
   const purchases = actionValue(row.actions, PURCHASE_TYPES);
   const revenueCents = unitsToCents(
@@ -669,9 +671,9 @@ function normalizeInsights(row: MetaInsightRow) {
     leads: actionValue(row.actions, LEAD_TYPES),
     bookings: actionValue(row.actions, BOOKING_TYPES),
     contacts: actionSum(row.actions, CONTACT_TYPES),
-    landingPageViews: actionValue(row.actions, ["landing_page_view", "omni_landing_page_view"]),
-    videoViews: actionValue(row.actions, ["video_view"]),
-    engagement: actionValue(row.actions, ["post_engagement"]),
+    landingPageViews: actionValue(row.actions, metaCapabilities.insightActions.landingPageViews),
+    videoViews: actionValue(row.actions, metaCapabilities.insightActions.videoViews),
+    engagement: actionValue(row.actions, metaCapabilities.insightActions.engagement),
     // Prefer Meta's own ROAS; fall back to deriving it, but only when both
     // parts are actually known.
     roas:
@@ -702,7 +704,7 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
   const instantForm = input.destination?.type === "INSTANT_FORM";
   const app = input.destination?.type === "APP" ? input.destination : null;
   const optimization = instantForm
-    ? "LEAD_GENERATION"
+    ? metaCapabilities.optimizationGoals.instantForm.value
     : metaOptimizationGoal(input.goal, Boolean(input.conversion), input.destination?.type);
 
   return {
@@ -712,7 +714,7 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     // under a campaign that has one, and MAIRO always sets the budget on the
     // campaign so the optimizer has one place to move it.
     ...(input.campaignOwnsBudget ? {} : { daily_budget: input.dailyBudgetCents }),
-    billing_event: "IMPRESSIONS",
+    billing_event: metaCapabilities.delivery.billingEvent.value,
     optimization_goal: optimization,
     status: "PAUSED",
     // Where a click lands, at the ad set level. Meta needs this to deliver a
@@ -722,14 +724,14 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
       ? { destination_type: CHANNEL_META[input.destination.channel].destinationType }
       : {}),
     // Engagement with the ad itself: likes, comments and shares on the post.
-    ...(input.destination?.type === "ON_POST" ? { destination_type: "ON_POST" } : {}),
+    ...(input.destination?.type === "ON_POST" ? { destination_type: metaCapabilities.destinationTypes.onPost.value } : {}),
     // An instant form lives on the ad, so the ad set says so and names the
     // Page the form belongs to. Without the promoted_object Meta refuses the
     // ad set; without ON_AD it builds a link ad whose button happens to carry
     // a form id and never opens it.
     ...(instantForm && input.pageId
       ? {
-          destination_type: "ON_AD",
+          destination_type: metaCapabilities.destinationTypes.instantForm.value,
           promoted_object: JSON.stringify({ page_id: input.pageId }),
         }
       : {}),
@@ -744,7 +746,7 @@ export function metaAdSetBody(input: CreateAdGroupInput): Record<string, unknown
     ...(isSchedulable(input.startAt) ? { start_time: metaStartTime(input.startAt) } : {}),
     ...(input.endAt ? { end_time: metaStartTime(input.endAt) } : {}),
     targeting: {
-      ...(input.targeting ?? { geo_locations: { countries: ["US"] } }),
+      ...(input.targeting ?? { geo_locations: { countries: [...metaCapabilities.targetingRules.defaultGeo.countries] } }),
       // Stated either way: newer API versions refuse an ad set that leaves
       // Advantage+ audience unsaid. 1 lets Meta widen past the choices when
       // it expects better results; 0 keeps to them exactly.
@@ -790,29 +792,10 @@ function metaOptimizationGoal(
   hasPixel: boolean,
   destination?: Destination["type"]
 ): string {
-  switch (goal) {
-    case "ENGAGEMENT":
-      // A message ad counts conversations started; otherwise it's the
-      // likes, comments and shares on the post.
-      return destination === "DIRECT_MESSAGE" ? "CONVERSATIONS" : "POST_ENGAGEMENT";
-    case "LEADS":
-      // OFFSITE_CONVERSIONS, not LEAD_GENERATION. LEAD_GENERATION means one of
-      // Meta's instant forms, which lives on Facebook and which MAIRO does not
-      // create — asking for it on a campaign that sends people to a website
-      // produces an ad set that cannot deliver. With a pixel, a website lead is
-      // an offsite conversion; without one, the best honest target is a click.
-      return hasPixel ? "OFFSITE_CONVERSIONS" : "LINK_CLICKS";
-    case "SALES":
-      // Same reasoning. Optimizing for purchases on an account that has never
-      // seen one is accepted by Meta and then under-delivers indefinitely.
-      return hasPixel ? "OFFSITE_CONVERSIONS" : "LINK_CLICKS";
-    case "AWARENESS":
-      return "REACH";
-    case "TRAFFIC":
-      return "LINK_CLICKS";
-    case "APP_PROMOTION":
-      return "APP_INSTALLS";
-  }
+  // The rules (and why: a pixel-less sales or leads ad set optimizing for
+  // conversions is accepted and then under-delivers forever; a message ad
+  // counts conversations) live in metaCapabilities.optimizationGoals.
+  return optimizationCapability(goal, { hasPixel, destination }).value;
 }
 
 /** Sets the status of a campaign, ad set or ad — Meta takes the same call for all three. */

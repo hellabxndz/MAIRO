@@ -257,6 +257,8 @@ model Organization {
   socialPromotions     SocialPromotion[]
   missions             MarketingMission[]
   missionNotes         MissionNote[]
+  platformCapabilities PlatformAccountCapability[]
+  platformOptIns       PlatformFeatureOptIn[]
   tiktokCreator        TikTokCreatorConnection?
   trackingPixels       TrackingPixel[]
   conversionEvents     ConversionEvent[]
@@ -887,6 +889,11 @@ model MairoCampaign {
   id             String       @id @default(cuid())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
+
+  /// Platform Intelligence: the platform capabilities this campaign was built
+  /// with (feature keys from the Meta Feature Registry), so results can be
+  /// compared with and without each one, per business.
+  metaFeatures String[] @default([])
 
   name      String
   objective AdGoal
@@ -2757,4 +2764,299 @@ model MissionNote {
   createdAt DateTime @default(now())
 
   @@index([organizationId, active])
+}
+
+// --- Platform Intelligence (Meta first) --------------------------------------
+//
+// Keeps MAIRO aligned with changes to the ad platforms it runs on. Every table
+// carries `platform` so TikTok, Google Ads and others can reuse it; only Meta
+// is implemented (src/lib/meta-intelligence). External content is untrusted:
+// nothing here changes code or a customer's live campaign on its own.
+
+/// A source MAIRO monitors. OFFICIAL outranks TRUSTED; nothing changes product
+/// behaviour on an UNVERIFIED source alone.
+model PlatformSource {
+  id            String    @id @default(cuid())
+  platform      String    @default("META")
+  key           String    @unique
+  name          String
+  url           String
+  /// CHANGELOG, VERSIONS, DOCS, HELP_CENTER, ANNOUNCEMENTS
+  kind          String
+  /// OFFICIAL, TRUSTED or UNVERIFIED.
+  authority     String    @default("OFFICIAL")
+  active        Boolean   @default(true)
+  lastCheckedAt DateTime?
+  lastChangedAt DateTime?
+  lastError     String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  snapshots PlatformSourceSnapshot[]
+  updates   PlatformUpdate[]
+}
+
+/// What a source said at one moment. Kept, never overwritten, so a change can
+/// be traced to the exact text before and after.
+model PlatformSourceSnapshot {
+  id        String         @id @default(cuid())
+  source    PlatformSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceId  String
+  hash      String
+  /// Normalised text (capped), as blocks separated by blank lines.
+  text      String         @db.Text
+  fetchedAt DateTime       @default(now())
+
+  @@index([sourceId, fetchedAt])
+}
+
+/// One detected change ("Meta Update"), carried through the safe update
+/// pipeline: DETECTED → ANALYZED → PROPOSED → DEVELOPMENT → AUTOMATED_TESTING
+/// → SANDBOX_TESTING → APPROVED → PRODUCTION (or DISMISSED).
+model PlatformUpdate {
+  id            String          @id @default(cuid())
+  platform      String          @default("META")
+  source        PlatformSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  sourceId      String?
+  /// Same change, same key: a re-run never files it twice.
+  dedupeKey     String          @unique
+  title         String
+  /// The text that changed (untrusted, shown as plain text only).
+  excerpt       String          @db.Text
+  sourceUrl     String?
+  /// NEW_FEATURE, DEPRECATION, API_VERSION_RELEASE, PERMISSION_CHANGE, … (see platform-intelligence/types.ts)
+  changeType    String
+  /// Area: campaign-creation, budget, publishing, permissions, billing, optimization, targeting, placements, creative, measurement, ai, api-version, knowledge
+  areas         String[]        @default([])
+  urgency       String          @default("LOW")
+  risk          String          @default("UNKNOWN")
+  compatibility String          @default("NOT_APPLICABLE")
+  status        String          @default("DETECTED")
+  /// The AI (or rule) interpretation, as JSON.
+  analysisJson  String?         @db.Text
+  analyzedBy    String?
+  /// A structured, validated proposal: registry/knowledge changes only (JSON).
+  proposalJson  String?         @db.Text
+  /// Feature in the registry this concerns, when known.
+  featureKey    String?
+  /// Who moved it last, and every move (JSON array), for the audit trail.
+  historyJson   String          @default("[]") @db.Text
+  detectedAt    DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([platform, status])
+  @@index([platform, urgency])
+}
+
+/// The Meta Feature Registry (platform = META): every capability MAIRO relies
+/// on or is evaluating. MAIRO's source of truth for what Meta offers.
+model PlatformFeature {
+  id                 String    @id @default(cuid())
+  platform           String    @default("META")
+  featureKey         String
+  name               String
+  category           String
+  description        String    @db.Text
+  apiVersion         String?
+  objectives         String[]  @default([])
+  optimizationGoals  String[]  @default([])
+  placements         String[]  @default([])
+  creativeFormats    String[]  @default([])
+  permissions        String[]  @default([])
+  accountType        String?
+  /// GA, LIMITED, BETA, ALPHA, UNKNOWN
+  availability       String    @default("UNKNOWN")
+  betaStatus         String?
+  regionRestrictions String[]  @default([])
+  deprecated         Boolean   @default(false)
+  deprecationDate    DateTime?
+  replacementKey     String?
+  lastVerifiedAt     DateTime?
+  sourceUrl          String?
+  /// SUPPORTED, PARTIALLY_SUPPORTED, TESTING, NOT_SUPPORTED, DEPRECATED, NOT_APPLICABLE
+  mairoSupport       String    @default("NOT_SUPPORTED")
+  /// Where MAIRO uses it (JSON): systems and code paths.
+  mairoMapping       String    @default("{}") @db.Text
+  /// LOW, MEDIUM, HIGH
+  breakingRisk       String    @default("LOW")
+  /// Goal families it can serve (sales, leads, bookings…). Goal first.
+  goalFit            String[]  @default([])
+  /// It's one of Meta's AI/automation (Advantage+) tools.
+  aiCapability       Boolean   @default(false)
+  notes              String?   @db.Text
+  version            Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([platform, featureKey])
+}
+
+/// Versioned knowledge. A change writes a new version and supersedes the old;
+/// nothing is overwritten, so a problem can be traced to what MAIRO believed.
+model PlatformKnowledge {
+  id           String    @id @default(cuid())
+  platform     String    @default("META")
+  /// feature, api-behavior, objective, optimization, placement, creative-spec, measurement, permission, rate-limit, deprecation, limitation, strategy
+  topic        String
+  key          String
+  version      Int
+  dataJson     String    @db.Text
+  summary      String    @db.Text
+  source       String
+  /// HIGH, MEDIUM, LOW
+  confidence   String    @default("MEDIUM")
+  /// VALIDATED knowledge feeds MAIRO's reasoning; PROPOSED waits for the pipeline.
+  state        String    @default("VALIDATED")
+  verifiedAt   DateTime?
+  changeNote   String?   @db.Text
+  updateId     String?
+  supersededAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([platform, topic, key, version])
+  @@index([platform, topic, key])
+}
+
+/// A feature flag for a platform capability: OFF, INTERNAL, SELECTED, ALL_ELIGIBLE.
+model PlatformFeatureFlag {
+  id             String   @id @default(cuid())
+  platform       String   @default("META")
+  key            String   @unique
+  featureKey     String?
+  description    String   @db.Text
+  stage          String   @default("OFF")
+  internalOrgIds String[] @default([])
+  selectedOrgIds String[] @default([])
+  updatedBy      String?
+  historyJson    String   @default("[]") @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/// API versions: what production runs, what's available, what's retiring.
+model PlatformApiVersion {
+  id              String    @id @default(cuid())
+  platform        String    @default("META")
+  version         String
+  releasedAt      DateTime?
+  /// When the platform retires it, from an official source or entered by an admin.
+  retiresAt       DateTime?
+  retiresSource   String?
+  /// AVAILABLE, PRODUCTION, CANDIDATE, DEPRECATED, RETIRED
+  status          String    @default("AVAILABLE")
+  /// NOT_STARTED, TESTING, PASSED, MIGRATED
+  migrationStatus String    @default("NOT_STARTED")
+  breakingNotes   String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([platform, version])
+}
+
+/// Platform API errors, grouped by signature. An unfamiliar error spreading
+/// across accounts is often the first sign the platform changed.
+model PlatformApiError {
+  id          String    @id @default(cuid())
+  platform    String    @default("META")
+  signature   String    @unique
+  code        Int?
+  subcode     Int?
+  message     String    @db.Text
+  endpoint    String
+  method      String
+  apiVersion  String
+  requestType String
+  count       Int       @default(1)
+  /// Hashed account keys (never tokens), capped.
+  accountKeys String[]  @default([])
+  firstAt     DateTime  @default(now())
+  lastAt      DateTime  @default(now())
+  flagged     Boolean   @default(false)
+  flaggedAt   DateTime?
+  updateId    String?
+
+  @@index([platform, lastAt])
+}
+
+/// A run of the platform integration tests: CONTRACT (stubbed), SANDBOX (a
+/// test ad account) or MANUAL (an admin's recorded test-account check).
+model PlatformTestRun {
+  id             String    @id @default(cuid())
+  platform       String    @default("META")
+  mode           String
+  apiVersion     String
+  passed         Int       @default(0)
+  failed         Int       @default(0)
+  criticalFailed Int       @default(0)
+  resultsJson    String    @db.Text
+  updateId       String?
+  ranBy          String?
+  notes          String?   @db.Text
+  startedAt      DateTime  @default(now())
+  finishedAt     DateTime?
+
+  @@index([platform, startedAt])
+}
+
+/// The MAIRO Meta Update log: what Meta changed and what MAIRO changed because of it.
+model PlatformReleaseLog {
+  id           String   @id @default(cuid())
+  platform     String   @default("META")
+  version      String
+  metaChanges  String[] @default([])
+  mairoChanges String[] @default([])
+  updateIds    String[] @default([])
+  createdBy    String?
+  createdAt    DateTime @default(now())
+
+  @@unique([platform, version])
+}
+
+/// What a business's own ad account can use (country, currency, capabilities,
+/// granted permissions). Features are never shown as available without it.
+model PlatformAccountCapability {
+  id             String       @id @default(cuid())
+  platform       String       @default("META")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  adAccountId    String?
+  country        String?
+  currency       String?
+  accountStatus  Int?
+  capabilities   String[]     @default([])
+  permissions    String[]     @default([])
+  checkedAt      DateTime     @default(now())
+  error          String?      @db.Text
+
+  @@unique([platform, organizationId])
+}
+
+/// A business saying yes to MAIRO trying a validated platform capability.
+model PlatformFeatureOptIn {
+  id             String       @id @default(cuid())
+  platform       String       @default("META")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  featureKey     String
+  /// APPROVED or DECLINED
+  status         String
+  decidedAt      DateTime     @default(now())
+
+  @@unique([platform, organizationId, featureKey])
+}
+
+/// Internal notifications for MAIRO administrators (AIOS).
+model PlatformAdminAlert {
+  id        String    @id @default(cuid())
+  platform  String    @default("META")
+  dedupeKey String    @unique
+  /// CRITICAL, HIGH, MEDIUM, LOW
+  severity  String
+  title     String
+  body      String    @db.Text
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([platform, readAt])
 }

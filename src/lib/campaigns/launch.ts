@@ -25,6 +25,8 @@ import {
   type Audience,
 } from "@/lib/campaigns/audience";
 import { metaPlacementTargeting } from "@/lib/campaigns/placements";
+import { featuresForCampaign } from "@/lib/meta-intelligence/capabilities";
+import { blockedForNewCampaigns } from "@/lib/meta-intelligence/feature-registry/guard";
 import { fetchImageBytes } from "@/lib/storage/blob";
 import { uploadAdVideo, waitForVideo } from "@/lib/meta/videos";
 import { creativeOfAccountAd } from "@/lib/meta/existing-ads";
@@ -181,11 +183,31 @@ export async function createMairoCampaign(
       )
     : null;
 
+  // Meta Intelligence: the registry features this campaign is built with,
+  // recorded so results can be compared per feature, and checked so a NEW
+  // campaign never uses something MAIRO has retired. Existing campaigns are
+  // never affected by this.
+  const metaFeatures = input.allocations.some((a) => a.platform === "META")
+    ? featuresForCampaign({
+        goal: input.objective,
+        hasConversionTracking: Boolean(await conversionTargetFor(input.organizationId, "META").catch(() => null)),
+        instantForm: input.destination?.type === "LEAD_FORM" && input.destination?.delivery === "META_NATIVE",
+        destination: input.destination?.type ?? null,
+        channel: input.destination?.channel ?? null,
+        placements: input.placements ?? [],
+        advantageAudience: Boolean(input.advantageAudience),
+        specialAdCategory: Boolean(input.specialAdCategory),
+        creativeKinds: (input.ads ?? []).map((a) => a.kind),
+      })
+    : [];
+  const retired = await blockedForNewCampaigns(metaFeatures);
+
   const campaign = await db.mairoCampaign.create({
     data: {
       organizationId: input.organizationId,
       name: input.name,
       objective: input.objective,
+      metaFeatures,
       totalDailyBudgetCents: input.totalDailyBudgetCents,
       startDate: input.startAt ?? null,
       startTimeZone: input.startTimeZone ?? null,
@@ -224,6 +246,21 @@ export async function createMairoCampaign(
     },
     include: { platformCampaigns: true },
   });
+
+  // Held as a draft, nothing sent to Meta, with the reason in plain words.
+  if (retired.length > 0) {
+    return {
+      mairoCampaignId: campaign.id,
+      results: campaign.platformCampaigns.map((child) => ({
+        platform: child.platform,
+        launched: false,
+        externalCampaignId: null,
+        error: `${retired.map((r) => r.reason).join(" ")} Change that setting and try again.`,
+        stage: "none" as const,
+        blocker: retired[0].reason,
+      })),
+    };
+  }
 
   const results = await Promise.all(
     campaign.platformCampaigns.map((child) =>

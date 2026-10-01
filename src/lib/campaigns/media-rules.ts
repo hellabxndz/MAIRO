@@ -9,24 +9,29 @@
 //
 // Sources: Meta's ad specs for feed, Stories and Reels placements.
 
+import { metaCapabilities } from "@/lib/meta-intelligence/capabilities";
+
 export type MediaCheck = {
   problems: string[];
   warnings: string[];
 };
 
-export const IMAGE_TYPES = ["image/jpeg", "image/png"] as const;
-export const VIDEO_TYPES = ["video/mp4", "video/quicktime"] as const;
+// The specs themselves live in metaCapabilities.creativeFormats (Meta Intelligence).
+const SPEC = metaCapabilities.creativeFormats;
+
+export const IMAGE_TYPES = SPEC.image.types;
+export const VIDEO_TYPES = SPEC.video.types;
 
 /** Meta's cap on an ad image. */
-export const MAX_IMAGE_BYTES = 30 * 1024 * 1024;
+export const MAX_IMAGE_BYTES = SPEC.image.maxBytes;
 /**
  * MAIRO's cap on an uploaded video. Meta takes up to 4GB, but an ad video
  * that size is a film, not an ad, and it has to travel through storage first.
  */
 export const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 /** Meta's limits on a video ad's length. */
-export const MIN_VIDEO_SECONDS = 1;
-export const MAX_VIDEO_SECONDS = 241 * 60;
+export const MIN_VIDEO_SECONDS = SPEC.video.minSeconds;
+export const MAX_VIDEO_SECONDS = SPEC.video.maxSeconds;
 
 const MB = 1024 * 1024;
 
@@ -46,10 +51,10 @@ export function checkImage(input: { type: string; bytes: number; width: number; 
     problems.push("Meta takes JPG or PNG pictures. Save it as one of those and try again.");
   }
   if (input.bytes > MAX_IMAGE_BYTES) problems.push("That picture is over 30MB, which is more than Meta accepts.");
-  if (input.width < 600 || input.height < 600) {
-    problems.push(`That picture is ${input.width}×${input.height}. Meta needs at least 600 pixels on each side.`);
-  } else if (input.width < 1080 && input.height < 1080) {
-    warnings.push("It's on the small side — 1080 pixels or more looks sharp on phones.");
+  if (input.width < SPEC.image.minSide || input.height < SPEC.image.minSide) {
+    problems.push(`That picture is ${input.width}×${input.height}. Meta needs at least ${SPEC.image.minSide} pixels on each side.`);
+  } else if (input.width < SPEC.image.sharpSide && input.height < SPEC.image.sharpSide) {
+    warnings.push(`It's on the small side — ${SPEC.image.sharpSide} pixels or more looks sharp on phones.`);
   }
   const r = input.width / input.height;
   if (r > 1.91 || r < 0.8) {

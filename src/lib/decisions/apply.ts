@@ -68,6 +68,15 @@ async function runChange(organizationId: string, c: DecisionChange): Promise<{ o
     case "guide":
       return { ok: true };
 
+    case "try-meta-feature":
+      // Consent for the next campaign only. Live campaigns stay as they are.
+      await db.platformFeatureOptIn.upsert({
+        where: { platform_organizationId_featureKey: { platform: "META", organizationId, featureKey: c.featureKey } },
+        create: { platform: "META", organizationId, featureKey: c.featureKey, status: "APPROVED" },
+        update: { status: "APPROVED", decidedAt: new Date() },
+      });
+      return { ok: true };
+
     case "set-budget": {
       const adapter = getAdapter(c.platform);
       if (!adapter) return { ok: false, error: "MAIRO can't change budgets on that network." };
@@ -292,6 +301,8 @@ function actionLabel(c: DecisionChange): string {
       return "Added a new ad version";
     case "widen-audience":
       return "Widened an audience";
+    case "try-meta-feature":
+      return "Approved a new Meta capability";
     case "guide":
       return "Pointed you to a fix";
   }
@@ -308,6 +319,8 @@ function summaryOf(c: DecisionChange): string {
       return `MAIRO added a new version of ${c.basedOnLabel} to ${c.campaignName}.`;
     case "widen-audience":
       return `MAIRO widened who ${c.campaignName} reaches: ${d.before} → ${d.after}.`;
+    case "try-meta-feature":
+      return `You approved MAIRO considering ${c.featureName} in your next campaign. Your running campaigns weren't changed.`;
     case "guide":
       return c.label;
   }

@@ -4,6 +4,7 @@ import type { DecisionDraft, DecisionInput } from "@/lib/decisions/types";
 import { missionGoal, readRequest, type MetricFamily, type MissionGoal, type Understood } from "@/lib/mission/goals";
 import type { BusinessFacts } from "@/lib/mission/planner";
 import { ALIGNED_AD_GOALS, engineDrafts, type EngineContext } from "./recommend";
+import { metaOptionsFor, metaRecommendationDrafts } from "@/lib/meta-intelligence/strategy-integration";
 import { engineInsights, type MeasuredInsight } from "./learning";
 import { buildStrategy, engineConfidence, structureObjective, type Confidence, type EngineInsight, type EngineStrategy, type StrategyInput } from "./core";
 
@@ -91,7 +92,7 @@ export async function savedInsights(organizationId: string): Promise<EngineInsig
  */
 export async function saveInsights(organizationId: string, items: MeasuredInsight[], now = new Date()): Promise<void> {
   for (const i of items) {
-    const { evidence, key, ...insight } = i;
+    const { evidence, key, retires, ...insight } = i;
     const existing = await db.mairoLearning.findUnique({ where: { organizationId_key: { organizationId, key } } });
     const evidenceJson = JSON.stringify({ evidence, insight });
     if (existing) {
@@ -104,7 +105,7 @@ export async function saveInsights(organizationId: string, items: MeasuredInsigh
       await db.mairoLearning.create({ data: { organizationId, key, category: "Strategy Engine", statement: i.statement, detail: i.adjustment, evidenceJson, confidence: i.confidence } });
     }
     await db.mairoLearning.updateMany({
-      where: { organizationId, key: { startsWith: `engine:${i.attribute}:`, not: key }, confidence: { not: "EARLY" } },
+      where: { organizationId, ...(retires ? { key: { in: retires } } : { key: { startsWith: `engine:${i.attribute}:`, not: key } }), confidence: { not: "EARLY" } },
       data: { confidence: "EARLY" },
     });
   }
@@ -186,6 +187,7 @@ export async function runStrategyEngine(organizationId: string, facts: BusinessF
     data: { spendCents: perf?.total?.spendCents ?? 0, results: resultsOf(objective.family, perf?.total) },
     insights,
     today: req.today,
+    metaOptions: (await metaOptionsFor(organizationId, objective.family).catch(() => [])).filter((m) => m.ok).map((m) => m.option),
   };
   return buildStrategy(input);
 }
@@ -210,7 +212,9 @@ export async function runEngineDecisions(organizationId: string, input: Decision
     promotionsLast30Days: promos.last30Days,
     today,
   };
-  return engineDrafts(input, ctx);
+  // Meta Intelligence: a newly validated Meta capability that fits this goal.
+  const meta = await metaRecommendationDrafts(organizationId, mission.primaryGoal as MissionGoal).catch(() => []);
+  return [...engineDrafts(input, ctx), ...meta];
 }
 
 /**

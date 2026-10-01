@@ -343,7 +343,7 @@ export function engineConfidence(input: { spendCents: number; results: number; s
 
 export type EngineInsight = {
   /** What's compared: format, hook, offer, audience, cta. */
-  attribute: "format" | "hook" | "offer" | "audience" | "cta";
+  attribute: "format" | "hook" | "offer" | "audience" | "cta" | "meta-feature";
   winner: string;
   loser: string;
   /** e.g. "cost per lead". */
@@ -378,6 +378,12 @@ export type EngineStrategy = {
   confidence: Confidence;
   learningsApplied: string[];
   organic: string | null;
+  /**
+   * Meta's optional tools (Advantage+ placements, audience…) MAIRO may use for
+   * this goal — validated, rolled out to this account, and not contradicted by
+   * this business's own results (Meta Intelligence).
+   */
+  metaTools: { name: string; why: string }[];
 };
 
 const ADJ: Record<MarketingObjective, string> = {
@@ -424,6 +430,8 @@ export type StrategyInput = {
   data: { spendCents: number; results: number };
   insights: EngineInsight[];
   today: string;
+  /** From Meta Intelligence: the Meta tools that fit this goal and account. */
+  metaOptions?: { featureKey: string; name: string; why: string }[];
 };
 
 export function buildStrategy(input: StrategyInput): EngineStrategy {
@@ -450,6 +458,7 @@ export function buildStrategy(input: StrategyInput): EngineStrategy {
   }
   const offerWin = input.insights.find((i) => i.attribute === "offer");
   if (offerWin) learningsApplied.push(offerWin.adjustment);
+  for (const m of input.insights.filter((i) => i.attribute === "meta-feature")) learningsApplied.push(m.adjustment);
 
   const promo = input.marketing.promotion;
   const promotion = promo ? promotionPlan({ start: promo.start, end: promo.end, today: input.today, campaignsRunning: input.marketing.campaignsRunning, promotionsLast30Days: input.marketing.promotionsLast30Days, hasPromoCreative: input.marketing.hasPromoCreative }) : null;
@@ -513,6 +522,7 @@ export function buildStrategy(input: StrategyInput): EngineStrategy {
     budget: recommendBudget({ monthlyCents: input.marketing.monthlyBudgetCents, currentDailyCents: input.marketing.currentDailyCents, family: o.family, pixelActive: input.business.pixelActive, hasLearnings: input.insights.length > 0 }),
     confidence,
     learningsApplied,
+    metaTools: (input.metaOptions ?? []).map((m) => ({ name: m.name, why: m.why })),
     organic: input.business.scale ? `Social Manager posts ${play.focus.slice(0, 3).map((f) => f.toLowerCase()).join(", ")} toward the same goal.` : null,
   };
 }

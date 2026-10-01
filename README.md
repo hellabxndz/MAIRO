@@ -560,6 +560,48 @@ One place decides the marketing strategy; the mission plan, Create, creatives, S
 - **Engine decisions** (`recommend.ts`, run with the daily Mairo Decisions): move up to 20% of budget from a campaign that can't produce the goal's result to one that does (only past learning, with ≥5 results, using its budget), more of a winning format, promotion urgency on the last day, a rest from discounts. Each says why and its "Expected purpose" with no guarantee; a rule decision about the same budget wins. Decision cards show **Recommended change · Why · Expected purpose** with **Approve / Modify / Decline**.
 - **Core rule** (`justifyAction`): every action must name the business objective it serves. Plan ad concepts, creative directions and running campaigns are checked; anything that can't answer isn't recommended (e.g. an awareness campaign on a small lead-gen budget, discount creative while discounts are resting).
 
+### MAIRO Meta Intelligence
+
+A permanent core layer that keeps MAIRO aligned with Meta advertising (`src/lib/meta-intelligence/`, admin at **AIOS → Meta Intelligence**). Meta evolves → MAIRO detects it → understands it → tests it → updates its knowledge → decides when it's actually useful. Customers never have to follow Meta's changes themselves.
+
+- **Security rule:** documentation is untrusted input. Meta Intelligence detects, analyses, proposes and tests. It **never changes code and never changes a customer's live campaign**. Production changes are structured registry/knowledge edits an OWNER approved through the gates.
+- **Sources** (`sources/`): official Meta sources first — Marketing API and Graph API changelogs, the versions page, Marketing API and Advantage+ docs, Instagram Platform, the Pages API, the developer blog, the Business Help Center and Meta for Business news. Only https pages on Meta's own hosts are fetched. Redirects must stay on the allowlist, fetches are capped at 15 s and 3 MB, and no credentials are sent. Authority comes from the host, and blogs, social posts and rumours never change behaviour. Admins can paste official text when a page can't be fetched.
+- **Change detector** (`change-detector/`): stores a snapshot of each source. The first look is a baseline; after that, added or removed text blocks are filed as updates. Each one is classified (new, deprecated, renamed or removed feature, endpoint or field; permission, objective, optimization, placement, targeting, creative, measurement, attribution, Advantage+ or AI change; API version release or retirement; policy). It also records urgency, risk, which registry feature is mentioned, and version release and retirement dates exactly as Meta states them.
+- **Interpretation** (`interpretation/`): the "META UPDATE" analysis. It answers what changed, why it matters, whether MAIRO uses it, which systems it affects, and what must change (customers, backend, campaign logic, UI, strategy knowledge). It also gives urgency, risk, and an evaluation: API availability, goal fit, replacement, permissions, API version, GA or beta, customer control, conflicts. It ends with a proposed integration plan.
+  - AI runs through a fixed schema with no tools, and is told the excerpt is untrusted. Rules are the fallback.
+  - Text that tries to instruct software is flagged and ignored.
+  - `useAutomatically` is never acted on.
+- **Meta Feature Registry** (`feature-registry/`, `PlatformFeature`): every Meta capability MAIRO relies on, with all the fields the spec lists (objectives, optimization goals, placements, formats, permissions, availability, regions, deprecation, replacement, last verified, source, MAIRO support and mapping, breaking risk, goal fit). Meta AI tools MAIRO hasn't evaluated are recorded as *Not supported*. Every change keeps the previous version.
+- **metaCapabilities** (`capabilities/`): every Meta value campaigns are built with now lives in one place. That covers objectives, optimization goals, placements, message destinations, targeting rules, bidding, creative specs, CTA types, pixel events and insight action types. `meta/campaigns.ts`, the adapter, `objectives.ts`, `placements.ts`, `destination.ts`, `creatives.ts` and `media-rules.ts` read from it, with identical behaviour.
+  - Campaigns record their features in `MairoCampaign.metaFeatures`.
+  - A **guard** stops NEW campaigns from using a feature the registry marks deprecated or unsupported. Existing campaigns are never touched.
+- **Versioned knowledge** (`knowledge-base/`): new versions supersede old ones and nothing is overwritten. Validated knowledge feeds the mission planner's and the assistant's prompts.
+- **Safe update pipeline** (`pipeline/`): Detected → Analyzed → Proposed → Development → Automated testing → Sandbox / test account → Approved → Production.
+  - Knowledge-only, non-breaking updates may fast-track.
+  - Anything touching campaign creation, budget, publishing, permissions, billing, optimization, targeting or live campaigns needs a green contract run **and** a sandbox or recorded test-account pass.
+  - Nothing reaches production while a critical test fails or none ran in the last 7 days.
+  - Every move is audited.
+  - Production applies the registry or knowledge change, creates any flag switched off, and writes the **Update Log** (what Meta changed, and what MAIRO changed because of it).
+- **Compatibility:** Supported / Partially supported / Testing / Not supported / Deprecated / Not applicable. Nothing is *Supported* until validated. Marking a feature supported requires a passing contract run and a sandbox or test-account run after its last change.
+- **Tests** (`testing/`):
+  - `npm run check:meta-contract` runs 16 tests of MAIRO's real Meta request code against a stubbed Meta, scoped to the run via `withGraphTransport` and never global. It covers authentication, permissions, ad account, campaign, ad set, creative and ad creation, status, budgets, optimization goals versus objectives, placements, media, insights, pagination, tokens, errors and API version. **It runs in `vercel-build`, so a critical failure blocks deployment.**
+  - Sandbox runs use `META_SANDBOX_ACCESS_TOKEN` / `META_SANDBOX_AD_ACCOUNT_ID` (a test account, never a customer's) and can try a candidate API version.
+  - Admins can record manual test-account checks.
+- **Feature flags** (`feature-flags/`): Off → Internal testing → Selected accounts → All eligible accounts (`META_<FEATURE>_ENABLED`). Setting a flag back to Off is the rollback. Internal accounts come from the flag's own list or `META_INTERNAL_ORG_IDS`.
+- **API versions** (`api-versioning/`): production (from `META_GRAPH_API_VERSION`, default in metaCapabilities), available, candidate and retired versions, plus migration status. Dates come only from an official source or an admin. Alerts fire at 180, 90 and 30 days and on the day: "MAIRO is currently using Meta API vXX.X. Meta plans to retire this version on [date]. Migration testing should begin."
+- **Deprecations** (`deprecations/`): affected systems and code, how many customer campaigns use it, the replacement, and a migration plan. New campaigns stop using it; existing ones keep running and move only with approval.
+- **Error monitoring** (`errors/`): every Graph error, grouped by code, subcode, endpoint shape and method, with account counts (hashed — never tokens). An unfamiliar error hitting three or more accounts within 48 hours is flagged as a *possible Meta API behavior change*, opened as an update and alerted.
+- **Capability discovery** (`discovery/`): each business's ad account (country, currency, status, capabilities, granted permissions). A feature is never shown as available without it, except GA features with no extra requirements.
+- **Strategy Engine integration** (`strategy-integration/`):
+  - The business goal always comes first. A Meta tool is considered only if it serves the active goal and is validated, rolled out to the account, and eligible.
+  - New tools also need the owner's yes.
+  - The business's own results get the last word: campaigns *with* versus *without* Advantage+ audience or placements are compared per business, under the learning loop's thresholds.
+  - The plan lists "Meta tools MAIRO may use".
+  - A validated new capability produces a one-time recommendation with **Approve / Learn more / Not now**. Approving records consent for the *next* campaign only.
+- **Admin notifications:** critical updates, retiring versions, failing contract tests, error spikes, deprecations that customer campaigns rely on, and suspicious source text. Shown in AIOS with severity.
+- The daily review cron runs it within a 12-second budget. `npm run check:meta-intelligence` covers the rest (29 checks, including the end-to-end path from a changed page to a production deprecation).
+- **Future platforms:** every table carries `platform`, and `src/lib/platform-intelligence/` defines the shared types and a registry where TikTok, Google Ads, YouTube or LinkedIn intelligence can plug in.
+
 ### MAIRO Social Manager (Scale only)
 
 Organic social media management, exclusive to **active Scale**. Everything else in MAIRO (ads) follows each plan's existing benefits; nothing on the ads side changed.

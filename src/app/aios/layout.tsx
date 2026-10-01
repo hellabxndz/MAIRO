@@ -9,6 +9,7 @@ const NAV = [
   { href: "/aios/creatives", label: "Creative pipeline" },
   { href: "/aios/copilot", label: "Copilot" },
   { href: "/aios/setup", label: "Setup check" },
+  { href: "/aios/meta-intelligence", label: "Meta Intelligence" },
 ];
 
 export default async function AiosLayout({ children }: { children: React.ReactNode }) {

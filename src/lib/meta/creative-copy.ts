@@ -1,3 +1,4 @@
+import { metaCapabilities } from "@/lib/meta-intelligence/capabilities";
 // Pulling the ad copy out of the concept the Creative agent wrote.
 //
 // The concept is markdown, written to a fixed structure by the system prompt in
@@ -46,11 +47,7 @@ const CTA_BY_PHRASE: [RegExp, string][] = [
 ];
 
 /** Every value Meta accepts, so a mapped one can be checked before it is sent. */
-export const META_CTA_TYPES = new Set([
-  "SHOP_NOW", "ORDER_NOW", "BOOK_TRAVEL", "SEE_MENU", "GET_QUOTE", "CALL_NOW",
-  "CONTACT_US", "SIGN_UP", "SUBSCRIBE", "DOWNLOAD", "APPLY_NOW", "GET_OFFER",
-  "MESSAGE_PAGE", "LEARN_MORE", "NO_BUTTON",
-]);
+export const META_CTA_TYPES = new Set<string>(metaCapabilities.ctaTypes);
 
 /** A heading is short. Anything longer is a sentence, not a section title. */
 const MAX_HEADING_CHARS = 40;

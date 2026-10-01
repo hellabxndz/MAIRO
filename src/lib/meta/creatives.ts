@@ -1,6 +1,7 @@
 import { metaGraphRequest } from "@/lib/meta/client";
 import { META_CTA_TYPES } from "@/lib/meta/creative-copy";
 import { CHANNEL_META, type Destination } from "@/lib/campaigns/destination";
+import { metaCapabilities } from "@/lib/meta-intelligence/capabilities";
 
 // Turning a picture and some copy into an ad that can actually run.
 //
@@ -100,15 +101,7 @@ export type AdCreativeInput = {
 };
 
 /** The individual features that made up Meta's retired standard_enhancements bundle. */
-export const STANDARD_ENHANCEMENT_FEATURES = [
-  "image_touchups",
-  "image_brightness_and_contrast",
-  "image_templates",
-  "video_auto_crop",
-  "text_optimizations",
-  "enhance_cta",
-  "inline_comment",
-] as const;
+export const STANDARD_ENHANCEMENT_FEATURES = metaCapabilities.creativeFormats.retiredStandardEnhancements;
 
 /**
  * Builds the creative: the thing the person actually sees.
@@ -309,21 +302,6 @@ export async function createMetaAd(input: {
  * about an invalid enum and no hint about which one.
  */
 export function metaCustomEventType(metaEvent: string): string {
-  const map: Record<string, string> = {
-    Purchase: "PURCHASE",
-    Lead: "LEAD",
-    CompleteRegistration: "COMPLETE_REGISTRATION",
-    Contact: "CONTACT",
-    Schedule: "SCHEDULE",
-    StartTrial: "START_TRIAL",
-    Subscribe: "SUBSCRIBE",
-    SubmitApplication: "SUBMIT_APPLICATION",
-    AddToCart: "ADD_TO_CART",
-    InitiateCheckout: "INITIATED_CHECKOUT",
-    ViewContent: "VIEW_CONTENT",
-    FindLocation: "FIND_LOCATION",
-    Search: "SEARCH",
-    Donate: "DONATE",
-  };
-  return map[metaEvent] ?? "OTHER";
+  // The mapping lives in metaCapabilities.conversionEvents.
+  return metaCapabilities.conversionEvents[metaEvent] ?? "OTHER";
 }
