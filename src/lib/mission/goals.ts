@@ -31,16 +31,16 @@ export type MetricFamily = "sales" | "leads" | "bookings" | "calls" | "traffic" 
 export const MISSION_GOALS = [
   { key: "INCREASE_SALES", label: "Increase sales", title: "Sell More", sentence: "MAIRO is focused on turning interest into purchases.", action: "BUY", metrics: "sales", social: "INCREASE_SALES" },
   { key: "GENERATE_LEADS", label: "Generate leads", title: "Get More Leads", sentence: "MAIRO is focused on getting potential customers to contact you.", action: "CONTACT", metrics: "leads", social: "GENERATE_LEADS" },
-  { key: "GET_BOOKINGS", label: "Get more bookings", title: "Get More Appointments", sentence: "MAIRO is focused on increasing appointment requests for your business.", action: "BOOK", metrics: "bookings", social: "GET_BOOKINGS" },
+  { key: "GET_BOOKINGS", label: "Get more appointments", title: "Get More Appointments", sentence: "MAIRO is focused on increasing appointment requests for your business.", action: "BOOK", metrics: "bookings", social: "GET_BOOKINGS" },
   { key: "GET_CALLS", label: "Get more calls", title: "Get More Calls", sentence: "MAIRO is focused on getting people to pick up the phone and call you.", action: "CALL", metrics: "calls", social: "GENERATE_LEADS" },
   { key: "WEBSITE_TRAFFIC", label: "Increase website traffic", title: "Bring People to Your Website", sentence: "MAIRO is focused on sending interested people to your website.", action: "VISIT_WEBSITE", metrics: "traffic", social: "WEBSITE_TRAFFIC" },
   { key: "NEW_PRODUCT", label: "Promote a new product", title: "Launch Your New Product", sentence: "MAIRO is building awareness and purchase intent around your new product.", action: "BUY", metrics: "sales", social: "NEW_PRODUCT" },
-  { key: "NEW_SERVICE", label: "Promote a new service", title: "Launch Your New Service", sentence: "MAIRO is introducing your new service to the people most likely to want it.", action: "BOOK", metrics: "bookings", social: "NEW_SERVICE" },
-  { key: "BRAND_AWARENESS", label: "Grow brand awareness", title: "Get Your Business Known", sentence: "MAIRO is focused on putting your business in front of the right local people.", action: "DISCOVER", metrics: "awareness", social: "BRAND_AWARENESS" },
+  { key: "NEW_SERVICE", label: "Promote a service", title: "Launch Your New Service", sentence: "MAIRO is introducing your new service to the people most likely to want it.", action: "BOOK", metrics: "bookings", social: "NEW_SERVICE" },
+  { key: "BRAND_AWARENESS", label: "Increase brand awareness", title: "Get Your Business Known", sentence: "MAIRO is focused on putting your business in front of the right local people.", action: "DISCOVER", metrics: "awareness", social: "BRAND_AWARENESS" },
   { key: "GROW_SOCIAL", label: "Grow social media", title: "Grow Your Social Following", sentence: "MAIRO is focused on content people follow, save and share.", action: "FOLLOW", metrics: "social", social: "GROW_FOLLOWERS" },
   { key: "PROMOTE_SALE", label: "Promote a sale", title: "Promote Your Sale", sentence: "MAIRO is making sure the right people hear about your sale before it ends.", action: "BUY", metrics: "sales", social: "PROMOTE_SALE" },
   { key: "PROMOTE_EVENT", label: "Promote an event", title: "Fill Your Event", sentence: "MAIRO is building attendance for your event.", action: "CONTACT", metrics: "awareness", social: "PROMOTE_EVENT" },
-  { key: "FOOT_TRAFFIC", label: "Bring customers into my location", title: "Bring People Through the Door", sentence: "MAIRO is focused on getting local people to come in.", action: "VISIT_LOCATION", metrics: "visits", social: "BRAND_AWARENESS" },
+  { key: "FOOT_TRAFFIC", label: "Bring people into my location", title: "Bring People Through the Door", sentence: "MAIRO is focused on getting local people to come in.", action: "VISIT_LOCATION", metrics: "visits", social: "BRAND_AWARENESS" },
   { key: "REPEAT_CUSTOMERS", label: "Increase repeat customers", title: "Bring Customers Back", sentence: "MAIRO is focused on bringing past customers back again.", action: "BUY", metrics: "sales", social: "REPEAT_CUSTOMERS" },
   { key: "RECOMMEND", label: "Let MAIRO recommend", title: "MAIRO's Recommendation", sentence: "MAIRO chose the goal that fits your business best.", action: "BUY", metrics: "sales", social: "RECOMMEND" },
 ] as const satisfies readonly { key: string; label: string; title: string; sentence: string; action: CustomerAction; metrics: MetricFamily; social: SocialGoalKey }[];
@@ -353,6 +353,8 @@ export type ResultFigures = {
   bookings?: number | null;
   contacts?: number | null;
   landingPageViews?: number | null;
+  conversions?: number | null;
+  engagement?: number | null;
   clicks: number | null;
   reach: number | null;
   impressions: number | null;
@@ -371,6 +373,7 @@ const per = (spend: number | null, count: number | null | undefined) => (spend !
  * clicks are never shown as leads, and engagement is never shown as sales.
  */
 export function resultsForGoal(family: MetricFamily, m: ResultFigures, social?: { likes: number; comments: number; posts: number } | null): ResultTile[] {
+  const spend: ResultTile = { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." };
   switch (family) {
     case "sales":
       return [
@@ -383,40 +386,40 @@ export function resultsForGoal(family: MetricFamily, m: ResultFigures, social?: 
       return [
         { label: "Leads", value: n(m.leads), hint: "Forms and lead events tracked from your ads." },
         { label: "Cost per lead", value: money(per(m.spendCents, m.leads)), hint: "Ad spend for each lead." },
-        { label: "Calls and messages", value: n(m.contacts), hint: "When Meta can track them." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        { label: "Contact actions", value: n(m.contacts), hint: "Calls, messages and Contact events, when Meta can track them." },
+        spend,
       ];
     case "bookings":
       return [
-        { label: "Booking actions", value: n(m.bookings), hint: "Bookings your website's tracking reported. Appointment systems aren't connected." },
+        { label: "Booking actions", value: n(m.bookings), hint: "Bookings your website's tracking reported (Meta's Schedule event)." },
+        { label: "Appointment leads", value: n((m.leads ?? 0) + (m.contacts ?? 0) || null), hint: "People who asked about an appointment by form, call or message, when tracked." },
         { label: "Cost per booking", value: money(per(m.spendCents, m.bookings)), hint: "Ad spend for each tracked booking." },
-        { label: "Leads and messages", value: n((m.leads ?? 0) + (m.contacts ?? 0) || null), hint: "People who reached out, when tracked." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        spend,
       ];
     case "calls":
       return [
         { label: "Calls and messages", value: n(m.contacts), hint: "Taps to call and conversations started, when Meta can track them." },
         { label: "Cost per contact", value: money(per(m.spendCents, m.contacts)), hint: "Ad spend for each." },
         { label: "Leads", value: n(m.leads), hint: "Forms tracked from your ads." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        spend,
       ];
     case "traffic":
       return [
-        { label: "Landing page views", value: n(m.landingPageViews), hint: "People whose browser actually loaded your page." },
-        { label: "Clicks", value: n(m.clicks), hint: "Clicks on your ads." },
+        { label: "Landing page views", value: n(m.landingPageViews), hint: "People whose browser actually loaded your page — not just clicks." },
         { label: "Cost per visit", value: money(per(m.spendCents, m.landingPageViews)), hint: "Ad spend for each landing page view." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        { label: "Conversion activity", value: n(m.conversions), hint: "Purchases, leads and other events your site reported after the visit." },
+        spend,
       ];
     case "visits":
       return [
         { label: "Local reach", value: n(m.reach), hint: "People who saw your ads. Store visits can't be measured from ads, so MAIRO doesn't guess them." },
         { label: "Impressions", value: n(m.impressions), hint: "Times your ads were shown." },
         { label: "Calls and messages", value: n(m.contacts), hint: "When tracked." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        spend,
       ];
     case "social":
       return [
-        { label: "Likes and comments", value: social ? n(social.likes + social.comments) : null, hint: "On posts MAIRO published (Scale)." },
+        { label: "Likes and comments", value: social ? n(social.likes + social.comments) : null, hint: "On posts MAIRO published (Scale). Engagement, not sales." },
         { label: "Posts published", value: social ? n(social.posts) : null, hint: "By Social Manager." },
         { label: "Reach from ads", value: n(m.reach), hint: "People who saw your ads." },
         { label: "Video views", value: n(m.videoViews), hint: "From your ads." },
@@ -427,7 +430,7 @@ export function resultsForGoal(family: MetricFamily, m: ResultFigures, social?: 
         { label: "Reach", value: n(m.reach), hint: "People who saw your ads." },
         { label: "Impressions", value: n(m.impressions), hint: "Times your ads were shown." },
         { label: "Video views", value: n(m.videoViews), hint: "From your ads." },
-        { label: "Ad spend", value: money(m.spendCents), hint: "Spent on ads in this period." },
+        { label: "Engagement", value: n(m.engagement), hint: "Reactions, comments, shares and clicks on your ads. Attention, not sales." },
       ];
   }
 }

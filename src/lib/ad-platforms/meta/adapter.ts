@@ -671,6 +671,7 @@ function normalizeInsights(row: MetaInsightRow) {
     contacts: actionSum(row.actions, CONTACT_TYPES),
     landingPageViews: actionValue(row.actions, ["landing_page_view", "omni_landing_page_view"]),
     videoViews: actionValue(row.actions, ["video_view"]),
+    engagement: actionValue(row.actions, ["post_engagement"]),
     // Prefer Meta's own ROAS; fall back to deriving it, but only when both
     // parts are actually known.
     roas:

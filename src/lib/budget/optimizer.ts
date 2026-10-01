@@ -407,6 +407,7 @@ export function aggregate(all: PlatformMetrics[]): PlatformMetrics {
     bookings: sum((m) => m.bookings ?? null),
     contacts: sum((m) => m.contacts ?? null),
     landingPageViews: sum((m) => m.landingPageViews ?? null),
+    engagement: sum((m) => m.engagement ?? null),
     shares: sum((m) => m.shares),
   };
 }

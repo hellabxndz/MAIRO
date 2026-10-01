@@ -5,7 +5,8 @@ import { wallClockInZone, instantFromLocal } from "@/lib/campaigns/schedule";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { socialAccess } from "@/lib/social/access";
 import { loadStrategy, savePromotion, setGoal, socialLearnings } from "@/lib/social/manager";
-import type { GoalKey as SocialGoalKey, PromotionDetails } from "@/lib/social/goals";
+import { goalInfo as socialGoalInfo, type GoalKey as SocialGoalKey, type PromotionDetails } from "@/lib/social/goals";
+import { effectiveLevel } from "@/lib/decisions/store";
 import { MISSION_GOALS, dateIn, goalPhrase, missionGoal, missingQuestions, resultsForGoal, type MissionGoal, type ResultFigures, type ResultTile, type Understood } from "./goals";
 import { buildMissionPlan, interpretRequest, missionPlanSchema, understandBusiness, type MissionPlan } from "./planner";
 
@@ -335,23 +336,46 @@ export async function tellMairo(organizationId: string, text: string, now = new 
 
 // --- What MAIRO is doing, what happened, what it learned, what's next --------------
 
-export type MissionActivity = { campaignsRunning: number; creativesTesting: number; socialScheduled: number | null; socialPublished: number | null; promotionsActive: number };
+export type MissionActivity = {
+  campaignsRunning: number;
+  creativesTesting: number;
+  /** How MAIRO is optimizing the running campaigns, in plain words. */
+  optimizing: { campaigns: number; how: "automatic" | "autopilot" | "suggest" };
+  /** Null when not on active Scale: Social Manager isn't part of their plan. */
+  socialScheduled: number | null;
+  socialPublished: number | null;
+  nextPost: { when: string; network: "Instagram" | "Facebook" } | null;
+  organicGoal: string | null;
+  promotionsActive: number;
+  promotion: string | null;
+};
 
 export async function missionActivity(organizationId: string, now = new Date()): Promise<MissionActivity> {
-  const [running, ads, scale, scheduled, published, promos] = await Promise.all([
+  const [running, ads, scale, scheduled, published, promos, level, next, strategy, zone] = await Promise.all([
     db.mairoCampaign.findMany({ where: { organizationId, status: "ACTIVE" }, select: { id: true } }),
     db.campaignAd.count({ where: { mairoCampaign: { organizationId, status: "ACTIVE" } } }),
     socialAccess(organizationId),
     db.instagramPost.count({ where: { organizationId, status: { in: ["SCHEDULED", "SUGGESTED"] }, scheduledFor: { gt: now, lte: new Date(now.getTime() + 7 * DAY) } } }),
     db.instagramPost.count({ where: { organizationId, status: "PUBLISHED", postedAt: { gte: new Date(now.getTime() - 7 * DAY) } } }),
-    db.missionNote.count({ where: { organizationId, kind: "PROMOTION", active: true, endsAt: { gte: now } } }),
+    db.missionNote.findMany({ where: { organizationId, kind: "PROMOTION", active: true, endsAt: { gte: now } }, orderBy: { endsAt: "asc" }, select: { text: true } }),
+    effectiveLevel(organizationId),
+    db.instagramPost.findFirst({ where: { organizationId, status: "SCHEDULED", scheduledFor: { gt: now } }, orderBy: { scheduledFor: "asc" }, select: { scheduledFor: true, network: true } }),
+    db.socialStrategy.findUnique({ where: { organizationId }, select: { goal: true } }),
+    zoneOf(organizationId),
   ]);
+  const when = next?.scheduledFor
+    ? new Intl.DateTimeFormat("en-US", { weekday: "long", hour: "numeric", minute: "2-digit", timeZone: zone }).format(next.scheduledFor).replace(" at ", " · ")
+    : null;
   return {
     campaignsRunning: running.length,
     creativesTesting: ads,
+    optimizing: { campaigns: running.length, how: level === "AUTOPILOT" ? "autopilot" : level === "ASSISTED" ? "automatic" : "suggest" },
     socialScheduled: scale.ok ? scheduled : null,
     socialPublished: scale.ok ? published : null,
-    promotionsActive: promos,
+    nextPost: scale.ok && when && next ? { when, network: next.network === "FACEBOOK" ? "Facebook" : "Instagram" } : null,
+    organicGoal: scale.ok && strategy ? socialGoalInfo(strategy.goal).label : null,
+    promotionsActive: promos.length,
+    promotion: promos[0]?.text ?? null,
   };
 }
 
@@ -375,6 +399,8 @@ export async function missionResults(organizationId: string, goal: MissionGoal, 
     bookings: t?.bookings ?? null,
     contacts: t?.contacts ?? null,
     landingPageViews: t?.landingPageViews ?? null,
+    conversions: t?.conversions ?? null,
+    engagement: t?.engagement ?? null,
     clicks: t?.clicks ?? null,
     reach: t?.reach ?? null,
     impressions: t?.impressions ?? null,

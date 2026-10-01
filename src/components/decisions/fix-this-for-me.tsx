@@ -9,7 +9,7 @@ import { OneClickFixModal } from "./approval-modal";
  * The button the assistant puts under its answer (One-Click Fix). Opens the
  * confirmation panel with exactly what Mairo wants to change.
  */
-export function FixThisForMe({ decisionIds }: { decisionIds: string[] }) {
+export function FixThisForMe({ decisionIds, label = "Fix This For Me" }: { decisionIds: string[]; label?: string }) {
   const [decisions, setDecisions] = useState<DecisionView[] | null>(null);
   const [pending, start] = useTransition();
   const [note, setNote] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function FixThisForMe({ decisionIds }: { decisionIds: string[] }) {
         className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white disabled:opacity-60"
         style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
       >
-        {pending ? "Opening…" : "Fix This For Me"}
+        {pending ? "Opening…" : label}
       </button>
       {note && <p className="mt-2 text-[12px] text-muted">{note}</p>}
       {decisions && <OneClickFixModal decisions={decisions} onClose={() => setDecisions(null)} />}

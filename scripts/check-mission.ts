@@ -140,7 +140,10 @@ async function main() {
     assert.equal(resultsForGoal("leads", m)[1].value, "$14.71");
     const bookings = resultsForGoal("bookings", m);
     assert.equal(bookings[0].value, null, "no booking events tracked → not tracked, not leads or clicks");
-    assert.deepEqual(labels("awareness").slice(0, 2), ["Reach", "Impressions"]);
+    assert.deepEqual(labels("awareness"), ["Reach", "Impressions", "Video views", "Engagement"]);
+    assert.deepEqual(labels("bookings").slice(0, 3), ["Booking actions", "Appointment leads", "Cost per booking"]);
+    assert.deepEqual(labels("traffic").slice(0, 3), ["Landing page views", "Cost per visit", "Conversion activity"]);
+    assert.ok(resultsForGoal("awareness", m).every((t) => !/sale|purchase|revenue/i.test(t.label)), "awareness never shows sales");
     assert.ok(!labels("leads").includes("Purchases") && !labels("awareness").includes("Revenue tracked"));
     assert.equal(resultsForGoal("traffic", m)[0].value, null, "clicks aren't shown as landing page views");
   });
@@ -212,7 +215,7 @@ async function main() {
       const before = (await activeMission(orgId))!.id;
       const r = await tellMairo(orgId, "I need more leads this month.");
       assert.equal(r.kind, "proposal");
-      assert.match(r.message, /Your current goal is getting more bookings\. MAIRO recommends changing it to generating leads/);
+      assert.match(r.message, /Your current goal is getting more appointments\. MAIRO recommends changing it to generating leads/);
       assert.equal((await activeMission(orgId))?.id, before);
       assert.equal((await proposedMission(orgId))?.primaryGoal, "GENERATE_LEADS");
     });

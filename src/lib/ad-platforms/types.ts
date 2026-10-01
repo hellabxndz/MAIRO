@@ -324,6 +324,8 @@ export type PlatformMetrics = {
   /** Calls, messages started and Contact events. */
   contacts?: number | null;
   landingPageViews?: number | null;
+  /** Meta's post engagement: reactions, comments, shares, clicks. Attention, never sales. */
+  engagement?: number | null;
 };
 
 export const EMPTY_METRICS: PlatformMetrics = {

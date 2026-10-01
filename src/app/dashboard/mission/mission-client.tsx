@@ -221,3 +221,18 @@ export function EndNote({ id, label }: { id: string; label: string }) {
     </button>
   );
 }
+
+/** The two things an owner does from the goal: change it, or tell MAIRO what's new. */
+export function GoalActions() {
+  const [open, setOpen] = useState<"goal" | "tell" | null>(null);
+  return (
+    <div className="mt-5">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => setOpen(open === "goal" ? null : "goal")} className={open === "goal" ? primary : secondary} aria-expanded={open === "goal"}>Change goal</button>
+        <button type="button" onClick={() => setOpen(open === "tell" ? null : "tell")} className={open === "tell" ? primary : secondary} aria-expanded={open === "tell"}>Tell MAIRO something new</button>
+      </div>
+      {open === "goal" && <div className="mt-4"><GoalPicker onCancel={() => setOpen(null)} /></div>}
+      {open === "tell" && <div className="mt-4"><TellMairo /></div>}
+    </div>
+  );
+}

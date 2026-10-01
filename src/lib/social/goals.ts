@@ -9,7 +9,7 @@
 export const GOALS = [
   { key: "INCREASE_SALES", label: "Increase sales", objective: "Sales" },
   { key: "GENERATE_LEADS", label: "Generate more leads", objective: "Leads" },
-  { key: "GET_BOOKINGS", label: "Get more bookings", objective: "Bookings" },
+  { key: "GET_BOOKINGS", label: "Get more appointments", objective: "Bookings" },
   { key: "NEW_PRODUCT", label: "Promote a new product", objective: "Product launch" },
   { key: "NEW_SERVICE", label: "Promote a new service", objective: "Service launch" },
   { key: "GROW_FOLLOWERS", label: "Grow followers", objective: "Followers" },

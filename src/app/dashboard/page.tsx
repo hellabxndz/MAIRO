@@ -48,8 +48,9 @@ import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
 import { activeMission, missionActivity, missionLearned, missionRecommendations, proposedMission } from "@/lib/mission/store";
 import { missionGoal, resultsForGoal } from "@/lib/mission/goals";
-import { DoingNow, GoalResults, Learned, MissionHeadline, NextActions } from "@/components/mission/mission-status";
-import { GoalPicker, TellMairo } from "@/app/dashboard/mission/mission-client";
+import { DoingNow, GoalCampaigns, GoalHero, GoalResults, Learned, NextActions, SocialCard, type NextItem } from "@/components/mission/mission-status";
+import { goalOption } from "@/lib/campaigns/objectives";
+import { GoalPicker } from "@/app/dashboard/mission/mission-client";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -410,27 +411,68 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     );
   }
 
-  const missionBlock = mission && missionDoing ? (
-    <section className="mb-6 space-y-4">
-      <div className="rounded-2xl border border-violet/25 bg-violet/[0.05] p-5">
-        <p className="mb-3 text-[15px] text-white/85">{greeting}</p>
-        <MissionHeadline title={mission.title} sentence={mission.plan.mission} secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null} />
-        <Link href="/dashboard/mission" className="mt-3 inline-block text-[13px] text-violet-bright underline underline-offset-4">See the plan</Link>
+  // The Simple dashboard, when the business has a goal: five questions, in
+  // order — what are we trying to do, what is MAIRO doing, what happened,
+  // what did MAIRO learn, what happens next. Raw advertising figures live in
+  // Advanced.
+  if (mission && missionDoing) {
+    const g = missionGoal(mission.primaryGoal);
+    const approvals = overview.insights
+      .filter((d) => d.changes.some((c) => c.type !== "guide"))
+      .slice(0, 2)
+      .map((d) => ({ title: d.title, text: d.recommendation, approveDecisionIds: [d.id], href: "/dashboard/decisions", label: "See details" }));
+    // Something blocking the ads outranks every other "next": the owner can't
+    // be told things are going well while Meta can't run the campaign.
+    const blocker = readiness.next && !readiness.ready && readiness.next.owner === "you"
+      ? [{ title: readiness.next.label, text: readiness.next.detail, href: readiness.next.href, label: "Fix this" }]
+      : [];
+    const nextItems: NextItem[] = [
+      ...blocker,
+      ...(proposal ? [{ title: "MAIRO created a new plan for you", text: `"${proposal.title}" is ready. It replaces your current goal once you approve it.`, href: "/dashboard/mission", label: "Review and approve" }] : []),
+      ...approvals,
+      ...missionNext,
+    ].slice(0, 3);
+    const hasResults = (t.spendCents ?? 0) > 0;
+    const fallback = missionDoing.campaignsRunning === 0
+      ? "MAIRO will start working as soon as your planned campaign is confirmed."
+      : hasResults
+        ? "Your current campaign is performing consistently. MAIRO recommends continuing to collect data before making major changes."
+        : "MAIRO is waiting for the first results from your campaigns before recommending any changes.";
+    return (
+      <div className="mx-auto max-w-[1440px]">
+        {header}
+        <GoalHero
+          greeting={greeting}
+          primary={g.label}
+          title={mission.title}
+          sentence={mission.plan.mission}
+          strategy={mission.plan.strategy}
+          secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null}
+          startedAt={mission.approvedAt}
+        />
+        <div className="mt-6">{alerts}</div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <DoingNow activity={missionDoing} />
+          <GoalResults tiles={resultsForGoal(g.metrics, t)} days={days} hasData={t.spendCents !== null} />
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <Learned items={missionLearnedItems} />
+          <NextActions items={nextItems} fallback={fallback} />
+        </div>
+        <div className="mt-4"><SocialCard activity={missionDoing} upgradeHref="/dashboard/billing" /></div>
+        <div className="mt-4">{weeklyCard}</div>
+        <div className="mt-4">
+          <GoalCampaigns campaigns={overview.campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status, goalLabel: goalOption(c.objective).label }))} />
+        </div>
+        <p className="mt-6 text-[13px] text-muted">
+          Want the detailed advertising figures — spend, CTR, CPC, CPM, ad sets and creative breakdowns? Switch to <span className="text-white">Advanced</span> at the top.
+        </p>
+        <ResultsNote className="mt-4" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <DoingNow activity={missionDoing} />
-        <GoalResults tiles={resultsForGoal(missionGoal(mission.primaryGoal).metrics, t)} days={days} hasData={t.spendCents !== null} />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Learned items={missionLearnedItems} />
-        <NextActions items={missionNext} fallback={`MAIRO keeps working on "${mission.title}" and checks the results every day.`} />
-      </div>
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
-        <h3 className="mb-2 text-[14px] font-semibold text-white">Tell MAIRO something new</h3>
-        <TellMairo />
-      </div>
-    </section>
-  ) : proposal ? (
+    );
+  }
+
+  const missionBlock = proposal ? (
     <section className="mb-6 rounded-2xl border border-violet/35 bg-violet/[0.07] p-5">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO created a plan</p>
       <h2 className="mt-1 text-[20px] font-semibold text-white">🎯 {proposal.title}</h2>
@@ -446,22 +488,21 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
       {header}
       {alerts}
       {missionBlock}
-      {!mission && <MorningBrief
+      <MorningBrief
         greeting={greeting}
         brief={report?.brief ?? null}
         frequency={fresh?.briefFrequency ?? "DAILY"}
         actions={briefActions}
         pendingDecisions={overview.pendingCount}
-      />}
+      />
       <div className="mt-4">{weeklyCard}</div>
-      {/* With a mission, results for its goal are shown above instead. */}
-      {!mission && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
         <KpiCard label="Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />
         <KpiCard label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.bag} />
         <KpiCard label="Cost per sale" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="What you paid in ads, on average, for each sale." />
         <KpiCard label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.bars} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
-      </div>}
+      </div>
       <div className="mt-4">
         <BusinessHealthScore health={report?.health ?? null} />
       </div>
