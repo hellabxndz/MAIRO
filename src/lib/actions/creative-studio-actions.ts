@@ -95,6 +95,7 @@ async function settle(ledgerId: string, outcome: PipelineOutcome): Promise<Studi
   if (outcome.ok) {
     await confirmCredits(ledgerId, outcome.assetId, outcome.versionId);
     revalidatePath("/dashboard/creative-studio");
+  revalidatePath("/dashboard/creatives", "layout");
     return {
       assetId: outcome.assetId,
       versionId: outcome.versionId,

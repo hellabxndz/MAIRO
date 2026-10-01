@@ -174,7 +174,7 @@ export async function requestCreativeAction(
   // the request itself. The page offers a retry button when aiConcept is null.
   await tryGenerateConcept(created.id);
 
-  revalidatePath("/dashboard/creatives");
+  revalidatePath("/dashboard/creatives", "layout");
   return undefined;
 }
 
@@ -282,7 +282,7 @@ export async function regenerateConceptAction(
   if (!owned) return { error: "Not found" };
 
   const error = await tryGenerateConcept(creativeRequestId);
-  revalidatePath("/dashboard/creatives");
+  revalidatePath("/dashboard/creatives", "layout");
   return error ? { error } : undefined;
 }
 
@@ -328,6 +328,6 @@ export async function refineConceptAction(
   });
 
   const error = await tryGenerateConcept(creativeRequestId);
-  revalidatePath("/dashboard/creatives");
+  revalidatePath("/dashboard/creatives", "layout");
   return error ? { error } : undefined;
 }

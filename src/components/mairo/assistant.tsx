@@ -142,7 +142,12 @@ export function MairoAssistant({
   // Other screens can open the panel — the Create wizard's "Ask" button does —
   // without owning its state.
   useEffect(() => {
-    const onOpen = () => setOpen(true);
+    // An optional starting question ("How are my ads doing?") comes in the event's detail.
+    const onOpen = (e: Event) => {
+      setOpen(true);
+      const prompt = (e as CustomEvent<{ prompt?: string }>).detail?.prompt;
+      if (typeof prompt === "string" && prompt) setInput(prompt);
+    };
     window.addEventListener(OPEN_ASSISTANT_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_ASSISTANT_EVENT, onOpen);
   }, []);
@@ -168,19 +173,19 @@ export function MairoAssistant({
 
   return (
     <>
-      {/* The launcher. Above the mobile bottom bar rather than behind it. */}
+      {/* The launcher, on wide screens. A phone already has Ask in the top bar
+          and Assistant in the bottom bar, and a floating pill there covers the
+          cards it sits over. */}
       {!open && !onAssistantPage && (
         <button
           type="button"
           onClick={() => setOpen(true)}
           aria-label={`Ask ${assistantName}`}
-          className="fixed bottom-[88px] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-white transition-transform duration-300 [transition-timing-function:var(--ease-mairo)] hover:scale-105 lg:bottom-6 lg:right-6"
+          className="fixed bottom-6 right-6 z-40 hidden h-12 items-center lg:inline-flex gap-2 rounded-full px-4 text-[14px] font-medium text-white transition-transform duration-300 [transition-timing-function:var(--ease-mairo)] hover:scale-[1.03]"
           style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
         >
-          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
-            <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M12 3.8v16.4M3.8 9.6h16.4M3.8 14.4h16.4" stroke="currentColor" strokeWidth="1.3" />
-          </svg>
+          <span aria-hidden>✨</span>
+          Ask {assistantName}
         </button>
       )}
 
@@ -260,7 +265,8 @@ export function MairoAssistant({
                     const text = marker === -1 ? raw : raw.slice(0, marker);
                     const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
                     const planReady = m.role === "assistant" && missionProposed(m.parts);
-                    if (!text && fixIds.length === 0 && !planReady) return null;
+                    const links = m.role === "assistant" ? goToLinks(m.parts) : [];
+                    if (!text && fixIds.length === 0 && !planReady && links.length === 0) return null;
                     return (
                       <div
                         key={m.id}
@@ -280,6 +286,11 @@ export function MairoAssistant({
                         >
                           {text}
                           {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
+                          {links.map((l) => (
+                            <a key={l.href} href={l.href} className="mt-3 mr-2 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
+                              {l.label} →
+                            </a>
+                          ))}
                           {planReady && (
                             <a href="/dashboard/mission" className="mt-3 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
                               Review MAIRO&rsquo;s plan
@@ -355,4 +366,17 @@ function missionProposed(parts: unknown[]): boolean {
     const part = p as { type?: string; state?: string; output?: { missionId?: unknown } };
     return (part.type === "tool-propose_mission" || part.type === "tool-tell_mairo") && part.state === "output-available" && typeof part.output?.missionId === "string";
   });
+}
+
+/** go_to's destinations, as buttons. Only MAIRO's own pages (the tool's fixed list). */
+export function goToLinks(parts: unknown[]): { href: string; label: string }[] {
+  const out: { href: string; label: string }[] = [];
+  for (const p of parts) {
+    const part = p as { type?: string; state?: string; output?: { href?: unknown; label?: unknown } };
+    if (part.type !== "tool-go_to" || part.state !== "output-available") continue;
+    const href = part.output?.href;
+    const label = part.output?.label;
+    if (typeof href === "string" && href.startsWith("/dashboard") && typeof label === "string" && !out.some((o) => o.href === href)) out.push({ href, label });
+  }
+  return out;
 }

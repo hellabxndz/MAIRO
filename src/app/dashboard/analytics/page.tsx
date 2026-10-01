@@ -13,6 +13,18 @@ import type { AdPlatform } from "@/generated/prisma/enums";
 import { compare, metric } from "@/lib/analytics/metrics";
 import { parseRange, RANGE_KEYS, rangeInfo, type RangeKey } from "@/lib/analytics/ranges";
 import { MetricTile } from "@/components/mairo/metric-tile";
+import { db } from "@/lib/db";
+import { viewMode } from "@/lib/view-mode";
+import { activeMission } from "@/lib/mission/store";
+import { missionGoal, type MetricFamily } from "@/lib/mission/goals";
+import { performanceTiles, money as fmtMoney, num } from "@/lib/dashboard/home";
+import { goalResults, loadCreativeHub, resultPhrase } from "@/lib/creatives/hub";
+import { loadIntelligence } from "@/lib/intelligence/run";
+import { loadOverview } from "@/lib/dashboard/overview";
+import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
+import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
+import { PANEL } from "@/components/dashboard/overview/format";
+import { AdCard } from "@/app/dashboard/creatives/hub-client";
 
 // Everything, in one place, with the ability to look at one network at a time.
 //
@@ -45,7 +57,7 @@ function percent(value: number | null): string {
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ platform?: string; range?: string }>;
+  searchParams: Promise<{ platform?: string; range?: string; view?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
@@ -55,6 +67,9 @@ export default async function AnalyticsPage({
   const filter: Filter =
     params.platform === "meta" ? "meta" : "all";
   const rangeKey: RangeKey = parseRange(params.range);
+  // Simple shows business results; Advanced shows every advertising metric.
+  // The page's own toggle wins; otherwise it follows the app-wide mode.
+  const view: "simple" | "advanced" = params.view === "advanced" || params.view === "simple" ? params.view : (await viewMode()) === "advanced" ? "advanced" : "simple";
   const period = rangeInfo(rangeKey);
 
   // The window, and the window before it. Both fetched together so the page
@@ -100,8 +115,24 @@ export default async function AnalyticsPage({
   return (
     <div>
       <PageHeader
-        title="Performance"
-        description="Everything MAIRO is running for you, added up — and broken down when you want it."
+        title="Analytics"
+        description={view === "simple" ? "Your results, in plain numbers." : "Every advertising metric, for when you want to dig in."}
+        action={
+          <div role="group" aria-label="Detail" className="inline-flex rounded-full border border-[color:var(--mairo-line)] p-0.5">
+            {(["simple", "advanced"] as const).map((v) => {
+              const q = new URLSearchParams();
+              q.set("view", v);
+              if (rangeKey !== "all") q.set("range", rangeKey);
+              return (
+                <Link key={v} href={`/dashboard/analytics?${q.toString()}`} aria-current={view === v ? "page" : undefined}
+                  className={`rounded-full px-4 py-1.5 text-[13px] capitalize ${view === v ? "text-white" : "text-muted hover:text-white"}`}
+                  style={view === v ? { backgroundImage: "var(--mairo-ramp)" } : undefined}>
+                  {v}
+                </Link>
+              );
+            })}
+          </div>
+        }
       />
 
       {report.problems.length > 0 && (
@@ -122,6 +153,7 @@ export default async function AnalyticsPage({
           const query = new URLSearchParams();
           if (key !== "all") query.set("range", key);
           if (filter !== "all") query.set("platform", filter);
+          query.set("view", view);
           const qs = query.toString();
           return (
             <FilterTab
@@ -134,6 +166,9 @@ export default async function AnalyticsPage({
         })}
       </div>
 
+      {view === "simple" ? (
+        <SimpleAnalytics organizationId={organizationId} shown={shown} hasData={report.hasData} campaigns={report.campaigns} />
+      ) : (<>
       {available.length > 1 && (
         <div className="mb-6 flex flex-wrap gap-2">
           <FilterTab
@@ -252,6 +287,8 @@ export default async function AnalyticsPage({
             </Card>
           )}
 
+          <AdvancedBreakdowns organizationId={organizationId} rangeKey={rangeKey} />
+
           {!entitlements.advanced_analytics && (
             <Card className="mt-6">
               <p className="text-sm text-neutral-400">
@@ -264,6 +301,94 @@ export default async function AnalyticsPage({
           )}
         </>
       )}
+      </>)}
+
+      <p className="mt-10 text-[13px] text-faint">
+        More: <Link href="/dashboard/reports" className="text-violet-bright hover:underline">Weekly reports</Link> · <Link href="/dashboard/activity" className="text-violet-bright hover:underline">Mairo activity</Link> · <Link href="/dashboard/decisions" className="text-violet-bright hover:underline">Mairo decisions</Link>
+      </p>
+    </div>
+  );
+}
+
+/** Simple: business results for the goal, the best creative and campaign, a few insights. */
+async function SimpleAnalytics({ organizationId, shown, hasData, campaigns }: { organizationId: string; shown: PlatformMetrics; hasData: boolean; campaigns: { mairoCampaignId: string; name: string; total: PlatformMetrics; hasData: boolean }[] }) {
+  const [mission, hub, intelligence, learnings, rows] = await Promise.all([
+    activeMission(organizationId),
+    loadCreativeHub(organizationId).catch(() => null),
+    loadIntelligence(organizationId).catch(() => null),
+    db.mairoLearning.findMany({ where: { organizationId, active: true, confidence: { in: ["HIGH", "MEDIUM"] } }, orderBy: { lastSeenAt: "desc" }, take: 3 }),
+    db.mairoCampaign.findMany({ where: { organizationId }, select: { id: true, objective: true } }),
+  ]);
+  const family: MetricFamily = mission ? missionGoal(mission.primaryGoal).metrics : "sales";
+  const tiles = performanceTiles(family, shown);
+  const extra = [
+    { label: "Revenue", value: shown.revenueCents, money: true },
+    { label: "Sales", value: shown.purchases },
+    { label: "Leads", value: shown.leads ?? null },
+    { label: "Bookings", value: shown.bookings ?? null },
+  ].filter((e) => e.value !== null && e.value !== undefined && !tiles.some((t) => t.label === e.label));
+  const known = new Set(rows.map((r) => r.id));
+  const best = campaigns
+    .filter((c) => c.hasData && known.has(c.mairoCampaignId))
+    .map((c) => ({ c, results: goalResults(family, c.total), spend: c.total.spendCents }))
+    .filter((x) => (x.results ?? 0) > 0 && (x.spend ?? 0) > 0)
+    .sort((a, b) => a.spend! / a.results! - b.spend! / b.results!)[0];
+  const insights = [
+    ...learnings.map((l) => l.statement),
+    ...(intelligence?.insights ?? []).filter((i) => i.severity !== "INFO").slice(0, 3).map((i) => i.title),
+  ].slice(0, 3);
+
+  if (!hasData) {
+    return <EmptyState title="Nothing to report yet" description="Once a campaign has been running for a day or so, its results land here. Nothing on this page is estimated." />;
+  }
+  return (
+    <div className="space-y-5">
+      <section className={`${PANEL} p-6`}>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+          {tiles.map((t) => (
+            <div key={t.label}>
+              <dd className="text-[clamp(26px,3.2vw,36px)] font-light tabular-nums text-white">{t.value}</dd>
+              <dt className="mt-1.5 text-[13px] text-muted">{t.label}</dt>
+            </div>
+          ))}
+        </dl>
+        {extra.length > 0 && (
+          <p className="mt-5 text-[13.5px] text-muted">{extra.map((e) => `${e.label}: ${e.money ? fmtMoney(e.value as number) : num(e.value as number)}`).join(" · ")}</p>
+        )}
+      </section>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className={`${PANEL} p-6`}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Best creative</h2>
+          {hub?.top[0] ? <div className="mt-4 max-w-[260px]"><AdCard ad={hub.top[0]} rank={1} /></div> : <p className="mt-3 text-[14px] text-muted">Not enough results to pick one yet.</p>}
+        </section>
+        <section className={`${PANEL} p-6`}>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Best campaign</h2>
+          {best ? (
+            <Link href={`/dashboard/campaigns/${best.c.mairoCampaignId}`} className="mt-3 block rounded-2xl p-1 hover:bg-white/[0.03]">
+              <p className="text-[18px] text-white">{best.c.name}</p>
+              <p className="mt-1 text-[14px] text-muted">{resultPhrase(family, best.results)} · {fmtMoney(Math.round(best.spend! / best.results!))} each</p>
+            </Link>
+          ) : <p className="mt-3 text-[14px] text-muted">Not enough results to pick one yet.</p>}
+          <h2 className="mt-7 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Mairo insights</h2>
+          {insights.length ? <ul className="mt-3 space-y-2 text-[14px] text-white/85">{insights.map((t) => <li key={t}>• {t}</li>)}</ul> : <p className="mt-3 text-[14px] text-muted">MAIRO is still learning what works for you.</p>}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/** Advanced: campaign, ad set and creative breakdowns, and where the ads showed. */
+async function AdvancedBreakdowns({ organizationId, rangeKey }: { organizationId: string; rangeKey: RangeKey }) {
+  const days = rangeKey === "7d" ? 7 : rangeKey === "90d" || rangeKey === "all" ? 90 : 30;
+  const overview = await loadOverview(organizationId, days, { adBreakdown: true }).catch(() => null);
+  if (!overview) return null;
+  return (
+    <div className="mt-6 space-y-4">
+      <CampaignTable rows={overview.campaigns} variant="advanced" range={overview.range} />
+      <section className={`${PANEL} p-5`}>
+        <h2 className="mb-3 text-[15px] font-medium text-white">By placement and platform</h2>
+        <PlatformSplit publishers={overview.publishers} selectable />
+      </section>
     </div>
   );
 }

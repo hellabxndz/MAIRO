@@ -25,14 +25,28 @@ import {
   percent,
 } from "@/components/mairo/campaign-parts";
 import { GlassPanel } from "@/components/mairo";
-import { Badge, EmptyState } from "@/components/ui";
-import { PlatformIcons } from "@/components/platform-icons";
+import { EmptyState } from "@/components/ui";
 import { CampaignTabs } from "./tabs";
 import { parseTab } from "./tab-list";
 import { CampaignApproval } from "./approval";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import { campaignAdvice } from "@/lib/campaigns/advice";
 import { RunControl } from "./run-control";
+import { ScheduleControl } from "../schedule-control";
+import { DestinationControl } from "../destination-control";
+import { DeleteCampaign } from "../delete-campaign";
+import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
+import { metaAdsManagerUrl } from "@/lib/ad-platforms/billing";
+import { entitlementsFor } from "@/lib/entitlements";
+import { planFor, PLANS } from "@/lib/plans";
+import { canOptimizeTowards } from "@/lib/tracking/pixels";
+import { toView } from "@/lib/decisions/store";
+import { MairoDecisionCard } from "@/components/decisions/decision-card";
+import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
+import { objectiveCapability, optimizationCapability } from "@/lib/meta-intelligence/capabilities";
+import { familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "@/lib/dashboard/campaigns";
+import { performanceTiles } from "@/lib/dashboard/home";
+import { EMPTY_METRICS } from "@/lib/ad-platforms/types";
 
 // One campaign, end to end.
 //
@@ -75,14 +89,19 @@ export default async function CampaignPage({
     include: {
       platformCampaigns: {
         select: {
+          id: true,
           platform: true,
           status: true,
+          externalCampaignId: true,
+          externalAdGroupId: true,
           externalAdId: true,
+          lastError: true,
           adReviewState: true,
           adReviewExplanation: true,
           adReviewAction: true,
         },
       },
+      ads: { orderBy: { position: "asc" } },
       creatives: {
         select: {
           id: true,
@@ -109,11 +128,21 @@ export default async function CampaignPage({
     }),
   ]);
 
-  const protectionLog = await db.protectionEvent.findMany({
-    where: { organizationId, mairoCampaignId: campaign.id },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-  });
+  const [protectionLog, decisionRows, entitlements, org, pixel, campaignCount] = await Promise.all([
+    db.protectionEvent.findMany({ where: { organizationId, mairoCampaignId: campaign.id }, orderBy: { createdAt: "desc" }, take: 10 }),
+    db.mairoDecision.findMany({ where: { organizationId, mairoCampaignId: campaign.id, status: "PENDING" }, orderBy: { createdAt: "desc" } }),
+    entitlementsFor(organizationId),
+    db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true } }),
+    db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
+    db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
+  ]);
+  const mode = await viewMode();
+  const plan = planFor(org?.subscriptionTier ?? "NONE");
+  const upgradeTarget = PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ?? PLANS[PLANS.length - 1];
+  const atLimit = Number.isFinite(entitlements.campaign_limit) && campaignCount >= entitlements.campaign_limit;
+  const hasTracking = pixel ? canOptimizeTowards(pixel.status) : false;
+  const family = familyFor(campaign.objective, campaign.destinationType);
+  const status = statusLabel(campaign, new Date());
   const report = performance.campaigns.find((c) => c.mairoCampaignId === campaign.id) ?? null;
   const metrics = report?.total ?? null;
   const live = campaign.status === "ACTIVE";
@@ -158,38 +187,31 @@ export default async function CampaignPage({
     startsAt: campaign.startDate,
   });
 
-  const statusTone =
-    campaign.status === "ACTIVE"
-      ? "green"
-      : campaign.status === "PAUSED"
-        ? "yellow"
-        : campaign.status === "ARCHIVED"
-          ? "neutral"
-          : "blue";
+  const placements = campaign.placements.length
+    ? PLACEMENT_OPTIONS.filter((p) => campaign.placements.includes(p.value)).map((p) => p.label).join(", ")
+    : "Everywhere Meta finds works best (Advantage+ placements)";
+  const metaAccountId = connections.get("META")?.accountId;
+  const metaCampaignId = campaign.platformCampaigns.find((c) => c.platform === "META" && c.externalCampaignId)?.externalCampaignId;
+  const result = primaryResult(campaign.objective, campaign.destinationType, metrics);
+  const decisions = decisionRows.map(toView);
+  const instantForm = campaign.destinationType === "LEAD_FORM" && campaign.leadFormDelivery === "META_NATIVE";
 
   return (
-    <div>
-      <Link
-        href="/dashboard/campaigns"
-        className="mb-6 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-white"
-      >
+    <div className="mx-auto max-w-[1180px]">
+      <Link href="/dashboard/campaigns" className="mb-6 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-white">
         <span aria-hidden>←</span>
         All campaigns
       </Link>
 
-      {/* ---- Header ---- */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* ---- Header: name, goal, status, the one thing that matters ---- */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-white sm:text-[26px]">
-              {campaign.name}
-            </h1>
-            <Badge tone={statusTone}>{campaign.status.toLowerCase().replace("_", " ")}</Badge>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-muted">
-            <PlatformIcons platforms={requested} />
+          <h1 className="text-[clamp(22px,3vw,28px)] font-semibold tracking-[-0.02em] text-white">{campaign.name}</h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-muted">
+            <span>{goalLabel(campaign.objective)}</span>
+            <span className="text-white/85">{status.dot} {status.text}</span>
             <span>{money(campaign.totalDailyBudgetCents)} a day</span>
-          </div>
+          </p>
         </div>
         {(campaign.status === "ACTIVE" || campaign.status === "PAUSED") && (
           <RunControl campaignId={campaign.id} status={campaign.status} dailyBudgetLabel={money(campaign.totalDailyBudgetCents)} />
@@ -198,46 +220,33 @@ export default async function CampaignPage({
 
       <CampaignTabs active={tab} />
 
-      {/* ---- Overview ---- */}
-      {tab === "overview" && (
-        <div className="space-y-8">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <CampaignMetric label="Spent" value={money(metrics?.spendCents)} hint="All time" />
-            <CampaignMetric label="Revenue" value={money(metrics?.revenueCents)} hint="All time" />
-            <CampaignMetric label="Return" value={ratio(metrics?.roas)} hint="Revenue per $1" emphasis />
-            <CampaignMetric
-              label={campaign.objective === "SALES" ? "Purchases" : "Results"}
-              value={count(metrics?.purchases ?? metrics?.conversions)}
-              hint="All time"
-            />
-          </div>
+      {/* ---- Performance ---- */}
+      {tab === "performance" && (
+        <div className="space-y-6">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-[24px] p-6 lg:grid-cols-4" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" }}>
+            {performanceTiles(family, metrics ?? EMPTY_METRICS).map((t) => (
+              <div key={t.label}>
+                <dd className="text-[clamp(24px,3vw,32px)] font-light tabular-nums text-white">{t.value}</dd>
+                <dt className="mt-1.5 text-[13px] text-muted">{t.label}</dt>
+              </div>
+            ))}
+          </dl>
+          <p className="text-[13.5px] text-muted">
+            <span className="text-white/85">What MAIRO is optimizing for:</span> {optimizingFor(campaign.objective, campaign.destinationType, hasTracking || instantForm)}. {result.label} so far: <span className="text-white">{result.value}</span>.
+          </p>
 
           {campaign.platformCampaigns
             .filter((p) => p.adReviewState === "REJECTED" || p.adReviewState === "WITH_ISSUES")
             .map((p) => (
-              <section
-                key={p.platform}
-                className="rounded-xl border p-5"
-                style={{ borderColor: "rgba(248,113,113,0.35)", background: "rgba(248,113,113,0.05)" }}
-              >
-                <p className="text-[15px] font-medium text-white">
-                  {p.adReviewState === "REJECTED" ? "Meta didn't approve this ad" : "Meta flagged a problem with this ad"}
-                </p>
+              <section key={p.platform} className="rounded-[20px] p-5" style={{ background: "rgba(248,113,113,0.06)" }}>
+                <p className="text-[15px] font-medium text-white">{p.adReviewState === "REJECTED" ? "Meta didn't approve this ad" : "Meta flagged a problem with this ad"}</p>
                 {p.adReviewExplanation && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{p.adReviewExplanation}</p>}
                 {p.adReviewAction && <p className="mt-2 text-[13px] leading-relaxed text-white/90">What to do: {p.adReviewAction}</p>}
-                <Link
-                  href="/dashboard/create"
-                  className="mt-4 inline-flex rounded-full px-4 py-2 text-[12.5px] font-medium text-white"
-                  style={{ backgroundImage: "var(--mairo-ramp)" }}
-                >
-                  Make a new ad
-                </Link>
+                <Link href="/dashboard/create" className="mt-4 inline-flex rounded-full px-4 py-2 text-[12.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>Make a new ad</Link>
               </section>
             ))}
           {campaign.platformCampaigns.some((p) => p.adReviewState === "PENDING") && (
-            <p className="text-[12.5px] text-muted">
-              Meta is reviewing the ad — usually within a day. MAIRO tells you if anything needs changing.
-            </p>
+            <p className="text-[12.5px] text-muted">Meta is reviewing the ad — usually within a day. MAIRO tells you if anything needs changing.</p>
           )}
 
           <CampaignHealthPanel health={health} />
@@ -249,19 +258,11 @@ export default async function CampaignPage({
                 {advice.map((a) => (
                   <GlassPanel key={a.title} className="p-4">
                     <p className="flex items-center gap-2 text-[14px] text-white">
-                      <span
-                        className="h-2 w-2 flex-none rounded-full"
-                        style={{ background: a.tone === "good" ? "#34d399" : a.tone === "fix" ? "#fbbf24" : a.tone === "idea" ? "#6c9eff" : "rgba(255,255,255,0.35)" }}
-                        aria-hidden
-                      />
+                      <span className="h-2 w-2 flex-none rounded-full" style={{ background: a.tone === "good" ? "#34d399" : a.tone === "fix" ? "#fbbf24" : a.tone === "idea" ? "#6c9eff" : "rgba(255,255,255,0.35)" }} aria-hidden />
                       {a.title}
                     </p>
                     <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{a.detail}</p>
-                    {a.href && (
-                      <Link href={a.href} className="mt-3 inline-block text-[12.5px] text-white/90 underline underline-offset-4">
-                        {a.hrefLabel}
-                      </Link>
-                    )}
+                    {a.href && <Link href={a.href} className="mt-3 inline-block text-[12.5px] text-white/90 underline underline-offset-4">{a.hrefLabel}</Link>}
                   </GlassPanel>
                 ))}
               </div>
@@ -269,221 +270,218 @@ export default async function CampaignPage({
             </section>
           )}
 
-          {protectionLog.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-[15px] font-medium text-white">Spend Protection</h2>
-              <GlassPanel className="p-4">
-                <ul className="space-y-2">
-                  {protectionLog.map((e) => (
-                    <li key={e.id} className="text-[12.5px] leading-relaxed text-muted">
-                      <span className="text-faint">{e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span> · {e.message}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/dashboard/settings#spend-protection" className="mt-3 inline-block text-[12px] text-muted underline underline-offset-4">
-                  Change your limits
-                </Link>
-              </GlassPanel>
-            </section>
-          )}
-
           {!live && <CampaignApproval campaignId={campaign.id} blockers={blockers} />}
-
-          <section>
-            <h2 className="mb-3 text-[15px] font-medium text-white">Where it&apos;s up to</h2>
-            <GlassPanel className="p-4 sm:p-5">
-              <CampaignTimeline steps={steps} />
-            </GlassPanel>
-          </section>
-        </div>
-      )}
-
-      {/* ---- Timeline ---- */}
-      {tab === "timeline" && (
-        <div className="space-y-5">
-          <GlassPanel className="p-5 sm:p-6">
-            <CampaignTimeline steps={steps} />
-          </GlassPanel>
-          {/* What Mairo has done since launch, day by day. */}
-          <CampaignJourneyTimeline
-            journey={await campaignJourney(organizationId, campaign.id).catch(() => null)}
-            campaigns={[]}
-            advanced={(await viewMode()) === "advanced"}
-          />
         </div>
       )}
 
       {/* ---- Creatives ---- */}
       {tab === "creatives" && (
         <div>
-          {campaign.creatives.length === 0 ? (
-            <EmptyState
-              title="No ads on this campaign yet"
-              description="MAIRO writes them as part of building the campaign. They appear here the moment it has."
-            />
+          {campaign.ads.length === 0 && campaign.creatives.length === 0 ? (
+            <EmptyState title="No ads on this campaign yet" description="MAIRO writes them as part of building the campaign. They appear here the moment it has." />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {campaign.creatives.map((c) => (
+              {campaign.ads.map((ad, i) => {
+                let why: string | null = null;
+                try {
+                  why = ad.briefJson ? (JSON.parse(ad.briefJson) as { reason?: string }).reason ?? null : null;
+                } catch {
+                  why = null;
+                }
+                const preview = ad.imageUrl ?? ad.videoPosterUrl;
+                return (
+                  <GlassPanel key={ad.id} className="flex flex-col p-4">
+                    {preview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={preview} alt="" className="mb-4 aspect-[4/5] w-full rounded-lg object-cover" />
+                    ) : (
+                      <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--mairo-line)" }}>
+                        {ad.kind === "EXISTING_AD" ? ad.sourceAdName ?? "Existing ad" : "Words only"}
+                      </div>
+                    )}
+                    <p className="text-[12px] text-faint">{i === 0 ? "Main ad" : `Version ${i + 1}`} · {ad.kind === "VIDEO" ? "Video" : ad.kind === "EXISTING_AD" ? "Existing ad" : "Image"}</p>
+                    {ad.headline && <p className="mt-1.5 text-[14px] font-medium text-white">{ad.headline}</p>}
+                    {ad.primaryText && <p className="mt-1.5 line-clamp-4 flex-1 text-[12.5px] leading-relaxed text-muted">{ad.primaryText}</p>}
+                    {why && <p className="mt-3 rounded-lg bg-violet/[0.08] px-3 py-2 text-[12px] text-white/80"><span className="text-violet-bright">Why MAIRO made it: </span>{why}</p>}
+                  </GlassPanel>
+                );
+              })}
+              {campaign.ads.length === 0 && campaign.creatives.map((c) => (
                 <GlassPanel key={c.id} className="flex flex-col p-4">
                   {c.mediaUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={c.mediaUrl}
-                      alt=""
-                      className="mb-4 aspect-[4/5] w-full rounded-lg object-cover"
-                    />
+                    <img src={c.mediaUrl} alt="" className="mb-4 aspect-[4/5] w-full rounded-lg object-cover" />
                   ) : (
-                    <div
-                      className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint"
-                      style={{ borderColor: "var(--mairo-line)" }}
-                    >
-                      Words only
-                    </div>
+                    <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--mairo-line)" }}>Words only</div>
                   )}
-                  <Badge tone="blue">{c.platform}</Badge>
-                  <p className="mt-3 text-[14px] font-medium text-white">{c.headline}</p>
-                  <p className="mt-1.5 line-clamp-4 flex-1 text-[12.5px] leading-relaxed text-muted">
-                    {c.primaryText}
-                  </p>
-                  {c.cta && (
-                    <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-blue-bright">
-                      {c.cta.replace(/_/g, " ")}
-                    </p>
-                  )}
+                  <p className="text-[14px] font-medium text-white">{c.headline}</p>
+                  <p className="mt-1.5 line-clamp-4 flex-1 text-[12.5px] leading-relaxed text-muted">{c.primaryText}</p>
                 </GlassPanel>
               ))}
             </div>
           )}
+          <Link href="/dashboard/creatives" className="mt-5 inline-block text-[13px] text-violet-bright hover:underline">All your creatives →</Link>
         </div>
       )}
 
-      {/* ---- Analytics ---- */}
-      {tab === "analytics" && (
-        <div className="space-y-8">
-          {!report?.hasData ? (
-            <EmptyState
-              title="No figures yet"
-              description="The networks report a few hours after a campaign starts delivering. Nothing is missing — there is just nothing to show yet."
-            />
-          ) : (
-            <>
+      {/* ---- Audience ---- */}
+      {tab === "audience" && (
+        <GlassPanel className="p-5 sm:p-6">
+          <dl className="space-y-4">
+            {[
+              ["Who sees it", describeAudience(audience)],
+              ["Where it shows", placements],
+              ["Let Meta find more people like this", campaign.specialAdCategory ? "Not allowed for this kind of ad" : campaign.advantageAudience ? "On — Meta can reach beyond your choices when it expects better results" : "Off — only the people you chose"],
+              ...(campaign.specialAdCategory ? [["Special category", `${campaign.specialAdCategory.toLowerCase().replace(/_/g, " ")} — Meta limits targeting for these ads`]] : []),
+            ].map(([k, v]) => (
+              <div key={k} className="grid gap-1 sm:grid-cols-[240px_minmax(0,1fr)]">
+                <dt className="text-[13px] text-muted">{k}</dt>
+                <dd className="text-[14px] text-white">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </GlassPanel>
+      )}
+
+      {/* ---- Budget ---- */}
+      {tab === "budget" && (
+        <div className="space-y-4">
+          <GlassPanel className="p-5 sm:p-6">
+            <dl className="grid gap-5 sm:grid-cols-3">
+              <div><dd className="text-[26px] font-light tabular-nums text-white">{campaign.budgetType === "LIFETIME" && campaign.lifetimeBudgetCents ? money(campaign.lifetimeBudgetCents) : `${money(campaign.totalDailyBudgetCents)}`}</dd><dt className="text-[13px] text-muted">{campaign.budgetType === "LIFETIME" ? "Total budget" : "Per day"}</dt></div>
+              <div><dd className="text-[26px] font-light tabular-nums text-white">{money(metrics?.spendCents)}</dd><dt className="text-[13px] text-muted">Spent so far</dt></div>
+              <div><dd className="text-[26px] font-light tabular-nums text-white">{campaign.endDate ? campaign.endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No end date"}</dd><dt className="text-[13px] text-muted">Runs until</dt></div>
+            </dl>
+            <p className="mt-5 text-[13px] text-muted">MAIRO never raises your budget on its own. Any change it suggests waits for your approval in Mairo Decisions.</p>
+          </GlassPanel>
+          {protectionLog.length > 0 && (
+            <GlassPanel className="p-5">
+              <h2 className="text-[15px] font-medium text-white">Spend Protection</h2>
+              <ul className="mt-2 space-y-2">
+                {protectionLog.map((e) => (
+                  <li key={e.id} className="text-[12.5px] leading-relaxed text-muted"><span className="text-faint">{e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span> · {e.message}</li>
+                ))}
+              </ul>
+            </GlassPanel>
+          )}
+          <Link href="/dashboard/settings#spend-protection" className="inline-block text-[13px] text-violet-bright hover:underline">Your spending limits →</Link>
+        </div>
+      )}
+
+      {/* ---- Mairo Decisions ---- */}
+      {tab === "decisions" && (
+        <div className="space-y-6">
+          <section>
+            <h2 className="mb-3 text-[15px] font-medium text-white">Waiting for you</h2>
+            {decisions.length === 0 ? (
+              <p className="text-[13.5px] text-muted">Nothing to decide on this campaign right now. MAIRO looks again every day.</p>
+            ) : (
+              <div className="grid gap-3 xl:grid-cols-2">{decisions.map((d) => <MairoDecisionCard key={d.id} decision={d} advanced={mode === "advanced"} />)}</div>
+            )}
+          </section>
+          <section>
+            <h2 className="mb-3 text-[15px] font-medium text-white">What MAIRO has done</h2>
+            {actions.length === 0 ? <NoActionsYet live={live} /> : <div className="space-y-3">{actions.map((a) => <AIActionCard key={a.id} entry={a} />)}</div>}
+          </section>
+        </div>
+      )}
+
+      {/* ---- History ---- */}
+      {tab === "history" && (
+        <div className="space-y-5">
+          <GlassPanel className="p-5 sm:p-6">
+            <CampaignTimeline steps={steps} />
+          </GlassPanel>
+          <CampaignJourneyTimeline journey={await campaignJourney(organizationId, campaign.id).catch(() => null)} campaigns={[]} advanced={mode === "advanced"} />
+        </div>
+      )}
+
+      {/* ---- Advanced Settings ---- */}
+      {tab === "advanced" && (
+        <div className="space-y-5">
+          <GlassPanel className="p-5 sm:p-6">
+            <h2 className="text-[15px] font-medium text-white">How it&rsquo;s set up on Meta</h2>
+            <dl className="mt-4 space-y-3">
+              {[
+                ["Campaign objective", objectiveCapability(campaign.objective, hasTracking, instantForm).value],
+                ["Optimization goal", optimizationCapability(campaign.objective, { hasPixel: hasTracking, instantForm, destination: campaign.destinationType }).value],
+                ["Destination", campaign.destinationType.toLowerCase().replace(/_/g, " ")],
+                ["Networks", requested.join(", ") || "—"],
+                ["Placements", campaign.placements.length ? campaign.placements.join(", ") : "Advantage+ placements"],
+                ["Advantage+ audience", campaign.advantageAudience && !campaign.specialAdCategory ? "On" : "Off"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex flex-wrap justify-between gap-3">
+                  <dt className="text-[13px] text-muted">{k}</dt>
+                  <dd className="font-mono text-[12.5px] text-white">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            {metaAccountId && metaCampaignId && (
+              <a href={metaAdsManagerUrl(metaAccountId, metaCampaignId)} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white/90 hover:text-white">
+                Open in Ads Manager <span aria-hidden>↗</span>
+              </a>
+            )}
+          </GlassPanel>
+
+          {report?.hasData && (
+            <GlassPanel className="p-5 sm:p-6">
+              <h2 className="mb-4 text-[15px] font-medium text-white">Detailed figures</h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <CampaignMetric label="Impressions" value={count(metrics?.impressions)} />
+                <CampaignMetric label="Reach" value={count(metrics?.reach)} hint="People" />
                 <CampaignMetric label="Clicks" value={count(metrics?.clicks)} />
                 <CampaignMetric label="Click rate" value={percent(metrics?.ctr)} hint="CTR" />
                 <CampaignMetric label="Cost per click" value={money(metrics?.cpcCents)} hint="CPC" />
                 <CampaignMetric label="Cost per 1,000" value={money(metrics?.cpmCents)} hint="CPM" />
-                <CampaignMetric
-                  label="Cost per purchase"
-                  value={money(metrics?.costPerPurchaseCents)}
-                  hint="CPA"
-                />
-                <CampaignMetric label="Conversions" value={count(metrics?.conversions)} />
-                <CampaignMetric label="Reach" value={count(metrics?.reach)} hint="People" />
+                <CampaignMetric label="Cost per purchase" value={money(metrics?.costPerPurchaseCents)} hint="CPA" />
+                <CampaignMetric label="Return" value={ratio(metrics?.roas)} hint="ROAS" />
               </div>
-
-              {report.byPlatform.length > 1 && (
-                <section>
-                  <h2 className="mb-3 text-[15px] font-medium text-white">By network</h2>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {report.byPlatform.map((p) => (
-                      <GlassPanel key={p.platform} className="p-5">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-[14px] font-medium text-white">{p.platform}</p>
-                          {p.unavailable ? (
-                            <Badge tone="yellow">Unavailable</Badge>
-                          ) : (
-                            <Badge tone={p.hasData ? "green" : "neutral"}>
-                              {p.hasData ? "Reporting" : "No data"}
-                            </Badge>
-                          )}
-                        </div>
-                        {p.unavailable ? (
-                          <p className="mt-3 text-[12.5px] text-muted">{p.unavailable}</p>
-                        ) : (
-                          <dl className="mt-4 grid grid-cols-2 gap-3">
-                            {[
-                              ["Spent", money(p.metrics.spendCents)],
-                              ["Revenue", money(p.metrics.revenueCents)],
-                              ["Return", ratio(p.metrics.roas)],
-                              ["Clicks", count(p.metrics.clicks)],
-                            ].map(([k, v]) => (
-                              <div key={k}>
-                                <dt className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-faint">
-                                  {k}
-                                </dt>
-                                <dd className="mt-1 text-[16px] tabular-nums text-white">{v}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        )}
-                      </GlassPanel>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </>
+            </GlassPanel>
           )}
-        </div>
-      )}
 
-      {/* ---- MAIRO actions ---- */}
-      {tab === "actions" && (
-        <div>
-          <p className="mb-5 max-w-2xl text-[13.5px] leading-relaxed text-muted">
-            Everything MAIRO has changed on this campaign by itself, with the numbers behind each
-            decision. Nothing here is a summary — it is what MAIRO wrote at the time it decided.
-          </p>
-          {actions.length === 0 ? (
-            <NoActionsYet live={live} />
-          ) : (
-            <div className="space-y-3">
-              {actions.map((a) => (
-                <AIActionCard key={a.id} entry={a} />
-              ))}
-            </div>
+          {campaign.status !== "ARCHIVED" && (
+            <GlassPanel className="p-5 sm:p-6">
+              <h2 className="text-[15px] font-medium text-white">Schedule and destination</h2>
+              <ScheduleControl
+                campaignId={campaign.id}
+                running={campaign.status === "ACTIVE"}
+                describedStart={campaign.startDate ? describeStart(campaign.startDate, campaign.startTimeZone) : null}
+                startLocal={campaign.startDate ? localInputValue(campaign.startDate, campaign.startTimeZone) : null}
+              />
+              <DestinationControl
+                campaignId={campaign.id}
+                type={campaign.destinationType}
+                url={campaign.destinationUrl}
+                phone={campaign.destinationPhone}
+                channel={campaign.messageChannel}
+                built={campaign.platformCampaigns.some((c) => c.externalAdId)}
+              />
+            </GlassPanel>
           )}
-        </div>
-      )}
 
-      {/* ---- Settings ---- */}
-      {tab === "settings" && (
-        <div className="space-y-4">
-          <GlassPanel className="p-5 sm:p-6">
-            <h2 className="text-[15px] font-medium text-white">What this campaign is</h2>
-            <dl className="mt-4 space-y-3">
-              {[
-                ["Goal", campaign.objective.toLowerCase()],
-                ["Budget", `${money(campaign.totalDailyBudgetCents)} a day`],
-                ["Networks", requested.join(", ") || "—"],
-                ["Audience", describeAudience(audience)],
-                [
-                  "Where the ad sends people",
-                  campaign.destinationType.toLowerCase().replace(/_/g, " "),
-                ],
-              ].map(([k, v]) => (
-                <div key={k} className="flex flex-wrap justify-between gap-3">
-                  <dt className="text-[13px] text-muted">{k}</dt>
-                  <dd className="text-[13px] text-white">{v}</dd>
+          {campaign.platformCampaigns.filter((c) => c.lastError || (c.externalCampaignId && !c.externalAdId)).length > 0 && (
+            <GlassPanel className="p-5 sm:p-6">
+              <h2 className="text-[15px] font-medium text-white">Delivery problems</h2>
+              {campaign.platformCampaigns.map((c) => (
+                <div key={c.id} className="mt-2 space-y-1 text-[13px] text-amber-200/90">
+                  {c.externalCampaignId && !c.externalAdId && <p>{c.externalAdGroupId ? "Created, but there is no ad in it yet — so it cannot show to anyone." : "Only the campaign was created — it has no audience or ad yet."}</p>}
+                  {c.lastError && <p>{c.lastError}</p>}
                 </div>
               ))}
-            </dl>
-          </GlassPanel>
+            </GlassPanel>
+          )}
 
-          <GlassPanel className="p-5 sm:p-6">
-            <h2 className="text-[15px] font-medium text-white">Controls</h2>
-            <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted">
-              Budget, schedule, targeting and where the ad points are changed on the campaigns
-              screen, which is also where this campaign can be removed.
-            </p>
-            <Link
-              href="/dashboard/campaigns"
-              className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-blue-bright transition-colors hover:text-white"
-            >
-              Open campaign controls
-              <span aria-hidden>→</span>
-            </Link>
-          </GlassPanel>
+          {campaign.status !== "ARCHIVED" && (
+            <GlassPanel className="p-5 sm:p-6">
+              <DeleteCampaign
+                campaignId={campaign.id}
+                name={campaign.name}
+                running={campaign.status === "ACTIVE"}
+                freesSlot={atLimit}
+                upgrade={upgradeTarget.limits.campaigns > entitlements.campaign_limit ? { name: upgradeTarget.name, price: upgradeTarget.priceMonthly, campaigns: upgradeTarget.limits.campaigns } : null}
+              />
+            </GlassPanel>
+          )}
         </div>
       )}
     </div>

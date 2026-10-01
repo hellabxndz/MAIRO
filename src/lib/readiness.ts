@@ -222,7 +222,7 @@ export async function readinessFor(
       label: "Approve an ad",
       detail:
         "Send a photo of what you sell and MAIRO writes the ad around it. Nothing runs until you are happy with one.",
-      href: "/dashboard/creatives",
+      href: "/dashboard/creatives?tab=new",
     },
     {
       id: "campaign",

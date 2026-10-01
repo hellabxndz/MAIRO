@@ -18,28 +18,9 @@ import { hasSeenTour } from "@/lib/actions/tour-actions";
 import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
-import { showsEnquiries } from "@/lib/leads/fields";
 import { FREE_NAV, SOCIAL_LOCKED_NAV, SOCIAL_NAV } from "./free-nav";
 import { socialAccess } from "@/lib/social/access";
 import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
-
-// Enquiries is the one destination that is not shown to everybody, because
-// most businesses do not collect them and an empty inbox in the sidebar is
-// noise. Everything else in the old eleven-item NAV moved into the new shell's
-// primary list or onto /dashboard/account — none of it was deleted, and every
-// route is unchanged.
-//
-// See src/components/mairo/app-shell.tsx for the map from the old labels.
-const ENQUIRIES_NAV = {
-  href: "/dashboard/leads",
-  label: "Enquiries",
-  icon: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="2.6" y="4.4" width="14.8" height="11.2" rx="2.2" />
-      <path d="M3.2 6.2l6.8 4.6 6.8-4.6" />
-    </svg>
-  ),
-};
 
 // Pages the not-yet-connected client can still open.
 //
@@ -86,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const pathname = (await headers()).get("x-pathname") ?? "";
 
-  const [organization, intake, metaAccount, seenTour, leadForm, socialPosting] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour, socialPosting] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -99,13 +80,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
-    db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
     socialAccess(organizationId).then((a) => a.ok),
   ]);
 
-  // Whether this business collects enquiries at all. The rule itself, and why
-  // it is wider than "uses Meta's instant form", is in showsEnquiries.
-  const collectsLeads = showsEnquiries({ hasForm: Boolean(leadForm) });
 
   // Enforce the intended funnel: sign up -> onboarding -> connect Meta ->
   // rest of the dashboard. /dashboard/meta itself is exempt from the second
@@ -175,7 +152,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       assistantName={assistantNameOf(organization?.assistantName)}
       // Social Manager is Scale-only: active Scale gets its section; every
       // other plan sees it locked, labelled Scale, leading to the upgrade.
-      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? SOCIAL_NAV : [SOCIAL_LOCKED_NAV]), ...(unpaid ? FREE_NAV(approved) : [])]}
+      // A short sidebar: Social Manager (Scale) or its locked entry; the free
+      // plan's two pages before subscribing. Enquiries lives inside Campaigns.
+      extraNav={[...(socialPosting && !unpaid ? SOCIAL_NAV : [SOCIAL_LOCKED_NAV]), ...(unpaid ? FREE_NAV(approved) : [])]}
+      scale={socialPosting && !unpaid}
       locked={[...(unpaid ? LOCKED_NAV : []), ...(socialPosting && !unpaid ? [] : ["/dashboard/social"])]}
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />

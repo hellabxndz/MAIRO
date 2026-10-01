@@ -14,59 +14,55 @@ import type { Step } from "@/components/tour";
 
 export const OWNER_TOUR: Step[] = [
   {
-    title: "Ninety seconds and you'll know your way around",
+    title: "Thirty seconds and you'll know your way around",
     body:
-      "You describe your business, MAIRO writes the plan and the ads, and the campaigns land in your own Meta account. Here's where each of those lives.",
+      "Tell MAIRO what you want your business to achieve. It runs the marketing, shows you the results, and asks you only when it needs you.",
   },
   {
     target: "nav:/dashboard",
     title: "Overview",
     body:
-      "Where you land. What's running, what it's spending, and whether anything needs you. If you only open one screen a week, this is it.",
+      "Your goal, how it's going this month, what MAIRO is working on, and anything that needs you. If you only open one screen a week, this is it.",
   },
   {
-    target: "nav:/dashboard/plan",
-    title: "Monthly plan",
+    target: "create",
+    title: "Create",
     body:
-      "MAIRO's actual thinking: what to spend, where to spend it, and what to expect this month. Read it once at the start of the month and you'll understand everything else.",
-  },
-  {
-    target: "nav:/dashboard/creatives",
-    title: "Creatives",
-    body:
-      "Send a photo of what you sell. You get back the picture, the headline and the words. Ask for changes as many times as you like — rewrites are free, only starting a new one counts.",
+      "One button for everything you can start: a campaign, a creative, a promotion — or just tell MAIRO something new.",
   },
   {
     target: "nav:/dashboard/campaigns",
     title: "Campaigns",
     body:
-      "The ads themselves. Anything MAIRO builds arrives PAUSED in your ad account — nothing spends a penny until you switch it on yourself.",
+      "Your ads, grouped as active, drafts, paused and completed. Open one for its results, creatives, audience, budget and history.",
   },
   {
-    // Was nav:/dashboard/meta, which is no longer a sidebar entry — the
-    // Meta-specific screen still exists and is still linked, from Integrations
-    // and from Account, but a tour step pointing at a nav item that is not
-    // there highlights nothing and looks broken.
-    target: "nav:/dashboard/integrations",
-    title: "Where you advertise",
+    target: "nav:/dashboard/creatives",
+    title: "Creatives",
     body:
-      "Links MAIRO to your own Facebook and Instagram ad account. Until one is connected you can plan and design, but nothing can go live.",
+      "Every ad image and video in one place: what's running, what's new and waiting for you, what ran before, and what's working best for your goal.",
+  },
+  {
+    target: "nav:/dashboard/analytics",
+    title: "Analytics",
+    body:
+      "Your results in plain numbers — and an Advanced view with every advertising metric, for when you want to dig in.",
   },
   {
     target: "nav:/dashboard/agents",
     title: "Your assistant",
     body:
-      "One assistant, called Alex until you rename it, unlimited, and it knows your business. \"Why did my cost per click go up?\" — ask in plain English and get a plain answer. It can text you when something happens, too.",
+      "Ask anything in plain English — \"How are my ads doing?\", \"We're launching a new product\" — and MAIRO answers or takes you to the right place.",
   },
   {
     target: "nav:/dashboard/settings",
     title: "Settings",
     body:
-      "What MAIRO knows about your business, and your plan. If the ads ever sound wrong, it's usually because something here needs correcting — every ad is written from these answers.",
+      "Your business profile, connected accounts, billing and everything else you set once and rarely touch.",
   },
   {
     title: "That's it",
     body:
-      "Connect your ad account, read this month's plan, approve a creative. MAIRO builds the campaign paused and you turn it on when you're happy.",
+      "Set your goal, approve what MAIRO asks you to, and get back to running your business.",
   },
 ];

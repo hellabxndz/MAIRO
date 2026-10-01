@@ -1,209 +1,92 @@
-import { after } from "next/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
-import { planFor } from "@/lib/plans";
-import { currentMonthKey } from "@/lib/utils/month";
-import { CreativeRequestForm } from "./creative-request-form";
-import { RegenerateConceptButton } from "./regenerate-concept-button";
-import { ConceptText } from "@/components/concept-text";
-import { ImageStudio } from "./image-studio";
-import { ConceptReply } from "./concept-reply";
 import { activeOrganizationId } from "@/lib/active-org";
-import { retryStuckReviews } from "@/lib/creatives/review-run";
+import { PageHeader, EmptyState, primaryButtonClass } from "@/components/ui";
+import { loadCreativeHub } from "@/lib/creatives/hub";
+import { AdCard, NewCard, PastList } from "./hub-client";
 
-// A concept is generated inside the request action, and a vision call takes
-// longer than the platform default allows.
-// Image editing is slower than a text call; give the action room to finish.
-export const maxDuration = 120;
+// Creatives: one page for everything about ads' pictures and videos.
+//
+//   Active          running in a campaign now, with its result for the goal
+//   New             made by MAIRO (or in Creative Studio), not running yet
+//   Past            creative history, searchable
+//   Top Performing  ranked by the business's goal — purchases for sales,
+//                   leads for leads — never by likes or clicks
+//
+// Making one starts from the button at the top: the AI Creative Studio (images)
+// or "write an ad from a photo". Both tools are unchanged; this is their home.
 
-const statusTone = {
-  REQUESTED: "neutral",
-  IN_PROGRESS: "yellow",
-  IN_REVIEW: "blue",
-  BLOCKED: "red",
-  APPROVED: "green",
-  DELIVERED: "green",
-} as const;
+export const maxDuration = 30;
 
-export default async function CreativesPage() {
+const TABS = [
+  { key: "active", label: "Active" },
+  { key: "new", label: "New" },
+  { key: "past", label: "Past" },
+  { key: "top", label: "Top Performing" },
+] as const;
+type Tab = (typeof TABS)[number]["key"];
+
+const WORDS: Record<string, string> = { sales: "purchases", leads: "leads", bookings: "bookings", calls: "calls and messages", traffic: "website visits", awareness: "people reached", visits: "people reached", social: "engagement" };
+
+export default async function CreativesPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
-
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const month = currentMonthKey();
-
-  const [requests, organization, usedThisMonth] = await Promise.all([
-    db.creativeRequest.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: "desc" },
-      include: { images: { orderBy: { version: "desc" } } },
-    }),
-    db.organization.findUnique({
-      where: { id: organizationId },
-      select: { subscriptionTier: true },
-    }),
-    // Mirrors requestCreativeAction: blocked requests are not charged.
-    db.creativeRequest.count({
-      where: { organizationId, month, status: { not: "BLOCKED" } },
-    }),
-  ]);
-
-  const plan = planFor(organization?.subscriptionTier ?? "NONE");
-  const remaining = Math.max(0, plan.limits.creativesPerMonth - usedThisMonth);
-
-  // A request sitting at IN_REVIEW is one whose safety check couldn't run. It
-  // is not waiting on anybody's opinion, so it should not need anybody to come
-  // and press something — asking again is the whole fix.
-  //
-  // after() means this happens once the page has already been sent, so the
-  // customer never waits on a model call to see their creatives. The verdict
-  // lands on their next load, and the nightly cron catches whatever nobody
-  // opens. Small limit because this runs on every visit.
-  if (requests.some((r) => r.status === "IN_REVIEW" && r.aiConcept)) {
-    after(async () => {
-      try {
-        await retryStuckReviews({ organizationId, limit: 3 });
-      } catch (error) {
-        console.error("Background safety-review retry failed:", error);
-      }
-    });
-  }
+  const hub = await loadCreativeHub(organizationId);
+  const requested = (await searchParams).tab;
+  const counts: Record<Tab, number> = { active: hub.active.length, new: hub.newItems.length, past: hub.past.length, top: hub.top.length };
+  const tab: Tab = TABS.some((t) => t.key === requested) ? (requested as Tab) : hub.active.length ? "active" : hub.newItems.length ? "new" : "active";
 
   return (
-    <div>
+    <div className="mx-auto max-w-[1180px]">
       <PageHeader
         title="Creatives"
-        description="Show MAIRO a picture of what you're selling, or just describe it, and it writes the ad."
-        action={
-          <Badge tone={remaining === 0 ? "yellow" : "neutral"}>
-            {usedThisMonth} / {plan.limits.creativesPerMonth} used this month
-          </Badge>
-        }
+        description="Every ad picture and video: what's running, what's new, what ran before, and what works best for your goal."
+        action={<Link href="/dashboard/creative-studio" className={primaryButtonClass}>+ Create new creative</Link>}
       />
 
-      <Card className="mb-8">
-        {remaining === 0 ? (
-          <div className="space-y-2">
-            <p className="font-medium">You&apos;re out of creative requests this month</p>
-            <p className="text-sm text-neutral-400">
-              The {plan.name} plan includes {plan.limits.creativesPerMonth} a month. They reset
-              on the 1st — or upgrade your plan for more.
-            </p>
-          </div>
-        ) : (
-          <CreativeRequestForm />
-        )}
-      </Card>
+      <nav aria-label="Creatives" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {TABS.map((t) => (
+          <Link key={t.key} href={`/dashboard/creatives?tab=${t.key}`} aria-current={t.key === tab ? "page" : undefined}
+            className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition ${t.key === tab ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
+            {t.label}{counts[t.key] > 0 && t.key !== "top" ? <span className="ml-1.5 text-faint">{counts[t.key]}</span> : null}
+          </Link>
+        ))}
+      </nav>
 
-      {requests.length === 0 ? (
-        <EmptyState
-          title="No ads yet"
-          description="Start one above — a picture of what you're selling, or a sentence about it."
-        />
+      {tab === "active" && (hub.active.length === 0 ? (
+        <EmptyState title="Nothing running right now" description="Creatives appear here while they're in a live campaign, with their results for your goal." />
       ) : (
-        <div className="space-y-3">
-          {requests.map((r) => (
-            <Card key={r.id}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm text-neutral-400">
-                    {r.type} · {r.month}
-                  </p>
-                  <p className="mt-1">{r.brief}</p>
-                </div>
-                <Badge tone={statusTone[r.status]}>{r.status.replace("_", " ")}</Badge>
-              </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">{hub.active.map((a) => <AdCard key={a.id} ad={a} />)}</div>
+      ))}
 
-              {r.status === "BLOCKED" ? (
-                <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/[0.06] p-4">
-                  <p className="text-xs uppercase tracking-[0.12em] text-red-300">
-                    Can&apos;t run this one{r.reviewCategory ? ` · ${r.reviewCategory}` : ""}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-300">
-                    {r.reviewNotes}
-                  </p>
-                  <p className="mt-3 text-xs leading-relaxed text-neutral-500">
-                    Every ad is checked against Meta&apos;s advertising policies before we
-                    approve it. Running this would put your ad account at risk. Change the
-                    brief and request it again — this one didn&apos;t use up any of your monthly requests.
-                  </p>
-                </div>
-              ) : (
-                (r.referenceImage || r.aiConcept) && (
-                  <div className="mt-5 flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row">
-                    {r.referenceImage && (
-                      <div className="shrink-0">
-                        <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
-                          Your reference
-                        </p>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- stored
-                            as a data URL, so there is no remote origin to optimise. */}
-                        <img
-                          src={r.referenceImage}
-                          alt="Reference supplied with this request"
-                          className="max-h-44 rounded-lg border border-white/10 object-contain"
-                        />
-                      </div>
-                    )}
+      {tab === "new" && (hub.newItems.length === 0 ? (
+        <EmptyState title="No new creatives" description="When MAIRO or Creative Studio makes something that isn't running yet, it waits here for you." />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">{hub.newItems.map((i) => <NewCard key={i.key} item={i} />)}</div>
+      ))}
 
-                    <div className="min-w-0 flex-1">
-                      <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
-                        Concept
-                      </p>
-                      {r.aiConcept ? (
-                        <>
-                          <ConceptText text={r.aiConcept} />
-                          {r.status === "APPROVED" && (
-                            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-neutral-600">
-                              Approved automatically — checked against Meta&apos;s advertising
-                              policies and our safety rules before it reached you.
-                            </p>
-                          )}
-                          {r.status === "IN_REVIEW" && (
-                            <p className="mt-4 border-t border-white/10 pt-3 text-xs text-amber-300/80">
-                              The automatic policy check couldn&apos;t run on this one, so it
-                              wasn&apos;t approved unchecked. We&apos;re asking again in the
-                              background — reload in a moment to see the answer.
-                            </p>
-                          )}
+      {tab === "past" && (hub.past.length === 0 ? (
+        <EmptyState title="No past creatives yet" description="Creatives from paused and finished campaigns are kept here." />
+      ) : (
+        <PastList ads={hub.past} />
+      ))}
 
-                          <ConceptReply creativeRequestId={r.id} />
-
-                          {r.status === "APPROVED" && (
-                            <div className="mt-6 border-t border-white/10 pt-5">
-                              <ImageStudio
-                                creativeRequestId={r.id}
-                                hasReference={Boolean(r.referenceImage)}
-                                images={r.images.map((i) => ({
-                                  id: i.id,
-                                  version: i.version,
-                                  imageData: i.imageData,
-                                  instruction: i.instruction,
-                                  isFinal: i.isFinal,
-                                  reviewNotes: i.reviewNotes,
-                                }))}
-                              />
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-sm text-neutral-500">
-                            No concept yet — the AI didn&apos;t manage to write one.
-                          </p>
-                          <RegenerateConceptButton creativeRequestId={r.id} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              )}
-            </Card>
-          ))}
-        </div>
+      {tab === "top" && (
+        <>
+          <p className="mb-4 text-[13.5px] text-muted">Ranked by {WORDS[hub.family]}{hub.goal ? ` — your goal is to ${hub.goal.toLowerCase()}` : ""}: the most results at the lowest cost, from the last 90 days. Never by likes or clicks when your goal is sales.</p>
+          {hub.top.length === 0 ? (
+            <EmptyState title="Not enough results to rank yet" description={`Once your ads bring in ${WORDS[hub.family]}, the best ones appear here.`} />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">{hub.top.map((a, i) => <AdCard key={a.id} ad={a} rank={i + 1} />)}</div>
+          )}
+        </>
       )}
+
+      <p className="mt-10 text-[13px] text-faint">
+        Prefer to start from a photo of what you sell? <Link href="/dashboard/creatives/requests" className="text-violet-bright hover:underline">Write an ad from a photo</Link>.
+      </p>
     </div>
   );
 }

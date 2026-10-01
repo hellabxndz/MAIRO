@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { FixThisForMe, proposedFixIds } from "@/components/decisions/fix-this-for-me";
+import { goToLinks } from "@/components/mairo/assistant";
 import { DefaultChatTransport, type UIMessage } from "ai";
 
 // The full conversation with your assistant.
@@ -148,7 +149,8 @@ export function AssistantConsole({
               const marker = raw.lastIndexOf("\n\n(Context: ");
               const text = marker === -1 ? raw : raw.slice(0, marker);
               const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
-              if (!text && fixIds.length === 0) return null;
+              const links = m.role === "assistant" ? goToLinks(m.parts) : [];
+              if (!text && fixIds.length === 0 && links.length === 0) return null;
 
               if (m.role === "user") {
                 return (
@@ -171,6 +173,9 @@ export function AssistantConsole({
                       {text}
                     </div>
                     {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
+                    {links.map((l) => (
+                      <a key={l.href} href={l.href} className="mr-2 mt-3 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">{l.label} →</a>
+                    ))}
                   </div>
                 </div>
               );

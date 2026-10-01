@@ -113,7 +113,7 @@ export async function generateAdImageAction(
       });
     });
 
-    revalidatePath("/dashboard/creatives");
+    revalidatePath("/dashboard/creatives", "layout");
     return undefined;
   } catch (error) {
     console.error("Ad image generation failed:", error);
@@ -181,7 +181,7 @@ export async function runOwnPhotoAsAdAction(
   // the customer asked for.
   if (result?.error) {
     await db.creativeImage.delete({ where: { id: created.id } }).catch(() => {});
-    revalidatePath("/dashboard/creatives");
+    revalidatePath("/dashboard/creatives", "layout");
   }
 
   return result;
@@ -236,7 +236,7 @@ export async function chooseImageAction(imageId: string): Promise<ImageActionSta
           reviewNotes: review.reason || "That picture can't run as an ad.",
         },
       });
-      revalidatePath("/dashboard/creatives");
+      revalidatePath("/dashboard/creatives", "layout");
       return {
         error:
           review.reason ||
@@ -248,7 +248,7 @@ export async function chooseImageAction(imageId: string): Promise<ImageActionSta
       where: { id: imageId },
       data: { isFinal: true, reviewedAt: new Date(), reviewNotes: null },
     });
-    revalidatePath("/dashboard/creatives");
+    revalidatePath("/dashboard/creatives", "layout");
     return undefined;
   } catch (error) {
     // A picture that could not be checked is not approved for use. Same rule
@@ -280,6 +280,6 @@ export async function unchooseImageAction(imageId: string): Promise<ImageActionS
     where: { id: imageId },
     data: { isFinal: false, reviewedAt: null, reviewNotes: null },
   });
-  revalidatePath("/dashboard/creatives");
+  revalidatePath("/dashboard/creatives", "layout");
   return undefined;
 }

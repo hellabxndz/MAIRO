@@ -137,6 +137,13 @@ export function assistantTools(organizationId: string) {
       },
     }),
 
+    go_to: tool({
+      description:
+        "Show a button that takes the person to the right MAIRO page, when they want to see or do something there (\"show me my best creative\", \"I want to create a campaign\"). Use it with a one-sentence answer; don't describe menus. Social pages are Scale only.",
+      inputSchema: z.object({ destination: z.enum(Object.keys(DESTINATIONS) as [keyof typeof DESTINATIONS, ...(keyof typeof DESTINATIONS)[]]) }),
+      execute: async ({ destination }) => DESTINATIONS[destination],
+    }),
+
     propose_fix: tool({
       description:
         "Show a 'Fix This For Me' button under your answer for recommended fixes from diagnose_campaigns (only those with canBeAppliedByMairo). The person reviews each change and approves it in a confirmation panel; nothing changes until they do. Call it at most once per answer, after explaining the problem.",
@@ -158,6 +165,31 @@ export function assistantTools(organizationId: string) {
   };
 }
 
+/**
+ * Where go_to may take someone. A fixed list: the assistant can't send a
+ * person to an arbitrary URL, only to a MAIRO page that exists.
+ */
+export const DESTINATIONS = {
+  overview: { href: "/dashboard", label: "Open your Overview" },
+  campaigns: { href: "/dashboard/campaigns", label: "Open Campaigns" },
+  create_campaign: { href: "/dashboard/create", label: "Create a campaign" },
+  creatives: { href: "/dashboard/creatives", label: "Open Creatives" },
+  best_creative: { href: "/dashboard/creatives?tab=top", label: "See your best creatives" },
+  new_creatives: { href: "/dashboard/creatives?tab=new", label: "See new creatives" },
+  create_creative: { href: "/dashboard/creative-studio", label: "Create a creative" },
+  analytics: { href: "/dashboard/analytics", label: "Open Analytics" },
+  analytics_advanced: { href: "/dashboard/analytics?view=advanced", label: "Open detailed analytics" },
+  decisions: { href: "/dashboard/decisions", label: "Open Mairo Decisions" },
+  mission: { href: "/dashboard/mission", label: "Open your goal and plan" },
+  social: { href: "/dashboard/social", label: "Open Social Manager" },
+  social_calendar: { href: "/dashboard/social/calendar", label: "Open the Content Calendar" },
+  social_approvals: { href: "/dashboard/social/posts?view=approval", label: "Review posts waiting for you" },
+  promotions: { href: "/dashboard/social/promotions", label: "Open Promotions" },
+  reports: { href: "/dashboard/reports", label: "Open your reports" },
+  settings: { href: "/dashboard/settings", label: "Open Settings" },
+  billing: { href: "/dashboard/billing", label: "Open Billing" },
+} as const;
+
 /** Added to the customer assistant's prompt alongside the tools. */
 export const MISSION_BRIEF = [
   "MAIRO Mission:",
@@ -165,6 +197,7 @@ export const MISSION_BRIEF = [
   "- When they describe an outcome they want or a launch, call get_mission, then propose_mission with their words. Say what you recommend in one or two sentences (e.g. \"Your current goal is brand awareness. I recommend changing the primary goal to customer acquisition.\"), then tell them the plan is ready to review and approve on the Mission page. Never say it's already changed.",
   "- When they tell you news (a promotion, something sold out, a fact), call tell_mairo and relay what MAIRO changed.",
   "- Social posting is part of the plan only on Scale; don't promise it otherwise. Never promise results.",
+  "- When the person wants to see or do something in MAIRO, call go_to so they get a button straight there, instead of describing where to click.",
   "- Before recommending anything, answer: what business objective does this help accomplish? If there's no clear answer, don't recommend it.",
   "- Say how sure MAIRO is in words (\"MAIRO needs more data\", \"MAIRO is becoming more confident\"), never as a percentage or a predicted result.",
 ].join("\n");

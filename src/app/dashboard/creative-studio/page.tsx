@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -75,6 +76,7 @@ export default async function CreativeStudioPage({
 
   return (
     <div>
+      <Link href="/dashboard/creatives" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-white"><span aria-hidden>←</span> All creatives</Link>
       <PageHeader
         title="AI Creative Studio"
         description="Create scroll-stopping ads with the power of AI."

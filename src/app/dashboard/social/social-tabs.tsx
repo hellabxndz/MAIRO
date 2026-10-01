@@ -1,17 +1,20 @@
 import Link from "next/link";
 
 // The Social Manager sections, one row of tabs across every Social page.
+// Everything social lives here — one sidebar entry, not one per feature.
+// Instagram and Facebook connections are reached from the Overview tab.
 
 const TABS = [
   { href: "/dashboard/social", label: "Overview" },
   { href: "/dashboard/social/calendar", label: "Content Calendar" },
+  { href: "/dashboard/social/posts?view=upcoming", label: "Upcoming" },
+  { href: "/dashboard/social/posts?view=approval", label: "Needs Approval" },
+  { href: "/dashboard/social/posts?view=published", label: "Published" },
   { href: "/dashboard/social/promotions", label: "Promotions" },
   { href: "/dashboard/social/performance", label: "Performance" },
-  { href: "/dashboard/social/instagram", label: "Instagram" },
-  { href: "/dashboard/social/facebook", label: "Facebook" },
 ] as const;
 
-export function SocialTabs({ active }: { active: (typeof TABS)[number]["href"] }) {
+export function SocialTabs({ active }: { active: (typeof TABS)[number]["href"] | "/dashboard/social/instagram" | "/dashboard/social/facebook" }) {
   return (
     <nav aria-label="Social Manager" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
       {TABS.map((t) => (

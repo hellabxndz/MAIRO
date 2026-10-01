@@ -2,41 +2,29 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, Badge, EmptyState, primaryButtonClass } from "@/components/ui";
+import { Card, PageHeader, EmptyState, primaryButtonClass } from "@/components/ui";
 import { planFor, PLANS } from "@/lib/plans";
 import { entitlementsFor } from "@/lib/entitlements";
 import { NewCampaignForm, type PlanContext } from "./new-campaign-form";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
-import { PlatformIcons, PlatformIcon } from "@/components/platform-icons";
-import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
+import { formatMoney, NO_VALUE } from "@/components/metrics";
 import { activeOrganizationId } from "@/lib/active-org";
 import { readinessFor } from "@/lib/readiness";
-import { PendingReason } from "@/components/readiness-panel";
-import { ScheduleControl } from "./schedule-control";
-import { DeleteCampaign } from "./delete-campaign";
-import { DestinationControl } from "./destination-control";
-import { describeStart, localInputValue } from "@/lib/campaigns/schedule";
-import { maybeGoLive, autoLaunchIntent } from "@/lib/campaigns/auto-launch";
+import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import { maybeRunSpendProtection } from "@/lib/protection/run";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import type { AdPlatform } from "@/generated/prisma/enums";
 import { existingLeadForm, leadFormUrl, previewLeadForm } from "@/lib/leads/forms";
 import { siteUrl } from "@/lib/site";
-import { metaAdsManagerUrl } from "@/lib/ad-platforms/billing";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
+import { viewMode } from "@/lib/view-mode";
+import { showsEnquiries } from "@/lib/leads/fields";
+import { CAMPAIGN_TABS, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
 
 // Each row's figures are live calls to Meta. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget.
 export const maxDuration = 30;
-
-const statusTone = {
-  DRAFT: "neutral",
-  PENDING_REVIEW: "yellow",
-  ACTIVE: "green",
-  PAUSED: "yellow",
-  ARCHIVED: "neutral",
-} as const;
 
 function platformLabel(platform: AdPlatform): string {
   return platform === "META"
@@ -46,15 +34,11 @@ function platformLabel(platform: AdPlatform): string {
       : platform;
 }
 
-function roas(value: number | null): string {
-  return value === null ? NO_VALUE : `${value.toFixed(2)}x`;
-}
-
 function cents(value: number | null): string {
   return value === null ? NO_VALUE : formatMoney(value / 100);
 }
 
-export default async function CampaignsPage() {
+export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -75,7 +59,6 @@ export default async function CampaignsPage() {
     entitlements,
     connections,
     readiness,
-    autoLaunch,
   ] = await Promise.all([
     db.mairoCampaign.findMany({
       where: { organizationId },
@@ -95,10 +78,13 @@ export default async function CampaignsPage() {
     entitlementsFor(organizationId),
     connectionSummaries(organizationId),
     readinessFor(organizationId, { checkFunding: true }),
-    autoLaunchIntent(organizationId),
   ]);
 
-  const performance = await fetchOrganizationPerformance(organizationId);
+  const [performance, mode, leadFormRow] = await Promise.all([
+    fetchOrganizationPerformance(organizationId),
+    viewMode(),
+    db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
+  ]);
   const byCampaign = new Map(
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
   );
@@ -118,7 +104,6 @@ export default async function CampaignsPage() {
   // off the main list — otherwise "delete" visibly does nothing and the
   // customer tries again.
   const live = campaigns.filter((c) => c.status !== "ARCHIVED");
-  const archived = campaigns.filter((c) => c.status === "ARCHIVED");
   const activeCount = live.length;
   // Infinity is how an unlimited plan says so, and it must never reach the
   // screen as the word "Infinity".
@@ -148,360 +133,108 @@ export default async function CampaignsPage() {
       .map((c) => c.platform),
   };
 
+  const now = new Date();
+  const buckets = new Map<CampaignTab, typeof campaigns>(CAMPAIGN_TABS.map((t) => [t.key, []]));
+  for (const c of campaigns) buckets.get(campaignTab(c, now))!.push(c);
+  const requested = (await searchParams).tab;
+  // The tab asked for; otherwise the first one with something in it.
+  const tab: CampaignTab = CAMPAIGN_TABS.some((t) => t.key === requested)
+    ? (requested as CampaignTab)
+    : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? "active");
+  const shown = buckets.get(tab) ?? [];
+
   return (
-    <div>
+    <div className="mx-auto max-w-[1180px]">
       <PageHeader
         title="Campaigns"
-        description="Your Facebook and Instagram campaigns. MAIRO handles the rest."
+        description="Your ads, at a glance. Open one for its results, creatives, audience, budget and history."
         action={
-          <Badge tone={atLimit ? "yellow" : "neutral"}>
-            {unlimitedCampaigns
-              ? `${activeCount} ${activeCount === 1 ? "campaign" : "campaigns"}`
-              : `${activeCount} of ${entitlements.campaign_limit} campaigns`}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            {showsEnquiries({ hasForm: Boolean(leadFormRow) }) && (
+              <Link href="/dashboard/leads" className="inline-flex min-h-[38px] items-center rounded-full border border-[color:var(--mairo-line)] px-4 text-[13px] text-white/85 hover:text-white">Enquiries</Link>
+            )}
+            <Link href="/dashboard/create" className={primaryButtonClass}>+ New campaign</Link>
+          </div>
         }
       />
 
-      {/* A network being unreachable is worth one quiet line, not a red alert
-          on every row that would otherwise show its numbers. */}
       {performance.problems.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-4">
-          {performance.problems.map((p) => (
-            <p key={p.platform} className="text-xs text-amber-200/90">
-              <span className="font-medium">{platformLabel(p.platform)}:</span>{" "}
-              {p.message}
-            </p>
-          ))}
-        </div>
+        <p className="mb-5 rounded-2xl bg-amber-400/[0.06] px-4 py-3 text-[13px] text-amber-200/90">
+          {performance.problems.map((p) => `${platformLabel(p.platform)}: ${p.message}`).join(" ")}
+        </p>
       )}
 
-      {!atLimit ? (
-        <Card className="mb-8">
-          <NewCampaignForm plan={planContext} />
-        </Card>
-      ) : (
-        /* The form used to just not render here, which left a customer on
-           Starter — one campaign — with no create form, no explanation, and
-           no way forward. There are only two honest answers, and both belong
-           on the screen. */
-        <Card className="mb-8 border-sky-400/20 bg-sky-400/[0.04]">
-          <h2 className="text-base text-white">
-            {entitlements.campaign_limit === 0
-              ? "Campaigns come with a plan"
-              : entitlements.campaign_limit === 1
-                ? `${plan.name} runs one campaign at a time`
-                : `You're using all ${entitlements.campaign_limit} of your campaigns`}
-          </h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
-            {entitlements.campaign_limit === 0
-              ? "Choose a plan and you can create as many campaigns as your business needs — there is no cap on the number."
-              : entitlements.campaign_limit === 1
-                ? "To start a different one, delete the campaign below first — that stops its ads and frees the slot. Or move up a plan and run more than one at once."
-                : "Delete one below to free a slot, or move up a plan to run more at once."}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-4">
-            {/* The way out that is not destructive, so it is the one that
-                looks like the answer. Deleting is right there below in red;
-                this is the other half of the same decision and should not be
-                the quieter of the two. */}
-            <Link
-              href="/dashboard/billing"
-              className={primaryButtonClass}
-            >
-              {upgradeTarget.name} runs {upgradeTarget.limits.campaigns} — ${upgradeTarget.priceMonthly}/mo
+      <nav aria-label="Campaign status" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {CAMPAIGN_TABS.map((t) => {
+          const n = buckets.get(t.key)?.length ?? 0;
+          return (
+            <Link key={t.key} href={`/dashboard/campaigns?tab=${t.key}`} aria-current={t.key === tab ? "page" : undefined}
+              className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition ${t.key === tab ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
+              {t.label}{n > 0 ? <span className="ml-1.5 text-faint">{n}</span> : null}
             </Link>
-            <p className="text-xs text-neutral-500">
-              Deleting is free and takes a moment. Nothing you&rsquo;ve already spent is lost.
-            </p>
-          </div>
-        </Card>
+          );
+        })}
+      </nav>
+
+      {atLimit && tab === "active" && (
+        <p className="mb-5 text-[13px] text-muted">
+          {plan.name} runs {entitlements.campaign_limit === 1 ? "one campaign" : `${entitlements.campaign_limit} campaigns`} at a time.{" "}
+          <Link href="/dashboard/billing" className="text-violet-bright underline underline-offset-4">{upgradeTarget.name} runs {upgradeTarget.limits.campaigns}</Link>
+        </p>
       )}
 
-      {live.length === 0 ? (
+      {shown.length === 0 ? (
         <EmptyState
-          title="No campaigns yet"
-          description="Create one above. Tell MAIRO what you want and how much you want to spend, and it takes care of the rest."
+          title={tab === "active" ? "No campaigns running" : tab === "drafts" ? "No drafts" : tab === "paused" ? "Nothing paused" : "No completed campaigns yet"}
+          description={tab === "active" ? "Tell MAIRO what you want to achieve and it builds the campaign for you to confirm." : undefined}
         />
       ) : (
-        <div className="space-y-4">
-          {live.map((campaign) => {
+        <div className="grid gap-3 md:grid-cols-2">
+          {shown.map((campaign) => {
             const report = byCampaign.get(campaign.id);
-            const platforms = campaign.platformCampaigns.map((c) => c.platform);
-            const metaAccountId = connections.get("META")?.accountId;
-            const metaCampaignId = campaign.platformCampaigns.find(
-              (c) => c.platform === "META" && c.externalCampaignId,
-            )?.externalCampaignId;
-
+            const status = statusLabel(campaign, now);
+            const result = primaryResult(campaign.objective, campaign.destinationType, report?.total ?? null);
+            const attention =
+              campaign.platformCampaigns.some((c) => c.lastError || c.adReviewState === "REJECTED" || c.adReviewState === "WITH_ISSUES") ||
+              (campaign.status === "PENDING_REVIEW" && !readiness.ready);
             return (
-              <Card key={campaign.id}>
-                <div className="flex flex-wrap items-start justify-between gap-4">
+              <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}
+                className="group block rounded-[24px] p-5 transition hover:bg-white/[0.045]"
+                style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-[16.5px] font-medium text-white">{campaign.name}</h2>
+                    <p className="mt-0.5 text-[13px] text-muted">{goalLabel(campaign.objective)}</p>
+                  </div>
+                  <span className="shrink-0 text-[13px] text-white/85">{status.dot} {status.text}</span>
+                </div>
+                <dl className="mt-5 grid grid-cols-2 gap-4">
                   <div>
-                    <div className="flex items-center gap-3">
-                      {/* The name is the way into the campaign's own screen —
-                          the timeline, the action log, everything MAIRO has
-                          done to it. This list stays the place to change
-                          budget and schedule. */}
-                      <h3 className="text-base text-white">
-                        <Link
-                          href={`/dashboard/campaigns/${campaign.id}`}
-                          className="transition-colors hover:text-blue-bright"
-                        >
-                          {campaign.name}
-                        </Link>
-                      </h3>
-                      <PlatformIcons platforms={platforms} />
-                    </div>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      {campaign.objective.toLowerCase().replace("_", " ")} ·{" "}
-                      {formatMoney(campaign.totalDailyBudgetCents / 100)} a day
-                    </p>
+                    <dd className="text-[24px] font-light tabular-nums text-white">{cents(report?.total.spendCents ?? null)}</dd>
+                    <dt className="text-[12.5px] text-muted">Spent</dt>
                   </div>
-                  <Badge tone={statusTone[campaign.status]}>
-                    {campaign.status.toLowerCase().replace("_", " ")}
-                  </Badge>
-                </div>
-
-                {/* The combined figures — the number the customer actually
-                    cares about, before any per-network detail. */}
-                <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                  <Figure
-                    label="Total spend"
-                    value={cents(report?.total.spendCents ?? null)}
-                  />
-                  <Figure
-                    label="Revenue"
-                    value={cents(report?.total.revenueCents ?? null)}
-                  />
-                  <Figure
-                    label="ROAS"
-                    value={roas(report?.total.roas ?? null)}
-                  />
-                  <Figure
-                    label="Purchases"
-                    value={
-                      report?.total.purchases === null ||
-                      report?.total.purchases === undefined
-                        ? NO_VALUE
-                        : formatInteger(report.total.purchases)
-                    }
-                  />
-                </div>
-
-                {/* Then the breakdown, only where there is more than one
-                    network to break down. */}
-                {platforms.length > 1 && report && (
-                  <div className="mt-5 space-y-2 border-t border-white/[0.06] pt-5">
-                    {report.byPlatform.map((p) => (
-                      <div
-                        key={p.platform}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/[0.02] px-4 py-3"
-                      >
-                        <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-neutral-400">
-                          <PlatformIcon
-                            platform={p.platform}
-                            className="h-3.5 w-3.5"
-                          />
-                          {platformLabel(p.platform)}
-                        </span>
-                        {p.unavailable ? (
-                          <span className="text-xs text-amber-200/70">
-                            {p.unavailable}
-                          </span>
-                        ) : (
-                          <span className="flex gap-6 text-xs tabular-nums text-neutral-300">
-                            <span>
-                              <span className="text-neutral-500">Spend </span>
-                              {cents(p.metrics.spendCents)}
-                            </span>
-                            <span>
-                              <span className="text-neutral-500">Revenue </span>
-                              {cents(p.metrics.revenueCents)}
-                            </span>
-                            <span>
-                              <span className="text-neutral-500">ROAS </span>
-                              {roas(p.metrics.roas)}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                  <div>
+                    <dd className="text-[24px] font-light tabular-nums text-white">{result.value}</dd>
+                    <dt className="text-[12.5px] text-muted">{result.label}</dt>
                   </div>
-                )}
-
-                {/* Why this one isn't running, said where they are looking at
-                    it. A campaign sitting at "pending review" reads as MAIRO
-                    checking it over, when in fact it is waiting on something
-                    only the customer can do. */}
-                {campaign.status === "PENDING_REVIEW" && (
-                  <PendingReason
-                    readiness={readiness}
-                    held={autoLaunch.held}
-                    startsAt={
-                      campaign.startDate
-                        ? describeStart(campaign.startDate, campaign.startTimeZone)
-                        : null
-                    }
-                  />
-                )}
-
-                {/* When it begins, and a way to move it. Shown on anything that
-                    hasn't finished, because the window between creating a
-                    campaign and it going live is days — Meta has to approve the
-                    ad — and plenty of people change their mind in it. */}
-                {campaign.status !== "ARCHIVED" && (
-                  <ScheduleControl
-                    campaignId={campaign.id}
-                    running={campaign.status === "ACTIVE"}
-                    describedStart={
-                      campaign.startDate
-                        ? describeStart(campaign.startDate, campaign.startTimeZone)
-                        : null
-                    }
-                    startLocal={
-                      campaign.startDate
-                        ? localInputValue(campaign.startDate, campaign.startTimeZone)
-                        : null
-                    }
-                  />
-                )}
-
-                {/* Where the clicks go, and a way to change it. Directly above
-                    the lines that say an ad could not be built, because "no
-                    address on it yet" is the most common reason they appear
-                    and this is the fix. */}
-                {campaign.status !== "ARCHIVED" && (
-                  <DestinationControl
-                    campaignId={campaign.id}
-                    type={campaign.destinationType}
-                    url={campaign.destinationUrl}
-                    phone={campaign.destinationPhone}
-                    channel={campaign.messageChannel}
-                    built={campaign.platformCampaigns.some((c) => c.externalAdId)}
-                  />
-                )}
-
-                {/* Whether each network can actually serve an impression.
-                    A campaign with no ad set and no ad beneath it delivers
-                    nothing, and looks identical on this page to one that
-                    works — so the difference is stated rather than left for
-                    the customer to discover from a dashboard of zeroes. */}
-                {campaign.platformCampaigns
-                  .filter((c) => c.externalCampaignId && !c.externalAdId)
-                  .map((c) => (
-                    <p
-                      key={`${c.id}-delivery`}
-                      className="mt-3 text-xs text-amber-200/90"
-                    >
-                      <span className="font-medium">
-                        {platformLabel(c.platform)}:
-                      </span>{" "}
-                      {c.externalAdGroupId
-                        ? "created, but there is no ad in it yet — so it cannot show to anyone."
-                        : "only the campaign was created — it has no audience or ad yet, so it cannot show to anyone."}
-                    </p>
-                  ))}
-
-                {/* A network that refused the campaign says so on its own row,
-                    rather than the whole campaign reading as broken. */}
-                {campaign.platformCampaigns
-                  .filter((c) => c.lastError)
-                  .map((c) => (
-                    <p key={c.id} className="mt-3 text-xs text-amber-200/80">
-                      <span className="font-medium">
-                        {platformLabel(c.platform)}:
-                      </span>{" "}
-                      {c.lastError}
-                    </p>
-                  ))}
-
-                {campaign.platformCampaigns
-                  .filter((c) => c.adReviewState === "REJECTED" || c.adReviewState === "WITH_ISSUES")
-                  .map((c) => (
-                    <p key={`review-${c.id}`} className="mt-3 text-xs text-red-300/90">
-                      <span className="font-medium">
-                        {c.adReviewState === "REJECTED" ? "Meta didn't approve the ad" : "Meta flagged the ad"}:
-                      </span>{" "}
-                      {c.adReviewExplanation}{" "}
-                      <Link href={`/dashboard/campaigns/${campaign.id}`} className="underline underline-offset-2">
-                        What to do
-                      </Link>
-                    </p>
-                  ))}
-
-                {metaAccountId && metaCampaignId && (
-                  <a
-                    href={metaAdsManagerUrl(metaAccountId, metaCampaignId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mr-3 mt-4 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white/90 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-                  >
-                    Open in Ads Manager
-                    <span aria-hidden>↗</span>
-                  </a>
-                )}
-
-                <DeleteCampaign
-                  campaignId={campaign.id}
-                  name={campaign.name}
-                  running={campaign.status === "ACTIVE"}
-                  freesSlot={atLimit}
-                  upgrade={
-                    upgradeTarget.limits.campaigns > entitlements.campaign_limit
-                      ? {
-                          name: upgradeTarget.name,
-                          price: upgradeTarget.priceMonthly,
-                          campaigns: upgradeTarget.limits.campaigns,
-                        }
-                      : null
-                  }
-                />
-              </Card>
+                </dl>
+                {attention && <p className="mt-3 text-[12.5px] text-amber-200">Needs your attention — open it to see why.</p>}
+              </Link>
             );
           })}
         </div>
       )}
 
-      {/* Deleted campaigns, kept rather than erased: MAIRO created them on a
-          real ad account and should always be able to account for what it
-          made. Folded away by default, because the point of deleting one was
-          to stop looking at it. */}
-      {archived.length > 0 && (
-        <details className="mt-8 group">
-          <summary className="cursor-pointer list-none text-xs text-neutral-500 underline decoration-white/15 underline-offset-4 transition hover:text-neutral-300">
-            {archived.length} deleted campaign{archived.length === 1 ? "" : "s"} — show
-          </summary>
-          <div className="mt-4 space-y-3">
-            {archived.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] px-5 py-4"
-              >
-                <div>
-                  <p className="text-sm text-neutral-400">{campaign.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-600">
-                    {campaign.objective.toLowerCase().replace("_", " ")} ·{" "}
-                    {formatMoney(campaign.totalDailyBudgetCents / 100)} a day · stopped
-                  </p>
-                </div>
-                <PlatformIcons
-                  platforms={campaign.platformCampaigns.map((c) => c.platform)}
-                />
-              </div>
-            ))}
-          </div>
+      {/* The older one-screen campaign form, for people who want every setting
+          at once. Advanced only; everyone else starts from + New campaign. */}
+      {mode === "advanced" && !atLimit && (
+        <details className="mt-10">
+          <summary className="cursor-pointer text-[13px] text-muted hover:text-white">Quick campaign form (advanced)</summary>
+          <Card className="mt-4">
+            <NewCampaignForm plan={planContext} />
+          </Card>
         </details>
       )}
-    </div>
-  );
-}
-
-function Figure({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-light tabular-nums text-white">{value}</p>
     </div>
   );
 }

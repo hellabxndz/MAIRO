@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Fragment, useTransition, type ReactNode } from "react";
 import { setViewMode } from "@/lib/actions/view-mode-actions";
 import type { ViewMode } from "@/lib/view-mode";
+import { AskMairoButton, CreateMenu } from "./create-menu";
 
 // The logged-in MAIRO shell.
 //
@@ -34,6 +35,8 @@ export type NavEntry = {
   badge?: string;
   /** Active only on this exact path, not its sub-pages. */
   exact?: boolean;
+  /** Other paths that belong to this destination (Creative Studio is part of Creatives). */
+  also?: string[];
 };
 
 /* --------------------------------------------------------------- the icons */
@@ -144,49 +147,35 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 
 /* ----------------------------------------------------------------- the map */
 
-/** The day-to-day destinations. Desktop sidebar, in this order. */
+/**
+ * The day-to-day destinations, deliberately few: Overview, Campaigns,
+ * Creatives, Analytics, (Social Manager), Mairo Assistant — and Settings at
+ * the bottom. Everything else lives inside one of them: creative tools inside
+ * Creatives, reports and activity inside Analytics, the business profile,
+ * integrations, billing and account inside Settings, the mission and
+ * decisions behind the Overview's cards. Every route still exists.
+ */
 export const PRIMARY_NAV: NavEntry[] = [
-  { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
-  // The goal MAIRO is working toward; everything below serves it.
-  { href: "/dashboard/mission", label: "Mission", icon: <Icon d={I.mission} /> },
-  { href: "/dashboard/decisions", label: "Decisions", icon: <Icon d={I.decisions} /> },
-  { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
-  // Points at the new AI Creative Studio, the primary place to make an ad
-  // image now. The older /dashboard/creatives concept-and-copy tool still
-  // works and is still linked from inside the product (e.g. the campaign
-  // launch pipeline's own error copy) — it is just no longer the thing this
-  // link opens, which is a deliberate "make the better tool the one people
-  // find" change, not a removal of the older one.
-  { href: "/dashboard/creative-studio", label: "Creative Studio", icon: <Icon d={I.creatives} /> },
-  { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} /> },
-  { href: "/dashboard/reports", label: "Reports", icon: <Icon d={I.reports} /> },
-  { href: "/dashboard/business", label: "Business Brain", icon: <Icon d={I.brain} /> },
-  { href: "/dashboard/activity", label: "Mairo Activity", icon: <Icon d={I.activity} /> },
-  { href: "/dashboard/agents", label: "Mairo AI", icon: <Icon d={I.mairo} /> },
-  { href: "/dashboard/integrations", label: "Integrations", icon: <Icon d={I.integrations} /> },
+  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission", "/dashboard/decisions"] },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
+  { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
+  { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} />, also: ["/dashboard/reports", "/dashboard/activity"] },
 ];
 
-/** Bottom of the sidebar. The things you go to occasionally, on purpose. */
+/** After Social Manager, which the layout adds for the plans that have it (or locked). */
+export const ASSISTANT_NAV: NavEntry = { href: "/dashboard/agents", label: "Mairo Assistant", icon: <Icon d={I.mairo} /> };
+
+/** Bottom of the sidebar. */
 export const SECONDARY_NAV: NavEntry[] = [
-  { href: "/dashboard/billing", label: "Billing", icon: <Icon d={I.billing} /> },
-  { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} /> },
-  { href: "/dashboard/account", label: "Account", icon: <Icon d={I.account} /> },
+  { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} />, also: ["/dashboard/business", "/dashboard/integrations", "/dashboard/billing", "/dashboard/account", "/dashboard/meta", "/dashboard/tracking", "/dashboard/notifications"] },
 ];
 
-/** The five on a phone. Chosen by what someone opens the app to do. */
-// Create sits in the middle, which is where a thumb lands and where the one
-// action the product exists for belongs. Account came off this bar to make room
-// for Analytics and moved to the top bar instead — dropping it entirely would
-// have stranded anyone on a phone with no way to reach settings or sign out.
-// Decisions took Analytics' place: it's what somebody opens the app on a phone
-// to do, and the dashboard links through to the full figures.
+/** The phone's bottom bar: four destinations around the Create button. */
 const MOBILE_NAV: NavEntry[] = [
-  { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },
-  { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
-  { href: "/dashboard/decisions", label: "Decisions", icon: <Icon d={I.decisions} /> },
-  { href: "/dashboard/agents", label: "Mairo", icon: <Icon d={I.mairo} /> },
+  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission", "/dashboard/decisions"] },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create"] },
+  { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
+  { href: "/dashboard/agents", label: "Assistant", icon: <Icon d={I.mairo} /> },
 ];
 
 /**
@@ -195,9 +184,11 @@ const MOBILE_NAV: NavEntry[] = [
  * Prefix matching for everything except /dashboard itself, which would
  * otherwise match every page in the product and light up permanently.
  */
-function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string, href: string, also: string[] = []): boolean {
+  const under = (h: string) => pathname === h || pathname.startsWith(`${h}/`);
+  if (also.some(under)) return true;
   if (href === "/dashboard") return pathname === "/dashboard";
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return under(href);
 }
 
 /* ------------------------------------------------------------- the toggle */
@@ -247,8 +238,11 @@ export function AppShell({
   assistantName,
   footer,
   locked = [],
+  scale = false,
 }: {
   children: ReactNode;
+  /** Active Scale: the Create menu offers social posts. */
+  scale?: boolean;
   /** Nav destinations shown with a lock: the account hasn't subscribed yet. */
   locked?: string[];
   mode: ViewMode;
@@ -278,14 +272,8 @@ export function AppShell({
   footer?: ReactNode;
 }) {
   const pathname = usePathname();
-  const named = (entries: NavEntry[]) =>
-    assistantName
-      ? entries.map((e) =>
-          e.href === "/dashboard/agents" ? { ...e, label: assistantName } : e,
-        )
-      : entries;
-
-  const primary = named([...PRIMARY_NAV, ...extraNav]);
+  const primary = [...PRIMARY_NAV, ...extraNav, ASSISTANT_NAV];
+  const askName = assistantName || "Mairo";
 
   const row = (item: NavEntry, active: boolean) => (
     <Link
@@ -337,6 +325,9 @@ export function AppShell({
         <Link href="/dashboard" className="mb-4 shrink-0 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
         </Link>
+        <div className="mb-4 shrink-0">
+          <CreateMenu scale={scale} />
+        </div>
 
         <nav className="flex flex-1 flex-col gap-0.5">
           {primary.map((i, n) => (
@@ -344,7 +335,7 @@ export function AppShell({
               {i.group && i.group !== primary[n - 1]?.group && (
                 <p className="mt-3 px-3 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">{i.group}</p>
               )}
-              {row(i, i.exact ? pathname === i.href : isActive(pathname, i.href))}
+              {row(i, i.exact ? pathname === i.href : isActive(pathname, i.href, i.also))}
             </Fragment>
           ))}
         </nav>
@@ -377,7 +368,7 @@ export function AppShell({
         )}
 
         <div className="mt-3 space-y-0.5 border-t pt-3" style={{ borderColor: "var(--mairo-line)" }}>
-          {SECONDARY_NAV.map((i) => row(i, isActive(pathname, i.href)))}
+          {SECONDARY_NAV.map((i) => row(i, isActive(pathname, i.href, i.also)))}
           {footer}
         </div>
       </aside>
@@ -392,13 +383,14 @@ export function AppShell({
         </Link>
         <span className="truncate text-[12px] text-faint">{businessName}</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <AskMairoButton name={askName} compact />
           <ViewToggle mode={mode} />
           {notifications}
-          {/* The way to settings, billing and signing out on a phone, now that
-              the bottom bar carries Analytics instead. */}
+          {/* Settings — and from there analytics' neighbours, billing, account
+              and signing out — on a phone. */}
           <Link
-            href="/dashboard/account"
-            aria-label="Account"
+            href="/dashboard/settings"
+            aria-label="Settings"
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-white"
             style={{ backgroundImage: "var(--mairo-ramp)" }}
           >
@@ -417,10 +409,11 @@ export function AppShell({
             the sidebar: it changes what this screen shows, so it belongs
             beside the screen. */}
         <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
+          <AskMairoButton name={askName} />
           <ViewToggle mode={mode} />
           {notifications}
           <Link
-            href="/dashboard/account"
+            href="/dashboard/settings"
             className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"
             style={{ borderColor: "var(--mairo-line)" }}
           >
@@ -439,12 +432,13 @@ export function AppShell({
 
       {/* ---- Mobile bottom navigation ---- */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 items-end border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
         style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.96)" }}
         aria-label="Primary"
       >
-        {named(MOBILE_NAV).map((item) => {
-          const active = isActive(pathname, item.href);
+        {[...MOBILE_NAV.slice(0, 2), null, ...MOBILE_NAV.slice(2)].map((item) => {
+          if (!item) return <CreateMenu key="create" scale={scale} variant="bar" />;
+          const active = isActive(pathname, item.href, item.also);
           return (
             <Link
               key={item.href}

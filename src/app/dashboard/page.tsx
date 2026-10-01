@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { dashboardMode } from "@/lib/view-mode";
-import { firstNameFrom } from "@/components/mairo/simple-dashboard";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui";
@@ -26,9 +25,9 @@ import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
 import { InsightsList } from "@/components/dashboard/overview/insights";
 import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
 import { count, money as fmtMoney, PANEL, pct, PUBLISHER_NAME, roas } from "@/components/dashboard/overview/format";
+import { SimpleOverview } from "./simple-overview";
 import { DashboardModeToggle } from "@/components/dashboard/overview/mode-toggle";
 import { MairoDecisionCard } from "@/components/decisions/decision-card";
-import { MorningBrief } from "@/components/intelligence/morning-brief";
 import { BusinessHealthScore } from "@/components/intelligence/business-health";
 import { OpportunityRadar } from "@/components/intelligence/opportunity-radar";
 import { EarlyWarnings } from "@/components/intelligence/early-warnings";
@@ -46,12 +45,6 @@ import { socialAccess } from "@/lib/social/access";
 import { FreeHome } from "@/components/strategy/free-access";
 import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
-import { activeMission, missionActivity, missionLearned, missionRecommendations, proposedMission } from "@/lib/mission/store";
-import { missionGoal, resultsForGoal } from "@/lib/mission/goals";
-import { missionConfidence } from "@/lib/engine";
-import { DoingNow, GoalCampaigns, GoalHero, GoalResults, Learned, NextActions, SocialCard, type NextItem } from "@/components/mission/mission-status";
-import { goalOption } from "@/lib/campaigns/objectives";
-import { GoalPicker } from "@/app/dashboard/mission/mission-client";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -85,10 +78,16 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // Approved Instagram posts that are due go out when the business opens MAIRO.
   await publishDuePosts({ organizationId, limit: 2, budgetMs: 8_000 }).catch(() => undefined);
 
-  const [organization, connections] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId } }),
-    connectionSummaries(organizationId),
-  ]);
+  // Simple mode: the calm Overview — goal, this month, what MAIRO is doing,
+  // anything that needs the owner, one insight, what's next. The Advanced and
+  // Profit First views below keep every figure for those who want them.
+  const mode = await dashboardMode();
+  if (mode === "simple") {
+    await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
+    return <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} />;
+  }
+
+  const connections = await connectionSummaries(organizationId);
   const connectedPlatforms = [...connections.values()].filter((c) => c.connected);
 
   // Whether any campaign is worth suggesting a change to. Usually none are,
@@ -129,7 +128,6 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // depths, not three products: everything below is read once, and the mode
   // only decides which of it goes on the screen — so they can never disagree
   // about the state of an account.
-  const mode = await dashboardMode();
   const advanced = mode === "advanced";
   const [overview, fresh, intelligence, latestReport, reportSettings] = await Promise.all([
     loadOverview(organizationId, days, { adBreakdown: advanced }),
@@ -163,28 +161,13 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     null;
   const journey = mode === "profit" || !journeyId ? null : await campaignJourney(organizationId, journeyId).catch(() => null);
 
-  const now = new Date();
-  const hour = Number(
-    new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: organization?.timezone || "America/New_York" }).format(now),
-  );
-  const greeting = `${Number.isFinite(hour) && hour < 12 ? "Good morning" : Number.isFinite(hour) && hour < 18 ? "Good afternoon" : "Good evening"}${
-    session.user.name ? `, ${firstNameFrom(session.user.name, "")}` : ""
-  }.`;
   const checkedAt = fresh?.decisionsCheckedAt
     ? fresh.decisionsCheckedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
     : null;
 
   const { current: t, previous: p } = overview;
 
-  // The MAIRO mission: what the business is trying to achieve, and MAIRO's
-  // work toward it. The Simple dashboard leads with it; raw figures stay in
-  // Advanced.
-  const [mission, proposal] = mode === "simple" ? await Promise.all([activeMission(organizationId), proposedMission(organizationId)]) : [null, null];
-  const [missionDoing, missionLearnedItems, missionNext, missionSure] = mission
-    ? await Promise.all([missionActivity(organizationId), missionLearned(organizationId), missionRecommendations(organizationId, mission), missionConfidence(organizationId, missionGoal(mission.primaryGoal).metrics, t).catch(() => null)])
-    : [null, [], [], null];
   const report = intelligence.report;
-  const briefActions = intelligence.insights.filter((i) => i.severity !== "INFO").slice(0, 2);
   const journeyCampaigns = overview.campaigns.map((c) => ({ id: c.id, name: c.name }));
 
   const alerts = (
@@ -293,10 +276,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     <header className="mb-6 space-y-4">
       <div className="min-w-0">
         <h1 className="text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
-          {mode === "profit" ? "Is your advertising making money?" : advanced ? "Here’s how your ads are performing" : "Here’s what MAIRO is doing for your business"}
+          {mode === "profit" ? "Is your advertising making money?" : "Here’s how your ads are performing"}
         </h1>
-        {/* The sales sentence would be the wrong yardstick for a leads or bookings mission. */}
-        {mode === "simple" && (!mission || missionGoal(mission.primaryGoal).metrics === "sales") && <p className="mt-1.5 text-[14.5px] text-muted">{summarySentence(t, p, days)}</p>}
         {mode === "profit" && <p className="mt-1.5 text-[14.5px] text-muted">Revenue, estimated profit and break-even — the financial side of your ads.</p>}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -368,178 +349,45 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     );
   }
 
-  if (advanced) {
-    return (
-      <div className="mx-auto max-w-[1440px]">
-        {header}
-        {alerts}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
-          <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
-          <KpiCard compact label="Reach" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added across campaigns." />
-          <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
-          <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
-          <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
-          <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
-          <KpiCard compact label="Conversions" value={count(t.purchases ?? t.conversions)} change={change(t.purchases ?? t.conversions, p?.purchases ?? p?.conversions)} icon={KPI_ICON.cart} />
-          <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
-          <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
-        </div>
-        <div className="mt-4">{weeklyCard}</div>
-        <div className="mt-4">{table}</div>
-        <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
-          {chart}
-          <section className={`${PANEL} p-5`}>
-            <InsightsList items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
-          </section>
-          <section className={`${PANEL} p-5`}>
-            <PlatformSplit publishers={overview.publishers} selectable />
-          </section>
-        </div>
-        <div className="mt-4">
-          <BusinessHealthScore health={report?.health ?? null} />
-        </div>
-        <div className="mt-4">
-          <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
-        </div>
-        <div className="mt-4">
-          <EarlyWarnings insights={intelligence.insights} advanced />
-        </div>
-        <div className="mt-4">{timeline}</div>
-        <div className="mt-4">{decisionsSection}</div>
-        <ResultsNote className="mt-6" />
-      </div>
-    );
-  }
-
-  // The Simple dashboard, when the business has a goal: five questions, in
-  // order — what are we trying to do, what is MAIRO doing, what happened,
-  // what did MAIRO learn, what happens next. Raw advertising figures live in
-  // Advanced.
-  if (mission && missionDoing) {
-    const g = missionGoal(mission.primaryGoal);
-    const approvals = overview.insights
-      .filter((d) => d.changes.some((c) => c.type !== "guide"))
-      .slice(0, 2)
-      .map((d) => ({ title: d.title, text: d.recommendation, approveDecisionIds: [d.id], href: "/dashboard/decisions", label: "See details" }));
-    // Something blocking the ads outranks every other "next": the owner can't
-    // be told things are going well while Meta can't run the campaign.
-    const blocker = readiness.next && !readiness.ready && readiness.next.owner === "you"
-      ? [{ title: readiness.next.label, text: readiness.next.detail, href: readiness.next.href, label: "Fix this" }]
-      : [];
-    const nextItems: NextItem[] = [
-      ...blocker,
-      ...(proposal ? [{ title: "MAIRO created a new plan for you", text: `"${proposal.title}" is ready. It replaces your current goal once you approve it.`, href: "/dashboard/mission", label: "Review and approve" }] : []),
-      ...approvals,
-      ...missionNext,
-    ].slice(0, 3);
-    const hasResults = (t.spendCents ?? 0) > 0;
-    const fallback = missionDoing.campaignsRunning === 0
-      ? "MAIRO will start working as soon as your planned campaign is confirmed."
-      : hasResults
-        ? "Your current campaign is performing consistently. MAIRO recommends continuing to collect data before making major changes."
-        : "MAIRO is waiting for the first results from your campaigns before recommending any changes.";
-    return (
-      <div className="mx-auto max-w-[1440px]">
-        {header}
-        <GoalHero
-          greeting={greeting}
-          primary={g.label}
-          title={mission.title}
-          sentence={mission.plan.mission}
-          strategy={mission.plan.strategy}
-          secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null}
-          startedAt={mission.approvedAt}
-          confidence={missionSure}
-        />
-        <div className="mt-6">{alerts}</div>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-          <DoingNow activity={missionDoing} />
-          <GoalResults tiles={resultsForGoal(g.metrics, t)} days={days} hasData={t.spendCents !== null} />
-        </div>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <Learned items={missionLearnedItems} />
-          <NextActions items={nextItems} fallback={fallback} />
-        </div>
-        <div className="mt-4"><SocialCard activity={missionDoing} upgradeHref="/dashboard/billing" /></div>
-        <div className="mt-4">{weeklyCard}</div>
-        <div className="mt-4">
-          <GoalCampaigns campaigns={overview.campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status, goalLabel: goalOption(c.objective).label }))} />
-        </div>
-        <p className="mt-6 text-[13px] text-muted">
-          Want the detailed advertising figures — spend, CTR, CPC, CPM, ad sets and creative breakdowns? Switch to <span className="text-white">Advanced</span> at the top.
-        </p>
-        <ResultsNote className="mt-4" />
-      </div>
-    );
-  }
-
-  const missionBlock = proposal ? (
-    <section className="mb-6 rounded-2xl border border-violet/35 bg-violet/[0.07] p-5">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO created a plan</p>
-      <h2 className="mt-1 text-[20px] font-semibold text-white">🎯 {proposal.title}</h2>
-      <p className="mt-1 text-[14px] text-white/80">{proposal.plan.mission}</p>
-      <Link href="/dashboard/mission" className="mt-3 inline-flex min-h-[42px] items-center rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">Review and approve</Link>
-    </section>
-  ) : (
-    <section className="mb-6"><GoalPicker /></section>
-  );
-
   return (
     <div className="mx-auto max-w-[1440px]">
       {header}
       {alerts}
-      {missionBlock}
-      <MorningBrief
-        greeting={greeting}
-        brief={report?.brief ?? null}
-        frequency={fresh?.briefFrequency ?? "DAILY"}
-        actions={briefActions}
-        pendingDecisions={overview.pendingCount}
-      />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+        <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
+        <KpiCard compact label="Reach" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added across campaigns." />
+        <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
+        <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
+        <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
+        <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
+        <KpiCard compact label="Conversions" value={count(t.purchases ?? t.conversions)} change={change(t.purchases ?? t.conversions, p?.purchases ?? p?.conversions)} icon={KPI_ICON.cart} />
+        <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
+        <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+      </div>
       <div className="mt-4">{weeklyCard}</div>
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-        <KpiCard label="Money spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
-        <KpiCard label="Revenue" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.cart} hint="Sales Meta tracked back to your ads." />
-        <KpiCard label="Purchases" value={count(t.purchases)} change={change(t.purchases, p?.purchases)} icon={KPI_ICON.bag} />
-        <KpiCard label="Cost per sale" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="What you paid in ads, on average, for each sale." />
-        <KpiCard label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.bars} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+      <div className="mt-4">{table}</div>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+        {chart}
+        <section className={`${PANEL} p-5`}>
+          <InsightsList items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
+        </section>
+        <section className={`${PANEL} p-5`}>
+          <PlatformSplit publishers={overview.publishers} selectable />
+        </section>
       </div>
       <div className="mt-4">
         <BusinessHealthScore health={report?.health ?? null} />
       </div>
-      <div className="mt-4">{decisionsSection}</div>
       <div className="mt-4">
         <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]">
-        {chart}
-        <section className={`${PANEL} p-5`}>
-          <PlatformSplit publishers={overview.publishers} />
-        </section>
-      </div>
-      <div className="mt-4">{table}</div>
       <div className="mt-4">
-        <EarlyWarnings insights={intelligence.insights} advanced={false} />
+        <EarlyWarnings insights={intelligence.insights} advanced />
       </div>
       <div className="mt-4">{timeline}</div>
+      <div className="mt-4">{decisionsSection}</div>
       <ResultsNote className="mt-6" />
     </div>
   );
-}
-
-/** The Simple view's one-line summary. Only says what the numbers show. */
-function summarySentence(t: PlatformMetrics, p: PlatformMetrics | null, days: number): string {
-  if (t.spendCents === null || t.spendCents === 0) return `Nothing has been spent on ads in the last ${days} days yet.`;
-  const spent = `You spent ${fmtMoney(t.spendCents)}`;
-  if (t.revenueCents !== null && t.revenueCents > 0) {
-    const move = change(t.revenueCents, p?.revenueCents);
-    const tail =
-      move === null || Math.abs(move) < 0.005
-        ? ""
-        : ` That’s a ${Math.abs(Math.round(move * 100))}% ${move > 0 ? "increase" : "drop"} from the period before.`;
-    return `${spent} and made ${fmtMoney(t.revenueCents)} in sales from your ads.${tail}`;
-  }
-  if (t.purchases) return `${spent} and got ${count(t.purchases)} purchase${t.purchases === 1 ? "" : "s"} from your ads.`;
-  return `${spent} in the last ${days} days. No sales have been tracked back to your ads yet.`;
 }

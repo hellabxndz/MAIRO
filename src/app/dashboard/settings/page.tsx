@@ -58,8 +58,29 @@ export default async function SettingsPage() {
     <div>
       <PageHeader
         title="Settings"
-        description="What we know about your business. Change any of it — the AI uses these answers every time it writes a plan or an ad."
+        description="Your business, your connections and your account — the things you set once and rarely touch."
       />
+
+      {/* Everything that isn't a day-to-day destination lives here, one tap
+          away, instead of in the sidebar. */}
+      <nav aria-label="Everything else" className="mb-8 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { href: "/dashboard/business", label: "Business Brain", hint: "What MAIRO knows about your business" },
+          { href: "/dashboard/mission", label: "Your goal & plan", hint: "The mission MAIRO is working toward" },
+          { href: "/dashboard/integrations", label: "Connected accounts", hint: "Facebook, Instagram and Meta" },
+          { href: "/dashboard/tracking", label: "Measuring sales", hint: "Website tracking and conversions" },
+          { href: "/dashboard/decisions", label: "Mairo Decisions", hint: "Every recommendation and what happened" },
+          { href: "/dashboard/reports", label: "Reports", hint: "Weekly and monthly summaries" },
+          { href: "/dashboard/activity", label: "Mairo Activity", hint: "Everything MAIRO did, in order" },
+          { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
+          { href: "/dashboard/account", label: "Account", hint: "Login, team and more" },
+        ].map((e) => (
+          <Link key={e.href} href={e.href} className="group rounded-2xl px-4 py-3 transition hover:bg-white/[0.05]" style={{ background: "rgba(255,255,255,0.025)" }}>
+            <span className="block text-[14.5px] text-white">{e.label} <span aria-hidden className="text-faint transition group-hover:text-white">›</span></span>
+            <span className="block text-[12.5px] text-muted">{e.hint}</span>
+          </Link>
+        ))}
+      </nav>
 
       <Card className="mb-8">
         <h2 className="mb-1 text-sm font-medium">Business details</h2>

@@ -79,6 +79,9 @@ export default async function SocialManagerPage() {
     <div>
       <PageHeader title="MAIRO Social Manager" description="Your AI marketing strategist for Instagram and Facebook. Everything MAIRO posts serves your goal." />
       <SocialTabs active="/dashboard/social" />
+      <p className="-mt-3 mb-5 text-[13px] text-muted">
+        Your accounts: <Link href="/dashboard/social/instagram" className="text-violet-bright hover:underline">Instagram</Link> · <Link href="/dashboard/social/facebook" className="text-violet-bright hover:underline">Facebook Page</Link>
+      </p>
 
       {(view.pausedAt || paused > 0) && <ResumeBanner />}
 

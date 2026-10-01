@@ -28,7 +28,7 @@ function Err({ text }: { text: string | null }) {
   return text ? <p role="alert" className="mt-3 rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{text}</p> : null;
 }
 
-export function GoalPicker({ initialGoal = null, onCancel, compact = false }: { initialGoal?: MissionGoal | null; onCancel?: () => void; compact?: boolean }) {
+export function GoalPicker({ initialGoal = null, onCancel, compact = false, afterPlan, placeholder, hideHeading = false }: { initialGoal?: MissionGoal | null; onCancel?: () => void; compact?: boolean; afterPlan?: () => void; placeholder?: string; hideHeading?: boolean }) {
   const router = useRouter();
   const [goal, setGoal] = useState<MissionGoal | null>(initialGoal);
   const [request, setRequest] = useState("");
@@ -43,14 +43,19 @@ export function GoalPicker({ initialGoal = null, onCancel, compact = false }: { 
       const r = await startMissionAction({ goal, request, answers: questions ? answers : undefined }).catch(() => ({ ok: false as const, error: "Something went wrong. Try again." }));
       if (!r.ok) return setError(r.error);
       if (r.kind === "questions") return setQuestions(r.questions);
+      if (afterPlan) return afterPlan();
       router.refresh();
     });
   }
 
   return (
     <div className={compact ? "" : "rounded-2xl border border-violet/30 bg-violet/[0.05] p-5 sm:p-7"}>
-      <h2 className="text-[22px] font-semibold leading-snug text-white">What do you want MAIRO to help your business accomplish?</h2>
-      <p className="mt-1.5 max-w-[640px] text-[14px] text-muted">Tell MAIRO the outcome. It works out the marketing — ads{" "}and, on Scale, your social posts — and shows you the plan before anything happens.</p>
+      {!hideHeading && (
+        <>
+          <h2 className="text-[22px] font-semibold leading-snug text-white">What do you want MAIRO to help your business accomplish?</h2>
+          <p className="mt-1.5 max-w-[640px] text-[14px] text-muted">Tell MAIRO the outcome. It works out the marketing — ads{" "}and, on Scale, your social posts — and shows you the plan before anything happens.</p>
+        </>
+      )}
 
       <label className="mt-5 block">
         <span className="text-[14px] font-medium text-white">In your own words</span>
@@ -60,7 +65,7 @@ export function GoalPicker({ initialGoal = null, onCancel, compact = false }: { 
           rows={2}
           maxLength={1000}
           className={`${input} mt-1.5`}
-          placeholder={`e.g. "We're a car detailing business and want more ceramic coating bookings."`}
+          placeholder={placeholder ?? `e.g. "We're a car detailing business and want more ceramic coating bookings."`}
           aria-label="What you want MAIRO to help with"
         />
       </label>
@@ -137,9 +142,9 @@ export function ApproveBar({ missionId, scale }: { missionId: string; scale: boo
   );
 }
 
-export function TellMairo({ placeholder }: { placeholder?: string }) {
+export function TellMairo({ placeholder, initialText = "" }: { placeholder?: string; initialText?: string }) {
   const router = useRouter();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<{ message: string; actions: string[]; missionId?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);

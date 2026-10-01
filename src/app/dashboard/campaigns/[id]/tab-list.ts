@@ -7,24 +7,23 @@
 // function, which Next refuses at runtime — the page threw on every load and
 // took the timeline down with it.
 
-export type TabKey =
-  | "overview"
-  | "timeline"
-  | "creatives"
-  | "analytics"
-  | "actions"
-  | "settings";
+export type TabKey = "performance" | "creatives" | "audience" | "budget" | "decisions" | "history" | "advanced";
 
 export const TABS: { key: TabKey; label: string }[] = [
-  { key: "overview", label: "Overview" },
-  { key: "timeline", label: "Timeline" },
+  { key: "performance", label: "Performance" },
   { key: "creatives", label: "Creatives" },
-  { key: "analytics", label: "Analytics" },
-  { key: "actions", label: "MAIRO actions" },
-  { key: "settings", label: "Settings" },
+  { key: "audience", label: "Audience" },
+  { key: "budget", label: "Budget" },
+  { key: "decisions", label: "Mairo Decisions" },
+  { key: "history", label: "History" },
+  { key: "advanced", label: "Advanced Settings" },
 ];
 
-/** An unknown or missing ?tab= is the overview, never a blank screen. */
+/** The old tab names still land somewhere sensible. */
+const OLD: Record<string, TabKey> = { overview: "performance", timeline: "history", analytics: "advanced", actions: "decisions", settings: "advanced" };
+
+/** An unknown or missing ?tab= is Performance, never a blank screen. */
 export function parseTab(value: string | undefined): TabKey {
-  return TABS.some((t) => t.key === value) ? (value as TabKey) : "overview";
+  if (value && OLD[value]) return OLD[value];
+  return TABS.some((t) => t.key === value) ? (value as TabKey) : "performance";
 }
