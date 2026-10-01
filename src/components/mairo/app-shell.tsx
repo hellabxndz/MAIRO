@@ -41,6 +41,9 @@ export type NavEntry = {
    keep patched forever, and these are twelve lines each. */
 
 const I = {
+  mission: (
+    <path d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M10 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z M10 10.6a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2z" />
+  ),
   home: (
     <path d="M3 9.5L10 4l7 5.5V16a1 1 0 0 1-1 1h-3.5v-4.5h-5V17H4a1 1 0 0 1-1-1V9.5z" />
   ),
@@ -144,6 +147,8 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 /** The day-to-day destinations. Desktop sidebar, in this order. */
 export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Home", icon: <Icon d={I.home} /> },
+  // The goal MAIRO is working toward; everything below serves it.
+  { href: "/dashboard/mission", label: "Mission", icon: <Icon d={I.mission} /> },
   { href: "/dashboard/decisions", label: "Decisions", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/create", label: "Create", icon: <Icon d={I.create} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} /> },

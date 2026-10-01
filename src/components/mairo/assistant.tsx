@@ -259,7 +259,8 @@ export function MairoAssistant({
                     const marker = raw.lastIndexOf("\n\n(Context: ");
                     const text = marker === -1 ? raw : raw.slice(0, marker);
                     const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
-                    if (!text && fixIds.length === 0) return null;
+                    const planReady = m.role === "assistant" && missionProposed(m.parts);
+                    if (!text && fixIds.length === 0 && !planReady) return null;
                     return (
                       <div
                         key={m.id}
@@ -279,6 +280,11 @@ export function MairoAssistant({
                         >
                           {text}
                           {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
+                          {planReady && (
+                            <a href="/dashboard/mission" className="mt-3 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
+                              Review MAIRO&rsquo;s plan
+                            </a>
+                          )}
                         </div>
                       </div>
                     );
@@ -341,4 +347,12 @@ export function MairoAssistant({
       `}</style>
     </>
   );
+}
+
+/** Whether this message saved a MAIRO plan for the person to review. */
+function missionProposed(parts: unknown[]): boolean {
+  return parts.some((p) => {
+    const part = p as { type?: string; state?: string; output?: { missionId?: unknown } };
+    return (part.type === "tool-propose_mission" || part.type === "tool-tell_mairo") && part.state === "output-available" && typeof part.output?.missionId === "string";
+  });
 }

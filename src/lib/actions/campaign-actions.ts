@@ -1,5 +1,6 @@
 "use server";
 
+import { linkMissionCampaign } from "@/lib/mission/store";
 import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -482,6 +483,8 @@ export async function createCampaignAction(
       // A draft made from the approved free plan: the plan now points at the
       // campaign, so the launch review can compare the two.
       await linkBuiltCampaign(organizationId, claimedDraft, outcome.mairoCampaignId);
+      // A draft MAIRO made from the mission: the campaign carries its objective and reason.
+      await linkMissionCampaign(organizationId, claimedDraft, outcome.mairoCampaignId);
       await db.campaignDraft.deleteMany({ where: { id: claimedDraft, organizationId } });
       revalidatePath("/dashboard/create");
     } else {

@@ -40,6 +40,7 @@
     "check:payment-gate": "tsx scripts/check-payment-gate.ts",
     "check:social-scheduler": "tsx scripts/check-social-scheduler.ts",
     "check:social-manager": "tsx scripts/check-social-manager.ts",
+    "check:mission": "tsx scripts/check-mission.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

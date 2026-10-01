@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { creativeObjective } from "@/lib/mission/store";
 import { currentMonthKey } from "@/lib/utils/month";
 import { generateCreativeConcept } from "@/lib/ai/creative";
 import { reviewCreative } from "@/lib/ai/review";
@@ -121,11 +122,13 @@ export async function attachAssetToCampaign(
     console.error("Copy safety review failed for a Studio creative:", error);
   }
 
+  const purpose = await creativeObjective(organizationId);
   const request = await db.creativeRequest.create({
     data: {
       organizationId,
       month: currentMonthKey(),
       type: "IMAGE",
+      ...(purpose ?? {}),
       brief,
       aiConcept: concept,
       status,

@@ -312,6 +312,18 @@ export type PlatformMetrics = {
   likes: number | null;
   comments: number | null;
   shares: number | null;
+
+  /**
+   * Results for goals other than sales, read from Meta's actions when the
+   * account tracks them. Optional and null when not tracked — a mission
+   * about appointments must never show clicks as if they were bookings.
+   */
+  leads?: number | null;
+  /** Meta's Schedule event: booked appointments, when the pixel sends it. */
+  bookings?: number | null;
+  /** Calls, messages started and Contact events. */
+  contacts?: number | null;
+  landingPageViews?: number | null;
 };
 
 export const EMPTY_METRICS: PlatformMetrics = {

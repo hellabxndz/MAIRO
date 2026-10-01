@@ -147,16 +147,16 @@ export default function Home() {
 
         <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-14 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-6 lg:px-12">
           <div className="min-w-0">
-            <Badge>AI Advertising Manager</Badge>
+            <Badge>AI Marketing Manager</Badge>
             <h1 className="mt-6 text-[clamp(34px,3.75vw,60px)] font-extrabold leading-[1.05] tracking-[-0.045em]">
-              <span className="sm:whitespace-nowrap">Grow your business</span>
+              <span className="sm:whitespace-nowrap">You run the business.</span>
               <br />
-              <span className="sm:whitespace-nowrap">with AI advertising</span>
+              <span className="sm:whitespace-nowrap">Mairo runs the</span>
               <br />
-              <span className={`${GRADIENT_TEXT} sm:whitespace-nowrap`}>that actually works.</span>
+              <span className={`${GRADIENT_TEXT} sm:whitespace-nowrap`}>marketing.</span>
             </h1>
             <p className="mt-6 max-w-[560px] text-[clamp(16px,1.35vw,19px)] leading-relaxed text-white/70">
-              Mairo creates, manages, and optimizes your Facebook and Instagram ads with AI — so you can get more customers and spend less time in Ads Manager.
+              Tell Mairo what you want your business to achieve — more sales, more bookings, a new launch. Mairo builds the strategy, creates the ads and content, runs it with your approval, and learns what works.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
@@ -480,7 +480,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
           <div className="col-span-2 sm:col-span-1">
             <p className="text-[18px] font-light tracking-[0.34em] text-white">MAIRO</p>
-            <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-white/50">The AI advertising manager for Facebook and Instagram.</p>
+            <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-white/50">Your AI marketing manager. You run the business — Mairo runs the marketing.</p>
             <p className="mt-4 text-[12px] text-white/35">© {new Date().getFullYear()} Mairo</p>
           </div>
           {[

@@ -20,6 +20,7 @@ export const FREE_PAGES = [
 
 /** Sidebar destinations shown with a lock before subscribing. */
 export const LOCKED_NAV = [
+  "/dashboard/mission",
   "/dashboard/decisions",
   "/dashboard/create",
   "/dashboard/campaigns",
@@ -39,6 +40,7 @@ const LOCKED: { prefix: string; title: string; text: string }[] = [
   { prefix: "/dashboard/analytics", title: "Analytics", text: "Activate Mairo to see live campaign performance." },
   { prefix: "/dashboard/campaigns", title: "Campaigns", text: "Subscribe to turn your approved plan into a real campaign." },
   { prefix: "/dashboard/create", title: "Create", text: "Subscribe to turn your approved plan into a real campaign." },
+  { prefix: "/dashboard/mission", title: "MAIRO Mission", text: "Your approved free plan becomes MAIRO's mission once you subscribe — then MAIRO runs it, measures it and improves it." },
   { prefix: "/dashboard/decisions", title: "Mairo Decisions", text: "Once your campaign is running, Mairo tells you what to change and why." },
   { prefix: "/dashboard/creative-studio", title: "Creative Studio", text: "Creative generation is part of your Mairo plan." },
   { prefix: "/dashboard/reports", title: "Reports", text: "Weekly Reports start once a real campaign is running." },

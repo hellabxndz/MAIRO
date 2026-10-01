@@ -403,6 +403,10 @@ export function aggregate(all: PlatformMetrics[]): PlatformMetrics {
     followersGained: sum((m) => m.followersGained),
     likes: sum((m) => m.likes),
     comments: sum((m) => m.comments),
+    leads: sum((m) => m.leads ?? null),
+    bookings: sum((m) => m.bookings ?? null),
+    contacts: sum((m) => m.contacts ?? null),
+    landingPageViews: sum((m) => m.landingPageViews ?? null),
     shares: sum((m) => m.shares),
   };
 }

@@ -132,10 +132,11 @@ export function promotionTitle(kind: PromotionKind, d: PromotionDetails): string
 
 // --- The kind of business ------------------------------------------------
 
-export const CATEGORIES = ["retail", "food", "health", "trades", "realestate", "beauty_fitness", "services", "general"] as const;
+export const CATEGORIES = ["retail", "food", "health", "trades", "auto", "realestate", "beauty_fitness", "services", "general"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 const CATEGORY_WORDS: [Category, RegExp][] = [
+  ["auto", /\bauto\b|automotive|car (detail|wash|care|repair)|detailing|mechanic|ceramic coat|tyre|tire shop|vehicle|window tint|body shop/i],
   ["food", /restaurant|caf[eé]|coffee|bakery|food|pizza|bar\b|grill|kitchen|catering|brew|deli|diner|bistro/i],
   ["health", /dent|clinic|doctor|medical|chiro|physio|therap|optom|veterin|vet\b|health|orthodont|pharma/i],
   ["trades", /roof|plumb|electric|contract|hvac|landscap|clean|construct|repair|remodel|paint|handyman|pest|moving|solar|garage/i],

@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+import { activeMission } from "@/lib/mission/store";
+import { missionGoal, resultsForGoal } from "@/lib/mission/goals";
 import { db } from "@/lib/db";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { getAdapter } from "@/lib/ad-platforms/registry";
@@ -268,8 +270,38 @@ export async function buildWeeklyReport(organizationId: string, week: DateRange)
   });
   const summary = await summarizeWeek(facts, plainSimple, plainAdvanced);
 
+  // Your Week With MAIRO: the same week, measured against the mission's goal.
+  const missionWeek = await (async () => {
+    const m = await activeMission(organizationId);
+    if (!m) return null;
+    const g = missionGoal(m.primaryGoal);
+    const [adsTested, posts, promos] = await Promise.all([
+      db.campaignAd.count({ where: { mairoCampaign: { organizationId, status: { in: ["ACTIVE", "PAUSED"] } }, createdAt: { lt: end } } }),
+      db.instagramPost.aggregate({ where: { organizationId, status: "PUBLISHED", postedAt: { gte: week.since, lt: end } }, _count: { _all: true }, _sum: { likeCount: true, commentCount: true } }),
+      db.missionNote.findMany({ where: { organizationId, kind: "PROMOTION", OR: [{ endsAt: { gte: week.since } }, { endsAt: null }], createdAt: { lt: end } }, select: { text: true } }),
+    ]);
+    const running = campaigns.filter((c) => c.status === "ACTIVE").length;
+    const did = [
+      `Ran ${running} campaign${running === 1 ? "" : "s"}`,
+      `Tested ${adsTested} ad creative${adsTested === 1 ? "" : "s"}`,
+      posts._count._all ? `Published ${posts._count._all} social post${posts._count._all === 1 ? "" : "s"} (Scale)` : null,
+      ...promos.slice(0, 2).map((p) => `Promoted: ${p.text}`),
+      changes.length ? `Made ${changes.length} change${changes.length === 1 ? "" : "s"} to your campaigns` : null,
+    ].filter(Boolean) as string[];
+    const tiles = resultsForGoal(g.metrics, now.total, { likes: posts._sum.likeCount ?? 0, comments: posts._sum.commentCount ?? 0, posts: posts._count._all });
+    return {
+      goal: g.label,
+      title: m.title,
+      did,
+      results: tiles.map((t) => ({ label: t.label, value: t.value })),
+      learned: learned.find((l) => l.saved)?.statement ?? learned[0]?.statement ?? null,
+      next: plan[0] ? `${plan[0].action}` : `MAIRO keeps working on "${m.title}" and tests what's working best.`,
+    };
+  })().catch(() => null);
+
   return {
     version: 1,
+    mission: missionWeek,
     period: { since, until, label: weekLabel(since, until) },
     businessName: org?.name ?? "",
     resultWord: word,

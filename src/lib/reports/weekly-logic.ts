@@ -137,6 +137,18 @@ export type WeeklyReportData = {
   campaignsActive: number;
   /** Something the report couldn't read, said plainly. */
   dataNote: string | null;
+  /**
+   * "Your Week With MAIRO": the week told against the business's mission.
+   * Absent on reports made before missions existed, or with no mission set.
+   */
+  mission?: {
+    goal: string;
+    title: string;
+    did: string[];
+    results: { label: string; value: string | null }[];
+    learned: string | null;
+    next: string;
+  } | null;
 };
 
 // --- small helpers ----------------------------------------------------------------

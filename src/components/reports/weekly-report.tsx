@@ -112,6 +112,33 @@ export function WeeklyReport({
     <div className="space-y-4">
       {data.dataNote && <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 text-[13px] text-amber-200">{data.dataNote}</p>}
 
+      {data.mission && (
+        <section className="rounded-2xl border border-violet/30 bg-violet/[0.05] p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your week with MAIRO</p>
+          <h2 className="mt-1 text-[19px] font-semibold text-white">🎯 Goal: {data.mission.goal}</h2>
+          <div className="mt-4 grid gap-5 md:grid-cols-2">
+            <div>
+              <h3 className="text-[13px] font-semibold text-white">What MAIRO did</h3>
+              <ul className="mt-1.5 space-y-1 text-[13.5px] text-white/85">{data.mission.did.map((d) => <li key={d}>• {d}</li>)}</ul>
+            </div>
+            <div>
+              <h3 className="text-[13px] font-semibold text-white">Results</h3>
+              <ul className="mt-1.5 space-y-1 text-[13.5px] text-white/85">
+                {data.mission.results.map((r) => <li key={r.label}>• {r.label}: <span className={r.value ? "font-semibold tabular-nums text-white" : "text-faint"}>{r.value ?? "not tracked yet"}</span></li>)}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-[13px] font-semibold text-white">What MAIRO learned</h3>
+              <p className="mt-1.5 text-[13.5px] text-white/85">{data.mission.learned ? `“${data.mission.learned}”` : "Not enough results yet to draw a conclusion."}</p>
+            </div>
+            <div>
+              <h3 className="text-[13px] font-semibold text-white">Next week&rsquo;s plan</h3>
+              <p className="mt-1.5 text-[13.5px] text-white/85">{data.mission.next}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
       <ReportSection title="Week at a glance" eyebrow={data.period.label}>
         <Glance c={data.glance.current} p={data.glance.previous} mode={mode} profitKnown={data.glance.profitKnown} word={word} />
       </ReportSection>

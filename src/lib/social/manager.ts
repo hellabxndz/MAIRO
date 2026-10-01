@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { objectiveFor } from "@/lib/mission/goals";
 import { loadBrain } from "@/lib/business/brain";
 import { metaGraphRequest } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
@@ -181,7 +182,7 @@ export async function generatePlan(
   const windowFrom = instantFromLocal(`${start}T00:00`, zone) ?? new Date(now.getTime() + DAY);
   const windowTo = instantFromLocal(`${addDays(end, 1)}T00:00`, zone) ?? new Date(windowFrom.getTime() + days * DAY);
 
-  const [promotions, existing, brain, library, learnings] = await Promise.all([
+  const [promotions, existing, brain, library, learnings, unavailable] = await Promise.all([
     db.socialPromotion.findMany({ where: { organizationId, status: "ACTIVE" }, orderBy: { createdAt: "asc" } }),
     db.instagramPost.findMany({
       where: { organizationId, scheduledFor: { gte: windowFrom, lt: windowTo }, status: { notIn: ["FAILED"] } },
@@ -190,7 +191,12 @@ export async function generatePlan(
     loadBrain(organizationId),
     mediaLibrary(organizationId),
     socialLearnings(organizationId),
+    db.missionNote.findMany({ where: { organizationId, kind: "UNAVAILABLE", active: true }, select: { text: true } }),
   ]);
+  // Sold out or discontinued: never planned into a post.
+  const avoid = unavailable.map((u) => `Do not promote ${u.text}: the business said it's unavailable.`);
+  const unavailableWords = unavailable.map((u) => u.text.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+  const usable = library.filter((m) => !unavailableWords.some((ws) => ws.length > 0 && ws.every((w) => m.label.toLowerCase().includes(w))));
   const allPromoPosts = await db.instagramPost.findMany({
     where: { organizationId, promotionId: { in: promotions.map((p) => p.id) } },
     select: { promotionId: true, sequenceStep: true },
@@ -256,8 +262,8 @@ export async function generatePlan(
     strategy: view.strategy,
     goalDetail: view.goalDetail,
     slots: postSlots,
-    library,
-    learnings: learnings.notes,
+    library: usable,
+    learnings: [...learnings.notes, ...avoid],
     timeoutMs: opts.timeoutMs,
   });
 
@@ -289,6 +295,7 @@ export async function generatePlan(
         scheduledFor: when,
         contentType: slot.contentType,
         objective: slot.promotion ? `${objective} · ${slot.promotion.title}` : objective,
+        marketingObjective: objectiveFor({ contentType: slot.contentType, promotional: slot.promotional, step: slot.step, goal: view.strategy.goal }),
         rationale: post.why,
         creativeIdea: post.creativeIdea,
         promotionId: slot.promotion?.id ?? null,

@@ -527,6 +527,23 @@ a network can be retired without orphaning the rows that reference it.
 
 Premium dark design built only from Mairo's own UI, charts, icons and platform logos — no people or stock photos. Sections: hero with a floating sample dashboard and AI callouts, platform bar (only platforms Mairo actually works with; product statements instead of customer counts), How It Works (free plan → approve → connect → subscribe → build → approve → launch), business-type selector, the free-plan demo ("strategy only"), Mairo Decisions, Business Health, Simple / Advanced / Profit First preview, pricing, FAQ and the final call. Every figure is marked as sample or demo data. All calls to action go to `/sign-up`, which starts the free plan.
 
+### The MAIRO Mission (the core loop)
+
+MAIRO is an AI marketing manager: the business says what it wants to achieve and MAIRO decides the marketing. Everything runs through one loop — **goal → understand the business → strategy → create → approve → launch/publish → measure → learn → improve** — centred on `/dashboard/mission` (sidebar: **Mission**) and the Simple dashboard.
+
+- **Goal:** 14 outcomes (sales, leads, bookings, calls, website traffic, new product/service, awareness, social, sale, event, foot traffic, repeat customers, "Let MAIRO recommend") or plain English ("We're a car detailing business and want more ceramic coating bookings"). `lib/mission/goals.ts` reads requests without AI; `lib/mission/planner.ts` uses AI when available.
+- **Understanding:** Business Brain, website, products, connected Meta, tracking, campaigns, media library, promotions, what the owner told MAIRO, and learned results. At most two simple questions, only when the answer changes the plan; answers are remembered.
+- **Plan:** "MAIRO created a plan" — goal, strategy, why, focus, ad concepts (each with an objective and "Why MAIRO created this ad"), social (Scale only), launch timeline, and MAIRO's tactics (customer action → Meta objective and destination, audience, creative, CTA, budget, retargeting, testing, optimization) behind a disclosure. Industry playbooks differ (clothing, restaurants, contractors, car care, barbers/salons, real estate, health, services).
+- **Approval:** a plan is PROPOSED until approved. Approving archives the old mission, **prefills a Create draft** (the owner still confirms the budget in Create; nothing launches or spends from the Mission), and on active Scale sets Social Manager to the same goal so ads and social are one strategy. Primary and secondary goals; the secondary never outranks the primary.
+- **Tell MAIRO something new:** promotions ("20% off this weekend" → a note with dates, urgency guidance, Scale social posts), sold out ("We sold out of the blue hoodie" → nothing new promotes it, planned posts mentioning it are skipped, running ads that mention it are flagged), launches ("launching a new hoodie Friday for $80" → a launch plan with timeline), or goal changes (a proposal to approve).
+- **Every marketing item has an objective** (`marketingObjective` on campaigns, creatives and social posts: Awareness, Education, Trust, Consideration, Lead generation, Conversion, Booking, Retention, Promotion, Product launch) and a reason.
+- **Results match the goal** (`resultsForGoal`): sales → revenue, purchases, cost per purchase, ROAS; leads → leads, cost per lead, calls/messages; bookings → Schedule events; traffic → landing page views; awareness → reach, impressions, video views. Untracked figures say "Not tracked yet" — clicks are never shown as leads, engagement never as sales. Meta's leads, Schedule, Contact/messaging and landing-page-view actions are now read.
+- **Learned / adjusted** come from Learning Memory and Social Manager results only. **Next actions** come from real data (planned campaign not started, promotion ending, clicks without purchases, sold-out item in a running ad, nothing scheduled on Scale).
+- **Weekly Report** opens with "Your week with MAIRO": goal, what MAIRO did, goal-matched results, what it learned, next week's plan.
+- **Assistant** tools: `get_mission`, `propose_mission` (saves a plan to approve; shows "Review MAIRO's plan"), `tell_mairo`.
+- The Create wizard's steps are unchanged (Meta App Review); MAIRO prefills it instead.
+- `npm run check:mission` checks it.
+
 ### MAIRO Social Manager (Scale only)
 
 Organic social media management, exclusive to **active Scale**. Everything else in MAIRO (ads) follows each plan's existing benefits; nothing on the ads side changed.

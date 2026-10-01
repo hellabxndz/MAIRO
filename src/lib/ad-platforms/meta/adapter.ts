@@ -160,6 +160,16 @@ function actionValue(actions: MetaAction[] | undefined, types: string[]): number
 }
 
 const PURCHASE_TYPES = ["omni_purchase", "purchase", "offsite_conversion.fb_pixel_purchase"];
+const LEAD_TYPES = ["lead", "onsite_conversion.lead_grouped", "offsite_conversion.fb_pixel_lead"];
+const BOOKING_TYPES = ["schedule_total", "omni_schedule", "offsite_conversion.fb_pixel_schedule"];
+const CONTACT_TYPES = ["contact_total", "onsite_conversion.messaging_conversation_started_7d", "click_to_call_native_call_placed"];
+
+/** Adds up several action types that each count once (messages + calls + contacts). */
+function actionSum(actions: MetaAction[] | undefined, types: string[]): number | null {
+  if (!actions) return null;
+  const hits = types.map((t) => actions.find((a) => a.action_type === t)).filter(Boolean) as MetaAction[];
+  return hits.length ? hits.reduce((n, a) => n + (num(a.value) ?? 0), 0) : null;
+}
 
 export const metaAdapter: AdPlatformAdapter = {
   platform: "META",
@@ -656,6 +666,11 @@ function normalizeInsights(row: MetaInsightRow) {
         ? Math.round(spendCents / purchases)
         : null,
     revenueCents,
+    leads: actionValue(row.actions, LEAD_TYPES),
+    bookings: actionValue(row.actions, BOOKING_TYPES),
+    contacts: actionSum(row.actions, CONTACT_TYPES),
+    landingPageViews: actionValue(row.actions, ["landing_page_view", "omni_landing_page_view"]),
+    videoViews: actionValue(row.actions, ["video_view"]),
     // Prefer Meta's own ROAS; fall back to deriving it, but only when both
     // parts are actually known.
     roas:

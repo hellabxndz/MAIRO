@@ -255,6 +255,8 @@ model Organization {
   instagramPosts       InstagramPost[]
   socialStrategy       SocialStrategy?
   socialPromotions     SocialPromotion[]
+  missions             MarketingMission[]
+  missionNotes         MissionNote[]
   tiktokCreator        TikTokCreatorConnection?
   trackingPixels       TrackingPixel[]
   conversionEvents     ConversionEvent[]
@@ -674,11 +676,15 @@ model CreativeRequest {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
 
-  month    String // e.g. "2026-09"
-  type     CreativeType
-  brief    String         @db.Text
-  status   CreativeStatus @default(REQUESTED)
-  assetUrl String?
+  month              String // e.g. "2026-09"
+  type               CreativeType
+  brief              String         @db.Text
+  /// What this creative is for (Awareness, Trust, Conversion…) and why,
+  /// from the business's active MAIRO mission.
+  marketingObjective String?
+  whyText            String?        @db.Text
+  status             CreativeStatus @default(REQUESTED)
+  assetUrl           String?
 
   // An optional picture the client uploads as the starting point — a product
   // shot, a competitor's ad, a mood reference. Stored as a data URL because it
@@ -882,6 +888,12 @@ model MairoCampaign {
   name      String
   objective AdGoal
   status    CampaignStatus @default(DRAFT)
+
+  /// The business goal this campaign serves (lib/mission), and why MAIRO
+  /// planned it. Every marketing item MAIRO makes carries both.
+  missionId          String?
+  marketingObjective String?
+  whyText            String? @db.Text
 
   /// When a person pressed Launch on this campaign. An account that asked
   /// MAIRO to hold before going live still has this one switched on once the
@@ -1948,28 +1960,32 @@ model InstagramPost {
   /// Publishing attempts, so a stuck post stops being retried.
   attempts         Int       @default(0)
 
-  postedAt     DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  postedAt           DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  /// The marketing objective this post serves: Awareness, Education, Trust,
+  /// Consideration, Lead generation, Conversion, Booking, Retention,
+  /// Promotion or Product launch.
+  marketingObjective String?
   /// Social Manager: what kind of post this is ("Product demonstration"),
   /// the goal it serves, and why MAIRO planned it. Shown on every card.
-  contentType  String?
-  objective    String?
-  rationale    String?          @db.Text
+  contentType        String?
+  objective          String?
+  rationale          String?          @db.Text
   /// The call to action, also written into the caption.
-  cta          String?
+  cta                String?
   /// For a planned post that still needs a picture or video: what to make.
-  creativeIdea String?          @db.Text
-  promotion    SocialPromotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
-  promotionId  String?
+  creativeIdea       String?          @db.Text
+  promotion          SocialPromotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  promotionId        String?
   /// Its place in a promotion or launch, e.g. "Teaser", "Last chance".
-  sequenceStep String?
+  sequenceStep       String?
   /// Approved by Autopilot under the business's own rules, not by a person.
-  autoApproved Boolean          @default(false)
+  autoApproved       Boolean          @default(false)
   /// Likes and comments read back from Instagram or Facebook after posting.
-  likeCount    Int?
-  commentCount Int?
-  metricsAt    DateTime?
+  likeCount          Int?
+  commentCount       Int?
+  metricsAt          DateTime?
 
   @@index([organizationId, status])
   @@index([status, scheduledFor])
@@ -2679,4 +2695,55 @@ model StrategyPlanRevision {
   createdAt   DateTime     @default(now())
 
   @@unique([planId, version])
+}
+
+/// The business's MAIRO mission: what it wants to achieve, and the plan MAIRO
+/// built for it. One is ACTIVE at a time; a change MAIRO suggests (or the
+/// business asks for) waits as PROPOSED until approved.
+model MarketingMission {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// PROPOSED, ACTIVE or ARCHIVED.
+  status          String    @default("PROPOSED")
+  /// One of the goals in lib/mission/goals.ts, e.g. GET_BOOKINGS.
+  primaryGoal     String
+  secondaryGoal   String?
+  /// What the business said, in its own words.
+  request         String    @default("") @db.Text
+  /// "Get More Appointments" — shown as the mission.
+  title           String
+  /// The plan (JSON): strategy, why, focus, tactics, ad concepts, timeline.
+  planJson        String    @db.Text
+  aiUsed          Boolean   @default(false)
+  /// The Create draft MAIRO prefilled from this plan.
+  campaignDraftId String?
+  approvedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
+}
+
+/// Something the business told MAIRO: a promotion this week, a product that
+/// sold out, a fact about the business. MAIRO plans around it.
+model MissionNote {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// PROMOTION, UNAVAILABLE, LAUNCH or INFO.
+  kind        String
+  text        String    @db.Text
+  /// What MAIRO understood (JSON): offer, item, dates…
+  detailsJson String    @default("{}") @db.Text
+  startsAt    DateTime?
+  endsAt      DateTime?
+  active      Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, active])
 }

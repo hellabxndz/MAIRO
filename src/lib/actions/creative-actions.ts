@@ -1,5 +1,6 @@
 "use server";
 
+import { creativeObjective } from "@/lib/mission/store";
 import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -156,6 +157,8 @@ export async function requestCreativeAction(
     };
   }
 
+  // Tagged with what it's for, from the business's mission.
+  const purpose = await creativeObjective(organizationId);
   const created = await db.creativeRequest.create({
     data: {
       organizationId,
@@ -163,6 +166,7 @@ export async function requestCreativeAction(
       type: parsed.data.type,
       brief: parsed.data.brief,
       referenceImage: reference.value,
+      ...(purpose ?? {}),
     },
   });
 
