@@ -22,7 +22,7 @@ import {
 // terms, each with an ⓘ that explains it. Same decision either way.
 
 export function MairoDecisionCard({ decision, advanced }: { decision: DecisionView; advanced: boolean }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<false | "approve" | "modify">(false);
   const [why, setWhy] = useState(false);
   const [pending, start] = useTransition();
   const [gone, setGone] = useState<string | null>(null);
@@ -32,6 +32,8 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
   const guideOnly = decision.changes.every((c) => c.type === "guide");
   const guide = decision.changes.find((c) => c.type === "guide");
   const creative = decision.kind === "creative-fatigue" && !guideOnly;
+  // Amounts the owner can change before approving: a budget, a radius.
+  const modifiable = !creative && decision.changes.some((c) => c.type === "set-budget" || (c.type === "widen-audience" && c.to.geoRadius !== null));
   const tone = CATEGORY_TONE[decision.category];
   const askHref = `/dashboard/agents?ask=${encodeURIComponent(`Why are you recommending this: "${decision.title}"?`)}${
     decision.mairoCampaignId ? `&about=${decision.mairoCampaignId}` : ""
@@ -79,17 +81,17 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
           <dd className="mt-1 text-white/90">{advanced ? decision.noticedAdvanced : decision.noticed}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Recommended action</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Recommended change</dt>
           <dd className="mt-1 text-white/90">{decision.recommendation}</dd>
         </div>
         {why && (
           <>
             <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Why it matters</dt>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Why</dt>
               <dd className="mt-1 text-muted">{decision.whyItMatters}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Potential impact</dt>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Expected purpose</dt>
               <dd className="mt-1 text-muted">{decision.impact}</dd>
             </div>
           </>
@@ -145,11 +147,17 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
           <button
             type="button"
             disabled={pending}
-            onClick={() => setOpen(true)}
+            onClick={() => setOpen("approve")}
             className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white"
             style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
           >
             {creative ? "Create replacement" : "Approve"}
+          </button>
+        )}
+        {modifiable && (
+          <button type="button" disabled={pending} onClick={() => setOpen("modify")}
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            Modify
           </button>
         )}
         {creative || guideOnly ? (
@@ -158,22 +166,23 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
             Ignore
           </button>
         ) : (
-          <button type="button" disabled={pending} onClick={() => act(rejectDecisionAction, "Rejected")}
+          <button type="button" disabled={pending} onClick={() => act(rejectDecisionAction, "Declined")}
             className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
-            Reject
+            Decline
           </button>
         )}
         <Link href={askHref} className="px-2 py-2 text-[12.5px] text-blue-bright hover:text-white">
           Ask Mairo why
         </Link>
         <button type="button" onClick={() => setWhy((v) => !v)} className="ml-auto px-1 py-2 text-[12px] text-muted hover:text-white">
-          {why ? "Less" : "Why it matters"}
+          {why ? "Less" : "Why"}
         </button>
       </div>
 
       {open && (
         <ApprovalModal
           decisions={[decision]}
+          startEditing={open === "modify"}
           onDone={(anyApplied) => setApproved(anyApplied)}
           onClose={() => {
             setOpen(false);

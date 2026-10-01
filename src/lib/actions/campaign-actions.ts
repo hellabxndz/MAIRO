@@ -1,6 +1,7 @@
 "use server";
 
 import { linkMissionCampaign } from "@/lib/mission/store";
+import { briefCampaignAds } from "@/lib/engine/brief";
 import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -493,6 +494,11 @@ export async function createCampaignAction(
         data: { step: "launch" },
       });
     }
+  }
+
+  // Every ad that reached a network carries the Strategy Engine's brief.
+  if (failures.length < outcome.results.length) {
+    await briefCampaignAds(organizationId, outcome.mairoCampaignId).catch((error) => console.error("Writing creative briefs failed:", error));
   }
 
   // Everything failed: the campaign is saved as a draft and the customer is

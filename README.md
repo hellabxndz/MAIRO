@@ -545,6 +545,21 @@ MAIRO is an AI marketing manager: the business says what it wants to achieve and
 - The Create wizard's steps are unchanged (Meta App Review); MAIRO prefills it instead.
 - `npm run check:mission` checks it.
 
+### MAIRO Strategy Engine
+
+One place decides the marketing strategy; the mission plan, Create, creatives, Social Manager, Mairo Decisions and the assistant all read from it (`src/lib/engine/`). The rules are pure and pinned by `npm run check:engine`; AI only writes the words around them.
+
+- **Structured objective** (`core.ts` `structureObjective`): "We need more roofing estimates" → Lead generation · Request an estimate · Roofing · High intent · Local customer acquisition. Also "more dinner reservations during weekdays" (Reserve a table · Fill weekday dinner), "sell more memberships" (Join a membership), "releasing a hoodie Friday" (Product launch). The business's own industry wins over a word in the request. Shown on the plan as "What MAIRO understood".
+- **Strategy** (`buildStrategy`): goal priorities, creative direction (industry playbook filtered to objectives that serve the goal, reordered by what the account learned), audience, messaging, CTA, offer use, testing plan, optimization focus, retargeting (only with tracking), budget, confidence. Industry logic covers clothing, restaurants, dentists/health, contractors, barbers/salons, car care, real estate and software.
+- **Launches** pick their stages (Tease, Reveal, Education, Demonstration, Social proof, Purchase, Urgency) with a reason for each, including the ones skipped (no tease when launch is tomorrow, no urgency without a real deadline, no social proof before customers exist).
+- **Promotions** (`promotionPlan`): when to introduce it, ~2 mentions a week, whether running ads should change (MAIRO asks), whether a new creative is worth it, urgency only in the last days, and a rest from discounts after several promotions in 30 days. Used by the plan and "Tell MAIRO something new".
+- **Budget** (`recommendBudget`): a split that always sums to 100% (goal / retargeting with tracking / testing / awareness only at larger budgets), a plain summary, and "a recommendation, not a promise". It never calls a default figure "your budget". The plan's daily amount and the Create draft come from it; the owner confirms or changes it in Create.
+- **Every creative carries a brief** (`briefJson` on creative requests, campaign ads — including MAIRO-written variations — and social posts): goal, marketing objective, audience, hook, message, CTA, format, reason.
+- **Learning loop** (`learning.ts`): compares format, hook style, offer vs no offer, CTA and audience age band per result type, only with ≥2 ads and ≥$50 on each side, ≥5 results on the better side and a ≥20% difference. Lessons go to Learning Memory (`engine:*` keys), strengthen to high after three sightings, and a new winner retires the old one.
+- **Confidence** is internal low/medium/high; customers only see words ("MAIRO needs more data…", "MAIRO is becoming more confident…"), never a percentage. Shown on the plan, mission page and goal hero.
+- **Engine decisions** (`recommend.ts`, run with the daily Mairo Decisions): move up to 20% of budget from a campaign that can't produce the goal's result to one that does (only past learning, with ≥5 results, using its budget), more of a winning format, promotion urgency on the last day, a rest from discounts. Each says why and its "Expected purpose" with no guarantee; a rule decision about the same budget wins. Decision cards show **Recommended change · Why · Expected purpose** with **Approve / Modify / Decline**.
+- **Core rule** (`justifyAction`): every action must name the business objective it serves. Plan ad concepts, creative directions and running campaigns are checked; anything that can't answer isn't recommended (e.g. an awareness campaign on a small lead-gen budget, discount creative while discounts are resting).
+
 ### MAIRO Social Manager (Scale only)
 
 Organic social media management, exclusive to **active Scale**. Everything else in MAIRO (ads) follows each plan's existing benefits; nothing on the ads side changed.

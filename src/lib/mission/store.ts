@@ -8,6 +8,9 @@ import { loadStrategy, savePromotion, setGoal, socialLearnings } from "@/lib/soc
 import { goalInfo as socialGoalInfo, type GoalKey as SocialGoalKey, type PromotionDetails } from "@/lib/social/goals";
 import { effectiveLevel } from "@/lib/decisions/store";
 import { MISSION_GOALS, dateIn, goalPhrase, missionGoal, missingQuestions, resultsForGoal, type MissionGoal, type ResultFigures, type ResultTile, type Understood } from "./goals";
+import { FROM_AD_GOAL, planBrief } from "@/lib/engine/brief";
+import { enginePromotions, missionConfidence } from "@/lib/engine";
+import { justifyAction, promotionPlan, type Confidence } from "@/lib/engine/core";
 import { buildMissionPlan, interpretRequest, missionPlanSchema, understandBusiness, type MissionPlan } from "./planner";
 
 // The business's mission, from goal to plan to approval, and everything that
@@ -111,7 +114,7 @@ export async function startMission(
   }).filter((q) => !input.answers?.[q.key]);
   if (questions.length) return { kind: "questions", questions, understood: { ...understood, goal } };
 
-  const { plan, ai } = await buildMissionPlan(organizationId, { goal, secondary: input.secondary ?? null, request, focusItem: understood.item, launch }, facts);
+  const { plan, ai } = await buildMissionPlan(organizationId, { goal, secondary: input.secondary ?? null, request, focusItem: understood.item, launch, understood, today }, facts);
   await db.marketingMission.deleteMany({ where: { organizationId, status: "PROPOSED" } });
   const row = await db.marketingMission.create({
     data: {
@@ -142,7 +145,14 @@ export function campaignPlanFromMission(plan: MissionPlan, org: { name: string; 
     service: "meta",
     businessName: org.name,
     website: org.website,
-    offering: [brief.offering, plan.focusItem ? `Focus: ${plan.focusItem}` : "", plan.launch?.discount ? `Offer: ${plan.launch.discount}` : ""].filter(Boolean).join(". "),
+    offering: [
+      brief.offering,
+      plan.focusItem ? `Focus: ${plan.focusItem}` : "",
+      plan.launch?.discount ? `Offer: ${plan.launch.discount}` : "",
+      // The Strategy Engine's message and call to action, so the ad copy MAIRO writes follows the strategy.
+      plan.engine ? `Key message: ${plan.engine.messaging[0] ?? ""}` : "",
+      plan.engine ? `Ask people to: ${plan.engine.cta}` : "",
+    ].filter(Boolean).join(". "),
     targetAudience: plan.tactics.audience || brief.audience,
     differentiator: plan.why,
     messageChannel: org.defaultMessageChannel,
@@ -226,6 +236,9 @@ export async function approveMission(organizationId: string, missionId: string, 
       platforms: existing?.platforms.length ? existing.platforms : ["INSTAGRAM"],
       postsPerWeek: existing?.postsPerWeek ?? (plan.secondaryGoal === "GROW_SOCIAL" ? 5 : 4),
       promotion,
+      direction: plan.engine
+        ? [plan.engine.statement, `Message: ${plan.engine.messaging.join("; ")}.`, `Call to action: ${plan.engine.cta}.`, plan.engine.offer.guidance, plan.engine.organic ?? ""].filter(Boolean).join(" ")
+        : null,
     });
     social = true;
   }
@@ -252,11 +265,16 @@ export async function linkMissionCampaign(organizationId: string, draftId: strin
 }
 
 /** The objective and reason for a new creative, from the active mission. */
-export async function creativeObjective(organizationId: string): Promise<{ marketingObjective: string; whyText: string } | null> {
+export async function creativeObjective(organizationId: string, extra: { format?: string | null; message?: string | null } = {}): Promise<{ marketingObjective: string; whyText: string; briefJson: string } | null> {
   const m = await activeMission(organizationId);
   if (!m) return null;
   const concept = m.plan.adConcepts[0];
-  return { marketingObjective: concept?.objective ?? "Conversion", whyText: `Made for your goal: ${missionGoal(m.primaryGoal).label.toLowerCase()}. ${concept?.why ?? ""}`.trim().slice(0, 600) };
+  return {
+    marketingObjective: concept?.objective ?? "Conversion",
+    whyText: `Made for your goal: ${missionGoal(m.primaryGoal).label.toLowerCase()}. ${concept?.why ?? ""}`.trim().slice(0, 600),
+    // The Strategy Engine's brief: goal, objective, audience, hook, message, CTA, format, reason.
+    briefJson: JSON.stringify(planBrief(m.plan, concept ?? null, { format: extra.format, message: extra.message })),
+  };
 }
 
 // --- "Tell MAIRO something new" ----------------------------------------------------
@@ -301,11 +319,23 @@ export async function tellMairo(organizationId: string, text: string, now = new 
   if (u.intent === "promotion") {
     const start = u.date ?? today;
     const end = u.endDate ?? u.date ?? new Date(Date.parse(`${start}T12:00:00Z`) + 2 * DAY).toISOString().slice(0, 10);
+    // The Strategy Engine decides when to introduce it, how often to mention
+    // it, whether ads or creatives change, and when urgency is honest.
+    const since = new Date(now.getTime() - 30 * DAY);
+    const [running, before, promoCreatives] = await Promise.all([
+      db.mairoCampaign.count({ where: { organizationId, status: "ACTIVE" } }),
+      enginePromotions(organizationId, today),
+      db.creativeRequest.count({ where: { organizationId, marketingObjective: "Promotion", createdAt: { gte: since } } }),
+    ]);
     await db.missionNote.create({ data: { organizationId, kind: "PROMOTION", text, detailsJson: JSON.stringify(u), startsAt: at(start), endsAt: at(end) } });
+    const p = promotionPlan({ start, end, today, campaignsRunning: running, promotionsLast30Days: before.last30Days + 1, hasPromoCreative: promoCreatives > 0 });
     const actions = [
-      `Your ${u.discount ?? "offer"}${u.item ? ` on ${u.item}` : ""} runs ${start === end ? `on ${start}` : `${start} to ${end}`}.`,
-      "Ads: MAIRO recommends putting the offer in your running ads' text for those days — you'll see it on your Mission page to approve.",
-      "Urgency starts the day before it ends, never earlier.",
+      `Your ${u.discount ?? "offer"}${u.item ? ` on ${u.item}` : ""} runs ${start === end ? `on ${start}` : `${start} to ${end}`}. ${p.introduce}`,
+      `Ads: ${p.adsChange.why}`,
+      p.newCreatives.yes ? `Creative: ${p.newCreatives.why} MAIRO will suggest one.` : `Creative: ${p.newCreatives.why}`,
+      p.urgency.length ? `Urgency: only at the end — ${p.urgency.map((x) => `"${x.message}" on ${x.date}`).join(", ")}.` : "No countdown — there's no end date to count down to.",
+      `MAIRO mentions it about ${p.mentionsPerWeek}× a week so it doesn't drown out everything else.`,
+      ...(p.restraint ? [p.restraint] : []),
     ];
     if ((await socialAccess(organizationId)).ok && (await loadStrategy(organizationId))) {
       await savePromotion(organizationId, "SALE", clean({ offer: u.item ? `${u.discount ?? "Sale"} on ${u.item}` : u.discount ?? text, discount: u.discount, start, end }) as PromotionDetails);
@@ -380,7 +410,7 @@ export async function missionActivity(organizationId: string, now = new Date()):
 }
 
 /** Results for the mission's goal over the last `days` days. Never another goal's metric. */
-export async function missionResults(organizationId: string, goal: MissionGoal, days = 7): Promise<{ tiles: ResultTile[]; hasData: boolean }> {
+export async function missionResults(organizationId: string, goal: MissionGoal, days = 7): Promise<{ tiles: ResultTile[]; hasData: boolean; confidence: Confidence }> {
   const family = missionGoal(goal).metrics;
   const until = new Date();
   const since = new Date(until.getTime() - days * DAY);
@@ -407,7 +437,8 @@ export async function missionResults(organizationId: string, goal: MissionGoal, 
     videoViews: t?.videoViews ?? null,
   };
   const socialFigures = { likes: social._sum.likeCount ?? 0, comments: social._sum.commentCount ?? 0, posts: social._count._all };
-  return { tiles: resultsForGoal(family, figures, socialFigures), hasData: Boolean(report?.hasData) };
+  const confidence = await missionConfidence(organizationId, family, figures);
+  return { tiles: resultsForGoal(family, figures, socialFigures), hasData: Boolean(report?.hasData), confidence };
 }
 
 /** What MAIRO learned, and what it's changing because of it. Only from real results. */
@@ -416,7 +447,8 @@ export async function missionLearned(organizationId: string): Promise<{ learned:
     db.mairoLearning.findMany({ where: { organizationId, active: true, confidence: { in: ["HIGH", "MEDIUM"] } }, orderBy: { lastSeenAt: "desc" }, take: 3 }),
     socialLearnings(organizationId),
   ]);
-  const out = rows.map((r) => ({ learned: r.statement, adjusted: "MAIRO is leaning on this in your next ad concepts and plans." }));
+  // Strategy Engine lessons say exactly what changes; others lean on plans in general.
+  const out = rows.map((r) => ({ learned: r.statement, adjusted: r.key.startsWith("engine:") ? r.detail : "MAIRO is leaning on this in your next ad concepts and plans." }));
   if (social.best && social.weakest) {
     out.push({ learned: `${social.best} posts get more engagement than ${social.weakest} posts on your feed.`, adjusted: `Your next social posts include more ${social.best.toLowerCase()} content.` });
   }
@@ -459,6 +491,18 @@ export async function missionRecommendations(organizationId: string, mission: Mi
     const words = u.text.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     const hit = running.find((c) => c.ads.some((a) => words.length > 0 && words.every((w) => `${a.headline ?? ""} ${a.primaryText ?? ""}`.toLowerCase().includes(w))));
     if (hit) out.push({ title: `${hit.name} still promotes ${u.text}`, text: `You told MAIRO ${u.text} is unavailable. MAIRO recommends pausing or changing that ad.`, href: `/dashboard/campaigns/${hit.id}`, label: "Open the campaign" });
+  }
+
+  // The core rule, applied to what's already running: a campaign that can't
+  // say which part of the goal it serves is worth a second look.
+  const engine = mission.plan.engine;
+  if (engine) {
+    for (const c of running) {
+      const check = justifyAction(engine, { kind: "campaign", adGoal: c.objective, objective: FROM_AD_GOAL[c.objective] });
+      if (!check.ok) {
+        out.push({ title: `"${c.name}" isn't working toward your goal`, text: `${check.reason} MAIRO recommends pausing it or moving its budget to a campaign built for ${engine.objective.goalLabel.toLowerCase()}.`, href: `/dashboard/campaigns/${c.id}`, label: "Open the campaign" });
+      }
+    }
   }
 
   // From results: people clicking but not buying.

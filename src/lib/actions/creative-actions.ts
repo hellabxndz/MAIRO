@@ -158,7 +158,7 @@ export async function requestCreativeAction(
   }
 
   // Tagged with what it's for, from the business's mission.
-  const purpose = await creativeObjective(organizationId);
+  const purpose = await creativeObjective(organizationId, { format: parsed.data.type, message: parsed.data.brief });
   const created = await db.creativeRequest.create({
     data: {
       organizationId,

@@ -74,6 +74,8 @@ export function recommendMissionGoal(category: Category, hasPricedProducts: bool
       return "GENERATE_LEADS";
     case "food":
       return "FOOT_TRAFFIC";
+    case "software":
+      return "INCREASE_SALES";
     case "retail":
       return "INCREASE_SALES";
     default:
@@ -299,6 +301,15 @@ const INDUSTRY: Partial<Record<Category, { focus: string[]; creative: Playbook["
       { angle: "Book a consultation", objective: "Booking", format: "IMAGE" },
     ],
     audience: "Local people likely to need what you offer.",
+  },
+  software: {
+    focus: ["Product demonstrations", "Problem and solution", "Features that matter", "Free trials", "Case studies"],
+    creative: [
+      { angle: "Product demo", objective: "Consideration", format: "VIDEO" },
+      { angle: "Customer case study", objective: "Trust", format: "CAROUSEL" },
+      { angle: "Start a free trial", objective: "Conversion", format: "IMAGE" },
+    ],
+    audience: "Teams and owners with the problem your software solves, plus past site visitors.",
   },
   services: {
     focus: ["Case studies", "Expertise", "Testimonials", "Consultation call to action"],

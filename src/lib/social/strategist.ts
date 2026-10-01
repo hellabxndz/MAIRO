@@ -111,6 +111,8 @@ export async function buildStrategy(input: {
   goalDetail: string;
   learnings: string[];
   promotion?: { kind: PromotionKind; details: PromotionDetails } | null;
+  /** The Strategy Engine's direction for the whole business, when a mission set it. */
+  direction?: string | null;
 }): Promise<{ strategy: Strategy; ai: boolean }> {
   const goal = resolveGoal(input.goal, input.profile);
   const fallback = ruleStrategy(goal, input.profile);
@@ -127,6 +129,7 @@ export async function buildStrategy(input: {
         `\nThe business's goal: ${goalInfo(goal).label}${input.goal === "RECOMMEND" ? " (MAIRO recommended this from what the business sells)" : ""}.`,
         input.goalDetail ? `In their words: "${input.goalDetail.slice(0, 600)}"` : "",
         input.promotion ? `\nWhat's happening: ${promotionLabel(input.promotion.kind)} — ${JSON.stringify(input.promotion.details).slice(0, 800)}` : "",
+        input.direction ? `\nMAIRO's strategy for the whole business (keep social consistent with it — same goal, message and call to action, in social form):\n${input.direction}` : "",
         input.learnings.length ? `\nWhat MAIRO has learned from their own posts:\n- ${input.learnings.join("\n- ")}` : "",
         `\nA starting playbook for this goal and category (adapt it, don't copy blindly): ${fallback.contentTypes.map((c) => c.type).join(", ")}.`,
       ]

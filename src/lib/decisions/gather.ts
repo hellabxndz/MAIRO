@@ -126,6 +126,7 @@ export async function gatherDecisionInput(organizationId: string, now = new Date
         externalAdId,
         headline: row?.headline ?? null,
         primaryText: row?.primaryText ?? null,
+        callToAction: row?.callToAction ?? null,
         recent: f.recent ?? null,
         prior: f.prior ?? null,
         week: f.week ?? null,

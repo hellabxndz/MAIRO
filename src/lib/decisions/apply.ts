@@ -10,6 +10,7 @@ import { guardrailsFor } from "./gather";
 import type { DecisionChange } from "./types";
 import { learningsBrief } from "@/lib/reports/learnings";
 import { parseChanges } from "./store";
+import { variationBrief } from "@/lib/engine/brief";
 
 // Carrying out a decision.
 //
@@ -172,6 +173,7 @@ async function runChange(organizationId: string, c: DecisionChange): Promise<{ o
           headline: fresh.headline,
           primaryText: fresh.primaryText,
           callToAction: fresh.cta,
+          briefJson: variationBrief(based.briefJson, fresh, c.basedOnLabel),
         },
       });
       const res = await addCampaignAd({ organizationId, mairoCampaignId: c.mairoCampaignId, platform: c.platform, campaignAdId: row.id });

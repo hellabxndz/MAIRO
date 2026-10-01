@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ConfidenceText } from "./plan-view";
+import type { Confidence } from "@/lib/engine/core";
 import type { MissionActivity } from "@/lib/mission/store";
 import type { ResultTile } from "@/lib/mission/goals";
 import { FixThisForMe } from "@/components/decisions/fix-this-for-me";
@@ -11,7 +13,7 @@ const panel = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
 const eyebrow = "text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright";
 
 /** Smaller headline for pages that aren't the dashboard. */
-export function MissionHeadline({ title, sentence, strategy, secondary }: { title: string; sentence: string; strategy?: string; secondary?: string | null }) {
+export function MissionHeadline({ title, sentence, strategy, secondary, confidence }: { title: string; sentence: string; strategy?: string; secondary?: string | null; confidence?: Confidence | null }) {
   return (
     <div>
       <p className={eyebrow}>Current MAIRO mission</p>
@@ -21,6 +23,7 @@ export function MissionHeadline({ title, sentence, strategy, secondary }: { titl
       <p className="mt-1 text-[14.5px] text-white/80">{sentence}</p>
       {strategy && <p className="mt-2 max-w-[760px] text-[13.5px] text-muted">{strategy}</p>}
       {secondary && <p className="mt-1 text-[12.5px] text-faint">Secondary goal: {secondary}</p>}
+      {confidence && <p className="mt-2 text-[13px] text-white/75"><ConfidenceText level={confidence.level} text={confidence.customer} /></p>}
     </div>
   );
 }
@@ -34,6 +37,7 @@ export function GoalHero({
   strategy,
   secondary,
   startedAt,
+  confidence,
 }: {
   greeting: string;
   primary: string;
@@ -42,6 +46,7 @@ export function GoalHero({
   strategy: string;
   secondary: string | null;
   startedAt: Date | null;
+  confidence?: Confidence | null;
 }) {
   return (
     <section
@@ -61,6 +66,7 @@ export function GoalHero({
           <dt className="text-[11px] uppercase tracking-[0.14em] text-faint">Current strategy</dt>
           <dd className="mt-1 text-white/85">{strategy}</dd>
           {title !== primary && <dd className="mt-1 text-[12.5px] text-muted">Mission: {title}</dd>}
+          {confidence && <dd className="mt-2 text-[13px] text-white/75"><ConfidenceText level={confidence.level} text={confidence.customer} /></dd>}
         </div>
         <div className="space-y-3">
           <div>

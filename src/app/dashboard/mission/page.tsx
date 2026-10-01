@@ -27,6 +27,7 @@ export default async function MissionPage() {
     proposedMission(organizationId),
     db.missionNote.findMany({ where: { organizationId, active: true }, orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
+  const results = mission ? await missionResults(organizationId, mission.primaryGoal, 7).catch(() => null) : null;
 
   return (
     <div className="mx-auto max-w-[1180px]">
@@ -61,6 +62,7 @@ export default async function MissionPage() {
               sentence={mission.plan.mission}
               strategy={mission.plan.strategy}
               secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null}
+              confidence={results?.confidence ?? null}
             />
             <div className="mt-4 flex flex-wrap gap-2">
               <ChangeGoalButton />
@@ -72,7 +74,7 @@ export default async function MissionPage() {
               )}
             </div>
           </div>
-          <ActiveMission organizationId={organizationId} mission={mission} />
+          <ActiveMission organizationId={organizationId} mission={mission} results={results} />
           <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
             <h3 className="text-[16px] font-semibold text-white">Tell MAIRO something new</h3>
             <p className="mb-3 mt-0.5 text-[13px] text-muted">A promotion, a launch, something sold out, a new goal. MAIRO works out what to change.</p>
@@ -98,10 +100,9 @@ export default async function MissionPage() {
   );
 }
 
-async function ActiveMission({ organizationId, mission }: { organizationId: string; mission: NonNullable<Awaited<ReturnType<typeof activeMission>>> }) {
-  const [activity, results, learned, next] = await Promise.all([
+async function ActiveMission({ organizationId, mission, results }: { organizationId: string; mission: NonNullable<Awaited<ReturnType<typeof activeMission>>>; results: Awaited<ReturnType<typeof missionResults>> | null }) {
+  const [activity, learned, next] = await Promise.all([
     missionActivity(organizationId),
-    missionResults(organizationId, mission.primaryGoal, 7),
     missionLearned(organizationId),
     missionRecommendations(organizationId, mission),
   ]);
@@ -109,7 +110,7 @@ async function ActiveMission({ organizationId, mission }: { organizationId: stri
     <>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <DoingNow activity={activity} />
-        <GoalResults tiles={results.tiles} days={7} hasData={results.hasData} />
+        <GoalResults tiles={results?.tiles ?? []} days={7} hasData={results?.hasData ?? false} />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Learned items={learned} />

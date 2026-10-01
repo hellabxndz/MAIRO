@@ -26,15 +26,18 @@ export function ApprovalModal({
   title = "Mairo wants to make these changes",
   onClose,
   onDone,
+  startEditing = false,
 }: {
   decisions: DecisionView[];
+  /** Opened from "Modify": the amounts are editable straight away. */
+  startEditing?: boolean;
   title?: string;
   onClose: () => void;
   /** Called once the changes were sent; true when at least one went through. */
   onDone?: (anyApplied: boolean) => void;
 }) {
   const actionable = decisions.filter((d) => d.changes.some((c) => c.type !== "guide"));
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [edits, setEdits] = useState<Edits>(() =>
     Object.fromEntries(actionable.map((d) => [d.id, d.changes])),
   );

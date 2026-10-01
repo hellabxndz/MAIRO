@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { CreativeBrief } from "@/lib/engine/core";
 import { objectiveFor } from "@/lib/mission/goals";
 import { loadBrain } from "@/lib/business/brain";
 import { metaGraphRequest } from "@/lib/meta/client";
@@ -100,7 +101,7 @@ export async function socialLearnings(organizationId: string): Promise<Learnings
  */
 export async function setGoal(
   organizationId: string,
-  input: { goal: GoalKey; goalDetail: string; platforms: Network[]; postsPerWeek: number; promotion?: { kind: PromotionKind; details: PromotionDetails } | null },
+  input: { goal: GoalKey; goalDetail: string; platforms: Network[]; postsPerWeek: number; promotion?: { kind: PromotionKind; details: PromotionDetails } | null; direction?: string | null },
 ): Promise<{ strategy: Strategy; ai: boolean; promotionId: string | null }> {
   const [brain, learnings] = await Promise.all([loadBrain(organizationId), socialLearnings(organizationId)]);
   const { strategy, ai } = await buildStrategy({
@@ -109,6 +110,7 @@ export async function setGoal(
     goalDetail: input.goalDetail,
     learnings: learnings.notes,
     promotion: input.promotion ?? null,
+    direction: input.direction ?? null,
   });
   const data = {
     goal: input.goal,
@@ -279,6 +281,7 @@ export async function generatePlan(
     if (!when || when <= now) continue;
     const hasMedia = post.mediaRefs.length > 0;
     const preview = hasMedia ? library.find((m) => m.ref === post.mediaRefs[0])?.previewUrl ?? null : null;
+    const marketingObjective = objectiveFor({ contentType: slot.contentType, promotional: slot.promotional, step: slot.step, goal: view.strategy.goal });
     await db.instagramPost.create({
       data: {
         organizationId,
@@ -295,7 +298,18 @@ export async function generatePlan(
         scheduledFor: when,
         contentType: slot.contentType,
         objective: slot.promotion ? `${objective} · ${slot.promotion.title}` : objective,
-        marketingObjective: objectiveFor({ contentType: slot.contentType, promotional: slot.promotional, step: slot.step, goal: view.strategy.goal }),
+        marketingObjective: marketingObjective,
+        // The Strategy Engine's brief: goal, objective, audience, hook, message, CTA, format, reason.
+        briefJson: JSON.stringify({
+          goal: goalInfo(view.strategy.goal).label,
+          objective: marketingObjective,
+          audience: view.strategy.audience.slice(0, 300),
+          hook: (post.caption.split("\n").find((l) => l.trim()) ?? "").slice(0, 160),
+          message: post.caption.slice(0, 400),
+          cta: post.cta ?? "",
+          format: post.format.toLowerCase(),
+          reason: post.why.slice(0, 300),
+        } satisfies CreativeBrief),
         rationale: post.why,
         creativeIdea: post.creativeIdea,
         promotionId: slot.promotion?.id ?? null,

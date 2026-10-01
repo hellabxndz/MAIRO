@@ -31,6 +31,8 @@ export type AdSnapshot = {
   /** The words, when MAIRO knows them — for writing a variation. */
   headline: string | null;
   primaryText: string | null;
+  /** The button, when MAIRO knows it (the Strategy Engine compares them). */
+  callToAction?: string | null;
   /** Last 3 days. */
   recent: PlatformMetrics | null;
   /** The 4 days before that. */

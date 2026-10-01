@@ -122,7 +122,7 @@ export async function attachAssetToCampaign(
     console.error("Copy safety review failed for a Studio creative:", error);
   }
 
-  const purpose = await creativeObjective(organizationId);
+  const purpose = await creativeObjective(organizationId, { format: "image", message: brief });
   const request = await db.creativeRequest.create({
     data: {
       organizationId,

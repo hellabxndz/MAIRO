@@ -132,7 +132,7 @@ export function promotionTitle(kind: PromotionKind, d: PromotionDetails): string
 
 // --- The kind of business ------------------------------------------------
 
-export const CATEGORIES = ["retail", "food", "health", "trades", "auto", "realestate", "beauty_fitness", "services", "general"] as const;
+export const CATEGORIES = ["retail", "food", "health", "trades", "auto", "realestate", "beauty_fitness", "software", "services", "general"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 const CATEGORY_WORDS: [Category, RegExp][] = [
@@ -143,7 +143,8 @@ const CATEGORY_WORDS: [Category, RegExp][] = [
   ["realestate", /real estate|realtor|property|homes? for|mortgage|broker/i],
   ["beauty_fitness", /salon|spa\b|beauty|nail|barber|lash|brow|fitness|gym|yoga|pilates|personal train|crossfit|tattoo/i],
   ["retail", /cloth|apparel|fashion|boutique|shop|store|jewel|e-?commerce|retail|shoe|furniture|gift|cosmetic|skincare|candle/i],
-  ["services", /consult|agency|law|legal|account|insurance|coach|tutor|design|marketing|photograph|financial|software|saas/i],
+  ["software", /software|saas|\bapp\b|platform|crm|subscription tool|web app|mobile app/i],
+  ["services", /consult|agency|law|legal|account|insurance|coach|tutor|design|marketing|photograph|financial/i],
 ];
 
 /** Best guess at the kind of business, from what it said about itself. */
@@ -205,6 +206,13 @@ const PLAYBOOK: Record<Exclude<GoalKey, "RECOMMEND">, { base: ContentIdea[]; byC
         c("Job walkthrough", "shows the process and professionalism", { format: "REEL" }),
         c("Customer review", "social proof from local customers"),
         c("Quote offer", "a direct way to get a price", { promotional: true }),
+      ],
+      software: [
+        c("Product demo", "shows the software solving a real problem in seconds", { format: "REEL" }),
+        c("Problem / solution", "names the pain and shows the fix"),
+        c("Feature spotlight", "one feature, one benefit, clearly", { format: "CAROUSEL" }),
+        c("Customer case study", "proof from a real team using it", { format: "CAROUSEL" }),
+        c("Start a free trial", "a low-risk way to try it", { promotional: true }),
       ],
       services: [
         c("Client result / case study", "shows the outcome clients get", { format: "CAROUSEL" }),

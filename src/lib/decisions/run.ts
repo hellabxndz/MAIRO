@@ -6,6 +6,9 @@ import { limitProblem, mayAutoApply } from "./guardrails";
 import { applyDecision } from "./apply";
 import type { DataStatus } from "./types";
 import { runIntelligence } from "@/lib/intelligence/run";
+import { runEngineDecisions } from "@/lib/engine";
+import { mergeDrafts } from "@/lib/engine/recommend";
+import { todayFor } from "@/lib/mission/store";
 
 // The daily look at an account: read the figures, apply the rules, keep the
 // decisions, and carry out the ones the customer has let MAIRO make itself.
@@ -42,7 +45,13 @@ export async function refreshDecisions(
 
   const input = await gatherDecisionInput(organizationId, now);
   const run = decide(input);
-  const ids = await persistDrafts(organizationId, run.decisions, "daily");
+  // The Strategy Engine learns from the same snapshot and adds its moves
+  // toward the business's goal. A failure there never blocks the rules.
+  const engine = await runEngineDecisions(organizationId, input, await todayFor(organizationId, now)).catch((error) => {
+    console.error(`Strategy Engine failed for ${organizationId}:`, error);
+    return [];
+  });
+  const ids = await persistDrafts(organizationId, mergeDrafts(run.decisions, engine), "daily");
   // Only daily decisions expire here; a One-Click Fix proposal is the
   // customer's open question and waits for their answer.
   const assistant = await db.mairoDecision.findMany({

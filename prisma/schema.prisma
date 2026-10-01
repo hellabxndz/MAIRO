@@ -683,6 +683,9 @@ model CreativeRequest {
   /// from the business's active MAIRO mission.
   marketingObjective String?
   whyText            String?        @db.Text
+  /// The Strategy Engine's brief (JSON): primary goal, marketing objective,
+  /// audience, hook, message, CTA, format and the reason it was made.
+  briefJson          String?        @db.Text
   status             CreativeStatus @default(REQUESTED)
   assetUrl           String?
 
@@ -1040,6 +1043,11 @@ model CampaignAd {
   headline     String?
   primaryText  String? @db.Text
   callToAction String?
+
+  /// The Strategy Engine's brief for this creative (JSON): primary goal,
+  /// marketing objective, audience, hook, message, CTA, format and the reason
+  /// it was made. See briefFor in lib/engine/core.ts.
+  briefJson String? @db.Text
 
   createdAt DateTime @default(now())
 
@@ -1967,6 +1975,9 @@ model InstagramPost {
   /// Consideration, Lead generation, Conversion, Booking, Retention,
   /// Promotion or Product launch.
   marketingObjective String?
+  /// The Strategy Engine's brief (JSON): goal, objective, audience, hook,
+  /// message, CTA, format and reason.
+  briefJson          String?          @db.Text
   /// Social Manager: what kind of post this is ("Product demonstration"),
   /// the goal it serves, and why MAIRO planned it. Shown on every card.
   contentType        String?

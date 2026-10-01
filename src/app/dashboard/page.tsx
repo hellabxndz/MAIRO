@@ -48,6 +48,7 @@ import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
 import { activeMission, missionActivity, missionLearned, missionRecommendations, proposedMission } from "@/lib/mission/store";
 import { missionGoal, resultsForGoal } from "@/lib/mission/goals";
+import { missionConfidence } from "@/lib/engine";
 import { DoingNow, GoalCampaigns, GoalHero, GoalResults, Learned, NextActions, SocialCard, type NextItem } from "@/components/mission/mission-status";
 import { goalOption } from "@/lib/campaigns/objectives";
 import { GoalPicker } from "@/app/dashboard/mission/mission-client";
@@ -179,9 +180,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // work toward it. The Simple dashboard leads with it; raw figures stay in
   // Advanced.
   const [mission, proposal] = mode === "simple" ? await Promise.all([activeMission(organizationId), proposedMission(organizationId)]) : [null, null];
-  const [missionDoing, missionLearnedItems, missionNext] = mission
-    ? await Promise.all([missionActivity(organizationId), missionLearned(organizationId), missionRecommendations(organizationId, mission)])
-    : [null, [], []];
+  const [missionDoing, missionLearnedItems, missionNext, missionSure] = mission
+    ? await Promise.all([missionActivity(organizationId), missionLearned(organizationId), missionRecommendations(organizationId, mission), missionConfidence(organizationId, missionGoal(mission.primaryGoal).metrics, t).catch(() => null)])
+    : [null, [], [], null];
   const report = intelligence.report;
   const briefActions = intelligence.insights.filter((i) => i.severity !== "INFO").slice(0, 2);
   const journeyCampaigns = overview.campaigns.map((c) => ({ id: c.id, name: c.name }));
@@ -449,6 +450,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
           strategy={mission.plan.strategy}
           secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null}
           startedAt={mission.approvedAt}
+          confidence={missionSure}
         />
         <div className="mt-6">{alerts}</div>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

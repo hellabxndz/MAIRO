@@ -9,6 +9,8 @@ import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { socialAccess } from "@/lib/social/access";
 import { socialLearnings } from "@/lib/social/manager";
 import { SEQUENCES } from "@/lib/social/goals";
+import { runStrategyEngine } from "@/lib/engine";
+import { justifyAction, type EngineStrategy } from "@/lib/engine/core";
 import {
   CUSTOMER_ACTIONS,
   MARKETING_OBJECTIVES,
@@ -19,7 +21,6 @@ import {
   missionGoal,
   playbookFor,
   readRequest,
-  recommendMissionGoal,
   type Category,
   type CustomerAction,
   type MissionGoal,
@@ -192,6 +193,8 @@ export type MissionPlan = MissionPlanContent & {
   adSetup: ReturnType<typeof adSetupFor>;
   scale: boolean;
   launch: { item: string | null; price: string | null; date: string | null; endDate: string | null; discount: string | null } | null;
+  /** The Strategy Engine's strategy this plan was built from. Missing on plans made before it existed. */
+  engine?: EngineStrategy;
 };
 
 function addDays(iso: string, days: number): string {
@@ -201,11 +204,11 @@ function addDays(iso: string, days: number): string {
 const titleCase = (s: string) => s.replace(/\b([a-z])/g, (m) => m.toUpperCase());
 const fmtDay = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-function rulePlan(input: PlanInput, goal: Exclude<MissionGoal, "RECOMMEND">, facts: BusinessFacts): MissionPlanContent {
+function rulePlan(input: PlanInput, goal: Exclude<MissionGoal, "RECOMMEND">, facts: BusinessFacts, engine: EngineStrategy): MissionPlanContent {
   const g = missionGoal(goal);
-  const play = playbookFor(goal, facts.category);
+  const play = playbookFor(goal, engine.objective.category);
   const item = input.launch?.item ?? input.focusItem;
-  const budget = facts.monthlyBudget ? Math.max(5, Math.round(facts.monthlyBudget / 30)) : 20;
+  const budget = Math.max(5, Math.round(engine.budget.dailyCents / 100));
   const kind = facts.category === "general" ? "your kind of business" : `a ${facts.category.replace("_", " & ").replace("realestate", "real estate").replace("auto", "car care")} business`;
   const reasonByFamily: Record<string, string> = {
     sales: "people buy once they've seen the product working and seen that others are happy with it",
@@ -226,36 +229,34 @@ function rulePlan(input: PlanInput, goal: Exclude<MissionGoal, "RECOMMEND">, fac
     }
   }
   return {
-    title: (!item ? g.title : /^Launch/.test(g.title) ? `Launch ${titleCase(item)}` : `${g.title}: ${titleCase(item)}`).slice(0, 70),
+    title: (!item ? engine.headline : /^Launch/.test(g.title) ? `Launch ${titleCase(item)}` : `${g.title}: ${titleCase(item)}`).slice(0, 70),
     mission: item ? `${g.sentence.replace(/\.$/, "")} — ${item}.` : g.sentence,
     strategy: facts.scale
       ? `MAIRO combines Meta ads with organic social content, both built around ${goalPhrase(goal)} for ${kind}.`
       : `MAIRO runs Meta ads built around ${goalPhrase(goal)} for ${kind}.`,
-    why: `For ${kind}, ${reasonByFamily[g.metrics]}. So MAIRO leads with ${play.focus.slice(0, 2).map((f) => f.toLowerCase()).join(" and ")}, then a clear "${play.cta}".`,
+    why: `For ${kind}, ${reasonByFamily[g.metrics]}. So MAIRO leads with ${play.focus.slice(0, 2).map((f) => f.toLowerCase()).join(" and ")}, then a clear "${engine.cta}".`,
     focus: play.focus,
     tactics: {
-      customerAction: g.action,
-      audience: play.audience,
-      creative: play.creative.map((c) => c.angle).join(", "),
-      messaging: play.messaging,
-      cta: play.cta,
-      budget: facts.scale
-        ? `About $${budget}/day on ads to start, with organic posts doing the trust-building in between. MAIRO shows you the budget before anything launches.`
-        : `About $${budget}/day to start. MAIRO shows you the budget before anything launches and never raises it on its own.`,
+      customerAction: engine.objective.customerAction,
+      audience: engine.audienceDirection.slice(0, 300),
+      creative: engine.creativeDirection.map((c) => c.angle).join(", ").slice(0, 300),
+      messaging: engine.messaging.join(". ").slice(0, 300),
+      cta: engine.cta.slice(0, 60),
+      budget: `About $${budget}/day. ${engine.budget.summary} MAIRO shows you the budget before anything launches and never raises it on its own.`.slice(0, 300),
       channels: [facts.metaConnected ? "Facebook and Instagram ads" : "Facebook and Instagram ads (connect Meta to run them)", facts.scale ? "your Instagram and Facebook Page (Social Manager)" : null].filter(Boolean).join(" + "),
       frequency: facts.scale ? "Ads run continuously; 3–5 organic posts a week." : "Ads run continuously; MAIRO refreshes creatives as they tire.",
-      promotion: input.launch?.discount ? `Your ${input.launch.discount} offer leads the ads while it runs, with urgency in the last days.` : facts.offers.length ? `MAIRO uses your current offer ("${facts.offers[0]}") where it helps.` : "No offer needed to start; MAIRO may suggest testing one.",
-      retargeting: facts.pixelActive ? "People who visited your site but didn't act see stronger, proof-led ads." : "Retargeting starts once your site's tracking is set up.",
-      testing: "Three ad angles run side by side; MAIRO keeps the winner and replaces the weakest.",
-      optimization: `MAIRO watches ${g.metrics === "sales" ? "cost per purchase" : g.metrics === "leads" ? "cost per lead" : g.metrics === "bookings" ? "cost per booking" : g.metrics === "traffic" ? "cost per visit" : "reach and response"} and suggests budget moves toward what works — you approve them.`,
+      promotion: engine.offer.guidance.slice(0, 300),
+      retargeting: engine.retargeting.slice(0, 300),
+      testing: engine.testingPlan.slice(0, 300),
+      optimization: engine.optimizationFocus.slice(0, 300),
     },
-    adConcepts: play.creative.map((c) => ({
+    adConcepts: (engine.creativeDirection.length >= 2 ? engine.creativeDirection : play.creative).slice(0, 4).map((c) => ({
       name: c.angle,
       objective: c.objective,
       format: c.format,
       headline: `${c.angle}${item ? `: ${item}` : ""}`.slice(0, 60),
       primaryText: `${facts.name}${item ? ` — ${item}` : ""}. ${facts.offers[0] ?? ""}`.trim().slice(0, 400),
-      cta: play.cta,
+      cta: engine.cta.slice(0, 40),
       why: `Your goal is ${goalPhrase(goal)}. This ${c.angle.toLowerCase()} ad builds ${c.objective.toLowerCase()}, which ${c.objective === "Trust" ? "people need before they act" : c.objective === "Education" ? "helps people recognise they need you" : "turns interest into action"}.`,
     })),
     organic: facts.scale ? `Social Manager posts ${play.focus.slice(0, 3).map((f) => f.toLowerCase()).join(", ")} on your own feed, so people who see your ads find proof when they check you out.` : null,
@@ -281,6 +282,10 @@ Rules:
 
 export type PlanInput = {
   goal: MissionGoal;
+  /** The business's local date, for launch and promotion timing. */
+  today?: string;
+  /** What MAIRO understood from their words, when they used words. */
+  understood?: Understood | null;
   secondary?: MissionGoal | null;
   request: string;
   focusItem?: string | null;
@@ -289,8 +294,17 @@ export type PlanInput = {
 
 export async function buildMissionPlan(organizationId: string, input: PlanInput, facts?: BusinessFacts): Promise<{ plan: MissionPlan; ai: boolean }> {
   const f = facts ?? (await understandBusiness(organizationId));
-  const goal: Exclude<MissionGoal, "RECOMMEND"> = input.goal === "RECOMMEND" ? recommendMissionGoal(f.category, f.products.some((p) => Boolean(p.price))) : input.goal;
-  const fallback = rulePlan(input, goal, f);
+  // The Strategy Engine decides; the plan (rules or AI) puts it into words.
+  const engine = await runStrategyEngine(organizationId, f, {
+    goal: input.goal,
+    secondary: input.secondary ?? null,
+    request: input.request,
+    understood: input.understood ?? null,
+    launch: input.launch ?? null,
+    today: input.today ?? new Date().toISOString().slice(0, 10),
+  });
+  const goal: Exclude<MissionGoal, "RECOMMEND"> = input.goal === "RECOMMEND" ? engine.objective.primaryGoal : input.goal;
+  const fallback = rulePlan(input, goal, f, engine);
   let content = fallback;
   let ai = false;
   if (aiAvailable()) {
@@ -312,12 +326,22 @@ export async function buildMissionPlan(organizationId: string, input: PlanInput,
           input.secondary ? `Secondary goal: ${missionGoal(input.secondary).label}.` : "",
           input.request ? `In their words: "${input.request.slice(0, 600)}"` : "",
           input.launch ? `Launch/promotion details: ${JSON.stringify(input.launch)}` : "",
-          `\nA starting playbook (adapt it): focus ${fallback.focus.join(", ")}; creative ${fallback.tactics.creative}; CTA ${fallback.tactics.cta}; budget about $${fallback.dailyBudget}/day.`,
+          `\nMAIRO's Strategy Engine already decided the strategy. Follow it; write it in plain words for this business:`,
+          engineBrief(engine),
         ]
           .filter(Boolean)
           .join("\n"),
       });
-      content = { ...object, organic: f.scale ? object.organic : null };
+      // The engine's decisions stand: budget, the customer action, and only
+      // ad concepts that serve the goal.
+      const concepts = object.adConcepts.filter((c) => justifyAction(engine, { kind: "creative", objective: c.objective as never }).ok);
+      content = {
+        ...object,
+        organic: f.scale ? object.organic : null,
+        dailyBudget: fallback.dailyBudget,
+        tactics: { ...object.tactics, customerAction: engine.objective.customerAction },
+        adConcepts: concepts.length >= 2 ? concepts : fallback.adConcepts,
+      };
       ai = true;
     } catch (error) {
       console.error("Mission plan AI failed:", error);
@@ -334,7 +358,29 @@ export async function buildMissionPlan(organizationId: string, input: PlanInput,
       adSetup: adSetupFor(content.tactics.customerAction, { hasWebsite: Boolean(f.website), hasPhone: Boolean(f.phone), pixelActive: f.pixelActive }),
       scale: f.scale,
       launch: input.launch ?? null,
+      engine,
     },
     ai,
   };
+}
+
+/** The engine's strategy, for the AI writing the plan. */
+function engineBrief(e: EngineStrategy): string {
+  const o = e.objective;
+  return [
+    `- Objective: ${o.goalLabel}; desired action: ${o.desiredAction}; industry: ${o.industry}; intent: ${o.intent}; focus: ${o.marketingFocus}.`,
+    `- Strategy: ${e.statement}`,
+    `- Priorities: ${e.priorities.join(", ")}.`,
+    `- Creative direction (in this order): ${e.creativeDirection.map((c) => `${c.angle} (${c.objective}, ${c.format})`).join("; ")}.`,
+    `- Audience: ${e.audienceDirection}`,
+    `- Messaging: ${e.messaging.join("; ")}. CTA: ${e.cta}.`,
+    `- Offer: ${e.offer.guidance}`,
+    `- Testing: ${e.testingPlan}`,
+    `- Budget: about $${Math.round(e.budget.dailyCents / 100)}/day. ${e.budget.summary}`,
+    e.launch ? `- Launch stages: ${e.launch.filter((s) => s.include).map((s) => s.stage).join(", ")} (skip the rest).` : "",
+    e.promotion ? `- Promotion: ${e.promotion.introduce} Mention it about ${e.promotion.mentionsPerWeek}× a week.${e.promotion.restraint ? ` ${e.promotion.restraint}` : ""}` : "",
+    e.learningsApplied.length ? `- From their own results: ${e.learningsApplied.join(" ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
