@@ -12,6 +12,7 @@ import { dayLabel, money, performanceTiles, pickInsight, whatsNext } from "../sr
 import { campaignTab, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "../src/lib/dashboard/campaigns";
 import { goalResults, rankByGoal, resultPhrase, type HubAd } from "../src/lib/creatives/hub";
 import { DESTINATIONS } from "../src/lib/ai/assistant-tools";
+import { advancedSettingsSummary } from "../src/lib/dashboard/settings-summary";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -134,6 +135,24 @@ async function main() {
     assert.equal(resultPhrase("sales", 12), "12 purchases");
     assert.equal(resultPhrase("sales", 1), "1 purchase");
     assert.equal(resultPhrase("leads", null), "No results yet");
+  });
+
+  console.log("\n— settings: folded, never hidden —");
+  await check("each folded setting says what's on right now", () => {
+    const base = { autoLaunchOn: false, stopLossCents: null, stopLossAction: "NOTIFY" as const, monthlyCapCents: null, level: "MANUAL" as const, autoOptimizeAllowed: true };
+    const off = advancedSettingsSummary(base);
+    assert.deepEqual(off.map((l) => l.anchor), ["go-live", "spend-protection", "automation", "brief"], "anchors match the section ids links use");
+    assert.match(off[0].value, /^Off/);
+    assert.equal(off[1].value, "Off");
+    assert.match(off[2].value, /^Manual/);
+    const on = advancedSettingsSummary({ ...base, autoLaunchOn: true, stopLossCents: 5000, stopLossAction: "PAUSE", monthlyCapCents: 150_000, level: "AUTOPILOT" });
+    assert.equal(on[0].value, "On");
+    assert.equal(on[1].value, "Pauses a campaign that spends $50 with no result · $1,500 monthly limit");
+    assert.match(on[2].value, /^Full Autopilot/);
+  });
+  await check("a level the plan doesn't include reads as Manual, as it behaves", () => {
+    const l = advancedSettingsSummary({ autoLaunchOn: false, stopLossCents: null, stopLossAction: "NOTIFY", monthlyCapCents: null, level: "ASSISTED", autoOptimizeAllowed: false });
+    assert.match(l[2].value, /^Manual .*plan doesn't include/);
   });
 
   console.log("\n— the assistant takes people to the right place —");

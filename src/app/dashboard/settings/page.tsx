@@ -16,6 +16,9 @@ import { entitlementsFor } from "@/lib/entitlements";
 import { planFor, PLANS } from "@/lib/plans";
 import { assistantNameOf } from "@/lib/ai/agents";
 import { maskPhone } from "@/lib/sms/send";
+import { viewMode } from "@/lib/view-mode";
+import { advancedSettingsSummary } from "@/lib/dashboard/settings-summary";
+import { AdvancedFold } from "./advanced-fold";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -26,7 +29,7 @@ export default async function SettingsPage() {
     protectionSettings(organizationId),
     db.protectionEvent.findMany({ where: { organizationId }, orderBy: { createdAt: "desc" }, take: 10 }),
   ]);
-  const [organization, intake, autoOptimize, entitlements, autoLaunch, sms] = await Promise.all([
+  const [organization, intake, autoOptimize, entitlements, autoLaunch, sms, mode] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -45,6 +48,7 @@ export default async function SettingsPage() {
     entitlementsFor(organizationId),
     autoLaunchIntent(organizationId),
     db.smsPreference.findUnique({ where: { organizationId } }),
+    viewMode(),
   ]);
   if (!organization) redirect("/sign-in");
 
@@ -54,8 +58,163 @@ export default async function SettingsPage() {
   const upgradeTarget =
     PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ?? PLANS[PLANS.length - 1];
 
-  return (
-    <div>
+  const businessCard = (
+    <Card className="mb-8">
+      <h2 className="mb-1 text-sm font-medium">Business details</h2>
+      <p className="mb-6 text-sm text-neutral-400">
+        Your name as customers know it, and where to find you.
+      </p>
+      <BusinessForm
+        name={organization.name}
+        industry={organization.industry ?? ""}
+        website={organization.website ?? ""}
+      />
+    </Card>
+  );
+  const brainCard = (
+    <Card className="mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="mb-1 text-sm font-medium">Business Brain</h2>
+          <p className="max-w-xl text-sm text-neutral-400">
+            What Mairo remembers about your business — products, prices, brand voice, who to reach, and which offers
+            worked. Every campaign starts from it.
+          </p>
+        </div>
+        <Link href="/dashboard/settings/business-brain" className={secondaryButtonClass}>
+          Open Business Brain
+        </Link>
+      </div>
+    </Card>
+  );
+  const reportsCard = (
+    <Card className="mb-8" id="reports">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="mb-1 text-sm font-medium">Reports</h2>
+          <p className="max-w-xl text-sm text-neutral-400">
+            Your Mairo Weekly Report — which day it arrives, how you&rsquo;re told, and the view it opens in.
+          </p>
+        </div>
+        <Link href="/dashboard/settings/reports" className={secondaryButtonClass}>
+          Report settings
+        </Link>
+      </div>
+    </Card>
+  );
+  const billingCard = (
+    <div className="mb-8">
+      <BillingSection
+        tier={organization.subscriptionTier}
+        status={organization.subscriptionStatus}
+        periodEnd={organization.currentPeriodEnd}
+        hasCustomer={Boolean(organization.stripeCustomerId)}
+      />
+    </div>
+  );
+  // In Advanced, directly under billing, because it is the other thing on
+  // this page that lets MAIRO act on its own.
+  const autoLaunchCard = (
+    <div className="mb-8 scroll-mt-24" id="go-live">
+      <AutoLaunchSection
+        held={autoLaunch.held}
+        waitingCount={autoLaunch.waitingCount}
+        lastLaunchedAt={autoLaunch.lastLaunchedAt}
+      />
+    </div>
+  );
+  const spendCard = (
+    <div className="mb-8">
+      <SpendProtectionSection
+        values={{
+          stopLossCents: protection.stopLossCents,
+          stopLossAction: protection.stopLossAction,
+          monthlyCapCents: protection.monthlyCapCents,
+          warnAtPercent: protection.warnAtPercent,
+        }}
+        events={protectionEvents.map((e) => ({
+          id: e.id,
+          at: e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          campaignName: null,
+          kind: e.kind,
+          action: e.action,
+          message: e.message,
+        }))}
+      />
+    </div>
+  );
+  const automationCard = (
+    <div className="mb-8">
+      <AutomationSection
+        allowed={entitlements.auto_optimize}
+        autopilotAllowed={entitlements.autopilot}
+        upgradePlanName={upgradeTarget.name}
+        values={{
+          // Defaults chosen to be safe rather than useful: Manual, a ceiling
+          // of twice what they spend now, and small steps. Someone who turns
+          // this up without reading the fields gets conservative behaviour,
+          // not a blank cheque.
+          level: autoOptimize?.level ?? "MANUAL",
+          maxDailyBudget: autoOptimize ? autoOptimize.maxDailyBudgetCents / 100 : 100,
+          maxDailyIncreasePercent: autoOptimize?.maxDailyIncreasePercent ?? 20,
+          maxBudgetShiftPercent: autoOptimize?.maxBudgetShiftPercent ?? 15,
+          minRoas: autoOptimize?.minRoas ?? null,
+          maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
+          platforms: autoOptimize?.platforms ?? [],
+          maxDailyDecreasePercent: autoOptimize?.maxDailyDecreasePercent ?? 30,
+          requireApprovalNewCreatives: autoOptimize?.requireApprovalNewCreatives ?? true,
+          requireApprovalAudience: autoOptimize?.requireApprovalAudience ?? true,
+          requireApprovalPlatformShift: autoOptimize?.requireApprovalPlatformShift ?? true,
+        }}
+      />
+    </div>
+  );
+  // Above the brief (and outside the fold in Simple), because this is the
+  // setting people come looking for — the assistant is the part of MAIRO
+  // they actually talk to.
+  const assistantCard = (
+    <div className="mb-8">
+      <AssistantSection
+        assistantName={assistantNameOf(organization.assistantName)}
+        phone={{
+          masked: sms?.phone ? maskPhone(sms.phone) : null,
+          verified: Boolean(sms?.verifiedAt) && !sms?.optedOutAt,
+          // A code that has expired is not a code they are waiting on, so
+          // the form goes back to asking for a number rather than for a
+          // code that will never be accepted.
+          awaitingCode: Boolean(
+            sms?.verifyCode && sms.verifyExpiresAt && sms.verifyExpiresAt > new Date(),
+          ),
+          prefs: {
+            onCampaignLive: sms?.onCampaignLive ?? true,
+            onNeedsAttention: sms?.onNeedsAttention ?? true,
+            onWeeklySummary: sms?.onWeeklySummary ?? false,
+            onBudgetChange: sms?.onBudgetChange ?? false,
+          },
+        }}
+      />
+    </div>
+  );
+  const briefCard = (
+    <Card id="brief" className="scroll-mt-24">
+      <h2 className="mb-1 text-sm font-medium">Your brief</h2>
+      <p className="mb-6 text-sm text-neutral-400">
+        The answers you gave when you signed up. Update them whenever the business
+        changes and the next plan will follow.
+      </p>
+      <BriefForm
+        primaryGoal={intake?.primaryGoal ?? "LEADS"}
+        monthlyBudget={intake ? intake.monthlyBudgetCents / 100 : 1000}
+        targetAudience={intake?.targetAudience ?? ""}
+        brandVoice={intake?.brandVoice ?? ""}
+        competitors={intake?.competitors ?? ""}
+        notes={intake?.notes ?? ""}
+      />
+    </Card>
+  );
+
+  const header = (
+    <>
       <PageHeader
         title="Settings"
         description="Your business, your connections and your account — the things you set once and rarely touch."
@@ -81,150 +240,49 @@ export default async function SettingsPage() {
           </Link>
         ))}
       </nav>
+    </>
+  );
 
-      <Card className="mb-8">
-        <h2 className="mb-1 text-sm font-medium">Business details</h2>
-        <p className="mb-6 text-sm text-neutral-400">
-          Your name as customers know it, and where to find you.
-        </p>
-        <BusinessForm
-          name={organization.name}
-          industry={organization.industry ?? ""}
-          website={organization.website ?? ""}
-        />
-      </Card>
-
-      <Card className="mb-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="mb-1 text-sm font-medium">Business Brain</h2>
-            <p className="max-w-xl text-sm text-neutral-400">
-              What Mairo remembers about your business — products, prices, brand voice, who to reach, and which offers
-              worked. Every campaign starts from it.
-            </p>
-          </div>
-          <Link href="/dashboard/settings/business-brain" className={secondaryButtonClass}>
-            Open Business Brain
-          </Link>
-        </div>
-      </Card>
-
-      <Card className="mb-8" id="reports">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="mb-1 text-sm font-medium">Reports</h2>
-            <p className="max-w-xl text-sm text-neutral-400">
-              Your Mairo Weekly Report — which day it arrives, how you&rsquo;re told, and the view it opens in.
-            </p>
-          </div>
-          <Link href="/dashboard/settings/reports" className={secondaryButtonClass}>
-            Report settings
-          </Link>
-        </div>
-      </Card>
-
-      <div className="mb-8">
-        <BillingSection
-          tier={organization.subscriptionTier}
-          status={organization.subscriptionStatus}
-          periodEnd={organization.currentPeriodEnd}
-          hasCustomer={Boolean(organization.stripeCustomerId)}
-        />
+  if (mode === "simple") {
+    // Simple: what an owner changes — their details, plan and assistant. The
+    // controls for what MAIRO does on its own fold away, with a line each
+    // saying what's on right now. Business Brain and Reports are in the grid.
+    const lines = advancedSettingsSummary({
+      autoLaunchOn: !autoLaunch.held,
+      stopLossCents: protection.stopLossCents,
+      stopLossAction: protection.stopLossAction,
+      monthlyCapCents: protection.monthlyCapCents,
+      level: autoOptimize?.level ?? "MANUAL",
+      autoOptimizeAllowed: entitlements.auto_optimize,
+    });
+    return (
+      <div>
+        {header}
+        {businessCard}
+        {billingCard}
+        {assistantCard}
+        <AdvancedFold lines={lines}>
+          {autoLaunchCard}
+          {spendCard}
+          {automationCard}
+          {briefCard}
+        </AdvancedFold>
       </div>
+    );
+  }
 
-      {/* Directly under billing, because it is the other thing on this page
-          that lets MAIRO act on its own. */}
-      <div className="mb-8">
-        <AutoLaunchSection
-          held={autoLaunch.held}
-          waitingCount={autoLaunch.waitingCount}
-          lastLaunchedAt={autoLaunch.lastLaunchedAt}
-        />
-      </div>
-
-      <div className="mb-8">
-        <SpendProtectionSection
-          values={{
-            stopLossCents: protection.stopLossCents,
-            stopLossAction: protection.stopLossAction,
-            monthlyCapCents: protection.monthlyCapCents,
-            warnAtPercent: protection.warnAtPercent,
-          }}
-          events={protectionEvents.map((e) => ({
-            id: e.id,
-            at: e.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            campaignName: null,
-            kind: e.kind,
-            action: e.action,
-            message: e.message,
-          }))}
-        />
-      </div>
-
-      <div className="mb-8 scroll-mt-24" id="automation">
-        <AutomationSection
-          allowed={entitlements.auto_optimize}
-          autopilotAllowed={entitlements.autopilot}
-          upgradePlanName={upgradeTarget.name}
-          values={{
-            // Defaults chosen to be safe rather than useful: Manual, a ceiling
-            // of twice what they spend now, and small steps. Someone who turns
-            // this up without reading the fields gets conservative behaviour,
-            // not a blank cheque.
-            level: autoOptimize?.level ?? "MANUAL",
-            maxDailyBudget: autoOptimize ? autoOptimize.maxDailyBudgetCents / 100 : 100,
-            maxDailyIncreasePercent: autoOptimize?.maxDailyIncreasePercent ?? 20,
-            maxBudgetShiftPercent: autoOptimize?.maxBudgetShiftPercent ?? 15,
-            minRoas: autoOptimize?.minRoas ?? null,
-            maxCpa: autoOptimize?.maxCpaCents ? autoOptimize.maxCpaCents / 100 : null,
-            platforms: autoOptimize?.platforms ?? [],
-            maxDailyDecreasePercent: autoOptimize?.maxDailyDecreasePercent ?? 30,
-            requireApprovalNewCreatives: autoOptimize?.requireApprovalNewCreatives ?? true,
-            requireApprovalAudience: autoOptimize?.requireApprovalAudience ?? true,
-            requireApprovalPlatformShift: autoOptimize?.requireApprovalPlatformShift ?? true,
-          }}
-        />
-      </div>
-
-      {/* Above the brief, because this is the setting people come looking
-          for — the assistant is the part of MAIRO they actually talk to. */}
-      <div className="mb-8">
-        <AssistantSection
-          assistantName={assistantNameOf(organization.assistantName)}
-          phone={{
-            masked: sms?.phone ? maskPhone(sms.phone) : null,
-            verified: Boolean(sms?.verifiedAt) && !sms?.optedOutAt,
-            // A code that has expired is not a code they are waiting on, so
-            // the form goes back to asking for a number rather than for a
-            // code that will never be accepted.
-            awaitingCode: Boolean(
-              sms?.verifyCode && sms.verifyExpiresAt && sms.verifyExpiresAt > new Date(),
-            ),
-            prefs: {
-              onCampaignLive: sms?.onCampaignLive ?? true,
-              onNeedsAttention: sms?.onNeedsAttention ?? true,
-              onWeeklySummary: sms?.onWeeklySummary ?? false,
-              onBudgetChange: sms?.onBudgetChange ?? false,
-            },
-          }}
-        />
-      </div>
-
-      <Card>
-        <h2 className="mb-1 text-sm font-medium">Your brief</h2>
-        <p className="mb-6 text-sm text-neutral-400">
-          The answers you gave when you signed up. Update them whenever the business
-          changes and the next plan will follow.
-        </p>
-        <BriefForm
-          primaryGoal={intake?.primaryGoal ?? "LEADS"}
-          monthlyBudget={intake ? intake.monthlyBudgetCents / 100 : 1000}
-          targetAudience={intake?.targetAudience ?? ""}
-          brandVoice={intake?.brandVoice ?? ""}
-          competitors={intake?.competitors ?? ""}
-          notes={intake?.notes ?? ""}
-        />
-      </Card>
+  return (
+    <div>
+      {header}
+      {businessCard}
+      {brainCard}
+      {reportsCard}
+      {billingCard}
+      {autoLaunchCard}
+      {spendCard}
+      {automationCard}
+      {assistantCard}
+      {briefCard}
     </div>
   );
 }

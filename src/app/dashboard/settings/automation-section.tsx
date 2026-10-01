@@ -68,7 +68,7 @@ export function AutomationSection({
 
   if (locked && values.level === "MANUAL") {
     return (
-      <Card id="automation">
+      <Card id="automation" className="scroll-mt-24">
         <h2 className="text-base text-white">What MAIRO may do on its own</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
           Right now MAIRO recommends changes and waits for you to approve every one. On
@@ -90,7 +90,7 @@ export function AutomationSection({
   const acting = level !== "MANUAL";
 
   return (
-    <Card id="automation">
+    <Card id="automation" className="scroll-mt-24">
       <form action={formAction} className="space-y-6">
         <div>
           <h2 className="text-base text-white">What MAIRO may do on its own</h2>
