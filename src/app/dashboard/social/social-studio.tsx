@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
-  answerSocialQuestionAction,
+  enableNetworkAction,
   approvePostsAction,
   createPostAction,
   discardPostAction,
@@ -36,6 +37,9 @@ export type PostView = {
   /** Whether a time was chosen (otherwise it posts once approved). */
   hasTime: boolean;
   suggestedByMairo: boolean;
+  /** Social Manager: what kind of post, and why MAIRO made it. */
+  contentType?: string | null;
+  rationale?: string | null;
 };
 
 const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
@@ -103,7 +107,7 @@ export function SocialStudio({
   canPost,
   timeZoneLabel,
   username,
-  optedIn,
+  planState,
 }: {
   network: Network;
   /** Whether the account is ready enough to say yes (posting may still need Facebook's OK). */
@@ -114,8 +118,10 @@ export function SocialStudio({
   canPost: boolean;
   timeZoneLabel: string;
   username: string;
-  optedIn: boolean;
+  /** Goal-first: no plan until the business set a goal and chose this network. */
+  planState: "no_goal" | "not_included" | "ready";
 }) {
+  const optedIn = planState === "ready";
   const router = useRouter();
   const [pending, start] = useTransition();
   const [result, setResult] = useState<SocialResult | null>(null);
@@ -158,28 +164,35 @@ export function SocialStudio({
 
   return (
     <div className="space-y-6">
-      {!optedIn ? (
+      {planState === "no_goal" ? (
+        <div className="rounded-2xl border border-violet/35 bg-violet/[0.06] p-6">
+          <p className="text-[19px] font-semibold text-white">Start with your goal</p>
+          <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-muted">
+            MAIRO doesn&rsquo;t post for the sake of posting. Tell Social Manager what you want your business to accomplish, and every {facebook ? "Facebook" : "Instagram"} post it plans will work toward it.
+          </p>
+          <Link href="/dashboard/social" className={`${primary} mt-4 inline-flex items-center`}>Tell MAIRO your goal</Link>
+        </div>
+      ) : planState === "not_included" ? (
         <div className="rounded-2xl border border-violet/35 bg-violet/[0.06] p-6">
           <p className="text-[19px] font-semibold text-white">{facebook ? "Let MAIRO post on your Facebook Page?" : "Let MAIRO post on your Instagram feed?"}</p>
           <p className="mt-2 max-w-[640px] text-[14px] leading-relaxed text-muted">
-            MAIRO plans posts from your approved pictures and videos, writes the {facebook ? "text" : "captions"}, and shows you exactly how each one will look on your {where}. Nothing is posted until you approve it.
+            MAIRO plans posts for your goal from your approved pictures and videos, writes the {facebook ? "text" : "captions"}, and shows you exactly how each one will look on your {where}. Nothing is posted until you approve it.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" disabled={pending || !canAnswer} onClick={() => run(() => answerSocialQuestionAction(network, true))} className={primary}>
+            <button type="button" disabled={pending || !canAnswer} onClick={() => run(() => enableNetworkAction(network))} className={primary}>
               {pending ? "Planning your first posts…" : "Yes, let MAIRO post"}
             </button>
-            <button type="button" disabled={pending} onClick={() => run(() => answerSocialQuestionAction(network, false))} className={secondary}>Not now</button>
           </div>
           {!canAnswer && <p className="mt-3 text-[12.5px] text-amber-200/90">{facebook ? "Your Facebook Page" : "Your Instagram"} needs to be ready first — see above.</p>}
         </div>
       ) : (
         <div className={`${card} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
           <div>
-            <p className="text-[15px] font-semibold text-white">MAIRO plans your posts</p>
-            <p className="mt-1 text-[13px] text-muted">MAIRO picks from your approved pictures and videos, writes the captions and suggests times. You see each post before it goes out.</p>
+            <p className="text-[15px] font-semibold text-white">MAIRO plans your posts for your goal</p>
+            <p className="mt-1 text-[13px] text-muted">MAIRO picks from your approved pictures and videos, writes the captions and suggests times. Every post says why it was made. See the whole plan in the <Link href="/dashboard/social/calendar" className="underline underline-offset-4">Content Calendar</Link>.</p>
           </div>
           <button type="button" disabled={pending || !canAnswer} onClick={() => run(() => planWeekAction(network))} className={`${primary} shrink-0`}>
-            {pending ? "Working…" : suggested.some((s) => s.suggestedByMairo) ? "Plan again" : "Plan my week"}
+            {pending ? "Working…" : "Plan my week"}
           </button>
         </div>
       )}
@@ -207,8 +220,13 @@ export function SocialStudio({
                   <InstagramPreview username={username} mediaType={p.mediaType} images={p.images} poster={p.previewUrl} caption={p.caption} />
                 )}
                 <p className="mt-2 text-[12.5px] text-muted">
-                  {p.suggestedByMairo ? "MAIRO suggests posting" : "Your post —"} {p.hasTime ? p.whenLabel : "as soon as you approve"}
+                  {p.suggestedByMairo ? `${p.contentType ?? "MAIRO suggests"} · posting` : "Your post —"} {p.hasTime ? p.whenLabel : "as soon as you approve"}
                 </p>
+                {p.rationale && p.suggestedByMairo && (
+                  <p className="mt-1.5 rounded-lg bg-violet/[0.08] px-3 py-2 text-[12.5px] leading-relaxed text-white/85">
+                    <span className="font-semibold text-violet-bright">Why MAIRO created this: </span>{p.rationale}
+                  </p>
+                )}
                 {editing === p.id && <PostEditor network={network} post={p} onDone={() => { setEditing(null); router.refresh(); }} />}
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" disabled={pending || !canPost} onClick={() => run(() => approvePostsAction([p.id], "now"))} className={primary}>

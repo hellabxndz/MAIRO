@@ -13,7 +13,6 @@ import { db } from "../src/lib/db";
 import { feedCanvas, planSlots, validatePost, validateWhen, isDuePost } from "../src/lib/instagram/social-logic";
 import { toInstagramJpeg } from "../src/lib/instagram/jpeg";
 import { publishDuePosts, publishPost } from "../src/lib/instagram/scheduler";
-import { socialQuestion } from "../src/lib/instagram/opt-in";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -129,23 +128,6 @@ async function main() {
     db.instagramPost.create({ data: { organizationId: orgId, caption: "Hello from the shop", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: past, ...data } as never });
 
   try {
-    await check("Scale is asked about Instagram, then Facebook; 'Not now' waits 30 days; a yes ends it", async () => {
-      const later = new Date(Date.now() + 31 * 86_400_000);
-      assert.equal(await socialQuestion(orgId), "INSTAGRAM");
-      await db.organization.update({ where: { id: orgId }, data: { instagramDeclinedAt: new Date() } });
-      assert.equal(await socialQuestion(orgId), "FACEBOOK", "Facebook comes once Instagram is answered");
-      await db.organization.update({ where: { id: orgId }, data: { facebookDeclinedAt: new Date() } });
-      assert.equal(await socialQuestion(orgId), null);
-      assert.equal(await socialQuestion(orgId, later), "INSTAGRAM");
-      await db.organization.update({ where: { id: orgId }, data: { instagramOptInAt: new Date() } });
-      assert.equal(await socialQuestion(orgId, later), "FACEBOOK");
-      await db.organization.update({ where: { id: orgId }, data: { facebookOptInAt: new Date() } });
-      assert.equal(await socialQuestion(orgId, later), null);
-      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH", instagramOptInAt: null, instagramDeclinedAt: null, facebookOptInAt: null, facebookDeclinedAt: null } });
-      assert.equal(await socialQuestion(orgId), null, "Growth isn't asked");
-      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "SCALE" } });
-    });
-
     await check("a photo post is published, via a JPEG address Instagram can fetch", async () => {
       const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
       const r = await publishPost(p.id, { budgetMs: 5_000 });
@@ -186,19 +168,21 @@ async function main() {
       assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: suggestion.id } })).status, "SUGGESTED");
     });
 
-    await check("without Scale, nothing is posted", async () => {
+    await check("without Scale, nothing is posted — it is paused", async () => {
       await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH" } });
       const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:g"] });
       const r = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(r.status, "FAILED");
+      // Paused, not failed: the content is kept for when Scale is back.
+      assert.equal(r.status, "PAUSED");
       assert.match(r.message, /Scale/);
+      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).status, "PAUSED");
       await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "SCALE" } });
     });
 
     await check("a free-plan account without a live subscription can't post", async () => {
       await db.organization.update({ where: { id: orgId }, data: { paymentRequired: true, subscriptionStatus: "past_due" } });
       const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:h"] });
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "FAILED");
+      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "PAUSED");
       await db.organization.update({ where: { id: orgId }, data: { paymentRequired: false, subscriptionStatus: "active" } });
     });
 

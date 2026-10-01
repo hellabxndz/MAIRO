@@ -253,6 +253,8 @@ model Organization {
   managedSetups        ManagedAccountSetup[]
   tiktokPosts          TikTokPost[]
   instagramPosts       InstagramPost[]
+  socialStrategy       SocialStrategy?
+  socialPromotions     SocialPromotion[]
   tiktokCreator        TikTokCreatorConnection?
   trackingPixels       TrackingPixel[]
   conversionEvents     ConversionEvent[]
@@ -1882,6 +1884,11 @@ enum InstagramPostStatus {
   PUBLISHED
   /// Instagram refused it, or processing failed.
   FAILED
+  /// The business chose not to post it.
+  SKIPPED
+  /// Was approved, but Scale stopped being active. Never published until the
+  /// business is on active Scale again and resumes it.
+  PAUSED
 }
 
 /// A post MAIRO published to the customer's own Instagram.
@@ -1941,13 +1948,87 @@ model InstagramPost {
   /// Publishing attempts, so a stuck post stops being retried.
   attempts         Int       @default(0)
 
-  postedAt  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  postedAt     DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  /// Social Manager: what kind of post this is ("Product demonstration"),
+  /// the goal it serves, and why MAIRO planned it. Shown on every card.
+  contentType  String?
+  objective    String?
+  rationale    String?          @db.Text
+  /// The call to action, also written into the caption.
+  cta          String?
+  /// For a planned post that still needs a picture or video: what to make.
+  creativeIdea String?          @db.Text
+  promotion    SocialPromotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  promotionId  String?
+  /// Its place in a promotion or launch, e.g. "Teaser", "Last chance".
+  sequenceStep String?
+  /// Approved by Autopilot under the business's own rules, not by a person.
+  autoApproved Boolean          @default(false)
+  /// Likes and comments read back from Instagram or Facebook after posting.
+  likeCount    Int?
+  commentCount Int?
+  metricsAt    DateTime?
 
   @@index([organizationId, status])
   @@index([status, scheduledFor])
   @@index([organizationId, network, status])
+  @@index([organizationId, scheduledFor])
+}
+
+/// MAIRO Social Manager (Scale only): what the business wants its social
+/// media to achieve, and the strategy MAIRO built for it. Every planned post
+/// serves this goal.
+model SocialStrategy {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String       @unique
+
+  /// One of the goals in lib/social/goals.ts, e.g. INCREASE_SALES.
+  goal         String
+  /// The goal in the business's own words, when they gave them.
+  goalDetail   String   @default("") @db.Text
+  /// Where MAIRO posts: INSTAGRAM and/or FACEBOOK.
+  platforms    String[] @default([])
+  /// APPROVAL_REQUIRED (default), WEEKLY or AUTOPILOT.
+  approvalMode String   @default("APPROVAL_REQUIRED")
+  postsPerWeek Int      @default(4)
+  /// The strategy MAIRO built (JSON: summary, pillars, cadence, CTAs).
+  strategyJson String   @db.Text
+  aiUsed       Boolean  @default(false)
+
+  /// Set when Scale stopped being active: nothing is generated or posted.
+  pausedAt     DateTime?
+  pausedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Something happening at the business that Social Manager markets: a sale,
+/// a new product or service, an event, a holiday promotion.
+model SocialPromotion {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// SALE, NEW_PRODUCT, NEW_SERVICE, EVENT, NEW_INVENTORY, HOLIDAY, ANNOUNCEMENT.
+  kind        String
+  title       String
+  /// What the business told MAIRO (JSON): offer, code, dates, restrictions…
+  detailsJson String    @db.Text
+  startsAt    DateTime?
+  endsAt      DateTime?
+  /// ACTIVE, ENDED or CANCELLED.
+  status      String    @default("ACTIVE")
+
+  posts InstagramPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
 }
 
 // --- AI Creative Studio ----------------------------------------------------

@@ -4,8 +4,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { activeOrganizationId } from "@/lib/active-org";
-import { entitlementsFor } from "@/lib/entitlements";
-import { PlanLock } from "@/components/plan-lock";
+import { socialGate } from "./gate";
+import { SocialTabs } from "./social-tabs";
+import { loadStrategy } from "@/lib/social/manager";
 import { SocialStudio, type PostView } from "./social-studio";
 import { findFacebookPage, PAGE_POSTING_CONNECT } from "@/lib/facebook/page-posting";
 import { findInstagramAccount, POSTS_PER_DAY, postsInLastDay } from "@/lib/instagram/publish";
@@ -14,7 +15,6 @@ import { publishDuePosts } from "@/lib/instagram/scheduler";
 import type { MediaType, Network } from "@/lib/instagram/social-logic";
 import { describeStart, localInputValue, wallClockInZone } from "@/lib/campaigns/schedule";
 import { executionAllowed } from "@/lib/billing/execution";
-import { planFor } from "@/lib/plans";
 
 // MAIRO posting on the customer's own profiles.
 //
@@ -34,31 +34,14 @@ export async function SocialPage({ network }: { network: Network }) {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const entitlements = await entitlementsFor(organizationId);
-
-  // Named from plans.ts rather than written into the copy, so renaming the
-  // plan doesn't leave the upsell advertising a plan that no longer exists.
-  const topPlan = planFor("SCALE");
-
-  if (!entitlements.social_posting) {
-    return (
-      <div>
-        <PageHeader
-          title={facebook ? "Facebook posts" : "Instagram posts"}
-          description={facebook ? "MAIRO plans, writes and posts to your own Facebook Page." : "MAIRO plans, writes and posts to your own Instagram."}
-        />
-        <PlanLock
-          title={`MAIRO posting for you comes with ${topPlan.name}`}
-          body={`Ads reach people who don't follow you yet. Your own feed and Page are what they check before they buy — and keeping them alive is the job nobody has time for. On ${topPlan.name}, MAIRO plans your week, writes the captions and posts to your Instagram and Facebook Page on the schedule you approve.`}
-        />
-      </div>
-    );
-  }
+  // Active Scale only; anyone else sees the upgrade (or paused) screen.
+  const gate = await socialGate(organizationId);
+  if (gate) return gate;
 
   // Anything already due goes out now, rather than waiting for the daily run.
   await publishDuePosts({ organizationId, budgetMs: 15_000, limit: 3 }).catch(() => null);
 
-  const [library, posts, igAccount, fbPage, todayCount, org, allowed] = await Promise.all([
+  const [library, posts, igAccount, fbPage, todayCount, org, allowed, strategy] = await Promise.all([
     mediaLibrary(organizationId),
     db.instagramPost.findMany({
       where: { organizationId, network },
@@ -68,8 +51,9 @@ export async function SocialPage({ network }: { network: Network }) {
     facebook ? null : findInstagramAccount(organizationId),
     facebook ? findFacebookPage(organizationId) : null,
     facebook ? 0 : postsInLastDay(organizationId),
-    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, instagramOptInAt: true, facebookOptInAt: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
     executionAllowed(organizationId),
+    loadStrategy(organizationId),
   ]);
   const zone = org?.timezone || "America/New_York";
   const view = (p: (typeof posts)[number]): PostView => ({
@@ -84,6 +68,8 @@ export async function SocialPage({ network }: { network: Network }) {
     images: p.mediaType === "REEL" ? [] : p.mediaRefs.map((_, i) => `/api/social/media/${p.id}/${i}`),
     hasTime: Boolean(p.scheduledFor),
     suggestedByMairo: p.suggestedByMairo,
+    contentType: p.contentType,
+    rationale: p.rationale,
   });
   const suggested = posts.filter((p) => p.status === "SUGGESTED").map(view);
   const upcoming = posts.filter((p) => p.status === "SCHEDULED" || p.status === "CREATED").map(view);
@@ -96,7 +82,10 @@ export async function SocialPage({ network }: { network: Network }) {
   const runAt = wallClockInZone(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 0)), zone).slice(11, 16);
   const tzLabel = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(now).find((x) => x.type === "timeZoneName")?.value ?? zone;
 
-  const optedIn = Boolean(facebook ? org?.facebookOptInAt : org?.instagramOptInAt);
+  // Social Manager is goal-first: nothing is planned here until the business
+  // has told MAIRO its goal, and this network is one it chose.
+  const optedIn = Boolean(strategy?.platforms.includes(network));
+  const planState: "no_goal" | "not_included" | "ready" = !strategy ? "no_goal" : optedIn ? "ready" : "not_included";
   const checkNote = (
     <p className="mb-6 max-w-3xl text-[13px] leading-relaxed text-muted">
       Approved posts go out at MAIRO&rsquo;s first check after their time: every morning at about {runAt} ({tzLabel}), and whenever you open this page. A post scheduled for the afternoon is published at the next of those checks.
@@ -117,6 +106,7 @@ export async function SocialPage({ network }: { network: Network }) {
             canPublish ? <Badge tone="green">{pageName}</Badge> : <Badge tone="yellow">{ready ? "Needs your OK" : "Page not ready"}</Badge>
           }
         />
+        <SocialTabs active="/dashboard/social/facebook" />
 
         {!fbPage.ok && (
           <Card className="mb-8 border-amber-400/20 bg-amber-400/[0.05]">
@@ -159,7 +149,7 @@ export async function SocialPage({ network }: { network: Network }) {
           canAnswer={ready}
           timeZoneLabel={tzLabel}
           username={pageName}
-          optedIn={optedIn}
+          planState={planState}
         />
         {historyList}
       </div>
@@ -184,6 +174,7 @@ export async function SocialPage({ network }: { network: Network }) {
           )
         }
       />
+      <SocialTabs active="/dashboard/social/instagram" />
 
       {/* The two ways this isn't ready, told apart. "Reconnect Meta" and
           "convert your Instagram to a Business account" are completely
@@ -237,7 +228,7 @@ export async function SocialPage({ network }: { network: Network }) {
         canAnswer={connected}
         timeZoneLabel={tzLabel}
         username={(igAccount?.ok && igAccount.data?.username) || "your_business"}
-        optedIn={optedIn}
+        planState={planState}
       />
       {historyList}
     </div>

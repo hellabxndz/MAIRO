@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { db } from "@/lib/db";
 import { stripe, tierForPriceId } from "@/lib/stripe/client";
 import { STOPPED_STATUSES, stopUnpaidExecution } from "@/lib/billing/stop-unpaid";
+import { pauseSocialIfLocked } from "@/lib/social/pause";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -160,6 +161,10 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     }
     await stopUnpaidExecution(organizationId);
   }
+
+  // Social Manager needs active Scale. A downgrade, cancellation or failed
+  // payment pauses whatever was scheduled; history and drafts are kept.
+  await pauseSocialIfLocked(organizationId).catch((error) => console.error("Pausing Social Manager failed:", error));
 }
 
 /**

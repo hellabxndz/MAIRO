@@ -5,15 +5,14 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { can } from "@/lib/entitlements";
-import { planFor } from "@/lib/plans";
+import { socialAccess } from "@/lib/social/access";
+import { generatePlan, loadStrategy } from "@/lib/social/manager";
+import { goalInfo } from "@/lib/social/goals";
 import { executionBlock } from "@/lib/billing/execution";
-import { brainBrief, loadBrain } from "@/lib/business/brain";
-import { instantFromLocal, wallClockInZone } from "@/lib/campaigns/schedule";
-import { writeCaptions } from "@/lib/ai/social-captions";
+import { instantFromLocal } from "@/lib/campaigns/schedule";
 import { mediaLibrary, ownsRefs } from "@/lib/instagram/library";
 import { publishPost } from "@/lib/instagram/scheduler";
-import { MEDIA_TYPES, NETWORKS, NETWORK_NAME, asNetwork, captionMax, planSlots, validatePost, validateWhen, type MediaType, type Network } from "@/lib/instagram/social-logic";
+import { MEDIA_TYPES, NETWORKS, NETWORK_NAME, asNetwork, validatePost, validateWhen, type MediaType, type Network } from "@/lib/instagram/social-logic";
 
 // Scale's Instagram and Facebook Page posting: post now, schedule, or let
 // MAIRO plan the week. The two share one queue; each post says which network
@@ -29,9 +28,9 @@ async function context(): Promise<{ organizationId: string; timeZone: string } |
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  if (!(await can(organizationId, "social_posting"))) {
-    return { error: `MAIRO posting to Instagram and Facebook comes with ${planFor("SCALE").name}. Choose it in Billing and it opens up straight away.` };
-  }
+  // Active Scale, read fresh from the database on every call.
+  const access = await socialAccess(organizationId);
+  if (!access.ok) return { error: access.message };
   const blocked = await executionBlock(organizationId);
   if (blocked) return { error: blocked };
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } });
@@ -67,7 +66,8 @@ export async function createPostAction(input: z.input<typeof createSchema>): Pro
   if (whenProblem) return { ok: false, error: whenProblem };
   if (!(await ownsRefs(ctx.organizationId, refs))) return { ok: false, error: "One of those pictures or videos isn't available to post." };
 
-  const preview = (await mediaLibrary(ctx.organizationId)).find((m) => m.ref === refs[0])?.previewUrl ?? null;
+  const [library, strategy] = await Promise.all([mediaLibrary(ctx.organizationId), loadStrategy(ctx.organizationId)]);
+  const preview = library.find((m) => m.ref === refs[0])?.previewUrl ?? null;
   // Every post is shown as it will look on Instagram or Facebook before
   // anything is posted: this creates the preview, and approving it posts.
   await db.instagramPost.create({
@@ -81,6 +81,9 @@ export async function createPostAction(input: z.input<typeof createSchema>): Pro
       status: "SUGGESTED",
       suggestedByMairo: false,
       scheduledFor: when,
+      contentType: "Your post",
+      objective: strategy ? goalInfo(strategy.goal).objective : null,
+      rationale: "You made this post yourself.",
     },
   });
   refresh();
@@ -88,95 +91,43 @@ export async function createPostAction(input: z.input<typeof createSchema>): Pro
 }
 
 /**
- * "Let MAIRO post on your Instagram feed?" / "…on your Facebook Page?" — yes
- * plans the first posts to preview; not now asks again later.
+ * Adds Instagram or the Facebook Page to where Social Manager posts. Asked on
+ * the network's own page; the goal comes first, in Social Manager.
  */
-export async function answerSocialQuestionAction(network: Network, yes: boolean): Promise<SocialResult> {
+export async function enableNetworkAction(network: Network): Promise<SocialResult> {
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const which = asNetwork(network);
-  const facebook = which === "FACEBOOK";
+  const strategy = await db.socialStrategy.findUnique({ where: { organizationId: ctx.organizationId }, select: { platforms: true } });
+  if (!strategy) return { ok: false, error: "Tell MAIRO what you want your business to accomplish first, in Social Manager." };
+  await db.socialStrategy.update({
+    where: { organizationId: ctx.organizationId },
+    data: { platforms: [...new Set([...strategy.platforms, which])] },
+  });
   await db.organization.update({
     where: { id: ctx.organizationId },
-    data: facebook
-      ? yes ? { facebookOptInAt: new Date(), facebookDeclinedAt: null } : { facebookDeclinedAt: new Date() }
-      : yes ? { instagramOptInAt: new Date(), instagramDeclinedAt: null } : { instagramDeclinedAt: new Date() },
+    data: which === "FACEBOOK" ? { facebookOptInAt: new Date(), facebookDeclinedAt: null } : { instagramOptInAt: new Date(), instagramDeclinedAt: null },
   });
   refresh();
-  revalidatePath("/dashboard");
-  if (!yes) return { ok: true, message: "No problem — MAIRO won't post anything. You can say yes any time on this page." };
-  const planned = await planWeekAction(which);
-  return planned.ok ? { ok: true, message: "Great — here's what MAIRO would post first. Nothing goes out until you approve each one." } : planned;
+  return planWeekAction(which);
 }
 
-/** MAIRO plans the next week: three posts with captions, for the business to approve. */
+/**
+ * MAIRO plans the next week for this network — from the business's goal and
+ * strategy, never at random. Nothing is posted until it's approved (or, on
+ * Autopilot, within the rules the business already approved).
+ */
 export async function planWeekAction(networkInput: Network = "INSTAGRAM"): Promise<SocialResult> {
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
-  const network = asNetwork(networkInput);
-  const optIn = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { instagramOptInAt: true, facebookOptInAt: true } });
-  if (network === "FACEBOOK" ? !optIn?.facebookOptInAt : !optIn?.instagramOptInAt) {
-    return { ok: false, error: network === "FACEBOOK" ? "Say yes to MAIRO posting on your Facebook Page first." : "Say yes to MAIRO posting on your Instagram feed first." };
-  }
-
-  const [library, brain, recent] = await Promise.all([
-    mediaLibrary(ctx.organizationId),
-    loadBrain(ctx.organizationId),
-    db.instagramPost.findMany({ where: { organizationId: ctx.organizationId, network, status: { not: "FAILED" } }, orderBy: { createdAt: "desc" }, take: 30, select: { mediaRefs: true } }),
-  ]);
-  if (library.length === 0) return { ok: false, error: "There's nothing to post yet. Make or approve a picture first, in Creative Studio or Creatives." };
-
-  // Least recently used first, so the week isn't three posts of the same thing.
-  const used = new Set(recent.flatMap((r) => r.mediaRefs));
-  const fresh = library.filter((m) => !used.has(m.ref));
-  const pool = [...fresh, ...library.filter((m) => used.has(m.ref))];
-  const images = pool.filter((m) => m.kind === "image");
-  const video = pool.find((m) => m.kind === "video");
-
-  type Draft = { mediaType: MediaType; refs: string[]; label: string; existing: string; preview: string | null };
-  const drafts: Draft[] = [];
-  if (images[0]) drafts.push({ mediaType: "IMAGE", refs: [images[0].ref], label: images[0].label, existing: images[0].suggested, preview: images[0].previewUrl });
-  if (images.length >= 4) {
-    const set = images.slice(1, 4);
-    drafts.push({ mediaType: "CAROUSEL", refs: set.map((i) => i.ref), label: set.map((i) => i.label).join("; "), existing: set[0].suggested, preview: set[0].previewUrl });
-  } else if (images[1]) {
-    drafts.push({ mediaType: "IMAGE", refs: [images[1].ref], label: images[1].label, existing: images[1].suggested, preview: images[1].previewUrl });
-  }
-  if (video) drafts.push({ mediaType: "REEL", refs: [video.ref], label: video.label, existing: video.suggested, preview: video.previewUrl });
-  else if (images[images.length >= 4 ? 4 : 2]) {
-    const i = images[images.length >= 4 ? 4 : 2];
-    drafts.push({ mediaType: "IMAGE", refs: [i.ref], label: i.label, existing: i.suggested, preview: i.previewUrl });
-  }
-
-  const { captions } = await writeCaptions({
-    brief: brainBrief(brain.profile),
-    items: drafts.map((d) => ({ kind: d.mediaType === "REEL" ? (network === "FACEBOOK" ? "video" : "Reel (video)") : d.mediaType === "CAROUSEL" ? (network === "FACEBOOK" ? "post with several photos" : "carousel of pictures") : "photo", label: d.label, existing: d.existing })),
-    network,
-  });
-
-  const today = wallClockInZone(new Date(), ctx.timeZone).slice(0, 10);
-  const slots = planSlots(drafts.length, /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : new Date().toISOString().slice(0, 10), 11);
-
-  // A new plan replaces suggestions that were never approved.
-  await db.instagramPost.deleteMany({ where: { organizationId: ctx.organizationId, network, status: "SUGGESTED", suggestedByMairo: true } });
-  for (let i = 0; i < drafts.length; i++) {
-    const d = drafts[i];
-    await db.instagramPost.create({
-      data: {
-        organizationId: ctx.organizationId,
-        network,
-        caption: (captions[i] || d.existing || d.label).slice(0, captionMax(network)),
-        mediaType: d.mediaType,
-        mediaRefs: d.refs,
-        previewUrl: d.preview,
-        status: "SUGGESTED",
-        suggestedByMairo: true,
-        scheduledFor: instantFromLocal(slots[i], ctx.timeZone),
-      },
-    });
-  }
+  const result = await generatePlan(ctx.organizationId, { network: asNetwork(networkInput), timeoutMs: 45_000 });
+  if (result.error) return { ok: false, error: result.error };
   refresh();
-  return { ok: true, message: `MAIRO planned ${drafts.length} post${drafts.length === 1 ? "" : "s"}. Nothing goes out until you approve ${drafts.length === 1 ? "it" : "them"}.` };
+  if (result.created === 0) return { ok: true, message: "Your week is already planned. Open the Content Calendar to see it." };
+  return {
+    ok: true,
+    message: `MAIRO planned ${result.created} post${result.created === 1 ? "" : "s"} for your goal${result.drafts ? ` (${result.drafts} still need${result.drafts === 1 ? "s" : ""} a picture or video)` : ""}. Nothing goes out until you approve it.`,
+  };
 }
 
 /**
@@ -237,10 +188,13 @@ export async function updatePostAction(input: z.infer<typeof updateSchema>): Pro
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = updateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Please check the post." };
-  const post = await db.instagramPost.findFirst({ where: { id: parsed.data.id, organizationId: ctx.organizationId, status: { in: ["SUGGESTED", "SCHEDULED"] } } });
+  const post = await db.instagramPost.findFirst({ where: { id: parsed.data.id, organizationId: ctx.organizationId, status: { in: ["SUGGESTED", "SCHEDULED", "DRAFT"] } } });
   if (!post) return { ok: false, error: "That post can't be changed any more." };
   const caption = parsed.data.caption.trim();
-  const problem = validatePost({ mediaType: post.mediaType as MediaType, refs: post.mediaRefs, caption, network: asNetwork(post.network) });
+  // A draft has no picture yet; only its words are checked.
+  const problem = post.status === "DRAFT"
+    ? caption ? null : "The post needs some text."
+    : validatePost({ mediaType: post.mediaType as MediaType, refs: post.mediaRefs, caption, network: asNetwork(post.network) });
   if (problem) return { ok: false, error: problem };
   const when = parsed.data.local ? instantFromLocal(parsed.data.local, ctx.timeZone) : null;
   if (parsed.data.local && !when) return { ok: false, error: "That time isn't valid." };
@@ -255,8 +209,13 @@ export async function discardPostAction(id: string): Promise<SocialResult> {
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  // Cancelling is always allowed, whatever the plan.
-  const gone = await db.instagramPost.deleteMany({ where: { id, organizationId, status: { in: ["SUGGESTED", "SCHEDULED", "DRAFT"] } } });
+  // Cancelling is always allowed, whatever the plan. A post MAIRO planned is
+  // kept as Skipped, so MAIRO learns what the business doesn't want; the
+  // business's own posts are simply removed.
+  const post = await db.instagramPost.findFirst({ where: { id, organizationId, status: { in: ["SUGGESTED", "SCHEDULED", "DRAFT", "PAUSED"] } }, select: { id: true, suggestedByMairo: true } });
+  if (!post) return { ok: false, error: "That post has already been posted." };
+  if (post.suggestedByMairo) await db.instagramPost.update({ where: { id: post.id }, data: { status: "SKIPPED", approvedAt: null } });
+  else await db.instagramPost.delete({ where: { id: post.id } });
   refresh();
-  return gone.count ? { ok: true, message: "Removed." } : { ok: false, error: "That post has already been posted." };
+  return { ok: true, message: post.suggestedByMairo ? "Skipped. MAIRO will take that into account." : "Removed." };
 }

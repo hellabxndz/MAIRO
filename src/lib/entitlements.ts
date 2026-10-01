@@ -29,7 +29,10 @@ export type Entitlements = {
   /** Run ads on Facebook and Instagram. */
   meta_ads: boolean;
   /**
-   * MAIRO posts to the customer's own Instagram.
+   * MAIRO Social Manager: goal-based social strategy, content calendar,
+   * promotions and posting to the customer's own Instagram and Facebook Page.
+   * Scale only — lib/social/access.ts also requires the tier itself and a
+   * live subscription.
    *
    * Organic posts on their own feed, not ads. Separate from meta_ads for a
    * reason: running an ad and publishing to somebody's profile are different
@@ -145,7 +148,8 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
   },
   AGENCY: {
     meta_ads: true,
-    social_posting: true,
+    // Social Manager is exclusive to Scale (see lib/social/access.ts).
+    social_posting: false,
     auto_optimize: true,
     autopilot: true,
     advanced_analytics: true,
@@ -158,7 +162,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
 /** Human wording for each flag, used by the upgrade prompts. */
 export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   meta_ads: "Meta ads",
-  social_posting: "MAIRO posts to your Instagram and Facebook Page",
+  social_posting: "MAIRO Social Manager",
   auto_optimize: "AI Assist",
   autopilot: "Full Autopilot",
   advanced_analytics: "Advanced analytics",
@@ -337,8 +341,8 @@ export function planComparison(
     { label: "New ads a month", value: String(limits.creativesPerMonth) },
     { label: "AI Creative Studio credits", value: `${e.studio_credits_monthly}/mo` },
     {
-      label: "Posts to your own feed",
-      value: e.social_posting ? "Instagram" : "No",
+      label: "MAIRO Social Manager",
+      value: e.social_posting ? "Instagram + Facebook" : "No",
       muted: !e.social_posting,
     },
   ];

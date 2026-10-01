@@ -42,8 +42,8 @@ export default async function AccountPage() {
       entries: [
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
         { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad Mairo has made for you" },
-        { href: "/dashboard/social/instagram", label: "Instagram posts", hint: "MAIRO posting on your feed (Scale)" },
-        { href: "/dashboard/social/facebook", label: "Facebook posts", hint: "MAIRO posting on your Page (Scale)" },
+        { href: "/dashboard/social", label: "Social Manager", hint: "AI social media management (Scale only)" },
+        { href: "/dashboard/social/calendar", label: "Content Calendar", hint: "Your planned and published posts (Scale only)" },
         ...(showsEnquiries({ hasForm: Boolean(leadForm) })
           ? [{ href: "/dashboard/leads", label: "Enquiries", hint: "People who asked you to get in touch" }]
           : []),

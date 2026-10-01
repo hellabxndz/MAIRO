@@ -14,6 +14,8 @@ export const FREE_PAGES = [
   "/dashboard/integrations",
   "/dashboard/billing",
   "/dashboard/guide",
+  // Opens to the Social Manager upgrade screen (Scale only), not a preview.
+  "/dashboard/social",
 ];
 
 /** Sidebar destinations shown with a lock before subscribing. */

@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { metaGraphRequest } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
-import { can } from "@/lib/entitlements";
+import { SOCIAL_PAUSED_MESSAGE, socialAccess } from "@/lib/social/access";
+import { pauseSocial } from "@/lib/social/pause";
 import { executionBlock } from "@/lib/billing/execution";
 import { absoluteUrl } from "@/lib/site";
 import { findInstagramAccount, postsInLastDay, toFailure } from "./publish";
@@ -26,7 +27,7 @@ import { MAX_ATTEMPTS, isDuePost, type MediaType } from "./social-logic";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export type PublishOutcome = { status: "PUBLISHED" | "CREATED" | "SCHEDULED" | "FAILED"; message: string; permalink?: string | null };
+export type PublishOutcome = { status: "PUBLISHED" | "CREATED" | "SCHEDULED" | "FAILED" | "PAUSED"; message: string; permalink?: string | null };
 
 function mediaUrl(postId: string, index: number): string {
   return absoluteUrl(`/api/social/media/${postId}/${index}`);
@@ -44,9 +45,18 @@ export async function publishPost(postId: string, opts: { budgetMs?: number } = 
 
   const organizationId = post.organizationId;
   const facebook = post.network === "FACEBOOK";
-  if (!(await can(organizationId, "social_posting"))) return fail(post.id, `Posting to ${facebook ? "Facebook" : "Instagram"} needs the Scale plan.`);
+  // Active Scale, checked now — not when the post was approved. A plan that
+  // lapsed since then pauses everything still waiting, and nothing goes out.
+  const access = await socialAccess(organizationId);
+  if (!access.ok) {
+    await pauseSocial(organizationId);
+    return { status: "PAUSED", message: SOCIAL_PAUSED_MESSAGE };
+  }
   const blocked = await executionBlock(organizationId);
-  if (blocked) return fail(post.id, blocked);
+  if (blocked) {
+    await pauseSocial(organizationId, blocked);
+    return { status: "PAUSED", message: blocked };
+  }
   if (facebook) return publishFacebookPost(post);
   if (post.status === "SCHEDULED" && (await postsInLastDay(organizationId)) >= POSTS_PER_DAY) {
     await db.instagramPost.update({ where: { id: post.id }, data: { error: `Instagram's limit of ${POSTS_PER_DAY} posts a day is reached — this goes out at the next check.` } });
@@ -154,7 +164,7 @@ export async function publishDuePosts(opts: { organizationId?: string; limit?: n
       return { status: "SCHEDULED" as const, message: "error" };
     });
     if (outcome.status === "PUBLISHED") result.published++;
-    else if (outcome.status === "FAILED") result.failed++;
+    else if (outcome.status === "FAILED" || outcome.status === "PAUSED") result.failed++;
     else result.pending++;
   }
   return result;

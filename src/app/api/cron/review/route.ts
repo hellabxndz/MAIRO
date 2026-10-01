@@ -7,6 +7,7 @@ import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
+import { pauseSocialSweep } from "@/lib/social/pause";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -94,5 +95,12 @@ export async function GET(req: Request) {
     return null;
   });
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid });
+  // Social Manager is Scale-only: anything scheduled by an account whose
+  // Scale lapsed is paused, never published.
+  const socialPaused = await pauseSocialSweep().catch((error) => {
+    console.error("Social pause sweep failed:", error);
+    return null;
+  });
+
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid, socialPaused });
 }

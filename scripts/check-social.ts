@@ -16,7 +16,7 @@
 
 import { DEFAULT_ENTITLEMENTS, FLAG_LABELS, planComparison } from "@/lib/entitlements";
 import { CAPTION_MAX, POSTS_PER_DAY } from "@/lib/instagram/constants";
-import { PLANS } from "@/lib/plans";
+import { FREELANCER_PLANS, PLANS } from "@/lib/plans";
 
 // The top plan, named from plans.ts. These labels used to say "Pro"; the
 // plan was renamed to Scale and every hard-coded mention had to be hunted
@@ -41,14 +41,15 @@ console.log(`\n— posting is ${TOP.name} only —`);
   // The freelancer ladder has to agree with the business one, or the same
   // feature costs a different amount depending on which page you bought from.
   ok("Studio mirrors Growth: no", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
-  ok(`Agency mirrors ${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
+  // Social Manager is exclusive to Scale — including over the freelancer plans.
+  ok(`Agency: no (Social Manager is ${TOP.name}-only)`, !DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
 
   // Exactly one business plan has it. A second would make "comes with Pro"
   // false everywhere it is written.
-  const withPosting = (["STARTER", "GROWTH", "SCALE"] as const).filter(
+  const withPosting = (["STARTER", "GROWTH", "SCALE", "STUDIO", "AGENCY"] as const).filter(
     (t) => DEFAULT_ENTITLEMENTS[t].social_posting
   );
-  ok("exactly one business plan includes it", withPosting.length === 1, withPosting.join(","));
+  ok("exactly one plan includes it, and it is Scale", withPosting.join(",") === "SCALE", withPosting.join(","));
 }
 
 console.log("\n— the pricing cards say the same thing the code does —");
@@ -86,11 +87,11 @@ console.log("\n— the pricing cards say the same thing the code does —");
   // The cards are what somebody decides on. A feature list still promising
   // Growth customers something the code no longer grants them is the kind of
   // lie that ends in a refund.
-  const growthPromises = growth.features.some((f) => /MAIRO posts to your/i.test(f));
-  ok("Growth no longer promises posting", !growthPromises);
+  const growthPromises = [...PLANS.filter((p) => p.tier !== "SCALE"), ...FREELANCER_PLANS].some((p) => p.features.some((f) => /social manager|posts to your|content calendar|scheduled (instagram|posting)/i.test(f)));
+  ok("no plan but Scale promises Social Manager or posting", !growthPromises);
   ok(
     `${TOP.name}'s card promises it`,
-    pro.features.some((f) => /posts to your Instagram/i.test(f))
+    pro.features.includes("MAIRO Social Manager")
   );
   // TikTok was retired. A card still mentioning it would sell something the
   // product can't do.
@@ -168,11 +169,11 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
   ok(`${TOP.name}: Full Autopilot`, pro["MAIRO works on its own"] === "Full Autopilot", pro["MAIRO works on its own"]);
 
   // The one that separates Growth from the top plan.
-  ok("Growth does not post for you", growth["Posts to your own feed"] === "No");
+  ok("Growth has no Social Manager", growth["MAIRO Social Manager"] === "No");
   ok(
     `${TOP.name} does`,
-    pro["Posts to your own feed"] === "Instagram",
-    pro["Posts to your own feed"]
+    pro["MAIRO Social Manager"] === "Instagram + Facebook",
+    pro["MAIRO Social Manager"]
   );
 
   // Campaign caps climb, and the top plan says "Unlimited" in a word — never
@@ -203,8 +204,8 @@ console.log("\n— the upgrade prompt has wording for the flag —");
 {
   ok("social_posting is labelled", Boolean(FLAG_LABELS.social_posting));
   ok(
-    "and the label names Instagram",
-    /instagram/i.test(FLAG_LABELS.social_posting) && !/tiktok/i.test(FLAG_LABELS.social_posting),
+    "and the label names Social Manager",
+    /social manager/i.test(FLAG_LABELS.social_posting) && !/tiktok/i.test(FLAG_LABELS.social_posting),
     FLAG_LABELS.social_posting
   );
 }

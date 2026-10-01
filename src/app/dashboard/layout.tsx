@@ -19,8 +19,8 @@ import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
-import { FREE_NAV, SOCIAL_NAV } from "./free-nav";
-import { can } from "@/lib/entitlements";
+import { FREE_NAV, SOCIAL_LOCKED_NAV, SOCIAL_NAV } from "./free-nav";
+import { socialAccess } from "@/lib/social/access";
 import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
 
 // Enquiries is the one destination that is not shown to everybody, because
@@ -100,7 +100,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
-    can(organizationId, "social_posting"),
+    socialAccess(organizationId).then((a) => a.ok),
   ]);
 
   // Whether this business collects enquiries at all. The rule itself, and why
@@ -173,8 +173,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userName={session.user.name ?? ""}
       showUpgrade={organization?.subscriptionTier !== "AGENCY"}
       assistantName={assistantNameOf(organization?.assistantName)}
-      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? SOCIAL_NAV : []), ...(unpaid ? FREE_NAV(approved) : [])]}
-      locked={unpaid ? LOCKED_NAV : []}
+      // Social Manager is Scale-only: active Scale gets its section; every
+      // other plan sees it locked, labelled Scale, leading to the upgrade.
+      extraNav={[...(collectsLeads ? [ENQUIRIES_NAV] : []), ...(socialPosting && !unpaid ? SOCIAL_NAV : [SOCIAL_LOCKED_NAV]), ...(unpaid ? FREE_NAV(approved) : [])]}
+      locked={[...(unpaid ? LOCKED_NAV : []), ...(socialPosting && !unpaid ? [] : ["/dashboard/social"])]}
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />
       }

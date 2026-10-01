@@ -30,6 +30,10 @@ export type NavEntry = {
   icon: ReactNode;
   /** A small heading shown above the first entry of a group, e.g. Scale's "Social". */
   group?: string;
+  /** A plan label beside the name, e.g. "Scale" on a locked feature. */
+  badge?: string;
+  /** Active only on this exact path, not its sub-pages. */
+  exact?: boolean;
 };
 
 /* --------------------------------------------------------------- the icons */
@@ -296,8 +300,20 @@ export function AppShell({
       <span className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>
         {item.icon}
       </span>
-      {item.label}
-      {locked.includes(item.href) && (
+      <span className="truncate whitespace-nowrap">{item.label}</span>
+      {item.badge && (
+        // A locked feature's plan, with the lock inside the label.
+        <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium ${active ? "border-white/60 text-white" : "border-violet-400/40 text-violet-bright"}`}>
+          {locked.includes(item.href) && (
+            <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-label="Locked">
+              <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
+              <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+            </svg>
+          )}
+          {item.badge}
+        </span>
+      )}
+      {!item.badge && locked.includes(item.href) && (
         <svg viewBox="0 0 16 16" className="ml-auto h-3.5 w-3.5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" aria-label="Locked">
           <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
           <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
@@ -323,7 +339,7 @@ export function AppShell({
               {i.group && i.group !== primary[n - 1]?.group && (
                 <p className="mt-3 px-3 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">{i.group}</p>
               )}
-              {row(i, isActive(pathname, i.href))}
+              {row(i, i.exact ? pathname === i.href : isActive(pathname, i.href))}
             </Fragment>
           ))}
         </nav>

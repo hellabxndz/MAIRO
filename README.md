@@ -527,6 +527,22 @@ a network can be retired without orphaning the rows that reference it.
 
 Premium dark design built only from Mairo's own UI, charts, icons and platform logos — no people or stock photos. Sections: hero with a floating sample dashboard and AI callouts, platform bar (only platforms Mairo actually works with; product statements instead of customer counts), How It Works (free plan → approve → connect → subscribe → build → approve → launch), business-type selector, the free-plan demo ("strategy only"), Mairo Decisions, Business Health, Simple / Advanced / Profit First preview, pricing, FAQ and the final call. Every figure is marked as sample or demo data. All calls to action go to `/sign-up`, which starts the free plan.
 
+### MAIRO Social Manager (Scale only)
+
+Organic social media management, exclusive to **active Scale**. Everything else in MAIRO (ads) follows each plan's existing benefits; nothing on the ads side changed.
+
+- **Who gets it:** `lib/social/access.ts` — the tier must be `SCALE` itself (a PlanConfig override can't open it to another plan; Agency no longer has `social_posting`), the subscription must be `active` or `trialing` (the card-backed trial week), and execution must not be stopped. This applies whatever `BILLING_ENFORCED` says. A plan set by hand in `/aios/organizations` (no Stripe subscription) is recorded as `active`.
+- **Checked on the server** by every Social Manager action (`lib/actions/social-manager-actions.ts`, `lib/actions/social-actions.ts`) and again by the publisher before every post (`lib/instagram/scheduler.ts`). The pages use the same check (`app/dashboard/social/gate.tsx`).
+- **Other plans** see **Social Manager · Scale** in the sidebar with a lock; it opens an upgrade screen. Free-plan accounts that haven't paid go to `/plan/activate`, others to Billing.
+- **Goal first:** the first screen asks "What do you want MAIRO to help your business accomplish?" (13 goals plus "Describe your goal"). Launch, sale and event goals ask for the details. MAIRO builds a strategy from the Business Brain, the goal, what's happening, and past results (`lib/social/strategist.ts`; AI with a rule-based playbook in `lib/social/goals.ts` when AI is unavailable). The mix differs by kind of business (retail, food, health, trades, real estate, beauty/fitness, services).
+- **Every post** has a content type, objective, platform, date, time, status and **Why MAIRO created this**. Posts without a matching picture or video are Drafts that say what to shoot.
+- **Content Calendar** (`/dashboard/social/calendar`): week and month views. Statuses: Draft, Awaiting approval, Approved, Scheduled, Published, Skipped (and Paused).
+- **Promotions** (`/dashboard/social/promotions`): sale, new product/service, event, new inventory, holiday, announcement. Sequenced (e.g. teaser → launch → showcase → reminder → ending soon → last chance) and capped so no week is more than 60% selling.
+- **Approval:** Approval required (default), Weekly approval (approve the week in one click; MAIRO plans the next week daily when it's thin and notifies), Autopilot (only after the business has approved 3 posts itself; schedules posts that have media).
+- **Performance** (`/dashboard/social/performance`): likes and comments read back from Instagram and Facebook (reach needs Meta's insights permission, which MAIRO doesn't request, so it isn't shown). MAIRO plans more of what gets engagement and less of what the business skips.
+- **Downgrade, cancellation or failed payment:** scheduled posts become **Paused** and are never published while inactive; Autopilot is switched off; strategy, drafts and history are kept. Triggered by the Stripe webhook, at publish time, when a Social page is opened, and by the daily review sweep. Back on Scale, **Resume** puts future posts back; posts that missed their time wait for approval again.
+- `npm run check:social-manager` checks all of it.
+
 ### Scale: Instagram and Facebook posting
 
 Scale accounts get a **Social** section in the sidebar with **Instagram posts** (`/dashboard/social/instagram`) and **Facebook posts** (`/dashboard/social/facebook`); `/dashboard/social` opens Instagram. Both work the same way, below; the Facebook differences are listed after.

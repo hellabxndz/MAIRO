@@ -88,6 +88,11 @@ unaffected. Before recording round 2, set the review account's organization to
 Scale in `/aios/organizations/<id>` — the Social pages are Scale-only, and with
 billing off everyone else gets Growth.
 
+**7b. Social Manager is Scale-only and needs an active subscription.** For
+the App Review round 2 recording, set the review account to Scale in
+`/aios/organizations/<id>` — that now also records it as active, which Social
+Manager requires.
+
 **8. Payment flow proven — done.** A live trial checkout came back through
 the webhook and the account showed Starter on a free trial.
 

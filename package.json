@@ -39,6 +39,7 @@
     "check:strategy-plan": "tsx scripts/check-strategy-plan.ts",
     "check:payment-gate": "tsx scripts/check-payment-gate.ts",
     "check:social-scheduler": "tsx scripts/check-social-scheduler.ts",
+    "check:social-manager": "tsx scripts/check-social-manager.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

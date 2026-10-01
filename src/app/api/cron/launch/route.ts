@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { publishDuePosts } from "@/lib/instagram/scheduler";
+import { socialAutopilotRun } from "@/lib/social/manager";
 import { db } from "@/lib/db";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 
@@ -49,6 +50,7 @@ function authorized(req: Request): boolean {
 }
 
 export async function GET(req: Request) {
+  const startedAt = Date.now();
   if (!authorized(req)) {
     return new NextResponse("Not authorized", { status: 401 });
   }
@@ -91,10 +93,18 @@ export async function GET(req: Request) {
     return null;
   });
 
+  // Social Manager on Weekly approval or Autopilot: plan the coming week when
+  // it's thin, in whatever time this run has left. Active Scale only.
+  const planned = await socialAutopilotRun({ budgetMs: Math.max(0, 55_000 - (Date.now() - startedAt)) }).catch((error) => {
+    console.error("Social Manager planning run failed:", error);
+    return null;
+  });
+
   return NextResponse.json({
     checked: organizationIds.length,
     launched,
     social,
+    planned,
     errors: errors.length > 0 ? errors : undefined,
   });
 }

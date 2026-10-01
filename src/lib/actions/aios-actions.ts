@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { pauseSocialIfLocked } from "@/lib/social/pause";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -109,7 +110,14 @@ export async function updateSubscriptionTierAction(organizationId: string, formD
   const subscriptionTier = formData.get(
     "subscriptionTier"
   ) as import("@/generated/prisma/enums").SubscriptionTier;
-  await db.organization.update({ where: { id: organizationId }, data: { subscriptionTier } });
+  // A plan given by hand (no Stripe subscription behind it) is a live plan:
+  // without a status, features that need an active subscription — Social
+  // Manager on Scale — would stay locked for an account the owner just
+  // upgraded. A Stripe-billed account keeps Stripe's own status.
+  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true } });
+  const manualStatus = org?.stripeSubscriptionId ? {} : { subscriptionStatus: subscriptionTier === "NONE" ? null : "active" };
+  await db.organization.update({ where: { id: organizationId }, data: { subscriptionTier, ...manualStatus } });
+  await pauseSocialIfLocked(organizationId).catch((error) => console.error("Pausing Social Manager failed:", error));
   revalidatePath(`/aios/organizations/${organizationId}`);
   revalidatePath("/aios/organizations");
 }
