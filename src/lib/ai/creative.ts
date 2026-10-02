@@ -29,6 +29,12 @@ export type CreativeConceptInput = {
   platform?: AdPlatform | null;
   brief: string;
   businessName: string;
+  /**
+   * The Business Brain (brainPrompt): goal, products, customers,
+   * differentiators, offers, brand style, objections and what has performed —
+   * so a concept is never generic when MAIRO knows the business.
+   */
+  brain?: string | null;
   /** A data URL, as stored on CreativeRequest.referenceImage. */
   referenceImage?: string | null;
   goal?: string | null;
@@ -62,6 +68,9 @@ export async function generateCreativeConcept(
     `Format requested: ${TYPE_GUIDANCE[input.type]}`,
     `Where it will run: ${creativeSpecFor(input.platform ?? "META").placements.join(", ")}`,
     `What they asked for: ${input.brief}`,
+    input.brain
+      ? `\nWhat MAIRO knows about this business (build the concept on it — its differentiators, its customers' problems and objections, its brand and visual style, the formats that have performed; never promote anything marked unavailable, never use anything listed to avoid, and treat temporary offers as temporary):\n${input.brain.slice(0, 6000)}`
+      : null,
     input.clientNotes
       ? `\nSince reading your first concept they have told you:\n${input.clientNotes}\n\nThese corrections take priority over anything you assumed before. Rewrite the concept properly around them.`
       : null,

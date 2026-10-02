@@ -24,7 +24,7 @@ import type { PlanEdit } from "@/lib/score/edits";
 // into an edit and scripts/check-ad-score.ts can assert every rule.
 
 export type BrainListField = "usps" | "painPoints" | "customerResults" | "objections" | "customerPraise" | "bestProducts" | "offers" | "creativeAssets";
-export type BrainTextField = "targetCustomer" | "serviceArea" | "customerAges" | "bestCustomers" | "excludedCustomers" | "mostProfitable";
+export type BrainTextField = "targetCustomer" | "serviceArea" | "customerAges" | "bestCustomers" | "excludedCustomers" | "mostProfitable" | "focusItem";
 type ContextField = "promotion" | "promotionEnds" | "urgency";
 
 /** The part of the Business Brain profile the questions read and write. */
@@ -353,9 +353,24 @@ const DEFS: Def[] = [
     scope: "business",
     label: "most profitable work",
     brain: "mostProfitable",
-    categories: ["trades", "services", "auto", "health", "beauty_fitness"],
-    text: { default: "Which jobs or services make you the most money?", beauty_fitness: "Which services make you the most money?" },
-    why: "MAIRO can put the campaign's attention behind what pays best.",
+    text: {
+      default: "Which jobs or services make you the most money?",
+      beauty_fitness: "Which services make you the most money?",
+      retail: "Which products make you the most money?",
+      food: "Which dishes or items make you the most money?",
+      software: "Which plan or product makes you the most money?",
+      general: "What makes you the most money?",
+    },
+    why: "Helps MAIRO prioritize your marketing budget.",
+  },
+  {
+    id: "brain-focus",
+    area: "setup",
+    scope: "business",
+    label: "focus",
+    brain: "focusItem",
+    text: { default: "Which product or service do you want to sell more of?", food: "Which dish or item do you want to sell more of?" },
+    why: "Helps MAIRO decide what your campaigns should focus on.",
   },
 ];
 
@@ -407,6 +422,8 @@ export function questionsFor(input: {
   limit?: number;
   /** Ids already answered in this session. */
   skip?: string[];
+  /** Question ids that matter most for the current goal, asked first. */
+  prefer?: string[];
 }): ReviewQuestion[] {
   const { category, known, context } = input;
   const asks: ReviewQuestion[] = [];
@@ -436,20 +453,37 @@ export function questionsFor(input: {
       };
       const current = def.scope === "business" ? knownValue(def, known) : null;
       if (current) {
-        // The same field asked two ways (e.g. objections) is confirmed once.
-        if (usedFields.has(def.brain!)) continue;
-        usedFields.add(def.brain!);
         confirms.push({ ...base, mode: "confirm", current, text: `We currently have your ${def.label} as “${current.length > 90 ? `${current.slice(0, 87)}…` : current}”. Is that still correct?` });
       } else {
-        if (def.brain && usedFields.has(def.brain) && !def.yesValue) continue;
-        if (def.brain) usedFields.add(def.brain);
         asks.push({ ...base, mode: "ask", current: null, text: pick(def.text, category)! });
       }
     }
   }
   const limit = input.limit ?? 3;
-  const out = asks.slice(0, limit);
-  if (out.length < limit && confirms[0]) out.push(confirms[0]);
+  // The goal's most useful questions first…
+  if (input.prefer?.length) {
+    const rank = (id: string) => {
+      const i = input.prefer!.indexOf(id);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    asks.sort((a, b) => rank(a.id) - rank(b.id));
+    confirms.sort((a, b) => rank(a.id) - rank(b.id));
+  }
+  // …then the same field asked two ways (e.g. objections) only once, keeping
+  // the wording that ranked highest. Yes/no offer questions each add their
+  // own offer, so they aren't duplicates of one another.
+  const once = <T extends ReviewQuestion>(list: T[]) =>
+    list.filter((q) => {
+      const field = questionDef(q.id)?.brain;
+      if (!field || q.yesNo) return true;
+      if (usedFields.has(field)) return false;
+      usedFields.add(field);
+      return true;
+    });
+  const asked = once(asks);
+  const confirming = once(confirms);
+  const out = asked.slice(0, limit);
+  if (out.length < limit && confirming[0]) out.push(confirming[0]);
   return out;
 }
 

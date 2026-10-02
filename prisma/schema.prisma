@@ -292,8 +292,9 @@ model Organization {
   /// How often the Morning Brief covers: yesterday (DAILY) or the last seven days (WEEKLY).
   briefFrequency     BriefFrequency @default(DAILY)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  brainEvents BrainEvent[]
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -2300,6 +2301,27 @@ model CreativeCreditPricing {
 /// The profile is JSON validated by src/lib/business/brain.ts rather than a
 /// column per field: it is read and written as a whole, and a new field is a
 /// code change rather than a migration.
+/// The Business Brain's timeline: what changed and why, in plain words —
+/// "Goal changed to Lead Generation", "You corrected: best seller is Premium
+/// Detail", "MAIRO learned: before/after videos lead". Read together with the
+/// mission history, promotions and learnings as one Business History.
+model BrainEvent {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  /// learned | corrected | removed | confirmed | product | note
+  kind   String
+  text   String  @db.Text
+  field  String?
+  /// customer | website | meta | performance | social | assistant | import | admin
+  source String
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
 model BusinessBrain {
   id             String       @id @default(cuid())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -2316,6 +2338,14 @@ model BusinessBrain {
   analysisJson String?   @db.Text
   analyzedUrl  String?
   analyzedAt   DateTime?
+
+  /// Where each fact came from and when it was last confirmed:
+  /// { [field]: { source, status: "confirmed" | "inferred", updatedAt, verifiedAt } }.
+  /// A customer's correction always outranks an inference.
+  factsJson   String @default("{}") @db.Text
+  /// Facts that used to be true ("Previously offered window tinting"), kept
+  /// apart from current facts: [{ field, text, until, source }].
+  historyJson String @default("[]") @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2646,6 +2676,10 @@ model MairoLearning {
   sourceReportId String?
   /// The business can switch a lesson off.
   active         Boolean            @default(true)
+  /// The mission goal this was learned under (e.g. GET_BOOKINGS), when known.
+  goal           String?
+  /// How many ads, campaigns or posts the comparison rested on.
+  sampleSize     Int?
 
   @@unique([organizationId, key])
   @@index([organizationId, active])

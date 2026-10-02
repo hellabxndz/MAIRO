@@ -1,5 +1,7 @@
 "use server";
 
+import { newMeta } from "@/lib/brain/rules";
+import { FIELD_BY_KEY } from "@/lib/brain/catalog";
 import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -49,10 +51,16 @@ export async function saveBrainAction(input: Record<string, unknown>): Promise<S
   const changed = (Object.keys(incoming) as BrainField[]).filter(
     (k) => JSON.stringify(current.profile[k]) !== JSON.stringify(parsed.data[k]),
   );
+  // What the owner typed is confirmed, theirs, and outranks anything inferred.
+  const now = new Date();
   await saveBrain(ctx.organizationId, {
     profile: parsed.data,
     editedFields: [...new Set([...current.editedFields, ...changed])],
+    meta: { ...current.meta, ...Object.fromEntries(changed.map((k) => [k, newMeta("customer", now)])) },
   });
+  if (changed.length) {
+    await db.brainEvent.create({ data: { organizationId: ctx.organizationId, kind: "corrected", text: `You updated ${changed.map((k) => FIELD_BY_KEY[k]?.label.toLowerCase() ?? (k === "products" ? "products and services" : k)).slice(0, 4).join(", ")}${changed.length > 4 ? ` and ${changed.length - 4} more` : ""}.`, source: "customer" } });
+  }
   revalidatePath("/dashboard/business");
   revalidatePath("/dashboard/settings/business-brain");
   return { ok: true };

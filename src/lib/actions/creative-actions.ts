@@ -1,5 +1,6 @@
 "use server";
 
+import { brainPromptFor } from "@/lib/brain/store";
 import { creativeObjective } from "@/lib/mission/store";
 import { executionBlock } from "@/lib/billing/execution";
 import { z } from "zod";
@@ -205,6 +206,7 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
       goal: request.organization.intake?.primaryGoal ?? null,
       brandVoice: request.organization.intake?.brandVoice ?? null,
       targetAudience: request.organization.intake?.targetAudience ?? null,
+      brain: await brainPromptFor(request.organizationId).catch(() => null),
     });
   } catch (error) {
     console.error("Creative concept generation failed:", error);

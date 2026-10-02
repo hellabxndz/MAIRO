@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { agentModel } from "@/lib/ai/model";
-import { brainBrief, loadBrain } from "@/lib/business/brain";
+import { brainPrompt, loadBrainState } from "@/lib/brain/store";
 import { learningsBrief } from "@/lib/reports/learnings";
 import { mediaLibrary } from "@/lib/instagram/library";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
@@ -64,7 +64,7 @@ export type BusinessFacts = {
 export async function understandBusiness(organizationId: string): Promise<BusinessFacts> {
   const [org, brain, meta, pixel, campaigns, library, access, notes, intake, learned, social] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, industry: true, website: true, phone: true } }),
-    loadBrain(organizationId),
+    loadBrainState(organizationId),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     db.mairoCampaign.findMany({ where: { organizationId, status: { not: "ARCHIVED" } }, orderBy: { createdAt: "desc" }, take: 10, select: { name: true, objective: true, status: true } }),
@@ -76,7 +76,7 @@ export async function understandBusiness(organizationId: string): Promise<Busine
     socialLearnings(organizationId),
   ]);
   const p = brain.profile;
-  const location = notes.find((n) => n.kind === "INFO" && n.detailsJson.includes('"location"'))?.text ?? null;
+  const location = (p.location || p.serviceArea) || notes.find((n) => n.kind === "INFO" && n.detailsJson.includes('"location"'))?.text || null;
   const sellsNote = notes.some((n) => n.kind === "INFO" && n.detailsJson.includes('"sells"'));
   return {
     name: org?.name ?? p.businessName,
@@ -88,14 +88,16 @@ export async function understandBusiness(organizationId: string): Promise<Busine
     location,
     products: p.products.slice(0, 12).map((x) => ({ name: x.name, price: x.price })),
     offers: p.offers,
-    brief: brainBrief(p),
+    // The whole Business Brain: facts with their sources, the goal, what's
+    // temporary, what used to be true, and what MAIRO learned from results.
+    brief: brainPrompt(brain),
     metaConnected: Boolean(meta),
     pixelActive: pixel ? canOptimizeTowards(pixel.status) : false,
     campaigns: campaigns.map((c) => ({ name: c.name, objective: c.objective, status: c.status })),
     media: { images: library.filter((m) => m.kind === "image").length, videos: library.filter((m) => m.kind === "video").length },
     scale: access.ok,
     notes: notes.map((n) => ({ kind: n.kind, text: n.text })),
-    unavailable: notes.filter((n) => n.kind === "UNAVAILABLE").map((n) => n.text),
+    unavailable: [...new Set([...notes.filter((n) => n.kind === "UNAVAILABLE").map((n) => n.text), ...p.products.filter((x) => x.status === "unavailable").map((x) => x.name)])],
     learnings: [...(learned ? learned.split("\n").slice(1).map((l) => l.replace(/^- /, "")) : []), ...(social.measured >= 4 ? social.notes : [])],
     monthlyBudget: intake?.monthlyBudgetCents ? Math.round(intake.monthlyBudgetCents / 100) : null,
   };

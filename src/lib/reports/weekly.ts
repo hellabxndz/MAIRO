@@ -335,6 +335,7 @@ export async function buildWeeklyReport(organizationId: string, week: DateRange)
 const CONF_RANK = { EARLY: 0, MEDIUM: 1, HIGH: 2 } as const;
 
 export async function saveLearnings(organizationId: string, items: Learning[], reportId: string): Promise<void> {
+  const mission = await db.marketingMission.findFirst({ where: { organizationId, status: "ACTIVE" }, orderBy: { approvedAt: "desc" }, select: { primaryGoal: true } });
   for (const l of items.filter((x) => x.saved)) {
     const existing = await db.mairoLearning.findUnique({ where: { organizationId_key: { organizationId, key: l.key } } });
     if (existing) {
@@ -348,11 +349,13 @@ export async function saveLearnings(organizationId: string, items: Learning[], r
           timesSeen: existing.timesSeen + 1,
           lastSeenAt: new Date(),
           sourceReportId: reportId,
+          goal: mission?.primaryGoal ?? existing.goal,
+          sampleSize: l.evidence.length || existing.sampleSize,
         },
       });
     } else {
       await db.mairoLearning.create({
-        data: { organizationId, key: l.key, category: l.category, statement: l.statement, detail: l.detail, evidenceJson: JSON.stringify(l.evidence), confidence: l.confidence, sourceReportId: reportId },
+        data: { organizationId, key: l.key, category: l.category, statement: l.statement, detail: l.detail, evidenceJson: JSON.stringify(l.evidence), confidence: l.confidence, sourceReportId: reportId, goal: mission?.primaryGoal ?? null, sampleSize: l.evidence.length || null },
       });
     }
   }

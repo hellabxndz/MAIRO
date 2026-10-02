@@ -24,6 +24,8 @@ export type CopyFacts = {
   website: string;
   /** A public address of the ad's picture (or a video still), to write words that fit it. */
   imageUrl?: string | null;
+  /** The Business Brain (brainPrompt): what MAIRO already knows, so no ad is written generically. */
+  brain?: string;
 };
 
 const SYSTEM = [
@@ -66,6 +68,9 @@ export async function writeAdCopyOptions(facts: CopyFacts): Promise<CopyOption[]
     `Advertising this time: ${facts.advertising || "the business as a whole"}`,
     `Goal of the ad: ${facts.goal}`,
     facts.website ? `Website: ${facts.website}` : "",
+    facts.brain
+      ? `\nWhat MAIRO knows about this business — build on it (its differentiators, its customers' problems and objections, its brand voice, what has worked); never contradict it, never promote anything marked unavailable, never mention a temporary offer as permanent, and never use anything listed to avoid:\n${facts.brain.slice(0, 6000)}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");

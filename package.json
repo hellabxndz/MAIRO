@@ -45,6 +45,7 @@
     "check:meta-contract": "tsx scripts/check-meta-contract.ts",
     "check:meta-intelligence": "tsx scripts/check-meta-intelligence.ts",
     "check:simple-ui": "tsx scripts/check-simple-ui.ts",
+    "check:brain": "tsx scripts/check-brain.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

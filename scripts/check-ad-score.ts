@@ -247,7 +247,7 @@ console.log("\n— answering never moves the score by itself —");
 
 console.log("\n— help MAIRO learn your business —");
 {
-  const known: KnownBusiness = { usps: [], painPoints: [], customerResults: [], objections: [], customerPraise: [], bestProducts: [], offers: [], creativeAssets: [], targetCustomer: "", serviceArea: "", customerAges: "", bestCustomers: "", excludedCustomers: "", mostProfitable: "", declinedQuestions: [] };
+  const known: KnownBusiness = { usps: [], painPoints: [], customerResults: [], objections: [], customerPraise: [], bestProducts: [], offers: [], creativeAssets: [], targetCustomer: "", serviceArea: "", customerAges: "", bestCustomers: "", excludedCustomers: "", mostProfitable: "", focusItem: "", declinedQuestions: [] };
   const ctx = { ...EMPTY_CONTEXT, answers: {}, kept: [] };
   const all = (category: Parameters<typeof questionsFor>[0]["category"]) =>
     questionsFor({ areas: ["hook", "offer", "audience", "creative", "landing", "setup"], category, goal: "SALES", known, context: ctx, limit: 50 }).map((q) => q.text);

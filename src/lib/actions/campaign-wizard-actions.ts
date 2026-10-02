@@ -7,6 +7,8 @@ import { fixElement, improveOptions, type BrandFacts } from "@/lib/ai/ad-score";
 import type { FixResult, OptionsResult } from "@/lib/score/edits";
 import { applyBusinessAnswer, businessAnswer, questionDef } from "@/lib/score/questions";
 import { businessCategory } from "@/lib/social/goals";
+import { newMeta } from "@/lib/brain/rules";
+import { brainPromptFor } from "@/lib/brain/store";
 import type { FixKind } from "@/lib/score/rules";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -142,6 +144,7 @@ export async function writeAdCopyAction(
       // Their own creative, so the suggested words fit it. Only this
       // business's own uploads are passed along.
       imageUrl: ownCreativeUrl(plan, scope.organizationId),
+      brain: await brainPromptFor(scope.organizationId).catch(() => undefined),
     });
     return { ok: true, options };
   } catch (error) {
@@ -318,7 +321,16 @@ export async function answerBusinessQuestionAction(input: {
   if (result.kind === "invalid") return { ok: false, error: result.error };
   const profile = applyBusinessAnswer(record.profile, def.id, result);
   const field = result.kind === "save" ? result.field : "declinedQuestions";
-  await saveBrain(scope.organizationId, { profile, editedFields: [...new Set([...record.editedFields, field])] });
+  // The owner said it: confirmed, theirs, on the Business Brain's timeline.
+  await saveBrain(scope.organizationId, {
+    profile,
+    editedFields: [...new Set([...record.editedFields, field])],
+    meta: result.kind === "save" ? { ...record.meta, [field]: newMeta("customer", new Date()) } : record.meta,
+  });
+  if (result.kind === "save") {
+    const said = Array.isArray(result.value) ? result.value.join(", ") : result.value;
+    await db.brainEvent.create({ data: { organizationId: scope.organizationId, kind: "learned", text: `MAIRO learned your ${def.label}: ${said.slice(0, 160)}.`, field, source: "customer" } });
+  }
   revalidatePath("/dashboard/settings/business-brain");
   return { ok: true, saved: result.kind === "save" ? "saved" : "declined", label: def.label };
 }

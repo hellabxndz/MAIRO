@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { changeBrain } from "@/lib/brain/store";
 import { newPlan, type CampaignPlan } from "@/lib/campaigns/plan";
 import { supportsDestination } from "@/lib/campaigns/objectives";
 import { wallClockInZone, instantFromLocal } from "@/lib/campaigns/schedule";
@@ -299,6 +300,8 @@ export async function tellMairo(organizationId: string, text: string, now = new 
   if (u.intent === "unavailable") {
     const item = u.item ?? text;
     await db.missionNote.create({ data: { organizationId, kind: "UNAVAILABLE", text: item, detailsJson: JSON.stringify(u) } });
+    // The Business Brain's product record says so too, so every feature knows.
+    await changeBrain(organizationId, { op: "product", name: item, patch: { status: "unavailable" } }, "customer").catch(() => null);
     // Stop planned social posts that send people to it.
     const words = item.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     const pending = await db.instagramPost.findMany({ where: { organizationId, status: { in: ["SUGGESTED", "DRAFT", "SCHEDULED"] } }, select: { id: true, caption: true } });

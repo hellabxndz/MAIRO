@@ -91,6 +91,8 @@ export async function savedInsights(organizationId: string): Promise<EngineInsig
  * retires the old one rather than both standing.
  */
 export async function saveInsights(organizationId: string, items: MeasuredInsight[], now = new Date()): Promise<void> {
+  // Each lesson remembers the goal it was learned under and how much it rested on.
+  const mission = await db.marketingMission.findFirst({ where: { organizationId, status: "ACTIVE" }, orderBy: { approvedAt: "desc" }, select: { primaryGoal: true } });
   for (const i of items) {
     const { evidence, key, retires, ...insight } = i;
     const existing = await db.mairoLearning.findUnique({ where: { organizationId_key: { organizationId, key } } });
@@ -99,10 +101,10 @@ export async function saveInsights(organizationId: string, items: MeasuredInsigh
       const timesSeen = existing.timesSeen + 1;
       await db.mairoLearning.update({
         where: { id: existing.id },
-        data: { statement: i.statement, detail: i.adjustment, evidenceJson, timesSeen, lastSeenAt: now, confidence: i.confidence === "HIGH" || timesSeen >= 3 ? "HIGH" : "MEDIUM" },
+        data: { statement: i.statement, detail: i.adjustment, evidenceJson, timesSeen, lastSeenAt: now, confidence: i.confidence === "HIGH" || timesSeen >= 3 ? "HIGH" : "MEDIUM", goal: mission?.primaryGoal ?? existing.goal, sampleSize: evidence.length || existing.sampleSize },
       });
     } else {
-      await db.mairoLearning.create({ data: { organizationId, key, category: "Strategy Engine", statement: i.statement, detail: i.adjustment, evidenceJson, confidence: i.confidence } });
+      await db.mairoLearning.create({ data: { organizationId, key, category: "Strategy Engine", statement: i.statement, detail: i.adjustment, evidenceJson, confidence: i.confidence, goal: mission?.primaryGoal ?? null, sampleSize: evidence.length || null } });
     }
     await db.mairoLearning.updateMany({
       where: { organizationId, ...(retires ? { key: { in: retires } } : { key: { startsWith: `engine:${i.attribute}:`, not: key } }), confidence: { not: "EARLY" } },

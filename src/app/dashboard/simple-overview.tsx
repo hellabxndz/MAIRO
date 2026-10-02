@@ -17,7 +17,9 @@ import { firstCampaignState } from "@/lib/strategy/first-campaign";
 import { firstNameFrom } from "@/components/mairo/simple-dashboard";
 import { localDay, performanceTiles, pickInsight, whatsNext, type InsightCandidate, type NextItem } from "@/lib/dashboard/home";
 import { WEEKDAYS } from "@/lib/reports/weekly";
-import { AttentionCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
+import { brainHeadline } from "@/lib/brain/store";
+import { carefulWording } from "@/lib/brain/rules";
+import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
 
 // The Overview in Simple mode: five questions, six calm cards.
 //
@@ -78,6 +80,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
     db.reportSettings.findUnique({ where: { organizationId }, select: { weeklyEnabled: true, deliveryDay: true } }),
     firstCampaignState(organizationId),
   ]);
+  const brain = await brainHeadline(organizationId).catch(() => null);
   const m = perf?.total ?? EMPTY_METRICS;
   const scale = social.ok;
   const askSocial = scale && !(await db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }));
@@ -147,7 +150,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
       } catch {
         evidence = [];
       }
-      return { text: l.statement, why: `${l.statement} ${l.detail}`.trim(), evidence, href: "/dashboard/analytics", source: "learning" as const, strength: l.confidence === "HIGH" ? 3 : 2 };
+      return { text: carefulWording(l.statement), why: carefulWording(`${l.statement} ${l.detail}`.trim()), evidence, href: "/dashboard/analytics", source: "learning" as const, strength: l.confidence === "HIGH" ? 3 : 2 };
     }),
     ...(intelligence?.insights ?? [])
       .filter((i) => i.severity === "OPPORTUNITY" || i.severity === "ATTENTION")
@@ -199,6 +202,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
           <InsightCard insight={insight} />
           <NextCard items={next} />
         </div>
+        {brain && <BrainCard learnedCount={brain.learnedCount} latest={brain.latest} questions={brain.questions} />}
       </div>
     </div>
   );

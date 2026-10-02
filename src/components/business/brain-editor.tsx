@@ -113,7 +113,7 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
             </li>
           ))}
         </ul>
-        <button type="button" onClick={() => setP({ ...p, products: [...p.products, { name: "", price: null, category: null, notes: null }] })} className="mt-2 text-[12.5px] text-blue-bright hover:text-white">
+        <button type="button" onClick={() => setP({ ...p, products: [...p.products, { name: "", price: null, category: null, notes: null, kind: null, priority: null, profitability: null, status: null, goal: null }] })} className="mt-2 text-[12.5px] text-blue-bright hover:text-white">
           + Add a product
         </button>
       </div>

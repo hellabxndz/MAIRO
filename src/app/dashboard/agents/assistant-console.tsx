@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { FixThisForMe, proposedFixIds } from "@/components/decisions/fix-this-for-me";
-import { goToLinks } from "@/components/mairo/assistant";
+import { brainLearned, goToLinks } from "@/components/mairo/assistant";
 import { DefaultChatTransport, type UIMessage } from "ai";
 
 // The full conversation with your assistant.
@@ -172,6 +172,7 @@ export function AssistantConsole({
                     <div className="whitespace-pre-wrap text-[14px] leading-relaxed text-white/90">
                       {text}
                     </div>
+                    {brainLearned(m.parts) && <p className="mt-2 text-[12px] text-emerald-300">✨ Added to Business Brain</p>}
                     {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                     {links.map((l) => (
                       <a key={l.href} href={l.href} className="mr-2 mt-3 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">{l.label} →</a>

@@ -9,6 +9,10 @@ import { resultsFor, resultWord } from "@/lib/protection/rules";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import { activeMission, missionActivity, proposedMission, startMission, tellMairo } from "@/lib/mission/store";
 import { MISSION_GOAL_KEYS, missionGoal } from "@/lib/mission/goals";
+import { changeBrain, loadBrainState } from "@/lib/brain/store";
+import { confirmationQuestion, requiresConfirmation, type FactChange } from "@/lib/brain/edit";
+import { BRAIN_FIELDS } from "@/lib/brain/catalog";
+import { displayValue, hasValue } from "@/lib/brain/rules";
 
 // What the assistant can look at and propose — One-Click Fix.
 //
@@ -137,6 +141,50 @@ export function assistantTools(organizationId: string) {
       },
     }),
 
+    get_business_brain: tool({
+      description:
+        "Read what MAIRO knows about this business — products and services, customers, what makes it different, brand, the current goal, what's temporary, and what MAIRO has learned from results. Use it before building a campaign or creative so you never ask the owner something MAIRO already knows.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const s = await loadBrainState(organizationId);
+        const p = s.profile as unknown as Record<string, unknown>;
+        return {
+          facts: BRAIN_FIELDS.filter((d) => hasValue(p[d.key])).map((d) => ({ field: d.key, label: d.label, value: displayValue(p[d.key]), confirmed: s.meta(d.key).status === "confirmed" })),
+          products: s.profile.products.map((x) => ({ name: x.name, price: x.price, priority: x.priority, status: x.status })),
+          goal: s.goals.current?.label ?? null,
+          temporary: s.temporary.map((t) => ({ text: t.text, state: t.state, ends: t.endsAt?.toISOString().slice(0, 10) ?? null })),
+          learned: s.learned.filter((l) => l.active).map((l) => l.said),
+          unknownButUseful: s.questions.map((q) => q.text),
+        };
+      },
+    }),
+
+    update_business_brain: tool({
+      description:
+        "Update what MAIRO knows about the business when the owner corrects or changes a lasting fact: \"we don't do free estimates anymore\" (remove from offers), \"our best seller is Premium Detail\" (add to bestProducts), \"we want to focus on commercial roofing\" (set focusItem — then also suggest propose_mission for a goal change), \"the blue hoodie is back\" (product status available). For a promotion or sale, or something just sold out, use tell_mairo instead — temporary things never go here. Removing or replacing a fact is permanent: call with confirmed=false first, ask the owner the returned question, and only call again with confirmed=true after they say yes.",
+      inputSchema: z.object({
+        op: z.enum(["set", "add", "remove", "product"]),
+        field: z.enum(BRAIN_FIELDS.map((d) => d.key) as [string, ...string[]]).optional().describe("The fact to change (not for op=product)"),
+        value: z.string().max(300).optional().describe("The new value, or the item to remove from a list"),
+        product: z.string().max(200).optional().describe("For op=product: the product or service name"),
+        status: z.enum(["available", "unavailable", "seasonal", "new"]).optional(),
+        priority: z.enum(["high", "normal", "low"]).optional(),
+        confirmed: z.boolean().describe("True only after the owner has said yes to the confirmation question"),
+      }),
+      execute: async ({ op, field, value, product, status, priority, confirmed }) => {
+        const change: FactChange | null =
+          op === "product"
+            ? product ? { op: "product", name: product, patch: { ...(status ? { status } : {}), ...(priority ? { priority } : {}) } } : null
+            : !field ? null
+              : op === "remove" ? { op: "remove", field, value }
+                : value ? { op, field, value } : null;
+        if (!change) return { ok: false, message: "Say which fact and what it should be." };
+        if (requiresConfirmation(change) && !confirmed) return { ok: false, needsConfirmation: true, ask: confirmationQuestion(change) };
+        const r = await changeBrain(organizationId, change, "assistant");
+        return r.ok ? { ok: true, learned: r.changed, message: r.text } : { ok: false, message: r.error };
+      },
+    }),
+
     go_to: tool({
       description:
         "Show a button that takes the person to the right MAIRO page, when they want to see or do something there (\"show me my best creative\", \"I want to create a campaign\"). Use it with a one-sentence answer; don't describe menus. Social pages are Scale only.",
@@ -195,7 +243,9 @@ export const MISSION_BRIEF = [
   "MAIRO Mission:",
   "- MAIRO is the business's AI marketing manager. The owner says what they want to achieve; MAIRO decides the marketing.",
   "- When they describe an outcome they want or a launch, call get_mission, then propose_mission with their words. Say what you recommend in one or two sentences (e.g. \"Your current goal is brand awareness. I recommend changing the primary goal to customer acquisition.\"), then tell them the plan is ready to review and approve on the Mission page. Never say it's already changed.",
-  "- When they tell you news (a promotion, something sold out, a fact), call tell_mairo and relay what MAIRO changed.",
+  "- When they tell you news (a promotion, something sold out), call tell_mairo and relay what MAIRO changed.",
+  "- When they correct or change a lasting fact about the business, call update_business_brain. Removing or replacing a fact needs their yes first: ask the question it returns, then call again with confirmed=true. After a change, say briefly “✓ MAIRO learned this.” — not after every message.",
+  "- The Business Brain above is what MAIRO already knows. Never ask the owner for something in it; build on it (\"Your current goal is more ceramic coating bookings, and before/after videos have been your strongest format — I'll build the next concept around that.\"). Learned patterns are observations, never causes: say \"has generated\" or \"MAIRO has seen\", never \"caused\".",
   "- Social posting is part of the plan only on Scale; don't promise it otherwise. Never promise results.",
   "- When the person wants to see or do something in MAIRO, call go_to so they get a button straight there, instead of describing where to click.",
   "- Before recommending anything, answer: what business objective does this help accomplish? If there's no clear answer, don't recommend it.",

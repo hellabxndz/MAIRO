@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { brainPromptFor } from "@/lib/brain/store";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import { addCampaignAd, metaTargetingForCampaign } from "@/lib/campaigns/launch";
 import { writeAdCopyOptions } from "@/lib/ai/ad-copy";
@@ -160,6 +161,7 @@ async function runChange(organizationId: string, c: DecisionChange): Promise<{ o
           destination: campaign.destinationType,
           website: campaign.destinationUrl ?? campaign.organization.website ?? "",
           imageUrl: based.imageUrl ?? based.videoPosterUrl ?? null,
+          brain: await brainPromptFor(organizationId).catch(() => undefined),
         });
       } catch {
         return { ok: false, error: "MAIRO couldn't write the new version just now. Nothing was changed." };

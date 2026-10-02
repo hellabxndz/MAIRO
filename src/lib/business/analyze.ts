@@ -1,9 +1,11 @@
+import { newMeta } from "@/lib/brain/rules";
 import { fetchPublicPage } from "@/lib/campaigns/landing-probe";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import { analyzeWithAi, type AiBusinessAnalysis } from "@/lib/ai/business-analyzer";
 import { literalConversionIssues, readSiteFacts, type SiteFacts } from "./site-facts";
 import {
   loadBrain,
+  newProduct,
   mergeAnalysis,
   sanitizeProfile,
   saveBrain,
@@ -47,7 +49,7 @@ function profileFromFacts(pages: SiteFacts[], url: string): Partial<BrainProfile
     businessName: home.siteName ?? home.title?.split(/[|–—-]/)[0]?.trim() ?? "",
     website: url,
     overview: home.description ?? "",
-    products: products.map((p) => ({ name: p.name, price: p.price, category: null, notes: null })),
+    products: products.map((p) => newProduct({ name: p.name, price: p.price })),
     brandColors: home.colors,
     primaryCta: home.ctas[0] ?? "",
   };
@@ -88,7 +90,7 @@ export async function analyzeBusiness(organizationId: string, rawUrl: string): P
         businessName: ai.businessName || fromFacts.businessName,
         industry: ai.industry,
         overview: ai.overview || fromFacts.overview,
-        products: ai.products.length ? ai.products : fromFacts.products,
+        products: ai.products.length ? ai.products.map((x) => newProduct(x)) : fromFacts.products,
         offers: ai.offers,
         discounts: ai.discounts,
         averageOrderValue: ai.averageOrderValue,
@@ -133,11 +135,16 @@ export async function analyzeBusiness(organizationId: string, rawUrl: string): P
   }
 
   const profile = mergeAnalysis(current.profile, sanitizeProfile(found), current.editedFields);
+  // What the website showed is MAIRO's inference until the business confirms
+  // it; facts the business confirmed were left alone by mergeAnalysis.
+  const now = new Date();
+  const read = (Object.keys(profile) as (keyof typeof profile)[]).filter((k) => JSON.stringify(profile[k]) !== JSON.stringify(current.profile[k]));
   await saveBrain(organizationId, {
     profile,
     analysis,
     analyzedUrl: home.finalUrl,
-    analyzedAt: new Date(),
+    analyzedAt: now,
+    meta: { ...current.meta, ...Object.fromEntries(read.map((k) => [k, newMeta("website", now)])) },
   });
   return { ok: true, brain: await loadBrain(organizationId) };
 }

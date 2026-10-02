@@ -645,7 +645,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
     start(async () => {
       const r = await answerBusinessQuestionAction({ id: q.id, answer: value, replace }).catch(() => ({ ok: false as const, error: "Couldn't save that just now." }));
       if (!r.ok) return finish(r.error, false);
-      finish(r.saved === "declined" ? "✓ Noted — MAIRO won't ask again." : `✓ Saved to your Business Profile. MAIRO will use it to improve your ${area}.`);
+      finish(r.saved === "declined" ? "✓ Noted — MAIRO won't ask again." : `✓ MAIRO learned this — added to your Business Brain. MAIRO will use it to improve your ${area}.`);
     });
   };
 

@@ -17,6 +17,8 @@ import { businessCategory, type Category } from "@/lib/social/goals";
 import { GROUP_ORDER, type GroupKey } from "@/lib/score/rules";
 import { reviewOverview } from "@/lib/score/review";
 import { questionsFor, type ReviewQuestion } from "@/lib/score/questions";
+import { GOAL_PRIORITY } from "@/lib/brain/rules";
+import { missionGoal } from "@/lib/mission/goals";
 
 export type CampaignReview = {
   status: ReviewStatus;
@@ -91,7 +93,11 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
   const category = businessCategory(`${brain.industry} ${brain.overview} ${plan.offering} ${plan.businessName}`);
   const opts = { kept: context.kept, category, hasOwnWords: hasOwnWords(plan) };
   const first = reviewOverview(score, opts).priorities.map((p) => p.key);
-  const ask = (areas: GroupKey[], limit: number) => questionsFor({ areas, category, goal: plan.goal, known: brain, context, limit });
+  // The Business Brain decides which unknowns matter most for the current
+  // goal — a leads goal asks about the offer and objections before branding.
+  const mission = await db.marketingMission.findFirst({ where: { organizationId, status: "ACTIVE" }, orderBy: { approvedAt: "desc" }, select: { primaryGoal: true } });
+  const prefer = mission ? GOAL_PRIORITY[missionGoal(mission.primaryGoal).metrics] : undefined;
+  const ask = (areas: GroupKey[], limit: number) => questionsFor({ areas, category, goal: plan.goal, known: brain, context, limit, prefer });
   const questions = {
     learn: ask([...first, ...GROUP_ORDER.filter((k) => !first.includes(k))], 3),
     byArea: Object.fromEntries(GROUP_ORDER.map((k) => [k, ask([k], 3)])) as Record<GroupKey, ReviewQuestion[]>,

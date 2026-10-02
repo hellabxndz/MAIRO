@@ -2,9 +2,8 @@ import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 
 import { strategyEngineBrief } from "@/lib/engine";
 import { metaKnowledgeBrief } from "@/lib/meta-intelligence/knowledge-base/store";
 import { assistantTools, MISSION_BRIEF, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
-import { learningsBrief } from "@/lib/reports/learnings";
 import { strategyBrief } from "@/lib/strategy/store";
-import { brainBrief, loadBrain } from "@/lib/business/brain";
+import { brainPrompt, loadBrainState } from "@/lib/brain/store";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hasActivePlan, readinessBrief, readinessFor } from "@/lib/readiness";
@@ -119,7 +118,8 @@ export async function POST(req: Request) {
   // it does not. An assistant that has not been told its own blind spots fills
   // them in confidently, and a confident guess about somebody's own business
   // is the fastest way to lose them.
-  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrain(threadOrgId)]);
+  // One Business Brain for the assistant, as for every other part of MAIRO.
+  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrainState(threadOrgId)]);
 
   await recordUserMessage(threadId, messages);
 
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainBrief(brain.profile)}\n\n${await learningsBrief(threadOrgId)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}`;
+  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainPrompt(brain)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}`;
 
   return stream(threadId, system, messages, assistantTools(threadOrgId));
 }

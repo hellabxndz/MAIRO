@@ -118,5 +118,6 @@ export async function toggleLearningAction(id: string, active: boolean): Promise
   if (!ctx) return { ok: false };
   const res = await db.mairoLearning.updateMany({ where: { id, organizationId: ctx.organizationId }, data: { active } });
   revalidatePath("/dashboard/business");
+  revalidatePath("/dashboard/settings/business-brain");
   return { ok: res.count > 0 };
 }

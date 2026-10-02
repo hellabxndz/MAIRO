@@ -8,7 +8,7 @@
 
 import { findColors, findCtas, findKeyLinks, findPrices, findProducts, literalConversionIssues, readSiteFacts } from "@/lib/business/site-facts";
 import { onlyShownPrices } from "@/lib/business/analyze";
-import { EMPTY_PROFILE, mergeAnalysis, sanitizeProfile, brainFacts } from "@/lib/business/brain";
+import { EMPTY_PROFILE, mergeAnalysis, sanitizeProfile, brainFacts, newProduct } from "@/lib/business/brain";
 import type { AiBusinessAnalysis } from "@/lib/ai/business-analyzer";
 
 let bad = 0;
@@ -108,7 +108,7 @@ console.log("\n— the Business Brain —");
   ok("a non-text price becomes null", s.products?.[0].price === null);
   ok("margin is capped at 100", s.profitMarginPercent === 100);
 
-  const facts = brainFacts({ ...EMPTY_PROFILE, overview: "Running shoes.", products: [{ name: "Stride One", price: "$129", category: null, notes: null }], offers: ["Free shipping over $100"] });
+  const facts = brainFacts({ ...EMPTY_PROFILE, overview: "Running shoes.", products: [newProduct({ name: "Stride One", price: "$129" })], offers: ["Free shipping over $100"] });
   ok("ad facts include products and offers", /Stride One \(\$129\)/.test(facts.offering) && /Free shipping/.test(facts.offering));
 }
 

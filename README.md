@@ -592,6 +592,22 @@ MAIRO is an AI marketing manager: the business says what it wants to achieve and
 - The Create wizard's steps are unchanged (Meta App Review); MAIRO prefills it instead.
 - `npm run check:mission` checks it.
 
+### MAIRO Business Brain (the shared intelligence layer)
+
+One persistent understanding of each business that every part of MAIRO reads — campaign creation, ad copy, creative concepts, the Strategy Engine and mission planner, the Campaign Review, Social Manager (Scale), the assistant and reports. Not a memory per feature: they all read `loadBrainState` / `brainPrompt` (`src/lib/brain/store.ts`), and every change goes through `changeBrain` (`src/lib/brain/edit.ts`).
+
+    BUSINESS BRAIN (what MAIRO knows) → MISSION (what the business wants) → STRATEGY → EXECUTION
+    → RESULTS → LEARNING (engine + weekly reports save learnings) → BUSINESS BRAIN updated → repeat
+
+- **Four kinds of knowledge, never mixed:** *current facts* (the profile), *temporary* (promotions with dates and codes, sold-out items — they expire on their own and are never saved as facts), *learned* (patterns from results, with confidence, evidence, goal and sample size), and *historical* (what used to be true — "Previously offered window tinting" — kept so MAIRO knows why the strategy changed, never read as current).
+- **What it stores** (`src/lib/brain/catalog.ts`): business basics, product and service records (price, kind, priority, profitability, availability, current goal — priority and margin only when the owner says), customers (ideal customer, types, problems, motivations, objections, purchase considerations — no assumed demographics), differentiators and standing offers, brand (voice, visual direction, creative style, words and claims to avoid). Every field states how it improves marketing; anything without a marketing purpose is refused.
+- **Sources and corrections:** each fact records where it came from (You told MAIRO, From your website, Learned from your results, From a chat with MAIRO, …), whether it's confirmed or MAIRO's best guess, and when it was last confirmed. The customer's word always wins — an inference never overwrites it. Removing a fact moves it to history; replacing a confirmed one keeps the old value there too.
+- **The page** (Settings → Business Brain, `/dashboard/settings/business-brain`): "What MAIRO knows about your business" in plain sections — Your Business, Your Goals (with goal history), Products & Services, Customers, What Makes You Different, Brand, Right Now, What MAIRO Has Learned (🔥 confident / 💡 still learning, with *See why*), Used to be true, Business History. Each fact has Correct · Update · Remove; products have Priority, High margin, Mark unavailable. "MAIRO knows your business: 44%" by area, never required to be 100.
+- **Progressive, purposeful questions:** no giant form. A few questions at a time, each with "Why MAIRO is asking", chosen by the current goal (a leads goal asks about the offer, the problem and objections before branding). Known answers are confirmed, not re-asked; an important fact unconfirmed for 180 days, or contradicted (the focus product is sold out), gets one "Is … still right?" check.
+- **Learning from results:** learnings record the goal and sample size; confidence is said plainly ("MAIRO is starting to notice" / "has noticed" / "has consistently found"), early hunches are never presented as patterns, and causal wording ("caused", "drove") is rewritten as an observation ("went with").
+- **Everywhere:** the assistant reads the Brain and has `get_business_brain` and `update_business_brain` ("we don't do free estimates anymore" — removing or replacing a fact asks the owner first; ✨ Added to Business Brain shows once). Tell MAIRO "we sold out of X" marks the product unavailable. The Overview has one small "MAIRO knows your business" card.
+- `npm run check:brain` pins the rules.
+
 ### MAIRO Strategy Engine
 
 One place decides the marketing strategy; the mission plan, Create, creatives, Social Manager, Mairo Decisions and the assistant all read from it (`src/lib/engine/`). The rules are pure and pinned by `npm run check:engine`; AI only writes the words around them.

@@ -145,6 +145,30 @@ export function AttentionCard({ items }: { items: AttentionItem[] }) {
   );
 }
 
+/** A small line, not the Business Brain itself: what MAIRO has learned, or a couple of questions to help it learn. */
+export function BrainCard({ learnedCount, latest, questions }: { learnedCount: number; latest: string | null; questions: number }) {
+  return (
+    <section aria-labelledby="brain-card" className="flex flex-col gap-3 rounded-[22px] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6" style={surface}>
+      <div className="min-w-0">
+        <h2 id="brain-card" className={eyebrow}>Mairo knows your business</h2>
+        <p className="mt-1.5 text-[14.5px] text-white">
+          {learnedCount > 0
+            ? `MAIRO has learned ${learnedCount} useful thing${learnedCount === 1 ? "" : "s"} about your business and marketing.`
+            : "MAIRO is just getting to know your business."}
+        </p>
+        {latest ? (
+          <p className="mt-0.5 text-[13px] text-muted">Latest: {latest}</p>
+        ) : questions > 0 ? (
+          <p className="mt-0.5 text-[13px] text-muted">Answer {questions} quick question{questions === 1 ? "" : "s"} to help MAIRO improve its recommendations.</p>
+        ) : null}
+      </div>
+      <Link href={questions > 0 && !latest ? "/dashboard/settings/business-brain#improve" : "/dashboard/settings/business-brain"} className={`${quietClass} shrink-0`}>
+        {questions > 0 && !latest ? "Help Mairo Learn" : "View Business Brain"}
+      </Link>
+    </section>
+  );
+}
+
 /** 5. One insight, not twenty. */
 export function InsightCard({ insight }: { insight: { text: string; why: string; evidence: { label: string; value: string }[]; href: string } | null }) {
   return (

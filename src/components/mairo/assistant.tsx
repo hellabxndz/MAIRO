@@ -266,6 +266,7 @@ export function MairoAssistant({
                     const fixIds = m.role === "assistant" ? proposedFixIds(m.parts) : [];
                     const planReady = m.role === "assistant" && missionProposed(m.parts);
                     const links = m.role === "assistant" ? goToLinks(m.parts) : [];
+                    const learned = m.role === "assistant" && brainLearned(m.parts);
                     if (!text && fixIds.length === 0 && !planReady && links.length === 0) return null;
                     return (
                       <div
@@ -285,6 +286,7 @@ export function MairoAssistant({
                           }
                         >
                           {text}
+                          {learned && <span className="mt-2 block text-[12px] text-emerald-300">✨ Added to Business Brain</span>}
                           {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                           {links.map((l) => (
                             <a key={l.href} href={l.href} className="mt-3 mr-2 inline-flex rounded-lg bg-[#7c5cff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
@@ -369,6 +371,14 @@ function missionProposed(parts: unknown[]): boolean {
 }
 
 /** go_to's destinations, as buttons. Only MAIRO's own pages (the tool's fixed list). */
+/** True when this answer actually changed the Business Brain — shown as one quiet line, not on every message. */
+export function brainLearned(parts: unknown[]): boolean {
+  return parts.some((p) => {
+    const part = p as { type?: string; state?: string; output?: { learned?: unknown } };
+    return part.type === "tool-update_business_brain" && part.state === "output-available" && part.output?.learned === true;
+  });
+}
+
 export function goToLinks(parts: unknown[]): { href: string; label: string }[] {
   const out: { href: string; label: string }[] = [];
   for (const p of parts) {

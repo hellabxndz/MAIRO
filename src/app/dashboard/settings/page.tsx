@@ -224,7 +224,7 @@ export default async function SettingsPage() {
           away, instead of in the sidebar. */}
       <nav aria-label="Everything else" className="mb-8 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {[
-          { href: "/dashboard/business", label: "Business Brain", hint: "What MAIRO knows about your business" },
+          { href: "/dashboard/settings/business-brain", label: "Business Brain", hint: "What MAIRO knows about your business" },
           { href: "/dashboard/mission", label: "Your goal & plan", hint: "The mission MAIRO is working toward" },
           { href: "/dashboard/integrations", label: "Connected accounts", hint: "Facebook, Instagram and Meta" },
           { href: "/dashboard/tracking", label: "Measuring sales", hint: "Website tracking and conversions" },
