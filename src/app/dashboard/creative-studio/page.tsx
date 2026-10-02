@@ -16,6 +16,7 @@ import { creditBalance } from "@/lib/creative-studio/credits";
 import { creditCosts } from "@/lib/creative-studio/pricing";
 import { libraryFor, variationGroup } from "@/lib/creative-studio/library";
 import { StudioWorkspace } from "@/components/creative-studio/studio-workspace";
+import { loadBrain } from "@/lib/business/brain";
 import { LibraryGrid } from "@/components/creative-studio/library-grid";
 
 // AI Creative Studio — where a business turns a sentence, or a product
@@ -81,6 +82,7 @@ export default async function CreativeStudioPage({
         title="AI Creative Studio"
         description="Create scroll-stopping ads with the power of AI."
       />
+      <BrandLine organizationId={organizationId} />
 
       {!configured ? (
         <GlassPanel className="p-6" lit>
@@ -127,5 +129,34 @@ export default async function CreativeStudioPage({
         <LibraryGrid items={library} />
       </section>
     </div>
+  );
+}
+
+/**
+ * Which part of the Business Brain the images follow — so the customer can
+ * see why a picture looks the way it does, and change it in one place.
+ */
+async function BrandLine({ organizationId }: { organizationId: string }) {
+  const { profile: p } = await loadBrain(organizationId).catch(() => ({ profile: null }));
+  if (!p) return null;
+  const parts = [[p.brandStyle, p.creativeStyle].filter(Boolean).join(". "), p.brandVoice, p.brandColors.length ? `${p.brandColors.slice(0, 4).join(" ")}` : ""].filter(Boolean);
+  return (
+    <p className="-mt-2 mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
+      <span aria-hidden>✨</span>
+      {parts.length ? (
+        <>
+          <span>
+            Images follow your Business Brain: <span className="text-white/85">{parts.join(" · ").slice(0, 160)}</span>
+            {p.avoidClaims.length ? <span> · avoiding {p.avoidClaims.slice(0, 2).join(", ").slice(0, 80)}</span> : null}
+          </span>
+          <Link href="/dashboard/settings/business-brain" className="text-violet-bright hover:text-white">Edit</Link>
+        </>
+      ) : (
+        <>
+          <span>Tell MAIRO your brand&rsquo;s look and every image will follow it.</span>
+          <Link href="/dashboard/settings/business-brain" className="text-violet-bright hover:text-white">Add it to your Business Brain</Link>
+        </>
+      )}
+    </p>
   );
 }

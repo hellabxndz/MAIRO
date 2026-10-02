@@ -30,6 +30,7 @@ import {
 import { brainPrompt, type BrainState as FullState } from "../src/lib/brain/store";
 import { EMPTY_PROFILE, brainBrief, newProduct, type BrainProfile } from "../src/lib/business/brain";
 import { questionsFor, type KnownBusiness } from "../src/lib/score/questions";
+import { imageBrandDirection, withBrandDirection } from "../src/lib/brain/visual";
 
 let passed = 0;
 async function check(name: string, fn: () => void | Promise<void>) {
@@ -219,6 +220,38 @@ async function main() {
     const b = brainBrief({ ...EMPTY_PROFILE, products: [newProduct({ name: "Blue hoodie", status: "unavailable" })], avoidClaims: ["Guaranteed results"] });
     assert.match(b, /Blue hoodie · UNAVAILABLE/);
     assert.match(b, /NEVER say or show: Guaranteed results/);
+  });
+
+  console.log("\n— Creative Studio reads the Brain —");
+  await check("images get the brand's look, never prices, offers or claims to draw", () => {
+    // A whole profile, offers and prices included — only the visual parts may come through.
+    const profile = {
+      ...EMPTY_PROFILE,
+      industry: "Auto detailing",
+      overview: "Ceramic coating in Austin",
+      brandStyle: "Dark premium photography",
+      brandVoice: "Luxury, confident, minimal",
+      brandColors: ["#0b0b0f", "#c9a227", "not-a-colour"],
+      avoidClaims: ["Cheap-looking discount graphics"],
+      offers: ["Free estimates", "20% off"],
+      products: [newProduct({ name: "Ceramic coating", price: "$1,200" }), newProduct({ name: "Window tint", status: "unavailable" })],
+    };
+    const d = imageBrandDirection(profile)!;
+    assert.match(d, /Visual direction: Dark premium photography/);
+    assert.match(d, /Mood: Luxury, confident, minimal/);
+    assert.match(d, /#0b0b0f, #c9a227/);
+    assert.doesNotMatch(d, /not-a-colour/);
+    assert.match(d, /Avoid: Cheap-looking discount graphics/);
+    assert.match(d, /Don't feature \(currently unavailable\): Window tint/);
+    assert.doesNotMatch(d, /\$1,200|Free estimates|20% off/, "nothing an image model would paint as text");
+    assert.ok(d.length <= 700);
+  });
+  await check("the customer's request comes first; nothing is added when MAIRO knows nothing visual", () => {
+    assert.equal(imageBrandDirection({ ...EMPTY_PROFILE }), null);
+    assert.equal(withBrandDirection("A cup of coffee on a marble table", null), "A cup of coffee on a marble table");
+    const both = withBrandDirection("A cup of coffee on a marble table", "About the brand: …");
+    assert.ok(both.startsWith("A cup of coffee on a marble table"));
+    assert.match(imageBrandDirection({ brandStyle: "Bright and playful" })!, /unless the request above says otherwise/);
   });
 
   console.log(`\n${passed} checks passed.\n`);

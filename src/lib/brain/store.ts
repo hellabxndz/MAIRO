@@ -5,6 +5,7 @@ import { businessCategory, type Category } from "@/lib/social/goals";
 import { questionsFor, type KnownBusiness, type ReviewQuestion } from "@/lib/score/questions";
 import { BRAIN_FIELDS, type FactMeta, type FactSource } from "./catalog";
 import { applyChange, type FactChange } from "./edit";
+import { imageBrandDirection } from "./visual";
 import {
   GOAL_PRIORITY,
   carefulWording,
@@ -196,6 +197,12 @@ export function brainPrompt(s: BrainState): string {
 
 export async function brainPromptFor(organizationId: string): Promise<string> {
   return brainPrompt(await loadBrainState(organizationId));
+}
+
+/** The Business Brain's visual brief for an image (Creative Studio), or null when MAIRO knows nothing visual yet. */
+export async function brainImageDirectionFor(organizationId: string): Promise<string | null> {
+  const { profile } = await loadBrain(organizationId);
+  return imageBrandDirection(profile);
 }
 
 export type ChangeOutcome = { ok: true; changed: boolean; text: string } | { ok: false; error: string };

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { creativeObjective } from "@/lib/mission/store";
 import { currentMonthKey } from "@/lib/utils/month";
 import { generateCreativeConcept } from "@/lib/ai/creative";
+import { brainPromptFor } from "@/lib/brain/store";
 import { reviewCreative } from "@/lib/ai/review";
 import { chooseImageAction } from "@/lib/actions/image-actions";
 import { fetchImageBytes } from "@/lib/storage/blob";
@@ -89,6 +90,9 @@ export async function attachAssetToCampaign(
       goal: organization.intake?.primaryGoal ?? null,
       brandVoice: organization.intake?.brandVoice ?? null,
       targetAudience: organization.intake?.targetAudience ?? null,
+      // What MAIRO knows about the business, so the words for a Studio image
+      // are built on it like every other creative's.
+      brain: await brainPromptFor(organizationId).catch(() => null),
     });
   } catch (error) {
     console.error("Ad copy generation failed for a Studio creative:", error);

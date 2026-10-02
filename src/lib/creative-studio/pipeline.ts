@@ -6,6 +6,13 @@ import { storeImage, fetchImageBytes } from "@/lib/storage/blob";
 import { cropToFormat } from "@/lib/creative-studio/format";
 import { nativeSizeFor } from "@/lib/creative-studio/format-info";
 import { buildPrompt } from "@/lib/creative-studio/presets";
+import { brainImageDirectionFor } from "@/lib/brain/store";
+import { withBrandDirection } from "@/lib/brain/visual";
+
+// The Business Brain's visual brief (brand style, colours, mood, what to
+// avoid) goes to the image model after the customer's own request. What's
+// saved as the version's instruction stays exactly what they asked for.
+const brandDirection = (organizationId: string) => brainImageDirectionFor(organizationId).catch(() => null);
 
 // Where an image actually gets made: the model called, the result cropped to
 // the asset's format, both the raw and the formatted copy saved, and the
@@ -74,7 +81,7 @@ export async function runGenerate(input: {
 
   try {
     const result = await generateFromPrompt({
-      prompt: fullPrompt,
+      prompt: withBrandDirection(fullPrompt, await brandDirection(input.organizationId)),
       size: nativeSizeFor(input.format),
       quality: input.quality,
     });
@@ -137,7 +144,7 @@ export async function runProductTransform(input: {
     const result = await editImage({
       imageBytes: input.productImage,
       imageContentType: input.productImageContentType || "image/png",
-      instruction,
+      instruction: withBrandDirection(instruction, await brandDirection(input.organizationId)),
       size: nativeSizeFor(input.format),
       quality: input.quality,
       isProductTransform: true,
@@ -228,6 +235,7 @@ export async function runVariations(input: {
 }): Promise<{ groupId: string; results: PipelineOutcome[] }> {
   const groupId = randomUUID();
   const basePrompt = buildPrompt(input.preset, input.prompt);
+  const direction = await brandDirection(input.organizationId);
 
   // Sequential, not Promise.all: each is a paid OpenAI call, and running them
   // one after another keeps a single Studio session from firing N requests
@@ -253,7 +261,7 @@ export async function runVariations(input: {
     });
 
     try {
-      const result = await generateFromPrompt({ prompt, size: nativeSizeFor(input.format), quality: input.quality });
+      const result = await generateFromPrompt({ prompt: withBrandDirection(prompt, direction), size: nativeSizeFor(input.format), quality: input.quality });
       const stored = await storeBoth(input.organizationId, asset.id, 1, result.bytes, input.format);
       await db.creativeStudioVersion.update({
         where: { id: version.id },
