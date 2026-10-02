@@ -103,7 +103,43 @@ export type CampaignPlan = {
   testing: boolean;
   /** The versions in the test, by index into copyOptions. */
   testPicks: number[];
+  /** What the owner told MAIRO about this campaign only (see CampaignContext). */
+  context: CampaignContext;
 };
+
+/**
+ * Campaign information: temporary facts that belong to this campaign and
+ * never to the Business Profile — a current promotion, when it ends, a new
+ * drop, a seasonal push. Answers to the Campaign Review's campaign questions
+ * land here, so "20% off this weekend" is never remembered as a permanent
+ * fact about the business.
+ */
+export type CampaignContext = {
+  /** The promotion running for this campaign, in the owner's words. Empty when none. */
+  promotion: string;
+  /** When it ends, as the owner said it. */
+  promotionEnds: string;
+  /** Limited stock, a new drop, a seasonal moment — a real reason to act now. */
+  urgency: string;
+  /** Other campaign-only answers, by question id. */
+  answers: Record<string, string>;
+  /** Score areas the owner chose to keep as they are. */
+  kept: string[];
+};
+
+export const EMPTY_CONTEXT: CampaignContext = { promotion: "", promotionEnds: "", urgency: "", answers: {}, kept: [] };
+
+/** A draft saved before the field existed, or with parts missing, reads as empty. */
+export function contextOf(plan: Pick<CampaignPlan, "context">): CampaignContext {
+  const c = plan.context as Partial<CampaignContext> | undefined;
+  return {
+    promotion: typeof c?.promotion === "string" ? c.promotion : "",
+    promotionEnds: typeof c?.promotionEnds === "string" ? c.promotionEnds : "",
+    urgency: typeof c?.urgency === "string" ? c.urgency : "",
+    answers: c?.answers && typeof c.answers === "object" ? c.answers : {},
+    kept: Array.isArray(c?.kept) ? c.kept.filter((k): k is string => typeof k === "string") : [],
+  };
+}
 
 export type PlanImage = {
   url: string;
@@ -197,6 +233,7 @@ export function newPlan(input: {
     chosenCopy: 0,
     testing: false,
     testPicks: [],
+    context: { ...EMPTY_CONTEXT, answers: {}, kept: [] },
   };
 }
 

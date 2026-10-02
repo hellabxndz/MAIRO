@@ -289,13 +289,46 @@ rather than a regex for a reason worth remembering: the regex version used
 
 ### 5g. Mairo's four AI features
 
-- **Pre-Launch Ad Score** (`src/lib/score/`, Create → AI Review). A 0–100 score
-  from 15 checks, grouped into Creative, Hook, Offer, Audience, Landing Page and
-  Campaign Setup, each with recommendations. *Fix with AI* rewrites one element
-  (`src/lib/ai/ad-score.ts`) and shows a before/after; nothing changes until the
-  customer applies it, and the review runs again. A blocking problem caps the
-  score at 45. With no `ANTHROPIC_API_KEY`, the words are scored on structure
-  only and the card says so.
+- **Campaign Review / Pre-Launch Score** (`src/lib/score/`, Create → AI Review). A 0–100 score
+  of campaign *preparation* from 15 checks, grouped into Creative, Hook, Offer,
+  Audience, Landing Page and Campaign Setup — and an explanation of every point it's missing.
+  - **The words agree with the number.** One set of bands everywhere (90+ Excellent, 80s Strong,
+    70s Good Preparation, 60s Needs Improvement, below 60 Major Improvements Recommended). Below
+    100 with recommendations, the summary names them ("Good campaign — but MAIRO found a few ways
+    to make it stronger"); below 100 without any, it says the difference is uncertainty or limited
+    data, not a problem. "Nothing to improve" is never said. "A higher score … does not guarantee
+    performance" and "100 is not required to launch" are on the page.
+  - **Actionable areas.** Each area opens a panel: why the score is lower, what's working, what
+    could improve, MAIRO's recommendation, and "Estimated MAIRO score after change" (65 → ~82 —
+    labelled an estimate of preparation, never of results). Landing Page keeps *Detected issues*
+    (with evidence: an error, no mobile layout, an offer in the ad that the page's words don't
+    show) apart from *Suggested things to check*, which never lower the score. Setup is in plain
+    words ("MAIRO may not be able to measure purchases correctly yet" → Fix Tracking); the
+    technical reason is shown in Advanced view.
+  - **Lowest first, three at a time.** "MAIRO recommends improving these first" lists at most
+    three areas; the rest wait under "more areas MAIRO can improve later". "Before you launch"
+    is a ✓/⚠ checklist with Improve Campaign and **Launch Anyway** — the score never blocks a
+    launch; only a real setup problem does.
+  - **Let MAIRO Improve It** writes three alternatives (one *Recommended*) for the hook,
+    headline, main text or offer from facts the business gave (`improveOptions` in
+    `src/lib/ai/ad-score.ts`; a number the facts don't contain drops the option). Nothing changes
+    until the customer picks one; *I'll Edit It* opens the step; *Keep Current Version* sets the
+    area aside without a recheck. Offers are never forced to be discounts — ideas are a free
+    estimate, consultation, trial, bundle, guarantee… by kind of business, and only confirmed
+    offers go in an ad.
+  - **Help MAIRO learn your business** (`src/lib/score/questions.ts`): a few questions at a time,
+    personal to the business (a restaurant is asked which dish to promote, a contractor about free
+    estimates, software about a trial), each with "Why MAIRO is asking". *Business Profile*
+    answers (what makes you different, who buys, results, objections, what you have for ads) are
+    saved to the Business Brain once and later asked as "We currently have … — is that still
+    correct?". *Campaign* answers (this promotion, when it ends, limited stock) stay on the
+    campaign (`plan.context`) and never become business facts. Answering never changes the score
+    by itself.
+  - **Recheck Campaign** re-runs every check and shows the change: 77 → Analyzing… → 86, what
+    improved, and what's still recommended.
+  - A blocking problem caps the score at 45. With no `ANTHROPIC_API_KEY` the words are scored on
+    structure only, and Let MAIRO Improve It says the AI isn't switched on.
+    `npm run check:ad-score` pins all of this.
 - **Business Analyzer + Business Brain** (`/dashboard/business`,
   `/dashboard/settings/business-brain`, `src/lib/business/`). Reads the home
   page plus up to three shop, pricing or services pages through the same

@@ -12,12 +12,29 @@ import { reviewCreative } from "@/lib/ai/review";
 import { creativeImageUrl, scoreCopyWithAi } from "@/lib/ai/ad-score";
 import { scoreCampaign, type AdScore } from "@/lib/score/rules";
 import { loadBrain } from "@/lib/business/brain";
+import { contextOf } from "@/lib/campaigns/plan";
+import { businessCategory, type Category } from "@/lib/social/goals";
+import { GROUP_ORDER, type GroupKey } from "@/lib/score/rules";
+import { reviewOverview } from "@/lib/score/review";
+import { questionsFor, type ReviewQuestion } from "@/lib/score/questions";
 
 export type CampaignReview = {
   status: ReviewStatus;
   findings: Finding[];
   /** The Pre-Launch Ad Score, built from the same facts. */
   score: AdScore;
+  /**
+   * "Help MAIRO learn your business": a few questions across the areas to
+   * improve first, and per area for its detail panel. Already-known answers
+   * come back as "Is that still correct?".
+   */
+  questions: { learn: ReviewQuestion[]; byArea: Record<GroupKey, ReviewQuestion[]> };
+  /** The kind of business, for offer ideas that suit it. */
+  category: Category;
+  /** The ad sends people to a website, so tracking matters. */
+  website: boolean;
+  /** What the business said it has for ads (photos, testimonials…), for creative advice. */
+  assets: string[];
   checkedAt: string;
 };
 
@@ -51,6 +68,9 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
 
   const findings = reviewFindings(plan, facts);
   const brain = (await loadBrain(organizationId)).profile;
+  const context = contextOf(plan);
+  // A promotion given for this campaign is an offer for this campaign only.
+  const offers = context.promotion.trim() ? [context.promotion.trim(), ...brain.offers] : brain.offers;
   // The safety check and the quality read run side by side; either failing
   // leaves the other standing, and the score falls back to reading structure.
   const [safety, ai] = await Promise.all([
@@ -58,7 +78,7 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
     scoreCopyWithAi({
       plan,
       brandVoice: brain.brandVoice,
-      offers: brain.offers,
+      offers,
       imageUrl: creativeImageUrl(plan, organizationId),
     }).catch((error) => {
       console.error("Ad score AI read failed:", error);
@@ -67,7 +87,16 @@ export async function reviewCampaign(organizationId: string, plan: CampaignPlan)
   ]);
   if (safety) findings.push(safety);
   const score = scoreCampaign({ plan, facts, findings, ai, brain: { brandVoice: brain.brandVoice, offers: brain.offers } });
-  return { status: reviewStatus(findings), findings, score, checkedAt: new Date().toISOString() };
+
+  const category = businessCategory(`${brain.industry} ${brain.overview} ${plan.offering} ${plan.businessName}`);
+  const opts = { kept: context.kept, category, hasOwnWords: hasOwnWords(plan) };
+  const first = reviewOverview(score, opts).priorities.map((p) => p.key);
+  const ask = (areas: GroupKey[], limit: number) => questionsFor({ areas, category, goal: plan.goal, known: brain, context, limit });
+  const questions = {
+    learn: ask([...first, ...GROUP_ORDER.filter((k) => !first.includes(k))], 3),
+    byArea: Object.fromEntries(GROUP_ORDER.map((k) => [k, ask([k], 3)])) as Record<GroupKey, ReviewQuestion[]>,
+  };
+  return { status: reviewStatus(findings), findings, score, questions, category, website: plan.destinationType === "WEBSITE", assets: brain.creativeAssets, checkedAt: new Date().toISOString() };
 }
 
 /**

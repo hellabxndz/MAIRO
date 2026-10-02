@@ -2,9 +2,11 @@
 
 import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
-import { loadBrain } from "@/lib/business/brain";
-import { fixElement } from "@/lib/ai/ad-score";
-import { applyEdits, type FixResult } from "@/lib/score/edits";
+import { loadBrain, saveBrain, type BrainProfile } from "@/lib/business/brain";
+import { fixElement, improveOptions, type BrandFacts } from "@/lib/ai/ad-score";
+import type { FixResult, OptionsResult } from "@/lib/score/edits";
+import { applyBusinessAnswer, businessAnswer, questionDef } from "@/lib/score/questions";
+import { businessCategory } from "@/lib/social/goals";
 import type { FixKind } from "@/lib/score/rules";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -264,31 +266,60 @@ export async function fixWithAiAction(plan: CampaignPlan, kind: FixKind): Promis
   const scope = await currentScope();
   if (!scope || !SERVICES.has(plan?.service)) return { ok: false, kind, error: "That campaign can't be fixed here." };
   const brain = (await loadBrain(scope.organizationId)).profile;
-  return fixElement({ plan, kind, brand: { brandVoice: brain.brandVoice, offers: brain.offers, usps: brain.usps } });
+  return fixElement({ plan, kind, brand: brandFacts(brain) });
+}
+
+function brandFacts(p: BrainProfile): BrandFacts {
+  return {
+    brandVoice: p.brandVoice,
+    offers: p.offers,
+    usps: p.usps,
+    painPoints: p.painPoints,
+    customerResults: p.customerResults,
+    objections: p.objections,
+    customerPraise: p.customerPraise,
+    bestProducts: p.bestProducts,
+    serviceArea: p.serviceArea,
+  };
 }
 
 /**
- * "Fix Everything With Mairo": every fixable recommendation, worked out one
- * after another on the plan as each fix would leave it, so two fixes to the
- * same words build on each other. Nothing is applied here — the customer
- * approves the list.
+ * "Improve With MAIRO": three alternatives for one part of the ad, one
+ * recommended. Nothing is applied here — the customer picks, and the wizard
+ * checks the campaign again on what they chose.
  */
-export async function fixEverythingAction(plan: CampaignPlan, kinds: FixKind[]): Promise<FixResult[]> {
+export async function improveOptionsAction(plan: CampaignPlan, kind: FixKind): Promise<OptionsResult> {
   const scope = await currentScope();
-  if (!scope || !SERVICES.has(plan?.service)) return [];
+  if (!scope || !SERVICES.has(plan?.service)) return { ok: false, kind, error: "That campaign can't be improved here." };
   const brain = (await loadBrain(scope.organizationId)).profile;
-  const brand = { brandVoice: brain.brandVoice, offers: brain.offers, usps: brain.usps };
-  const unique = [...new Set(kinds)].slice(0, 10);
-  // Whole-text rewrites before the opening line, so the hook is written on
-  // the finished text rather than replaced by it.
-  const order: FixKind[] = ["primaryText", "offer", "hook", "headline", "cta", "variation", "audience", "placements", "budget", "landing"];
-  unique.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  const results: FixResult[] = [];
-  let working = plan;
-  for (const kind of unique) {
-    const r = await fixElement({ plan: working, kind, brand });
-    results.push(r);
-    if (r.ok) working = applyEdits(working, r.edits);
-  }
-  return results;
+  return improveOptions({ plan, kind, brand: brandFacts(brain) });
 }
+
+/**
+ * Saves an answer to a Business Profile question ("What makes customers
+ * choose you?") to the Business Brain, marked as the owner's own words so a
+ * fresh website analysis never overwrites it. Campaign answers never come
+ * here — they stay on the campaign. Answering doesn't change any score; the
+ * next check of the campaign decides that.
+ */
+export async function answerBusinessQuestionAction(input: {
+  id: string;
+  answer: string;
+  /** A confirmation the owner corrected: the new answer replaces what MAIRO had first. */
+  replace?: boolean;
+}): Promise<{ ok: true; saved: "saved" | "declined"; label: string } | { ok: false; error: string }> {
+  const scope = await currentScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  const def = questionDef(String(input?.id ?? ""));
+  if (!def || def.scope !== "business") return { ok: false, error: "That question isn't about your business profile." };
+  const record = await loadBrain(scope.organizationId);
+  const category = businessCategory(`${record.profile.industry} ${record.profile.overview}`);
+  const result = businessAnswer(def.id, String(input.answer ?? ""), category, Boolean(input.replace));
+  if (result.kind === "invalid") return { ok: false, error: result.error };
+  const profile = applyBusinessAnswer(record.profile, def.id, result);
+  const field = result.kind === "save" ? result.field : "declinedQuestions";
+  await saveBrain(scope.organizationId, { profile, editedFields: [...new Set([...record.editedFields, field])] });
+  revalidatePath("/dashboard/settings/business-brain");
+  return { ok: true, saved: result.kind === "save" ? "saved" : "declined", label: def.label };
+}
+

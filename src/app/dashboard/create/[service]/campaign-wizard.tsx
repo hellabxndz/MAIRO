@@ -12,7 +12,7 @@ import { ViewToggle } from "@/components/mairo/app-shell";
 import { inputClass } from "@/components/ui";
 import { destinationsFor, goalOption, PROMOTES_OPTIONS, recommendedGoal } from "@/lib/campaigns/objectives";
 import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
-import { dollars, hasOwnWords, plannedSpend, runningCopy, WIZARD_STEPS, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
+import { contextOf, dollars, hasOwnWords, plannedSpend, runningCopy, WIZARD_STEPS, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
 import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { campaignName, planFormEntries } from "@/lib/campaigns/plan-form";
 import type { CampaignReview } from "@/lib/campaigns/review";
@@ -105,7 +105,9 @@ export function CampaignWizard(props: Props) {
   const showAnalysis = attempt > 0 && (pending || !state?.error) && !state?.upgradeNeeded;
 
   const current = STEPS[stepIndex].id;
-  const planKey = JSON.stringify(plan);
+  // Which score areas the owner chose to keep is a note on the review, not a
+  // change to what launches, so it doesn't make the review stale.
+  const planKey = reviewKey(plan);
   const reviewStale = reviewedPlan !== planKey;
 
   const update = useCallback((patch: Partial<CampaignPlan>) => {
@@ -160,7 +162,7 @@ export function CampaignWizard(props: Props) {
     setChecking(false);
     if (result.ok) {
       setReview(result.review);
-      setReviewedPlan(JSON.stringify(snapshot));
+      setReviewedPlan(reviewKey(snapshot));
     } else {
       setReviewError(result.error);
     }
@@ -370,6 +372,12 @@ export function CampaignWizard(props: Props) {
                 void saveDraft("review", next);
                 void runReview(next);
               }}
+              onKeep={(kept) => {
+                const next = { ...plan, context: { ...contextOf(plan), kept } };
+                setPlan(next);
+                void saveDraft("review", next);
+              }}
+              onLaunchAnyway={() => goTo(LAUNCH_INDEX)}
             />
           )}
           {current === "launch" && (
@@ -495,6 +503,11 @@ export function CampaignWizard(props: Props) {
 /* ----------------------------------------------------------------- rules */
 
 /** What stops Continue on this screen, said rather than just greyed out. */
+/** What the review depends on: the plan, minus which areas the owner chose to keep as they are. */
+function reviewKey(plan: CampaignPlan): string {
+  return JSON.stringify({ ...plan, context: { ...contextOf(plan), kept: [] } });
+}
+
 function blockedBecause(
   step: StepId,
   plan: CampaignPlan,

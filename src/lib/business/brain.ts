@@ -52,6 +52,29 @@ export const profileSchema = z.object({
   mainGoals: text,
   successfulOffers: list,
   unsuccessfulOffers: list,
+  // Learned from the owner's answers in the Campaign Review ("Help MAIRO learn
+  // your business"). Long-term facts only — a sale or a deadline belongs to
+  // one campaign and is kept on that campaign, never here.
+  /** The strongest results customers get, in the owner's words. */
+  customerResults: list,
+  /** Why people hesitate or don't buy, and what they misunderstand. */
+  objections: list,
+  /** What customers compliment most. */
+  customerPraise: list,
+  /** Where most customers are. */
+  serviceArea: text,
+  /** The age range that buys most often, as the owner put it. */
+  customerAges: text,
+  /** The customers worth the most to the business. */
+  bestCustomers: text,
+  /** People the owner doesn't want to reach. */
+  excludedCustomers: text,
+  /** The products or services that make the most money. */
+  mostProfitable: text,
+  /** Material the business has for ads: product photos, before/after, testimonials… */
+  creativeAssets: list,
+  /** Campaign Review questions the owner answered "no" to, so they aren't asked every campaign. */
+  declinedQuestions: list,
   /** Gross margin, when the business tells MAIRO. Used for profit on the dashboard. */
   profitMarginPercent: z.number().min(0).max(100).nullable().default(null),
 });
@@ -321,7 +344,12 @@ export function sanitizeProfile(input: Partial<Record<BrainField, unknown>>): Pa
       case "usps":
       case "opportunities":
       case "successfulOffers":
-      case "unsuccessfulOffers": {
+      case "unsuccessfulOffers":
+      case "customerResults":
+      case "objections":
+      case "customerPraise":
+      case "creativeAssets":
+      case "declinedQuestions": {
         const list = strs(v);
         if (list) out[k] = list;
         break;

@@ -19,6 +19,12 @@ export type LandingProbe =
       /** Loads Meta's pixel script. Says nothing about whether events fire. */
       hasMetaPixel: boolean;
       title: string | null;
+      /**
+       * The page's visible words, shortened. Lets the review say "the ad's
+       * offer isn't on this page" only when it really isn't in the text.
+       * Absent when the page builds its words with JavaScript.
+       */
+      text?: string;
     }
   | { ok: false; reason: "unreachable" | "blocked" | "error_status"; status?: number; message: string };
 
@@ -115,9 +121,24 @@ export async function probeLandingPage(rawUrl: string): Promise<LandingProbe> {
       mobileReady: /<meta[^>]+name=["']?viewport["']?[^>]*>/i.test(html),
       hasMetaPixel: /connect\.facebook\.net\/[^"']*fbevents\.js|fbq\(\s*['"]init['"]/i.test(html),
       title: html.match(/<title[^>]*>([^<]{1,200})<\/title>/i)?.[1]?.trim() ?? null,
+      text: visibleText(html),
     };
   }
   return { ok: false, reason: "unreachable", message: "The page redirected too many times." };
+}
+
+/** The words a person would see, without scripts, styles or markup. */
+export function visibleText(html: string, max = 12_000): string {
+  return html
+    .replace(/<(script|style|noscript|svg|template)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#37;|&percnt;/g, "%")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
 }
 
 async function readCapped(res: Response, maxBytes = MAX_BYTES): Promise<string> {
