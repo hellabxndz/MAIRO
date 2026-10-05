@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader, secondaryButtonClass } from "@/components/ui";
-import { PLANS, TRIAL_DAYS, billingEnforced, planFor } from "@/lib/plans";
+import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, planFor, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
 import { PlanButton } from "../settings/plan-button";
@@ -53,8 +53,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
       <PageHeader
         title={subscribed ? "Your plan" : "Choose a plan"}
         description={
-          TRIAL_DAYS > 0 && !subscribed
-            ? `Every plan starts with a ${TRIAL_DAYS}-day free trial. Stripe takes your card, and you can cancel before it ends at no charge.`
+          !subscribed
+            ? `Starter starts with a ${STARTER_TRIAL_DAYS}-day free trial — Stripe takes your card, and you can cancel before it ends at no charge. Growth and Scale are billed from the day you subscribe.`
             : "Change or cancel any time. Your ad spend is paid to Meta directly — never through this."
         }
       />
@@ -174,7 +174,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
               ) : (
                 <PlanButton
                   tier={plan.tier}
-                  label={TRIAL_DAYS > 0 ? `Start ${TRIAL_DAYS}-day free trial` : `Choose ${plan.name}`}
+                  label={trialDaysFor(plan.tier) > 0 ? `Start ${trialDaysFor(plan.tier)}-day free trial` : `Choose ${plan.name}`}
                 />
               )}
             </div>

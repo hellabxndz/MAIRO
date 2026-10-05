@@ -68,18 +68,20 @@ export type Plan = {
   inherits?: string;
   /** Only what this plan adds. Everything below it comes via `inherits`. */
   features: string[];
+  /** Days of free trial at checkout. Absent: no trial — billing starts when they subscribe. */
+  trialDays?: number;
 };
 
 /**
- * Days of free trial on every client plan.
+ * The free trial: Starter only, 7 days. Growth, Scale and the freelancer
+ * plans bill from the day they subscribe.
  *
- * One constant rather than a number typed into Stripe and again into the
- * marketing copy — those two drift, and the version that drifts is always the
- * one on the page promising longer than the card actually gives.
- *
- * Zero switches trials off everywhere at once.
+ * One number on the plan rather than one typed into Stripe and again into
+ * the marketing copy — those two drift, and the version that drifts is always
+ * the one on the page promising longer than the card actually gives. Checkout
+ * and every line of copy read it through trialDaysFor().
  */
-export const TRIAL_DAYS = 7;
+export const STARTER_TRIAL_DAYS = 7;
 
 export const PLANS: Plan[] = [
   // Three plans, one network. MAIRO runs Meta (Facebook and Instagram) only,
@@ -91,6 +93,7 @@ export const PLANS: Plan[] = [
     tier: "STARTER",
     name: "Starter",
     priceMonthly: 149.99,
+    trialDays: STARTER_TRIAL_DAYS,
     tagline: "MAIRO builds your ads. You approve every change.",
     spendGuidance: "Best for trying paid ads for the first time",
     // Three at a time: enough for an offer, an evergreen campaign and a test,
@@ -219,6 +222,11 @@ export const FREELANCER_PLANS: Plan[] = [
 export const ALL_PLANS: Plan[] = [...PLANS, ...FREELANCER_PLANS];
 
 /** True for the tiers that come with client businesses attached. */
+/** The free-trial days a plan starts with at checkout — 0 for every plan but Starter. */
+export function trialDaysFor(tier: SubscriptionTier): number {
+  return ALL_PLANS.find((p) => p.tier === tier)?.trialDays ?? 0;
+}
+
 export function isFreelancerTier(tier: SubscriptionTier): boolean {
   return tier === "STUDIO" || tier === "AGENCY";
 }

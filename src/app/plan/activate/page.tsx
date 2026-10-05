@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { activateIfPaid, approvedPlanOf, planHeadline } from "@/lib/strategy/store";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
-import { PLANS, TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers } from "@/lib/stripe/client";
 import { usd } from "@/lib/strategy/plan-logic";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
@@ -174,9 +174,13 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                   ) : (
                     <p className="mt-4 text-[13px] text-faint">This plan can&rsquo;t be bought here yet.</p>
                   )}
-                  {TRIAL_DAYS > 0 && (
+                  {trialDaysFor(selected.tier) > 0 ? (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                      Starts with a {TRIAL_DAYS}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved.
+                      Starts with a {trialDaysFor(selected.tier)}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved.
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
+                      Billed from today — {selected.name} has no free trial (only Starter does). Change or cancel any time.
                     </p>
                   )}
                   <Link href="/plan/activate?skip=1#plans" className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">Change plan</Link>

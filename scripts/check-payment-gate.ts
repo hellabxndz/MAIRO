@@ -13,6 +13,7 @@ import { entitlementsFor } from "../src/lib/entitlements";
 import { stopUnpaidExecution, stopUnpaidSweep } from "../src/lib/billing/stop-unpaid";
 import { safeReturnTo } from "../src/lib/meta/return-to";
 import { isFreePage } from "../src/components/strategy/free-access";
+import { ALL_PLANS, trialDaysFor } from "../src/lib/plans";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -39,6 +40,11 @@ async function campaign(organizationId: string, status: "ACTIVE" | "PENDING_REVI
 }
 
 async function main() {
+  await check("only Starter has a free trial — 7 days; every other plan bills from day one", () => {
+    assert.equal(trialDaysFor("STARTER"), 7);
+    for (const p of ALL_PLANS.filter((x) => x.tier !== "STARTER")) assert.equal(trialDaysFor(p.tier), 0, p.tier);
+    assert.equal(trialDaysFor("NONE"), 0);
+  });
   const billingOff = process.env.BILLING_ENFORCED?.trim() !== "1";
 
   await check("free-plan accounts need a live subscription, whatever BILLING_ENFORCED says", () => {

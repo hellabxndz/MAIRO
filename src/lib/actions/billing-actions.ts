@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
-import { ALL_PLANS, isFreelancerTier, TRIAL_DAYS } from "@/lib/plans";
+import { ALL_PLANS, isFreelancerTier, trialDaysFor } from "@/lib/plans";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -230,10 +230,11 @@ async function createCheckoutUrl(input: {
       // and a trial that ends by silently locking somebody out of campaigns
       // that are live and spending would be worse for them than a charge.
       //
-      // Read from one constant so the checkout and the copy cannot disagree
-      // about how long it is. Zero means no trial, and the field is omitted
-      // entirely rather than sent as 0, which Stripe rejects.
-      ...(TRIAL_DAYS > 0 ? { trial_period_days: TRIAL_DAYS } : {}),
+      // Starter only: read from the plan, so the checkout and the copy cannot
+      // disagree about which plans have one or how long it is. Every other
+      // plan has none, and the field is omitted entirely rather than sent as
+      // 0, which Stripe rejects.
+      ...(trialDaysFor(tier) > 0 ? { trial_period_days: trialDaysFor(tier) } : {}),
     },
     // Lets Stripe collect the address it needs for tax where that applies.
     billing_address_collection: "auto",

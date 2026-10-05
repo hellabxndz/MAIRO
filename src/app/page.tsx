@@ -9,7 +9,7 @@ import { DashboardModes } from "@/components/landing/dashboard-modes";
 import { Faq } from "@/components/faq";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
-import { PLANS, TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 
 // The marketing page: a premium AI advertising company, not a crypto site.
 // Dark navy, violet and electric-blue light, glass cards, and Mairo's own
@@ -106,7 +106,7 @@ const FAQ = [
   },
   {
     q: "How does the free trial work?",
-    a: `Paid plans start with a ${TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and the first charge is after the trial. If that payment doesn't go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved.`,
+    a: `The Starter plan starts with a ${STARTER_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and the first charge is after the trial. If that payment doesn't go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved. Growth and Scale don't have a trial; they're billed from the day you subscribe.`,
   },
   {
     q: "Can Mairo guarantee results?",
@@ -401,7 +401,7 @@ export default function Home() {
         <SectionHead
           badge="PRICING"
           title="Start with your free plan. Subscribe when you're ready."
-          sub={`Your plan is free. A subscription is what lets Mairo build, launch and optimize it — and every paid plan starts with a ${TRIAL_DAYS}-day free trial.`}
+          sub={`Your plan is free. A subscription is what lets Mairo build, launch and optimize it — and Starter comes with a ${STARTER_TRIAL_DAYS}-day free trial.`}
         />
         <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((plan) => (
@@ -420,6 +420,7 @@ export default function Home() {
                 <span className="text-[38px] font-bold tracking-[-0.03em] tabular-nums">{money(plan.priceMonthly)}</span>
                 <span className="text-[13px] text-white/50">/month</span>
               </p>
+              {plan.trialDays ? <p className="mt-1 text-[12.5px] font-medium text-emerald-300">{plan.trialDays}-day free trial</p> : null}
               <p className="mt-1 text-[13px] text-white/60">{plan.tagline}</p>
               <ul className="mt-5 flex-1 space-y-2 text-[13.5px] text-white/80">
                 {plan.inherits && <li className="text-white/50">Everything in {plan.inherits}, plus:</li>}
