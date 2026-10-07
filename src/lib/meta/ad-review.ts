@@ -1,4 +1,4 @@
-import { metaGraphRequest } from "@/lib/meta/client";
+import { ACCOUNT_TTL, metaGraphRequest } from "@/lib/meta/client";
 import type { ReviewStep } from "@/lib/campaigns/review-rules";
 
 // What Meta's ad review decided, in words a business owner can act on.
@@ -113,6 +113,7 @@ export async function fetchAdReviews(adIds: string[], accessToken: string): Prom
     Record<string, { effective_status?: string; ad_review_feedback?: Feedback; issues_info?: Issue[] }>
   >("/", {
     accessToken,
+    cacheFor: ACCOUNT_TTL,
     params: { ids: adIds.slice(0, 50).join(","), fields: "effective_status,ad_review_feedback,issues_info" },
   });
   for (const [id, ad] of Object.entries(res)) {

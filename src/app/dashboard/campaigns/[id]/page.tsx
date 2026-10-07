@@ -78,65 +78,80 @@ export default async function CampaignPage({
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
   // Meta's latest verdict on the ads, so a rejection shows here as soon as it
-  // happens. Throttled inside: a recent check costs nothing.
-  await syncAdReviews(organizationId).catch(() => 0);
+  // happens. Throttled inside: a recent check costs nothing. Only the
+  // campaign itself waits for it — everything else on the screen is read at
+  // the same time, in one round, rather than three rounds one after another.
+  const reviewed = syncAdReviews(organizationId).catch(() => 0);
 
-  const campaign = await db.mairoCampaign.findFirst({
-    // Scoped by organization as well as id: an id in the URL is not
-    // authorisation, and this is the only thing standing between one customer
-    // and another's campaign.
-    where: { id, organizationId },
-    include: {
-      platformCampaigns: {
-        select: {
-          id: true,
-          platform: true,
-          status: true,
-          externalCampaignId: true,
-          externalAdGroupId: true,
-          externalAdId: true,
-          lastError: true,
-          adReviewState: true,
-          adReviewExplanation: true,
-          adReviewAction: true,
+  const [
+    campaign,
+    connections,
+    performance,
+    readiness,
+    actions,
+    intake,
+    autoOptimize,
+    protectionLog,
+    decisionRows,
+    entitlements,
+    org,
+    pixel,
+    campaignCount,
+    mode,
+  ] = await Promise.all([
+    reviewed.then(() => db.mairoCampaign.findFirst({
+      // Scoped by organization as well as id: an id in the URL is not
+      // authorisation, and this is the only thing standing between one customer
+      // and another's campaign.
+      where: { id, organizationId },
+      include: {
+        platformCampaigns: {
+          select: {
+            id: true,
+            platform: true,
+            status: true,
+            externalCampaignId: true,
+            externalAdGroupId: true,
+            externalAdId: true,
+            lastError: true,
+            adReviewState: true,
+            adReviewExplanation: true,
+            adReviewAction: true,
+          },
+        },
+        ads: { orderBy: { position: "asc" } },
+        creatives: {
+          select: {
+            id: true,
+            platform: true,
+            headline: true,
+            primaryText: true,
+            cta: true,
+            mediaUrl: true,
+          },
         },
       },
-      ads: { orderBy: { position: "asc" } },
-      creatives: {
-        select: {
-          id: true,
-          platform: true,
-          headline: true,
-          primaryText: true,
-          cta: true,
-          mediaUrl: true,
-        },
-      },
-    },
-  });
-  if (!campaign) notFound();
-
-  const [connections, performance, readiness, actions, intake, autoOptimize] = await Promise.all([
+    })),
     connectionSummaries(organizationId),
     fetchOrganizationPerformance(organizationId),
     readinessFor(organizationId, { checkFunding: true }),
-    campaignActions(campaign.id),
+    // By the id in the URL: read-only, and nothing below is shown unless the
+    // campaign above turns out to be this organization's.
+    campaignActions(id),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     db.autoOptimizeSettings.findUnique({
       where: { organizationId },
       select: { enabled: true },
     }),
-  ]);
-
-  const [protectionLog, decisionRows, entitlements, org, pixel, campaignCount] = await Promise.all([
-    db.protectionEvent.findMany({ where: { organizationId, mairoCampaignId: campaign.id }, orderBy: { createdAt: "desc" }, take: 10 }),
-    db.mairoDecision.findMany({ where: { organizationId, mairoCampaignId: campaign.id, status: "PENDING" }, orderBy: { createdAt: "desc" } }),
+    db.protectionEvent.findMany({ where: { organizationId, mairoCampaignId: id }, orderBy: { createdAt: "desc" }, take: 10 }),
+    db.mairoDecision.findMany({ where: { organizationId, mairoCampaignId: id, status: "PENDING" }, orderBy: { createdAt: "desc" } }),
     entitlementsFor(organizationId),
     db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
+    viewMode(),
   ]);
-  const mode = await viewMode();
+  if (!campaign) notFound();
   const plan = planFor(org?.subscriptionTier ?? "NONE");
   const upgradeTarget = PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ?? PLANS[PLANS.length - 1];
   const atLimit = Number.isFinite(entitlements.campaign_limit) && campaignCount >= entitlements.campaign_limit;

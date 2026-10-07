@@ -101,11 +101,14 @@ export async function expirePromotions(organizationId: string, now = new Date())
 
 /** Everything MAIRO knows about a business, in one read. */
 export async function loadBrainState(organizationId: string, now = new Date()): Promise<BrainState> {
-  await expirePromotions(organizationId, now);
-  const [record, missions, notes, learnings] = await Promise.all([
+  // Expiring runs alongside the reads rather than before them — the notes
+  // read leaves out anything already past its end, so it never shows an
+  // ended promotion as current whichever finishes first.
+  const [, record, missions, notes, learnings] = await Promise.all([
+    expirePromotions(organizationId, now),
     loadBrain(organizationId),
     db.marketingMission.findMany({ where: { organizationId, status: { in: ["ACTIVE", "ARCHIVED"] }, approvedAt: { not: null } }, orderBy: { approvedAt: "asc" }, select: { primaryGoal: true, secondaryGoal: true, approvedAt: true, status: true } }),
-    db.missionNote.findMany({ where: { organizationId, active: true, kind: { in: ["PROMOTION", "SALE", "UNAVAILABLE"] } }, orderBy: { createdAt: "desc" }, take: 20 }),
+    db.missionNote.findMany({ where: { organizationId, active: true, kind: { in: ["PROMOTION", "SALE", "UNAVAILABLE"] }, OR: [{ kind: "UNAVAILABLE" }, { endsAt: null }, { endsAt: { gte: now } }] }, orderBy: { createdAt: "desc" }, take: 20 }),
     db.mairoLearning.findMany({ where: { organizationId }, orderBy: [{ active: "desc" }, { lastSeenAt: "desc" }], take: 30 }),
   ]);
   const profile = record.profile;

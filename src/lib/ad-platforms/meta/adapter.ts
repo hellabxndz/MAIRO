@@ -19,7 +19,7 @@ import {
   type PlatformResult,
 } from "../types";
 import { loadCredentials, markConnectionProblem } from "../connections";
-import { MetaApiError, metaGraphRequest } from "@/lib/meta/client";
+import { MetaApiError, metaGraphRequest, RESULTS_TTL } from "@/lib/meta/client";
 import { createMetaCampaign, metaObjectiveFor } from "@/lib/meta/campaigns";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { isSchedulable, metaStartTime } from "@/lib/campaigns/schedule";
@@ -461,6 +461,7 @@ export const metaAdapter: AdPlatformAdapter = {
         `/${loaded.creds.externalAccountId}/insights`,
         {
           accessToken: loaded.creds.accessToken,
+          cacheFor: RESULTS_TTL,
           params: {
             level: "campaign",
             fields:
@@ -500,6 +501,7 @@ export const metaAdapter: AdPlatformAdapter = {
         `/${input.externalCampaignId}/insights`,
         {
           accessToken: loaded.creds.accessToken,
+          cacheFor: RESULTS_TTL,
           params: {
             level: "ad",
             fields: "ad_id,spend,impressions,reach,clicks,ctr,cpc,cpm,actions,action_values,purchase_roas",
@@ -580,6 +582,7 @@ async function campaignInsights(
   try {
     const res = await metaGraphRequest<{ data: MetaInsightRow[] }>(`/${loaded.creds.externalAccountId}/insights`, {
       accessToken: loaded.creds.accessToken,
+      cacheFor: RESULTS_TTL,
       params: {
         level: "campaign",
         fields: "campaign_id,spend,impressions,reach,clicks,ctr,cpc,cpm,actions,action_values,purchase_roas",

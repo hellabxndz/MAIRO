@@ -1,4 +1,4 @@
-import { metaGraphRequest } from "@/lib/meta/client";
+import { ACCOUNT_TTL, metaGraphRequest, RESULTS_TTL } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import {
   metaAccountStatusMessage,
@@ -57,6 +57,7 @@ export async function fetchMetaBillingStatus(
   try {
     row = await metaGraphRequest<AdAccountBillingFields>(`/${accountId}`, {
       accessToken: connection.accessToken,
+      cacheFor: ACCOUNT_TTL,
       params: {
         fields:
           "account_status,disable_reason,currency,balance,amount_spent,spend_cap,is_prepay_account,funding_source_details",
@@ -153,6 +154,7 @@ export async function fetchMonthToDateSpendCents(
       `/${connection.metaAdAccountId}/insights`,
       {
         accessToken: connection.accessToken,
+        cacheFor: RESULTS_TTL,
         params: {
           fields: "spend",
           time_range: JSON.stringify({

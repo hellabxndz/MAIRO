@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -31,7 +32,9 @@ export default async function SocialManagerPage() {
   const gate = await socialGate(organizationId);
   if (gate) return gate;
 
-  await publishDuePosts({ organizationId, budgetMs: 10_000, limit: 2 }).catch(() => null);
+  // Anything already due goes out — after the page is sent, so opening the
+  // screen never waits on Instagram. The next look shows it posted.
+  after(() => publishDuePosts({ organizationId, budgetMs: 10_000, limit: 2 }).catch(() => null));
 
   const [view, org, brain] = await Promise.all([
     loadStrategy(organizationId),

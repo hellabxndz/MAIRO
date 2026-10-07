@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { SectionSkeleton } from "@/components/mairo/page-skeleton";
 import { auth } from "@/lib/auth";
 import { Card, PageHeader, EmptyState, Badge } from "@/components/ui";
 import { activeOrganizationId } from "@/lib/active-org";
@@ -167,7 +169,12 @@ export default async function AnalyticsPage({
       </div>
 
       {view === "simple" ? (
-        <SimpleAnalytics organizationId={organizationId} shown={shown} hasData={report.hasData} campaigns={report.campaigns} />
+        // Its own boundary: the figures above are already read, and the best
+        // creative and insights below ask Meta again — no reason for the
+        // headline numbers to wait for them.
+        <Suspense fallback={<SectionSkeleton panels={3} />}>
+          <SimpleAnalytics organizationId={organizationId} shown={shown} hasData={report.hasData} campaigns={report.campaigns} />
+        </Suspense>
       ) : (<>
       {available.length > 1 && (
         <div className="mb-6 flex flex-wrap gap-2">
@@ -287,7 +294,9 @@ export default async function AnalyticsPage({
             </Card>
           )}
 
-          <AdvancedBreakdowns organizationId={organizationId} rangeKey={rangeKey} />
+          <Suspense fallback={<SectionSkeleton />}>
+            <AdvancedBreakdowns organizationId={organizationId} rangeKey={rangeKey} />
+          </Suspense>
 
           {!entitlements.advanced_analytics && (
             <Card className="mt-6">

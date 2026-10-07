@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -38,8 +39,9 @@ export async function SocialPage({ network }: { network: Network }) {
   const gate = await socialGate(organizationId);
   if (gate) return gate;
 
-  // Anything already due goes out now, rather than waiting for the daily run.
-  await publishDuePosts({ organizationId, budgetMs: 15_000, limit: 3 }).catch(() => null);
+  // Anything already due goes out now, rather than waiting for the daily run
+  // — after the page is sent, so opening the screen never waits on Instagram.
+  after(() => publishDuePosts({ organizationId, budgetMs: 15_000, limit: 3 }).catch(() => null));
 
   const [library, posts, igAccount, fbPage, todayCount, org, allowed, strategy] = await Promise.all([
     mediaLibrary(organizationId),

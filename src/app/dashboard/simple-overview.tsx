@@ -38,32 +38,35 @@ import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard,
 const DAY = 86_400_000;
 
 export async function SimpleOverview({ organizationId, userName, launched }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[] } }) {
-  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } });
+  // Everything this screen needs is read in as few rounds as it can be: each
+  // `await` in a row is another wait on the database (or on Meta), and the
+  // page used to make eight of them one after another.
+  const [org, mission, proposal, campaignCount, connections] = await Promise.all([
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
+    activeMission(organizationId),
+    proposedMission(organizationId),
+    db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
+    connectionSummaries(organizationId),
+  ]);
   const tz = org?.timezone || "America/New_York";
   const now = new Date();
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: tz }).format(now));
   const greeting = `${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}${userName ? `, ${firstNameFrom(userName, "")}` : ""}.`;
 
-  const [mission, proposal, campaignCount] = await Promise.all([
-    activeMission(organizationId),
-    proposedMission(organizationId),
-    db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
-  ]);
   if (!mission && !proposal && campaignCount === 0) return <EmptyHome greeting={greeting} />;
 
   const today = localDay(now, tz);
   const monthStart = new Date(`${today.slice(0, 8)}01T00:00:00Z`);
   const family: MetricFamily = mission ? missionGoal(mission.primaryGoal).metrics : "sales";
 
-  const connections = await connectionSummaries(organizationId);
   const metaConnected = [...connections.values()].some((c) => c.connected && c.platform === "META");
-  const billing = metaConnected ? await fetchMetaBillingStatus(organizationId).catch(() => null) : null;
-  const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
+  const billingRead = metaConnected ? fetchMetaBillingStatus(organizationId).catch(() => null) : Promise.resolve(null);
 
-  const [perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign] = await Promise.all([
+  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy] = await Promise.all([
+    billingRead,
     campaignCount > 0 ? fetchOrganizationPerformance(organizationId, { since: monthStart, until: now }).catch(() => null) : Promise.resolve(null),
     missionActivity(organizationId),
-    readinessFor(organizationId, { billing }),
+    billingRead.then((b) => readinessFor(organizationId, { billing: b })),
     db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 10 }),
     loadIntelligence(organizationId).catch(() => null),
     db.mairoLearning.findMany({ where: { organizationId, active: true, confidence: { in: ["HIGH", "MEDIUM"] } }, orderBy: { lastSeenAt: "desc" }, take: 5 }),
@@ -79,11 +82,13 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
     db.mairoCampaign.findMany({ where: { organizationId, startDate: { gt: now, lte: new Date(now.getTime() + 8 * DAY) }, status: { notIn: ["ARCHIVED"] } }, select: { name: true, startDate: true }, take: 3 }),
     db.reportSettings.findUnique({ where: { organizationId }, select: { weeklyEnabled: true, deliveryDay: true } }),
     firstCampaignState(organizationId),
+    brainHeadline(organizationId).catch(() => null),
+    db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
   ]);
-  const brain = await brainHeadline(organizationId).catch(() => null);
+  const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
   const m = perf?.total ?? EMPTY_METRICS;
   const scale = social.ok;
-  const askSocial = scale && !(await db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }));
+  const askSocial = scale && !socialStrategy;
 
   // --- 1. Goal --------------------------------------------------------------------
   const sure = mission ? await missionConfidence(organizationId, family, m).catch(() => null) : null;

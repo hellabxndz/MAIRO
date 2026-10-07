@@ -50,11 +50,84 @@ type MetaRequestOptions = {
    * `params` but sent as the request body instead, which has no such limit.
    */
   formParams?: Record<string, string | number | undefined>;
+  /**
+   * Reuse this read's answer for this many milliseconds. Only for reads, and
+   * only where a minute-old answer is as good as a new one: results (Meta's
+   * own figures lag by far longer than that) and the account's billing state.
+   * See READS below.
+   */
+  cacheFor?: number;
 };
+
+/**
+ * Recent answers to cacheable reads, so one click doesn't ask Meta the same
+ * question several times.
+ *
+ * The Overview alone used to read this month's results, the billing state and
+ * every campaign's ads separately for the goal card, the recommendations, the
+ * intelligence and the decisions — each a fresh round trip to Meta, each
+ * taking anywhere from a few hundred milliseconds to a couple of seconds, and
+ * the page waited for all of them. Then the next click asked again.
+ *
+ * In memory, per server instance: no figures or tokens are written anywhere.
+ * A request still in flight is shared rather than repeated. Failures are never
+ * kept — the next read tries again. Anything MAIRO changes on Meta with a
+ * token forgets every answer read with that token, so a paused campaign or a
+ * new budget is never shown as it was a minute ago.
+ */
+/** Results: Meta's own figures trail real time by far more than this. */
+export const RESULTS_TTL = 120_000;
+/** Account state (billing, ad review): short, so a fix made on Meta shows up quickly. */
+export const ACCOUNT_TTL = 30_000;
+
+const READS = new Map<string, { token: string; until: number; value: Promise<unknown> }>();
+const MAX_READS = 500;
+
+function forgetReads(accessToken: string) {
+  for (const [key, entry] of READS) if (entry.token === accessToken) READS.delete(key);
+}
+
+function cachedRead<T>(key: string, token: string, ttl: number, load: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+  const hit = READS.get(key);
+  if (hit && hit.until > now) return hit.value as Promise<T>;
+  if (READS.size >= MAX_READS) {
+    for (const [k, e] of READS) if (e.until <= now) READS.delete(k);
+    // Still full of live entries: drop the oldest (Map keeps insertion order).
+    while (READS.size >= MAX_READS) READS.delete(READS.keys().next().value!);
+  }
+  const value = load();
+  READS.set(key, { token, until: now + ttl, value });
+  value.catch(() => {
+    if (READS.get(key)?.value === value) READS.delete(key);
+  });
+  return value;
+}
 
 export async function metaGraphRequest<T = unknown>(
   path: string,
-  { method = "GET", accessToken, params = {}, body, formParams }: MetaRequestOptions = {}
+  options: MetaRequestOptions = {}
+): Promise<T> {
+  const { method = "GET", accessToken, cacheFor } = options;
+  // A test harness's stubbed Meta is never cached, nor read from the cache.
+  if (method === "GET" && cacheFor && cacheFor > 0 && accessToken && !transport.getStore()) {
+    const key = `${path}?${JSON.stringify(options.params ?? {})}#${accessToken}`;
+    return cachedRead(key, accessToken, cacheFor, () => sendGraphRequest<T>(path, options));
+  }
+  if (method === "GET" || !accessToken) return sendGraphRequest<T>(path, options);
+  // A change: forget what was read with this token, before and after, so a
+  // read that raced the change can't keep the old answer either.
+  forgetReads(accessToken);
+  try {
+    return await sendGraphRequest<T>(path, options);
+  } finally {
+    forgetReads(accessToken);
+  }
+}
+
+async function sendGraphRequest<T>(
+  path: string,
+  { method = "GET", accessToken, params = {}, body, formParams }: MetaRequestOptions
 ): Promise<T> {
   const ctx = transport.getStore();
   const version = ctx?.version ?? GRAPH_VERSION;

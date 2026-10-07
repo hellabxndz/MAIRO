@@ -46,6 +46,7 @@
     "check:meta-intelligence": "tsx scripts/check-meta-intelligence.ts",
     "check:simple-ui": "tsx scripts/check-simple-ui.ts",
     "check:brain": "tsx scripts/check-brain.ts",
+    "check:graph-cache": "tsx scripts/check-graph-cache.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

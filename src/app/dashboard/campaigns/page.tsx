@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -49,16 +50,34 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   // so somebody who finishes their setup and lands here rather than on the
   // overview gets the same behaviour.
   await maybeGoLive(organizationId);
-  // Spend limits, checked here too: the scheduled run is only daily.
-  await maybeRunSpendProtection(organizationId).catch(() => undefined);
-  await syncAdReviews(organizationId).catch(() => 0);
+  // Spend limits (the scheduled run is only daily) and Meta's ad review
+  // states are checked after the page is sent rather than before: both are
+  // upkeep, both used to hold this screen while they asked Meta, and the
+  // next screen shows whatever they found.
+  after(async () => {
+    await maybeRunSpendProtection(organizationId).catch(() => undefined);
+    await syncAdReviews(organizationId).catch(() => 0);
+  });
 
+  // One round of reads, side by side.
+  //
+  // The lead form is deliberately not created here. Opening the campaigns
+  // page is not asking for a lead form, and writing one for everybody who
+  // looks would leave most businesses with a public page they never wanted.
+  // What this reads is the form if they already have one, and the questions
+  // MAIRO *would* ask if they pick it — a preview costs nothing and persists
+  // nothing.
   const [
     campaigns,
     organization,
     entitlements,
     connections,
     readiness,
+    performance,
+    mode,
+    leadFormRow,
+    leadForm,
+    formPreview,
   ] = await Promise.all([
     db.mairoCampaign.findMany({
       where: { organizationId },
@@ -78,26 +97,15 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     entitlementsFor(organizationId),
     connectionSummaries(organizationId),
     readinessFor(organizationId, { checkFunding: true }),
-  ]);
-
-  const [performance, mode, leadFormRow] = await Promise.all([
     fetchOrganizationPerformance(organizationId),
     viewMode(),
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
+    existingLeadForm(organizationId),
+    previewLeadForm(organizationId),
   ]);
   const byCampaign = new Map(
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
   );
-
-  // Deliberately not created here. Opening the campaigns page is not asking
-  // for a lead form, and writing one for everybody who looks would leave most
-  // businesses with a public page they never wanted. What this reads is the
-  // form if they already have one, and the questions MAIRO *would* ask if they
-  // pick it — a preview costs nothing and persists nothing.
-  const [leadForm, formPreview] = await Promise.all([
-    existingLeadForm(organizationId),
-    previewLeadForm(organizationId),
-  ]);
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
   // Deleted campaigns are archived rather than erased, so they have to come

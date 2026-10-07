@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { dashboardMode } from "@/lib/view-mode";
 import { auth } from "@/lib/auth";
@@ -59,12 +60,19 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
 
   // A free-plan account that hasn't subscribed: its plan, its next step, and
   // what unlocks with a subscription. Nothing below runs for it.
-  const free = await freeHomeState(organizationId);
+  //
+  // Read together: each is its own question, and asking them one after the
+  // other made every Overview load wait for all of them in a row.
+  const [free, social, socialStrategy, mode] = await Promise.all([
+    freeHomeState(organizationId),
+    socialAccess(organizationId),
+    db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
+    dashboardMode(),
+  ]);
   if (free) return <FreeHome {...free} />;
 
   // Active Scale without a Social Manager goal yet: invite them to set one.
-  const askSocial =
-    (await socialAccess(organizationId)).ok && !(await db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }));
+  const askSocial = social.ok && !socialStrategy;
 
   // Before anything is read, anything that is ready goes live.
   //
@@ -73,33 +81,43 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // at all unless a campaign is built and every setup step is genuinely
   // finished — see src/lib/campaigns/auto-launch.ts for what it refuses to do.
   const launched = await maybeGoLive(organizationId);
-  // Spend limits, checked here too: the scheduled run is only daily.
-  await maybeRunSpendProtection(organizationId).catch(() => undefined);
-  // Approved Instagram posts that are due go out when the business opens MAIRO.
-  await publishDuePosts({ organizationId, limit: 2, budgetMs: 8_000 }).catch(() => undefined);
+
+  // The upkeep that rides along with opening MAIRO — spend limits (the
+  // scheduled run is only daily), approved Instagram posts that are due, and
+  // the daily look behind Mairo Decisions once it has gone stale — runs after
+  // the page has been sent, not before. Each one used to hold the screen
+  // until it finished: publishing a post alone was allowed eight seconds.
+  // None of them changes what this render shows in a way worth waiting for;
+  // the next screen picks up whatever they found.
+  after(async () => {
+    await maybeRunSpendProtection(organizationId).catch(() => undefined);
+    await publishDuePosts({ organizationId, limit: 2, budgetMs: 8_000 }).catch(() => undefined);
+    await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
+  });
 
   // Simple mode: the calm Overview — goal, this month, what MAIRO is doing,
   // anything that needs the owner, one insight, what's next. The Advanced and
   // Profit First views below keep every figure for those who want them.
-  const mode = await dashboardMode();
   if (mode === "simple") {
-    await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
     return <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} />;
   }
 
-  const connections = await connectionSummaries(organizationId);
-  const connectedPlatforms = [...connections.values()].filter((c) => c.connected);
-
-  // Whether any campaign is worth suggesting a change to. Usually none are,
-  // which is the correct answer for a campaign in its first week.
-  const recommendations = await buildRecommendations(organizationId);
-
-  // Whether the ad account can actually be charged. A campaign that has been
-  // created, looks healthy and delivers nothing is almost always this, and it
-  // is the one problem a business owner has no way of diagnosing themselves.
-  const billing = connectedPlatforms.some((c) => c.platform === "META")
-    ? await fetchMetaBillingStatus(organizationId)
-    : null;
+  // Read side by side rather than one after another.
+  //
+  // Recommendations: whether any campaign is worth suggesting a change to.
+  // Usually none are, which is the correct answer for a campaign in its first
+  // week.
+  //
+  // Billing: whether the ad account can actually be charged. A campaign that
+  // has been created, looks healthy and delivers nothing is almost always
+  // this, and it is the one problem a business owner has no way of diagnosing
+  // themselves.
+  const [recommendations, billing] = await Promise.all([
+    buildRecommendations(organizationId),
+    connectionSummaries(organizationId).then((c) =>
+      [...c.values()].some((x) => x.connected && x.platform === "META") ? fetchMetaBillingStatus(organizationId) : null,
+    ),
+  ]);
   const billingProblem =
     billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
 
@@ -109,36 +127,30 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   //
   // The billing answer read just above is handed over rather than fetched
   // again — same question, same render.
-  const [readiness, autoLaunch] = await Promise.all([
-    readinessFor(organizationId, { billing }),
-    autoLaunchIntent(organizationId),
+  //
+  // Simple, Advanced and Profit First are the same screen at different
+  // depths, not three products: everything below is read once, and the mode
+  // only decides which of it goes on the screen — so they can never disagree
+  // about the state of an account.
+  const advanced = mode === "advanced";
+  // firstCampaign: a business that came through the free plan — its first
+  // campaign's state.
+  const [[readiness, autoLaunch], overview, fresh, intelligence, latestReport, reportSettings, firstCampaign] = await Promise.all([
+    Promise.all([readinessFor(organizationId, { billing }), autoLaunchIntent(organizationId)]),
+    loadOverview(organizationId, days, { adBreakdown: advanced }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
+    loadIntelligence(organizationId),
+    db.weeklyReport.findFirst({ where: { organizationId }, orderBy: { weekStart: "desc" } }),
+    db.reportSettings.findUnique({ where: { organizationId } }),
+    firstCampaignState(organizationId),
   ]);
+  const latestData = latestReport ? parseReport(latestReport.dataJson) : null;
 
   // When the missing card is the thing holding the account up, the panel says
   // so and carries the link straight to Meta's payment page. The standalone
   // billing card below then has nothing to add, so it is not drawn — two
   // amber boxes repeating each other reads as a product that is shouting.
   const fundingIsTheBlocker = readiness.next?.id === "funding";
-
-  // Mairo Decisions. The daily look runs here too when it's gone stale, so
-  // the insights are about this morning's numbers, not yesterday's.
-  await refreshDecisions(organizationId).catch((error) => console.error("Decisions refresh failed:", error));
-
-  // Simple, Advanced and Profit First are the same screen at different
-  // depths, not three products: everything below is read once, and the mode
-  // only decides which of it goes on the screen — so they can never disagree
-  // about the state of an account.
-  const advanced = mode === "advanced";
-  const [overview, fresh, intelligence, latestReport, reportSettings] = await Promise.all([
-    loadOverview(organizationId, days, { adBreakdown: advanced }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
-    loadIntelligence(organizationId),
-    db.weeklyReport.findFirst({ where: { organizationId }, orderBy: { weekStart: "desc" } }),
-    db.reportSettings.findUnique({ where: { organizationId } }),
-  ]);
-  const latestData = latestReport ? parseReport(latestReport.dataJson) : null;
-  // A business that came through the free plan: its first campaign's state.
-  const firstCampaign = await firstCampaignState(organizationId);
   const weeklyCard = (
     <WeeklyReportCard
       report={
