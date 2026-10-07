@@ -27,28 +27,38 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 // for a permission the app isn't approved for only adds a line to the dialog
 // that Meta won't grant to customers, so it's left out. It stays in
 // KNOWN_SCOPES so a future review round can put it back through META_SCOPES.
-// instagram_basic and instagram_content_publish are what let MAIRO post to the
-// customer's own Instagram on the top plan. They are requested for everyone
-// rather than only for that plan's accounts, because the alternative is asking a
-// customer to reconnect Meta on the day they upgrade — and a reconnect is the
-// step people abandon. Meta grants a permission; it does not act on it, and
-// nothing in MAIRO calls an Instagram endpoint unless the plan allows it.
+// pages_read_engagement is here for Instagram too: reading
+// instagram_business_account off the Page needs it, and without it the lookup
+// returns an empty field rather than an error, which reads as "you have no
+// Instagram" for somebody who does.
 //
-// pages_read_engagement comes with them: reading instagram_business_account off
-// the Page needs it, and without it the lookup returns an empty field rather
-// than an error, which reads as "you have no Instagram" for somebody who does.
-//
-// This is the full set MAIRO needs once Meta has approved them. Which of them
-// a given deployment actually asks for is metaScopes() below — see there for
-// why that is settable.
+// This is the everyday set: what every business connecting an ad account is
+// asked for, and exactly what Meta has approved. Which of them a given
+// deployment actually asks for is metaScopes() below — see there for why that
+// is settable.
 const SCOPES = [
   "ads_management",
   "pages_show_list",
   "pages_read_engagement",
   "business_management",
-  "instagram_basic",
-  "instagram_content_publish",
 ];
+
+/**
+ * Posting to the business's own Instagram (Scale's Social Manager).
+ *
+ * Not in SCOPES, for the same reason Facebook Page posting isn't: they are
+ * asked for only when a Scale business connects Instagram, through their own
+ * dialog (/api/meta/connect?also=instagram). They used to be in the everyday
+ * dialog — and Facebook refuses a whole login that names a permission the app
+ * hasn't been set up for ("Invalid Scopes: instagram_basic,
+ * instagram_content_publish"), so until the app has the Instagram use case,
+ * every business connecting an ad account saw an error page. Now only the
+ * Instagram button depends on that setup, and connecting ads never does.
+ */
+export const INSTAGRAM_SCOPES = ["instagram_basic", "instagram_content_publish"];
+
+/** Where a Scale business goes to let MAIRO post to its Instagram. */
+export const INSTAGRAM_CONNECT = `/api/meta/connect?also=instagram&returnTo=${encodeURIComponent("/dashboard/social")}`;
 
 /**
  * Every scope name Meta knows about here, so a typo cannot reach the dialog.
@@ -66,6 +76,7 @@ const KNOWN_SCOPES = new Set([
   "ads_management",
   "ads_read",
   ...SCOPES.filter((s) => s !== "ads_management"),
+  ...INSTAGRAM_SCOPES,
   "pages_manage_posts",
 ]);
 
@@ -168,7 +179,7 @@ export function metaRedirectUri(): string {
   );
 }
 
-export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean } = {}): string {
+export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean } = {}): string {
   const appId = requireEnv("META_APP_ID");
   const redirectUri = metaRedirectUri();
 
@@ -176,11 +187,12 @@ export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean } 
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  const scopes = opts.pagePosting ? [...new Set([...metaScopes(), PAGE_POSTING_SCOPE])] : metaScopes();
+  const extra = [...(opts.pagePosting ? [PAGE_POSTING_SCOPE] : []), ...(opts.instagram ? INSTAGRAM_SCOPES : [])];
+  const scopes = [...new Set([...metaScopes(), ...extra])];
   url.searchParams.set("scope", scopes.join(","));
   // Asks again for a permission that was turned down before, rather than
   // Facebook silently skipping it.
-  if (opts.pagePosting) url.searchParams.set("auth_type", "rerequest");
+  if (extra.length > 0) url.searchParams.set("auth_type", "rerequest");
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { INSTAGRAM_CONNECT } from "@/lib/meta/oauth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -187,12 +188,15 @@ export async function SocialPage({ network }: { network: Network }) {
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
             {igAccount.error.message}
           </p>
-          <Link
-            href="/dashboard/meta"
+          {/* Instagram's permissions are asked for here, on their own — the
+              everyday Meta connect doesn't include them. A plain link: it
+              leaves for Facebook's dialog. */}
+          <a
+            href={INSTAGRAM_CONNECT}
             className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110"
           >
-            Open your Meta connection
-          </Link>
+            Connect Instagram
+          </a>
         </Card>
       )}
 
@@ -206,6 +210,16 @@ export async function SocialPage({ network }: { network: Network }) {
             account. In the Instagram app: Settings → Account type and tools → Switch to
             professional account, then link it to your Facebook Page. It takes about two
             minutes and changes nothing your followers see.
+          </p>
+          {/* Without the Instagram permission Meta leaves the linked account
+              off the Page rather than erroring, so this can also mean it
+              simply hasn't been allowed yet. */}
+          <p className="mt-3 text-sm text-neutral-300">
+            Already a Business account linked to your Page?{" "}
+            <a href={INSTAGRAM_CONNECT} className="text-violet-bright hover:underline">
+              Connect Instagram
+            </a>{" "}
+            so MAIRO is allowed to see and post to it.
           </p>
         </Card>
       )}

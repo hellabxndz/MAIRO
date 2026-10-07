@@ -121,7 +121,7 @@ export function toFailure(error: unknown, fallback: string): { ok: false; error:
     if (/permission|OAuth|scope/i.test(detail)) {
       return fail<never>(
         "insufficient_scope",
-        `${detail} Reconnecting your Meta account on the Meta screen will ask for the Instagram permission.`,
+        `${detail} Use Connect Instagram on the Instagram posts page to give MAIRO the Instagram permission.`,
         error.body
       ) as { ok: false; error: PlatformError };
     }

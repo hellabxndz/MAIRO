@@ -44,8 +44,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // ?also=page_posts: Scale's Facebook posting, asked for on its own.
-    const authUrl = buildMetaAuthUrl(state, { pagePosting: req.nextUrl.searchParams.get("also") === "page_posts" });
+    // ?also=page_posts / ?also=instagram: Scale's Facebook and Instagram
+    // posting, each asked for on its own, never in the everyday dialog.
+    const also = req.nextUrl.searchParams.get("also");
+    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram" });
     return NextResponse.redirect(authUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to start Meta connect";

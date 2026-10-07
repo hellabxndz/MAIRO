@@ -699,6 +699,17 @@ console.log("\n— the permissions the login dialog asks for —");
   process.env.META_SCOPES = "pages_manage_posts";
   ok("and it's a name META_SCOPES accepts, for its own review round", metaScopes().join() === "pages_manage_posts");
   delete process.env.META_SCOPES;
+
+  // Instagram posting (Scale) is its own dialog too. Facebook refuses a whole
+  // login naming a permission the app isn't set up for, so having Instagram
+  // in the everyday dialog put an error page in front of every ad connect.
+  ok("the everyday connect doesn't ask for Instagram", !everyday.get("scope")!.includes("instagram_"), everyday.get("scope")!);
+  ok("and asks for exactly what Meta approved", everyday.get("scope") === "ads_management,pages_show_list,pages_read_engagement,business_management", everyday.get("scope")!);
+  const ig = new URL(buildMetaAuthUrl("s", { instagram: true })).searchParams;
+  ok("connecting Instagram asks for its two permissions, on top of the rest", ["instagram_basic", "instagram_content_publish", "ads_management"].every((x) => ig.get("scope")!.split(",").includes(x)) && ig.get("auth_type") === "rerequest", ig.get("scope")!);
+  process.env.META_SCOPES = "instagram_basic,instagram_content_publish";
+  ok("and they're names META_SCOPES accepts", metaScopes().length === 2);
+  delete process.env.META_SCOPES;
   if (hadApp === undefined) delete process.env.META_APP_ID;
 }
 
