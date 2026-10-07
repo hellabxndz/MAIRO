@@ -84,9 +84,12 @@ Client sign-up and the dashboard work without this — you'll just see a
 4. Add a valid **OAuth redirect URI**: for local dev,
    `http://localhost:3000/api/meta/callback`; in production, your real
    domain's equivalent. Set the same value in `.env` as `META_REDIRECT_URI`.
-5. Request the `ads_management`, `ads_read`, and `business_management`
-   permissions under **App Review** — Meta has to approve these before a
-   real (non-admin/tester) user can connect an ad account. This review can
+5. Request `ads_management`, `business_management`, `pages_show_list` and
+   `pages_read_engagement` under **App Review** — Meta has to approve these before a
+   real (non-admin/tester) user can connect an ad account. `ads_read` isn't
+   needed and isn't requested: `ads_management` already covers reading ad
+   accounts, campaigns and Insights (Meta approved the four above on
+   October 7, 2026 and declined `ads_read`). This review can
    take from a few days to a few weeks; while it's pending you (and any users
    added as testers/admins on the app) can already connect and test.
 6. Make sure the Meta user connecting has admin access to a Business Manager

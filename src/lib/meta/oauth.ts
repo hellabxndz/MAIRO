@@ -18,7 +18,15 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 // be paying for it.
 //
 // Ad accounts are unaffected; /me/adaccounts returns business-owned accounts
-// under ads_read alone. Pages are the case that needs it.
+// under ads_management. Pages are the case that needs it.
+//
+// ads_read is deliberately NOT asked for. Meta's App Review (October 7, 2026)
+// approved ads_management, business_management, pages_show_list and
+// pages_read_engagement but not ads_read — and ads_management already lets
+// the app read the ad accounts it manages: campaigns, ads and Insights. Asking
+// for a permission the app isn't approved for only adds a line to the dialog
+// that Meta won't grant to customers, so it's left out. It stays in
+// KNOWN_SCOPES so a future review round can put it back through META_SCOPES.
 // instagram_basic and instagram_content_publish are what let MAIRO post to the
 // customer's own Instagram on the top plan. They are requested for everyone
 // rather than only for that plan's accounts, because the alternative is asking a
@@ -35,7 +43,6 @@ import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 // why that is settable.
 const SCOPES = [
   "ads_management",
-  "ads_read",
   "pages_show_list",
   "pages_read_engagement",
   "business_management",
@@ -53,7 +60,14 @@ const SCOPES = [
  * dashboard, and this is what turns that into a refusal at build-the-URL time
  * naming the bad value.
  */
-const KNOWN_SCOPES = new Set([...SCOPES, "pages_manage_posts"]);
+const KNOWN_SCOPES = new Set([
+  // One canonical order for the dialog: ads_read (not asked for by default)
+  // sits beside ads_management, where a review round would expect it.
+  "ads_management",
+  "ads_read",
+  ...SCOPES.filter((s) => s !== "ads_management"),
+  "pages_manage_posts",
+]);
 
 /**
  * Posting on the business's own Facebook Page (Scale).

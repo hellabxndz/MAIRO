@@ -38,6 +38,16 @@ export async function discoverAccount(organizationId: string): Promise<{ ok: boo
 
 export type Eligibility = { eligible: boolean; reasons: string[] };
 
+/**
+ * Whether the granted permissions cover one a feature needs. ads_management
+ * includes reading the ad accounts it manages, so it covers ads_read — which
+ * MAIRO doesn't ask for (Meta's App Review didn't approve it).
+ */
+export function permissionCovered(permission: string, granted: string[]): boolean {
+  if (granted.includes(permission)) return true;
+  return permission === "ads_read" && granted.includes("ads_management");
+}
+
 /** Whether this account can use a feature, from what Meta told MAIRO about it. Pure. */
 export function eligibility(
   feature: { availability: string; permissions: string[]; regionRestrictions: string[]; deprecated: boolean },
@@ -47,7 +57,7 @@ export function eligibility(
   if (feature.deprecated) reasons.push("Meta is retiring it.");
   if (!account) return { eligible: false, reasons: [...reasons, "MAIRO hasn't checked this ad account yet."] };
   if (account.accountStatus !== null && account.accountStatus !== 1) reasons.push("The ad account isn't active.");
-  const missing = feature.permissions.filter((p) => !account.permissions.includes(p));
+  const missing = feature.permissions.filter((p) => !permissionCovered(p, account.permissions));
   if (missing.length) reasons.push(`Missing permission: ${missing.join(", ")}.`);
   if (feature.regionRestrictions.length && (!account.country || !feature.regionRestrictions.includes(account.country))) reasons.push(`Only available in ${feature.regionRestrictions.join(", ")}.`);
   if (["BETA", "ALPHA", "LIMITED", "UNKNOWN"].includes(feature.availability)) reasons.push(feature.availability === "UNKNOWN" ? "Its availability hasn't been verified." : `It's in ${feature.availability.toLowerCase()} rollout; MAIRO can't confirm this account has it.`);

@@ -353,10 +353,10 @@ export const BASELINE_FEATURES: FeatureRecord[] = [
   },
   {
     featureKey: "permissions.ads_management",
-    name: "ads_management / ads_read permissions",
+    name: "ads_management and Page permissions",
     category: "Permissions",
-    description: "The permissions MAIRO needs to build and read campaigns.",
-    permissions: ["ads_management", "ads_read", "business_management", "pages_show_list", "pages_read_engagement"],
+    description: "The permissions MAIRO needs to build and read campaigns. ads_management covers reading ad accounts and Insights; ads_read isn't requested (not approved in App Review).",
+    permissions: ["ads_management", "business_management", "pages_show_list", "pages_read_engagement"],
     availability: "GA",
     mairoSupport: "SUPPORTED",
     mairoMapping: { systems: ["Meta connection and permissions"], code: ["src/lib/meta/oauth.ts"] },

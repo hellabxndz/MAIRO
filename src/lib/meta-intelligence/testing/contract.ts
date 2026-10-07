@@ -76,15 +76,19 @@ export const CONTRACT_TESTS: ContractTest[] = [
   },
   {
     key: "auth.permissions",
-    name: "Permissions: MAIRO asks for what campaigns need; only granted ones count",
+    name: "Permissions: MAIRO asks only for approved permissions; ads_management covers reading",
     area: "Permissions",
     critical: true,
     features: ["permissions.ads_management"],
     run: async () => {
       const scopes = metaScopes();
-      for (const s of ["ads_management", "ads_read"]) check(scopes.includes(s), `${s} isn't requested`);
+      for (const s of ["ads_management", "business_management", "pages_show_list", "pages_read_engagement"]) check(scopes.includes(s), `${s} isn't requested`);
+      // Not approved by Meta's App Review; ads_management covers reading.
+      check(!scopes.includes("ads_read"), "ads_read is requested, but Meta didn't approve it");
       const e = eligibility({ availability: "GA", permissions: ["ads_management"], regionRestrictions: [], deprecated: false }, { country: "US", permissions: ["ads_read"], capabilities: [], accountStatus: 1 });
       check(!e.eligible && e.reasons.some((r) => r.includes("ads_management")), "a missing permission isn't caught");
+      const reads = eligibility({ availability: "GA", permissions: ["ads_read"], regionRestrictions: [], deprecated: false }, { country: "US", permissions: ["ads_management"], capabilities: [], accountStatus: 1 });
+      check(reads.eligible, "ads_management doesn't cover reading");
     },
   },
   {

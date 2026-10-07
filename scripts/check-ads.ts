@@ -657,6 +657,9 @@ console.log("\n— the permissions the login dialog asks for —");
   ok("a submission round asks for only its own permissions", round.length === 4, round.join(","));
   ok("and leaves Instagram out of the dialog", !round.includes("instagram_content_publish"));
 
+  delete process.env.META_SCOPES;
+  ok("by default MAIRO doesn't ask for ads_read — Meta didn't approve it, and ads_management covers reading", !metaScopes().includes("ads_read") && metaScopes().includes("ads_management"));
+
   process.env.META_SCOPES = " pages_show_list , ads_read , ads_read ";
   const messy = metaScopes();
   ok("pasted whitespace and repeats are tolerated", messy.length === 2, messy.join(","));

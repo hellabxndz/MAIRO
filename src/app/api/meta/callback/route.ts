@@ -172,9 +172,9 @@ function explainMetaError(raw: string): string {
 
   if (/invalid scope|permission|ads_management|business_management/i.test(raw)) {
     return (
-      "Meta refused one of the permissions this app asks for. Until App Review " +
-      "approves them, ads_management, ads_read, business_management and " +
-      "pages_show_list only work for accounts with a role on the app."
+      "Meta refused one of the permissions this app asks for. A permission " +
+      "App Review hasn't approved only works for accounts with a role on the " +
+      "app — check META_SCOPES isn't asking for one (such as ads_read)."
     );
   }
 
