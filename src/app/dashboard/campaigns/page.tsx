@@ -1,4 +1,6 @@
 import { after } from "next/server";
+import { loadAccountHistory } from "@/lib/meta/account-history";
+import { AccountCampaigns } from "./account-campaigns";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -78,6 +80,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     leadFormRow,
     leadForm,
     formPreview,
+    history,
   ] = await Promise.all([
     db.mairoCampaign.findMany({
       where: { organizationId },
@@ -102,6 +105,8 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
     existingLeadForm(organizationId),
     previewLeadForm(organizationId),
+    // The campaigns already on their Meta account that MAIRO didn't make.
+    loadAccountHistory(organizationId),
   ]);
   const byCampaign = new Map(
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
@@ -145,11 +150,15 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   const buckets = new Map<CampaignTab, typeof campaigns>(CAMPAIGN_TABS.map((t) => [t.key, []]));
   for (const c of campaigns) buckets.get(campaignTab(c, now))!.push(c);
   const requested = (await searchParams).tab;
-  // The tab asked for; otherwise the first one with something in it.
-  const tab: CampaignTab = CAMPAIGN_TABS.some((t) => t.key === requested)
-    ? (requested as CampaignTab)
-    : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? "active");
-  const shown = buckets.get(tab) ?? [];
+  const fromMeta = history.ok ? history.campaigns : [];
+  // The tab asked for; otherwise the first one with something in it — and
+  // for a business that has only ever advertised in Ads Manager, that's the
+  // campaigns already on its account rather than an empty "Active".
+  const tab: CampaignTab | "meta" =
+    requested === "meta" || CAMPAIGN_TABS.some((t) => t.key === requested)
+      ? (requested as CampaignTab | "meta")
+      : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? (fromMeta.length > 0 ? "meta" : "active"));
+  const shown = tab === "meta" ? [] : (buckets.get(tab) ?? []);
 
   return (
     <div className="mx-auto max-w-[1180px]">
@@ -182,6 +191,14 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             </Link>
           );
         })}
+        {/* Only once a Meta account is connected: before that there is no
+            account to read. */}
+        {history.ok || history.reason === "unreadable" ? (
+          <Link href="/dashboard/campaigns?tab=meta" aria-current={tab === "meta" ? "page" : undefined}
+            className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition ${tab === "meta" ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
+            On Meta{fromMeta.length > 0 ? <span className="ml-1.5 text-faint">{fromMeta.length}</span> : null}
+          </Link>
+        ) : null}
       </nav>
 
       {atLimit && tab === "active" && (
@@ -191,7 +208,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         </p>
       )}
 
-      {shown.length === 0 ? (
+      {tab === "meta" ? (
+        <AccountCampaigns history={history} />
+      ) : shown.length === 0 ? (
         <EmptyState
           title={tab === "active" ? "No campaigns running" : tab === "drafts" ? "No drafts" : tab === "paused" ? "Nothing paused" : "No completed campaigns yet"}
           description={tab === "active" ? "Tell MAIRO what you want to achieve and it builds the campaign for you to confirm." : undefined}

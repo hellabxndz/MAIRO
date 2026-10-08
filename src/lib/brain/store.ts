@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { loadAccountHistory } from "@/lib/meta/account-history";
+import { historyBrief, historyPoints, type HistoryPoints } from "@/lib/meta/account-history-rules";
 import { brainBrief, loadBrain, saveBrain, type BrainProfile, type BrainRecord, type HistoricalFact } from "@/lib/business/brain";
 import { missionGoal, type MetricFamily } from "@/lib/mission/goals";
 import { businessCategory, type Category } from "@/lib/social/goals";
@@ -71,6 +73,11 @@ export type BrainState = {
   questions: ReviewQuestion[];
   verify: Verification | null;
   understanding: Understanding;
+  /**
+   * What the business ran on its Meta ad account outside MAIRO — or null
+   * (not connected, nothing ran, or Meta didn't answer).
+   */
+  accountHistory: HistoryPoints | null;
 };
 
 export function knownOf(p: BrainProfile): KnownBusiness {
@@ -104,12 +111,17 @@ export async function loadBrainState(organizationId: string, now = new Date()): 
   // Expiring runs alongside the reads rather than before them — the notes
   // read leaves out anything already past its end, so it never shows an
   // ended promotion as current whichever finishes first.
-  const [, record, missions, notes, learnings] = await Promise.all([
+  const [, record, missions, notes, learnings, accountHistory] = await Promise.all([
     expirePromotions(organizationId, now),
     loadBrain(organizationId),
     db.marketingMission.findMany({ where: { organizationId, status: { in: ["ACTIVE", "ARCHIVED"] }, approvedAt: { not: null } }, orderBy: { approvedAt: "asc" }, select: { primaryGoal: true, secondaryGoal: true, approvedAt: true, status: true } }),
     db.missionNote.findMany({ where: { organizationId, active: true, kind: { in: ["PROMOTION", "SALE", "UNAVAILABLE"] }, OR: [{ kind: "UNAVAILABLE" }, { endsAt: null }, { endsAt: { gte: now } }] }, orderBy: { createdAt: "desc" }, take: 20 }),
     db.mairoLearning.findMany({ where: { organizationId }, orderBy: [{ active: "desc" }, { lastSeenAt: "desc" }], take: 30 }),
+    // Campaigns run outside MAIRO. Never allowed to hold up or break the
+    // Brain: no answer from Meta is simply no history.
+    loadAccountHistory(organizationId, now)
+      .then((h) => (h.ok ? historyPoints(h.campaigns) : null))
+      .catch(() => null),
   ]);
   const profile = record.profile;
   const legacy = { edited: record.editedFields, analyzedAt: record.analyzedAt, updatedAt: record.updatedAt };
@@ -170,6 +182,7 @@ export async function loadBrainState(organizationId: string, now = new Date()): 
     questions,
     verify: factToVerify(profile as unknown as Record<string, unknown>, meta, now),
     understanding: understanding(profile as unknown as Record<string, unknown>, active_, questions.length),
+    accountHistory,
   };
 }
 
@@ -195,6 +208,8 @@ export function brainPrompt(s: BrainState): string {
   if (learned.length) lines.push("What MAIRO has learned from this business's own results (observations, not causes — say “has generated” or “has seen”, never “caused”):", ...learned.map((l) => `- ${l.said}${l.sampleSize ? ` (based on ${l.sampleSize} compared)` : ""}`));
   const early = s.learned.filter((l) => l.active && l.confidence === "EARLY").length;
   if (early) lines.push(`MAIRO is still learning ${early} other pattern${early === 1 ? "" : "s"} from too little data to rely on.`);
+  const past = historyBrief(s.accountHistory);
+  if (past) lines.push(past);
   return lines.join("\n");
 }
 

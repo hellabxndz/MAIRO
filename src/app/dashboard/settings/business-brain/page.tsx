@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { money } from "@/lib/dashboard/home";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
@@ -189,6 +190,32 @@ export default async function BusinessBrainPage() {
             </ul>
           )}
         </section>
+
+        {/* Read from the Meta ad account, live: campaigns run outside MAIRO.
+            Kept apart from what MAIRO learned from its own. */}
+        {s.accountHistory && (
+          <section className={card} style={surface} aria-labelledby="brain-meta-history">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="brain-meta-history" className={eyebrow}>Your campaigns before MAIRO</h2>
+              <Link href="/dashboard/campaigns?tab=meta" className="text-[12.5px] text-muted hover:text-white">See them →</Link>
+            </div>
+            <p className="mt-1 text-[12.5px] text-faint">From your Meta ad account. MAIRO uses this as context for what your account has already seen — it doesn&rsquo;t change those campaigns.</p>
+            <p className="mt-3 text-[14px] text-white">
+              {s.accountHistory.count} campaign{s.accountHistory.count === 1 ? "" : "s"} run outside MAIRO · {money(s.accountHistory.spentCents)} spent
+            </p>
+            {s.accountHistory.best.length > 0 ? (
+              <ul className="mt-2 space-y-1.5 text-[13.5px] text-white/80">
+                {s.accountHistory.best.map((b) => (
+                  <li key={b.goal}>
+                    Lowest cost per {b.results === 1 ? b.noun : b.noun.replace(/s$/, "")}: <span className="text-white">{b.name}</span> — {b.results.toLocaleString("en-US")} {b.noun}, about {money(b.eachCents)} each
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-[13.5px] text-muted">None of them recorded sales, leads or website visits Meta could count, so there&rsquo;s no cost per result to learn from yet.</p>
+            )}
+          </section>
+        )}
 
         {s.history.length > 0 && (
           <section className={card} style={surface} aria-labelledby="brain-past">
