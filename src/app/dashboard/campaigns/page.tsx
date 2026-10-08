@@ -1,5 +1,6 @@
 import { after } from "next/server";
-import { loadAccountHistory } from "@/lib/meta/account-history";
+import { Suspense } from "react";
+import { SectionSkeleton } from "@/components/mairo/page-skeleton";
 import { AccountCampaigns } from "./account-campaigns";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -80,7 +81,6 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     leadFormRow,
     leadForm,
     formPreview,
-    history,
   ] = await Promise.all([
     db.mairoCampaign.findMany({
       where: { organizationId },
@@ -105,8 +105,6 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
     existingLeadForm(organizationId),
     previewLeadForm(organizationId),
-    // The campaigns already on their Meta account that MAIRO didn't make.
-    loadAccountHistory(organizationId),
   ]);
   const byCampaign = new Map(
     performance.campaigns.map((c) => [c.mairoCampaignId, c]),
@@ -150,14 +148,17 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   const buckets = new Map<CampaignTab, typeof campaigns>(CAMPAIGN_TABS.map((t) => [t.key, []]));
   for (const c of campaigns) buckets.get(campaignTab(c, now))!.push(c);
   const requested = (await searchParams).tab;
-  const fromMeta = history.ok ? history.campaigns : [];
+  // "On Meta" — the campaigns already on the connected ad account that MAIRO
+  // didn't make — once there is an account to read. The list itself is read
+  // only on that tab, so the rest of this page never waits on Meta for it.
+  const metaConnected = connections.get("META")?.connected ?? false;
   // The tab asked for; otherwise the first one with something in it — and
-  // for a business that has only ever advertised in Ads Manager, that's the
-  // campaigns already on its account rather than an empty "Active".
+  // for a connected business with no MAIRO campaigns yet, the campaigns
+  // already on its account rather than an empty "Active".
   const tab: CampaignTab | "meta" =
-    requested === "meta" || CAMPAIGN_TABS.some((t) => t.key === requested)
+    (requested === "meta" && metaConnected) || CAMPAIGN_TABS.some((t) => t.key === requested)
       ? (requested as CampaignTab | "meta")
-      : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? (fromMeta.length > 0 ? "meta" : "active"));
+      : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? (metaConnected ? "meta" : "active"));
   const shown = tab === "meta" ? [] : (buckets.get(tab) ?? []);
 
   return (
@@ -191,14 +192,12 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             </Link>
           );
         })}
-        {/* Only once a Meta account is connected: before that there is no
-            account to read. */}
-        {history.ok || history.reason === "unreadable" ? (
+        {metaConnected && (
           <Link href="/dashboard/campaigns?tab=meta" aria-current={tab === "meta" ? "page" : undefined}
             className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition ${tab === "meta" ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
-            On Meta{fromMeta.length > 0 ? <span className="ml-1.5 text-faint">{fromMeta.length}</span> : null}
+            On Meta
           </Link>
-        ) : null}
+        )}
       </nav>
 
       {atLimit && tab === "active" && (
@@ -209,7 +208,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       )}
 
       {tab === "meta" ? (
-        <AccountCampaigns history={history} />
+        <Suspense fallback={<SectionSkeleton panels={2} />}>
+          <AccountCampaigns organizationId={organizationId} />
+        </Suspense>
       ) : shown.length === 0 ? (
         <EmptyState
           title={tab === "active" ? "No campaigns running" : tab === "drafts" ? "No drafts" : tab === "paused" ? "Nothing paused" : "No completed campaigns yet"}

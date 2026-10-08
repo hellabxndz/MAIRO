@@ -107,7 +107,36 @@ export async function expirePromotions(organizationId: string, now = new Date())
 }
 
 /** Everything MAIRO knows about a business, in one read. */
-export async function loadBrainState(organizationId: string, now = new Date()): Promise<BrainState> {
+/**
+ * How long the Brain waits for the Meta account's past campaigns before
+ * going ahead without them. The read carries on and lands in the read cache,
+ * so the next ask a moment later has it.
+ */
+const HISTORY_BUDGET_MS = 4_000;
+
+async function accountHistoryWithin(organizationId: string, now: Date): Promise<HistoryPoints | null> {
+  const read = loadAccountHistory(organizationId, now)
+    .then((h) => (h.ok ? historyPoints(h.campaigns) : null))
+    .catch(() => null);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), HISTORY_BUDGET_MS);
+  });
+  try {
+    return await Promise.race([read, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Everything MAIRO knows about a business, in one read.
+ *
+ * `accountHistory` asks Meta for the campaigns run outside MAIRO. Only the
+ * callers that use it ask (prompts, the Brain page): the Overview's small
+ * card doesn't, so the Overview never waits on Meta for it.
+ */
+export async function loadBrainState(organizationId: string, now = new Date(), opts: { accountHistory?: boolean } = {}): Promise<BrainState> {
   // Expiring runs alongside the reads rather than before them — the notes
   // read leaves out anything already past its end, so it never shows an
   // ended promotion as current whichever finishes first.
@@ -118,10 +147,8 @@ export async function loadBrainState(organizationId: string, now = new Date()): 
     db.missionNote.findMany({ where: { organizationId, active: true, kind: { in: ["PROMOTION", "SALE", "UNAVAILABLE"] }, OR: [{ kind: "UNAVAILABLE" }, { endsAt: null }, { endsAt: { gte: now } }] }, orderBy: { createdAt: "desc" }, take: 20 }),
     db.mairoLearning.findMany({ where: { organizationId }, orderBy: [{ active: "desc" }, { lastSeenAt: "desc" }], take: 30 }),
     // Campaigns run outside MAIRO. Never allowed to hold up or break the
-    // Brain: no answer from Meta is simply no history.
-    loadAccountHistory(organizationId, now)
-      .then((h) => (h.ok ? historyPoints(h.campaigns) : null))
-      .catch(() => null),
+    // Brain: no answer from Meta in time is simply no history.
+    opts.accountHistory ? accountHistoryWithin(organizationId, now) : Promise.resolve(null),
   ]);
   const profile = record.profile;
   const legacy = { edited: record.editedFields, analyzedAt: record.analyzedAt, updatedAt: record.updatedAt };
@@ -214,7 +241,7 @@ export function brainPrompt(s: BrainState): string {
 }
 
 export async function brainPromptFor(organizationId: string): Promise<string> {
-  return brainPrompt(await loadBrainState(organizationId));
+  return brainPrompt(await loadBrainState(organizationId, new Date(), { accountHistory: true }));
 }
 
 /** The Business Brain's visual brief for an image (Creative Studio), or null when MAIRO knows nothing visual yet. */

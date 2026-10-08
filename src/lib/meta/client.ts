@@ -75,6 +75,9 @@ type MetaRequestOptions = {
  * token forgets every answer read with that token, so a paused campaign or a
  * new budget is never shown as it was a minute ago.
  */
+const READ_TIMEOUT_MS = 20_000;
+const WRITE_TIMEOUT_MS = 120_000;
+
 /** Results: Meta's own figures trail real time by far more than this. */
 export const RESULTS_TTL = 120_000;
 /** Account state (billing, ad review): short, so a fix made on Meta shows up quickly. */
@@ -151,12 +154,27 @@ async function sendGraphRequest<T>(
     contentType = "application/x-www-form-urlencoded";
   }
 
-  const res = await (ctx?.fetch ?? fetch)(url.toString(), {
-    method,
-    headers: contentType ? { "Content-Type": contentType } : undefined,
-    body: requestBody,
-    cache: "no-store",
-  });
+  // A time limit on every call. Without one, a Meta request that never
+  // answers held the page on its loading screen until the server gave up —
+  // a minute or more of nothing. Reads are given 20 seconds (Meta's slowest
+  // honest answers, a large account's all-time results, come in well under);
+  // changes and uploads get longer, since a video can take a while to send.
+  const limit = method === "GET" ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+  let res: Response;
+  try {
+    res = await (ctx?.fetch ?? fetch)(url.toString(), {
+      method,
+      headers: contentType ? { "Content-Type": contentType } : undefined,
+      body: requestBody,
+      cache: "no-store",
+      signal: AbortSignal.timeout(limit),
+    });
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new MetaApiError(`Meta didn't answer within ${Math.round(limit / 1000)} seconds. Try again in a minute.`, 504, null);
+    }
+    throw error;
+  }
 
   const json = await res.json().catch(() => null);
 

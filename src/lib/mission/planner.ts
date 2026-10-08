@@ -64,7 +64,7 @@ export type BusinessFacts = {
 export async function understandBusiness(organizationId: string): Promise<BusinessFacts> {
   const [org, brain, meta, pixel, campaigns, library, access, notes, intake, learned, social] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, industry: true, website: true, phone: true } }),
-    loadBrainState(organizationId),
+    loadBrainState(organizationId, new Date(), { accountHistory: true }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     db.mairoCampaign.findMany({ where: { organizationId, status: { not: "ARCHIVED" } }, orderBy: { createdAt: "desc" }, take: 10, select: { name: true, objective: true, status: true } }),

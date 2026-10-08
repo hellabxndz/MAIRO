@@ -1,17 +1,22 @@
 import { EmptyState } from "@/components/ui";
 import { goalLabel, primaryResult } from "@/lib/dashboard/campaigns";
 import { money } from "@/lib/dashboard/home";
-import type { AccountHistory } from "@/lib/meta/account-history";
+import { loadAccountHistory } from "@/lib/meta/account-history";
 import { adsManagerUrl, STATE_LABEL } from "@/lib/meta/account-history-rules";
 
 // The Campaigns page's "On Meta" tab: campaigns already on the business's
 // Meta ad account that MAIRO didn't make. Read-only — each card opens the
 // campaign in Ads Manager, which is where it can be changed, because MAIRO
 // never touches what it didn't build.
+//
+// It reads Meta itself, inside its own Suspense boundary on the page, so the
+// tabs and header are on screen while Meta answers — and if Meta is slow,
+// only this list waits (the read gives up after 20 seconds and says so).
 
 const day = (d: Date | null) => (d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null);
 
-export function AccountCampaigns({ history }: { history: AccountHistory }) {
+export async function AccountCampaigns({ organizationId }: { organizationId: string }) {
+  const history = await loadAccountHistory(organizationId);
   if (!history.ok) {
     return <p className="rounded-2xl bg-amber-400/[0.06] px-4 py-3 text-[13px] text-amber-200/90">{history.message}</p>;
   }

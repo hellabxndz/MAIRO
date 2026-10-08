@@ -119,7 +119,7 @@ export async function POST(req: Request) {
   // them in confidently, and a confident guess about somebody's own business
   // is the fastest way to lose them.
   // One Business Brain for the assistant, as for every other part of MAIRO.
-  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrainState(threadOrgId)]);
+  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrainState(threadOrgId, new Date(), { accountHistory: true })]);
 
   await recordUserMessage(threadId, messages);
 

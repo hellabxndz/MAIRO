@@ -28,7 +28,7 @@ export default async function BusinessBrainPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const [s, timeline] = await Promise.all([loadBrainState(organizationId), brainTimeline(organizationId, 24)]);
+  const [s, timeline] = await Promise.all([loadBrainState(organizationId, new Date(), { accountHistory: true }), brainTimeline(organizationId, 24)]);
   const p = s.profile as unknown as Record<string, unknown>;
 
   const rows = (section: BrainSection): FactRowData[] =>
