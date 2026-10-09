@@ -89,8 +89,8 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
   return (
     <div>
       <PageHeader
-        title="Mairo Decisions"
-        description="Each day Mairo looks at your campaigns and writes down what's worth changing — only when there's something real to act on. Nothing changes until you approve it, unless you've let Mairo act within your limits."
+        title="AI Recommendations"
+        description="Once a day your AI team looks at your campaigns and writes down what's worth changing — only when there's something real to act on, with the numbers behind it. Nothing changes until you approve it, unless you've let MAIRO act within your limits."
         action={<RefreshDecisionsButton />}
       />
 

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { NotificationKind } from "@/generated/prisma/enums";
-import { kindInfo } from "./kinds";
+import { kindInfo, optionalGroup } from "./kinds";
 import { sendSms } from "@/lib/sms/send";
 
 // Writing a notification, once.
@@ -35,10 +35,19 @@ export type NotifyInput = {
   smsBody?: string;
 };
 
-export type NotifyResult = { created: boolean; id: string };
+export type NotifyResult = { created: boolean; id: string | null };
 
 export async function notify(input: NotifyInput): Promise<NotifyResult> {
   const info = kindInfo(input.kind);
+
+  // The business's own choice for the optional kinds. Urgent ones ignore it.
+  const group = optionalGroup(input.kind);
+  if (group) {
+    const prefs = await db.organization.findUnique({ where: { id: input.organizationId }, select: { notifyOpportunities: true, notifyReports: true } });
+    if (prefs && ((group === "opportunities" && !prefs.notifyOpportunities) || (group === "reports" && !prefs.notifyReports))) {
+      return { created: false, id: null };
+    }
+  }
 
   const existing = await db.notification.findUnique({
     where: {

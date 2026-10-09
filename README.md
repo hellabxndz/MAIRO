@@ -614,6 +614,29 @@ One persistent understanding of each business that every part of MAIRO reads —
 - **Campaigns run outside MAIRO:** once Meta is connected, Campaigns → **On Meta** lists the campaigns already on the ad account that MAIRO didn't make (`src/lib/meta/account-history.ts`): goal, dates, state, lifetime spend and the result for its goal, each opening in Ads Manager. Read-only — MAIRO never changes, pauses or spends on them, and its own campaigns are never listed twice. Two cached Graph reads (the account's campaigns, and account insights by campaign), `ads_management` only, made only on that tab (inside its own Suspense boundary) — the other tabs and the Overview never wait on them. Every Graph call has a time limit (20s for reads, 120s for changes and uploads), so a Meta that doesn't answer gives a message, never an endless loading screen; the Brain waits at most 4s for the history and goes ahead without it. The Brain gets a short summary (how many ran, total spend, the lowest cost per result for each goal, never ranked across goals, worded as what happened and marked as made outside MAIRO) for every prompt, and the Brain page shows it under "Your campaigns before MAIRO". `npm run check:account-history` pins the rules.
 - `npm run check:brain` pins the rules.
 
+### Your MAIRO AI Team
+
+Eight specialties of one AI system — not eight people or eight running processes. Each is a set of MAIRO's existing services (`src/lib/team/agents.ts`), and every piece of work any of them does is recorded as an `AgentRun` by the service that did it. The AI Team screen, its activity feed, the Daily Brief and the assistant's `get_ai_team` tool read only those records and the decisions they link to.
+
+| Specialty | Runs on | Records |
+|---|---|---|
+| Strategy Agent | Business Analyzer, Advertising Plan, Strategy Engine; coordinates the daily review | read-website, write-plan, team-review |
+| Audience Agent | Plan audience, audience decisions | plan-audience, recommend |
+| Creative Agent | Ad concepts (with policy check), Creative Studio, ad versions | ad-concept, studio-image, recommend |
+| Campaign Agent | Campaign builder, launch | build-campaign (built switched off), launch (after Meta accepted) |
+| Optimization Agent | Mairo Decisions rules | find-improvements, recommend, auto-apply, apply-approved |
+| Budget Guardian | Spending limits, Spend Protection, Meta billing check | check-limits, check-approval, spend-check |
+| Analytics Agent | Mairo Intelligence, weekly reports | read-results, daily-brief, weekly-report |
+| Growth Advisor | Strategy Engine growth moves | recommend |
+
+- **The daily team review** (`refreshDecisions`, `src/lib/team/review.ts`) is the orchestration: Analytics reads the results → the Optimization, Creative, Audience and Growth specialties propose (each decision belongs to the one that noticed it, `agentForDecision`) → the Budget Guardian checks every budget change against the customer's limits, the same check approval repeats → changes the customer's automation level allows are made (recorded only after Meta accepts) → Analytics writes the Daily Brief. Each step is a child run of the Strategy Agent's review. An account with nothing live gets no review records. Deterministic; no extra AI calls.
+- **States are derived, never set** (`src/lib/team/status.ts`): Working only while a run is in progress (a run older than 30 minutes is an Error, and the daily cron sweeps it to FAILED); Monitoring only after a check in the last 36 hours with something live — and always described as "once a day, and when you open MAIRO"; Waiting for approval when its recommendations, a plan or a built campaign wait on the customer; Needs attention for a real problem in its area (a rejected ad, no payment method on Meta, broken tracking); Connection required without Meta; Idle otherwise.
+- **Screens:** `/dashboard/team` (welcome line from real counts, the Daily MAIRO Brief, eight cards with last finished task, what's waiting, and this month's measurable contribution — counts only, never invented impact — and the activity feed, filterable by specialist), the Overview's AI Team card, recommendations that say "What your Optimization Agent noticed", AI Recommendations (`/dashboard/decisions`), and "Ask your AI team" (the one assistant, routed by specialty with `get_ai_team`). Sidebar: Overview, AI Team, Recommendations, Campaigns, Creatives, Analytics.
+- **Notifications:** problems that stop ads, launches and anything MAIRO did itself are always sent; opportunities and report announcements can be switched off on Notifications (`Organization.notifyOpportunities`, `notifyReports`).
+- **AIOS → Customers** lists AI Team tasks that failed or got stuck in the last 48 hours.
+- **Landing page:** "Meet your new AI advertising team" (`#ai-team`) — the eight specialties, how they work together, what always needs approval, and that they're one AI system checking on a schedule.
+- `npm run check:team` pins the states, attribution, Guardian check and wording.
+
 ### Customer success, Results and lead outcomes
 
 What keeps a business paying: seeing what MAIRO did for it, and the MAIRO team seeing who's struggling before they cancel.

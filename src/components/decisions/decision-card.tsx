@@ -1,5 +1,7 @@
 "use client";
 
+import { AGENT, agentForDecision } from "@/lib/team/agents";
+
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { DecisionView } from "@/lib/decisions/store";
@@ -79,7 +81,7 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
 
       <dl className="mt-4 space-y-3 text-[13px] leading-relaxed">
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What Mairo noticed</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What your {AGENT[agentForDecision(decision.kind, decision.category)].name} noticed</dt>
           <dd className="mt-1 text-white/90">{advanced ? decision.noticedAdvanced : decision.noticed}</dd>
         </div>
         <div>

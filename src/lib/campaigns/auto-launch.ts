@@ -1,3 +1,4 @@
+import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import { readinessFor } from "@/lib/readiness";
@@ -227,6 +228,20 @@ export async function maybeGoLive(
   });
 
   const launched = [...new Set(names)];
+
+  // The Campaign Agent's record of it — only now, after Meta switched it on.
+  for (const name of launched) {
+    await recordRun({
+      organizationId,
+      agent: "ARCHITECT",
+      task: "launch",
+      status: "DONE",
+      summary: opts.approvedByPerson
+        ? `Put “${name}” live on Meta after your approval.`
+        : `Put “${name}” live on Meta once its ads were approved and everything was ready.`,
+      href: "/dashboard/campaigns",
+    });
+  }
 
   // Tell them, if they asked to be told. This is the single most worth-a-text
   // moment in the product — money starts leaving their account — so it is the

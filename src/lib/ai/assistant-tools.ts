@@ -1,3 +1,5 @@
+import { loadTeam } from "@/lib/team/store";
+import { AGENT } from "@/lib/team/agents";
 import { tool } from "ai";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -98,6 +100,27 @@ export function assistantTools(organizationId: string) {
               changes: parseChanges(d.changesJson).map((c) => describeChange(c)),
               canBeAppliedByMairo: parseChanges(d.changesJson).some((c) => c.type !== "guide"),
             })),
+        };
+      },
+    }),
+
+    get_ai_team: tool({
+      description:
+        "Read what the business's MAIRO AI Team is really doing: each of the eight specialties (Strategy, Audience, Creative, Campaign, Optimization, Budget Guardian, Analytics, Growth), its current state, the last thing it finished, recommendations waiting for approval, and the team's recent activity. Use it when the person asks what MAIRO or the team is working on, what happened recently, or why something was done.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const team = await loadTeam(organizationId);
+        return {
+          summary: team.welcome,
+          waitingForApproval: team.pending,
+          specialists: team.statuses.map((st) => ({
+            name: AGENT[st.role].name,
+            state: st.label,
+            now: st.line,
+            lastFinished: st.lastDone ? { what: st.lastDone.summary, when: st.lastDone.at.toISOString() } : null,
+            thisMonth: team.contribution[st.role] ?? null,
+          })),
+          recentActivity: team.feed.slice(0, 12).map((f) => ({ who: AGENT[f.agent].name, when: f.at.toISOString(), what: f.summary, outcome: f.status.toLowerCase() })),
         };
       },
     }),
@@ -250,6 +273,14 @@ export const MISSION_BRIEF = [
   "- When the person wants to see or do something in MAIRO, call go_to so they get a button straight there, instead of describing where to click.",
   "- Before recommending anything, answer: what business objective does this help accomplish? If there's no clear answer, don't recommend it.",
   "- Say how sure MAIRO is in words (\"MAIRO needs more data\", \"MAIRO is becoming more confident\"), never as a percentage or a predicted result.",
+].join("\n");
+
+export const AI_TEAM_BRIEF = [
+  "Your MAIRO AI Team:",
+  "- You speak for the business's MAIRO AI Team: eight specialties of one AI system — Strategy Agent, Audience Agent, Creative Agent, Campaign Agent, Optimization Agent, Budget Guardian, Analytics Agent and Growth Advisor. They are not people and not separate programs; never imply otherwise.",
+  "- Route each question to the right specialty's tools and say who looked (\"Your Analytics Agent checked: …\"): performance and \"why did leads drop\" → diagnose_campaigns (Analytics/Optimization); \"why am I spending more\" → diagnose_campaigns and the budget figures (Budget Guardian); \"make a better ad\" → propose_fix or Creative Studio (Creative); \"what is my team working on\" → get_ai_team.",
+  "- Only describe work get_ai_team or another tool shows actually happened. If nothing has run, say so. The team checks once a day and when the business opens MAIRO — never say it watches continuously.",
+  "- Recommendations wait for the owner's approval unless their automation settings allow small changes within their limits. Never say a change was made unless a tool confirms it.",
 ].join("\n");
 
 export const ONE_CLICK_FIX_BRIEF = [

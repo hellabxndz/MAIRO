@@ -1,5 +1,7 @@
 "use server";
 
+import { recordRun } from "@/lib/team/runs";
+
 import { linkMissionCampaign } from "@/lib/mission/store";
 import { briefCampaignAds } from "@/lib/engine/brief";
 import { executionBlock } from "@/lib/billing/execution";
@@ -499,6 +501,25 @@ export async function createCampaignAction(
   // Every ad that reached a network carries the Strategy Engine's brief.
   if (failures.length < outcome.results.length) {
     await briefCampaignAds(organizationId, outcome.mairoCampaignId).catch((error) => console.error("Writing creative briefs failed:", error));
+    // The Campaign Agent's record, once Meta has the campaign. Built paused:
+    // nothing spends until the business approves the launch.
+    await recordRun({
+      organizationId,
+      agent: "ARCHITECT",
+      task: "build-campaign",
+      status: "DONE",
+      summary: `Built “${name}” on Meta, switched off — it waits for your approval before anything is spent.`,
+      href: `/dashboard/campaigns/${outcome.mairoCampaignId}`,
+    });
+  } else {
+    await recordRun({
+      organizationId,
+      agent: "ARCHITECT",
+      task: "build-campaign",
+      status: "NOTHING",
+      summary: `Couldn't build “${name}” on Meta: ${failures[0]?.error ?? "Meta refused it"}. It's saved as a draft.`,
+      href: "/dashboard/create",
+    });
   }
 
   // Everything failed: the campaign is saved as a draft and the customer is

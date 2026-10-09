@@ -54,3 +54,19 @@ export async function dismissNotificationAction(id: string): Promise<void> {
   });
   revalidatePath("/dashboard", "layout");
 }
+
+/**
+ * Which optional notifications the business wants: opportunities and report
+ * announcements. Problems that stop ads, launches and anything MAIRO did on
+ * its own are always sent — see optionalGroup in notifications/kinds.ts.
+ */
+export async function saveNotificationPrefsAction(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return;
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  await db.organization.update({
+    where: { id: organizationId },
+    data: { notifyOpportunities: formData.get("opportunities") === "on", notifyReports: formData.get("reports") === "on" },
+  });
+  revalidatePath("/dashboard/notifications");
+}

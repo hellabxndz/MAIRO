@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui";
 import { GlassPanel, MairoButton } from "@/components/mairo";
 import { kindInfo } from "@/lib/notifications/kinds";
 import { whenLabel } from "@/lib/notifications/present";
-import { markAllReadAction, dismissNotificationAction } from "@/lib/actions/notification-actions";
+import { markAllReadAction, dismissNotificationAction, saveNotificationPrefsAction } from "@/lib/actions/notification-actions";
 import type { NotificationSeverity } from "@/generated/prisma/enums";
 
 // Everything MAIRO has told this business, in one place.
@@ -33,11 +33,14 @@ export default async function NotificationsPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const rows = await db.notification.findMany({
-    where: { organizationId, dismissedAt: null },
-    orderBy: { createdAt: "desc" },
-    take: 60,
-  });
+  const [rows, prefs] = await Promise.all([
+    db.notification.findMany({
+      where: { organizationId, dismissedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 60,
+    }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { notifyOpportunities: true, notifyReports: true } }),
+  ]);
   const unread = rows.filter((r) => r.readAt === null).length;
   const now = new Date();
 
@@ -61,8 +64,8 @@ export default async function NotificationsPage() {
         <GlassPanel className="px-6 py-14 text-center">
           <h2 className="text-[16px] font-medium text-white">Nothing to tell you yet</h2>
           <p className="mx-auto mt-2.5 max-w-md text-[13px] leading-relaxed text-muted">
-            MAIRO watches your campaigns and writes here when something is worth your
-            attention — a campaign spending without results, one platform beating another,
+            Your AI team checks your campaigns once a day, and when you open MAIRO, and writes
+            here when something is worth your attention — a campaign spending without results,
             an ad account that has disconnected. Quiet means nothing needs you.
           </p>
         </GlassPanel>
@@ -128,6 +131,33 @@ export default async function NotificationsPage() {
           })}
         </ul>
       )}
+
+      {/* What the business chooses to hear about. The urgent kinds can't be
+          switched off — they're the ones nobody should miss. */}
+      <GlassPanel className="mt-8 p-5 sm:p-6">
+        <h2 className="text-[15px] font-medium text-white">What MAIRO tells you</h2>
+        <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-muted">
+          Problems that stop your ads, a campaign going live, and anything MAIRO changed on its own are always sent.
+          These are up to you — turning one off stops the notification and its text message.
+        </p>
+        <form action={saveNotificationPrefsAction} className="mt-4 space-y-3">
+          <label className="flex items-start gap-3 text-[14px] text-white">
+            <input type="checkbox" name="opportunities" defaultChecked={prefs?.notifyOpportunities ?? true} className="mt-1 h-4 w-4" />
+            <span>
+              Opportunities
+              <span className="block text-[12.5px] text-muted">A campaign doing well enough to consider more budget, new ads ready to look at</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 text-[14px] text-white">
+            <input type="checkbox" name="reports" defaultChecked={prefs?.notifyReports ?? true} className="mt-1 h-4 w-4" />
+            <span>
+              Reports
+              <span className="block text-[12.5px] text-muted">When your weekly or monthly report is ready — they&rsquo;re written either way</span>
+            </span>
+          </label>
+          <MairoButton type="submit" tone="ghost">Save</MairoButton>
+        </form>
+      </GlassPanel>
     </div>
   );
 }

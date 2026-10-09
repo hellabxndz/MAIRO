@@ -310,6 +310,13 @@ model Organization {
   lastActiveAt DateTime?
   /// When the subscription ended, for retention. Cleared by a new one.
   canceledAt   DateTime?
+
+  /// The MAIRO AI Team's work log for this business.
+  agentRuns AgentRun[]
+  /// Notification preferences. Problems that stop ads are always shown;
+  /// these switch off the optional kinds.
+  notifyOpportunities Boolean @default(true)
+  notifyReports       Boolean @default(true)
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -3202,4 +3209,56 @@ model SupportNote {
   createdAt      DateTime       @default(now())
 
   @@index([organizationId, createdAt])
+}
+
+/// The eight specialties of the MAIRO AI Team. Not eight running processes:
+/// each is a set of MAIRO's existing services, and a run is one of them
+/// doing a piece of work for one business.
+enum AgentRole {
+  STRATEGIST
+  AUDIENCE
+  CREATIVE
+  ARCHITECT
+  OPTIMIZER
+  GUARDIAN
+  ANALYST
+  GROWTH
+}
+
+enum AgentRunStatus {
+  RUNNING
+  /// Finished and produced something: a plan, a change, a report.
+  DONE
+  /// Finished and found nothing that needed doing — said so, not hidden.
+  NOTHING
+  FAILED
+}
+
+/// One piece of work by one specialty, recorded by the service that did it.
+/// The AI Team screen, the activity feed and the Daily Brief read only these
+/// (and the decisions they link to) — nothing on them is made up.
+model AgentRun {
+  id             String         @id @default(cuid())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  agent          AgentRole
+  /// What kind of work: "daily-review", "spend-check", "weekly-report"…
+  task           String
+  status         AgentRunStatus @default(RUNNING)
+  /// One sentence the customer reads: what it did or found.
+  summary        String?        @db.Text
+  /// Why, and the figures behind it, for "See details".
+  detail         String?        @db.Text
+  /// Where to see the result.
+  href           String?
+  /// The coordinating run this was a step of (the daily team review).
+  parentId       String?
+  /// A decision this run proposed or checked.
+  decisionId     String?
+  startedAt      DateTime       @default(now())
+  finishedAt     DateTime?
+
+  @@index([organizationId, startedAt])
+  @@index([organizationId, agent, startedAt])
+  @@index([status, startedAt])
 }

@@ -1,3 +1,4 @@
+import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
 import type { StrategyPlan } from "@/generated/prisma/client";
 import { analyzeBusiness } from "@/lib/business/analyze";
@@ -148,8 +149,31 @@ export async function createStrategy(organizationId: string): Promise<{ ok: true
       },
     });
   } catch {
-    // Two tabs raced; the other one wrote it.
+    // Two tabs raced; the other one wrote it — and recorded it.
+    return { ok: true, ai };
   }
+  // The plan is the Strategy Agent's work, and who to reach in it the
+  // Audience Agent's. Recorded once the plan exists.
+  const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  await recordRun({
+    organizationId,
+    agent: "STRATEGIST",
+    task: "write-plan",
+    status: "DONE",
+    summary: `Wrote your advertising plan: ${GOAL_LABEL[plan.goal].toLowerCase()}, about ${usd(plan.dailyBudget)} a day — waiting for your approval.`,
+    detail: plan.summary || null,
+    href: "/plan",
+  });
+  const a = plan.audience;
+  await recordRun({
+    organizationId,
+    agent: "AUDIENCE",
+    task: "plan-audience",
+    status: "DONE",
+    summary: `Chose who your plan reaches: ${[a.location, `ages ${a.ageMin}–${a.ageMax}`].filter(Boolean).join(", ")}${a.interests.length ? `, interested in ${a.interests.slice(0, 3).join(", ")}` : ""}.`,
+    detail: a.summary || null,
+    href: "/plan",
+  });
   return { ok: true, ai };
 }
 

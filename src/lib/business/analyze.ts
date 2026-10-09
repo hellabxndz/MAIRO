@@ -1,3 +1,4 @@
+import { recordRun } from "@/lib/team/runs";
 import { newMeta } from "@/lib/brain/rules";
 import { fetchPublicPage } from "@/lib/campaigns/landing-probe";
 import { normalizeUrl } from "@/lib/campaigns/destination";
@@ -145,6 +146,14 @@ export async function analyzeBusiness(organizationId: string, rawUrl: string): P
     analyzedUrl: home.finalUrl,
     analyzedAt: now,
     meta: { ...current.meta, ...Object.fromEntries(read.map((k) => [k, newMeta("website", now)])) },
+  });
+  await recordRun({
+    organizationId,
+    agent: "STRATEGIST",
+    task: "read-website",
+    status: "DONE",
+    summary: `Read your website (${new URL(home.finalUrl).hostname}, ${pages.length} page${pages.length === 1 ? "" : "s"}) and updated what MAIRO knows about your business.`,
+    href: "/dashboard/settings/business-brain",
   });
   return { ok: true, brain: await loadBrain(organizationId) };
 }

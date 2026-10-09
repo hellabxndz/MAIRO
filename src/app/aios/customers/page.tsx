@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
 import { successAccounts } from "@/lib/success/accounts";
+import { recentFailedRuns } from "@/lib/team/runs";
 
 // Customer success: who's getting value from MAIRO, who's struggling and
 // why, and the program's numbers — for the first founding customers and
@@ -23,7 +24,7 @@ const pct = (v: number | null) => (v === null ? "—" : `${v}%`);
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ founding?: string }> }) {
   const foundingOnly = (await searchParams).founding === "1";
-  const [{ accounts, metrics }, inbox] = await Promise.all([
+  const [{ accounts, metrics }, inbox, failedRuns] = await Promise.all([
     successAccounts({ foundingOnly }),
     db.customerFeedback.findMany({
       where: { status: { not: "RESOLVED" }, kind: { not: "PULSE" } },
@@ -31,6 +32,8 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
       take: 30,
       include: { organization: { select: { name: true } } },
     }),
+    // AI Team work that failed or never finished, so it gets looked at.
+    recentFailedRuns(),
   ]);
 
   return (
@@ -110,6 +113,24 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">AI Team tasks that failed or got stuck (48 hours)</h2>
+      {failedRuns.length === 0 ? (
+        <p className="text-[13px] text-neutral-500">None.</p>
+      ) : (
+        <div className="space-y-2">
+          {failedRuns.map((r) => (
+            <Card key={r.id} className="!p-4">
+              <p className="text-sm text-white">
+                <Badge tone="red">{r.status === "RUNNING" ? "Stuck" : "Failed"}</Badge>{" "}
+                <Link href={`/aios/organizations/${r.organizationId}`} className="hover:underline">{r.organization.name}</Link>
+                <span className="text-neutral-500"> · {r.agent.toLowerCase()} · {r.task} · {ago(r.startedAt)}</span>
+              </p>
+              {(r.detail || r.summary) && <p className="mt-1.5 whitespace-pre-wrap text-[12.5px] text-neutral-400">{r.detail ?? r.summary}</p>}
+            </Card>
+          ))}
         </div>
       )}
 

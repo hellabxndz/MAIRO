@@ -1,3 +1,4 @@
+import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
 import { getAdapter, platformName } from "@/lib/ad-platforms/registry";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
@@ -215,6 +216,32 @@ export async function runSpendProtection(organizationId: string): Promise<number
           acted += 1;
         }
       }
+    }
+  }
+  // The Budget Guardian's record. Every action is recorded; a check that
+  // found nothing is recorded at most every six hours, so a page load every
+  // fifteen minutes doesn't fill the AI Team feed with the same sentence.
+  if (acted > 0) {
+    await recordRun({
+      organizationId,
+      agent: "GUARDIAN",
+      task: "spend-check",
+      status: "DONE",
+      summary: `Acted on ${acted} spend limit${acted === 1 ? "" : "s"} you set — see Spend Protection for what and why.`,
+      href: "/dashboard/settings#spend-protection",
+    });
+  } else {
+    const recent = await db.agentRun.count({
+      where: { organizationId, agent: "GUARDIAN", task: "spend-check", startedAt: { gte: new Date(Date.now() - 6 * 3_600_000) } },
+    });
+    if (recent === 0) {
+      await recordRun({
+        organizationId,
+        agent: "GUARDIAN",
+        task: "spend-check",
+        status: "NOTHING",
+        summary: `Checked spend for ${live.length} live campaign${live.length === 1 ? "" : "s"} against your limits — nothing over. Meta's spend figures can lag by a few hours.`,
+      });
     }
   }
   return acted;

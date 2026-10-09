@@ -1,5 +1,7 @@
 "use server";
 
+import { recordRun } from "@/lib/team/runs";
+
 import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -150,6 +152,7 @@ export async function generateCreativeAction(
       where: { id: outcome.versionId },
       data: { creditsSpent: cost },
     });
+    await studioRun(ctx.organizationId, "Made a new image in Creative Studio from your description.");
   }
 
   return settle(reservation.ledgerId, outcome);
@@ -207,9 +210,15 @@ export async function transformProductAction(
 
   if (outcome.ok) {
     await db.creativeStudioVersion.update({ where: { id: outcome.versionId }, data: { creditsSpent: cost } });
+    await studioRun(ctx.organizationId, "Turned your product photo into a new ad image in Creative Studio.");
   }
 
   return settle(reservation.ledgerId, outcome);
+}
+
+/** The Creative Agent's record of a finished Studio image — real pictures, so said as images. */
+async function studioRun(organizationId: string, summary: string): Promise<void> {
+  await recordRun({ organizationId, agent: "CREATIVE", task: "studio-image", status: "DONE", summary, href: "/dashboard/creative-studio" });
 }
 
 const editSchema = z.object({
@@ -317,6 +326,7 @@ export async function generateVariationsAction(
     for (const r of succeeded) {
       if (r.ok) await db.creativeStudioVersion.update({ where: { id: r.versionId }, data: { creditsSpent: perImage } });
     }
+    await studioRun(ctx.organizationId, `Made ${succeeded.length} image variation${succeeded.length === 1 ? "" : "s"} in Creative Studio for you to compare.`);
   } else {
     await releaseCredits(reservation.ledgerId);
   }

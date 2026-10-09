@@ -1,3 +1,4 @@
+import { recordRun } from "@/lib/team/runs";
 import { randomBytes } from "node:crypto";
 import { activeMission } from "@/lib/mission/store";
 import { missionGoal, resultsForGoal } from "@/lib/mission/goals";
@@ -373,6 +374,15 @@ export async function generateWeeklyReport(organizationId: string, week: DateRan
     update: { weekEnd: week.until, dataJson: JSON.stringify(data), generatedAt: new Date() },
   });
   await saveLearnings(organizationId, data.learnings, row.id);
+  // The Analytics Agent's record of it, after the report exists.
+  await recordRun({
+    organizationId,
+    agent: "ANALYST",
+    task: "weekly-report",
+    status: "DONE",
+    summary: `Wrote your weekly report for ${data.period.label}${data.learnings.length ? `, with ${data.learnings.length} lesson${data.learnings.length === 1 ? "" : "s"} saved for next time` : ""}.`,
+    href: `/dashboard/reports/weekly/${row.id}`,
+  });
   return { id: row.id, data };
 }
 

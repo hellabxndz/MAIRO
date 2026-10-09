@@ -49,10 +49,16 @@ export const OWNER_TOUR: Step[] = [
       "Your results in plain numbers — and an Advanced view with every advertising metric, for when you want to dig in.",
   },
   {
-    target: "nav:/dashboard/agents",
-    title: "Your assistant",
+    target: "nav:/dashboard/team",
+    title: "Your AI Team",
     body:
-      "Ask anything in plain English — \"How are my ads doing?\", \"We're launching a new product\" — and MAIRO answers or takes you to the right place.",
+      "Eight AI specialties — strategy, audience, creative, campaigns, optimization, budget, analytics and growth — and what each has really done. Ask them anything in plain English.",
+  },
+  {
+    target: "nav:/dashboard/decisions",
+    title: "Recommendations",
+    body:
+      "What your AI team suggests changing, with the numbers behind it. Nothing changes until you approve.",
   },
   {
     target: "nav:/dashboard/settings",

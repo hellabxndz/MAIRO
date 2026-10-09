@@ -148,22 +148,29 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 /* ----------------------------------------------------------------- the map */
 
 /**
- * The day-to-day destinations, deliberately few: Overview, Campaigns,
- * Creatives, Analytics, (Social Manager), Mairo Assistant — and Settings at
+ * The day-to-day destinations, deliberately few: Overview, AI Team,
+ * Recommendations, Campaigns, Creatives, Analytics, (Social Manager) — and Settings at
  * the bottom. Everything else lives inside one of them: creative tools inside
  * Creatives, reports and activity inside Analytics, the business profile,
  * integrations, billing and account inside Settings, the mission and
  * decisions behind the Overview's cards. Every route still exists.
  */
 export const PRIMARY_NAV: NavEntry[] = [
-  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission", "/dashboard/decisions"] },
+  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission"] },
+  // The AI Team (and asking it), then what it recommends.
+  { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.mairo} />, also: ["/dashboard/agents"] },
+  { href: "/dashboard/decisions", label: "Recommendations", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
   { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} />, also: ["/dashboard/reports", "/dashboard/activity"] },
 ];
 
-/** After Social Manager, which the layout adds for the plans that have it (or locked). */
-export const ASSISTANT_NAV: NavEntry = { href: "/dashboard/agents", label: "Mairo Assistant", icon: <Icon d={I.mairo} /> };
+/**
+ * After Social Manager, which the layout adds for the plans that have it
+ * (or locked). The assistant is part of the AI Team now — "Ask your AI
+ * team" — so this is empty; kept as a slot so the layout's order holds.
+ */
+export const ASSISTANT_NAV: NavEntry | null = null;
 
 /** Bottom of the sidebar. */
 export const SECONDARY_NAV: NavEntry[] = [
@@ -175,7 +182,7 @@ const MOBILE_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission", "/dashboard/decisions"] },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create"] },
   { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
-  { href: "/dashboard/agents", label: "Assistant", icon: <Icon d={I.mairo} /> },
+  { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.mairo} />, also: ["/dashboard/agents", "/dashboard/decisions"] },
 ];
 
 /**
@@ -272,7 +279,7 @@ export function AppShell({
   footer?: ReactNode;
 }) {
   const pathname = usePathname();
-  const primary = [...PRIMARY_NAV, ...extraNav, ASSISTANT_NAV];
+  const primary = [...PRIMARY_NAV, ...extraNav, ...(ASSISTANT_NAV ? [ASSISTANT_NAV] : [])];
   const askName = assistantName || "Mairo";
 
   const row = (item: NavEntry, active: boolean) => (

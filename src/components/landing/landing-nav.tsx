@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 const LINKS = [
   { href: "#product", label: "Product" },
   { href: "#how-it-works", label: "How It Works" },
+  { href: "#ai-team", label: "AI Team" },
   { href: "#pricing", label: "Pricing" },
 ];
 

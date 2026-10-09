@@ -1,5 +1,6 @@
 "use server";
 
+import { recordRun } from "@/lib/team/runs";
 import { brainPromptFor } from "@/lib/brain/store";
 import { creativeObjective } from "@/lib/mission/store";
 import { executionBlock } from "@/lib/billing/execution";
@@ -229,11 +230,18 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
     console.error("Creative safety review failed:", error);
   }
 
+  // The Creative Agent's record. A concept is words — what the ad says and
+  // shows — and is called a concept, never an image.
+  const about = request.brief.length > 60 ? `${request.brief.slice(0, 59)}…` : request.brief;
+  const creativeRun = (summary: string) =>
+    recordRun({ organizationId: request.organizationId, agent: "CREATIVE", task: "ad-concept", status: "DONE", summary, href: "/dashboard/creatives" });
+
   if (!review) {
     await db.creativeRequest.update({
       where: { id: creativeRequestId },
       data: { aiConcept: concept, status: "IN_REVIEW", reviewedAt: null },
     });
+    await creativeRun(`Wrote an ad concept for “${about}”. The policy check couldn't run, so a person will review it first.`);
     return null;
   }
 
@@ -250,6 +258,7 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
         reviewNotes: review.reason || "This request can't be turned into an ad we can run.",
       },
     });
+    await creativeRun(`Wrote an ad concept for “${about}”, but it didn't pass the advertising-policy check, so it won't be used.`);
     return null;
   }
 
@@ -263,6 +272,7 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
       reviewNotes: null,
     },
   });
+  await creativeRun(`Wrote an ad concept for “${about}” and checked it against advertising policies — ready for you to look at.`);
   return null;
 }
 

@@ -10,6 +10,8 @@ import { Faq } from "@/components/faq";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { AGENTS } from "@/lib/team/agents";
+import { AgentIcon } from "@/components/team/agent-ui";
 
 // The marketing page: a premium AI advertising company, not a crypto site.
 // Dark navy, violet and electric-blue light, glass cards, and Mairo's own
@@ -269,6 +271,68 @@ export default function Home() {
         <p className="mx-auto mt-12 max-w-[900px] text-center text-[13px] leading-relaxed text-white/45">
           Free plan → edit plan → approve plan → connect ad account → choose subscription → pay → Mairo builds the campaign → your final approval → launch.
         </p>
+      </section>
+
+      {/* ── Your AI advertising team ──────────────────────────────────── */}
+      <section id="ai-team" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-24 -z-10 mx-auto h-[420px] max-w-[1000px] rounded-full bg-violet-600/15 blur-[120px]" />
+        <SectionHead
+          badge="YOUR AI ADVERTISING TEAM"
+          title="Meet your new AI advertising team."
+          sub="MAIRO brings eight AI specialties together to plan, create, manage, analyze and improve your campaigns — all from one simple dashboard."
+        />
+        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {AGENTS.map((a) => (
+            <li key={a.role} className={`rounded-2xl ${GLASS} p-5`}>
+              <AgentIcon role={a.role} />
+              <p className="mt-4 text-[16px] font-semibold text-white">{a.name}</p>
+              <p className="text-[13px] text-violet-200/80">{a.purpose}</p>
+              <ul className="mt-3 space-y-1.5 text-[13.5px] leading-relaxed text-white/60">
+                {a.does.slice(0, 3).map((d) => (
+                  <li key={d}>· {d}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-10 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <div className={`rounded-2xl ${GLASS} p-6`}>
+            <p className="text-[15px] font-semibold text-white">How they work together</p>
+            <ol className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-white/75">
+              {["Strategy plans", "Audience picks who to reach", "Creative makes the ads", "Campaign builds it, switched off", "Budget Guardian checks your limits", "You approve", "Campaign launches", "Analytics reports daily", "Optimization proposes improvements", "Growth looks for what's next"].map((step, i, all) => (
+                <li key={step} className="flex items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 ${step === "You approve" ? "bg-amber-400/15 text-amber-100" : "bg-white/[0.06]"}`}>{step}</span>
+                  {i < all.length - 1 && <span aria-hidden className="text-violet-300/60">→</span>}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-[13px] leading-relaxed text-white/50">
+              Real examples: &ldquo;Your Campaign Agent built your Meta campaign and is waiting for your approval.&rdquo; &ldquo;Your Budget Guardian
+              checked the proposed change against your limits.&rdquo; &ldquo;Your Analytics Agent wrote your weekly report.&rdquo; Every line on your
+              AI Team screen is something that really ran.
+            </p>
+          </div>
+          <div className={`rounded-2xl ${GLASS} p-6`}>
+            <p className="text-[15px] font-semibold text-white">What always needs your approval</p>
+            <ul className="mt-3 space-y-2 text-[13.5px] text-white/70">
+              <li>✓ Launching any campaign — with the budget shown first</li>
+              <li>✓ Spending more than you&rsquo;ve set</li>
+              <li>✓ Changing who a running campaign reaches</li>
+              <li>✓ Anything outside the automation level you choose</li>
+            </ul>
+            <p className="mt-4 text-[12.5px] leading-relaxed text-white/45">
+              Eight AI specialties, one AI system — not eight people, and not eight separate programs. They check your campaigns on a schedule,
+              once a day and whenever you open MAIRO. MAIRO can&rsquo;t promise sales or a particular return.
+            </p>
+          </div>
+        </div>
+        <div className="mt-10 text-center">
+          <p className="text-[15px] text-white/70">Your business. Your goals. Your AI advertising team.</p>
+          <Link href="/sign-up" className={`${PRIMARY} mt-5 inline-flex min-h-[54px] items-center gap-2 rounded-full px-8 text-[15.5px] font-semibold`}>
+            Get started
+          </Link>
+        </div>
       </section>
 
       {/* ── Built for your business ─────────────────────────────────── */}

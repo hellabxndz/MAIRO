@@ -24,6 +24,8 @@ import { cookies } from "next/headers";
 import { journeyFor, pulseDue } from "@/lib/success/store";
 import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
 import { JourneyCard } from "@/components/success/journey-card";
+import { loadTeam } from "@/lib/team/store";
+import { TeamCard } from "@/components/team/team-card";
 import { PulseCard } from "@/components/success/feedback";
 import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
 
@@ -86,7 +88,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
   const metaConnected = [...connections.values()].some((c) => c.connected && c.platform === "META");
   const billingRead = metaConnected ? fetchMetaBillingStatus(organizationId).catch(() => null) : Promise.resolve(null);
 
-  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy, monthLeads] = await Promise.all([
+  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy, monthLeads, team] = await Promise.all([
     billingRead,
     campaignCount > 0 ? fetchOrganizationPerformance(organizationId, { since: monthStart, until: now }).catch(() => null) : Promise.resolve(null),
     missionActivity(organizationId),
@@ -109,6 +111,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
     brainHeadline(organizationId).catch(() => null),
     db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
     db.lead.findMany({ where: { organizationId, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
+    loadTeam(organizationId, { now }).catch(() => null),
   ]);
   const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
   const m = perf?.total ?? EMPTY_METRICS;
@@ -229,7 +232,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
         {goal}
         <PerformanceCard tiles={performanceTiles(family, m)} note={perfNote} outcome={outcomeSummary(leadFunnel(monthLeads), m.spendCents)} />
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
-          <WorkingOnCard rows={rows} />
+          {team ? <TeamCard team={team} /> : <WorkingOnCard rows={rows} />}
           <AttentionCard items={attention.slice(0, 3)} />
         </div>
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">

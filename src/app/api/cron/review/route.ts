@@ -5,6 +5,7 @@ import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
+import { sweepStuckRuns } from "@/lib/team/runs";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 import { pauseSocialSweep } from "@/lib/social/pause";
@@ -89,6 +90,13 @@ export async function GET(req: Request) {
 
   const texts = await sweepSmsNotifications();
 
+  // AI Team runs that never finished (a timeout, a crash) are marked failed,
+  // so no agent shows "Working" on something that stopped.
+  const stuckRuns = await sweepStuckRuns().catch((error) => {
+    console.error("AI Team stuck-run sweep failed:", error);
+    return null;
+  });
+
   // Backstop for a missed Stripe webhook: never-paid subscriptions that ended
   // or failed still have nothing running.
   const unpaid = await stopUnpaidSweep().catch((error) => {
@@ -112,5 +120,5 @@ export async function GET(req: Request) {
     return null;
   });
 
-  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence });
+  return NextResponse.json({ reviews, leads, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns });
 }

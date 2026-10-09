@@ -101,3 +101,16 @@ export function severityTone(severity: NotificationSeverity): "green" | "yellow"
   if (severity === "OPPORTUNITY") return "green";
   return "blue";
 }
+
+/**
+ * Which notifications a business may switch off. Problems that stop ads
+ * (needs attention, tired ads, payment, a lost connection), a campaign going
+ * live, and anything MAIRO did on its own are always sent — those are the
+ * ones a business must never miss. Opportunities and report announcements
+ * are optional; the reports themselves are still written either way.
+ */
+export function optionalGroup(kind: NotificationKind): "opportunities" | "reports" | null {
+  if (kind === "BUDGET_OPPORTUNITY" || kind === "CREATIVES_READY") return "opportunities";
+  if (kind === "WEEKLY_REPORT" || kind === "MONTHLY_REPORT") return "reports";
+  return null;
+}

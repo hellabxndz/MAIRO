@@ -1,3 +1,5 @@
+import { recordRun } from "@/lib/team/runs";
+import { agentForDecision } from "@/lib/team/agents";
 import { db } from "@/lib/db";
 import { brainPromptFor } from "@/lib/brain/store";
 import { getAdapter } from "@/lib/ad-platforms/registry";
@@ -312,6 +314,26 @@ async function carryOut(
       ...(input.edited ? { changesJson: JSON.stringify(input.edited) } : {}),
     },
   });
+
+  // The team's record of an approval it carried out — only for what Meta
+  // accepted. (MAIRO's own automatic changes are recorded by the daily
+  // review that made them.) A budget change was checked against the
+  // customer's limits above, before anything ran: that's the Guardian's part.
+  if (!input.automatic && anyApplied) {
+    const owner = agentForDecision(decision.kind, decision.category);
+    if (changes.some((c) => c.type === "set-budget")) {
+      await recordRun({ organizationId: input.organizationId, agent: "GUARDIAN", task: "check-approval", status: "DONE", summary: `Checked “${decision.title}” against your spending limits before it ran — within them.`, decisionId: decision.id });
+    }
+    await recordRun({
+      organizationId: input.organizationId,
+      agent: owner,
+      task: "apply-approved",
+      status: "DONE",
+      summary: `${failure ? "Partly carried out" : "Carried out"} your approval on Meta: ${decision.title}`,
+      href: "/dashboard/activity",
+      decisionId: decision.id,
+    });
+  }
 
   if (input.automatic && anyApplied) {
     await notify({
