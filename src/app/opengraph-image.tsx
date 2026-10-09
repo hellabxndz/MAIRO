@@ -12,7 +12,7 @@ import { SITE_NAME } from "@/lib/site";
 // It also keeps the repository free of a large binary that somebody has to
 // remember to re-export whenever the name or the palette changes.
 
-export const alt = "MAIRO — ads that run themselves";
+export const alt = "MAIRO — Meet your new AI advertising team";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +62,7 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Ads that run themselves.
+            Meet your new AI advertising team.
           </div>
           <div
             style={{
@@ -73,8 +73,8 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Tell MAIRO what you sell. It plans, writes and runs your Facebook and
-            Instagram campaigns — no ads manager, no jargon.
+            Eight AI specialties that create, manage and improve your Facebook and
+            Instagram ads. You run the business — you stay in control.
           </div>
         </div>
 

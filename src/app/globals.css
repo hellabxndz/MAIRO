@@ -316,10 +316,11 @@
   50% { transform: translateY(-8px); }
 }
 .mairo-float { animation: mairo-float 7s ease-in-out infinite; }
-@keyframes mairo-dash {
-  to { stroke-dashoffset: -600; }
+/* Landing: one quiet dot travelling round the AI team. */
+@keyframes mairo-orbit {
+  to { transform: rotate(360deg); }
 }
-.mairo-arc { stroke-dasharray: 3 12; animation: mairo-dash 26s linear infinite; }
+.mairo-orbit { animation: mairo-orbit 48s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .mairo-float, .mairo-arc { animation: none; }
+  .mairo-float, .mairo-orbit { animation: none; }
 }

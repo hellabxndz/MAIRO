@@ -25,7 +25,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "MAIRO — Facebook & Instagram ads that run themselves",
+    default: "MAIRO — Your AI advertising team for Facebook & Instagram",
     // Every other page appends to this rather than replacing it, so a tab
     // reads "Pricing · MAIRO" instead of a bare word with no owner.
     template: `%s · ${SITE_NAME}`,
@@ -35,13 +35,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: "MAIRO — Facebook & Instagram ads that run themselves",
+    title: "MAIRO — Your AI advertising team for Facebook & Instagram",
     description: SITE_DESCRIPTION,
     url: siteUrl(),
   },
   twitter: {
     card: "summary_large_image",
-    title: "MAIRO — Facebook & Instagram ads that run themselves",
+    title: "MAIRO — Your AI advertising team for Facebook & Instagram",
     description: SITE_DESCRIPTION,
   },
   alternates: { canonical: "/" },

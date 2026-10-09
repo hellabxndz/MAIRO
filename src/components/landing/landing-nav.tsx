@@ -7,16 +7,16 @@ import { useEffect, useState } from "react";
 // one call to action. On a phone the links fold into a menu.
 
 const LINKS = [
-  { href: "#product", label: "Product" },
-  { href: "#how-it-works", label: "How It Works" },
   { href: "#ai-team", label: "AI Team" },
+  { href: "#product-preview", label: "Product" },
+  { href: "#how-it-works", label: "How It Works" },
   { href: "#pricing", label: "Pricing" },
 ];
 
 const RESOURCES = [
   { href: "#faq", label: "FAQ" },
   { href: "#free-plan", label: "Your free plan" },
-  { href: "#decisions", label: "How Mairo decides" },
+  { href: "#trust", label: "You stay in control" },
   { href: "/for-freelancers", label: "For freelancers & agencies" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
@@ -46,7 +46,7 @@ export function LandingNav() {
             MAIRO
           </Link>
 
-          <div className="hidden items-center gap-9 text-[14px] font-medium text-white/90 md:flex">
+          <div className="hidden items-center gap-7 whitespace-nowrap xl:gap-9 text-[14px] font-medium text-white/90 lg:flex">
             {LINKS.map((l) => (
               <a key={l.href} href={l.href} className="transition-colors hover:text-white">
                 {l.label}
@@ -83,21 +83,21 @@ export function LandingNav() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link href="/sign-in" className="hidden rounded-full border border-white/12 bg-white/[0.03] px-5 py-2.5 text-[13.5px] font-medium text-white/90 backdrop-blur transition hover:border-white/30 hover:text-white sm:inline-block">
+          <Link href="/sign-in" className="hidden rounded-full border border-white/12 bg-white/[0.03] px-5 py-2.5 text-[13.5px] font-medium text-white/90 backdrop-blur transition hover:border-white/30 hover:text-white sm:inline-block whitespace-nowrap">
             Sign In
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(79,125,255,0.9)] transition hover:brightness-110"
+            className="whitespace-nowrap rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(79,125,255,0.9)] transition hover:brightness-110"
           >
-            Get Started Free <span aria-hidden>→</span>
+            Get My Free Plan <span aria-hidden>→</span>
           </Link>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-label="Menu"
-            className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white md:hidden"
+            className="ml-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white lg:hidden"
           >
             <span aria-hidden>{open ? "✕" : "☰"}</span>
           </button>
@@ -105,7 +105,7 @@ export function LandingNav() {
       </nav>
 
       {open && (
-        <div className="border-t border-white/[0.06] px-5 pb-5 md:hidden">
+        <div className="border-t border-white/[0.06] px-5 pb-5 lg:hidden">
           <ul className="space-y-1 pt-3">
             {[...LINKS, ...RESOURCES, { href: "/sign-in", label: "Sign In" }].map((l) => (
               <li key={l.href}>

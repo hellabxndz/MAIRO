@@ -19,8 +19,8 @@ export const SITE_NAME = "MAIRO";
  * words a stranger searching for help with their ads actually uses.
  */
 export const SITE_DESCRIPTION =
-  "MAIRO is your AI marketing manager. Tell it what you want your business to achieve — it builds the strategy, " +
-  "creates your Facebook and Instagram ads and content, and runs them with your approval.";
+  "Meet your new AI advertising team: eight AI specialties that plan, create, manage and improve your Facebook " +
+  "and Instagram ads from one simple dashboard — on your own Meta ad account, with your approval on every launch.";
 
 export function siteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
