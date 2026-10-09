@@ -7,19 +7,20 @@ import { useEffect, useState } from "react";
 // one call to action. On a phone the links fold into a menu.
 
 const LINKS = [
+  { href: "#how-it-works", label: "How it works" },
   { href: "#ai-team", label: "AI Team" },
-  { href: "#product-preview", label: "Product" },
-  { href: "#why-mairo", label: "Why MAIRO" },
+  { href: "#outcomes", label: "Results" },
   { href: "#pricing", label: "Pricing" },
 ];
 
 const RESOURCES = [
-  { href: "#faq", label: "FAQ" },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#free-plan", label: "Your free plan" },
-  { href: "#control", label: "Money and control" },
-  { href: "#integrations", label: "Integrations" },
   { href: "#performance-coach", label: "Performance Coach" },
+  { href: "#product-preview", label: "See MAIRO at work" },
+  { href: "#free-plan", label: "Your free plan" },
+  { href: "#why-mairo", label: "Why MAIRO" },
+  { href: "#trust", label: "Security and budget control" },
+  { href: "#integrations", label: "Integrations" },
+  { href: "#faq", label: "FAQ" },
   { href: "/for-freelancers", label: "Sign up as a freelancer or agency" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },

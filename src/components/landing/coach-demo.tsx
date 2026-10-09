@@ -41,7 +41,7 @@ function Journey({ view }: { view: ExampleView }) {
               {s.rate && <span className={`text-[10.5px] ${flagged ? "font-medium text-warn" : "text-faint"}`}>{s.rate}</span>}
             </p>
             {s.value === null && <p className="mt-1 text-[10.5px] leading-snug text-faint">Not marked yet</p>}
-            {flagged && <span className="absolute -top-2 right-2 rounded-full bg-warn px-2 py-0.5 text-[10px] font-semibold text-white">Biggest drop</span>}
+            {flagged && <span className="absolute -top-2 right-2 rounded-full bg-warn px-2 py-0.5 text-[10px] font-semibold text-paper">Biggest drop</span>}
           </li>
         );
       })}

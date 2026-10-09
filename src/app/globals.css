@@ -53,9 +53,10 @@
   --color-magenta: #c026d3;
 
   /* ---- Status ---------------------------------------------------------- */
-  --color-live: #0f9d6b;
-  --color-warn: #c2780a;
-  --color-alert: #dc3b30;
+  /* Dark enough to read as text on white (4.5:1), not only as a dot. */
+  --color-live: #0b7f57;
+  --color-warn: #a35f00;
+  --color-alert: #c9332a;
 
   /* ---- Text ------------------------------------------------------------ */
   /*
@@ -67,7 +68,8 @@
   --color-white: #12152b;
   --color-paper: #ffffff;
   --color-muted: #5a6382;
-  --color-faint: #8a92aa;
+  /* The quietest type that still reads: 4.7:1 on white. */
+  --color-faint: #6b7390;
 
   /* ---- The greys, re-pointed ------------------------------------------- */
   /*

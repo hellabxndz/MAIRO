@@ -70,7 +70,7 @@ export function planStories(): PlanStory[] {
       `${e.studio_credits_monthly} AI image credits a month (about ${pictures(e.studio_credits_monthly)} pictures)`,
       ...(e.autopilot ? ["Full Autopilot available"] : e.auto_optimize ? ["AI Assist available"] : ["You approve every change"]),
       ...(e.advanced_analytics ? ["Every ad's results side by side"] : ["Results in plain English"]),
-      ...(e.social_posting ? ["MAIRO Social Manager"] : []),
+      ...(e.social_posting ? [metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves"] : []),
       ...(prioritySupport(t) ? ["Priority support"] : []),
     ];
     return {
