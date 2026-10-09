@@ -198,8 +198,12 @@ export async function maybeGoLive(
     // Moving the status first, conditionally, means only one of them gets a
     // count of 1 and goes on to call Meta. Without it both would, and the
     // second would be resuming a campaign that is already running.
+    //
+    // The approval is checked again in the same statement: an owner who
+    // cancelled the launch a moment ago (cancelPlanLaunchAction) has cleared
+    // it, and this claim then finds nothing to switch on.
     const claim = await db.platformCampaign.updateMany({
-      where: { id: child.id, status: "PENDING_REVIEW" },
+      where: { id: child.id, status: "PENDING_REVIEW", mairoCampaign: { launchApprovedAt: { not: null } } },
       data: { status: "ACTIVE", lastError: null },
     });
     if (claim.count === 0) continue;

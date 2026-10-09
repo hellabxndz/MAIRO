@@ -191,6 +191,10 @@ model Organization {
   /// need a paid (or trialing) subscription, whatever BILLING_ENFORCED says.
   /// Older accounts, and the Meta App Review account, follow BILLING_ENFORCED.
   paymentRequired        Boolean   @default(false)
+  /// Answers on the setup screens before they're finished (OnboardingDraft),
+  /// so leaving halfway — or a failed save — loses nothing. Cleared once the
+  /// intake is saved.
+  onboardingDraft        Json?
   /// Whether a payment has ever gone through. A subscription that ends or
   /// fails before this is true never paid — its ads are stopped.
   hasPaid                Boolean   @default(false)

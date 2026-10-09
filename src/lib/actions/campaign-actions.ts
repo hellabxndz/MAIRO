@@ -526,6 +526,8 @@ export async function createCampaignAction(
       task: "build-campaign",
       status: "NOTHING",
       summary: `Couldn't build “${name}” on Meta: ${failures[0]?.error ?? "Meta refused it"}. It's saved as a draft.`,
+      // Meta's own words, so the setup steps can explain them plainly.
+      detail: failures[0]?.error ?? null,
       href: "/dashboard/create",
     });
   }

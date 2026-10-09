@@ -55,6 +55,9 @@ const TASK_LABEL: Record<string, string> = {
   "write-plan": "Writing your advertising plan",
   "read-website": "Reading your website",
   "plan-audience": "Choosing who to reach",
+  "plan-creative": "Drafting ad ideas for your plan",
+  "revise-plan": "Updating your plan",
+  "cancel-launch": "Keeping a campaign switched off",
   "spend-check": "Checking spend against your limits",
   "weekly-report": "Writing your weekly report",
 };

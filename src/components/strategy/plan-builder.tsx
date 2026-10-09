@@ -42,12 +42,14 @@ export function PlanBuilder({ website }: { website: string | null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // One line per real request — reading the website, then writing the plan
+  // (goal, budget, audience and ad ideas come back together). A line is
+  // "in progress" only while its request is actually running.
   const steps = [
-    ...(website ? [{ key: "website", label: `Reading ${website.replace(/^https?:\/\//, "").replace(/\/$/, "")}` }] : []),
-    { key: "plan", label: "Choosing your audience, budget split and campaign" },
-    { key: "done", label: "Writing your creative concepts and hooks" },
+    ...(website ? [{ key: "website", label: `Your Strategy Agent reads ${website.replace(/^https?:\/\//, "").replace(/\/$/, "")}` }] : []),
+    { key: "plan", label: "Your Strategy, Audience and Creative Agents write your plan: goal, budget, who to reach and first ad ideas" },
   ];
-  const at = stage === "error" ? -1 : steps.findIndex((s) => s.key === stage);
+  const at = stage === "error" ? -1 : stage === "done" ? steps.length : steps.findIndex((s) => s.key === stage);
 
   return (
     <div className="mx-auto max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-6 sm:p-8">
@@ -56,19 +58,22 @@ export function PlanBuilder({ website }: { website: string | null }) {
       <p className="mt-2 text-[14px] text-muted">This takes under a minute. You&rsquo;ll review everything and can change any part before moving on.</p>
       <ul className="mt-6 space-y-3">
         {steps.map((s, i) => {
-          const done = at > i || stage === "done";
-          const active = at === i || (stage === "plan" && s.key === "done");
+          const done = at > i;
+          const active = at === i;
           return (
-            <li key={s.key} className="flex items-center gap-3 text-[14px]">
+            <li key={s.key} className="flex items-start gap-3 text-[14px]">
               <span
                 aria-hidden
-                className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] ${
-                  done ? "border-emerald-400/40 text-emerald-300" : active ? "animate-pulse border-violet/60 text-violet-bright" : "border-white/10 text-faint"
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] ${
+                  done ? "border-emerald-400/40 text-emerald-300" : active ? "border-violet/60 text-violet-bright" : "border-white/10 text-faint"
                 }`}
               >
                 {done ? "✓" : i + 1}
               </span>
-              <span className={done || active ? "text-white" : "text-faint"}>{s.label}</span>
+              <span className={done || active ? "text-white" : "text-faint"}>
+                {s.label}
+                {active && <span className="ml-2 text-[12px] text-violet-bright">in progress</span>}
+              </span>
             </li>
           );
         })}

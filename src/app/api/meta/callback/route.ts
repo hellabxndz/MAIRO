@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
-import {
-  exchangeCodeForToken,
-  exchangeForLongLivedToken,
-  fetchAdAccounts,
-  fetchPages,
-  metaRedirectUri,
-} from "@/lib/meta/oauth";
 import { stopExploring } from "@/lib/explore-mode";
-import { saveMetaConnection } from "@/lib/meta/connection";
-import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { RETURN_COOKIE, safeReturnTo } from "@/lib/meta/return-to";
+import { completeMetaConnection } from "@/lib/meta/connect-flow";
+import { classifyMetaConnect, explainMetaConnect, type MetaConnectCode } from "@/lib/onboarding/problems";
 
 const STATE_COOKIE = "myro_meta_oauth_state";
 
-function redirectWithError(origin: string, message: string) {
-  const url = new URL("/dashboard/meta", origin);
-  url.searchParams.set("error", message);
+/**
+ * Back to the step they started from, with the reason — never to a page they
+ * didn't come from. A connection that fails halfway through setup used to
+ * drop the business on the Meta settings page, out of the setup steps, with
+ * Meta's raw words; now it returns to where they were, says what happened in
+ * plain words, and everything they'd done is still there.
+ */
+function failed(origin: string, returnTo: string | null, code: MetaConnectCode, extra: { missing?: string[]; technical?: string | null } = {}) {
+  const url = new URL(returnTo ?? "/dashboard/meta", origin);
+  url.searchParams.set("metaError", code);
+  if (extra.missing?.length) url.searchParams.set("missing", extra.missing.join(","));
+  if (extra.technical) url.searchParams.set("metaDetail", extra.technical.slice(0, 600));
+  // The Meta settings page shows `error` as text; give it the plain version.
+  if (!returnTo) {
+    const p = explainMetaConnect(code, { returnTo: "/dashboard/meta", missing: extra.missing });
+    url.searchParams.set("error", `${p.title}. ${p.message}`);
+  }
   return NextResponse.redirect(url);
 }
 
@@ -29,19 +36,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", origin));
   }
 
-  const error = req.nextUrl.searchParams.get("error_description");
-  if (error) return redirectWithError(origin, error);
+  const cookieStore = await cookies();
+  const returnTo = safeReturnTo(cookieStore.get(RETURN_COOKIE)?.value);
+  cookieStore.delete(RETURN_COOKIE);
+
+  // Facebook sends these when the person closed the window or said no.
+  const metaError = req.nextUrl.searchParams.get("error");
+  const errorReason = req.nextUrl.searchParams.get("error_reason");
+  const description = req.nextUrl.searchParams.get("error_description");
+  if (metaError || description) {
+    return failed(origin, returnTo, classifyMetaConnect({ error: metaError, errorReason, description }), { technical: description });
+  }
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
-  if (!code || !state) return redirectWithError(origin, "Missing code or state from Meta.");
-
-  const cookieStore = await cookies();
   const expectedState = cookieStore.get(STATE_COOKIE)?.value;
   cookieStore.delete(STATE_COOKIE);
-
-  if (!expectedState || expectedState !== state) {
-    return redirectWithError(origin, "Invalid OAuth state. Please try connecting again.");
+  if (!code || !state || !expectedState || expectedState !== state) {
+    return failed(origin, returnTo, "link_expired");
   }
 
   const [organizationId] = state.split(".");
@@ -56,127 +68,30 @@ export async function GET(req: NextRequest) {
   // this is the separate question of whether it belongs to the caller.
   const permitted = await activeOrganizationId();
   if (!organizationId || organizationId !== permitted) {
-    return redirectWithError(origin, "This connection doesn't match your account.");
+    return failed(origin, returnTo, "wrong_account");
   }
 
   try {
-    const shortLived = await exchangeCodeForToken(code);
-    const longLived = await exchangeForLongLivedToken(shortLived.access_token);
-
-    const adAccounts = await fetchAdAccounts(longLived.access_token);
-    if (adAccounts.length === 0) {
-      return redirectWithError(
-        origin,
-        "No Meta ad accounts found for this login. Create an ad account in Meta Business Manager first."
-      );
-    }
-
-    // Prefer an account that can actually run ads.
-    //
-    // This used to take adAccounts[0] and ask no questions, which is fine right
-    // up until somebody's first account is a disabled or unsettled one and
-    // their second is the working one. They would connect successfully, create
-    // a campaign, and watch nothing ever deliver, with the dashboard reporting
-    // a healthy connection throughout.
-    //
-    // Meta's account_status 1 is the only value that can spend. Falling back to
-    // the first account when none qualify is deliberate: a connection to a
-    // troubled account is still better than refusing to connect at all, and the
-    // billing card on the Meta page names the problem either way.
-    //
-    // Reconnecting (to grant one more permission, say) keeps the ad account
-    // and Page already chosen, while this login can still reach them.
-    const previous = await db.metaAdAccount.findUnique({ where: { organizationId }, select: { metaAdAccountId: true, pageId: true } });
-    const chosen =
-      adAccounts.find((a) => a.id === previous?.metaAdAccountId) ??
-      adAccounts.find((a) => a.account_status === 1) ??
-      adAccounts[0];
-
-    const pages = await fetchPages(longLived.access_token);
-    const page = pages.find((p) => p.id === previous?.pageId) ?? pages[0];
-
-    const tokenExpiresAt = longLived.expires_in
-      ? new Date(Date.now() + longLived.expires_in * 1000)
-      : null;
-
-    await saveMetaConnection({
-      organizationId,
-      metaAdAccountId: chosen.id,
-      // First Page as a starting point, not a decision. A business with more
-      // than one Page gets whichever Meta returns first, which is why the Meta
-      // page shows which one was picked and lets it be changed — an ad going
-      // out under the wrong brand is not something to discover from a comment
-      // notification.
-      pageId: page?.id ?? null,
-      pageName: page?.name ?? null,
-      accessToken: longLived.access_token,
-      tokenExpiresAt,
-    });
+    const result = await completeMetaConnection(organizationId, code);
+    if (!result.ok) return failed(origin, returnTo, result.code, { missing: result.missing, technical: result.technical });
 
     // A real connection makes "looking around first" moot — drop the flag so
     // the not-connected banner disappears and the funnel is back to normal.
     await stopExploring();
 
-    // A connected account that cannot be charged is the single most common
-    // reason a first campaign never runs, so it is called out on arrival
-    // rather than left for the customer to find.
-    // Back to where they started, when that was somewhere else — the
-    // campaign they were planning picks up where it left off.
-    const returnTo = safeReturnTo(cookieStore.get(RETURN_COOKIE)?.value);
-    cookieStore.delete(RETURN_COOKIE);
+    // Back to where they started — the campaign they were planning picks up
+    // where it left off. An ad account that can't spend, or no Page, is said
+    // on arrival by the setup steps rather than left for later.
     const url = new URL(returnTo ?? "/dashboard/meta", origin);
     url.searchParams.set("connected", "1");
-    if (chosen.account_status !== 1) url.searchParams.set("checkBilling", "1");
+    if (result.accountStatus !== 1) {
+      url.searchParams.set("checkBilling", "1");
+      url.searchParams.set("acct", String(result.accountStatus));
+    }
     return NextResponse.redirect(url);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to connect to Meta.";
-    return redirectWithError(origin, explainMetaError(message));
+    console.error("Meta connection failed:", message);
+    return failed(origin, returnTo, classifyMetaConnect({ message }), { technical: message });
   }
-}
-
-/**
- * Turns Meta's OAuth errors into something that names the actual fix.
- *
- * Every one of these is a configuration problem on the deployment, not
- * something the person clicking the button did wrong — but Meta phrases them
- * as if you were supposed to already know. "Error validating client secret."
- * is a complete sentence to Meta and a dead end to everyone else, so each of
- * the ones that actually happen gets translated into the setting to go change.
- */
-function explainMetaError(raw: string): string {
-  if (/client secret/i.test(raw)) {
-    return (
-      "Meta rejected this app's client secret. The META_APP_SECRET set on this " +
-      "deployment doesn't match the App Secret on the Meta app — most often " +
-      "because the secret was reset in Meta and never updated here, or it was " +
-      "updated but the project hasn't been redeployed since. Copy it again from " +
-      "App settings > Basic, save it, and redeploy."
-    );
-  }
-
-  if (/app not active|not currently accessible|isn't available|app is in development/i.test(raw)) {
-    return (
-      "This Meta app is still unpublished, so only people with a role on it " +
-      "(Administrator, Developer or Tester) can connect. Either add this " +
-      "Facebook account under App roles, or finish App Review to open it to " +
-      "everyone."
-    );
-  }
-
-  if (/redirect|url is blocked|uri/i.test(raw)) {
-    return (
-      `Meta blocked the redirect. Register exactly this URL under Valid OAuth ` +
-      `Redirect URIs on the Meta app, with no trailing slash: ${metaRedirectUri()}`
-    );
-  }
-
-  if (/invalid scope|permission|ads_management|business_management/i.test(raw)) {
-    return (
-      "Meta refused one of the permissions this app asks for. A permission " +
-      "App Review hasn't approved only works for accounts with a role on the " +
-      "app — check META_SCOPES isn't asking for one (such as ads_read)."
-    );
-  }
-
-  return raw;
 }

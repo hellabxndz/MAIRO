@@ -11,6 +11,9 @@ import { usd } from "@/lib/strategy/plan-logic";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
 import { JourneyFrame } from "@/components/strategy/journey";
 import { WatchDemo } from "@/components/landing/watch-demo";
+import { loadOnboarding } from "@/lib/onboarding/progress-store";
+import { connectHref, connectProblemFromParams, explainSubscription } from "@/lib/onboarding/problems";
+import { ProblemCard } from "@/components/onboarding/problem-card";
 
 // Connect the ad account, then CHOOSE YOUR MAIRO PLAN.
 //
@@ -53,8 +56,9 @@ function money(n: number): string {
   return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
 }
 
-export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ checkout?: string; tier?: string; skip?: string; connected?: string; subscribed?: string }> }) {
-  const { checkout, tier: chosenTier, skip, connected: justConnected, subscribed } = await searchParams;
+export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ checkout?: string; tier?: string; skip?: string; connected?: string; subscribed?: string; metaError?: string; missing?: string; metaDetail?: string; acct?: string }> }) {
+  const params = await searchParams;
+  const { checkout, tier: chosenTier, skip, connected: justConnected, subscribed } = params;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -66,19 +70,20 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   const plan = approvedPlanOf(row);
   if (!plan) redirect("/plan");
 
-  const [org, meta] = await Promise.all([
+  const [org, meta, steps] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, subscriptionStatus: true, executionStoppedAt: true, executionStoppedReason: true },
     }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true, metaAdAccountId: true, pageName: true } }),
+    loadOnboarding(organizationId),
   ]);
   if (!org) redirect("/sign-in");
 
   // Back from Stripe before its confirmation reached Mairo: say so and look again.
   if (subscribed === "1" && !FAILED.includes(org.subscriptionStatus ?? "")) {
     return (
-      <JourneyFrame step={4}>
+      <JourneyFrame steps={steps} here="subscribe">
         <div className="mx-auto mt-6 max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-8 text-center">
           <meta httpEquiv="refresh" content="4" />
           <p className="text-[18px] font-semibold text-white">Confirming your subscription with Stripe…</p>
@@ -90,14 +95,20 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
 
   const connected = meta?.status === "CONNECTED";
   const showPlans = connected || skip === "1";
+  // Connected, and usable: not expired, a Page chosen, nothing Meta flagged.
+  const connectionOk = steps?.find((s) => s.id === "connect")?.state === "done";
   const head = planHeadline(plan);
   const configured = billingConfigured();
   const buyable = configured ? purchasableTiers() : [];
   const selected = PLANS.find((p) => p.tier === chosenTier) ?? null;
-  const saved = checkout === "cancelled" || FAILED.includes(org.subscriptionStatus ?? "");
+  // What went wrong, if anything, said plainly with the way out: a connection
+  // that came back with a problem, or one that worked but can't be used now
+  // (expired, no Page), and a payment that didn't go through.
+  const connectProblem = connectProblemFromParams(params, "/plan/activate") ?? steps?.find((s) => s.id === "connect")?.problem ?? null;
+  const paymentProblem = explainSubscription(org.subscriptionStatus, { checkoutCancelled: checkout === "cancelled" });
 
   return (
-    <JourneyFrame step={showPlans ? 4 : 3} skipped={connected ? [] : [3]} wide>
+    <JourneyFrame steps={steps} here={showPlans ? "subscribe" : "connect"} wide>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">
           {org.executionStoppedAt && (
@@ -107,16 +118,12 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             </div>
           )}
 
-          {saved && !org.executionStoppedAt && (
-            <div className="rounded-2xl border border-white/12 bg-white/[0.03] p-5">
-              <p className="text-[15px] font-semibold text-white">Your Mairo plan is saved.</p>
-              <p className="mt-1 text-[13.5px] text-muted">Choose a subscription whenever you&rsquo;re ready to activate it. Your business details, approved plan, connected account and website analysis are all kept.</p>
-              <a href="#plans" className="mt-3 inline-flex min-h-[42px] items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110">Choose a Plan</a>
-            </div>
-          )}
+          {paymentProblem && !org.executionStoppedAt && <ProblemCard problem={paymentProblem} tone="warn" />}
+
+          {connectProblem && <ProblemCard problem={connectProblem} tone={params.metaError ? "alert" : "warn"} />}
 
           {/* The ad account */}
-          {connected ? (
+          {connected && connectionOk ? (
             <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-5">
               <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Account connected ✓</p>
               <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -130,9 +137,9 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-6">
               <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Plan approved ✓</p>
               <p className="mt-2 text-[20px] font-semibold text-white">Connect your ad account</p>
-              <p className="mt-1 text-[14px] text-muted">So Mairo knows where your campaign will eventually run.</p>
-              <a href="/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1" className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
-                Connect My Ad Account
+              <p className="mt-1 text-[14px] text-muted">So Mairo knows where your campaign will eventually run. You&rsquo;ll sign in with Facebook and choose your ad account and Facebook Page — keep every option switched on so MAIRO can build your campaign.</p>
+              <a href={connectHref("/plan/activate?connected=1")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
+                {connected ? "Reconnect My Ad Account" : "Connect My Ad Account"}
               </a>
               <p className="mt-3 text-[13px] text-muted">Connecting your account does not launch anything or spend money.</p>
               {!showPlans && (

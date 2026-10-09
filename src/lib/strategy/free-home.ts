@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { hasActivePlan } from "@/lib/readiness";
+import { loadOnboarding } from "@/lib/onboarding/progress-store";
 
 /** The free home's state, or null when this account has full access. */
 export async function freeHomeState(organizationId: string) {
@@ -8,14 +9,16 @@ export async function freeHomeState(organizationId: string) {
     select: { name: true, subscriptionTier: true, subscriptionStatus: true, paymentRequired: true, executionStoppedReason: true, executionStoppedAt: true, parentId: true },
   });
   if (!org || !org.paymentRequired || org.parentId || hasActivePlan(org)) return null;
-  const [plan, meta] = await Promise.all([
+  const [plan, meta, steps] = await Promise.all([
     db.strategyPlan.findUnique({ where: { organizationId }, select: { status: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true } }),
+    loadOnboarding(organizationId),
   ]);
   return {
     approved: plan?.status === "APPROVED",
     connected: meta?.status === "CONNECTED",
     businessName: org.name,
     stoppedReason: org.executionStoppedAt ? org.executionStoppedReason : null,
+    steps,
   };
 }

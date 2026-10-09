@@ -6,8 +6,6 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrg } from "@/lib/active-org";
-import { hasActivePlan } from "@/lib/readiness";
-import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import { reviseStrategy, strategyFacts, aiAvailable } from "@/lib/ai/strategy";
 import {
   CAMPAIGN_TYPE_VALUES,
@@ -43,6 +41,8 @@ import {
 } from "@/lib/strategy/store";
 import { draftFromApprovedPlan } from "@/lib/strategy/campaign";
 import { executionBlock } from "@/lib/billing/execution";
+import { recordRun } from "@/lib/team/runs";
+import { cancelPlanLaunch, launchPlanCampaign, type CancelResult, type LaunchResult } from "@/lib/onboarding/launch";
 
 // What the free plan's review screen and the launch journey call.
 
@@ -162,6 +162,17 @@ export async function askMairoAction(request: string, expectedVersion: number): 
     if (changes.length === 0) return { ok: true, answer: "Your plan already says that — nothing needed changing." };
     const saved = await commit(ctx.organizationId, { expectedVersion, plan, changes, kind: "ai", request: text, requestedBy: "you" });
     if (!saved.ok) return saved;
+    // The Strategy Agent's record of the change, once it's saved.
+    const parts = [...new Set(changes.map((c) => SECTION_LABEL[c.section]?.toLowerCase()).filter(Boolean))];
+    await recordRun({
+      organizationId: ctx.organizationId,
+      agent: "STRATEGIST",
+      task: "revise-plan",
+      status: "DONE",
+      summary: `Updated your plan as you asked: changed ${parts.slice(0, 3).join(", ")}${parts.length > 3 ? ` and ${parts.length - 3} more` : ""}.`,
+      detail: text,
+      href: "/plan",
+    });
     refresh();
     return { ok: true, plan, version: saved.version, status: "DRAFT", changes, suggestion, note: null };
   } finally {
@@ -335,36 +346,25 @@ export async function buildFromPlanAction(): Promise<void> {
   redirect(`/dashboard/create/meta?draft=${draftId}`);
 }
 
-/** "Launch Campaign": the one press that lets the first campaign spend. */
-export async function launchPlanCampaignAction(): Promise<{ ok: true; launched: boolean; message: string | null } | { ok: false; error: string }> {
+/** "Approve and launch" — see launchPlanCampaign. */
+export async function launchPlanCampaignAction(): Promise<LaunchResult> {
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
-  const [row, org] = await Promise.all([
-    db.strategyPlan.findUnique({ where: { organizationId: ctx.organizationId } }),
-    db.organization.findUnique({ where: { id: ctx.organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } }),
-  ]);
-  if (!row?.campaignId) return { ok: false, error: "The campaign hasn't been built yet." };
-  if (!org || !hasActivePlan(org)) return { ok: false, error: "Choose a Mairo plan first — your subscription isn't active, so nothing can be launched." };
-  const owned = await db.mairoCampaign.updateMany({
-    where: { id: row.campaignId, organizationId: ctx.organizationId },
-    data: { launchApprovedAt: new Date() },
-  });
-  if (owned.count === 0) return { ok: false, error: "Campaign not found." };
-
-  const outcome = await maybeGoLive(ctx.organizationId, { onlyCampaignId: row.campaignId, approvedByPerson: true });
-  if (outcome.launched) {
-    await db.strategyPlan.update({ where: { id: row.id }, data: { launchedAt: new Date() } });
-  }
+  const r = await launchPlanCampaign(ctx.organizationId);
   refresh();
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/campaigns");
-  return {
-    ok: true,
-    launched: outcome.launched,
-    message: outcome.launched
-      ? null
-      : outcome.heldBecause ?? "Approved. Meta is still reviewing the ad — Mairo switches it on as soon as the review clears, because you've already said yes.",
-  };
+  return r;
+}
+
+/** "Cancel the launch" — see cancelPlanLaunch. */
+export async function cancelPlanLaunchAction(): Promise<CancelResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const r = await cancelPlanLaunch(ctx.organizationId);
+  refresh();
+  revalidatePath("/dashboard");
+  return r;
 }
 
 export async function dismissWelcomeAction(): Promise<void> {

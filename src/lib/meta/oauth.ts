@@ -179,7 +179,7 @@ export function metaRedirectUri(): string {
   );
 }
 
-export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean } = {}): string {
+export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean; rerequest?: boolean } = {}): string {
   const appId = requireEnv("META_APP_ID");
   const redirectUri = metaRedirectUri();
 
@@ -192,7 +192,9 @@ export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; i
   url.searchParams.set("scope", scopes.join(","));
   // Asks again for a permission that was turned down before, rather than
   // Facebook silently skipping it.
-  if (extra.length > 0) url.searchParams.set("auth_type", "rerequest");
+  // Also when a business switched something off last time and is connecting
+  // again to turn it back on.
+  if (extra.length > 0 || opts.rerequest) url.searchParams.set("auth_type", "rerequest");
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

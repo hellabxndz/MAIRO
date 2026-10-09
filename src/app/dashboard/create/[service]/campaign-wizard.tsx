@@ -1,5 +1,7 @@
 "use client";
 
+import { ProblemCard } from "@/components/onboarding/problem-card";
+import { explainCampaignError } from "@/lib/onboarding/problems";
 import { startTransition, useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -97,7 +99,12 @@ export function CampaignWizard(props: Props) {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
 
-  const [confirmed, setConfirmed] = useState(false);
+  // The first campaign from the approved plan is approved on its own review
+  // screen (/dashboard/launch), with the budget, the ads, the account and
+  // both bills in front of the owner. Here it is only built, switched off.
+  const finalReviewLater = Boolean(props.afterLaunchHref);
+  const [agreedHere, setConfirmed] = useState(false);
+  const confirmed = finalReviewLater || agreedHere;
   const [customName, setCustomName] = useState("");
 
   const [state, formAction, pending] = useActionState<CampaignActionState, FormData>(createCampaignAction, undefined);
@@ -212,7 +219,9 @@ export function CampaignWizard(props: Props) {
       fd.append(k, v);
     }
     // The owner ticked "I agree to spend …" with the budget in front of them.
-    fd.append("spendAgreed", "1");
+    // Not for the plan's first campaign: that approval is given on the review
+    // screen it goes to next.
+    if (!finalReviewLater) fd.append("spendAgreed", "1");
     setAttempt((n) => n + 1);
     startTransition(() => formAction(fd));
   }
@@ -403,25 +412,30 @@ export function CampaignWizard(props: Props) {
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What happens next</p>
                 <p className="mt-2">
                   MAIRO builds the campaign in your own {NETWORK[plan.service]} ad account, switched off.{" "}
-                  {autoLaunchHeld
-                    ? props.afterLaunchHref
-                      ? "It then waits: you'll see it beside your approved plan, and nothing runs until you press Launch Campaign."
-                      : "It then waits: nothing runs until you press Approve on the Campaigns page, because you've asked MAIRO to hold before going live."
-                    : `Once the ad is ready and ${NETWORK[plan.service]} can charge your payment method, MAIRO switches it on — that's when spending starts. You can pause it any time.`}
+                  {finalReviewLater
+                    ? "Then you'll see the full pre-launch review — the ads, who sees them, the budget Meta charges and your MAIRO subscription — and nothing runs until you approve it there."
+                    : autoLaunchHeld
+                      ? "It then waits: nothing runs until you press Approve on the Campaigns page, because you've asked MAIRO to hold before going live."
+                      : `Once the ad is ready and ${NETWORK[plan.service]} can charge your payment method, MAIRO switches it on — that's when spending starts. You can pause it any time.`}
                 </p>
               </div>
 
+              {!finalReviewLater && (
               <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4"
-                style={{ borderColor: confirmed ? "rgba(108,158,255,0.5)" : "var(--mairo-line)", background: confirmed ? "rgba(61,125,255,0.06)" : "transparent" }}>
-                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#6c9eff]" />
+                style={{ borderColor: agreedHere ? "rgba(108,158,255,0.5)" : "var(--mairo-line)", background: agreedHere ? "rgba(61,125,255,0.06)" : "transparent" }}>
+                <input type="checkbox" checked={agreedHere} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#6c9eff]" />
                 <span className="text-[13px] leading-relaxed text-white/90">
                   {spend.maxCents !== null
                     ? `I agree to spend up to ${dollars(spend.maxCents)} in total on this campaign, charged by ${NETWORK[plan.service]} to my ad account.`
                     : `I agree to spend ${dollars(spend.perDayCents)} a day (about ${dollars(spend.per30DaysCents)} every 30 days) on this campaign until I pause or stop it, charged by ${NETWORK[plan.service]} to my ad account.`}
                 </span>
               </label>
+              )}
 
-              {state?.error && (
+              {state?.error && state.partial?.length ? (
+                // Meta refused the build: said plainly, with Meta's words kept for support.
+                <ProblemCard className="mt-5" problem={{ ...explainCampaignError(state.partial[0].error, { campaignHref: "#", returnTo: props.afterLaunchHref ?? "/dashboard/create" }), fix: null, kept: "Nothing was launched or charged. Your campaign is saved as a draft — change it and build again." }} />
+              ) : state?.error && (
                 <div className="mt-5 rounded-xl border border-alert/30 bg-alert/[0.06] px-4 py-3 text-[13px] text-alert">
                   <p>{state.error}</p>
                   {state.partial && state.partial.length > 1 && (
@@ -464,7 +478,7 @@ export function CampaignWizard(props: Props) {
                 <button key="launch" type="button" onClick={() => void launch()} disabled={blocked !== null || pending}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
                   style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
-                  {pending ? "Building…" : "Launch campaign"}
+                  {pending ? "Building…" : finalReviewLater ? "Build it for my final review" : "Launch campaign"}
                   <span aria-hidden>→</span>
                 </button>
               )}

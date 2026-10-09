@@ -174,6 +174,20 @@ export async function createStrategy(organizationId: string): Promise<{ ok: true
     detail: a.summary || null,
     href: "/plan",
   });
+  // The ad ideas in the plan are the Creative Agent's part — recorded only
+  // when the plan actually has some.
+  if (plan.concepts.length || plan.hooks.length) {
+    const ideas = [plan.concepts.length ? `${plan.concepts.length} ad idea${plan.concepts.length === 1 ? "" : "s"}` : null, plan.hooks.length ? `${plan.hooks.length} opening line${plan.hooks.length === 1 ? "" : "s"}` : null].filter(Boolean).join(" and ");
+    await recordRun({
+      organizationId,
+      agent: "CREATIVE",
+      task: "plan-creative",
+      status: "DONE",
+      summary: `Drafted ${ideas} for your plan — the starting point for your ads.`,
+      detail: plan.concepts.map((c) => c.title).join(" · ") || null,
+      href: "/plan",
+    });
+  }
   return { ok: true, ai };
 }
 

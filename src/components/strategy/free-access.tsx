@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { JourneySteps } from "./journey";
+import { SetupProgress } from "@/components/onboarding/setup-progress";
+import type { OnboardingStep } from "@/lib/onboarding/progress";
 
 // What a free-plan account sees inside the dashboard before subscribing.
 // Free: their plan, their business, connected accounts and pricing. Everything
@@ -110,13 +111,14 @@ export function FreeHome({
   connected,
   businessName,
   stoppedReason,
+  steps,
 }: {
   approved: boolean;
   connected: boolean;
   businessName: string;
   stoppedReason: string | null;
+  steps: OnboardingStep[] | null;
 }) {
-  const step = !approved ? 2 : !connected ? 3 : 4;
   const next = !approved
     ? { title: "Review and approve your free plan", text: "Change anything you like — ask Mairo or edit it yourself — then approve it.", href: "/plan", label: "Open my free plan", external: false }
     : !connected
@@ -140,7 +142,7 @@ export function FreeHome({
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      <JourneySteps step={step} paid={false} />
+      {steps && <SetupProgress steps={steps} />}
       {stoppedReason && (
         <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
           <p className="text-[15px] font-semibold text-white">Mairo paused your campaigns</p>

@@ -67,7 +67,9 @@ export async function loadJourney(organizationId: string, opts: { checkFunding: 
 
   const pcs = campaign?.platformCampaigns ?? [];
   const built = pcs.some((p) => p.externalCampaignId && p.externalAdId);
-  const launched = pcs.some((p) => p.status === "ACTIVE");
+  // Live only once Meta switched it on: the campaign is marked ACTIVE after
+  // Meta accepted the change, not when MAIRO claims the row to try.
+  const launched = pcs.some((p) => p.status === "ACTIVE") && campaign?.status === "ACTIVE";
   let launchedAt = row.launchedAt;
   if (launched && !launchedAt) {
     launchedAt = new Date();

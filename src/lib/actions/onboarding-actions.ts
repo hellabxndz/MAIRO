@@ -8,6 +8,9 @@ import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
 import { activeOrganizationId } from "@/lib/active-org";
 import { normalizePhone, normalizeUrl, requiredDetailFor } from "@/lib/campaigns/destination";
+import { Prisma } from "@/generated/prisma/client";
+import { recommendGoal } from "@/lib/onboarding/goal";
+import { businessSchema, goalDraftSchema, learnBusiness, saveBusinessStep, saveGoalDraft, type LearnResult } from "@/lib/onboarding/setup";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
@@ -141,6 +144,9 @@ export async function completeOnboardingAction(
     },
   });
 
+  // The intake is the record from here on; the half-finished answers are done with.
+  await db.organization.update({ where: { id: organizationId }, data: { onboardingDraft: Prisma.DbNull } });
+
   // A business signing itself up gets the free plan next: Mairo writes it,
   // they review, change and approve it, and only then choose a subscription.
   // A freelancer's client keeps the old path — its freelancer already pays.
@@ -214,4 +220,32 @@ export async function completeOnboardingAction(
     redirect("/dashboard/leads?setup=1");
   }
   redirect("/dashboard/meta?required=1");
+}
+
+// --- The setup screens (lib/onboarding/setup.ts does the work) -----------------------
+
+async function orgId(): Promise<string | null> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return null;
+  return (await activeOrganizationId()) ?? session.user.organizationId;
+}
+
+export type { Learned } from "@/lib/onboarding/setup";
+
+export async function saveBusinessStepAction(input: z.input<typeof businessSchema>): Promise<{ ok: true; website: string | null } | { ok: false; error: string }> {
+  const organizationId = await orgId();
+  if (!organizationId) return { ok: false, error: "You need to be signed in." };
+  return saveBusinessStep(organizationId, input);
+}
+
+export async function learnBusinessAction(): Promise<LearnResult> {
+  const organizationId = await orgId();
+  if (!organizationId) return { ok: true, read: false, learned: [], note: "You need to be signed in.", suggestion: recommendGoal({}) };
+  return learnBusiness(organizationId);
+}
+
+export async function saveGoalDraftAction(input: z.input<typeof goalDraftSchema>): Promise<{ ok: boolean }> {
+  const organizationId = await orgId();
+  if (!organizationId) return { ok: false };
+  return saveGoalDraft(organizationId, input);
 }

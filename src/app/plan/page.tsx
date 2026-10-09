@@ -6,6 +6,7 @@ import { loadStrategy, strategyInputFor } from "@/lib/strategy/store";
 import { JourneyFrame } from "@/components/strategy/journey";
 import { PlanBuilder } from "@/components/strategy/plan-builder";
 import { PlanReview } from "@/components/strategy/plan-review";
+import { loadOnboarding } from "@/lib/onboarding/progress-store";
 
 // The free stage: Mairo writes the plan, the business reviews it, asks for
 // changes, and approves it. No dashboard yet — that comes with activation.
@@ -20,10 +21,11 @@ export default async function PlanPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [org, intake, loaded] = await Promise.all([
+  const [org, intake, loaded, steps] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, website: true } }),
     db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }),
     loadStrategy(organizationId),
+    loadOnboarding(organizationId),
   ]);
   if (!org) redirect("/sign-in");
   if (!intake) redirect("/onboarding");
@@ -31,7 +33,7 @@ export default async function PlanPage() {
 
   if (!loaded) {
     return (
-      <JourneyFrame step={2}>
+      <JourneyFrame steps={steps} here="plan">
         <PlanBuilder website={org.website} />
       </JourneyFrame>
     );
@@ -44,7 +46,7 @@ export default async function PlanPage() {
   const connected = meta?.status === "CONNECTED";
   const approved = loaded.row.status === "APPROVED";
   return (
-    <JourneyFrame step={approved ? (connected ? 4 : 3) : 2} wide>
+    <JourneyFrame steps={steps} here={approved ? "connect" : "approve"} wide>
       <PlanReview
         plan={loaded.plan}
         version={loaded.row.version}

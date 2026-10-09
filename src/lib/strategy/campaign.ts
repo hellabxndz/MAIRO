@@ -87,7 +87,15 @@ export async function draftFromApprovedPlan(organizationId: string, userId: stri
     },
     select: { id: true },
   });
-  await db.strategyPlan.update({ where: { id: row.id }, data: { campaignDraftId: draft.id } });
+  // Two presses of "Build My Campaign" at once both get here. Only the one
+  // that finds the plan still pointing where it read it wins; the other
+  // removes its own draft and uses the winner's, so one plan never has two.
+  const linked = await db.strategyPlan.updateMany({ where: { id: row.id, campaignDraftId: row.campaignDraftId }, data: { campaignDraftId: draft.id } });
+  if (linked.count === 0) {
+    await db.campaignDraft.deleteMany({ where: { id: draft.id, organizationId } });
+    const winner = await db.strategyPlan.findUnique({ where: { id: row.id }, select: { campaignDraftId: true } });
+    return winner?.campaignDraftId ?? null;
+  }
   return draft.id;
 }
 

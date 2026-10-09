@@ -47,12 +47,18 @@ export async function GET(req: NextRequest) {
     // ?also=page_posts / ?also=instagram: Scale's Facebook and Instagram
     // posting, each asked for on its own, never in the everyday dialog.
     const also = req.nextUrl.searchParams.get("also");
-    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram" });
+    // ?rerequest=1: connecting again after switching a permission off.
+    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram", rerequest: req.nextUrl.searchParams.get("rerequest") === "1" });
     return NextResponse.redirect(authUrl);
   } catch (error) {
+    // Usually a missing setting on this deployment. The business goes back
+    // to the step it was on, told plainly; the setting is in the details.
     const message = error instanceof Error ? error.message : "Failed to start Meta connect";
-    return NextResponse.redirect(
-      new URL(`/dashboard/meta?error=${encodeURIComponent(message)}`, req.nextUrl.origin)
-    );
+    console.error("Meta connect couldn't start:", message);
+    const url = new URL(returnTo ?? "/dashboard/meta", req.nextUrl.origin);
+    url.searchParams.set("metaError", "setup");
+    url.searchParams.set("metaDetail", message.slice(0, 600));
+    if (!returnTo) url.searchParams.set("error", "MAIRO's connection to Meta isn't working right now. This is a problem on MAIRO's side, not something you did — try again later.");
+    return NextResponse.redirect(url);
   }
 }
