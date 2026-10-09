@@ -102,7 +102,7 @@ export function Journey({ result, labels }: { result: CoachResult; labels: { BOO
                 <span className="block h-full rounded-full bg-[image:var(--mairo-ramp)]" style={{ width: `${Math.max(2, Math.round((v / max) * 100))}%` }} />
               </span>
               <span className="text-right tabular-nums text-white">
-                {v}
+                {v.toLocaleString("en-US")}
                 {prevV ? <span className="ml-1.5 text-[11.5px] text-faint">{Math.round((v / prevV) * 100)}%</span> : null}
               </span>
             </li>

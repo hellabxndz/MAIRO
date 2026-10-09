@@ -55,6 +55,13 @@ export function MetaAdAccountPicker({ accountId }: { accountId: string }) {
         <div className="space-y-2">
           {pending && !accounts && <p className="text-sm text-neutral-500">Asking Meta…</p>}
 
+          {accounts?.length === 0 && (
+            <p className="max-w-xl text-sm text-amber-300">
+              Meta didn&apos;t list any ad accounts for this login. Check your role on the account in
+              Meta Business Settings, then reconnect.
+            </p>
+          )}
+
           {accounts && accounts.length > 0 && (
             <ul className="max-w-md divide-y divide-white/5 overflow-hidden rounded-lg border border-white/10">
               {accounts.map((a) => {
