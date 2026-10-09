@@ -285,7 +285,7 @@ function Snippet({ title, hint, code }: { title: string; hint: string; code: str
         </button>
       </div>
       <p className="mt-1 text-xs leading-relaxed text-neutral-500">{hint}</p>
-      <pre className="mt-2 max-h-56 overflow-auto rounded-lg border border-white/10 bg-black/40 p-3 text-[11px] leading-relaxed text-neutral-400">
+      <pre className="mt-2 max-h-56 overflow-auto rounded-lg border border-white/10 bg-field-2 p-3 text-[11px] leading-relaxed text-neutral-400">
         <code>{code}</code>
       </pre>
     </div>

@@ -108,7 +108,7 @@ export function AnalysisScan({
                       ? "border-[color:var(--mairo-line-lit)] bg-blue/20"
                       : "border-[color:var(--mairo-line)]"
                 } ${working && !reduced ? "mairo-scan-dot" : ""}`}
-                style={{ background: done || working ? undefined : "rgba(6,10,24,0.9)" }}
+                style={{ background: done || working ? undefined : "rgba(var(--mairo-bg-rgb),0.9)" }}
               >
                 {done && (
                   <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none">

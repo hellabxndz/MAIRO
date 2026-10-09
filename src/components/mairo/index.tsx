@@ -146,7 +146,7 @@ export function MairoCard({
       }
       style={{
         backgroundImage: lit
-          ? "linear-gradient(158deg, rgba(28,48,104,0.58), rgba(9,15,36,0.72))"
+          ? "linear-gradient(158deg, rgba(28,48,104,0.58), rgba(var(--mairo-bg-rgb),0.72))"
           : "var(--mairo-glass)",
         borderColor: lit ? "rgba(108,158,255,0.42)" : "var(--mairo-line)",
         boxShadow: lit
@@ -227,7 +227,7 @@ export function Chip({ children }: { children: ReactNode }) {
   return (
     <span
       className="inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted sm:text-[10px]"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
     >
       {children}
     </span>

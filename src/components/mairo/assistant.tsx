@@ -200,7 +200,7 @@ export function MairoAssistant({
             role="dialog"
             aria-label={`${assistantName}, your assistant`}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl border-t lg:inset-y-0 lg:left-auto lg:right-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:border-l lg:border-t-0"
-            style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(6,10,24,0.98)" }}
+            style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.98)" }}
           >
             <header
               className="flex items-center gap-3 border-b px-5 py-4"
@@ -281,7 +281,7 @@ export function MairoAssistant({
                           }`}
                           style={
                             m.role === "assistant"
-                              ? { background: "rgba(255,255,255,0.04)" }
+                              ? { background: "rgba(var(--mairo-fg-rgb),0.04)" }
                               : undefined
                           }
                         >
@@ -322,7 +322,7 @@ export function MairoAssistant({
             >
               <div
                 className="flex items-center gap-2 rounded-full border px-4 py-2"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.6)" }}
+                style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
               >
                 <input
                   value={input}

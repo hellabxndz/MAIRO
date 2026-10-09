@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { addPromotionAction, endPromotionAction, type ManagerResult } from "@/lib/actions/social-manager-actions";
 import { PROMOTION_FIELDS, PROMOTION_KINDS, SEQUENCES, type PromotionKind } from "@/lib/social/goals";
 
-const input = "w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 
 export function PromotionForm({ initialKind }: { initialKind: PromotionKind | null }) {
   const router = useRouter();
@@ -15,7 +15,7 @@ export function PromotionForm({ initialKind }: { initialKind: PromotionKind | nu
   const [pending, start] = useTransition();
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <h2 className="text-[18px] font-semibold text-white">Anything happening at your business?</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {PROMOTION_KINDS.map((k) => (

@@ -62,7 +62,7 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
   return (
     <article
       className="rounded-2xl border p-5 sm:p-6"
-      style={{ borderColor: decision.urgent ? "rgba(248,113,113,0.35)" : "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}
+      style={{ borderColor: decision.urgent ? "rgba(248,113,113,0.35)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
     >
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
         <span className="rounded-full px-2.5 py-0.5 font-medium" style={{ color: tone, border: `1px solid ${tone}55` }}>

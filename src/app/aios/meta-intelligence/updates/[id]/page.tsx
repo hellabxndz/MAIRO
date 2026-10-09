@@ -45,7 +45,7 @@ export default async function UpdatePage({ params }: PageProps<"/aios/meta-intel
         <p className="mt-3 text-[12.5px] text-faint">Detected {u.detectedAt.toLocaleString("en-US")} · {u.source ? <>{u.source.name} ({u.source.authority.toLowerCase()})</> : "MAIRO error monitoring"} {u.sourceUrl && <a href={u.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">source</a>}</p>
         <details className="mt-3">
           <summary className="cursor-pointer text-[13px] text-white/85">What the source says (untrusted text)</summary>
-          <pre className="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-lg bg-black/30 p-3 text-[12.5px] text-white/75">{u.excerpt}</pre>
+          <pre className="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-lg bg-field-2 p-3 text-[12.5px] text-white/75">{u.excerpt}</pre>
         </details>
       </Card>
 
@@ -93,7 +93,7 @@ export default async function UpdatePage({ params }: PageProps<"/aios/meta-intel
             <div><dt className="text-faint">Strategy Engine lesson</dt><dd className="text-white/85">{p.strategyLesson ?? "None"}</dd></div>
           </dl>
           {p.suggestedCodeChanges && (
-            <details className="mt-3"><summary className="cursor-pointer text-[13px] text-white/85">Suggested code changes (for developers — never executed)</summary><pre className="mt-2 whitespace-pre-wrap rounded-lg bg-black/30 p-3 text-[12.5px] text-white/75">{p.suggestedCodeChanges}</pre></details>
+            <details className="mt-3"><summary className="cursor-pointer text-[13px] text-white/85">Suggested code changes (for developers — never executed)</summary><pre className="mt-2 whitespace-pre-wrap rounded-lg bg-field-2 p-3 text-[12.5px] text-white/75">{p.suggestedCodeChanges}</pre></details>
           )}
         </Card>
       )}

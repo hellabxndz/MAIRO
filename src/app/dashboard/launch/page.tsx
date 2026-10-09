@@ -19,7 +19,7 @@ import { JourneySteps } from "@/components/strategy/journey";
 export const metadata = { title: "Your first campaign" };
 export const dynamic = "force-dynamic";
 
-const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80";
+const card = "rounded-2xl border border-white/[0.07] bg-field/80";
 
 export default async function LaunchPage({ searchParams }: { searchParams: Promise<{ welcome?: string; subscribed?: string; connected?: string }> }) {
   const { welcome, subscribed } = await searchParams;

@@ -37,7 +37,7 @@ export function LandingNav() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
-        scrolled || open ? "border-b border-white/[0.06] bg-[#050814]/80 backdrop-blur-md" : "bg-transparent"
+        scrolled || open ? "border-b border-white/[0.06] bg-field-3/80 backdrop-blur-md" : "bg-transparent"
       }`}
     >
       <nav className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
@@ -67,7 +67,7 @@ export function LandingNav() {
               </button>
               {resources && (
                 <div className="absolute left-1/2 top-full w-60 -translate-x-1/2 pt-3">
-                  <ul className="rounded-xl border border-white/10 bg-[#0c0c17] p-1.5 shadow-2xl">
+                  <ul className="rounded-xl border border-white/10 bg-paper p-1.5 shadow-2xl">
                     {RESOURCES.map((r) => (
                       <li key={r.href}>
                         <Link href={r.href} className="block rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/[0.05] hover:text-white">

@@ -50,7 +50,7 @@ export function PlanBuilder({ website }: { website: string | null }) {
   const at = stage === "error" ? -1 : steps.findIndex((s) => s.key === stage);
 
   return (
-    <div className="mx-auto max-w-[560px] rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-6 sm:p-8">
+    <div className="mx-auto max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-6 sm:p-8">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free plan</p>
       <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.02em]">Mairo is building your advertising plan</h1>
       <p className="mt-2 text-[14px] text-muted">This takes under a minute. You&rsquo;ll review everything and can change any part before moving on.</p>

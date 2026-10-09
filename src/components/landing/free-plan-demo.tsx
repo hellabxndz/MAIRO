@@ -59,7 +59,7 @@ export function FreePlanDemo() {
         )}
       </div>
 
-      <div className="flex flex-col rounded-3xl border border-white/10 bg-[#0b0e22]/80 p-6">
+      <div className="flex flex-col rounded-3xl border border-white/10 bg-field-2/80 p-6">
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Ask Mairo</p>
         {edited ? (
           <div className="mt-4 space-y-3">

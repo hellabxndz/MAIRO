@@ -87,7 +87,7 @@ export function EarlyWarnings({ insights, advanced }: { insights: InsightView[];
   const [filter, setFilter] = useState<string>("all");
   const shown = early.filter((i) => filter === "all" || i.category === filter);
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo found this before you did</h2>
       <p className="mt-1 text-[14px] text-muted">Small problems become expensive when nobody notices them.</p>
       {early.length === 0 ? (

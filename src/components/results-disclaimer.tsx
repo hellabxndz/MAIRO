@@ -55,7 +55,7 @@ export function ResultsDisclaimer({ className = "" }: { className?: string }) {
       className={`rounded-[var(--radius-panel)] border p-5 sm:p-6 ${className}`}
       style={{
         borderColor: "var(--mairo-line)",
-        background: "rgba(10,16,32,0.5)",
+        background: "rgba(var(--mairo-bg-rgb),0.5)",
       }}
       aria-labelledby="results-disclaimer-heading"
     >

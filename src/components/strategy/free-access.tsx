@@ -77,7 +77,7 @@ function LockIcon({ className = "h-5 w-5" }: { className?: string }) {
 export function LockedArea({ pathname, approved }: { pathname: string; approved: boolean }) {
   const info = lockInfo(pathname);
   return (
-    <div className="relative mx-auto max-w-[900px] overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b1122]/80">
+    <div className="relative mx-auto max-w-[900px] overflow-hidden rounded-2xl border border-white/[0.07] bg-field/80">
       {/* A shape of the page behind the lock — no numbers. */}
       <div aria-hidden className="pointer-events-none select-none p-6 opacity-40 blur-[2px]">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -88,7 +88,7 @@ export function LockedArea({ pathname, approved }: { pathname: string; approved:
         <div className="mt-3 h-48 rounded-xl border border-white/10 bg-gradient-to-t from-violet/20 to-transparent" />
       </div>
       <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div className="max-w-[420px] rounded-2xl border border-white/12 bg-[#070b18]/95 p-6 text-center shadow-2xl">
+        <div className="max-w-[420px] rounded-2xl border border-white/12 bg-paper p-6 text-center shadow-2xl">
           <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/12 text-violet-bright">
             <LockIcon />
           </span>
@@ -166,7 +166,7 @@ export function FreeHome({
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((t) => (
-          <Link key={t.title} href={t.href} className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5 transition hover:border-violet/40">
+          <Link key={t.title} href={t.href} className="rounded-2xl border border-white/[0.07] bg-field/80 p-5 transition hover:border-violet/40">
             <p className="text-[15px] font-semibold text-white">{t.title}</p>
             <p className="mt-1 text-[13px] text-muted">{t.text}</p>
           </Link>

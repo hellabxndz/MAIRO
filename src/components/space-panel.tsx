@@ -34,7 +34,7 @@ export function SpacePanel({
   return (
     <div
       className={`rounded-2xl border border-white/[0.09] bg-white/[0.045] ${className}`}
-      style={{ boxShadow: "0 40px 120px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.02) inset" }}
+      style={{ boxShadow: "0 40px 120px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(var(--mairo-fg-rgb),0.02) inset" }}
     >
       {label && (
         <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-5 py-3.5">

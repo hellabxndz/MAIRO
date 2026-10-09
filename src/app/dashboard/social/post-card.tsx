@@ -18,7 +18,7 @@ type Result = { ok: true; message: string; permalink?: string | null } | { ok: f
 
 const primary = "min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[40px] rounded-lg border border-white/12 px-4 text-[13px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
-const input = "w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 
 export const TONE_CLASS: Record<CalendarPost["tone"], string> = {
   muted: "bg-white/[0.06] text-white/60",
@@ -136,7 +136,7 @@ export function PostCard({
   const when = post.date ? `${new Date(`${post.date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}` : "When approved";
 
   return (
-    <article className="min-w-0 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-4" aria-label={`${post.contentType} post`}>
+    <article className="min-w-0 rounded-2xl border border-white/[0.07] bg-field/80 p-4" aria-label={`${post.contentType} post`}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[14.5px] font-semibold text-white">{post.contentType}</p>

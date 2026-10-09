@@ -143,7 +143,7 @@ export function WeeklyReport({
         <Glance c={data.glance.current} p={data.glance.previous} mode={mode} profitKnown={data.glance.profitKnown} word={word} />
       </ReportSection>
 
-      <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(124,92,255,0.16),transparent_55%),#0b1122] p-5">
+      <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(124,92,255,0.16),transparent_55%),var(--color-field)] p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo summary</p>
         <p className="mt-2 text-[15.5px] leading-relaxed text-white/90">{mode === "advanced" ? data.summary.advanced : data.summary.simple}</p>
       </section>

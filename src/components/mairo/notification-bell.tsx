@@ -98,7 +98,7 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
           className="absolute right-0 top-11 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border"
           style={{
             borderColor: "var(--mairo-line-lit)",
-            background: "rgba(8,13,30,0.98)",
+            background: "rgba(var(--mairo-bg-rgb),0.98)",
             boxShadow: "var(--mairo-glow-lift)",
           }}
         >

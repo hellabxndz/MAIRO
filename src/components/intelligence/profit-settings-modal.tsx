@@ -27,7 +27,7 @@ function Field({ name, label, hint, defaultValue, prefix, suffix }: { name: stri
     <label className="block">
       <span className="text-[13px] font-medium text-white">{label}</span>
       {hint && <span className="mt-0.5 block text-[12px] text-faint">{hint}</span>}
-      <span className="mt-1.5 flex h-11 items-center rounded-lg border border-white/10 bg-[#0c1326] px-3 focus-within:border-violet/60">
+      <span className="mt-1.5 flex h-11 items-center rounded-lg border border-white/10 bg-field-2 px-3 focus-within:border-violet/60">
         {prefix && <span className="mr-1 text-muted">{prefix}</span>}
         <input name={name} defaultValue={defaultValue} inputMode="decimal" className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-faint" placeholder="—" />
         {suffix && <span className="ml-1 text-muted">{suffix}</span>}
@@ -68,7 +68,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
             <form
               action={action}
               onClick={(e) => e.stopPropagation()}
-              className="max-h-[92vh] w-full max-w-[620px] overflow-y-auto rounded-t-2xl border border-white/10 bg-[#0b1122] p-5 shadow-2xl sm:rounded-2xl sm:p-6"
+              className="max-h-[92vh] w-full max-w-[620px] overflow-y-auto rounded-t-2xl border border-white/10 bg-field p-5 shadow-2xl sm:rounded-2xl sm:p-6"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -114,7 +114,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
                           {p.title}
                           {p.priceCents !== null && <span className="text-faint"> · ${(p.priceCents / 100).toFixed(2)}</span>}
                         </span>
-                        <span className="flex h-10 w-28 items-center rounded-lg border border-white/10 bg-[#0c1326] px-2.5 focus-within:border-violet/60">
+                        <span className="flex h-10 w-28 items-center rounded-lg border border-white/10 bg-field-2 px-2.5 focus-within:border-violet/60">
                           <span className="mr-1 text-muted">$</span>
                           <input name={`product-cost-${p.id}`} defaultValue={dollars(p.costCents)} inputMode="decimal" aria-label={`Cost of ${p.title}`} className="w-full bg-transparent text-[13px] text-white outline-none" placeholder="—" />
                         </span>

@@ -104,7 +104,7 @@ export function StepAudience({
                     style={{
                       borderColor: plan.genders === g.v ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
                       background: plan.genders === g.v ? "rgba(61,125,255,0.08)" : "transparent",
-                      color: plan.genders === g.v ? "white" : undefined,
+                      color: plan.genders === g.v ? "var(--color-white)" : undefined,
                     }}>
                     {g.l}
                   </button>

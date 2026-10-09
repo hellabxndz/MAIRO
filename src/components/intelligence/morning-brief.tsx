@@ -53,7 +53,7 @@ export function MorningBrief({
   const count = actions.length;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-violet/30 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(124,92,255,0.18),transparent_55%),linear-gradient(180deg,#0e1430,#0b1122)] p-5 sm:p-6">
+    <section className="relative overflow-hidden rounded-2xl border border-violet/30 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(124,92,255,0.18),transparent_55%),linear-gradient(180deg,var(--color-field),var(--color-field-2))] p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your morning brief</p>
@@ -109,7 +109,7 @@ export function MorningBrief({
             </p>
             <ul className="mt-2.5 space-y-2.5">
               {actions.map((a, i) => (
-                <li key={a.id} className="flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-black/20 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <li key={a.id} className="flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3.5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">Action {i + 1}</p>
                     <p className="text-[14px] font-medium text-white">{a.title}</p>

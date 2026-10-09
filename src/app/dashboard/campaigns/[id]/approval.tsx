@@ -34,7 +34,7 @@ export function CampaignApproval({
       <section
         id="approve"
         className="rounded-[var(--radius-panel)] border p-5 sm:p-6"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
       >
         <h2 className="text-[15px] font-medium text-white">Not ready to launch yet</h2>
         <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-muted">
@@ -59,7 +59,7 @@ export function CampaignApproval({
       className="rounded-[var(--radius-panel)] border p-5 sm:p-6"
       style={{
         borderColor: "rgba(108,158,255,0.4)",
-        background: "linear-gradient(158deg, rgba(28,48,104,0.5), rgba(9,15,36,0.7))",
+        background: "linear-gradient(158deg, rgba(28,48,104,0.5), rgba(var(--mairo-bg-rgb),0.7))",
         boxShadow: "0 0 30px rgba(61,125,255,0.18)",
       }}
     >

@@ -27,7 +27,7 @@ export function AdvancedFold({ lines, children }: { lines: SummaryLine[]; childr
   }, []);
 
   return (
-    <details ref={ref} className="group mb-8 rounded-[22px]" style={{ background: "rgba(255,255,255,0.025)" }}>
+    <details ref={ref} className="group mb-8 rounded-[22px]" style={{ background: "rgba(var(--mairo-fg-rgb),0.025)" }}>
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-[22px] px-5 py-5 transition hover:bg-white/[0.03] sm:px-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
           <span className="block text-[15px] font-medium text-white">Advanced settings</span>

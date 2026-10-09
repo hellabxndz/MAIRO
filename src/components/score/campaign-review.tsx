@@ -83,7 +83,7 @@ export function CampaignReviewPanel({
   return (
     <div className="space-y-5">
       {/* --- the score ------------------------------------------------------------ */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(10,16,32,0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
         {comparison && <ComparisonBanner c={comparison} learned={learned} />}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -130,7 +130,7 @@ export function CampaignReviewPanel({
 
       {/* --- improve your campaign ----------------------------------------------- */}
       {score.blocking === 0 && (count > 0 || review.questions.learn.length > 0) && (
-        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(124,92,255,0.45)", background: "linear-gradient(180deg, rgba(124,92,255,0.12), rgba(10,16,32,0.5))" }}>
+        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(124,92,255,0.45)", background: "linear-gradient(180deg, rgba(124,92,255,0.12), rgba(var(--mairo-bg-rgb),0.5))" }}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[16px] font-medium text-white">Improve Your Campaign</p>
@@ -232,12 +232,12 @@ export function CampaignReviewPanel({
       </div>
 
       {/* --- before you launch ------------------------------------------------------- */}
-      <section className="rounded-2xl border p-5" style={{ ...line, background: "rgba(10,16,32,0.5)" }}>
+      <section className="rounded-2xl border p-5" style={{ ...line, background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
         <p className={`${eyebrow} text-faint`}>Before you launch</p>
         <ul className="mt-3 space-y-1.5">
           {checklist.items.map((i) => (
             <li key={i.key} className="flex items-center gap-2.5 text-[13.5px]">
-              <span aria-hidden className="w-4 text-center" style={{ color: i.ok ? "#34d399" : i.blocking ? "#f87171" : "#fbbf24" }}>{i.ok ? "✓" : i.blocking ? "✕" : "⚠"}</span>
+              <span aria-hidden className="w-4 text-center" style={{ color: i.ok ? "var(--color-emerald-400)" : i.blocking ? "var(--color-red-400)" : "var(--color-amber-400)" }}>{i.ok ? "✓" : i.blocking ? "✕" : "⚠"}</span>
               <span className={i.ok ? "text-white/85" : "text-white"}>{i.text}</span>
             </li>
           ))}
@@ -297,7 +297,7 @@ function useCountUp(from: number | null, to: number): number {
 function ComparisonBanner({ c, learned }: { c: Comparison; learned: number }) {
   const up = c.delta > 0;
   return (
-    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(52,211,153,0.35)" : "var(--mairo-line)", background: up ? "rgba(52,211,153,0.06)" : "rgba(255,255,255,0.02)" }}>
+    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(52,211,153,0.35)" : "var(--mairo-line)", background: up ? "rgba(52,211,153,0.06)" : "rgba(var(--mairo-fg-rgb),0.02)" }}>
       <p className="text-[14.5px] font-medium text-white">{c.headline}</p>
       <p className="mt-0.5 text-[13px] text-white/85">
         {c.from} → {c.to}
@@ -596,7 +596,7 @@ function LearnPanel({ questions, h }: { questions: ReviewQuestion[]; h: ReviewHa
   const q = open[0];
   const position = questions.length - open.length + 1;
   return (
-    <section className="rounded-2xl border p-5" style={{ ...line, background: "rgba(10,16,32,0.5)" }}>
+    <section className="rounded-2xl border p-5" style={{ ...line, background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className={`${eyebrow} text-faint`}>Help MAIRO learn your business</p>
@@ -680,7 +680,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
               const on = chosen.includes(c);
               return (
                 <button key={c} type="button" aria-pressed={on} onClick={() => setChosen((x) => (on ? x.filter((y) => y !== c) : [...x, c]))}
-                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(124,92,255,0.18)" : undefined, color: on ? "white" : "rgba(255,255,255,0.8)" }}>
+                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(124,92,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
                   {on ? "✓ " : ""}{c}
                 </button>
               );
@@ -694,7 +694,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
       ) : q.yesNo ? (
         <div className="mt-3">
           <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Add detail (optional), e.g. what's included"
-            className="w-full rounded-xl border bg-[rgba(10,16,32,0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
+            className="w-full rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" disabled={pending} onClick={() => submit(`yes ${answer}`)} className={primaryBtn} style={ramp}>{pending ? "Saving…" : "Yes"}</button>
             <button type="button" disabled={pending} onClick={() => submit("no")} className={quietBtn} style={line}>No</button>
@@ -704,7 +704,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
         <form className="mt-3" onSubmit={(e) => { e.preventDefault(); submit(answer, updating); }}>
           <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} rows={2} maxLength={300} aria-label={q.text}
             placeholder={updating ? `What should MAIRO use instead?` : (q.placeholder ?? "In your own words")}
-            className="w-full resize-none rounded-xl border bg-[rgba(10,16,32,0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
+            className="w-full resize-none rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
           <button type="submit" disabled={pending || !answer.trim()} className={`${primaryBtn} mt-2`} style={ramp}>{pending ? "Saving…" : "Save answer"}</button>
         </form>
       )}

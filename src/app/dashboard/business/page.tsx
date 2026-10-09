@@ -71,7 +71,7 @@ export default async function BusinessPage() {
         }
       />
 
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(10,16,32,0.55)" }}>
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.55)" }}>
         <BusinessAnalyzer defaultUrl={brain.analyzedUrl ?? p.website} analyzed={Boolean(brain.analyzedAt)} />
         {brain.analyzedAt && (
           <p className="mt-3 text-[12px] text-faint">
@@ -248,7 +248,7 @@ export default async function BusinessPage() {
 
 function Section({ title, children, lit = false }: { title: string; children: ReactNode; lit?: boolean }) {
   return (
-    <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: lit ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: "rgba(10,16,32,0.45)" }}>
+    <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: lit ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}>
       <h2 className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-blue-bright">{title}</h2>
       {children}
     </section>

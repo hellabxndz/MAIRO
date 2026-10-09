@@ -198,7 +198,7 @@ function Cell({ label, value }: { label: string; value: string }) {
   return (
     <div
       className="rounded-xl border px-3.5 py-3"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
     >
       <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-faint">{label}</p>
       <p className="mt-1.5 text-[14px] text-white">{value}</p>

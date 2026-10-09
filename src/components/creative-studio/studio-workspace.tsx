@@ -364,7 +364,7 @@ export function StudioWorkspace({
               <div className="relative overflow-hidden rounded-[var(--radius-panel)] border" style={{ borderColor: "var(--mairo-line)" }}>
                 <img src={result.imageUrl} alt="Generated creative" className="w-full" />
                 {busy && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                  <div data-palette="classic" className="absolute inset-0 flex items-center justify-center bg-black/60">
                     <GeneratingOverlay label="Editing" />
                   </div>
                 )}

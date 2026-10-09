@@ -6,7 +6,7 @@ import { freelancerSignUpAction } from "@/lib/actions/auth-actions";
 import { GoogleButton, OrDivider } from "@/components/google-button";
 
 const inputClass =
-  "w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
+  "w-full rounded-lg border border-white/10 bg-field px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
 
 export function FreelancerSignUpForm({
   googleEnabled,

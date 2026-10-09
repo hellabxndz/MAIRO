@@ -182,7 +182,7 @@ export function Tour({
         className="pointer-events-none absolute rounded-xl transition-all duration-300"
         style={{
           boxShadow: "0 0 0 9999px rgba(0,0,0,0.78)",
-          outline: "1px solid rgba(255,255,255,0.22)",
+          outline: "1px solid rgba(var(--mairo-fg-rgb),0.22)",
         }}
       />
 

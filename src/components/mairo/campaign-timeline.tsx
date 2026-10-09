@@ -91,7 +91,7 @@ export function CampaignTimeline({ steps }: { steps: TimelineStep[] }) {
                 className={`absolute left-0 top-3.5 flex h-[31px] w-[31px] items-center justify-center rounded-full border transition-all duration-500 [transition-timing-function:var(--ease-mairo)] ${DOT[step.state]} ${
                   step.state === "current" ? "mairo-step-pulse" : ""
                 }`}
-                style={{ background: "rgba(6,10,24,0.9)" }}
+                style={{ background: "rgba(var(--mairo-bg-rgb),0.9)" }}
               >
                 <Mark state={step.state} index={i} />
               </span>

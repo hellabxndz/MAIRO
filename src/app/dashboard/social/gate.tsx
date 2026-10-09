@@ -66,7 +66,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
             <h2 className="mb-3 text-[15px] font-semibold text-white">Your posting history</h2>
             <ul className="space-y-2">
               {published.map((p) => (
-                <li key={p.id} className="rounded-xl border border-white/[0.07] bg-[#0b1122]/80 px-4 py-3 text-[13px] text-white/80">
+                <li key={p.id} className="rounded-xl border border-white/[0.07] bg-field/80 px-4 py-3 text-[13px] text-white/80">
                   <span className="text-[11.5px] uppercase tracking-[0.12em] text-faint">
                     {p.network === "FACEBOOK" ? "Facebook" : "Instagram"} · {p.postedAt?.toLocaleDateString() ?? ""}
                   </span>

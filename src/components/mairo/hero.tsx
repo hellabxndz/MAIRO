@@ -99,7 +99,7 @@ function CardChip({ children, icon }: { children: ReactNode; icon?: ReactNode })
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-muted"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.025)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
     >
       {icon}
       {children}
@@ -232,13 +232,13 @@ function CampaignCard() {
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div
           className="flex items-end rounded-lg border p-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(10,17,38,0.5)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <Sparkline className="h-8" />
         </div>
         <div
           className="rounded-lg border px-3 py-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(10,17,38,0.5)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <p className="text-[11px] leading-tight text-white/85">Campaigns live</p>
           <p className="mt-1 flex items-center gap-1 text-[11px] text-blue-bright">
@@ -308,7 +308,7 @@ function AudienceCard() {
       <div className="mt-4 grid grid-cols-[1.35fr_1fr] gap-2">
         <div
           className="flex items-center rounded-lg border p-2"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(10,17,38,0.5)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <AudiencePlot />
         </div>
@@ -339,7 +339,7 @@ function OptimizationCard() {
       <div className="mt-4 grid grid-cols-[1.5fr_1fr] gap-2">
         <div
           className="flex items-center rounded-lg border px-2.5 py-2"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(10,17,38,0.5)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <RisingLine className="h-11" />
         </div>
@@ -370,7 +370,7 @@ function OptimizationCard() {
           <span
             key={s.label}
             className="inline-flex items-center justify-center gap-1 rounded-md border px-1.5 py-1 text-[9.5px] text-muted"
-            style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.025)" }}
+            style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
           >
             <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 shrink-0 text-blue-bright" fill="none" aria-hidden>
               {s.dir === "up" ? (
@@ -527,7 +527,7 @@ export function MairoHero() {
             <div className="mt-5 flex justify-center lg:mt-7">
               <span
                 className="rounded-full border px-5 py-2.5 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-muted sm:text-[10px] sm:tracking-[0.24em]"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.65)" }}
+                style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.65)" }}
               >
                 Ads performance compounded by AI
               </span>

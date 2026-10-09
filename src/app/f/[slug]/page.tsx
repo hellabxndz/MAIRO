@@ -52,7 +52,9 @@ export default async function PublicLeadFormPage({
   if (fields.length === 0) notFound();
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-5 py-10">
+    // The original palette, under which this form was always drawn: a white
+    // card with dark type. Its visitors are the business's own customers.
+    <main data-palette="classic" className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-5 py-10">
       <LeadFormView
         slug={form.slug}
         businessName={form.organization.name}

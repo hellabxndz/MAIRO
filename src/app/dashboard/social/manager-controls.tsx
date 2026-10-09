@@ -78,7 +78,7 @@ export function PostingSettings({ platforms, postsPerWeek }: { platforms: Networ
       ))}
       <label className="flex items-center gap-2">
         Posts a week
-        <select value={n} onChange={(e) => setN(Number(e.target.value))} className="rounded-lg border border-white/10 bg-[#0c1326] px-2 py-1 text-white">
+        <select value={n} onChange={(e) => setN(Number(e.target.value))} className="rounded-lg border border-white/10 bg-field-2 px-2 py-1 text-white">
           {[2, 3, 4, 5, 6, 7].map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
       </label>

@@ -57,7 +57,7 @@ export function CalendarView({
         {view === "week" ? (
           <ol className="grid grid-cols-1 gap-3 md:grid-cols-7">
             {dates.map((d) => (
-              <li key={d} className={`min-w-0 rounded-xl border p-2 ${d === today ? "border-violet-400/60" : "border-white/[0.07]"} bg-[#0b1122]/60`}>
+              <li key={d} className={`min-w-0 rounded-xl border p-2 ${d === today ? "border-violet-400/60" : "border-white/[0.07]"} bg-field/60`}>
                 <p className="mb-2 px-1 text-[12px] text-faint">
                   <span className="font-semibold text-white/85">{dayName(d, { weekday: "short" })}</span> {dayName(d, { day: "numeric", month: "short" })}
                 </p>
@@ -71,7 +71,7 @@ export function CalendarView({
                         ) : (
                           <span className="flex h-full items-center justify-center px-2 text-center text-[10.5px] text-amber-200/80">Creative needed</span>
                         )}
-                        {p.mediaType === "REEL" && <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[10px] text-white">▶</span>}
+                        {p.mediaType === "REEL" && <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 text-[10px] text-[#fff]">▶</span>}
                       </span>
                       <span className="flex items-center gap-1.5 text-[11.5px] text-white/70"><PlatformMark network={p.network} className="h-3 w-3" />{p.time}</span>
                       <span className="mt-0.5 block truncate text-[12.5px] font-medium text-white">{p.contentType}</span>
@@ -90,7 +90,7 @@ export function CalendarView({
                 <p key={d} className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-faint">{d}</p>
               ))}
               {dates.map((d) => (
-                <div key={d} className={`min-h-[92px] rounded-lg border p-1.5 ${d.slice(0, 7) === month ? "bg-[#0b1122]/60" : "bg-transparent opacity-50"} ${d === today ? "border-violet-400/60" : "border-white/[0.06]"}`}>
+                <div key={d} className={`min-h-[92px] rounded-lg border p-1.5 ${d.slice(0, 7) === month ? "bg-field/60" : "bg-transparent opacity-50"} ${d === today ? "border-violet-400/60" : "border-white/[0.06]"}`}>
                   <p className="mb-1 text-[11.5px] text-white/70">{Number(d.slice(8))}</p>
                   <div className="space-y-1">
                     {(byDate.get(d) ?? []).map((p) => (

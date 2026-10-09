@@ -50,7 +50,7 @@ export function RangePicker({ days, since, until }: { days: number; since: strin
         </svg>
       </button>
       {open && (
-        <ul className="absolute right-0 z-30 mt-2 w-48 rounded-xl border border-white/10 bg-[#0c1326] p-1.5 shadow-2xl">
+        <ul className="absolute right-0 z-30 mt-2 w-48 rounded-xl border border-white/10 bg-field-2 p-1.5 shadow-2xl">
           {OPTIONS.map((n) => (
             <li key={n}>
               <button

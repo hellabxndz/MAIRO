@@ -343,9 +343,9 @@ function VersionFormServer({ production }: { production: string }) {
       }}
       className="mt-2 grid gap-2 md:grid-cols-[140px_180px_180px_auto]"
     >
-      <input name="version" defaultValue={production} className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3 py-2 text-sm text-white" aria-label="Version" />
-      <input name="retiresAt" placeholder="Retires YYYY-MM-DD" className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3 py-2 text-sm text-white" aria-label="Retirement date" />
-      <select name="migration" className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3 py-2 text-sm text-white" aria-label="Migration status">{["NOT_STARTED", "TESTING", "PASSED", "MIGRATED"].map((m) => <option key={m}>{m}</option>)}</select>
+      <input name="version" defaultValue={production} className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-2 text-sm text-white" aria-label="Version" />
+      <input name="retiresAt" placeholder="Retires YYYY-MM-DD" className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-2 text-sm text-white" aria-label="Retirement date" />
+      <select name="migration" className="rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-2 text-sm text-white" aria-label="Migration status">{["NOT_STARTED", "TESTING", "PASSED", "MIGRATED"].map((m) => <option key={m}>{m}</option>)}</select>
       <button className="rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-sm text-white/85 hover:text-white">Save</button>
     </form>
   );

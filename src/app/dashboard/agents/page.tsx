@@ -232,7 +232,7 @@ function AssistantHero({
  */
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="px-4 py-4 text-center" style={{ background: "rgba(8,13,30,0.85)" }}>
+    <div className="px-4 py-4 text-center" style={{ background: "rgba(var(--mairo-bg-rgb),0.85)" }}>
       <p className="text-[22px] font-medium leading-none text-white sm:text-[26px]">
         {value > 0 ? value.toLocaleString("en-US") : "—"}
       </p>
@@ -269,7 +269,7 @@ function AssistantOrb() {
         style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
       />
       <span className="absolute inset-0 flex items-center justify-center">
-        <svg viewBox="0 0 24 24" className="h-9 w-9 text-white sm:h-10 sm:w-10" fill="none" aria-hidden>
+        <svg viewBox="0 0 24 24" className="h-9 w-9 text-[#fff] sm:h-10 sm:w-10" fill="none" aria-hidden>
           <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.4" />
           <path d="M12 3.8v16.4M3.8 9.6h16.4M3.8 14.4h16.4" stroke="currentColor" strokeWidth="1.1" />
         </svg>

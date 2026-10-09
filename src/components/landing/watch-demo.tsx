@@ -29,7 +29,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
       <button type="button" onClick={() => setOpen(true)} className={className}>
         <span
           aria-hidden
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-paper shadow-sm"
         >
           <svg viewBox="0 0 12 12" className="ml-0.5 h-2.5 w-2.5 fill-black">
             <path d="M2 1.2v9.6L10.5 6z" />
@@ -55,14 +55,14 @@ export function WatchDemo({ className = "" }: { className?: string }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close demo"
-                className="absolute -top-11 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:bg-white/10"
+                className="absolute -top-11 right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#fff]/20 bg-[#fff]/10 text-[#fff] hover:bg-[#fff]/20"
               >
                 <span aria-hidden>✕</span>
               </button>
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a14] shadow-[0_40px_120px_-20px_rgba(124,92,255,0.5)]">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-paper shadow-[0_40px_120px_-20px_rgba(124,92,255,0.5)]">
                 <LiveDemo />
               </div>
-              <p className="mt-3 text-center text-[12px] text-white/50">
+              <p className="mt-3 text-center text-[12px] text-[#fff]/70">
                 A worked example of how Mairo plans a campaign — not a
                 customer&rsquo;s results.
               </p>

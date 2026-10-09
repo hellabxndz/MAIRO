@@ -23,7 +23,7 @@ export function ReportSection({ title, eyebrow, children, detail = false, id }: 
     }
   }, [detail]);
   return (
-    <section id={id} className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80">
+    <section id={id} className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-field/80">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
         <span>
           {eyebrow && <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{eyebrow}</span>}
@@ -105,7 +105,7 @@ export function SharePanel({ reportId, token, origin }: { reportId: string; toke
         <>
           <p className="mt-1 text-[13px] text-muted">Approved. Anyone with this link can view the client-facing version — nothing has been sent.</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <input readOnly value={link} className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[12.5px] text-white/85" onFocus={(e) => e.currentTarget.select()} />
+            <input readOnly value={link} className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-field-2 px-3 text-[12.5px] text-white/85" onFocus={(e) => e.currentTarget.select()} />
             <button type="button" onClick={() => void navigator.clipboard.writeText(link).then(() => setCopied(true))} className="h-10 rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white">
               {copied ? "Copied" : "Copy link"}
             </button>

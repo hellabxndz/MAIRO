@@ -64,7 +64,7 @@ export function StepReview({
       sub="MAIRO checks the whole campaign against your account, your page and Meta's rules before any money is spent — and tells you exactly what would make it stronger."
     >
       {checking && (
-        <div className="rounded-2xl border p-6 text-center" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+        <div className="rounded-2xl border p-6 text-center" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
           {before && <p className="text-[40px] font-semibold tabular-nums text-white/60">{before.overall}</p>}
           {before && <p aria-hidden className="text-white/30">↓</p>}
           <p className="text-[14px] text-muted"><span className="mairo-think">{before ? "Analyzing…" : "Checking your campaign…"}</span></p>

@@ -10,7 +10,7 @@ export function WeeklyReportCard({ report, nextDay, enabled }: { report: { id: s
   const c = ready?.data.glance.current;
   const actions = ready?.data.attention.length ?? 0;
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-field/80 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Weekly report</p>
         {ready && c ? (

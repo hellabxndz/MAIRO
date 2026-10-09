@@ -48,8 +48,8 @@ const EXAMPLES = [
   "Why did you pick this audience?",
 ];
 
-const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80";
-const input = "h-11 w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const card = "rounded-2xl border border-white/[0.07] bg-field/80";
+const input = "h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 const primary = "min-h-[44px] rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-60";
 const secondary = "min-h-[44px] rounded-lg border border-white/12 px-4 text-[13.5px] text-white/85 transition hover:border-white/30 disabled:opacity-60";
 
@@ -444,7 +444,7 @@ export function PlanReview(props: {
                 maxLength={1000}
                 aria-label="Tell Mairo what you want to change"
                 placeholder={`Tell Mairo what you want to change… e.g. “${EXAMPLES[example]}”`}
-                className="w-full resize-none rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60"
+                className="w-full resize-none rounded-lg border border-white/10 bg-field-2 px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60"
               />
               <button type="submit" disabled={pending || !request.trim()} className={`${primary} mt-2 w-full`}>
                 {status === "REVISING" ? "Mairo is updating your plan…" : "Ask Mairo"}

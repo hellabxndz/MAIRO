@@ -99,7 +99,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
           <span className="text-[20px] font-medium tabular-nums">{counts.pending}</span>{" "}
           <span className="text-muted">to review</span>
         </span>
-        {counts.urgent > 0 && <span className="text-[#f87171]">{counts.urgent} need attention</span>}
+        {counts.urgent > 0 && <span className="text-red-300">{counts.urgent} need attention</span>}
         {counts.growth > 0 && <span className="text-live">{counts.growth} growth opportunit{counts.growth === 1 ? "y" : "ies"}</span>}
         <Link href="/dashboard/settings#automation" className="ml-auto text-[12.5px] text-muted hover:text-white">
           Mode: {levelInfo(level).label} →
@@ -114,7 +114,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
             className="shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors"
             style={{
               borderColor: filter === x.key ? "var(--mairo-line-lit)" : "var(--mairo-line)",
-              color: filter === x.key ? "white" : "var(--color-muted, #9aa3b5)",
+              color: filter === x.key ? "var(--color-white)" : "var(--color-muted, #9aa3b5)",
               background: filter === x.key ? "rgba(108,158,255,0.12)" : "transparent",
             }}
             aria-current={filter === x.key ? "page" : undefined}

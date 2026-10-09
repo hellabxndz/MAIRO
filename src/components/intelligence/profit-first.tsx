@@ -14,7 +14,7 @@ function money(cents: number | null, whole = false): string {
 export function ProfitMetricCard({ label, value, note, tone = "default", large = false }: { label: string; value: string; note?: string; tone?: "default" | "good" | "bad"; large?: boolean }) {
   const color = tone === "good" ? "text-emerald-300" : tone === "bad" ? "text-alert" : "text-white";
   return (
-    <div className={`min-w-0 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 ${large ? "p-5" : "p-4"}`}>
+    <div className={`min-w-0 rounded-2xl border border-white/[0.07] bg-field/80 ${large ? "p-5" : "p-4"}`}>
       <p className="truncate text-[12.5px] text-muted">{label}</p>
       <p className={`mt-1 truncate font-semibold tabular-nums tracking-tight ${color} ${large ? "text-[32px]" : "text-[21px]"}`}>{value}</p>
       {note && <p className="mt-0.5 truncate text-[11.5px] text-faint">{note}</p>}
@@ -63,7 +63,7 @@ function Waterfall({ r }: { r: ProfitReport }) {
 
 function Table({ title, note, rows, empty }: { title: string; note: string; rows: Row[]; empty: string }) {
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <h3 className="text-[15px] font-semibold text-white">{title}</h3>
       <p className="mt-0.5 text-[12.5px] text-faint">{note}</p>
       {rows.length === 0 ? (
@@ -130,7 +130,7 @@ export function ProfitFirstView({
         <ProfitMetricCard label="Profit margin" value={r.profitMargin === null ? "—" : `${Math.round(r.profitMargin * 100)}%`} note={r.margin ? `Gross margin ${Math.round(r.margin.percent)}%` : undefined} />
       </div>
 
-      <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Profit status</p>
@@ -160,7 +160,7 @@ export function ProfitFirstView({
         <Table title="Campaign profitability" note="Before fixed monthly costs." rows={campaigns} empty="No campaign has tracked revenue in this period." />
       </div>
 
-      <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h3 className="text-[15px] font-semibold text-white">Product profitability</h3>
         <p className="mt-0.5 text-[12.5px] text-faint">Each product&rsquo;s margin and the ROAS an ad for it needs to break even. Meta doesn&rsquo;t report sales per product, so this is per unit, not per campaign.</p>
         {products.length === 0 ? (

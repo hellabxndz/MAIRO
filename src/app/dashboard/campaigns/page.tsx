@@ -228,7 +228,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             return (
               <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}
                 className="group block rounded-[24px] p-5 transition hover:bg-white/[0.045]"
-                style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" }}>
+                style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-[16.5px] font-medium text-white">{campaign.name}</h2>

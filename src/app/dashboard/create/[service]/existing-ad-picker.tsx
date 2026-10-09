@@ -51,7 +51,7 @@ export function ExistingAdPicker({
               className="flex w-full gap-3 rounded-xl border p-3 text-left transition-all duration-300"
               style={{
                 borderColor: selected ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-                background: selected ? "rgba(61,125,255,0.08)" : "rgba(255,255,255,0.015)",
+                background: selected ? "rgba(61,125,255,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
               }}
             >
               {ad.thumbnailUrl && (

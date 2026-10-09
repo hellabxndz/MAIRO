@@ -66,7 +66,7 @@ export function PlatformSplit({
             value={key}
             onChange={(e) => setKey(e.target.value as MetricKey)}
             aria-label="What to split"
-            className="h-8 rounded-lg border border-white/10 bg-[#0c1326] px-2 text-[12px] text-white/85 outline-none focus:border-violet/60"
+            className="h-8 rounded-lg border border-white/10 bg-field-2 px-2 text-[12px] text-white/85 outline-none focus:border-violet/60"
           >
             {Object.entries(METRICS).map(([k, m]) => (
               <option key={k} value={k}>

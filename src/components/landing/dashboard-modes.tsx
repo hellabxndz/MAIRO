@@ -67,7 +67,7 @@ export function DashboardModes() {
       <p className="mt-4 text-[14px] text-white/60">{SUB[mode]}</p>
       <div className={`mt-5 grid grid-cols-2 gap-3 ${MODES[mode].length > 6 ? "sm:grid-cols-3 lg:grid-cols-5" : "sm:grid-cols-3"}`}>
         {MODES[mode].map(([k, v]) => (
-          <div key={k} className="rounded-2xl border border-white/[0.07] bg-[#0b0e22]/80 p-4 transition hover:-translate-y-0.5 hover:border-violet-400/30">
+          <div key={k} className="rounded-2xl border border-white/[0.07] bg-field-2/80 p-4 transition hover:-translate-y-0.5 hover:border-violet-400/30">
             <p className="text-[12px] text-white/50">{k}</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums text-white">{v}</p>
           </div>

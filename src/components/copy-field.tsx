@@ -21,7 +21,7 @@ export function CopyField({ value }: { value: string }) {
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <code className="flex-1 overflow-x-auto rounded border border-white/10 bg-black/40 px-3 py-2 text-xs text-neutral-200">
+      <code className="flex-1 overflow-x-auto rounded border border-white/10 bg-field-2 px-3 py-2 text-xs text-neutral-200">
         {value}
       </code>
       <button

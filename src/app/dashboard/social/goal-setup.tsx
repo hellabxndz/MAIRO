@@ -9,7 +9,7 @@ import type { Network } from "@/lib/instagram/social-logic";
 // Social Manager's first screen. It doesn't ask for a post: it asks what the
 // business wants to achieve, and MAIRO builds the strategy from that.
 
-const input = "w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 
 export function GoalSetup({
   initial,
@@ -123,7 +123,7 @@ export function GoalSetup({
         </div>
         <label className="flex items-center gap-2 text-[14px] text-white/90">
           Posts a week
-          <select value={perWeek} onChange={(e) => setPerWeek(Number(e.target.value))} className="rounded-lg border border-white/10 bg-[#0c1326] px-2 py-1.5 text-white">
+          <select value={perWeek} onChange={(e) => setPerWeek(Number(e.target.value))} className="rounded-lg border border-white/10 bg-field-2 px-2 py-1.5 text-white">
             {[2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>

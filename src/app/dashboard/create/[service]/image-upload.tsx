@@ -96,7 +96,7 @@ export function ImageUpload({
               <button
                 type="button"
                 onClick={() => onChange(images.filter((x) => x.url !== img.url))}
-                className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[11px] text-white hover:bg-black"
+                className="absolute right-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[11px] text-[#fff] hover:bg-black"
                 aria-label={`Remove picture ${i + 1}`}
               >
                 Remove

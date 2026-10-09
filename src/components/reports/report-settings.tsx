@@ -48,14 +48,14 @@ export function ReportSettings({
   const [state, action, pending] = useActionState<ReportSettingsState, FormData>(saveReportSettingsAction, { ok: false, error: null });
   return (
     <form action={action} className="space-y-5">
-      <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h2 className="text-[16px] font-semibold text-white">Weekly report</h2>
         <div className="mt-4 space-y-4">
           <Toggle name="weeklyEnabled" label="Send me a weekly report" hint="A summary of the previous 7 days: what happened, what Mairo changed and learned, and what's next." defaultChecked={values.weeklyEnabled} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-[13px] text-white">Delivery day</span>
-              <select name="deliveryDay" defaultValue={values.deliveryDay} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white outline-none focus:border-violet/60">
+              <select name="deliveryDay" defaultValue={values.deliveryDay} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none focus:border-violet/60">
                 {DAYS.map((d, i) => (
                   <option key={d} value={i}>
                     {d}
@@ -65,7 +65,7 @@ export function ReportSettings({
             </label>
             <label className="block">
               <span className="text-[13px] text-white">Open reports in</span>
-              <select name="preferredMode" defaultValue={values.preferredMode} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white outline-none focus:border-violet/60">
+              <select name="preferredMode" defaultValue={values.preferredMode} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none focus:border-violet/60">
                 <option value="simple">Simple</option>
                 <option value="advanced">Advanced</option>
                 <option value="profit">Profit First</option>
@@ -76,7 +76,7 @@ export function ReportSettings({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h2 className="text-[16px] font-semibold text-white">How to tell you</h2>
         <div className="mt-4 space-y-4">
           <Toggle name="inApp" label="In the app" hint="A card in your notifications when the report is ready." defaultChecked={values.inApp} />
@@ -105,17 +105,17 @@ export function ReportSettings({
       </section>
 
       {agency && (
-        <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+        <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
           <h2 className="text-[16px] font-semibold text-white">Client reports</h2>
           <p className="mt-1 text-[13px] text-muted">Each client gets their own weekly report. You review it, approve it, and share the link — Mairo never sends a client report by itself.</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-[13px] text-white">Agency name</span>
-              <input name="brandName" defaultValue={values.brandName ?? ""} maxLength={80} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white outline-none focus:border-violet/60" />
+              <input name="brandName" defaultValue={values.brandName ?? ""} maxLength={80} className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none focus:border-violet/60" />
             </label>
             <label className="block">
               <span className="text-[13px] text-white">Logo address</span>
-              <input name="brandLogoUrl" defaultValue={values.brandLogoUrl ?? ""} placeholder="https://…" className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60" />
+              <input name="brandLogoUrl" defaultValue={values.brandLogoUrl ?? ""} placeholder="https://…" className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60" />
             </label>
           </div>
           <div className="mt-4 space-y-4">

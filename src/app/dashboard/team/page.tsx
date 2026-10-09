@@ -16,7 +16,7 @@ export const metadata = { title: "Your AI Team — MAIRO" };
 export const dynamic = "force-dynamic";
 
 const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright";
-const panel = { background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" };
+const panel = { background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" };
 
 const WORKFLOW = [
   ["STRATEGIST", "reads your business and writes the plan around your goal"],
@@ -59,7 +59,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       </header>
 
       {/* The Daily MAIRO Brief: the latest team review, step by step. */}
-      <section aria-labelledby="brief" className="mb-6 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.14), rgba(255,255,255,0.015) 60%)" }}>
+      <section aria-labelledby="brief" className="mb-6 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.14), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 id="brief" className={eyebrow}>Your Daily MAIRO Brief</h2>
           {team.brief && <p className="text-[12.5px] text-muted">{team.brief.at.toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" })}</p>}

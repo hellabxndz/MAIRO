@@ -56,7 +56,7 @@ function Photos({ images }: { images: string[] }) {
         <span key={i} className="relative block">
           <Pic src={src} className="h-full w-full" />
           {i === 3 && more > 0 && (
-            <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-[26px] font-semibold text-white">+{more}</span>
+            <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-[26px] font-semibold text-[#fff]">+{more}</span>
           )}
         </span>
       ))}
@@ -83,7 +83,7 @@ export function FacebookPreview({
   const short = text.length > 240 && !open;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-white/10 bg-[#242526] text-[#e4e6eb]" aria-label="Preview of the Facebook post">
+    <article data-palette="classic" className="overflow-hidden rounded-xl border border-white/10 bg-[#242526] text-[#e4e6eb]" aria-label="Preview of the Facebook post">
       <header className="flex items-center gap-2.5 px-3 pt-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1877f2] text-[15px] font-semibold uppercase text-white">
           {pageName.slice(0, 1)}
@@ -115,7 +115,7 @@ export function FacebookPreview({
         <span className="relative block aspect-video w-full bg-black">
           {poster && <Image src={poster} alt="" fill unoptimized sizes="400px" className="object-cover" />}
           <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/55 text-[18px] text-white">▶</span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/55 text-[18px] text-[#fff]">▶</span>
           </span>
         </span>
       ) : (

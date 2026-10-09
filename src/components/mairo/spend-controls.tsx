@@ -86,7 +86,7 @@ export function SpendControls({
         <div className="mt-5">
           <div
             className="h-1.5 w-full overflow-hidden rounded-full"
-            style={{ background: "rgba(255,255,255,0.07)" }}
+            style={{ background: "rgba(var(--mairo-fg-rgb),0.07)" }}
             role="img"
             aria-label={`${Math.round(used)}% of this month's budget used`}
           >
@@ -103,13 +103,13 @@ export function SpendControls({
 
       <div
         className="mt-5 rounded-xl border p-4"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
       >
         <div className="flex flex-wrap items-center gap-2.5">
           <span
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium"
             style={{
-              background: level === "MANUAL" ? "rgba(255,255,255,0.06)" : "rgba(52,211,153,0.12)",
+              background: level === "MANUAL" ? "rgba(var(--mairo-fg-rgb),0.06)" : "rgba(52,211,153,0.12)",
               color: level === "MANUAL" ? "rgb(203,213,225)" : "rgb(110,231,183)",
             }}
           >

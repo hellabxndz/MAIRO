@@ -79,7 +79,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   if (subscribed === "1" && !FAILED.includes(org.subscriptionStatus ?? "")) {
     return (
       <JourneyFrame step={4}>
-        <div className="mx-auto mt-6 max-w-[560px] rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-8 text-center">
+        <div className="mx-auto mt-6 max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-8 text-center">
           <meta httpEquiv="refresh" content="4" />
           <p className="text-[18px] font-semibold text-white">Confirming your subscription with Stripe…</p>
           <p className="mt-2 text-[14px] text-muted">This usually takes a few seconds. The page checks again on its own, then Mairo is ready to build your campaign.</p>
@@ -127,7 +127,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
               {justConnected === "1" && <p className="mt-3 text-[12.5px] text-muted">Nothing was created in your account and nothing was spent.</p>}
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-6">
+            <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-6">
               <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Plan approved ✓</p>
               <p className="mt-2 text-[20px] font-semibold text-white">Connect your ad account</p>
               <p className="mt-1 text-[14px] text-muted">So Mairo knows where your campaign will eventually run.</p>
@@ -198,7 +198,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                       ["Support", p.features.some((f) => /priority support/i.test(f)) ? "Priority support" : "Standard support"],
                     ];
                     return (
-                      <div key={p.tier} className={`flex min-w-0 flex-col rounded-2xl border p-5 ${p.featured ? "border-violet/40 bg-violet/[0.05]" : "border-white/[0.07] bg-[#0b1122]/80"}`}>
+                      <div key={p.tier} className={`flex min-w-0 flex-col rounded-2xl border p-5 ${p.featured ? "border-violet/40 bg-violet/[0.05]" : "border-white/[0.07] bg-field/80"}`}>
                         <p className="text-[15px] font-semibold text-white">{p.name}</p>
                         <p className="mt-1 text-[28px] font-semibold tabular-nums text-white">
                           {money(p.priceMonthly)}<span className="text-[13px] font-normal text-faint">/month</span>
@@ -226,7 +226,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
         </div>
 
         <aside className="min-w-0 space-y-4">
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">You already created your plan for free.</p>
             <p className="mt-1 text-[13px] text-muted">Your subscription unlocks:</p>
             <ul className="mt-3 space-y-1.5 text-[13px] text-white/85">
@@ -235,7 +235,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
               ))}
             </ul>
           </div>
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">Your ad budget is separate</p>
             <dl className="mt-3 space-y-2 text-[13px]">
               <div><dt className="text-faint">Mairo subscription</dt><dd className="text-white">{selected ? `${money(selected.priceMonthly)}/month` : `From ${money(Math.min(...PLANS.map((p) => p.priceMonthly)))}/month`}</dd></div>
@@ -243,7 +243,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             </dl>
             <p className="mt-3 text-[12.5px] text-muted">Mairo never treats your subscription as ad spend, and never charges your ad budget.</p>
           </div>
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">Your approved plan</p>
             <p className="mt-1 text-[13px] text-muted">{head.goal} · {head.platform} · {head.budget} · {head.campaign}</p>
             <Link href="/plan" className="mt-2 inline-block text-[12.5px] text-violet-bright hover:text-white">Review or change it</Link>

@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         >
           MAIRO
         </Link>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-8 shadow-[0_0_60px_-15px_rgba(255,255,255,0.15)]">
+        <div className="rounded-2xl border border-white/10 bg-paper p-8 shadow-[0_24px_60px_-30px_rgba(18,21,43,0.28)]">
           {children}
         </div>
       </div>

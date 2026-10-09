@@ -85,7 +85,7 @@ export function StepBusiness({
         sub={known && !editingBusiness ? "What MAIRO already knows. Change anything that's out of date." : "Only what's true — MAIRO never invents details for your ads."}
       >
         {!editingBusiness ? (
-          <div className="rounded-xl border p-4 text-[13px] leading-relaxed" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+          <div className="rounded-xl border p-4 text-[13px] leading-relaxed" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
             <Known label="You sell" value={plan.offering} />
             <Known label="Your customers" value={plan.targetAudience} />
             <Known label="What makes you different" value={plan.differentiator} />

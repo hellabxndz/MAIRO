@@ -42,8 +42,8 @@ export type PostView = {
   rationale?: string | null;
 };
 
-const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
-const input = "w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const card = "rounded-2xl border border-white/[0.07] bg-field/80 p-5";
+const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 const primary = "min-h-[42px] rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[42px] rounded-lg border border-white/12 px-4 text-[13.5px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 
@@ -53,7 +53,7 @@ function Thumb({ url, kind }: { url: string | null; kind: "image" | "video" }) {
       {url ? <Image src={url} alt="" fill unoptimized sizes="160px" className="object-cover" /> : null}
       {kind === "video" && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-[11px] text-white">▶</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-[11px] text-[#fff]">▶</span>
         </span>
       )}
     </span>

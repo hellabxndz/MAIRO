@@ -68,8 +68,8 @@ export function IntelligenceField({
         style={{
           opacity: 0.9 * intensity,
           backgroundImage:
-            "repeating-linear-gradient(to right, rgba(255,255,255,0.03) 0 1px, transparent 1px 88px)," +
-            "repeating-linear-gradient(to bottom, rgba(255,255,255,0.03) 0 1px, transparent 1px 88px)",
+            "repeating-linear-gradient(to right, rgba(var(--mairo-fg-rgb),0.03) 0 1px, transparent 1px 88px)," +
+            "repeating-linear-gradient(to bottom, rgba(var(--mairo-fg-rgb),0.03) 0 1px, transparent 1px 88px)",
           WebkitMaskImage:
             "radial-gradient(ellipse 125% 80% at 50% 40%, #000 12%, rgba(0,0,0,0.5) 60%, transparent 94%)",
           maskImage:

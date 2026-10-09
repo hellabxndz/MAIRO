@@ -11,16 +11,16 @@ import { regenerateConceptAction } from "@/lib/actions/creative-actions";
 import type { HubAd, NewItem } from "@/lib/creatives/hub";
 
 const tile = "rounded-[22px] overflow-hidden transition hover:bg-white/[0.045]";
-const surface = { background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" };
+const surface = { background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" };
 
 function Preview({ src, kind, label }: { src: string | null; kind?: string; label: string }) {
   return src ? (
-    <div className="relative aspect-[4/5] w-full bg-black/30">
+    <div className="relative aspect-[4/5] w-full bg-field-3">
       <img src={src} alt={label} className="h-full w-full object-cover" loading="lazy" />
-      {kind === "VIDEO" && <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">▶ Video</span>}
+      {kind === "VIDEO" && <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#fff]">▶ Video</span>}
     </div>
   ) : (
-    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 px-5 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(124,92,255,0.14), transparent 70%), rgba(255,255,255,0.025)" }}>
+    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 px-5 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(124,92,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
       <span aria-hidden className="text-[26px] opacity-80">{kind === "EXISTING_AD" ? "📣" : "🖼️"}</span>
       <span className="text-[13px] text-white/60">{kind === "EXISTING_AD" ? "Your existing ad" : "No picture yet"}</span>
     </div>
@@ -109,9 +109,9 @@ export function PastList({ ads }: { ads: HubAd[] }) {
     <div>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search creatives or campaigns" aria-label="Search past creatives"
-          className="min-h-[42px] flex-1 rounded-full border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" />
+          className="min-h-[42px] flex-1 rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" />
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status"
-          className="min-h-[42px] rounded-full border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-4 text-[14px] text-white">
+          className="min-h-[42px] rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white">
           <option value="all">All statuses</option>
           {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>

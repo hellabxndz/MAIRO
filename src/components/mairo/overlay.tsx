@@ -56,7 +56,7 @@ export function Modal({ open, onClose, title, children, wide = false }: { open: 
         aria-labelledby={id}
         tabIndex={-1}
         className={`relative max-h-[90vh] w-full overflow-y-auto rounded-t-3xl border p-5 outline-none sm:rounded-3xl sm:p-7 ${wide ? "sm:max-w-[860px]" : "sm:max-w-[560px]"}`}
-        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(8,12,26,0.98)", boxShadow: "var(--mairo-glow-soft)" }}
+        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.98)", boxShadow: "var(--mairo-glow-soft)" }}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <h2 id={id} className="text-[18px] font-semibold text-white">{title}</h2>
@@ -82,7 +82,7 @@ export function Drawer({ open, onClose, title, children }: { open: boolean; onCl
         aria-labelledby={id}
         tabIndex={-1}
         className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-3xl border-t p-5 outline-none sm:p-6 lg:inset-y-0 lg:left-auto lg:right-0 lg:max-h-none lg:w-[480px] lg:rounded-none lg:border-l lg:border-t-0"
-        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(8,12,26,0.99)" }}
+        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.99)" }}
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <h2 id={id} className="text-[18px] font-semibold text-white">{title}</h2>

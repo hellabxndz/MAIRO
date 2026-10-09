@@ -54,7 +54,7 @@ export const metadata: Metadata = {
 // form controls and the space above a bounced scroll are dark too, rather than
 // flashing white on the way in.
 export const viewport: Viewport = {
-  themeColor: "#07070a",
+  themeColor: "#ffffff",
   colorScheme: "dark",
 };
 

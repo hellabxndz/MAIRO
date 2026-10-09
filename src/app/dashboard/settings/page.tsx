@@ -234,7 +234,7 @@ export default async function SettingsPage() {
           { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
           { href: "/dashboard/account", label: "Account", hint: "Login, team and more" },
         ].map((e) => (
-          <Link key={e.href} href={e.href} className="group rounded-2xl px-4 py-3 transition hover:bg-white/[0.05]" style={{ background: "rgba(255,255,255,0.025)" }}>
+          <Link key={e.href} href={e.href} className="group rounded-2xl px-4 py-3 transition hover:bg-white/[0.05]" style={{ background: "rgba(var(--mairo-fg-rgb),0.025)" }}>
             <span className="block text-[14.5px] text-white">{e.label} <span aria-hidden className="text-faint transition group-hover:text-white">›</span></span>
             <span className="block text-[12.5px] text-muted">{e.hint}</span>
           </Link>

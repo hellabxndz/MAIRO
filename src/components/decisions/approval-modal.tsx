@@ -85,7 +85,7 @@ export function ApprovalModal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-2xl border p-6 outline-none sm:rounded-2xl"
-        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(8,12,26,0.97)", boxShadow: "var(--mairo-glow-lift)" }}
+        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.97)", boxShadow: "var(--mairo-glow-lift)" }}
       >
         {!result ? (
           <>

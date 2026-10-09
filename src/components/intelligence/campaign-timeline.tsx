@@ -92,7 +92,7 @@ export function CampaignTimeline({
   };
 
   return (
-    <section id="journey" className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section id="journey" className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Campaign journey</h2>
@@ -103,7 +103,7 @@ export function CampaignTimeline({
             value={journey.campaign.id}
             onChange={(e) => pick(e.target.value)}
             aria-label="Campaign"
-            className="h-10 max-w-[260px] rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[13px] text-white outline-none focus:border-violet/60"
+            className="h-10 max-w-[260px] rounded-lg border border-white/10 bg-field-2 px-3 text-[13px] text-white outline-none focus:border-violet/60"
           >
             {campaigns.map((c) => (
               <option key={c.id} value={c.id}>

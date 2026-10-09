@@ -160,7 +160,7 @@ export function WorkspaceShell({
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r px-3.5 py-5 lg:flex"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.86)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.86)" }}
       >
         <Link href="/clients" className="mb-1 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -193,7 +193,7 @@ export function WorkspaceShell({
       {/* ---- Mobile top bar ---- */}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.92)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
       >
         <Link href="/clients" className="text-[13px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -221,7 +221,7 @@ export function WorkspaceShell({
       {/* ---- Mobile bottom navigation ---- */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.96)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
         aria-label="Primary"
       >
         {NAV.map((item) => {

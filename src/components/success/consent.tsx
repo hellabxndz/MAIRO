@@ -33,7 +33,7 @@ export function CaseStudyConsent({ given }: { given: boolean }) {
         }}
         className={`relative mt-1 h-6 w-11 shrink-0 rounded-full transition disabled:opacity-60 ${on ? "bg-[image:var(--mairo-ramp)]" : "bg-white/15"}`}
       >
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-paper shadow-sm transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
       </button>
     </div>
   );

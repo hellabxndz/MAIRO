@@ -51,8 +51,8 @@ export function ProblemSection() {
                 key={item.name}
                 className="rounded-2xl border p-4"
                 style={{
-                  borderColor: "rgba(255,255,255,0.07)",
-                  background: "rgba(255,255,255,0.015)",
+                  borderColor: "rgba(var(--mairo-fg-rgb),0.07)",
+                  background: "rgba(var(--mairo-fg-rgb),0.015)",
                 }}
               >
                 <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/25">
@@ -83,7 +83,7 @@ export function ProblemSection() {
             style={{
               borderColor: "rgba(108,158,255,0.42)",
               backgroundImage:
-                "linear-gradient(158deg, rgba(28,48,104,0.55), rgba(9,15,36,0.72))",
+                "linear-gradient(158deg, rgba(28,48,104,0.55), rgba(var(--mairo-bg-rgb),0.72))",
               boxShadow:
                 "0 0 0 1px rgba(80,130,235,0.12), 0 0 40px rgba(61,125,255,0.2), 0 24px 60px rgba(2,6,18,0.6)",
             }}

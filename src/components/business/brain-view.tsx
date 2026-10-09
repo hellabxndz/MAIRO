@@ -22,7 +22,7 @@ export type FactRowData = {
   purpose: string;
 };
 
-const input = "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3.5 py-2.5 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]";
+const input = "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]";
 const small = "rounded-full border border-[color:var(--mairo-line)] px-3 py-1 text-[12px] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white disabled:opacity-50";
 
 function useChange() {
@@ -105,7 +105,7 @@ export function AddFact({ missing }: { missing: { key: string; label: string; li
         <label className="flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
           <span>+ Tell MAIRO about</span>
           <select value="" onChange={(e) => setKey(e.target.value)} aria-label="Add something MAIRO doesn't know yet"
-            className="rounded-full border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3 py-1 text-[12.5px] text-white">
+            className="rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-1 text-[12.5px] text-white">
             <option value="">choose…</option>
             {missing.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
           </select>

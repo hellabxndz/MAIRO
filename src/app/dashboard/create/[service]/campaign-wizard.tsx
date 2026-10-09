@@ -397,7 +397,7 @@ export function CampaignWizard(props: Props) {
                 </label>
               )}
 
-              <div className="mt-6 rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+              <div className="mt-6 rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What happens next</p>
                 <p className="mt-2">
                   MAIRO builds the campaign in your own {NETWORK[plan.service]} ad account, switched off.{" "}
@@ -484,7 +484,7 @@ export function CampaignWizard(props: Props) {
 
         {/* What's decided so far, and help. Desktop only; phones get it inline. */}
         <aside className="hidden xl:sticky xl:top-8 xl:block xl:self-start">
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Your campaign so far</p>
             <div className="mt-3">
               <PlanSummary plan={plan} mode={mode} />
@@ -635,7 +635,7 @@ function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mod
 
   return (
     <dl className={detailed ? "grid gap-x-6 gap-y-3 rounded-xl border p-5 sm:grid-cols-[150px_minmax(0,1fr)]" : "space-y-2.5"}
-      style={detailed ? { borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" } : undefined}>
+      style={detailed ? { borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" } : undefined}>
       {rows.map(([k, v]) =>
         detailed ? (
           <div key={k} className="contents">

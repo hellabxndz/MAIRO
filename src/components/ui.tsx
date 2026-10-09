@@ -115,7 +115,7 @@ export function EmptyState({ title, description }: { title: string; description?
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(10,16,32,0.6)] px-3.5 py-2.5 " +
+  "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 " +
   "text-sm text-white placeholder-faint outline-none transition-colors " +
   "focus:border-[color:var(--mairo-line-lit)]";
 

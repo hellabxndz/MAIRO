@@ -78,7 +78,7 @@ export function MairoToday({
   ];
 
   return (
-    <section className="mb-8 rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(10,16,32,0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
+    <section className="mb-8 rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-bright">Mairo today</p>
       <h2 className="mt-2 text-[20px] font-medium text-white">
         {greeting(hour)}
@@ -96,7 +96,7 @@ export function MairoToday({
           {counts.pending > 0 && (
             <p className="mt-1 text-[12.5px] text-muted">
               {counts.pending} Mairo Decision{counts.pending === 1 ? "" : "s"}
-              {counts.urgent > 0 && <span className="text-[#f87171]"> · {counts.urgent} need{counts.urgent === 1 ? "s" : ""} attention</span>}
+              {counts.urgent > 0 && <span className="text-red-300"> · {counts.urgent} need{counts.urgent === 1 ? "s" : ""} attention</span>}
               {counts.growth > 0 && <span className="text-live"> · {counts.growth} growth opportunit{counts.growth === 1 ? "y" : "ies"}</span>}
             </p>
           )}
@@ -129,7 +129,7 @@ export function MairoToday({
           <ul className="mt-3 space-y-2">
             {doing.map((d) => (
               <li key={d.label} className="flex items-start gap-2.5 text-[13px]">
-                <span aria-hidden className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ background: d.on ? "#34d399" : "rgba(255,255,255,0.18)" }} />
+                <span aria-hidden className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ background: d.on ? "#34d399" : "rgba(var(--mairo-fg-rgb),0.18)" }} />
                 <span>
                   <span className={d.on ? "text-white" : "text-muted"}>{d.label}</span>
                   <span className="block text-[12px] text-faint">{d.status}</span>

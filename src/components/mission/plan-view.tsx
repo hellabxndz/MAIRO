@@ -5,7 +5,7 @@ import { CUSTOMER_ACTIONS, missionGoal } from "@/lib/mission/goals";
 // The tactics are MAIRO's decisions; they're shown so nothing is hidden, not
 // so the owner has to understand them.
 
-const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
+const card = "rounded-2xl border border-white/[0.07] bg-field/80 p-5";
 
 export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; showTactics?: boolean }) {
   const action = CUSTOMER_ACTIONS.find((a) => a.key === plan.tactics.customerAction)?.label ?? "";

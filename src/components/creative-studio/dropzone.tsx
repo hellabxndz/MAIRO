@@ -35,11 +35,11 @@ export function Dropzone({
   if (value) {
     return (
       <div className="relative overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
-        <img src={value} alt="Uploaded" className="max-h-72 w-full object-contain bg-black/40" />
+        <img src={value} alt="Uploaded" className="max-h-72 w-full object-contain bg-field-3" />
         <button
           type="button"
           onClick={() => onChange(null)}
-          className="absolute right-2 top-2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] text-white/90 transition hover:bg-black/90"
+          className="absolute right-2 top-2 rounded-full bg-black/70 px-3 py-1.5 text-[11px] text-[#fff] transition hover:bg-black/90"
         >
           Remove
         </button>

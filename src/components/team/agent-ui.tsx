@@ -24,7 +24,7 @@ export function AgentIcon({ role, size = 40 }: { role: AgentRole; size?: number 
     <span
       aria-hidden
       className="flex shrink-0 items-center justify-center rounded-2xl"
-      style={{ width: size, height: size, background: "linear-gradient(140deg, rgba(124,92,255,0.35), rgba(59,130,246,0.18))", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)" }}
+      style={{ width: size, height: size, background: "linear-gradient(140deg, #7c5cff, #4f6bff)", boxShadow: "0 6px 16px -8px rgba(124,92,255,0.7)" }}
     >
       <svg viewBox="0 0 20 20" width={size * 0.5} height={size * 0.5} fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d={GLYPH[role]} />
@@ -39,7 +39,7 @@ const TONE: Record<AgentState, { dot: string; text: string; pulse?: boolean }> =
   WAITING: { dot: "#fbbf24", text: "text-amber-200" },
   COMPLETED: { dot: "#60a5fa", text: "text-blue-200" },
   ATTENTION: { dot: "#fb923c", text: "text-orange-200" },
-  IDLE: { dot: "rgba(255,255,255,0.35)", text: "text-white/60" },
+  IDLE: { dot: "rgba(var(--mairo-fg-rgb),0.35)", text: "text-white/60" },
   CONNECT: { dot: "#fbbf24", text: "text-amber-200" },
   ERROR: { dot: "#f87171", text: "text-red-200" },
 };
@@ -69,7 +69,7 @@ export function AgentCard({ status, pending, contribution, now }: { status: Agen
         ? { href: "/dashboard/decisions", label: `Review ${pending === 1 ? "recommendation" : `${pending} recommendations`}` }
         : null;
   return (
-    <article className="flex flex-col rounded-[24px] p-5" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)" }}>
+    <article className="flex flex-col rounded-[24px] p-5" style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.04), rgba(var(--mairo-fg-rgb),0.015))", boxShadow: "inset 0 0 0 1px rgba(var(--mairo-fg-rgb),0.05)" }}>
       <div className="flex items-start gap-3">
         <AgentIcon role={status.role} />
         <div className="min-w-0 flex-1">

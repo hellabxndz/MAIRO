@@ -7,7 +7,7 @@ import type { Journey } from "@/lib/success/journey";
 export function JourneyCard({ journey, founding }: { journey: Journey; founding: boolean }) {
   const current = journey.stages.find((s) => s.state === "current");
   return (
-    <section aria-labelledby="journey" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))" }}>
+    <section aria-labelledby="journey" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="journey" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">
           Your first 30 days{founding ? " · Founding customer" : ""}

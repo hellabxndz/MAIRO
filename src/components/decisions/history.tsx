@@ -6,11 +6,11 @@ import { CATEGORY_LABEL, whenText } from "./labels";
 // the before and after, the reason, and who approved it.
 
 const STATUS: Record<string, { label: string; color: string }> = {
-  APPLIED: { label: "Approved", color: "#34d399" },
-  REJECTED: { label: "Rejected", color: "#f87171" },
-  FAILED: { label: "Couldn't be made", color: "#fbbf24" },
-  EXPIRED: { label: "No longer needed", color: "#94a3b8" },
-  IGNORED: { label: "Ignored", color: "#94a3b8" },
+  APPLIED: { label: "Approved", color: "var(--color-emerald-400)" },
+  REJECTED: { label: "Rejected", color: "var(--color-red-400)" },
+  FAILED: { label: "Couldn't be made", color: "var(--color-amber-400)" },
+  EXPIRED: { label: "No longer needed", color: "var(--color-faint)" },
+  IGNORED: { label: "Ignored", color: "var(--color-faint)" },
 };
 
 export function DecisionHistory({
@@ -26,7 +26,7 @@ export function DecisionHistory({
   return (
     <ul className="space-y-3">
       {decisions.map((d) => {
-        const s = STATUS[d.status] ?? { label: d.status, color: "#94a3b8" };
+        const s = STATUS[d.status] ?? { label: d.status, color: "var(--color-faint)" };
         const rows = d.result ?? d.changes.filter((c) => c.type !== "guide").map((c) => ({ ...describeChange(c), ok: false, error: null }));
         return (
           <li key={d.id} className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>

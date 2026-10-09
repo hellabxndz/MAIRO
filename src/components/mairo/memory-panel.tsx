@@ -70,7 +70,7 @@ export function MemoryPanel({
               </div>
               <div
                 className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
-                style={{ background: "rgba(255,255,255,0.06)" }}
+                style={{ background: "rgba(var(--mairo-fg-rgb),0.06)" }}
               >
                 <div
                   className="h-full rounded-full transition-[width] duration-700 [transition-timing-function:var(--ease-mairo)]"
@@ -117,7 +117,7 @@ export function MemoryPanel({
       {profile.nextStep ? (
         <div
           className="mt-6 rounded-xl border p-4"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
         >
           <p className="text-[12px] text-faint">Most useful thing you could tell it next</p>
           <Link

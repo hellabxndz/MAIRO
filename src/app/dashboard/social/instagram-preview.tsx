@@ -36,7 +36,7 @@ export function InstagramPreview({
   const short = caption.length > 125 && !open;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-white/10 bg-black text-white" aria-label="Preview of the Instagram post">
+    <article data-palette="classic" className="overflow-hidden rounded-xl border border-white/10 bg-black text-white" aria-label="Preview of the Instagram post">
       <header className="flex items-center gap-2.5 px-3 py-2.5">
         <span className="rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[2px]">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-[12px] font-semibold uppercase">{username.slice(0, 1)}</span>
@@ -60,10 +60,10 @@ export function InstagramPreview({
           <>
             <span className="absolute right-2.5 top-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px]">{at + 1}/{images.length}</span>
             {at > 0 && (
-              <button type="button" onClick={() => setAt(at - 1)} aria-label="Previous picture" className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-black">‹</button>
+              <button type="button" onClick={() => setAt(at - 1)} aria-label="Previous picture" className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-paper/85 text-[#111]">‹</button>
             )}
             {at < images.length - 1 && (
-              <button type="button" onClick={() => setAt(at + 1)} aria-label="Next picture" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-black">›</button>
+              <button type="button" onClick={() => setAt(at + 1)} aria-label="Next picture" className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-paper/85 text-[#111]">›</button>
             )}
           </>
         )}

@@ -143,7 +143,7 @@ export function SiteNav() {
                     className="absolute left-1/2 top-full z-50 mt-2 w-[260px] -translate-x-1/2 overflow-hidden rounded-2xl border p-1.5"
                     style={{
                       borderColor: "var(--mairo-line-lit)",
-                      backgroundColor: "rgba(6,10,24,0.97)",
+                      backgroundColor: "rgba(var(--mairo-bg-rgb),0.97)",
                       boxShadow: "var(--mairo-glow-lift)",
                     }}
                   >
@@ -205,7 +205,7 @@ export function SiteNav() {
         {open && (
           <div
             className="pointer-events-auto mx-auto mt-2 max-h-[70vh] max-w-[1500px] overflow-y-auto rounded-3xl border px-6 py-6 lg:hidden"
-            style={{ borderColor: "var(--mairo-line)", backgroundColor: "rgba(6,10,24,0.98)" }}
+            style={{ borderColor: "var(--mairo-line)", backgroundColor: "rgba(var(--mairo-bg-rgb),0.98)" }}
           >
             {GROUPS.map((g) => (
               <div key={g.label} className="mb-5">

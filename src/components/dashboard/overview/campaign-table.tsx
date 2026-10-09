@@ -253,7 +253,7 @@ export function CampaignTable({
                 Columns
               </button>
               {picker && (
-                <ul className="absolute right-0 z-30 mt-2 w-52 rounded-xl border border-white/10 bg-[#0c1326] p-1.5 shadow-2xl">
+                <ul className="absolute right-0 z-30 mt-2 w-52 rounded-xl border border-white/10 bg-field-2 p-1.5 shadow-2xl">
                   {Object.values(COLUMNS).map((c) => (
                     <li key={c.key}>
                       <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-white/85 hover:bg-white/[0.05]">

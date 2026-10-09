@@ -33,7 +33,7 @@ export function StepBudget({
               style={{
                 borderColor: plan.dailyAmount === a ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
                 background: plan.dailyAmount === a ? "rgba(61,125,255,0.1)" : "transparent",
-                color: plan.dailyAmount === a ? "white" : undefined,
+                color: plan.dailyAmount === a ? "var(--color-white)" : undefined,
               }}>
               ${a} per day
             </button>

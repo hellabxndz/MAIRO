@@ -63,7 +63,7 @@ export function AutoLaunchSection({
               className="peer sr-only"
             />
             <span className="block h-6 w-11 rounded-full bg-white/10 transition peer-checked:bg-sky-400/70" />
-            <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+            <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-paper shadow-sm transition peer-checked:translate-x-5" />
           </span>
         </label>
       </div>

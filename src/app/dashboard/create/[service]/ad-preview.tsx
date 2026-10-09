@@ -35,7 +35,7 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border p-5" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+    <div className="mt-6 rounded-xl border p-5" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Preview, drawn by Meta</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {PREVIEW_FORMATS.map((f) => (
@@ -49,7 +49,7 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
             style={{
               borderColor: format === f.value ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
               background: format === f.value ? "rgba(61,125,255,0.1)" : "transparent",
-              color: format === f.value ? "white" : undefined,
+              color: format === f.value ? "var(--color-white)" : undefined,
             }}
           >
             {f.label}
@@ -67,7 +67,7 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
             title={`Ad preview — ${PREVIEW_FORMATS.find((f) => f.value === shown.format)?.label}`}
             width={SIZE[shown.format].w}
             height={SIZE[shown.format].h}
-            className="max-w-full rounded-lg border-0 bg-white"
+            className="max-w-full rounded-lg border-0 bg-paper"
             sandbox="allow-scripts allow-same-origin allow-popups"
             loading="lazy"
           />

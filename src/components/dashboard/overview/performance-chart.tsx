@@ -175,11 +175,11 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
             {buckets.map((b, i) => (
               <g key={i}>
                 {dual ? (
-                  <circle cx={xAt(i)} cy={yCount(b.purchases)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} fill="#0b1122" stroke="#4b8bff" strokeWidth="1.8" />
+                  <circle cx={xAt(i)} cy={yCount(b.purchases)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#4b8bff" strokeWidth="1.8" />
                 ) : (
                   <>
-                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} fill="#0b1122" stroke="#c4b5fd" strokeWidth="1.8" />
-                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} fill="#0b1122" stroke="#7c5cff" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#c4b5fd" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#7c5cff" strokeWidth="1.8" />
                   </>
                 )}
                 {i % labelEvery === 0 && (
@@ -196,7 +196,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
 
         {h && hover !== null && (
           <div
-            className="pointer-events-none absolute top-2 z-10 w-44 rounded-xl border border-white/10 bg-[#0c1326]/95 p-3 text-[12px] shadow-2xl"
+            className="pointer-events-none absolute top-2 z-10 w-44 rounded-xl border border-white/10 bg-field-2/95 p-3 text-[12px] shadow-2xl"
             style={{ left: Math.min(Math.max(xAt(hover) - 88, 0), Math.max(0, width - 176)) }}
           >
             <p className="font-medium text-white">{h.title}</p>

@@ -53,7 +53,7 @@ export function JourneySteps({ step, paid, skipped = [] }: { step: number; paid:
 /** The onboarding frame: no sidebar, just where they are and a way out. */
 export function JourneyFrame({ step, paid = false, skipped, children, wide = false }: { step: number; paid?: boolean; skipped?: number[]; children: React.ReactNode; wide?: boolean }) {
   return (
-    <div className="min-h-screen bg-[#060a16] text-white">
+    <div className="min-h-screen bg-paper text-white">
       <header className="border-b border-white/[0.06]">
         <div className={`mx-auto flex items-center justify-between gap-4 px-4 py-4 sm:px-6 ${wide ? "max-w-[1240px]" : "max-w-[1000px]"}`}>
           <Link href="/" className="text-[14px] font-light tracking-[0.3em] text-white">

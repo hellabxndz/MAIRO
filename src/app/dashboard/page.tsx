@@ -304,7 +304,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   );
 
   const decisionsSection = (
-    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo decisions</h2>
         <Link href="/dashboard/decisions" className="text-[12.5px] text-violet-bright hover:text-white">

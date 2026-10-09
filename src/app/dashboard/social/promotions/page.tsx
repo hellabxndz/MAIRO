@@ -56,7 +56,7 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
           <h2 className="mb-3 text-[16px] font-semibold text-white">Your promotions</h2>
           <ul className="space-y-3">
             {promotions.map((p) => (
-              <li key={p.id} className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-4">
+              <li key={p.id} className="rounded-2xl border border-white/[0.07] bg-field/80 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{promotionLabel(p.kind)}</p>

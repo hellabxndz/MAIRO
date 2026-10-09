@@ -48,14 +48,14 @@ export default async function SocialPerformancePage() {
           ["Awaiting approval", count("SUGGESTED")],
           ["Skipped", count("SKIPPED")],
         ].map(([label, n]) => (
-          <div key={label} className="rounded-xl border border-white/[0.07] bg-[#0b1122]/80 px-4 py-3">
+          <div key={label} className="rounded-xl border border-white/[0.07] bg-field/80 px-4 py-3">
             <p className="text-[11.5px] uppercase tracking-[0.14em] text-faint">{label}</p>
             <p className="mt-1 text-[24px] font-semibold tabular-nums text-white">{n}</p>
           </div>
         ))}
       </div>
 
-      <section className="mb-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="mb-6 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h2 className="text-[16px] font-semibold text-white">What MAIRO learned</h2>
         <ul className="mt-2 space-y-1.5 text-[14px] text-white/85">
           {learnings.notes.map((n) => <li key={n}>{n}</li>)}
@@ -63,7 +63,7 @@ export default async function SocialPerformancePage() {
         <p className="mt-3 text-[12px] text-faint">MAIRO uses this when it plans your next posts: more of what works, less of what you skip.</p>
       </section>
 
-      <section className="mb-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+      <section className="mb-6 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h2 className="text-[16px] font-semibold text-white">Engagement by kind of post</h2>
         <p className="text-[12.5px] text-muted">Average likes and comments per post. Read from Instagram and Facebook; reach isn&rsquo;t available without Meta&rsquo;s insights permission, so it isn&rsquo;t shown.</p>
         {learnings.byType.length === 0 ? (
@@ -84,7 +84,7 @@ export default async function SocialPerformancePage() {
       </section>
 
       {top.length > 0 && (
-        <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+        <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
           <h2 className="mb-3 text-[16px] font-semibold text-white">Top posts</h2>
           <ul className="space-y-2.5">
             {top.map((p) => (

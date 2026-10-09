@@ -130,7 +130,7 @@ export function AssistantConsole({
                   type="button"
                   onClick={() => ask(q)}
                   className="rounded-xl border px-4 py-3 text-left text-[13px] leading-snug text-white/85 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-0.5 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-                  style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.02)" }}
+                  style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
                 >
                   {q}
                 </button>
@@ -217,7 +217,7 @@ export function AssistantConsole({
       >
         <div
           className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border px-4 py-2.5 transition-colors duration-300 focus-within:border-[color:var(--mairo-line-lit)]"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.6)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
         >
           <textarea
             ref={composer}

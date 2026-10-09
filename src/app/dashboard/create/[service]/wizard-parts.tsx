@@ -61,7 +61,7 @@ export function Choice({
       className="rounded-xl border p-4 text-left transition-all duration-300 [transition-timing-function:var(--ease-mairo)] disabled:cursor-not-allowed disabled:opacity-45"
       style={{
         borderColor: selected ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-        background: selected ? "rgba(61,125,255,0.08)" : "rgba(255,255,255,0.015)",
+        background: selected ? "rgba(61,125,255,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
         boxShadow: selected ? "0 0 24px rgba(61,125,255,0.18)" : "none",
       }}
     >
@@ -183,7 +183,7 @@ export function Note({ children, tone = "neutral" }: { children: React.ReactNode
       className={`rounded-xl border p-4 text-[12.5px] leading-relaxed ${tone === "warn" ? "text-amber-200/90" : "text-muted"}`}
       style={{
         borderColor: tone === "warn" ? "rgba(251,191,36,0.25)" : "var(--mairo-line)",
-        background: tone === "warn" ? "rgba(251,191,36,0.04)" : "rgba(10,16,32,0.5)",
+        background: tone === "warn" ? "rgba(251,191,36,0.04)" : "rgba(var(--mairo-bg-rgb),0.5)",
       }}
     >
       {children}

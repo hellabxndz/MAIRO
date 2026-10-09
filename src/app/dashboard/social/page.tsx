@@ -22,7 +22,7 @@ import { POST_SELECT, toCalendarPost } from "./manager-data";
 
 export const maxDuration = 60;
 
-const card = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
+const card = "rounded-2xl border border-white/[0.07] bg-field/80 p-5";
 
 export default async function SocialManagerPage() {
   const session = await auth();

@@ -9,7 +9,7 @@ import { GoalActions } from "@/app/dashboard/mission/mission-client";
 // The mission at a glance, in the order an owner asks: what are we trying to
 // do, what is MAIRO doing, what happened, what did MAIRO learn, what's next.
 
-const panel = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5";
+const panel = "rounded-2xl border border-white/[0.07] bg-field/80 p-5";
 const eyebrow = "text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright";
 
 /** Smaller headline for pages that aren't the dashboard. */
@@ -52,7 +52,7 @@ export function GoalHero({
     <section
       aria-labelledby="current-goal"
       className="relative overflow-hidden rounded-3xl border border-violet/30 p-6 sm:p-8"
-      style={{ background: "radial-gradient(120% 140% at 100% 0%, rgba(124,92,255,0.22), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(59,107,255,0.14), transparent 60%), #0b1122" }}
+      style={{ background: "radial-gradient(120% 140% at 100% 0%, rgba(124,92,255,0.22), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(59,107,255,0.14), transparent 60%), var(--color-field)" }}
     >
       <p className="text-[14px] text-white/70">{greeting}</p>
       <p className={`${eyebrow} mt-4`}>Your current goal</p>

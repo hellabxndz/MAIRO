@@ -51,7 +51,7 @@ export function LibraryGrid({ items }: { items: LibraryItem[] }) {
         const image = item.latestVersion;
         return (
           <div key={item.assetId} className="group overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
-            <div className="relative aspect-square bg-black/40">
+            <div className="relative aspect-square bg-field-3">
               {image?.status === "COMPLETE" && image.imageUrl ? (
                 <img src={image.imageUrl} alt={image.instruction ?? "Creative"} className="h-full w-full object-cover" />
               ) : image?.status === "FAILED" ? (

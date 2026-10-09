@@ -63,7 +63,7 @@ export function GoogleButton({
         formNoValidate
         onClick={check}
         disabled={pending}
-        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-3 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-100 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/15 bg-paper px-3 py-2 text-sm font-medium text-[#1f1f1f] transition hover:bg-[#f6f7fb] disabled:opacity-60"
       >
         <GoogleMark />
         {pending && clicked ? "Opening Google…" : "Continue with Google"}

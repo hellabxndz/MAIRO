@@ -358,7 +358,7 @@ export function SimpleDashboard({
             <HeroOrb />
             <div
               className="absolute -top-1 right-0 flex items-center gap-2 rounded-xl border px-3 py-2"
-              style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(10,16,32,0.85)" }}
+              style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.85)" }}
             >
               <span className="text-[12px] font-medium text-white">Mairo AI</span>
               <AIStatus label="Online" />

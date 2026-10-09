@@ -30,7 +30,7 @@ export function HeroDashboard() {
   const line = chartPath(CHART, 300, 90);
   const ring = 2 * Math.PI * 30;
   return (
-    <div className="relative rounded-[22px] border border-white/12 bg-[#0a0d1f]/90 p-2.5 shadow-[0_40px_120px_-30px_rgba(99,70,255,0.65),0_0_0_1px_rgba(139,92,246,0.15)] backdrop-blur-xl">
+    <div className="relative rounded-[22px] border border-white/12 bg-paper p-2.5 shadow-[0_40px_120px_-30px_rgba(99,70,255,0.65),0_0_0_1px_rgba(139,92,246,0.15)] backdrop-blur-xl">
       <div className="flex gap-2.5">
         {/* Sidebar */}
         <aside className="hidden w-[132px] shrink-0 flex-col gap-0.5 rounded-2xl bg-white/[0.02] p-2.5 sm:flex">
@@ -91,7 +91,7 @@ export function HeroDashboard() {
               <p className="text-[8.5px] text-white/50">Business Health</p>
               <div className="mt-1 flex items-center gap-3">
                 <svg viewBox="0 0 72 72" className="h-[58px] w-[58px] shrink-0" aria-label="Business Health 84 out of 100">
-                  <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+                  <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(var(--mairo-fg-rgb),0.08)" strokeWidth="6" />
                   <circle cx="36" cy="36" r="30" fill="none" stroke="url(#hd-line)" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${ring * 0.84} ${ring}`} transform="rotate(-90 36 36)" />
                   <text x="36" y="40" textAnchor="middle" className="fill-white text-[16px] font-semibold">84</text>
                 </svg>
@@ -136,7 +136,7 @@ export function HeroDashboard() {
           </div>
         </div>
       </div>
-      <span className="absolute left-1/2 top-2.5 -translate-x-1/2 rounded-full border border-white/15 bg-black/50 px-2 py-0.5 text-[8.5px] uppercase tracking-[0.14em] text-white/60">
+      <span className="absolute left-1/2 top-2.5 -translate-x-1/2 rounded-full border border-white/15 bg-paper/90 px-2 py-0.5 text-[8.5px] uppercase tracking-[0.14em] text-white/60">
         Sample data
       </span>
     </div>

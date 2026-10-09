@@ -56,7 +56,7 @@ export default async function MissionPage() {
 
       {mission && (
         <section className="space-y-4">
-          <div className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <MissionHeadline
               title={mission.title}
               sentence={mission.plan.mission}
@@ -75,7 +75,7 @@ export default async function MissionPage() {
             </div>
           </div>
           <ActiveMission organizationId={organizationId} mission={mission} results={results} />
-          <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <h3 className="text-[16px] font-semibold text-white">Tell MAIRO something new</h3>
             <p className="mb-3 mt-0.5 text-[13px] text-muted">A promotion, a launch, something sold out, a new goal. MAIRO works out what to change.</p>
             <TellMairo />
@@ -90,7 +90,7 @@ export default async function MissionPage() {
               </ul>
             )}
           </section>
-          <details className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+          <details className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <summary className="cursor-pointer text-[15px] font-semibold text-white">The full plan</summary>
             <div className="mt-4"><PlanView plan={mission.plan} /></div>
           </details>

@@ -7,10 +7,10 @@
    One place for every colour, radius, glow and easing in the product. Nothing
    below this file should contain a hand-written blue.
 
-   The palette is taken from the MAIRO reference renders: a near-black navy
-   environment, electric blue carrying the mass, ultraviolet for the second
-   voice, cyan as the cold edge and magenta used sparingly enough that it still
-   means something. White type throughout.
+   Light by default: white pages, ink type, MAIRO's blue-to-violet ramp for
+   the actions that matter. The original night palette (near-black navy,
+   electric blue, ultraviolet) lives on as the "classic" scope below, for
+   the places that stay dark on purpose.
 
    The rule the references actually encode, and the one worth keeping: glow is
    a signal, not a texture. A primary action glows. A metric that moved glows.
@@ -25,92 +25,98 @@
      decided rather than said. */
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* ===================================================================
+     LIGHT — the default. White pages, ink type, MAIRO's purple and blue
+     carrying the brand. The original night palette is kept below as the
+     "classic" scope, for the places that stay dark on purpose.
+     =================================================================== */
+
   /* ---- Environment ----------------------------------------------------- */
-  /* Four steps of dark, not one. A single flat black gives no dimension and
-     every panel on it looks pasted on. */
-  --color-ink: #05070f;
-  --color-ink-2: #070b18;
-  --color-surface: #0a1020;
-  --color-surface-2: #0e1730;
-  --color-line: #1a2744;
-  --color-line-lit: #2b4478;
+  --color-ink: #ffffff;
+  --color-ink-2: #f8f9fc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f6f7fb;
+  --color-line: #e3e6ef;
+  --color-line-lit: #c7cde0;
+  /* Inputs and inset panels that used to be a hand-written navy. */
+  --color-field: #ffffff;
+  --color-field-2: #f6f7fb;
+  --color-field-3: #eef0f6;
 
   /* ---- Signal ---------------------------------------------------------- */
-  --color-blue: #3d7dff;
-  --color-blue-bright: #6aa6ff;
+  --color-blue: #2f6bff;
+  --color-blue-bright: #2a5be0;
   --color-blue-deep: #1b49c9;
-  --color-cyan: #22d3ee;
+  --color-cyan: #0891b2;
   --color-violet: #7c5cff;
-  --color-violet-bright: #a78bfa;
-  --color-magenta: #d946ef;
+  --color-violet-bright: #6544f0;
+  --color-magenta: #c026d3;
 
   /* ---- Status ---------------------------------------------------------- */
-  --color-live: #34d399;
-  --color-warn: #fbbf24;
-  --color-alert: #f87171;
+  --color-live: #0f9d6b;
+  --color-warn: #c2780a;
+  --color-alert: #dc3b30;
 
   /* ---- Text ------------------------------------------------------------ */
-  --color-muted: #94a6cc;
-  --color-faint: #5d6e91;
-
-  /* ---- The legacy greys, re-pointed at the MAIRO palette ---------------- */
   /*
-     There are around seven hundred uses of text-neutral-400, text-neutral-500
-     and friends across sixty-five signed-in screens, written before this
-     design system existed. They are not wrong, they are just grey — which is
-     why every page past the dashboard still looked like the old product.
-     
-     Rewriting seven hundred class names by hand across screens that handle
-     money and campaign state is a large diff with nothing to catch a mistake
-     in it. Re-pointing the scale does the same job in ten lines: the same
-     class now resolves to the navy-tinted equivalent, so the whole app moves
-     onto the palette at once and any page written against the scale in future
-     lands in the right place automatically.
-     
-     The steps keep their relative lightness, so contrast ratios move with the
-     hue rather than collapsing.
+     "white" is the product's primary type colour, written as text-white
+     across 1,600 call sites from the night palette. In light it means ink.
+     Real white — text on a purple button, a toggle's knob — is "paper", and
+     inside the classic scope "white" is white again.
   */
-  --color-neutral-50: #f4f7ff;
-  --color-neutral-100: #e4eaf8;
-  --color-neutral-200: #cdd8ef;
-  --color-neutral-300: #b0c0e0;
-  --color-neutral-400: #94a6cc;
-  --color-neutral-500: #7a8cb4;
-  --color-neutral-600: #5d6e91;
-  --color-neutral-700: #3f4f73;
-  --color-neutral-800: #22304f;
-  --color-neutral-900: #111c36;
-  --color-neutral-950: #070b18;
+  --color-white: #12152b;
+  --color-paper: #ffffff;
+  --color-muted: #5a6382;
+  --color-faint: #8a92aa;
 
-  /* The same trick for the three legacy accent families. The inner screens
-     were built before the tokens existed and reach for Tailwind's stock
-     sky/emerald/amber — 62 uses of sky-400 alone. Re-pointing the steps here
-     moves every one of them onto the vocabulary without touching the call
-     sites, and keeps the meaning each family already carried:
+  /* ---- The greys, re-pointed ------------------------------------------- */
+  /*
+     The same trick the night palette used for the legacy neutral scale,
+     turned over: low steps are now dark type, high steps light surfaces, so
+     text-neutral-400 (secondary type) reads on white and bg-neutral-900
+     (an inset) is a pale grey. Relative contrast between steps holds.
+  */
+  --color-neutral-50: #0b0d1a;
+  --color-neutral-100: #151a2e;
+  --color-neutral-200: #232a42;
+  --color-neutral-300: #39415c;
+  --color-neutral-400: #4f5874;
+  --color-neutral-500: #66708c;
+  --color-neutral-600: #8790a8;
+  --color-neutral-700: #b9c0d3;
+  --color-neutral-800: #dde2ee;
+  --color-neutral-900: #eef1f7;
+  --color-neutral-950: #ffffff;
 
-       sky      informational, so it becomes the MAIRO blue
-       emerald  live/success, so it becomes --color-live
-       amber    waiting on somebody, so it becomes --color-warn
+  /* Accent families: the light steps were type on navy; on white they need
+     to be the dark end of the same hue. */
+  --color-sky-200: #1e4fc8;
+  --color-sky-300: #2458d6;
+  --color-sky-400: #2f66e0;
+  --color-sky-500: #2556c4;
 
-     The 400 step of each lands exactly on the token it maps to, because that
-     is the step the app overwhelmingly uses. */
-  --color-sky-200: #a9c6ff;
-  --color-sky-300: #8bb2ff;
-  --color-sky-400: #3d7dff;
-  --color-sky-500: #2f66e0;
+  --color-emerald-100: #065f46;
+  --color-emerald-200: #047857;
+  --color-emerald-300: #05845c;
+  --color-emerald-400: #0f9d6b;
+  --color-emerald-500: #0b8a5d;
+  --color-emerald-600: #087a52;
 
-  --color-emerald-100: #d3f7e7;
-  --color-emerald-200: #a7e9cd;
-  --color-emerald-300: #6fe0b4;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #17b783;
-  --color-emerald-600: #0f9b6c;
+  --color-amber-100: #7c4a03;
+  --color-amber-200: #8a5300;
+  --color-amber-300: #a16207;
+  --color-amber-400: #d97706;
+  --color-amber-500: #b45309;
 
-  --color-amber-100: #fdf3d4;
-  --color-amber-200: #fde9a8;
-  --color-amber-300: #fcd469;
-  --color-amber-400: #fbbf24;
-  --color-amber-500: #eaa612;
+  --color-red-200: #b42318;
+  --color-red-300: #c4322b;
+  --color-red-400: #d92d20;
+  --color-violet-200: #5b3fd6;
+  --color-violet-300: #6a4cf0;
+  --color-violet-400: #7457f5;
+  --color-blue-200: #2753c9;
+  --color-orange-200: #b54708;
+  --color-rose-300: #be123c;
 
   /* ---- Form ------------------------------------------------------------ */
   --radius-card: 1.125rem;
@@ -123,33 +129,157 @@
 }
 
 :root {
+  color-scheme: light;
+  /* Overlays written as rgba(<fg>, a) — a faint wash of the type colour —
+     and panels as rgba(<bg>, a). Light: ink washes on white panels. */
+  --mairo-fg-rgb: 18, 21, 43;
+  --mairo-bg-rgb: 255, 255, 255;
+
   /* Values Tailwind cannot express as utilities. Referenced by name from the
      MAIRO components, never retyped. */
-  --mairo-line: rgba(122, 162, 255, 0.16);
-  --mairo-line-lit: rgba(122, 162, 255, 0.38);
+  --mairo-line: rgba(18, 21, 43, 0.1);
+  --mairo-line-lit: rgba(124, 92, 255, 0.45);
 
-  /* Glass: a translucent fill and a hairline, nothing more. No backdrop-filter
-     anywhere in this product — it cannot sample a fixed backdrop on mobile
-     browsers and composites the element on its own, which paints a
-     nearly-transparent panel as an opaque black rectangle. That shipped once
-     and took weeks to find. */
-  --mairo-glass: linear-gradient(
-    160deg,
-    rgba(18, 28, 56, 0.72) 0%,
-    rgba(10, 16, 34, 0.62) 100%
-  );
+  /* A card: white, a hairline and the softest lift. No backdrop-filter
+     anywhere in this product — see the classic scope's note. */
+  --mairo-glass: linear-gradient(160deg, #ffffff 0%, #fbfbfe 100%);
 
-  /* Three glow strengths, and they are a scale rather than a palette: rest,
-     interactive, and the one thing on the screen that matters most. */
-  --mairo-glow-soft: 0 0 0 1px rgba(122, 162, 255, 0.1), 0 18px 48px -24px rgba(0, 0, 0, 0.9);
-  --mairo-glow-lift: 0 0 0 1px rgba(122, 162, 255, 0.24), 0 26px 60px -26px rgba(29, 73, 201, 0.55);
-  --mairo-glow-key: 0 0 0 1px rgba(122, 162, 255, 0.34), 0 0 34px -6px rgba(61, 125, 255, 0.55),
-    0 24px 60px -28px rgba(0, 0, 0, 0.95);
+  /* Three lifts, a scale rather than a palette: rest, interactive, and the
+     one thing on the screen that matters most (the purple glow). */
+  --mairo-glow-soft: 0 0 0 1px rgba(18, 21, 43, 0.06), 0 1px 2px rgba(18, 21, 43, 0.04), 0 10px 28px -18px rgba(18, 21, 43, 0.2);
+  --mairo-glow-lift: 0 0 0 1px rgba(124, 92, 255, 0.18), 0 14px 32px -18px rgba(76, 52, 200, 0.35);
+  --mairo-glow-key: 0 0 0 1px rgba(124, 92, 255, 0.28), 0 10px 26px -10px rgba(98, 72, 240, 0.55);
 
   /* The primary action, and the headline's second line. The same ramp, so the
      button and the word "Mairo" are recognisably the same material. */
   --mairo-ramp: linear-gradient(120deg, #2f6dff 0%, #4b7dff 42%, #7c5cff 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #2f6dff 0%, #5a6dff 45%, #7c5cff 100%);
+}
+
+/* ===========================================================================
+   CLASSIC — the original night palette, scoped.
+
+   Where MAIRO stays dark on purpose: anything sitting on the purple/blue
+   ramp or a solid accent (its type stays white), the landing hero and its
+   imagery, the cinematic intro, Facebook/Instagram previews drawn in their
+   own colours, and the public lead form (which was always drawn light under
+   these values). Mark a container data-palette="classic" to put it here.
+
+   The values are exactly the ones the product shipped with: a near-black
+   navy environment, electric blue carrying the mass, ultraviolet for the
+   second voice. Glow is a signal, not a texture. No backdrop-filter: it
+   cannot sample a fixed backdrop on mobile and paints a translucent panel
+   as an opaque black rectangle — that shipped once and took weeks to find.
+   =========================================================================== */
+[data-palette="classic"],
+[class~="bg-[image:var(--mairo-ramp)]"],
+[style*="--mairo-ramp)"],
+[class~="bg-[#7c5cff]"],
+[class~="bg-[#7c5cff]/70"],
+[class~="from-[#7c4dff]"],
+[class~="from-[#7c5cff]"],
+[class~="from-[#3b6bff]"],
+[class~="from-[#4f7dff]"],
+[class~="from-[#6d5cff]"],
+[class~="from-[#312e81]"],
+[class~="bg-[#1877f2]"],
+[class~="bg-[#18191a]"],
+[class~="bg-violet-500"],
+[class~="bg-red-500"],
+[class~="bg-red-500/80"],
+[class~="bg-red-500/90"] {
+  color-scheme: dark;
+  --color-ink: #05070f;
+  --color-ink-2: #070b18;
+  --color-surface: #0a1020;
+  --color-surface-2: #0e1730;
+  --color-line: #1a2744;
+  --color-line-lit: #2b4478;
+  --color-field: #0b1122;
+  --color-field-2: #0c1326;
+  --color-field-3: #050814;
+  --color-blue: #3d7dff;
+  --color-blue-bright: #6aa6ff;
+  --color-blue-deep: #1b49c9;
+  --color-cyan: #22d3ee;
+  --color-violet: #7c5cff;
+  --color-violet-bright: #a78bfa;
+  --color-magenta: #d946ef;
+  --color-live: #34d399;
+  --color-warn: #fbbf24;
+  --color-alert: #f87171;
+  --color-white: #ffffff;
+  --color-muted: #94a6cc;
+  --color-faint: #5d6e91;
+  --color-neutral-50: #f4f7ff;
+  --color-neutral-100: #e4eaf8;
+  --color-neutral-200: #cdd8ef;
+  --color-neutral-300: #b0c0e0;
+  --color-neutral-400: #94a6cc;
+  --color-neutral-500: #7a8cb4;
+  --color-neutral-600: #5d6e91;
+  --color-neutral-700: #3f4f73;
+  --color-neutral-800: #22304f;
+  --color-neutral-900: #111c36;
+  --color-neutral-950: #070b18;
+  --color-sky-200: #a9c6ff;
+  --color-sky-300: #8bb2ff;
+  --color-sky-400: #3d7dff;
+  --color-sky-500: #2f66e0;
+  --color-emerald-100: #d3f7e7;
+  --color-emerald-200: #a7e9cd;
+  --color-emerald-300: #6fe0b4;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #17b783;
+  --color-emerald-600: #0f9b6c;
+  --color-amber-100: #fdf3d4;
+  --color-amber-200: #fde9a8;
+  --color-amber-300: #fcd469;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #eaa612;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-blue-200: #bfdbfe;
+  --color-orange-200: #fed7aa;
+  --color-rose-300: #fda4af;
+  --mairo-fg-rgb: 255, 255, 255;
+  --mairo-bg-rgb: 10, 16, 32;
+  --mairo-line: rgba(122, 162, 255, 0.16);
+  --mairo-line-lit: rgba(122, 162, 255, 0.38);
+  --mairo-glass: linear-gradient(160deg, rgba(18, 28, 56, 0.72) 0%, rgba(10, 16, 34, 0.62) 100%);
+  --mairo-glow-soft: 0 0 0 1px rgba(122, 162, 255, 0.1), 0 18px 48px -24px rgba(0, 0, 0, 0.9);
+  --mairo-glow-lift: 0 0 0 1px rgba(122, 162, 255, 0.24), 0 26px 60px -26px rgba(29, 73, 201, 0.55);
+  --mairo-glow-key: 0 0 0 1px rgba(122, 162, 255, 0.34), 0 0 34px -6px rgba(61, 125, 255, 0.55), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
   --mairo-ramp-soft: linear-gradient(120deg, #6aa6ff 0%, #8fb5ff 45%, #a78bfa 100%);
+}
+
+/* Type inside the classic scope defaults to its white, so a solid accent
+   whose label never named a colour (it used to inherit white from the page)
+   keeps it. In the base layer, so any text utility on the element still wins. */
+@layer base {
+[data-palette="classic"],
+[class~="bg-[image:var(--mairo-ramp)]"],
+[style*="--mairo-ramp)"],
+[class~="bg-[#7c5cff]"],
+[class~="bg-[#7c5cff]/70"],
+[class~="from-[#7c4dff]"],
+[class~="from-[#7c5cff]"],
+[class~="from-[#3b6bff]"],
+[class~="from-[#4f7dff]"],
+[class~="from-[#6d5cff]"],
+[class~="from-[#312e81]"],
+[class~="bg-[#1877f2]"],
+[class~="bg-[#18191a]"],
+[class~="bg-violet-500"],
+[class~="bg-red-500"],
+[class~="bg-red-500/80"],
+[class~="bg-red-500/90"] {
+    color: var(--color-white);
+  }
 }
 
 /* The lattice. Used as a class rather than a component because it is applied
@@ -165,7 +295,7 @@
 /* Focus, once, for everything. A futuristic interface that cannot be operated
    from a keyboard is a broken interface. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-blue-bright);
+  outline: 2px solid var(--color-violet);
   outline-offset: 2px;
   border-radius: 4px;
 }

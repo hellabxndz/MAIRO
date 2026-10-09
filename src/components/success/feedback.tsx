@@ -148,7 +148,7 @@ export function PulseCard() {
   if (done === "later") return null;
   if (done === "sent") {
     return (
-      <section className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(124,92,255,0.10), rgba(255,255,255,0.015))" }}>
+      <section className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015))" }}>
         <p className="text-[15px] text-white">Thank you. The MAIRO team reads every answer.</p>
       </section>
     );
@@ -163,7 +163,7 @@ export function PulseCard() {
     });
 
   return (
-    <section aria-labelledby="pulse" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(124,92,255,0.10), rgba(255,255,255,0.015))" }}>
+    <section aria-labelledby="pulse" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015))" }}>
       <h2 id="pulse" className="text-[16px] font-medium text-white">{PULSE_QUESTION}</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         {EASIER.map((o) => (

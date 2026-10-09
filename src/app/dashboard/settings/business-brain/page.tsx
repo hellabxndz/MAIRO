@@ -20,7 +20,7 @@ import { AddFact, AddProduct, BrainQuestion, FactRow, InsightRow, ProductCard, V
 export const dynamic = "force-dynamic";
 
 const card = "rounded-[22px] border border-[color:var(--mairo-line)] p-5 sm:p-6";
-const surface = { background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012))" };
+const surface = { background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.03), rgba(var(--mairo-fg-rgb),0.012))" };
 const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright";
 const date = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 

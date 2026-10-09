@@ -206,7 +206,7 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
   return (
     <div
       className="inline-flex items-center rounded-full border p-0.5"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.7)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.7)" }}
       role="group"
       aria-label="Interface detail"
     >
@@ -327,7 +327,7 @@ export function AppShell({
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.86)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.86)" }}
       >
         <Link href="/dashboard" className="mb-4 shrink-0 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -383,7 +383,7 @@ export function AppShell({
       {/* ---- Mobile top bar. The name of the business, and the mode. ---- */}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.92)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
       >
         <Link href="/dashboard" className="text-[13px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -440,7 +440,7 @@ export function AppShell({
       {/* ---- Mobile bottom navigation ---- */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 items-end border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(6,9,20,0.96)" }}
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
         aria-label="Primary"
       >
         {[...MOBILE_NAV.slice(0, 2), null, ...MOBILE_NAV.slice(2)].map((item) => {

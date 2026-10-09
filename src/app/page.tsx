@@ -14,7 +14,7 @@ import { AGENTS } from "@/lib/team/agents";
 import { AgentIcon } from "@/components/team/agent-ui";
 
 // The marketing page: a premium AI advertising company, not a crypto site.
-// Dark navy, violet and electric-blue light, glass cards, and Mairo's own
+// White, with violet and electric-blue light, soft cards, and Mairo's own
 // software as the only imagery — no people, no stock photos.
 //
 // Two rules above the design:
@@ -27,7 +27,7 @@ import { AgentIcon } from "@/components/team/agent-ui";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
 
-const PRIMARY = "bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] shadow-[0_14px_44px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110";
+const PRIMARY = "bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] text-white shadow-[0_14px_44px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110";
 const GRADIENT_TEXT = "bg-gradient-to-r from-[#a86bff] via-[#8a6dff] to-[#4f86ff] bg-clip-text text-transparent";
 const GLASS = "border border-white/10 bg-white/[0.03] backdrop-blur-xl";
 
@@ -122,7 +122,7 @@ function money(n: number): string {
 
 export default function Home() {
   return (
-    <div className={`${jakarta.className} relative min-h-screen overflow-x-hidden bg-[#050814] text-white`}>
+    <div className={`${jakarta.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
       <LandingNav />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -184,7 +184,7 @@ export default function Home() {
             {CALLOUTS.map((c) => (
               <div
                 key={c.text}
-                className={`mairo-float absolute z-10 hidden max-w-[210px] items-center gap-3 rounded-2xl ${GLASS} bg-[#12143a]/80 px-4 py-3 shadow-[0_18px_50px_-18px_rgba(99,102,241,0.9)] xl:flex ${c.pos}`}
+                className={`mairo-float absolute z-10 hidden max-w-[210px] items-center gap-3 rounded-2xl ${GLASS} bg-paper/90 px-4 py-3 shadow-[0_18px_50px_-18px_rgba(99,102,241,0.9)] xl:flex ${c.pos}`}
                 style={{ animationDelay: c.delay }}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4f7dff] to-[#8b4dfb]">
@@ -388,7 +388,7 @@ export default function Home() {
                 ["Creative #2", "$46.21", "1.8x", "text-rose-300"],
                 ["Creative #4", "$24.30", "4.7x", "text-emerald-300"],
               ].map(([n, cpa, roas, tone]) => (
-                <div key={n} className="rounded-2xl border border-white/[0.07] bg-[#0b0e22]/80 p-4">
+                <div key={n} className="rounded-2xl border border-white/[0.07] bg-field-2/80 p-4">
                   <p className="text-[13px] font-medium text-white">{n}</p>
                   <p className="mt-2 text-[12px] text-white/50">CPA <span className={`ml-1 text-[15px] font-semibold ${tone}`}>{cpa}</span></p>
                   <p className="text-[12px] text-white/50">ROAS <span className={`ml-1 text-[15px] font-semibold ${tone}`}>{roas}</span></p>
@@ -476,7 +476,7 @@ export default function Home() {
               }`}
             >
               {plan.featured && (
-                <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-3 py-1 text-[11px] font-medium">Most popular</span>
+                <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-3 py-1 text-[11px] font-medium text-white">Most popular</span>
               )}
               <p className="text-[16px] font-semibold">{plan.name}</p>
               <p className="mt-1 text-[13px] text-white/55">{plan.headline}</p>
@@ -521,7 +521,7 @@ export default function Home() {
 
       {/* ── Final call ───────────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-        <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.35),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.3),transparent_60%),linear-gradient(135deg,#0d0f2e,#060817)] px-6 py-16 text-center sm:px-12">
+        <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
           <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
             Get your free personalized <span className={GRADIENT_TEXT}>advertising plan.</span>
           </h2>

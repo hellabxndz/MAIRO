@@ -17,7 +17,7 @@ const TILE =
   "relative aspect-[3/4] overflow-hidden rounded-lg border";
 const TILE_STYLE = {
   borderColor: "var(--mairo-line)",
-  background: "linear-gradient(160deg, rgba(38,62,126,0.55), rgba(10,17,38,0.9))",
+  background: "linear-gradient(160deg, rgba(38,62,126,0.55), rgba(var(--mairo-bg-rgb),0.9))",
 };
 
 function Trainer() {

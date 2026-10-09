@@ -92,7 +92,7 @@ export function StoreCard({ ingestUrl, hasShopifySecret, lastReceivedAt, receive
             {copied ? "Copied" : "Copy"}
           </button>
         </div>
-        <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-3 text-[11px] text-neutral-400">
+        <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-field-2 p-3 text-[11px] text-neutral-400">
           <code>{ingestUrl}</code>
         </pre>
         <p className="mt-2 text-xs leading-relaxed text-neutral-500">

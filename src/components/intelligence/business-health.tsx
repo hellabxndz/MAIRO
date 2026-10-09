@@ -97,7 +97,7 @@ export function BusinessHealthScore({ health, showReportLink = true, defaultOpen
   const [open, setOpen] = useState<string | null>(defaultOpen);
   const status = health?.status ? STATUS[health.status] : null;
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-5">
+    <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Business health</h2>
         {showReportLink && (

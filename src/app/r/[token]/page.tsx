@@ -24,7 +24,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const brand = row.organization.parentId ? await db.reportSettings.findUnique({ where: { organizationId: row.organization.parentId } }) : null;
 
   return (
-    <main className="min-h-screen bg-[#05070f] px-4 py-8 sm:px-8">
+    <main className="min-h-screen bg-paper px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-[1100px]">
         <ReportHeader data={data} brandName={brand?.brandName} brandLogoUrl={brand?.brandLogoUrl} clientName={row.organization.name} />
         <WeeklyReport data={data} mode="simple" pendingDecisionIds={[]} clientFacing hideInternal={brand?.hideInternal ?? true} />

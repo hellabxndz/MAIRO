@@ -18,7 +18,7 @@ import { MISSION_GOALS, type MissionGoal } from "@/lib/mission/goals";
 // your own words), answering at most two questions, approving the plan, and
 // telling MAIRO when something changes.
 
-const input = "w-full rounded-lg border border-white/10 bg-[#0c1326] px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
+const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 const primary = "min-h-[44px] rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[44px] rounded-lg border border-white/12 px-4 text-[14px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 
@@ -199,7 +199,7 @@ export function SecondaryGoal({ current, primary: primaryGoal }: { current: Miss
   if (!open) return <button type="button" onClick={() => setOpen(true)} className={secondary}>{current ? "Change secondary goal" : "Add secondary goal"}</button>;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <select value={value} onChange={(e) => setValue(e.target.value)} className="min-h-[44px] rounded-lg border border-white/10 bg-[#0c1326] px-3 text-[14px] text-white" aria-label="Secondary goal">
+      <select value={value} onChange={(e) => setValue(e.target.value)} className="min-h-[44px] rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white" aria-label="Secondary goal">
         <option value="">No secondary goal</option>
         {MISSION_GOALS.filter((g) => g.key !== primaryGoal && g.key !== "RECOMMEND").map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
       </select>

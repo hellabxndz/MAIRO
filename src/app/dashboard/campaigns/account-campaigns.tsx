@@ -50,7 +50,7 @@ export async function AccountCampaigns({ organizationId }: { organizationId: str
               target="_blank"
               rel="noopener noreferrer"
               className="group block rounded-[24px] p-5 transition hover:bg-white/[0.045]"
-              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))" }}
+              style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.025), rgba(var(--mairo-fg-rgb),0.01))" }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

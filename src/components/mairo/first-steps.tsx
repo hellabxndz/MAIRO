@@ -54,7 +54,7 @@ export function FirstSteps({
                 style={{
                   borderColor: step.done ? "rgba(52,211,153,0.4)" : isNext ? "rgba(108,158,255,0.6)" : "var(--mairo-line)",
                   background: step.done ? "rgba(52,211,153,0.1)" : isNext ? "rgba(61,125,255,0.15)" : "transparent",
-                  color: step.done ? "#6ee7b7" : isNext ? "white" : undefined,
+                  color: step.done ? "var(--color-emerald-300)" : isNext ? "var(--color-white)" : undefined,
                 }}
                 aria-hidden
               >
@@ -94,7 +94,7 @@ export function FirstSteps({
         })}
       </ol>
 
-      <div className="mt-6 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.5)" }}>
+      <div className="mt-6 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
         <p className="text-[13px] text-white">You can plan now</p>
         <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
           Your monthly plan and your campaigns can be worked out before anything is connected. MAIRO only makes a campaign

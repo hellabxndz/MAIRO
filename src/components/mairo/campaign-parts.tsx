@@ -137,7 +137,7 @@ export function AIActionCard({
   return (
     <div
       className="rounded-[var(--radius-card)] border p-4"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(10,16,32,0.45)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}
     >
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-blue-bright">

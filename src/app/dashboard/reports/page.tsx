@@ -67,7 +67,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       )}
 
       {reports.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-8 text-center">
+        <div className="mt-6 rounded-2xl border border-white/[0.07] bg-field/80 p-8 text-center">
           <p className="text-[15px] text-white">No weekly reports yet</p>
           <p className="mt-1 text-[13.5px] text-muted">The first one arrives on {day} once a campaign has been running, or create one now.</p>
         </div>
@@ -77,7 +77,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             const c = data!.glance.current;
             return (
               <li key={row.id}>
-                <Link href={`/dashboard/reports/weekly/${row.id}`} className="flex flex-col gap-3 rounded-2xl border border-white/[0.07] bg-[#0b1122]/80 p-4 transition hover:border-violet/40 sm:flex-row sm:items-center">
+                <Link href={`/dashboard/reports/weekly/${row.id}`} className="flex flex-col gap-3 rounded-2xl border border-white/[0.07] bg-field/80 p-4 transition hover:border-violet/40 sm:flex-row sm:items-center">
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold text-white">{data!.period.label}</span>
                     <span className="block text-[12.5px] text-faint">
