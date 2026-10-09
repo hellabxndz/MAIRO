@@ -9,6 +9,8 @@ import { existingLeadForm, leadFormUrl, parseFields, previewLeadForm } from "@/l
 import { ChooseForm } from "./choose-form";
 import { FormBuilder } from "./form-builder";
 import { SyncLeads } from "./sync-leads";
+import { LeadOutcome } from "./lead-outcome";
+import { leadFunnel } from "@/lib/leads/outcomes";
 import { siteUrl } from "@/lib/site";
 
 // What came back from the ads, and the form that collected it.
@@ -41,7 +43,7 @@ export default async function LeadsPage({
   // campaign, or presses the button below.
   const form = await existingLeadForm(organizationId);
 
-  const [leads, total, preview] = await Promise.all([
+  const [leads, total, preview, outcomes] = await Promise.all([
     db.lead.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
@@ -49,7 +51,9 @@ export default async function LeadsPage({
     }),
     db.lead.count({ where: { organizationId } }),
     form ? Promise.resolve<string[]>([]) : previewLeadForm(organizationId),
+    db.lead.findMany({ where: { organizationId }, select: { status: true, valueCents: true }, take: 10_000 }),
   ]);
+  const funnel = leadFunnel(outcomes);
 
   const fields = form ? parseFields(form.fieldsJson) : [];
   const url = form ? leadFormUrl(form.slug, siteUrl()) : null;
@@ -145,6 +149,32 @@ export default async function LeadsPage({
       </Card>
       )}
 
+      {/* Reported → good → booked → customer. Everything past "reported" is
+          the business's own word; unmarked enquiries are said to be unmarked. */}
+      {funnel.reported > 0 && (
+        <Card className="mb-6">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+            {[
+              { label: "Enquiries", value: funnel.real, hint: "Forms filled in, minus anything you marked spam" },
+              { label: "Good leads", value: funnel.qualified, hint: "Marked good, booked or customer" },
+              { label: "Booked", value: funnel.booked, hint: "Marked booked or customer" },
+              { label: "Customers", value: funnel.won, hint: "Marked customer" },
+            ].map((t) => (
+              <div key={t.label} title={t.hint}>
+                <dd className="text-[28px] font-light tabular-nums leading-none text-white">{t.value}</dd>
+                <dt className="mt-1.5 text-[12.5px] text-neutral-400">{t.label}</dt>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-xs leading-relaxed text-neutral-500">
+            A form filled in is a reported lead — Meta and MAIRO can&rsquo;t know more than that. Only you know
+            which became good leads, bookings or paying customers, so mark each one below.
+            {funnel.wonValueCents ? ` Jobs you've recorded: ${(funnel.wonValueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}.` : ""}
+            {funnel.unmarked > 0 ? ` ${funnel.unmarked} not marked yet.` : ""}
+          </p>
+        </Card>
+      )}
+
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-neutral-300">
           {total} {total === 1 ? "enquiry" : "enquiries"}
@@ -200,6 +230,7 @@ export default async function LeadsPage({
                     );
                   })}
                 </dl>
+                <LeadOutcome leadId={lead.id} status={lead.status} valueCents={lead.valueCents} />
               </Card>
             );
           })}

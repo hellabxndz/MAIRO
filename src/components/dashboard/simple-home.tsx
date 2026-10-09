@@ -61,7 +61,7 @@ export function ProposalCard({ title, sentence }: { title: string; sentence: str
 }
 
 /** 2. How is my business performing? Four numbers, for the goal. */
-export function PerformanceCard({ tiles, note, period = "This month" }: { tiles: Tile[]; note: string | null; period?: string }) {
+export function PerformanceCard({ tiles, note, period = "This month", outcome = null }: { tiles: Tile[]; note: string | null; period?: string; outcome?: { headline: string; detail: string | null } | null }) {
   return (
     <section aria-labelledby="performance" className={card} style={surface}>
       <div className="flex items-baseline justify-between gap-3">
@@ -76,6 +76,14 @@ export function PerformanceCard({ tiles, note, period = "This month" }: { tiles:
           </div>
         ))}
       </dl>
+      {/* What came of the enquiries — the business's own marks, kept apart
+          from what Meta reports. */}
+      {outcome && (
+        <Link href="/dashboard/leads" className="mt-5 block rounded-2xl bg-white/[0.035] px-4 py-3 transition hover:bg-white/[0.06]">
+          <p className="text-[14px] text-white">{outcome.headline}</p>
+          {outcome.detail && <p className="mt-0.5 text-[12.5px] text-muted">{outcome.detail}</p>}
+        </Link>
+      )}
       {note && <p className="mt-4 text-[12.5px] text-faint">{note}</p>}
     </section>
   );

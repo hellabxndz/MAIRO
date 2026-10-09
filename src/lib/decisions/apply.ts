@@ -236,6 +236,43 @@ export async function applyDecision(input: {
   const problem = limitProblem(changes, guardrails, running._sum.totalDailyBudgetCents ?? 0);
   if (problem) return { ok: false, error: problem, applied: [] };
 
+  // Claim it before anything reaches Meta. Checking the status above isn't
+  // enough on its own: a double click, a second tab, or MAIRO's automatic
+  // run landing at the same moment as a person's approval would all pass
+  // that check together, and each would send the change — two new ads where
+  // one was approved, every line in Activity twice. Only one of them can move
+  // applyingAt from empty; the others stop here. It's a lease, so an approval
+  // that died half-way frees the decision after a couple of minutes.
+  const claim = await db.mairoDecision.updateMany({
+    where: {
+      id: decision.id,
+      organizationId: input.organizationId,
+      status: { in: ["PENDING", "FAILED"] },
+      OR: [{ applyingAt: null }, { applyingAt: { lt: new Date(Date.now() - APPLY_LEASE_MS) } }],
+    },
+    data: { applyingAt: new Date() },
+  });
+  if (claim.count === 0) {
+    return { ok: false, error: "MAIRO is already making this change. It will show in Mairo Activity in a moment.", applied: [] };
+  }
+
+  try {
+    return await carryOut(input, decision, changes);
+  } finally {
+    // Released whatever happened. On success the status has already moved
+    // on, so nothing can claim it again; after an error it can be retried.
+    await db.mairoDecision.update({ where: { id: decision.id }, data: { applyingAt: null } }).catch(() => undefined);
+  }
+}
+
+/** How long an approval in progress holds a decision before another may try. */
+export const APPLY_LEASE_MS = 2 * 60_000;
+
+async function carryOut(
+  input: { organizationId: string; userId: string | null; automatic: boolean; edited?: DecisionChange[] },
+  decision: NonNullable<Awaited<ReturnType<typeof db.mairoDecision.findUnique>>>,
+  changes: DecisionChange[],
+): Promise<ApplyOutcome> {
   const applied: AppliedChange[] = [];
   let failure: string | null = null;
   for (const change of safeOrder(changes)) {

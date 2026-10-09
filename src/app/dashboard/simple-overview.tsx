@@ -19,6 +19,12 @@ import { localDay, performanceTiles, pickInsight, whatsNext, type InsightCandida
 import { WEEKDAYS } from "@/lib/reports/weekly";
 import { brainHeadline } from "@/lib/brain/store";
 import { carefulWording } from "@/lib/brain/rules";
+import { leadFunnel, outcomeSummary } from "@/lib/leads/outcomes";
+import { cookies } from "next/headers";
+import { journeyFor, pulseDue } from "@/lib/success/store";
+import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
+import { JourneyCard } from "@/components/success/journey-card";
+import { PulseCard } from "@/components/success/feedback";
 import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
 
 // The Overview in Simple mode: five questions, six calm cards.
@@ -37,23 +43,41 @@ import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard,
 
 const DAY = 86_400_000;
 
-export async function SimpleOverview({ organizationId, userName, launched }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[] } }) {
+export async function SimpleOverview({ organizationId, userName, launched, askFeedback = false }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[] }; askFeedback?: boolean }) {
   // Everything this screen needs is read in as few rounds as it can be: each
   // `await` in a row is another wait on the database (or on Meta), and the
   // page used to make eight of them one after another.
-  const [org, mission, proposal, campaignCount, connections] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
+  const [org, mission, proposal, campaignCount, connections, pulseWanted, pulseLater] = await Promise.all([
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, foundingCustomer: true } }),
     activeMission(organizationId),
     proposedMission(organizationId),
     db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
     connectionSummaries(organizationId),
+    pulseDue(organizationId),
+    cookies().then((c) => c.get(PULSE_LATER_COOKIE)?.value === "1"),
   ]);
+  // "Is MAIRO making advertising easier?" — monthly from the first week, or
+  // when the 30-day journey sends them here to answer it.
+  const showPulse = askFeedback || (pulseWanted && !pulseLater);
   const tz = org?.timezone || "America/New_York";
   const now = new Date();
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: tz }).format(now));
   const greeting = `${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}${userName ? `, ${firstNameFrom(userName, "")}` : ""}.`;
 
-  if (!mission && !proposal && campaignCount === 0) return <EmptyHome greeting={greeting} />;
+  if (!mission && !proposal && campaignCount === 0) {
+    // A brand-new account still gets its first-30-days guide under the
+    // starting question — it's the one thing that says what happens next.
+    const early = await journeyFor(organizationId);
+    return (
+      <>
+        <EmptyHome greeting={greeting} />
+        <div className="mx-auto max-w-[920px] space-y-4">
+          {early?.show && <JourneyCard journey={early} founding={Boolean(org?.foundingCustomer)} />}
+          {showPulse && <PulseCard />}
+        </div>
+      </>
+    );
+  }
 
   const today = localDay(now, tz);
   const monthStart = new Date(`${today.slice(0, 8)}01T00:00:00Z`);
@@ -62,7 +86,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
   const metaConnected = [...connections.values()].some((c) => c.connected && c.platform === "META");
   const billingRead = metaConnected ? fetchMetaBillingStatus(organizationId).catch(() => null) : Promise.resolve(null);
 
-  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy] = await Promise.all([
+  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy, monthLeads] = await Promise.all([
     billingRead,
     campaignCount > 0 ? fetchOrganizationPerformance(organizationId, { since: monthStart, until: now }).catch(() => null) : Promise.resolve(null),
     missionActivity(organizationId),
@@ -84,6 +108,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
     firstCampaignState(organizationId),
     brainHeadline(organizationId).catch(() => null),
     db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
+    db.lead.findMany({ where: { organizationId, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
   ]);
   const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
   const m = perf?.total ?? EMPTY_METRICS;
@@ -192,13 +217,17 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
   ];
   const next = whatsNext({ today, events, campaignsRunning: activity.campaignsRunning, goalPhrase: mission ? goalPhrase(mission.primaryGoal) : null });
 
+  // The first month, worked out from the figures already on this screen.
+  const journey = await journeyFor(organizationId, { readiness, spendCents: m.spendCents }).catch(() => null);
+
   // Mobile order is the reading order: goal, performance, doing, attention, insight, next.
   return (
     <div className="mx-auto max-w-[1180px]">
       <HomeHeader greeting={greeting} />
       <div className="space-y-4 sm:space-y-5">
+        {journey?.show && <JourneyCard journey={journey} founding={Boolean(org?.foundingCustomer)} />}
         {goal}
-        <PerformanceCard tiles={performanceTiles(family, m)} note={perfNote} />
+        <PerformanceCard tiles={performanceTiles(family, m)} note={perfNote} outcome={outcomeSummary(leadFunnel(monthLeads), m.spendCents)} />
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
           <WorkingOnCard rows={rows} />
           <AttentionCard items={attention.slice(0, 3)} />
@@ -208,6 +237,7 @@ export async function SimpleOverview({ organizationId, userName, launched }: { o
           <NextCard items={next} />
         </div>
         {brain && <BrainCard learnedCount={brain.learnedCount} latest={brain.latest} questions={brain.questions} />}
+        {showPulse && <PulseCard />}
       </div>
     </div>
   );

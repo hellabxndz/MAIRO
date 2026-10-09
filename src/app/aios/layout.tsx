@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 
 const NAV = [
   { href: "/aios", label: "Overview" },
+  { href: "/aios/customers", label: "Customers" },
   { href: "/aios/organizations", label: "Organizations" },
   { href: "/aios/creatives", label: "Creative pipeline" },
   { href: "/aios/copilot", label: "Copilot" },

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { after } from "next/server";
+import { touchActivity } from "@/lib/success/store";
+import { FeedbackButton } from "@/components/success/feedback";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { signOutAction } from "@/lib/actions/auth-actions";
@@ -132,6 +135,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect(journey ? "/dashboard/launch" : "/dashboard/meta?required=1");
   }
 
+  // When the business last opened MAIRO, for the team's customer-success
+  // view. After the page is sent, and at most one write an hour.
+  after(() => touchActivity(organizationId).catch(() => undefined));
+
   // The assistant's thread. Same thread the full-page chat uses, so the panel
   // and the page are one conversation rather than two that each forget the
   // other. Created lazily on first dashboard load and reused after that.
@@ -161,6 +168,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />
       }
       footer={
+        <>
+        <FeedbackButton />
         <form action={signOutAction}>
           <button
             type="submit"
@@ -169,6 +178,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             Sign out
           </button>
         </form>
+        </>
       }
     >
       {/* Offered on the first visit after setup, and on demand after that.

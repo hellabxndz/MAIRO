@@ -79,8 +79,8 @@ export default async function ReportsPage({
   return (
     <div>
       <PageHeader
-        title={`Your ${report.label} report`}
-        description="What your advertising did last month, and what MAIRO suggests next."
+        title={`Results · ${report.label}`}
+        description="What your advertising achieved, what MAIRO did for you, and what it suggests next."
         action={
           /* A plain anchor, not next/link. Link prefetches, and prefetching a
              route that streams a file attachment meant every visit to this
@@ -133,42 +133,81 @@ export default async function ReportsPage({
       ) : (
         <>
           <GlassPanel lit className="p-5 sm:p-7">
-            <HudLabel className="mb-5">The month</HudLabel>
+            <HudLabel className="mb-5">Advertising performance</HudLabel>
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
               <Figure label="Advertising spend" value={money(report.spendCents)} />
-              <Figure label="Revenue from ads" value={money(report.revenueCents)} />
               <Figure
-                label="Return on ad spend"
-                value={report.roas === null ? "—" : `${report.roas.toFixed(2)}×`}
+                label={`${report.resultLabel} Meta reported`}
+                value={report.results === null ? "—" : report.results.toLocaleString("en-US")}
               />
+              <Figure label={`Cost per ${report.resultLabel === "Sales" ? "sale" : report.resultLabel === "Leads" ? "lead" : "result"}`} value={money(report.costPerResultCents)} />
+              {/* Revenue only where something could measure it. */}
               <Figure
-                label="Results"
-                value={report.purchases === null ? "—" : report.purchases.toLocaleString("en-US")}
+                label={report.roas === null ? "Revenue from ads" : `Revenue · ${report.roas.toFixed(1)}× return`}
+                value={money(report.revenueCents)}
               />
             </div>
 
             <p className="mt-7 max-w-3xl text-[14px] leading-relaxed text-white/90">
               {report.summary}
             </p>
+            {/* Only when there's no revenue figure at all: Meta may report
+                purchase values from a pixel MAIRO didn't set up, and those
+                are real figures, not a gap. */}
+            {report.revenueCents === null && report.spendCents !== null && (
+              <p className="mt-3 max-w-3xl text-[12.5px] leading-relaxed text-muted">
+                Meta didn&rsquo;t report what your ads earned{report.salesTracked ? "" : " — usually because sales tracking isn\u2019t set up"}, so
+                revenue and return show as a dash rather than a guess.{" "}
+                {!report.salesTracked && <Link href="/dashboard/tracking" className="text-blue-bright hover:text-white">Set up tracking →</Link>}
+              </p>
+            )}
           </GlassPanel>
+
+          {/* The business's own marks, kept apart from what Meta reported. */}
+          {report.leadOutcomes.reported > 0 && (
+            <GlassPanel className="mt-6 p-5 sm:p-6">
+              <div className="mb-5 flex items-baseline justify-between gap-3">
+                <HudLabel>Your enquiries</HudLabel>
+                <Link href="/dashboard/leads" className="text-[12.5px] text-muted hover:text-white">Mark enquiries →</Link>
+              </div>
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+                <Figure label="Came in" value={String(report.leadOutcomes.real)} />
+                <Figure label="Good leads" value={String(report.leadOutcomes.qualified)} />
+                <Figure label="Booked" value={String(report.leadOutcomes.booked)} />
+                <Figure label="Paying customers" value={String(report.leadOutcomes.won)} />
+              </div>
+              <p className="mt-5 max-w-3xl text-[12.5px] leading-relaxed text-muted">
+                These are what you marked on Leads — Meta only knows a form was filled in.
+                {report.leadOutcomes.wonValueCents ? ` Jobs you recorded: ${money(report.leadOutcomes.wonValueCents)}.` : ""}
+                {report.leadOutcomes.unmarked > 0 ? ` ${report.leadOutcomes.unmarked} not marked yet.` : ""}
+              </p>
+            </GlassPanel>
+          )}
 
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <GlassPanel className="p-5 sm:p-6">
               <HudLabel className="mb-5">What MAIRO did</HudLabel>
               <dl className="space-y-3.5">
-                <Row label="Ads running this month" value={String(report.creativesTested)} />
-                <Row label="Campaigns paused" value={String(report.adsPaused)} />
-                <Row label="Changes MAIRO made" value={String(report.changesMade)} />
-                <Row label="Cost per result" value={money(report.costPerPurchaseCents)} />
-                <Row
-                  label="Best platform"
-                  value={
-                    report.bestPlatform
-                      ? `${report.bestPlatform.name} · ${money(report.bestPlatform.costPerPurchaseCents)}`
-                      : "Not enough to compare"
-                  }
-                />
+                <Row label="Campaigns created" value={String(report.work.campaignsCreated)} />
+                <Row label="Recommendations made" value={String(report.work.recommendations)} />
+                <Row label="You approved" value={String(report.work.approved)} />
+                <Row label="You declined" value={String(report.work.declined)} />
+                <Row label="Changes carried out on Meta" value={String(report.changesMade)} />
+                <Row label="Problems caught" value={String(report.work.problemsFound)} />
+                <Row label="Ads running and tested" value={String(report.creativesTested)} />
+                <Row label="Weekly reports" value={String(report.work.reportsGenerated)} />
               </dl>
+              {report.work.accepted.length > 0 && (
+                <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+                  <p className="text-[12px] text-faint">Recommendations you said yes to</p>
+                  <ul className="mt-2 space-y-1.5 text-[13px] text-white/85">
+                    {report.work.accepted.map((t) => <li key={t}>✓ {t}</li>)}
+                  </ul>
+                </div>
+              )}
+              <Link href="/dashboard/activity" className="mt-5 inline-block text-[12.5px] text-blue-bright hover:text-white">
+                Every change, with the reason →
+              </Link>
             </GlassPanel>
 
             <GlassPanel className="p-5 sm:p-6">
@@ -176,26 +215,32 @@ export default async function ReportsPage({
               <p className="text-[28px] font-medium leading-none text-white">
                 {money(report.recommendedNextCents)}
               </p>
-              <p className="mt-2 text-[11.5px] text-faint">Recommended advertising budget</p>
+              <p className="mt-2 text-[11.5px] text-faint">Recommended advertising budget — a suggestion, never applied without you</p>
               <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-muted">
                 {report.recommendationWhy}
               </p>
+              {report.bestPlatform && (
+                <p className="mt-3 text-[12.5px] text-muted">
+                  Cheapest results: {report.bestPlatform.name} · {money(report.bestPlatform.costPerPurchaseCents)}
+                </p>
+              )}
               <div className="mt-5 flex flex-wrap items-center gap-4">
                 <Link
-                  href={`/dashboard/agents?ask=${encodeURIComponent(`Talk me through my ${report.label} report.`)}`}
+                  href={`/dashboard/agents?ask=${encodeURIComponent(`Talk me through my ${report.label} results.`)}`}
                   className="text-[12.5px] text-blue-bright transition-colors hover:text-white"
                 >
-                  Ask {assistant} about this report →
+                  Ask {assistant} about this month →
                 </Link>
               </div>
             </GlassPanel>
           </div>
 
           <p className="mt-8 max-w-3xl text-[11.5px] leading-relaxed text-faint">
-            Figures come from the advertising platforms&rsquo; own reporting and may differ
-            slightly from what they show in their dashboards. Where a platform reported
-            nothing, this page shows a dash rather than a zero. MAIRO can&rsquo;t promise
-            sales, leads or a particular return.
+            Figures come from Meta&rsquo;s own reporting and may differ slightly from Ads
+            Manager. Where Meta reported nothing, this page shows a dash rather than a zero.
+            A reported lead or conversion isn&rsquo;t revenue until it becomes a paying
+            customer, and advertising results aren&rsquo;t profit — your costs aren&rsquo;t in
+            these numbers. MAIRO can&rsquo;t promise sales, leads or a particular return.
           </p>
         </>
       )}

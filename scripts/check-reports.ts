@@ -70,9 +70,16 @@ const blank: MonthlyReport = {
   roas: null,
   purchases: null,
   costPerPurchaseCents: null,
+  leads: null,
+  results: null,
+  resultLabel: "Results",
+  costPerResultCents: null,
   creativesTested: 0,
   adsPaused: 0,
   changesMade: 0,
+  work: { campaignsCreated: 0, recommendations: 0, approved: 0, declined: 0, problemsFound: 0, reportsGenerated: 0, accepted: [] },
+  leadOutcomes: { reported: 0, spam: 0, real: 0, qualified: 0, booked: 0, won: 0, lost: 0, unmarked: 0, wonValueCents: null },
+  salesTracked: false,
   bestPlatform: null,
   recommendedNextCents: null,
   recommendationWhy: "There is no spend to base a recommendation on yet.",
@@ -96,6 +103,9 @@ const real: MonthlyReport = {
   roas: 4.008,
   purchases: 83,
   costPerPurchaseCents: 7469,
+  results: 83,
+  resultLabel: "Sales",
+  costPerResultCents: 7469,
   creativesTested: 27,
   adsPaused: 8,
   changesMade: 12,
@@ -112,6 +122,26 @@ check("return is shown to two places", realText.includes("4.01"));
 check("the best platform is named", realText.includes("TikTok"));
 check("counts appear", realText.includes("27") && realText.includes("12"));
 check("nothing reads 'not reported' when everything was", !realText.includes("not reported"));
+
+console.log("\n— a leads business sees its leads, and what became of them —");
+const leadsMonth: MonthlyReport = {
+  ...blank,
+  spendCents: 90000,
+  leads: 30,
+  results: 30,
+  resultLabel: "Leads",
+  costPerResultCents: 3000,
+  changesMade: 4,
+  work: { campaignsCreated: 1, recommendations: 6, approved: 3, declined: 1, problemsFound: 2, reportsGenerated: 4, accepted: ["Move budget to the roofing estimates ad"] },
+  leadOutcomes: { reported: 32, spam: 2, real: 30, qualified: 12, booked: 5, won: 2, lost: 3, unmarked: 13, wonValueCents: 1_800_000 },
+  thin: false,
+};
+const leadsText = reportAsText(leadsMonth, "Peak Roofing");
+check("leads are the headline result, not a dash", /Leads\s+30/.test(leadsText));
+check("cost per lead is shown", /Cost per result\s+\$30/.test(leadsText));
+check("MAIRO's work is listed", /Recommendations MAIRO made\s+6/.test(leadsText) && /You approved\s+3/.test(leadsText) && /Problems MAIRO caught\s+2/.test(leadsText));
+check("what the business marked is kept apart from what Meta reported", /Marked good leads\s+12/.test(leadsText) && /Paying customers\s+2/.test(leadsText));
+check("and says a lead isn't revenue", /not revenue/.test(leadsText));
 
 console.log("\n— the recommendation never flatters a bad month —");
 // Exercised through the exported report shape: the rule is that a losing month

@@ -6,6 +6,8 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
 import { GlassPanel } from "@/components/mairo";
 import { StartTourLink } from "@/components/tour";
+import { FeedbackButton } from "@/components/success/feedback";
+import { CaseStudyConsent } from "@/components/success/consent";
 
 // Account: everywhere the new navigation does not go.
 //
@@ -31,7 +33,7 @@ export default async function AccountPage() {
   const [organization, leadForm] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
-      select: { name: true, subscriptionTier: true },
+      select: { name: true, subscriptionTier: true, caseStudyConsentAt: true },
     }),
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
   ]);
@@ -40,6 +42,7 @@ export default async function AccountPage() {
     {
       title: "Your advertising",
       entries: [
+        { href: "/dashboard/reports/monthly", label: "Results", hint: "What your ads achieved and what MAIRO did, month by month" },
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
         { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad Mairo has made for you" },
         { href: "/dashboard/social", label: "Social Manager", hint: "AI social media management (Scale only)" },
@@ -107,6 +110,24 @@ export default async function AccountPage() {
           </section>
         ))}
       </div>
+
+      {/* Talking to the MAIRO team — here as well as the sidebar, because
+          the sidebar isn't there on a phone. */}
+      <section className="mt-8">
+        <h2 className="mb-3 font-mono text-[10px] uppercase tracking-[0.24em] text-faint">MAIRO and you</h2>
+        <GlassPanel>
+          <div className="flex items-center gap-4 px-5 py-4">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] text-white">Tell the MAIRO team something</span>
+              <span className="block text-[12px] text-faint">A problem, something confusing, or an idea — people read every one</span>
+            </span>
+            <FeedbackButton className="shrink-0 rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white/85 transition hover:text-white" />
+          </div>
+          <div className="border-t" style={{ borderColor: "var(--mairo-line)" }}>
+            <CaseStudyConsent given={Boolean(organization?.caseStudyConsentAt)} />
+          </div>
+        </GlassPanel>
+      </section>
 
       {/* The only way back into the walkthrough.
       

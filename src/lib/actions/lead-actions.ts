@@ -12,6 +12,8 @@ import {
 } from "@/lib/leads/forms";
 import { validateFields, type LeadField } from "@/lib/leads/fields";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
+import { LEAD_OUTCOMES } from "@/lib/leads/outcomes";
+import type { LeadStatus } from "@/generated/prisma/enums";
 
 /**
  * Takes a submission from the public form.
@@ -202,4 +204,37 @@ export async function syncLeadsAction(): Promise<{
 
   revalidatePath("/dashboard/leads");
   return { added: result.added };
+}
+
+/**
+ * What became of a lead, in the business's own words: a good lead, booked,
+ * a customer (optionally with what the job was worth), not a fit, or spam.
+ * Only the organization's own leads; the value is kept only for customers.
+ */
+export async function setLeadOutcomeAction(
+  leadId: string,
+  status: LeadStatus,
+  valueDollars?: number | null,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  if (!LEAD_OUTCOMES.some((o) => o.status === status)) return { ok: false, error: "That isn't an outcome MAIRO knows." };
+
+  let valueCents: number | null = null;
+  if (status === "WON" && valueDollars !== null && valueDollars !== undefined) {
+    if (!Number.isFinite(valueDollars) || valueDollars < 0 || valueDollars > 10_000_000) {
+      return { ok: false, error: "Enter what the job was worth in dollars, or leave it empty." };
+    }
+    valueCents = Math.round(valueDollars * 100);
+  }
+
+  const updated = await db.lead.updateMany({
+    where: { id: leadId, organizationId },
+    data: { status, valueCents, statusChangedAt: new Date() },
+  });
+  if (updated.count === 0) return { ok: false, error: "That enquiry isn't there any more." };
+  revalidatePath("/dashboard/leads");
+  revalidatePath("/dashboard");
+  return { ok: true };
 }

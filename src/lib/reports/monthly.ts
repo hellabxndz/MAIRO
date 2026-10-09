@@ -1,3 +1,4 @@
+import { leadFunnel, type LeadFunnel } from "@/lib/leads/outcomes";
 import { db } from "@/lib/db";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { platformName } from "@/lib/ad-platforms/registry";
@@ -40,9 +41,32 @@ export type MonthlyReport = {
   purchases: number | null;
   costPerPurchaseCents: number | null;
 
+  /** Leads Meta reported (form fills, instant forms). Null when it reported none. */
+  leads: number | null;
+  /** The headline result: sales when there were any, otherwise leads, otherwise conversions. */
+  results: number | null;
+  resultLabel: "Sales" | "Leads" | "Results";
+  costPerResultCents: number | null;
+
   creativesTested: number;
   adsPaused: number;
   changesMade: number;
+
+  /** MAIRO's work this month — counts of things that happened in it. */
+  work: {
+    campaignsCreated: number;
+    recommendations: number;
+    approved: number;
+    declined: number;
+    problemsFound: number;
+    reportsGenerated: number;
+    /** The recommendations the business said yes to, newest first. */
+    accepted: string[];
+  };
+  /** What the business marked its enquiries as — never assumed. */
+  leadOutcomes: LeadFunnel;
+  /** Whether a Meta pixel was reporting sales — revenue figures depend on it. */
+  salesTracked: boolean;
 
   /** The platform with the cheapest result, when more than one is comparable. */
   bestPlatform: { platform: AdPlatform; name: string; costPerPurchaseCents: number } | null;
@@ -129,6 +153,9 @@ function writeSummary(input: {
   revenueCents: number | null;
   roas: number | null;
   purchases: number | null;
+  resultNoun: [string, string];
+  leadOutcomes: LeadFunnel;
+  approved: number;
   changesMade: number;
   creativesTested: number;
   bestPlatformName: string | null;
@@ -145,7 +172,7 @@ function writeSummary(input: {
     );
   } else if (input.purchases !== null && input.purchases > 0) {
     parts.push(
-      `You spent ${money(input.spendCents)} and got ${input.purchases} ${input.purchases === 1 ? "result" : "results"}. The platforms did not report what those were worth, so there is no return figure this month.`,
+      `You spent ${money(input.spendCents)} and Meta reported ${input.purchases} ${input.purchases === 1 ? input.resultNoun[0] : input.resultNoun[1]}. It didn't report what those were worth, so there is no return figure this month — a reported lead isn't revenue until it becomes a paying customer.`,
     );
   } else {
     parts.push(
@@ -158,9 +185,15 @@ function writeSummary(input: {
       `MAIRO had ${input.creativesTested} ${input.creativesTested === 1 ? "ad" : "ads"} running for you.`,
     );
   }
+  const lo = input.leadOutcomes;
+  if (lo.qualified || lo.booked || lo.won) {
+    parts.push(
+      `Of the enquiries that came in, you marked ${[lo.qualified ? `${lo.qualified} as good leads` : null, lo.booked ? `${lo.booked} booked` : null, lo.won ? `${lo.won} as paying customers` : null].filter(Boolean).join(", ")}.`,
+    );
+  }
   if (input.changesMade > 0) {
     parts.push(
-      `It made ${input.changesMade} ${input.changesMade === 1 ? "change" : "changes"}, each recorded with the numbers behind it.`,
+      `It made ${input.changesMade} ${input.changesMade === 1 ? "change" : "changes"}${input.approved ? `, including ${input.approved} you approved` : ""}, each recorded with the numbers behind it.`,
     );
   } else {
     parts.push("It made no changes — nothing in the figures called for one.");
@@ -181,7 +214,8 @@ export async function monthlyReport(
   // Everything scoped to the month. The counts are of things that HAPPENED in
   // it, not of things that exist now — a report about August that changes when
   // somebody deletes a creative in October is not a report.
-  const [report, creativesTested, adsPaused, changesMade] = await Promise.all([
+  const inMonth = { gte: range.since, lte: range.until };
+  const [report, creativesTested, adsPaused, optimizerChanges, activityChanges, campaignsCreated, recommendations, approvedRows, declined, problemsFound, reportsGenerated, monthLeads, pixel] = await Promise.all([
     fetchOrganizationPerformance(organizationId, range).catch(() => null),
     db.platformCreative.count({
       where: { organizationId, createdAt: { gte: range.since, lte: range.until } },
@@ -199,7 +233,24 @@ export async function monthlyReport(
         appliedAt: { gte: range.since, lte: range.until },
       },
     }),
+    // Changes carried out through Mairo Decisions (approved or automatic),
+    // each one a row in Mairo Activity once the network accepted it.
+    db.mairoActivity.count({ where: { organizationId, createdAt: inMonth } }),
+    db.mairoCampaign.count({ where: { organizationId, createdAt: inMonth } }),
+    db.mairoDecision.count({ where: { organizationId, createdAt: inMonth } }),
+    db.mairoDecision.findMany({
+      where: { organizationId, status: "APPLIED", decidedAt: inMonth },
+      orderBy: { decidedAt: "desc" },
+      select: { title: true },
+      take: 50,
+    }),
+    db.mairoDecision.count({ where: { organizationId, status: "REJECTED", decidedAt: inMonth } }),
+    db.mairoInsight.count({ where: { organizationId, createdAt: inMonth } }),
+    db.weeklyReport.count({ where: { organizationId, generatedAt: inMonth } }),
+    db.lead.findMany({ where: { organizationId, createdAt: inMonth }, select: { status: true, valueCents: true } }),
+    db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
   ]);
+  const changesMade = optimizerChanges + activityChanges;
 
   const total: PlatformMetrics | null = report?.total ?? null;
   const spendCents = total?.spendCents ?? null;
@@ -229,6 +280,13 @@ export async function monthlyReport(
         )
       : null;
 
+  const leads = total?.leads ?? null;
+  const sales = total?.purchases ?? null;
+  const [results, resultLabel]: [number | null, MonthlyReport["resultLabel"]] =
+    sales !== null && sales > 0 ? [sales, "Sales"] : leads !== null && leads > 0 ? [leads, "Leads"] : [purchases, "Results"];
+  const costPerResultCents = spendCents !== null && results !== null && results > 0 ? Math.round(spendCents / results) : null;
+  const leadOutcomes = leadFunnel(monthLeads);
+
   const recommendation = recommendNext(spendCents, roas);
 
   return {
@@ -239,9 +297,24 @@ export async function monthlyReport(
     roas,
     purchases,
     costPerPurchaseCents,
+    leads,
+    results,
+    resultLabel,
+    costPerResultCents,
     creativesTested,
     adsPaused,
     changesMade,
+    work: {
+      campaignsCreated,
+      recommendations,
+      approved: approvedRows.length,
+      declined,
+      problemsFound,
+      reportsGenerated,
+      accepted: [...new Set(approvedRows.map((r) => r.title))].slice(0, 5),
+    },
+    leadOutcomes,
+    salesTracked: pixel?.status === "ACTIVE",
     bestPlatform: best
       ? {
           platform: best.platform,
@@ -255,7 +328,10 @@ export async function monthlyReport(
       spendCents,
       revenueCents,
       roas,
-      purchases,
+      purchases: results,
+      resultNoun: resultLabel === "Sales" ? ["sale", "sales"] : resultLabel === "Leads" ? ["lead", "leads"] : ["result", "results"],
+      leadOutcomes,
+      approved: approvedRows.length,
       changesMade,
       creativesTested,
       bestPlatformName: best ? platformName(best.platform) : null,
@@ -275,12 +351,19 @@ export function reportAsText(report: MonthlyReport, businessName: string): strin
     line("Advertising spend", money(report.spendCents)),
     line("Revenue from advertising", money(report.revenueCents)),
     line("Return on ad spend", report.roas === null ? "not reported" : `${report.roas.toFixed(2)}x`),
-    line("Results", report.purchases === null ? "not reported" : String(report.purchases)),
-    line("Cost per result", money(report.costPerPurchaseCents)),
+    line(report.resultLabel, report.results === null ? "not reported" : String(report.results)),
+    line("Cost per result", money(report.costPerResultCents)),
     "",
     line("Ads running this month", String(report.creativesTested)),
     line("Campaigns paused", String(report.adsPaused)),
     line("Changes MAIRO made", String(report.changesMade)),
+    line("Recommendations MAIRO made", String(report.work.recommendations)),
+    line("You approved", String(report.work.approved)),
+    line("Problems MAIRO caught", String(report.work.problemsFound)),
+    line("Weekly reports", String(report.work.reportsGenerated)),
+    ...(report.leadOutcomes.reported
+      ? ["", line("Enquiries", String(report.leadOutcomes.real)), line("Marked good leads", String(report.leadOutcomes.qualified)), line("Booked", String(report.leadOutcomes.booked)), line("Paying customers", String(report.leadOutcomes.won))]
+      : []),
     line("Best platform", report.bestPlatform ? report.bestPlatform.name : "not enough data"),
     "",
     line(
@@ -293,8 +376,9 @@ export function reportAsText(report: MonthlyReport, businessName: string): strin
     report.summary,
     "",
     "Figures come from the advertising platforms' own reporting and may differ",
-    "slightly from what they show in their dashboards. MAIRO cannot promise",
-    "sales, leads or a particular return.",
+    "slightly from what they show in their dashboards. A reported lead or",
+    "conversion is not revenue, and ad results are not profit.",
+    "MAIRO cannot promise sales, leads or a particular return.",
   ].join("\n");
 }
 

@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions/aios-actions";
 import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
 import { planFor } from "@/lib/plans";
+import { SuccessPanel } from "./success-panel";
 
 const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
 // Approve and block belong to the safety check, not to a dropdown — see
@@ -63,6 +64,8 @@ export default async function OrganizationDetailPage({
           </Badge>
         }
       />
+
+      <SuccessPanel organizationId={org.id} />
 
       <Card className="mb-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

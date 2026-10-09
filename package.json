@@ -48,6 +48,9 @@
     "check:brain": "tsx scripts/check-brain.ts",
     "check:graph-cache": "tsx scripts/check-graph-cache.ts",
     "check:account-history": "tsx scripts/check-account-history.ts",
+    "check:decision-claim": "tsx scripts/check-decision-claim.ts",
+    "check:lead-outcomes": "tsx scripts/check-lead-outcomes.ts",
+    "check:success": "tsx scripts/check-success.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

@@ -131,7 +131,7 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     );
   }
 
-  const before = await db.organization.findUnique({ where: { id: organizationId }, select: { hasPaid: true } });
+  const before = await db.organization.findUnique({ where: { id: organizationId }, select: { hasPaid: true, canceledAt: true } });
   const paidNow = subscription.status === "active";
   const live = subscription.status === "active" || subscription.status === "trialing";
 
@@ -142,6 +142,9 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
       // any earlier stop.
       ...(paidNow ? { hasPaid: true } : {}),
       ...(live ? { executionStoppedAt: null, executionStoppedReason: null } : {}),
+      // For retention: when the subscription ended (the first time Stripe
+      // said so — a redelivered webhook doesn't move it), cleared by a new one.
+      ...(finished ? (before?.canceledAt ? {} : { canceledAt: new Date() }) : live ? { canceledAt: null } : {}),
       stripeSubscriptionId: finished ? null : subscription.id,
       subscriptionStatus: subscription.status,
       // Left untouched when the price is unrecognised, rather than reset.

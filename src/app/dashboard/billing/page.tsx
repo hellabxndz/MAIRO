@@ -6,6 +6,7 @@ import { PageHeader, secondaryButtonClass } from "@/components/ui";
 import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, planFor, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
+import { CancelReason } from "@/components/success/cancel-reason";
 import { PlanButton } from "../settings/plan-button";
 
 // Where "Upgrade" goes: every plan side by side, and one button from each
@@ -186,6 +187,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         Payment is handled by Stripe; MAIRO never sees your card. Your plan pays for MAIRO. What your ads
         cost is separate and goes straight from you to Meta.
       </p>
+      {subscribed && organization.stripeCustomerId && <CancelReason />}
     </div>
   );
 }

@@ -295,6 +295,21 @@ model Organization {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   brainEvents BrainEvent[]
+
+  /// Customer success. What the business tells MAIRO about MAIRO, and what
+  /// the MAIRO team recorded talking to them.
+  feedback     CustomerFeedback[]
+  supportNotes SupportNote[]
+  /// One of the first businesses on MAIRO, looked after more closely.
+  foundingCustomer Boolean   @default(false)
+  foundingSince    DateTime?
+  /// The business agreed its results may be shared in an anonymized case
+  /// study. Null means no — never assumed, and withdrawable at any time.
+  caseStudyConsentAt DateTime?
+  /// Last time anyone from the business opened the dashboard (to the hour).
+  lastActiveAt DateTime?
+  /// When the subscription ended, for retention. Cleared by a new one.
+  canceledAt   DateTime?
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -1647,6 +1662,22 @@ enum LeadSource {
   META_INSTANT
 }
 
+/// What became of a lead. NEW is all a form or Meta can tell MAIRO; every
+/// step after that is the business's word.
+enum LeadStatus {
+  NEW
+  /// A real prospect the business wants — not spam, in the area, wants the service.
+  QUALIFIED
+  /// An appointment, estimate or call booked.
+  BOOKED
+  /// Became a paying customer.
+  WON
+  /// Didn't go anywhere.
+  LOST
+  /// Junk, a test, or a duplicate.
+  SPAM
+}
+
 /// One person who filled the form in.
 model Lead {
   id             String       @id @default(cuid())
@@ -1679,6 +1710,14 @@ model Lead {
   /// Unique, because a sync that runs twice must not store the same person
   /// twice — and a sync will run twice, on every schedule and every retry.
   externalLeadId String? @unique
+
+  /// What became of this person, as the business marks it. A form filled in
+  /// is a reported lead and nothing more until somebody says otherwise —
+  /// MAIRO never assumes a lead was qualified, booked or paid.
+  status          LeadStatus @default(NEW)
+  /// What the job was worth, when the business says it became a customer.
+  valueCents      Int?
+  statusChangedAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -2436,6 +2475,11 @@ model MairoDecision {
   /// What was actually done, with the before and after of each change.
   resultJson  String?   @db.Text
   decidedAt   DateTime?
+  /// Set while an approval is being carried out, so a second approval (a
+  /// double click, two tabs, MAIRO acting at the same moment) can't send the
+  /// same change to Meta twice. A lease: an approval that crashed frees it
+  /// after two minutes.
+  applyingAt  DateTime?
   decidedById String?
   /// True when MAIRO carried it out itself under AI Assist or Full Autopilot.
   automatic   Boolean   @default(false)
@@ -3093,4 +3137,69 @@ model PlatformAdminAlert {
   createdAt DateTime  @default(now())
 
   @@index([platform, readAt])
+}
+
+/// What the business tells MAIRO about MAIRO: the "is MAIRO making
+/// advertising easier?" pulse, problems, ideas, what's confusing, and why
+/// they're leaving. Read by the MAIRO team in AIOS; never shown to anyone else.
+enum FeedbackKind {
+  PULSE
+  PROBLEM
+  IDEA
+  CONFUSING
+  CANCELLATION
+}
+
+enum FeedbackEasier {
+  YES
+  SOMEWHAT
+  NO
+}
+
+enum FeedbackStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+model CustomerFeedback {
+  id             String          @id @default(cuid())
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  userId         String?
+  kind           FeedbackKind
+  /// The pulse answer: is MAIRO making advertising easier?
+  easier         FeedbackEasier?
+  text           String?         @db.Text
+  /// The screen it was sent from.
+  page           String?
+  status         FeedbackStatus  @default(OPEN)
+  /// The MAIRO team's own note, never shown to the business.
+  internalNote   String?         @db.Text
+  createdAt      DateTime        @default(now())
+  resolvedAt     DateTime?
+
+  @@index([organizationId, createdAt])
+  @@index([status, createdAt])
+}
+
+enum SupportChannel {
+  CALL
+  EMAIL
+  CHAT
+  MEETING
+  NOTE
+}
+
+/// A record of the MAIRO team talking to a business — internal only.
+model SupportNote {
+  id             String         @id @default(cuid())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  authorId       String?
+  channel        SupportChannel @default(NOTE)
+  text           String         @db.Text
+  createdAt      DateTime       @default(now())
+
+  @@index([organizationId, createdAt])
 }

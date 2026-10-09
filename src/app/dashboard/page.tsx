@@ -52,11 +52,12 @@ import { firstCampaignState } from "@/lib/strategy/first-campaign";
 // queried at once and Meta is having a slow moment.
 export const maxDuration = 30;
 
-export default async function DashboardOverviewPage({ searchParams }: { searchParams: Promise<{ range?: string; journey?: string }> }) {
+export default async function DashboardOverviewPage({ searchParams }: { searchParams: Promise<{ range?: string; journey?: string; feedback?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const days = parseRange((await searchParams).range);
+  const query = await searchParams;
+  const days = parseRange(query.range);
 
   // A free-plan account that hasn't subscribed: its plan, its next step, and
   // what unlocks with a subscription. Nothing below runs for it.
@@ -99,7 +100,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // anything that needs the owner, one insight, what's next. The Advanced and
   // Profit First views below keep every figure for those who want them.
   if (mode === "simple") {
-    return <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} />;
+    return <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} askFeedback={query.feedback === "1"} />;
   }
 
   // Read side by side rather than one after another.
