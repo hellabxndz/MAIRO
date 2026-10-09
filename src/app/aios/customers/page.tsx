@@ -22,6 +22,9 @@ const ago = (d: Date | null) => {
 };
 const pct = (v: number | null) => (v === null ? "—" : `${v}%`);
 
+const META_LABEL = { connected: "Connected", expiring: "Expires soon", expired: "Expired", error: "Needs reconnect", none: "Not connected" } as const;
+const META_TONE = { connected: "green", expiring: "yellow", expired: "red", error: "red", none: "neutral" } as const;
+
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ founding?: string }> }) {
   const foundingOnly = (await searchParams).founding === "1";
   const [{ accounts, metrics }, inbox, failedRuns] = await Promise.all([
@@ -77,6 +80,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">First 30 days</th>
                 <th className="px-4 py-3 font-medium">Plan</th>
+                <th className="px-4 py-3 font-medium">Meta</th>
                 <th className="px-4 py-3 font-medium">Last visit</th>
                 <th className="px-4 py-3 font-medium">Why</th>
               </tr>
@@ -102,6 +106,11 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                     <td className="px-4 py-3 text-neutral-400">
                       {a.plan === "NONE" ? "No plan" : a.plan}
                       <div className="text-[12px] text-neutral-500">{a.status ?? "—"}{a.daysToFirstCampaign !== null ? ` · 1st campaign day ${a.daysToFirstCampaign}` : ""}</div>
+                      {a.cancelAt && <div className="text-[12px] text-amber-300">Cancelled · ends {a.cancelAt.toLocaleDateString()}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-400">
+                      <Badge tone={META_TONE[a.meta]}>{META_LABEL[a.meta]}</Badge>
+                      <div className="mt-1 text-[12px] text-neutral-500">{a.runningCampaigns} running</div>
                     </td>
                     <td className="px-4 py-3 text-neutral-400">{ago(a.lastActiveAt)}</td>
                     <td className="px-4 py-3 text-[13px] text-neutral-300">

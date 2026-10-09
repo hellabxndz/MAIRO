@@ -1,3 +1,4 @@
+import { metaPostingApproved } from "@/lib/social/publishing-status";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { hasActivePlan } from "@/lib/readiness";
@@ -17,8 +18,8 @@ const BENEFITS = [
   "Content built around sales, leads, bookings, launches and promotions",
   "AI-generated captions and creatives",
   "Smart content calendar",
-  "Instagram and Facebook scheduling",
-  "Automatic publishing of what you approve",
+  `Instagram and Facebook scheduling${metaPostingApproved() ? "" : " — publishing once Meta approves"}`,
+  `Automatic publishing of what you approve${metaPostingApproved() ? "" : ", once Meta approves MAIRO's posting access"}`,
   "Promotion campaigns",
   "Performance learning",
 ];

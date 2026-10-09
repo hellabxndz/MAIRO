@@ -110,6 +110,23 @@ Mairo Activity.
 **10. `ANTHROPIC_API_KEY` — set.** Powers the Ad Score, Business Analyzer,
 Fix with AI, One-Click Fix and the social post captions.
 
+**11. Two switches to flip when the time comes.** `META_POSTING_APPROVED=1`
+once Meta approves the posting permissions (round 2) — until then every
+Social page, the pricing page and the privacy policy say publishing is
+waiting for Meta. `NEXT_PUBLIC_SUPPORT_EMAIL` once a monitored mailbox exists
+on a business domain (e.g. on mairo.io); until then the legal pages show the
+current Gmail address. Redeploy after either.
+
+**12. Legal review before charging the first customers.** Have a qualified
+person check: the exact registered name of the operating company (the pages
+say "BLING Marketing"); the missing governing-law/jurisdiction clause in the
+Terms; whether "the current month isn't refunded" (on cancelling and on
+account deletion) holds where your customers are; the "within 30 days"
+backup and log promise — confirm Neon's history retention and Vercel's log
+retention on your plans are 30 days or less; and whether the processors list
+(Meta, Anthropic, OpenAI, Google, Stripe, Twilio, Neon, Vercel) needs data
+processing agreements referenced.
+
 ## TikTok (retired)
 
 MAIRO no longer runs TikTok. The `TIKTOK_*` variables in Vercel can be deleted,

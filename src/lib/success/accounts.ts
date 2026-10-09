@@ -1,3 +1,4 @@
+import { EXPIRY_WARNING_DAYS, daysLeft } from "@/lib/meta/token-expiry";
 import { db } from "@/lib/db";
 import { successJourney, type Journey } from "./journey";
 import { journeyFactsFor } from "./store";
@@ -27,6 +28,12 @@ export type SuccessAccount = {
   latestPulse: "YES" | "SOMEWHAT" | "NO" | null;
   openIssues: number;
   cancelReason: string | null;
+  /** The Meta connection as last recorded (no Meta call): what support checks first. */
+  meta: "connected" | "expiring" | "expired" | "error" | "none";
+  /** When a cancelled subscription ends, while it's still active. */
+  cancelAt: Date | null;
+  /** MAIRO campaigns live on Meta now. */
+  runningCampaigns: number;
 };
 
 export async function successAccount(organizationId: string, now = new Date()): Promise<SuccessAccount | null> {
@@ -36,6 +43,9 @@ export async function successAccount(organizationId: string, now = new Date()): 
       select: {
         id: true, name: true, createdAt: true, foundingCustomer: true, caseStudyConsentAt: true, subscriptionTier: true,
         subscriptionStatus: true, hasPaid: true, lastActiveAt: true, canceledAt: true, autoLaunchedAt: true,
+        subscriptionCancelAt: true,
+        metaAdAccount: { select: { status: true, tokenExpiresAt: true } },
+        _count: { select: { mairoCampaigns: { where: { status: { not: "ARCHIVED" }, platformCampaigns: { some: { platform: "META", status: "ACTIVE", externalCampaignId: { not: null } } } } } } },
       },
     }),
     journeyFactsFor(organizationId, {}, now),
@@ -85,7 +95,20 @@ export async function successAccount(organizationId: string, now = new Date()): 
     latestPulse,
     openIssues: issues,
     cancelReason: cancel?.text ?? null,
+    meta: metaHealth(org.metaAdAccount, now),
+    cancelAt: org.subscriptionCancelAt,
+    runningCampaigns: org._count.mairoCampaigns,
   };
+}
+
+function metaHealth(m: { status: string; tokenExpiresAt: Date | null } | null, now: Date): SuccessAccount["meta"] {
+  if (!m) return "none";
+  if (m.status === "TOKEN_EXPIRED") return "expired";
+  if (m.status !== "CONNECTED") return "error";
+  const left = daysLeft(m.tokenExpiresAt, now);
+  if (m.tokenExpiresAt && left === null) return "expired";
+  if (left !== null && left <= EXPIRY_WARNING_DAYS) return "expiring";
+  return "connected";
 }
 
 const RANK = { struggling: 0, watch: 1, healthy: 2, cancelled: 3 } as const;

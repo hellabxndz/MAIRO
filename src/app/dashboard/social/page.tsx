@@ -18,6 +18,7 @@ import { POST_SELECT, toCalendarPost } from "./manager-data";
 import { findInstagramAccount } from "@/lib/instagram/publish";
 import { findFacebookPage } from "@/lib/facebook/page-posting";
 import { executionAllowed } from "@/lib/billing/execution";
+import { POSTING_PENDING, metaPostingApproved } from "@/lib/social/publishing-status";
 
 // MAIRO Social Manager (Scale only). The business says what it wants to
 // achieve; MAIRO works out the strategy, plans the posts, and shows each one
@@ -50,6 +51,11 @@ export default async function SocialManagerPage() {
     return (
       <div>
         <PageHeader title="MAIRO Social Manager" description="Tell MAIRO what you want your business to achieve. MAIRO figures out how to market toward it." />
+        {!metaPostingApproved() && (
+          <p role="status" className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/[0.06] px-4 py-3 text-[13px] leading-relaxed text-amber-100">
+            {POSTING_PENDING}
+          </p>
+        )}
         <GoalSetup businessName={businessName} />
         {!brain && (
           <p className="mt-4 text-[13px] text-muted">

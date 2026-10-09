@@ -116,7 +116,7 @@ const TRUST = [
 type Source = "Meta reports" | "MAIRO counts" | "You mark" | "Confirmed";
 const OUTCOME_STEPS: { step: string; body: string; source: Source }[] = [
   { step: "Ad results", body: "Who saw your ads, who clicked, and the results Meta attributes to them.", source: "Meta reports" },
-  { step: "Leads", body: "Enquiries from your forms, each counted once, with spam left out.", source: "MAIRO counts" },
+  { step: "Leads", body: "Enquiries from your forms, minus any you mark as spam or a duplicate.", source: "MAIRO counts" },
   { step: "Qualified leads", body: "The enquiries you mark as good ones.", source: "You mark" },
   { step: "Appointments", body: "Leads you mark as booked.", source: "You mark" },
   { step: "Customers", body: "Leads you mark as paying customers.", source: "You mark" },

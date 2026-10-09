@@ -16,7 +16,12 @@ type State = { kind: "idle" } | { kind: "paused" } | { kind: "failed"; error: st
 const usd = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const ADS_MANAGER = "https://adsmanager.facebook.com/adsmanager/manage/campaigns";
 
-export function RunningCampaigns({ campaigns, canPause }: { campaigns: Row[]; canPause: boolean }) {
+export function RunningCampaigns({ campaigns: current, canPause }: { campaigns: Row[]; canPause: boolean }) {
+  // Pausing refreshes the page, and a paused campaign drops out of the list
+  // the server sends. The rows shown first are kept, so its "Paused ·
+  // confirmed by Meta" stays on screen instead of the row vanishing.
+  const [first] = useState(current);
+  const campaigns = [...first, ...current.filter((c) => !first.some((f) => f.id === c.id))];
   const [states, setStates] = useState<Record<string, State>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [, start] = useTransition();
