@@ -2,6 +2,9 @@ import { loadTeam } from "@/lib/team/store";
 import { AGENT } from "@/lib/team/agents";
 import { tool } from "ai";
 import { z } from "zod";
+import { diagnose } from "@/lib/coach/diagnose";
+import { gatherCoachInput } from "@/lib/coach/gather";
+import { loadChangeHistory, loadFindings } from "@/lib/coach/store";
 import { db } from "@/lib/db";
 import { gatherDecisionInput } from "@/lib/decisions/gather";
 import { decide, costPerResult, clickRate, frequency } from "@/lib/decisions/rules";
@@ -121,6 +124,57 @@ export function assistantTools(organizationId: string) {
             thisMonth: team.contribution[st.role] ?? null,
           })),
           recentActivity: team.feed.slice(0, 12).map((f) => ({ who: AGENT[f.agent].name, when: f.at.toISOString(), what: f.summary, outcome: f.status.toLowerCase() })),
+        };
+      },
+    }),
+
+    get_performance_coach: tool({
+      description:
+        "Read the business's Performance Coach: its results from ad to customer over the last two weeks against the two before (spend from Meta, leads MAIRO stored, and what the business marked — good leads, appointments, customers, confirmed sales), where people drop out, what the AI team found with the evidence and possible explanations, what MAIRO can't see yet, and what followed earlier changes. Use it for \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\", \"should I increase my budget\" and \"what is my AI team doing to improve my campaigns\".",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const [findings, history] = await Promise.all([loadFindings(organizationId), loadChangeHistory(organizationId)]);
+        let live: Awaited<ReturnType<typeof diagnose>> | null = null;
+        try {
+          live = diagnose(await gatherCoachInput(organizationId));
+        } catch {
+          live = null;
+        }
+        const f = live?.current;
+        return {
+          period: "last 14 days, compared with the 14 before",
+          results: f
+            ? {
+                spendFromMeta: f.spendCents === null ? null : f.spendCents / 100,
+                leadsStoredInMairo: f.leads,
+                leadsMetaReported: f.metaLeads,
+                leadsTheBusinessMarked: f.judged,
+                goodLeads: f.judged ? f.qualified : null,
+                appointments: f.judged ? f.appointments : null,
+                customers: f.judged ? f.customers : null,
+                confirmedSalesDollars: f.verifiedRevenueCents === null ? null : f.verifiedRevenueCents / 100,
+                costPerGoodLead: f.costPerQualifiedCents === null ? null : f.costPerQualifiedCents / 100,
+                costPerCustomer: f.cacCents === null ? null : f.cacCents / 100,
+                typicalHoursToFirstContact: f.medianResponseHours,
+                leadsWaitingOverADay: f.waitingForContact,
+              }
+            : "Couldn't read Meta just now — use the findings below, and say the figures couldn't be refreshed.",
+          whereItDrops: live?.whereItDrops ?? null,
+          stageRates: live?.steps ?? [],
+          findings: findings.active.map((x) => ({
+            title: x.title,
+            plain: x.plain,
+            observed: x.noticed,
+            possibleExplanations: x.explanations.map((e) => `${e.basis === "evidence" ? "[in their records]" : "[possibility]"} ${e.text}`),
+            recommendation: x.shownRecommendation,
+            evidenceStrength: x.confidence,
+            limitations: x.limitations,
+            missing: x.missing,
+            specialists: x.agents.map((a) => AGENT[a as keyof typeof AGENT]?.name ?? a),
+            planStatus: x.status,
+          })),
+          cantSeeYet: (live?.gaps ?? []).map((g) => `${g.title}: ${g.why}`),
+          whatFollowedEarlierChanges: history.filter((h) => h.verdictNote).map((h) => `${h.title}: ${h.verdictNote}`),
         };
       },
     }),
@@ -281,6 +335,7 @@ export const AI_TEAM_BRIEF = [
   "- Route each question to the right specialty's tools and say who looked (\"Your Analytics Agent checked: …\"): performance and \"why did leads drop\" → diagnose_campaigns (Analytics/Optimization); \"why am I spending more\" → diagnose_campaigns and the budget figures (Budget Guardian); \"make a better ad\" → propose_fix or Creative Studio (Creative); \"what is my team working on\" → get_ai_team.",
   "- Only describe work get_ai_team or another tool shows actually happened. If nothing has run, say so. The team checks once a day and when the business opens MAIRO — never say it watches continuously.",
   "- Recommendations wait for the owner's approval unless their automation settings allow small changes within their limits. Never say a change was made unless a tool confirms it.",
+  "- For \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\" or \"should I increase my budget\", call get_performance_coach and answer from it, in plain words first, numbers after. Keep what MAIRO observed apart from possible explanations; never state a cause as certain. If the drop is after the lead (follow-up, booking, closing), say so — don't blame the ads. If something important isn't tracked (leads not marked, no pixel, no sale values), say exactly what's missing and ask only for that. Never suggest more budget while the coach says to hold off.",
 ].join("\n");
 
 export const ONE_CLICK_FIX_BRIEF = [

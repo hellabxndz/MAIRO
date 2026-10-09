@@ -27,6 +27,7 @@ const WORKFLOW = [
   [null, "you review and approve — nothing is spent before this"],
   ["ARCHITECT", "launches through Meta"],
   ["ANALYST", "reads results once a day and writes your Daily Brief"],
+  ["ANALYST", "follows results past the click — leads, follow-up, bookings, customers — for your Performance Coach"],
   ["OPTIMIZER", "proposes improvements once there's enough data, with the numbers behind them"],
   ["GROWTH", "looks for room to grow, and says what it needs to see before suggesting more spend"],
 ] as const;

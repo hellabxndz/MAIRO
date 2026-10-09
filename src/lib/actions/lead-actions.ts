@@ -15,6 +15,7 @@ import { validateFields, type LeadField } from "@/lib/leads/fields";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { reportLeadToMeta } from "@/lib/leads/report";
 import { LEAD_OUTCOMES } from "@/lib/leads/outcomes";
+import { cleanStageLabels, isLostReason } from "@/lib/leads/details";
 import type { LeadStatus } from "@/generated/prisma/enums";
 
 /**
@@ -33,6 +34,7 @@ export async function submitLeadAction(input: {
   slug: string;
   values: Record<string, string>;
   clickId?: string | null;
+  campaignRef?: string | null;
 }): Promise<SubmitOutcome> {
   const result = await submitLead(input);
   if (!result.ok) return result;
@@ -216,14 +218,18 @@ export async function syncLeadsAction(): Promise<{
 }
 
 /**
- * What became of a lead, in the business's own words: a good lead, booked,
- * a customer (optionally with what the job was worth), not a fit, or spam.
- * Only the organization's own leads; the value is kept only for customers.
+ * What became of a lead, in the business's own words: contacted, a good lead,
+ * booked, estimate sent, a customer (optionally with what the job was worth),
+ * not a fit (optionally why), or spam. Only the organization's own leads; the
+ * value is kept only for customers. Choosing "Contacted" is a contact logged
+ * now — the only stage that is, because marking a lead good days later says
+ * nothing about when somebody rang.
  */
 export async function setLeadOutcomeAction(
   leadId: string,
   status: LeadStatus,
   valueDollars?: number | null,
+  lostReason?: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
@@ -238,12 +244,109 @@ export async function setLeadOutcomeAction(
     valueCents = Math.round(valueDollars * 100);
   }
 
-  const updated = await db.lead.updateMany({
-    where: { id: leadId, organizationId },
-    data: { status, valueCents, statusChangedAt: new Date() },
+  const now = new Date();
+  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true } });
+  if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
+  await db.lead.update({
+    where: { id: leadId },
+    data: {
+      status,
+      valueCents,
+      statusChangedAt: now,
+      lostReason: status === "LOST" && isLostReason(lostReason) ? lostReason : status === "LOST" ? undefined : null,
+      ...(status === "CONTACTED" ? { lastContactedAt: now, ...(lead.firstContactedAt ? {} : { firstContactedAt: now }) } : {}),
+    },
   });
-  if (updated.count === 0) return { ok: false, error: "That enquiry isn't there any more." };
   revalidatePath("/dashboard/leads");
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+const dateOrNull = (v: string | null | undefined): Date | null | "bad" => {
+  if (v === null || v === undefined || v === "") return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? "bad" : d;
+};
+const centsOrNull = (v: number | null | undefined): number | null | "bad" => {
+  if (v === null || v === undefined) return null;
+  return Number.isFinite(v) && v >= 0 && v <= 10_000_000 ? Math.round(v * 100) : "bad";
+};
+
+/**
+ * The rest of a lead's record, as the business keeps it: a contact made (and
+ * when), the appointment, the next follow-up, what the job is expected to be
+ * worth, what it was worth, why it was lost, and private notes. Only fields
+ * that were sent change. Only the organization's own leads.
+ */
+export async function saveLeadDetailsAction(
+  leadId: string,
+  patch: {
+    contactedAt?: string | null;
+    appointmentAt?: string | null;
+    nextFollowUpAt?: string | null;
+    estimatedValueDollars?: number | null;
+    valueDollars?: number | null;
+    lostReason?: string | null;
+    notes?: string | null;
+  },
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, createdAt: true } });
+  if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
+
+  const data: Record<string, unknown> = {};
+  if ("contactedAt" in patch) {
+    const d = dateOrNull(patch.contactedAt);
+    if (d === "bad") return { ok: false, error: "That contact date isn't a date MAIRO can read." };
+    if (d) {
+      if (d.getTime() > Date.now() + 5 * 60_000) return { ok: false, error: "A contact can't be in the future." };
+      if (d < lead.createdAt) return { ok: false, error: "That's before the enquiry came in." };
+      data.lastContactedAt = d;
+      if (!lead.firstContactedAt || d < lead.firstContactedAt) data.firstContactedAt = d;
+      if (lead.status === "NEW") {
+        data.status = "CONTACTED";
+        data.statusChangedAt = new Date();
+      }
+    }
+  }
+  for (const key of ["appointmentAt", "nextFollowUpAt"] as const) {
+    if (!(key in patch)) continue;
+    const d = dateOrNull(patch[key]);
+    if (d === "bad") return { ok: false, error: "That date isn't one MAIRO can read." };
+    data[key] = d;
+  }
+  if ("estimatedValueDollars" in patch) {
+    const c = centsOrNull(patch.estimatedValueDollars);
+    if (c === "bad") return { ok: false, error: "Enter the expected value in dollars, or leave it empty." };
+    data.estimatedValueCents = c;
+  }
+  if ("valueDollars" in patch) {
+    const c = centsOrNull(patch.valueDollars);
+    if (c === "bad") return { ok: false, error: "Enter what the job was worth in dollars, or leave it empty." };
+    if (c !== null && lead.status !== "WON") return { ok: false, error: "A sale value is for a lead marked as a customer." };
+    data.valueCents = c;
+  }
+  if ("lostReason" in patch) {
+    if (patch.lostReason !== null && patch.lostReason !== undefined && !isLostReason(patch.lostReason)) return { ok: false, error: "That isn't a reason MAIRO knows." };
+    data.lostReason = patch.lostReason ?? null;
+  }
+  if ("notes" in patch) data.notes = patch.notes?.trim().slice(0, 4000) || null;
+
+  await db.lead.update({ where: { id: leadId }, data });
+  revalidatePath("/dashboard/leads");
+  return { ok: true };
+}
+
+/** The business's own names for its lead stages. Empty names fall back to MAIRO's. */
+export async function saveLeadStagesAction(labels: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  const clean = cleanStageLabels(labels);
+  await db.organization.update({ where: { id: organizationId }, data: { leadStagesJson: Object.keys(clean).length ? JSON.stringify(clean) : null } });
+  revalidatePath("/dashboard/leads");
+  revalidatePath("/dashboard/coach");
   return { ok: true };
 }

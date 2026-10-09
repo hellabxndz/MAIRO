@@ -10,8 +10,10 @@ import { ChooseForm } from "./choose-form";
 import { FormBuilder } from "./form-builder";
 import { SyncLeads } from "./sync-leads";
 import { LeadOutcome } from "./lead-outcome";
-import { leadFunnel } from "@/lib/leads/outcomes";
+import { LEAD_OUTCOMES, leadFunnel } from "@/lib/leads/outcomes";
+import { followUpOf, lostReasonLabel, parseStageLabels, presetFor, RENAMEABLE, stageLabels } from "@/lib/leads/details";
 import { siteUrl } from "@/lib/site";
+import { StageNames } from "./stage-names";
 
 // What came back from the ads, and the form that collected it.
 //
@@ -43,17 +45,21 @@ export default async function LeadsPage({
   // campaign, or presses the button below.
   const form = await existingLeadForm(organizationId);
 
-  const [leads, total, preview, outcomes] = await Promise.all([
+  const [leads, total, preview, outcomes, org] = await Promise.all([
     db.lead.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
       take: 100,
+      include: { mairoCampaign: { select: { name: true } } },
     }),
     db.lead.count({ where: { organizationId } }),
     form ? Promise.resolve<string[]>([]) : previewLeadForm(organizationId),
     db.lead.findMany({ where: { organizationId }, select: { status: true, valueCents: true }, take: 10_000 }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { industry: true, leadStagesJson: true } }),
   ]);
   const funnel = leadFunnel(outcomes);
+  const labels = stageLabels(org?.industry, org?.leadStagesJson);
+  const now = new Date();
 
   const fields = form ? parseFields(form.fieldsJson) : [];
   const url = form ? leadFormUrl(form.slug, siteUrl()) : null;
@@ -153,11 +159,13 @@ export default async function LeadsPage({
           the business's own word; unmarked enquiries are said to be unmarked. */}
       {funnel.reported > 0 && (
         <Card className="mb-6">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
             {[
               { label: "Enquiries", value: funnel.real, hint: "Forms filled in, minus anything you marked spam" },
-              { label: "Good leads", value: funnel.qualified, hint: "Marked good, booked or customer" },
-              { label: "Booked", value: funnel.booked, hint: "Marked booked or customer" },
+              { label: labels.CONTACTED, value: funnel.contacted, hint: "Marked contacted or any later stage" },
+              { label: "Good leads", value: funnel.qualified, hint: "Marked good or any later stage" },
+              { label: labels.BOOKED, value: funnel.booked, hint: "Marked booked or any later stage" },
+              ...(funnel.estimates > 0 ? [{ label: labels.ESTIMATE_SENT, value: funnel.estimates, hint: "Marked estimate sent or customer" }] : []),
               { label: "Customers", value: funnel.won, hint: "Marked customer" },
             ].map((t) => (
               <div key={t.label} title={t.hint}>
@@ -173,6 +181,14 @@ export default async function LeadsPage({
             {funnel.unmarked > 0 ? ` ${funnel.unmarked} not marked yet.` : ""}
           </p>
         </Card>
+      )}
+
+      {total > 0 && (
+        <StageNames
+          stages={RENAMEABLE.map((status) => ({ status, defaultLabel: LEAD_OUTCOMES.find((o) => o.status === status)!.label }))}
+          labels={parseStageLabels(org?.leadStagesJson) as Record<string, string>}
+          preset={presetFor(org?.industry)}
+        />
       )}
 
       <div className="mb-3 flex items-baseline justify-between">
@@ -204,7 +220,16 @@ export default async function LeadsPage({
                       minute: "2-digit",
                     })}
                   </p>
-                  <span className="flex items-center gap-2">
+                  <span className="flex flex-wrap items-center gap-2">
+                    {(() => {
+                      const f = followUpOf(lead, now);
+                      if (f.state === "not-contacted") return <span className="rounded-full bg-warn/15 px-2 py-0.5 text-[11px] text-warn">Not contacted yet · {f.hours >= 48 ? `${Math.floor(f.hours / 24)} days` : `${f.hours} hours`}</span>;
+                      if (f.state === "due") return <span className="rounded-full bg-warn/15 px-2 py-0.5 text-[11px] text-warn">Follow-up due</span>;
+                      return null;
+                    })()}
+                    {lead.mairoCampaign && (
+                      <span className="text-[11px] text-muted">From &ldquo;{lead.mairoCampaign.name}&rdquo;</span>
+                    )}
                     {lead.source === "META_INSTANT" && (
                       <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
                         instant form
@@ -230,7 +255,20 @@ export default async function LeadsPage({
                     );
                   })}
                 </dl>
-                <LeadOutcome leadId={lead.id} status={lead.status} valueCents={lead.valueCents} />
+                {lead.status === "LOST" && lead.lostReason && <p className="mt-2 text-[12.5px] text-muted">Why it was lost: {lostReasonLabel(lead.lostReason)}</p>}
+                <LeadOutcome
+                  leadId={lead.id}
+                  status={lead.status}
+                  labels={labels}
+                  valueCents={lead.valueCents}
+                  estimatedValueCents={lead.estimatedValueCents}
+                  lostReason={lead.lostReason}
+                  notes={lead.notes}
+                  firstContactedAt={lead.firstContactedAt?.toISOString() ?? null}
+                  lastContactedAt={lead.lastContactedAt?.toISOString() ?? null}
+                  appointmentAt={lead.appointmentAt?.toISOString() ?? null}
+                  nextFollowUpAt={lead.nextFollowUpAt?.toISOString() ?? null}
+                />
               </Card>
             );
           })}

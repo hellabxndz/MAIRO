@@ -43,8 +43,8 @@ export async function notify(input: NotifyInput): Promise<NotifyResult> {
   // The business's own choice for the optional kinds. Urgent ones ignore it.
   const group = optionalGroup(input.kind);
   if (group) {
-    const prefs = await db.organization.findUnique({ where: { id: input.organizationId }, select: { notifyOpportunities: true, notifyReports: true } });
-    if (prefs && ((group === "opportunities" && !prefs.notifyOpportunities) || (group === "reports" && !prefs.notifyReports))) {
+    const prefs = await db.organization.findUnique({ where: { id: input.organizationId }, select: { notifyOpportunities: true, notifyReports: true, notifyCoachAlerts: true } });
+    if (prefs && ((group === "opportunities" && !prefs.notifyOpportunities) || (group === "reports" && !prefs.notifyReports) || (group === "coach" && !prefs.notifyCoachAlerts))) {
       return { created: false, id: null };
     }
   }

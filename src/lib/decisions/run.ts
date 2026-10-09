@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { runCoach } from "@/lib/coach/run";
+import { DONT_REPEAT_DAYS, withoutRepeats } from "@/lib/coach/verdict";
 import { gatherDecisionInput } from "./gather";
 import { allDrafts, decide } from "./rules";
 import { effectiveLevel, expireStale, parseChanges, persistDrafts } from "./store";
@@ -76,7 +78,16 @@ export async function refreshDecisions(
     console.error(`Strategy Engine failed for ${organizationId}:`, error);
     return [];
   });
-  const merged = mergeDrafts(run.decisions, engine);
+  // Not again what was followed by worse results for the same campaign lately.
+  const worsened = await db.mairoDecision.findMany({
+    where: { organizationId, verdict: "WORSENED", decidedAt: { gte: new Date(now.getTime() - DONT_REPEAT_DAYS * 86_400_000) } },
+    select: { kind: true, mairoCampaignId: true, decidedAt: true },
+  });
+  const merged = withoutRepeats(
+    mergeDrafts(run.decisions, engine),
+    worsened.map((w) => ({ kind: w.kind, mairoCampaignId: w.mairoCampaignId, at: w.decidedAt! })),
+    now,
+  ).kept;
   const ids = await persistDrafts(organizationId, merged, "daily");
 
   // Who proposed what. The Optimization Agent always reports, even when it
@@ -86,13 +97,24 @@ export async function refreshDecisions(
   for (const [agent, drafts] of byAgent) await step(agent, "recommend", proposalSummary(agent, drafts));
   const runningNow = await db.mairoCampaign.aggregate({ where: { organizationId, status: "ACTIVE" }, _sum: { totalDailyBudgetCents: true } });
   await step("GUARDIAN", "check-limits", guardianCheck(merged, input.guardrails, runningNow._sum.totalDailyBudgetCents ?? 0));
+  // The Performance Coach follows the same results past the click — leads,
+  // follow-up, bookings, customers — on the same snapshot. A failure there
+  // never blocks the rest of the review.
+  const coach = team
+    ? await runCoach(organizationId, { parentRunId: review, decisionInput: input, now }).catch((error) => {
+        console.error(`Performance Coach failed for ${organizationId}:`, error);
+        return null;
+      })
+    : null;
+  const coachIds = coach?.ok ? coach.decisionIds : [];
+
   // Only daily decisions expire here; a One-Click Fix proposal is the
   // customer's open question and waits for their answer.
   const assistant = await db.mairoDecision.findMany({
     where: { organizationId, status: "PENDING", source: "assistant" },
     select: { id: true },
   });
-  await expireStale(organizationId, [...ids, ...assistant.map((a) => a.id)]);
+  await expireStale(organizationId, [...ids, ...coachIds, ...assistant.map((a) => a.id)]);
 
   // What MAIRO may do on its own, within the customer's level and switches.
   const level = await effectiveLevel(organizationId);

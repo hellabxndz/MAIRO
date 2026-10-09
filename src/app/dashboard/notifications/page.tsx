@@ -39,7 +39,7 @@ export default async function NotificationsPage() {
       orderBy: { createdAt: "desc" },
       take: 60,
     }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { notifyOpportunities: true, notifyReports: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { notifyOpportunities: true, notifyReports: true, notifyCoachAlerts: true } }),
   ]);
   const unread = rows.filter((r) => r.readAt === null).length;
   const now = new Date();
@@ -153,6 +153,13 @@ export default async function NotificationsPage() {
             <span>
               Reports
               <span className="block text-[12.5px] text-muted">When your weekly or monthly report is ready — they&rsquo;re written either way</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 text-[14px] text-white">
+            <input type="checkbox" name="coach" defaultChecked={prefs?.notifyCoachAlerts ?? true} className="mt-1 h-4 w-4" />
+            <span>
+              Performance Coach alerts
+              <span className="block text-[12.5px] text-muted">Leads waiting for a reply, good leads getting more expensive, fewer bookings, tracking that stopped — only when your records show it</span>
             </span>
           </label>
           <MairoButton type="submit" tone="ghost">Save</MairoButton>

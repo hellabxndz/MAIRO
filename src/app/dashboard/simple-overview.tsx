@@ -26,6 +26,7 @@ import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
 import { JourneyCard } from "@/components/success/journey-card";
 import { loadTeam } from "@/lib/team/store";
 import { TeamCard } from "@/components/team/team-card";
+import { CoachCard } from "@/components/coach/coach-card";
 import { PulseCard } from "@/components/success/feedback";
 import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
 
@@ -113,6 +114,10 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
     db.lead.findMany({ where: { organizationId, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
     loadTeam(organizationId, { now }).catch(() => null),
   ]);
+  const coachOpen = await db.coachFinding
+    .findMany({ where: { organizationId, status: { in: ["OPEN", "APPROVED"] } }, select: { id: true, title: true, plain: true, severity: true }, orderBy: [{ priority: "desc" }, { firstSeenAt: "asc" }], take: 20 })
+    .catch(() => []);
+  const coachTop = [...coachOpen].sort((a, b) => ["ATTENTION", "OPPORTUNITY", "WATCH"].indexOf(a.severity) - ["ATTENTION", "OPPORTUNITY", "WATCH"].indexOf(b.severity))[0] ?? null;
   const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
   const m = perf?.total ?? EMPTY_METRICS;
   const scale = social.ok;
@@ -235,6 +240,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
           {team ? <TeamCard team={team} /> : <WorkingOnCard rows={rows} />}
           <AttentionCard items={attention.slice(0, 3)} />
         </div>
+        {(coachTop || team) && <CoachCard top={coachTop} count={coachOpen.length} />}
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
           <InsightCard insight={insight} />
           <NextCard items={next} />

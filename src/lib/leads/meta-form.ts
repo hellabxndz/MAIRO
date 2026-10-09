@@ -121,6 +121,8 @@ type MetaLead = {
   id: string;
   created_time?: string;
   field_data?: { name: string; values: string[] }[];
+  /** The ad campaign the person came through, when Meta says. */
+  campaign_id?: string;
 };
 
 /**
@@ -151,7 +153,7 @@ export async function syncMetaLeads(
     const res = await metaGraphRequest<{ data?: MetaLead[] }>(`/${form.metaFormId}/leads`, {
       accessToken: connection.accessToken,
       params: {
-        fields: "id,created_time,field_data",
+        fields: "id,created_time,field_data,campaign_id",
         limit: 200,
         // Only what arrived since the last look. Without this a form with a
         // thousand submissions is re-read in full on every sync.
@@ -169,6 +171,17 @@ export async function syncMetaLeads(
 
     const rows = res.data ?? [];
     let added = 0;
+
+    // Meta names the campaign for a lead that came through an ad; MAIRO keeps
+    // it only for this business's own campaigns.
+    const metaCampaignIds = [...new Set(rows.map((r) => r.campaign_id).filter((x): x is string => Boolean(x)))];
+    const known = metaCampaignIds.length
+      ? await db.platformCampaign.findMany({
+          where: { externalCampaignId: { in: metaCampaignIds }, mairoCampaign: { organizationId: form.organizationId } },
+          select: { externalCampaignId: true, mairoCampaignId: true },
+        })
+      : [];
+    const campaignFor = new Map(known.map((k) => [k.externalCampaignId!, k.mairoCampaignId]));
 
     for (const row of rows) {
       const answers = answersFrom(row, fields);
@@ -191,6 +204,7 @@ export async function syncMetaLeads(
             hashedEmail: hashEmail(contact.email),
             hashedPhone: hashPhone(phone),
             createdAt: row.created_time ? new Date(row.created_time) : undefined,
+            mairoCampaignId: (row.campaign_id && campaignFor.get(row.campaign_id)) || null,
           },
         });
         added++;

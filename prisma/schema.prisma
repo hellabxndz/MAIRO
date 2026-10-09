@@ -85,6 +85,8 @@ enum NotificationKind {
   PAYMENT_ISSUE
   ACCOUNT_DISCONNECTED
   MAIRO_ACTED
+  /// The Performance Coach found something worth knowing.
+  COACH_ALERT
 }
 
 enum NotificationSeverity {
@@ -313,10 +315,17 @@ model Organization {
 
   /// The MAIRO AI Team's work log for this business.
   agentRuns AgentRun[]
+  coachFindings CoachFinding[]
   /// Notification preferences. Problems that stop ads are always shown;
   /// these switch off the optional kinds.
   notifyOpportunities Boolean @default(true)
   notifyReports       Boolean @default(true)
+  /// Performance Coach alerts: slower follow-up, rising cost per good lead,
+  /// tracking that stopped, lead quality slipping. Optional, like the above.
+  notifyCoachAlerts   Boolean @default(true)
+  /// The business's own names for its lead stages (JSON: stage → label), e.g.
+  /// "Inspection booked" for an appointment. Null uses MAIRO's defaults.
+  leadStagesJson      String? @db.Text
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -1035,6 +1044,8 @@ model MairoCampaign {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+  /// Leads known to have come from this campaign.
+  leads Lead[]
 }
 
 /// What one campaign ad is made of.
@@ -1673,10 +1684,14 @@ enum LeadSource {
 /// step after that is the business's word.
 enum LeadStatus {
   NEW
+  /// Somebody at the business has been in touch with them.
+  CONTACTED
   /// A real prospect the business wants — not spam, in the area, wants the service.
   QUALIFIED
   /// An appointment, estimate or call booked.
   BOOKED
+  /// A quote or estimate sent, waiting on an answer.
+  ESTIMATE_SENT
   /// Became a paying customer.
   WON
   /// Didn't go anywhere.
@@ -1734,10 +1749,31 @@ model Lead {
   /// Why it couldn't be sent, or a warning about how well it can be matched.
   metaReportError String?   @db.Text
 
+  /// The campaign this lead came from — only when that is reliably known: the
+  /// ad's link to MAIRO's form carried it, or Meta's instant form said so.
+  /// Never guessed from timing. Null means "not known", not "no campaign".
+  mairoCampaign   MairoCampaign? @relation(fields: [mairoCampaignId], references: [id], onDelete: SetNull)
+  mairoCampaignId String?
+
+  /// Follow-up, as the business records it. The first contact is what
+  /// response time is measured from; nothing here is inferred.
+  firstContactedAt DateTime?
+  lastContactedAt  DateTime?
+  /// When the next follow-up is due, if the business set one.
+  nextFollowUpAt   DateTime?
+  appointmentAt    DateTime?
+  /// What the business expects the job to be worth (an estimate). Never revenue.
+  estimatedValueCents Int?
+  /// Why it didn't go anywhere, for LOST: one of the reasons in lib/leads/details.
+  lostReason       String?
+  /// The business's own notes. Private to the business.
+  notes            String?   @db.Text
+
   createdAt DateTime @default(now())
 
   @@index([organizationId, createdAt])
   @@index([leadFormId])
+  @@index([mairoCampaignId])
 }
 
 /// Where an order came from.
@@ -2498,6 +2534,17 @@ model MairoDecision {
   decidedById String?
   /// True when MAIRO carried it out itself under AI Assist or Full Autopilot.
   automatic   Boolean   @default(false)
+
+  /// What happened after it was carried out, once enough time has passed
+  /// to compare (IMPROVED, WORSENED, INCONCLUSIVE, NOT_MEASURABLE). Describes
+  /// what followed the change — never a claim that the change caused it.
+  verdict     String?
+  verdictNote String?   @db.Text
+  /// The before and after figures behind the verdict.
+  verdictJson String?   @db.Text
+  verdictAt   DateTime?
+  /// The Performance Coach finding that proposed it, if one did.
+  findingId   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3269,4 +3316,103 @@ model AgentRun {
   @@index([organizationId, startedAt])
   @@index([organizationId, agent, startedAt])
   @@index([status, startedAt])
+}
+
+/// What the Performance Coach investigates.
+enum CoachCategory {
+  CREATIVE
+  AUDIENCE
+  CONVERSION
+  TRACKING
+  LEAD_QUALITY
+  FOLLOW_UP
+  SALES
+  BUDGET
+  OPPORTUNITY
+}
+
+/// How strong the evidence is — words, never a percentage.
+enum CoachConfidence {
+  /// Direct records, or enough data on both sides of a comparison.
+  STRONG
+  /// Enough to act on, not enough to be sure.
+  SOME
+  /// A first sign, said as one.
+  EARLY
+}
+
+enum CoachFindingStatus {
+  OPEN
+  /// The business accepted the plan.
+  APPROVED
+  DISMISSED
+  /// No longer seen on a later review, or the plan is done.
+  RESOLVED
+}
+
+/// One thing the Performance Coach found: what it observed (with the numbers),
+/// the possible explanations (kept apart from what was observed), what it
+/// recommends, how sure it is and what it can't see, and the improvement plan.
+/// Also the optimization history: what was approved, done, and what followed.
+model CoachFinding {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+
+  mairoCampaignId String?
+  campaignName    String?
+
+  /// The situation, so a later review updates this row instead of repeating it.
+  key        String
+  category   CoachCategory
+  /// ATTENTION, OPPORTUNITY or WATCH.
+  severity   String
+  confidence CoachConfidence
+  /// Higher first, as the investigation ranked it, so the list keeps its order.
+  priority   Int             @default(50)
+
+  title          String
+  /// The plain-language sentence for someone with no advertising knowledge.
+  plain          String @db.Text
+  /// What MAIRO noticed: observed, measured.
+  noticed        String @db.Text
+  /// Possible explanations: [{ text, basis: "evidence" | "possibility" }].
+  explanationsJson String @db.Text
+  recommendation String @db.Text
+  /// Other recommendations, for "another recommendation".
+  alternativesJson String @db.Text
+  alternativeIndex Int    @default(0)
+  /// The numbers behind it: [{ label, value, detail? }].
+  evidenceJson   String @db.Text
+  limitations    String @db.Text
+  /// What MAIRO can't see that would settle it.
+  missingJson    String @db.Text
+  /// The improvement plan: steps with priority, risk, approval, verification and status.
+  stepsJson      String @db.Text
+  /// The specialists that worked on it.
+  agentsJson     String @db.Text
+  /// The figure that would show the plan worked: { metric, value, betterWhen, unit }.
+  measureJson    String? @db.Text
+
+  /// A change on Meta it proposed, through Mairo Decisions' approval path.
+  decisionId String?
+
+  status     CoachFindingStatus @default(OPEN)
+  /// HELPFUL or NOT_HELPFUL, if the business said.
+  feedback   String?
+  decidedAt  DateTime?
+  resolvedAt DateTime?
+  /// When to look again at an approved plan, and what was seen.
+  checkAfter  DateTime?
+  verdict     String?
+  verdictNote String?   @db.Text
+  verdictAt   DateTime?
+
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([organizationId, key])
 }

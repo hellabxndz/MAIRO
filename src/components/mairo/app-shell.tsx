@@ -64,6 +64,8 @@ const I = {
       <path d="M3.6 13.6l3.8-3.8 3.4 3.4 2.4-2 3.2 3.2" />
     </>
   ),
+  // A magnifier over a rising line: following results to their cause.
+  coach: <path d="M9 15.5a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM13.4 13.4 17.5 17.5M6 11l2-2 1.4 1.4L12 7.6" />,
   analytics: (
     <>
       <path d="M3 16h14" />
@@ -159,6 +161,7 @@ export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission"] },
   // The AI Team (and asking it), then what it recommends.
   { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.mairo} />, also: ["/dashboard/agents"] },
+  { href: "/dashboard/coach", label: "Performance Coach", icon: <Icon d={I.coach} /> },
   { href: "/dashboard/decisions", label: "Recommendations", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
   { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },

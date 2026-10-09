@@ -149,6 +149,23 @@ export function leadFormUrl(slug: string, appUrl: string): string {
   return `${appUrl.replace(/\/+$/, "")}/f/${slug}`;
 }
 
+/**
+ * The form's link as one campaign's ad uses it: the campaign rides along, so
+ * a lead that arrives through it is known to have come from that campaign.
+ * Only MAIRO's own form links are tagged; any other address is left alone.
+ */
+export function tagFormUrl(url: string | null, mairoCampaignId: string): string | null {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (!/^\/f\/[^/]+\/?$/.test(u.pathname)) return url;
+    u.searchParams.set("c", mairoCampaignId);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 export type SubmitOutcome =
   | { ok: true; thankYou: string }
   | { ok: false; errors: Record<string, string> };
@@ -166,6 +183,8 @@ export async function submitLead(input: {
   slug: string;
   values: Record<string, string>;
   clickId?: string | null;
+  /** The campaign the ad's link named. Kept only if it is this business's own. */
+  campaignRef?: string | null;
 }): Promise<SubmitOutcome & { leadId?: string }> {
   const form = await db.leadForm.findUnique({ where: { slug: input.slug } });
   if (!form) return { ok: false, errors: { _form: "This form is no longer available." } };
@@ -201,6 +220,13 @@ export async function submitLead(input: {
   // back to the ad that produced it.
   const phone = contact.phone ? normalizePhone(contact.phone) : null;
 
+  // Anybody can type a ?c= into the address bar, so the campaign is checked
+  // against the form's own business — a stranger can't attach a lead to
+  // somebody else's campaign, or see whether one exists.
+  const campaign = input.campaignRef
+    ? await db.mairoCampaign.findFirst({ where: { id: input.campaignRef.slice(0, 64), organizationId: form.organizationId }, select: { id: true } })
+    : null;
+
   const lead = await db.lead.create({
     data: {
       organizationId: form.organizationId,
@@ -210,6 +236,7 @@ export async function submitLead(input: {
       hashedEmail: hashEmail(contact.email),
       hashedPhone: hashPhone(phone),
       clickId: input.clickId?.slice(0, 512) ?? null,
+      mairoCampaignId: campaign?.id ?? null,
     },
   });
 

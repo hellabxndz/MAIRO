@@ -55,6 +55,8 @@
     "check:team": "tsx scripts/check-team.ts",
     "check:live-meta": "tsx scripts/check-live-meta.ts",
     "check:lead-report": "tsx scripts/check-lead-report.ts",
+    "check:coach": "tsx scripts/check-coach.ts",
+    "check:coach-db": "tsx scripts/check-coach-db.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

@@ -1,3 +1,4 @@
+import { tagFormUrl } from "@/lib/leads/forms";
 import { db } from "@/lib/db";
 import type {
   AdDestination,
@@ -1055,7 +1056,9 @@ async function destinationFor(
   return resolveDestination(
     {
       type: campaign.destinationType,
-      url: campaign.destinationUrl,
+      // MAIRO's own form, linked with this campaign named, so each lead is
+      // known to have come from it.
+      url: campaign.destinationType === "LEAD_FORM" ? tagFormUrl(campaign.destinationUrl, mairoCampaignId) : campaign.destinationUrl,
       phone: campaign.destinationPhone,
       channel: campaign.messageChannel,
       metaAppId: campaign.metaAppId,

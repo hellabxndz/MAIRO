@@ -88,7 +88,13 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "MAIRO made a change",
     severity: "INFO",
     sms: "budget-change",
+  },  COACH_ALERT: {
+    kind: "COACH_ALERT",
+    label: "Performance Coach",
+    severity: "WARNING",
+    sms: null,
   },
+
 };
 
 export function kindInfo(kind: NotificationKind): KindInfo {
@@ -109,8 +115,9 @@ export function severityTone(severity: NotificationSeverity): "green" | "yellow"
  * ones a business must never miss. Opportunities and report announcements
  * are optional; the reports themselves are still written either way.
  */
-export function optionalGroup(kind: NotificationKind): "opportunities" | "reports" | null {
+export function optionalGroup(kind: NotificationKind): "opportunities" | "reports" | "coach" | null {
   if (kind === "BUDGET_OPPORTUNITY" || kind === "CREATIVES_READY") return "opportunities";
   if (kind === "WEEKLY_REPORT" || kind === "MONTHLY_REPORT") return "reports";
+  if (kind === "COACH_ALERT") return "coach";
   return null;
 }

@@ -14,8 +14,10 @@ import type { LeadStatus } from "@/generated/prisma/enums";
 
 export const LEAD_OUTCOMES: { status: LeadStatus; label: string; hint: string }[] = [
   { status: "NEW", label: "New", hint: "Not looked at yet" },
+  { status: "CONTACTED", label: "Contacted", hint: "You've been in touch with them" },
   { status: "QUALIFIED", label: "Good lead", hint: "A real prospect you'd want — in your area, wants what you do" },
-  { status: "BOOKED", label: "Booked", hint: "An estimate, appointment or call is booked" },
+  { status: "BOOKED", label: "Booked", hint: "An appointment, visit or call is booked" },
+  { status: "ESTIMATE_SENT", label: "Estimate sent", hint: "You've sent a quote or estimate and are waiting to hear" },
   { status: "WON", label: "Customer", hint: "They paid for a job" },
   { status: "LOST", label: "Not a fit", hint: "A real person, but it didn't go anywhere" },
   { status: "SPAM", label: "Spam", hint: "Junk, a test or a duplicate" },
@@ -23,8 +25,12 @@ export const LEAD_OUTCOMES: { status: LeadStatus; label: string; hint: string }[
 
 export const OUTCOME_LABEL = Object.fromEntries(LEAD_OUTCOMES.map((o) => [o.status, o.label])) as Record<LeadStatus, string>;
 
-/** How far a lead got. A booked lead was a good one; a customer was booked. */
-const STAGE: Record<LeadStatus, number> = { NEW: 0, QUALIFIED: 1, BOOKED: 2, WON: 3, LOST: -1, SPAM: -2 };
+/**
+ * How far a lead got. Each step counts the ones after it: a good lead was
+ * contacted, a booked lead was a good one, an estimate follows a booking, and
+ * a customer got that far.
+ */
+export const STAGE: Record<LeadStatus, number> = { NEW: 0, CONTACTED: 1, QUALIFIED: 2, BOOKED: 3, ESTIMATE_SENT: 4, WON: 5, LOST: -1, SPAM: -2 };
 
 export type LeadFunnel = {
   /** Everything that came in. */
@@ -33,9 +39,13 @@ export type LeadFunnel = {
   spam: number;
   /** Reported minus spam. */
   real: number;
+  /** Marked contacted or any later step. */
+  contacted: number;
   /** Marked good, booked or customer — each later step counts the earlier ones. */
   qualified: number;
   booked: number;
+  /** Marked estimate sent or customer. */
+  estimates: number;
   won: number;
   lost: number;
   /** Still unmarked. */
@@ -53,8 +63,10 @@ export function leadFunnel(rows: { status: LeadStatus; valueCents: number | null
     reported: rows.length,
     spam,
     real: rows.length - spam,
-    qualified: at(1),
-    booked: at(2),
+    contacted: at(STAGE.CONTACTED),
+    qualified: at(STAGE.QUALIFIED),
+    booked: at(STAGE.BOOKED),
+    estimates: at(STAGE.ESTIMATE_SENT),
     won: won.length,
     lost: rows.filter((r) => r.status === "LOST").length,
     unmarked: rows.filter((r) => r.status === "NEW").length,

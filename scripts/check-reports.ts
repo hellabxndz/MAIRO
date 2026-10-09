@@ -78,7 +78,7 @@ const blank: MonthlyReport = {
   adsPaused: 0,
   changesMade: 0,
   work: { campaignsCreated: 0, recommendations: 0, approved: 0, declined: 0, problemsFound: 0, reportsGenerated: 0, accepted: [] },
-  leadOutcomes: { reported: 0, spam: 0, real: 0, qualified: 0, booked: 0, won: 0, lost: 0, unmarked: 0, wonValueCents: null },
+  leadOutcomes: { reported: 0, spam: 0, real: 0, contacted: 0, qualified: 0, booked: 0, estimates: 0, won: 0, lost: 0, unmarked: 0, wonValueCents: null },
   salesTracked: false,
   bestPlatform: null,
   recommendedNextCents: null,
@@ -133,7 +133,7 @@ const leadsMonth: MonthlyReport = {
   costPerResultCents: 3000,
   changesMade: 4,
   work: { campaignsCreated: 1, recommendations: 6, approved: 3, declined: 1, problemsFound: 2, reportsGenerated: 4, accepted: ["Move budget to the roofing estimates ad"] },
-  leadOutcomes: { reported: 32, spam: 2, real: 30, qualified: 12, booked: 5, won: 2, lost: 3, unmarked: 13, wonValueCents: 1_800_000 },
+  leadOutcomes: { reported: 32, spam: 2, real: 30, contacted: 14, qualified: 12, booked: 5, estimates: 3, won: 2, lost: 3, unmarked: 13, wonValueCents: 1_800_000 },
   thin: false,
 };
 const leadsText = reportAsText(leadsMonth, "Peak Roofing");

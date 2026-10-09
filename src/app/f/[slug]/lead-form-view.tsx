@@ -61,6 +61,8 @@ export function LeadFormView({
               fields.map((f) => [f.key, String(formData.get(f.key) ?? "")])
             ),
             clickId: url.searchParams.get("fbclid"),
+            // The campaign whose ad linked here, when the link named one.
+            campaignRef: url.searchParams.get("c"),
           });
           if (result.ok) setDone(result.thankYou);
           else setErrors(result.errors);
