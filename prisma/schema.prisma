@@ -2545,6 +2545,11 @@ model MairoDecision {
   verdictAt   DateTime?
   /// The Performance Coach finding that proposed it, if one did.
   findingId   String?
+  /// The daily team review that last produced or re-confirmed this
+  /// recommendation — its steps (results read, proposal, limit check) are
+  /// how the AI Team screen shows who contributed. Null for one made outside
+  /// a review (an assistant proposal, or one older than this column).
+  reviewRunId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

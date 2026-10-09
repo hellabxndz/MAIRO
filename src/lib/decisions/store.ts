@@ -88,7 +88,11 @@ export async function persistDrafts(
   organizationId: string,
   drafts: DecisionDraft[],
   source: "daily" | "assistant" = "daily",
+  opts: { reviewRunId?: string | null } = {},
 ): Promise<string[]> {
+  // The review that produced (or re-confirmed) it: how the AI Team screen
+  // shows who contributed. Left as it was when there's no review.
+  const link = opts.reviewRunId ? { reviewRunId: opts.reviewRunId } : {};
   const ids: string[] = [];
   for (const d of drafts) {
     const content = {
@@ -114,11 +118,11 @@ export async function persistDrafts(
     if (existing) {
       // Decided already: the customer's answer stands for this situation.
       if (existing.status !== "PENDING") continue;
-      await db.mairoDecision.update({ where: { id: existing.id }, data: content });
+      await db.mairoDecision.update({ where: { id: existing.id }, data: { ...content, ...link } });
       ids.push(existing.id);
     } else {
       const row = await db.mairoDecision.create({
-        data: { organizationId, dedupeKey: d.dedupeKey, source, ...content },
+        data: { organizationId, dedupeKey: d.dedupeKey, source, ...content, ...link },
       });
       ids.push(row.id);
     }

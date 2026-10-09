@@ -71,6 +71,10 @@ export function ApprovalModal({
   }
 
   const madeCount = result?.applied.filter((a) => a.ok).length ?? 0;
+  // A Meta change is reported as made only once Meta accepted it (applyDecision
+  // records nothing before). Trying a new Meta option is a MAIRO setting, so
+  // it isn't called a Meta confirmation.
+  const onMeta = actionable.some((d) => d.changes.some((c) => c.type === "set-budget" || c.type === "pause-ad" || c.type === "widen-audience" || c.type === "new-ad-variation"));
 
   return (
     <div
@@ -91,7 +95,7 @@ export function ApprovalModal({
           <>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-blue-bright">Your approval</p>
             <h2 className="mt-1.5 text-[18px] font-medium text-white">{title}</h2>
-            <p className="mt-1 text-[12.5px] text-muted">Nothing changes until you approve. You can undo any of it later from the campaign.</p>
+            <p className="mt-1 text-[12.5px] text-muted">Nothing changes until you approve, and nothing is reported as done until Meta confirms it. You can undo any of it later from the campaign.</p>
 
             <ul className="mt-5 space-y-4">
               {actionable.map((d) => (
@@ -181,10 +185,10 @@ export function ApprovalModal({
         ) : (
           <>
             <p className={`font-mono text-[10px] uppercase tracking-[0.18em] ${madeCount === 0 ? "text-amber-200" : "text-live"}`}>
-              {madeCount === 0 ? "Nothing changed" : "Done"}
+              {madeCount === 0 ? "Nothing changed" : onMeta ? "Confirmed by Meta" : "Done"}
             </p>
             <h2 className="mt-1.5 text-[18px] font-medium text-white">
-              {madeCount === 0 ? "Mairo couldn't make the changes" : `Mairo made ${madeCount} change${madeCount === 1 ? "" : "s"}.`}
+              {madeCount === 0 ? "Mairo couldn't make the changes" : onMeta ? `Meta confirmed ${madeCount} change${madeCount === 1 ? "" : "s"}.` : `Mairo made ${madeCount} change${madeCount === 1 ? "" : "s"}.`}
             </h2>
             {result.error && <p className="mt-2 text-[13px] text-amber-200/90">{result.error}</p>}
             {result.partial && !result.error && (

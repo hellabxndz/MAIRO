@@ -1,57 +1,50 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { EMPTY_METRICS } from "@/lib/ad-platforms/types";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { readinessFor } from "@/lib/readiness";
-import { buildRecommendations } from "@/lib/actions/optimize-actions";
-import { OptimizationCard } from "@/components/optimization-card";
-import { MairoDecisionCard } from "@/components/decisions/decision-card";
 import { toView } from "@/lib/decisions/store";
-import { loadIntelligence } from "@/lib/intelligence/run";
-import { activeMission, missionActivity, proposedMission } from "@/lib/mission/store";
-import { goalPhrase, missionGoal, type MetricFamily } from "@/lib/mission/goals";
-import { missionConfidence } from "@/lib/engine";
-import { socialAccess } from "@/lib/social/access";
+import { activeMission, proposedMission } from "@/lib/mission/store";
+import { missionGoal, type MetricFamily } from "@/lib/mission/goals";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
 import { firstNameFrom } from "@/components/mairo/simple-dashboard";
-import { localDay, performanceTiles, pickInsight, whatsNext, type InsightCandidate, type NextItem } from "@/lib/dashboard/home";
-import { WEEKDAYS } from "@/lib/reports/weekly";
-import { brainHeadline } from "@/lib/brain/store";
-import { carefulWording } from "@/lib/brain/rules";
+import { localDay, performanceTiles } from "@/lib/dashboard/home";
 import { leadFunnel, outcomeSummary } from "@/lib/leads/outcomes";
 import { cookies } from "next/headers";
 import { journeyFor, pulseDue } from "@/lib/success/store";
 import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
 import { JourneyCard } from "@/components/success/journey-card";
 import { loadTeam } from "@/lib/team/store";
-import { TeamCard } from "@/components/team/team-card";
-import { CoachCard } from "@/components/coach/coach-card";
+import { loadBrief } from "@/lib/team/brief-store";
+import { otherApprovals } from "@/lib/approvals/queue";
+import { assistantNameOf } from "@/lib/ai/agents";
 import { PulseCard } from "@/components/success/feedback";
-import { AttentionCard, BrainCard, EmptyHome, GoalCard, HomeHeader, InsightCard, NextCard, PerformanceCard, ProposalCard, WorkingOnCard, type AttentionItem, type WorkRow } from "@/components/dashboard/simple-home";
+import { DailyBrief } from "@/components/team/daily-brief";
+import { AttentionCard, EmptyHome, PerformanceCard, type AttentionItem } from "@/components/dashboard/simple-home";
+import { ApprovalsPreview, HomeSection, RecentWork, TeamStrip } from "@/components/dashboard/command-home";
+import { AskTeam } from "@/components/dashboard/ask-team";
+import { DashboardModeToggle } from "@/components/dashboard/overview/mode-toggle";
+import { ChangeGoalModalButton } from "@/components/mairo/goal-actions";
 
-// The Overview in Simple mode: five questions, six calm cards.
+// The Overview in Simple mode: one helpful assistant in front of a whole
+// advertising department. Five sections, in the order an owner asks:
 //
-//   1. Your goal            what am I trying to accomplish?
-//   2. This month           how is my business performing? (four numbers, for the goal)
-//   3. Mairo is working on  what is MAIRO doing? (each row opens its page)
-//   4. Needs your attention does MAIRO need anything? (only when it does)
-//   5. Mairo insight        one thing worth knowing (See why opens the detail)
-//   6. What's next          what MAIRO has planned
+//   1. Business results            how is my advertising doing? (this month)
+//   2. Your AI advertising team    who's on it, and what is each one doing?
+//   3. What MAIRO did recently     what actually happened?
+//   4. Waiting for your approval   what needs my yes?
+//   5. Your Daily Brief            the day's results, changes, issues and next check
 //
-// Everything else — campaign tables, charts, decision lists, technical
-// metrics — lives one click away in Campaigns, Creatives, Analytics or
-// Advanced view. Before adding anything here, ask: does the customer need to
-// see this immediately?
-
-const DAY = 86_400_000;
+// With "Ask your AI team" above them, and — only when something is in the
+// way — what needs fixing first. Everything here comes from records; before
+// anything has launched the Brief shows the steps left, never figures.
+// Advanced and Profit First stay one switch away for the full numbers.
 
 export async function SimpleOverview({ organizationId, userName, launched, askFeedback = false }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[] }; askFeedback?: boolean }) {
-  // Everything this screen needs is read in as few rounds as it can be: each
-  // `await` in a row is another wait on the database (or on Meta), and the
-  // page used to make eight of them one after another.
   const [org, mission, proposal, campaignCount, connections, pulseWanted, pulseLater] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, foundingCustomer: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, foundingCustomer: true, assistantName: true } }),
     activeMission(organizationId),
     proposedMission(organizationId),
     db.mairoCampaign.count({ where: { organizationId, status: { not: "ARCHIVED" } } }),
@@ -59,13 +52,12 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
     pulseDue(organizationId),
     cookies().then((c) => c.get(PULSE_LATER_COOKIE)?.value === "1"),
   ]);
-  // "Is MAIRO making advertising easier?" — monthly from the first week, or
-  // when the 30-day journey sends them here to answer it.
   const showPulse = askFeedback || (pulseWanted && !pulseLater);
   const tz = org?.timezone || "America/New_York";
   const now = new Date();
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: tz }).format(now));
   const greeting = `${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}${userName ? `, ${firstNameFrom(userName, "")}` : ""}.`;
+  const assistant = assistantNameOf(org?.assistantName);
 
   if (!mission && !proposal && campaignCount === 0) {
     // A brand-new account still gets its first-30-days guide under the
@@ -85,167 +77,90 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
   const today = localDay(now, tz);
   const monthStart = new Date(`${today.slice(0, 8)}01T00:00:00Z`);
   const family: MetricFamily = mission ? missionGoal(mission.primaryGoal).metrics : "sales";
-
   const metaConnected = [...connections.values()].some((c) => c.connected && c.platform === "META");
   const billingRead = metaConnected ? fetchMetaBillingStatus(organizationId).catch(() => null) : Promise.resolve(null);
 
-  const [billing, perf, activity, readiness, decisions, intelligence, learnings, recommendations, social, posts, newCreative, notes, campaigns, reportSettings, firstCampaign, brain, socialStrategy, monthLeads, team] = await Promise.all([
+  const [billing, perf, readiness, decisions, firstCampaign, monthLeads, team, others] = await Promise.all([
     billingRead,
     campaignCount > 0 ? fetchOrganizationPerformance(organizationId, { since: monthStart, until: now }).catch(() => null) : Promise.resolve(null),
-    missionActivity(organizationId),
     billingRead.then((b) => readinessFor(organizationId, { billing: b })),
-    db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, orderBy: { createdAt: "desc" }, take: 10 }),
-    loadIntelligence(organizationId).catch(() => null),
-    db.mairoLearning.findMany({ where: { organizationId, active: true, confidence: { in: ["HIGH", "MEDIUM"] } }, orderBy: { lastSeenAt: "desc" }, take: 5 }),
-    campaignCount > 0 ? buildRecommendations(organizationId).catch(() => []) : Promise.resolve([]),
-    socialAccess(organizationId),
-    db.instagramPost.findMany({ where: { organizationId, status: { in: ["SUGGESTED", "SCHEDULED"] }, scheduledFor: { gte: now, lte: new Date(now.getTime() + 14 * DAY) } }, orderBy: { scheduledFor: "asc" }, take: 20, select: { id: true, status: true, scheduledFor: true, network: true, mediaType: true } }),
-    (async () => {
-      // A creative MAIRO made recently that no campaign uses yet.
-      const used = await db.campaignAd.findMany({ where: { mairoCampaign: { organizationId }, creativeRequestId: { not: null } }, select: { creativeRequestId: true } });
-      return db.creativeRequest.findFirst({ where: { organizationId, status: "APPROVED", createdAt: { gte: new Date(now.getTime() - 14 * DAY) }, id: { notIn: used.map((u) => u.creativeRequestId!) } }, orderBy: { createdAt: "desc" }, select: { id: true, brief: true } });
-    })(),
-    db.missionNote.findMany({ where: { organizationId, kind: "PROMOTION", active: true, endsAt: { gte: now, lte: new Date(now.getTime() + 8 * DAY) } }, take: 3 }),
-    db.mairoCampaign.findMany({ where: { organizationId, startDate: { gt: now, lte: new Date(now.getTime() + 8 * DAY) }, status: { notIn: ["ARCHIVED"] } }, select: { name: true, startDate: true }, take: 3 }),
-    db.reportSettings.findUnique({ where: { organizationId }, select: { weeklyEnabled: true, deliveryDay: true } }),
+    db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, orderBy: [{ urgent: "desc" }, { createdAt: "desc" }], take: 10 }),
     firstCampaignState(organizationId),
-    brainHeadline(organizationId).catch(() => null),
-    db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
     db.lead.findMany({ where: { organizationId, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
-    loadTeam(organizationId, { now }).catch(() => null),
+    loadTeam(organizationId, { now }),
+    otherApprovals(organizationId, now).catch(() => []),
   ]);
-  const coachOpen = await db.coachFinding
-    .findMany({ where: { organizationId, status: { in: ["OPEN", "APPROVED"] } }, select: { id: true, title: true, plain: true, severity: true }, orderBy: [{ priority: "desc" }, { firstSeenAt: "asc" }], take: 20 })
-    .catch(() => []);
-  const coachTop = [...coachOpen].sort((a, b) => ["ATTENTION", "OPPORTUNITY", "WATCH"].indexOf(a.severity) - ["ATTENTION", "OPPORTUNITY", "WATCH"].indexOf(b.severity))[0] ?? null;
+  const brief = await loadBrief(organizationId, team, now);
   const billingProblem = billing && billing.state !== "funded" && billing.state !== "unknown" ? billing : null;
   const m = perf?.total ?? EMPTY_METRICS;
-  const scale = social.ok;
-  const askSocial = scale && !socialStrategy;
 
-  // --- 1. Goal --------------------------------------------------------------------
-  const sure = mission ? await missionConfidence(organizationId, family, m).catch(() => null) : null;
-  const goal = mission ? (
-    <GoalCard goal={missionGoal(mission.primaryGoal).label} sentence={mission.plan.mission} secondary={mission.secondaryGoal ? missionGoal(mission.secondaryGoal).label : null} confidence={sure?.customer ?? null} />
-  ) : proposal ? (
-    <ProposalCard title={proposal.title} sentence={proposal.plan.mission} />
-  ) : (
-    <GoalCard goal="No goal set yet" sentence="Tell MAIRO what you want to achieve — more sales, leads or bookings — and it focuses everything on that." secondary={null} confidence={null} />
-  );
+  // Only what's in the way. Recommendations and launches live in section 4.
+  const blockers: AttentionItem[] = [];
+  if (readiness.next && !readiness.ready && readiness.next.owner === "you") {
+    blockers.push({ key: "readiness", title: readiness.next.label, text: readiness.next.detail, action: readiness.next.id === "funding" && billingProblem?.actionUrl ? { href: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Fix in Meta", external: true } : { href: readiness.next.href, label: "Fix this" } });
+  } else if (billingProblem) {
+    blockers.push({ key: "billing", title: billingProblem.state === "no_payment_method" ? "Meta has no way to charge for your ads yet" : "Meta can't run your ads right now", text: billingProblem.message ?? "Open your Meta billing settings to fix it.", action: billingProblem.actionUrl ? { href: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Fix in Meta", external: true } : { href: "/dashboard/meta", label: "See details" } });
+  }
+  if (firstCampaign && !firstCampaign.launched) blockers.push({ key: "first", title: "Finish setting up your first campaign", text: "A few steps are left before it can run.", action: { href: "/dashboard/launch", label: "Continue" } });
+  if (launched.launched) blockers.push({ key: "launched", title: launched.names.length === 1 ? `“${launched.names[0]}” is now live` : `${launched.names.length} campaigns are now live`, text: "Meta approved the ads and confirmed your account can be charged, so the launch you approved went ahead. You can pause any time.", action: { href: "/dashboard/campaigns", label: "See campaigns" } });
 
-  // --- 2. Performance -----------------------------------------------------------
   const perfNote = perf?.problems.length
-    ? "Meta couldn't be read just now, so some numbers may be missing. They fill in on the next look."
+    ? "Meta couldn't be read just now, so some numbers may be missing — not zero. They fill in on the next look."
     : campaignCount === 0
       ? "Your results appear here once your first campaign runs."
       : (m.spendCents ?? 0) === 0
         ? "Nothing spent yet this month."
         : null;
+  const goal = mission ? (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-white/85">
+      <span className="text-faint">Your goal:</span>
+      <span className="font-medium text-white">{missionGoal(mission.primaryGoal).label}</span>
+      <ChangeGoalModalButton />
+    </p>
+  ) : proposal ? (
+    <p className="text-[14px] text-white/85">
+      MAIRO created a plan for you: <span className="font-medium text-white">{proposal.title}</span>.{" "}
+      <Link href="/dashboard/mission" className="text-violet-bright hover:underline">Review it</Link>
+    </p>
+  ) : null;
 
-  // --- 3. Working on --------------------------------------------------------------
-  const word = { sales: "sales", leads: "lead", bookings: "booking", calls: "calls", traffic: "traffic", awareness: "awareness", social: "social", visits: "local" }[family];
-  const rows: WorkRow[] = [
-    activity.campaignsRunning > 0
-      ? { icon: "🟢", text: `${activity.campaignsRunning} campaign${activity.campaignsRunning === 1 ? "" : "s"} running`, href: "/dashboard/campaigns" }
-      : { icon: "⚪", text: campaignCount > 0 ? "No campaigns running right now" : "No campaigns yet", href: campaignCount > 0 ? "/dashboard/campaigns" : "/dashboard/create" },
-    ...(activity.creativesTesting > 0 ? [{ icon: "🧪", text: `Testing ${activity.creativesTesting} creative${activity.creativesTesting === 1 ? "" : "s"}`, href: "/dashboard/creatives" }] : []),
-    ...(activity.campaignsRunning > 0 ? [{ icon: "⚡", text: `Optimizing your ${word} campaign${activity.campaignsRunning === 1 ? "" : "s"}`, href: "/dashboard/decisions" }] : []),
-    ...(scale && activity.socialScheduled ? [{ icon: "📱", text: `${activity.socialScheduled} social post${activity.socialScheduled === 1 ? "" : "s"} scheduled`, href: "/dashboard/social/posts?view=upcoming" }] : []),
-    ...(activity.promotionsActive > 0 ? [{ icon: "🏷️", text: activity.promotion ? `Promoting: ${activity.promotion}` : `${activity.promotionsActive} promotion running`, href: "/dashboard/mission" }] : []),
-  ].slice(0, 5);
-
-  // --- 4. Needs your attention ------------------------------------------------------
-  const views = decisions.map(toView);
-  const attention: AttentionItem[] = [];
-  if (readiness.next && !readiness.ready && readiness.next.owner === "you") {
-    attention.push({ key: "readiness", title: readiness.next.label, text: readiness.next.detail, action: readiness.next.id === "funding" && billingProblem?.actionUrl ? { href: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Fix in Meta", external: true } : { href: readiness.next.href, label: "Fix this" } });
-  } else if (billingProblem) {
-    attention.push({ key: "billing", title: billingProblem.state === "no_payment_method" ? "Meta has no way to charge for your ads yet" : "Meta can't run your ads right now", text: billingProblem.message ?? "Open your Meta billing settings to fix it.", action: billingProblem.actionUrl ? { href: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Fix in Meta", external: true } : { href: "/dashboard/meta", label: "See details" } });
-  }
-  if (firstCampaign && !firstCampaign.launched) attention.push({ key: "first", title: "Finish setting up your first campaign", text: "A few steps are left before it can run.", action: { href: "/dashboard/launch", label: "Continue" } });
-  if (launched.launched) attention.push({ key: "launched", title: launched.names.length === 1 ? `MAIRO put ${launched.names[0]} live` : `MAIRO put ${launched.names.length} campaigns live`, text: "Everything it needed was done, so it started rather than waiting. You can pause any time.", action: { href: "/dashboard/campaigns", label: "See campaigns" } });
-  if (mission && proposal) attention.push({ key: "proposal", title: "MAIRO created a new plan", text: `"${proposal.title}" is ready for your approval.`, action: { href: "/dashboard/mission", label: "Review" } });
-  const decision = views.find((d) => d.changes.some((c) => c.type !== "guide"));
-  if (decision) attention.push({ key: `decision-${decision.id}`, title: decision.kind === "meta-capability" ? "A new Meta option for your goal" : "Campaign recommendation", text: decision.title, action: { drawerTitle: "MAIRO's recommendation", label: "Review recommendation", content: <MairoDecisionCard decision={decision} advanced={false} /> } });
-  const waiting = posts.filter((p) => p.status === "SUGGESTED");
-  if (scale && waiting[0]?.scheduledFor) {
-    const d = waiting[0];
-    const when = d.scheduledFor!.toLocaleDateString("en-US", { weekday: "long", timeZone: tz });
-    attention.push({ key: "post", title: `${d.network === "FACEBOOK" ? "Facebook" : "Instagram"} ${d.mediaType === "REEL" ? "Reel" : "post"} ready`, text: `MAIRO created ${when}'s ${d.network === "FACEBOOK" ? "Facebook" : "Instagram"} ${d.mediaType === "REEL" ? "Reel" : "post"}${waiting.length > 1 ? ` (and ${waiting.length - 1} more)` : ""}.`, action: { href: "/dashboard/social/posts?view=approval", label: "Approve" } });
-  }
-  if (newCreative) attention.push({ key: "creative", title: "New creative ready", text: `MAIRO made a new creative${newCreative.brief ? `: ${newCreative.brief.slice(0, 80)}` : ""}.`, action: { href: "/dashboard/creatives?tab=new", label: "Review" } });
-  if (recommendations[0]) attention.push({ key: "optimize", title: "Budget recommendation", text: recommendations[0].recommendation.headline, action: { drawerTitle: "MAIRO's recommendation", label: "Review recommendation", content: <OptimizationCard item={recommendations[0]} /> } });
-  if (askSocial) attention.push({ key: "social", title: "Set up Social Manager", text: "Tell MAIRO what your posts should achieve and it plans your week.", action: { href: "/dashboard/social", label: "Set up" } });
-
-  // --- 5. One insight ---------------------------------------------------------------
-  const candidates: InsightCandidate[] = [
-    ...learnings.map((l) => {
-      let evidence: { label: string; value: string }[] = [];
-      try {
-        const e = JSON.parse(l.evidenceJson) as unknown;
-        const list = Array.isArray(e) ? e : (e as { evidence?: unknown[] }).evidence ?? [];
-        evidence = (list as { label?: string; value?: string }[]).filter((x) => x.label && x.value).slice(0, 4) as { label: string; value: string }[];
-      } catch {
-        evidence = [];
-      }
-      return { text: carefulWording(l.statement), why: carefulWording(`${l.statement} ${l.detail}`.trim()), evidence, href: "/dashboard/analytics", source: "learning" as const, strength: l.confidence === "HIGH" ? 3 : 2 };
-    }),
-    ...(intelligence?.insights ?? [])
-      .filter((i) => i.severity === "OPPORTUNITY" || i.severity === "ATTENTION")
-      .slice(0, 3)
-      .map((i) => ({
-        text: i.title,
-        why: `${i.happened} ${i.whyItMatters}`.trim(),
-        evidence: [...(i.previousValue ? [{ label: "Before", value: i.previousValue }] : []), ...(i.currentValue ? [{ label: "Now", value: i.currentValue }] : [])],
-        href: i.mairoCampaignId ? `/dashboard/campaigns/${i.mairoCampaignId}` : "/dashboard/analytics",
-        source: "intelligence" as const,
-        strength: i.severity === "ATTENTION" ? 2.5 : 1.5,
-      })),
-  ];
-  const insight = pickInsight(candidates);
-
-  // --- 6. What's next ---------------------------------------------------------------
-  const events: NextItem[] = [
-    ...posts.filter((p) => p.scheduledFor).map((p) => ({
-      day: localDay(p.scheduledFor!, tz),
-      text: `${p.network === "FACEBOOK" ? "Facebook" : "Instagram"} ${p.mediaType === "REEL" ? "Reel" : p.mediaType === "STORY" ? "story" : p.mediaType === "CAROUSEL" ? "carousel" : "post"} publishes${p.status === "SUGGESTED" ? " after your approval" : ""}.`,
-      href: "/dashboard/social/calendar",
-    })),
-    ...campaigns.filter((c) => c.startDate).map((c) => ({ day: localDay(c.startDate!, tz), text: `“${c.name}” starts.`, href: "/dashboard/campaigns" })),
-    ...notes.filter((n) => n.endsAt).map((n) => ({ day: localDay(n.endsAt!, tz), text: `Your promotion ends — MAIRO adds a last-chance reminder.`, href: "/dashboard/mission" })),
-    ...(activity.campaignsRunning > 0 ? [{ day: localDay(new Date(now.getTime() + DAY), tz), text: "MAIRO checks your results and looks for improvements." }] : []),
-    ...(reportSettings?.weeklyEnabled !== false
-      ? [(() => {
-          const want = reportSettings?.deliveryDay ?? 1;
-          const dow = new Date(`${today}T12:00:00Z`).getUTCDay();
-          const ahead = ((want - dow + 7) % 7) || 7;
-          return { day: localDay(new Date(Date.parse(`${today}T12:00:00Z`) + ahead * DAY), tz), text: `Your weekly report arrives (${WEEKDAYS[want]}).`, href: "/dashboard/reports" };
-        })()]
-      : []),
-  ];
-  const next = whatsNext({ today, events, campaignsRunning: activity.campaignsRunning, goalPhrase: mission ? goalPhrase(mission.primaryGoal) : null });
-
-  // The first month, worked out from the figures already on this screen.
   const journey = await journeyFor(organizationId, { readiness, spendCents: m.spendCents }).catch(() => null);
+  const views = decisions.map(toView);
+  const waiting = views.length + others.length;
 
-  // Mobile order is the reading order: goal, performance, doing, attention, insight, next.
   return (
     <div className="mx-auto max-w-[1180px]">
-      <HomeHeader greeting={greeting} />
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.02em] text-white">{greeting}</h1>
+          <p className="mt-1 text-[14.5px] text-muted">Your advertising, and the AI team working on it, at a glance.</p>
+        </div>
+        <DashboardModeToggle mode="simple" />
+      </header>
       <div className="space-y-4 sm:space-y-5">
         {journey?.show && <JourneyCard journey={journey} founding={Boolean(org?.foundingCustomer)} />}
-        {goal}
-        <PerformanceCard tiles={performanceTiles(family, m)} note={perfNote} outcome={outcomeSummary(leadFunnel(monthLeads), m.spendCents)} />
+        {blockers.length > 0 && <AttentionCard items={blockers} />}
+        <AskTeam name={assistant} />
+
+        <PerformanceCard heading="Business results" tiles={performanceTiles(family, m)} note={perfNote} outcome={outcomeSummary(leadFunnel(monthLeads), m.spendCents)} goal={goal} href="/dashboard/reports/monthly?m=current" />
+
+        <HomeSection id="home-team" title="Your AI advertising team" action={{ href: "/dashboard/team", label: "Open your AI Team" }}>
+          <TeamStrip team={team} />
+        </HomeSection>
+
         <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
-          {team ? <TeamCard team={team} /> : <WorkingOnCard rows={rows} />}
-          <AttentionCard items={attention.slice(0, 3)} />
+          <HomeSection id="home-recent" title="What MAIRO did recently" action={{ href: "/dashboard/team#activity", label: "Full activity" }}>
+            <RecentWork team={team} now={now} />
+          </HomeSection>
+          <HomeSection id="home-approvals" title="Waiting for your approval" action={{ href: "/dashboard/decisions", label: `Approval Center${waiting ? ` (${waiting})` : ""}` }}>
+            <ApprovalsPreview decisions={views} others={others} />
+          </HomeSection>
         </div>
-        {(coachTop || team) && <CoachCard top={coachTop} count={coachOpen.length} />}
-        <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
-          <InsightCard insight={insight} />
-          <NextCard items={next} />
-        </div>
-        {brain && <BrainCard learnedCount={brain.learnedCount} latest={brain.latest} questions={brain.questions} />}
+
+        <HomeSection id="home-brief" title="Your Daily Brief" tint action={{ href: "/dashboard/team#brief", label: "Open on your AI Team" }}>
+          <DailyBrief brief={brief} now={now} timeZone={team.timeZone} compact />
+        </HomeSection>
+
         {showPulse && <PulseCard />}
       </div>
     </div>

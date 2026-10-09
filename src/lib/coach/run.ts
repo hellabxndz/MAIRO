@@ -99,7 +99,7 @@ export async function runCoach(organizationId: string, opts: { parentRunId?: str
 
   const saved = await persistFindings(organizationId, keep, { now, complete: true });
   for (const f of keep.filter((x) => x.change)) {
-    const [decisionId] = await persistDrafts(organizationId, [f.change!], "daily");
+    const [decisionId] = await persistDrafts(organizationId, [f.change!], "daily", { reviewRunId: parentId });
     const findingId = saved.ids.get(f.key);
     if (decisionId && findingId) {
       decisionIds.push(decisionId);

@@ -5,12 +5,17 @@ import { activeOrganizationId } from "@/lib/active-org";
 import type { AgentRole } from "@/generated/prisma/enums";
 import { AGENT, AGENTS } from "@/lib/team/agents";
 import { loadTeam } from "@/lib/team/store";
-import { AgentCard, AgentIcon, FeedLine } from "@/components/team/agent-ui";
+import { AgentCard, FeedLine } from "@/components/team/agent-ui";
+import { loadBrief } from "@/lib/team/brief-store";
+import { DailyBrief } from "@/components/team/daily-brief";
+import { recentTrails } from "@/lib/team/trail-store";
+import { TrailCard } from "@/components/team/trail";
 
-// Your MAIRO AI Team: the eight specialties, what each is really doing, the
-// Daily Brief from the latest team review, and everything the team did —
-// all read from recorded runs and decisions. An agent with nothing to do
-// says it's idle.
+// The AI Team Command Center: the eight specialties, what each is really
+// doing, how they worked together on the latest recommendations, the Daily
+// Brief, and everything the team did — all read from recorded runs,
+// decisions and connections. An agent with nothing to do says it's idle;
+// nothing spins to suggest work that isn't happening.
 
 export const metadata = { title: "Your AI Team — MAIRO" };
 export const dynamic = "force-dynamic";
@@ -40,6 +45,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const filter = AGENTS.some((a) => a.role === requested) ? (requested as AgentRole) : null;
   const now = new Date();
   const team = await loadTeam(organizationId, { agent: filter, now });
+  const [brief, trails] = await Promise.all([loadBrief(organizationId, team, now), recentTrails(organizationId, { now, limit: 3 })]);
 
   return (
     <div className="mx-auto max-w-[1180px]">
@@ -59,40 +65,34 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         </div>
       </header>
 
-      {/* The Daily MAIRO Brief: the latest team review, step by step. */}
-      <section aria-labelledby="brief" className="mb-6 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.14), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+      <section aria-label="Your AI team" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {team.statuses.map((s) => (
+          <AgentCard key={s.role} status={s} pending={team.pendingByAgent[s.role] ?? 0} contribution={team.contribution[s.role] ?? null} now={now} timeZone={team.timeZone} />
+        ))}
+      </section>
+
+      <section aria-labelledby="together" className="mt-8">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="brief" className={eyebrow}>Your Daily MAIRO Brief</h2>
-          {team.brief && <p className="text-[12.5px] text-muted">{team.brief.at.toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" })}</p>}
+          <h2 id="together" className={eyebrow}>How your team worked together</h2>
+          <Link href="/dashboard/decisions" className="text-[12.5px] text-muted hover:text-white">Approval Center →</Link>
         </div>
-        {team.brief ? (
-          <ul className="mt-4 space-y-3">
-            {team.brief.lines.map((l) => (
-              <li key={l.id} className="flex items-start gap-3">
-                <AgentIcon role={l.agent} size={28} />
-                <p className="text-[14px] leading-relaxed text-white/90">
-                  <span className="text-white">{AGENT[l.agent].name}:</span> {l.summary}
-                </p>
-              </li>
-            ))}
-            {team.pending > 0 && (
-              <li className="pl-[40px] text-[14px] text-amber-200">
-                {team.pending} recommendation{team.pending === 1 ? " is" : "s are"} ready for your approval.{" "}
-                <Link href="/dashboard/decisions" className="underline underline-offset-4">Review</Link>
-              </li>
-            )}
-          </ul>
+        <p className="mt-2 max-w-[760px] text-[13px] text-muted">Each recommendation, and every specialist that took part in it — from the records of your daily reviews, your answer, and what Meta confirmed.</p>
+        {trails.length === 0 ? (
+          <p className="mt-4 text-[14px] text-muted">No recommendations yet. Once a campaign has run long enough to judge, the team&rsquo;s work on each one shows here.</p>
         ) : (
-          <p className="mt-3 text-[14px] text-white/75">
-            Your first Daily Brief arrives after the team&rsquo;s first review of a live campaign. Reviews run once a day, and when you open MAIRO.
-          </p>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            {trails.map((t) => (
+              <TrailCard key={t.decisionId} trail={t} now={now} timeZone={team.timeZone} />
+            ))}
+          </div>
         )}
       </section>
 
-      <section aria-label="Your AI team" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {team.statuses.map((s) => (
-          <AgentCard key={s.role} status={s} pending={team.pendingByAgent[s.role] ?? 0} contribution={team.contribution[s.role] ?? null} now={now} />
-        ))}
+      <section aria-labelledby="brief" className="mt-8 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+        <h2 id="brief" className={eyebrow}>Your Daily Brief</h2>
+        <div className="mt-3">
+          <DailyBrief brief={brief} now={now} timeZone={team.timeZone} />
+        </div>
       </section>
 
       <section id="activity" aria-labelledby="activity-title" className="mt-8 scroll-mt-24 rounded-[28px] p-5 sm:p-7" style={panel}>
@@ -117,7 +117,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         ) : (
           <ul className="-mx-3 mt-3">
             {team.feed.map((f) => (
-              <FeedLine key={f.id} item={f} now={now} />
+              <FeedLine key={f.id} item={f} now={now} timeZone={team.timeZone} />
             ))}
           </ul>
         )}

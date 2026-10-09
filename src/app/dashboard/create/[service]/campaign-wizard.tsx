@@ -211,6 +211,8 @@ export function CampaignWizard(props: Props) {
     for (const [k, v] of planFormEntries(plan, { draftId: id, name: mode === "advanced" ? customName : undefined })) {
       fd.append(k, v);
     }
+    // The owner ticked "I agree to spend …" with the budget in front of them.
+    fd.append("spendAgreed", "1");
     setAttempt((n) => n + 1);
     startTransition(() => formAction(fd));
   }

@@ -16,9 +16,11 @@ const STATUS: Record<string, { label: string; color: string }> = {
 export function DecisionHistory({
   decisions,
   campaignNames,
+  timeZone,
 }: {
   decisions: DecisionView[];
   campaignNames: Record<string, string>;
+  timeZone?: string;
 }) {
   if (decisions.length === 0) {
     return <p className="text-[13px] text-muted">Nothing here yet. Decisions you approve or reject are kept here with what changed.</p>;
@@ -29,9 +31,9 @@ export function DecisionHistory({
         const s = STATUS[d.status] ?? { label: d.status, color: "var(--color-faint)" };
         const rows = d.result ?? d.changes.filter((c) => c.type !== "guide").map((c) => ({ ...describeChange(c), ok: false, error: null }));
         return (
-          <li key={d.id} className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+          <li key={d.id} id={`d-${d.id}`} className="scroll-mt-24 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-faint">
-              <span>{whenText(d.decidedAt ?? d.createdAt)}</span>
+              <span>{whenText(d.decidedAt ?? d.createdAt, undefined, timeZone)}</span>
               <span>·</span>
               <span>{CATEGORY_LABEL[d.category]}</span>
               {d.mairoCampaignId && campaignNames[d.mairoCampaignId] && (

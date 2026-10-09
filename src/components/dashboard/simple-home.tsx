@@ -61,13 +61,14 @@ export function ProposalCard({ title, sentence }: { title: string; sentence: str
 }
 
 /** 2. How is my business performing? Four numbers, for the goal. */
-export function PerformanceCard({ tiles, note, period = "This month", outcome = null }: { tiles: Tile[]; note: string | null; period?: string; outcome?: { headline: string; detail: string | null } | null }) {
+export function PerformanceCard({ tiles, note, period = "This month", outcome = null, heading = null, goal = null, href = "/dashboard/analytics" }: { tiles: Tile[]; note: string | null; period?: string; outcome?: { headline: string; detail: string | null } | null; heading?: string | null; goal?: ReactNode; href?: string }) {
   return (
     <section aria-labelledby="performance" className={card} style={surface}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="performance" className={eyebrow}>{period}</h2>
-        <Link href="/dashboard/analytics" className="text-[13px] text-muted hover:text-white">See full results →</Link>
+        <h2 id="performance" className={eyebrow}>{heading ? `${heading} · ${period}` : period}</h2>
+        <Link href={href} className="text-[13px] text-muted hover:text-white">See full results →</Link>
       </div>
+      {goal && <div className="mt-2">{goal}</div>}
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
         {tiles.map((t) => (
           <div key={t.label} className="min-w-0">

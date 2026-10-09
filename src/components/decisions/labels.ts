@@ -59,13 +59,17 @@ export function termHelp(label: string): string | null {
   return TERM_HELP.find((t) => t.match.test(label))?.help ?? null;
 }
 
-export function whenText(iso: string, now = new Date()): string {
+/**
+ * "Today, 10:36 AM" in the business's timezone when given one — the same clock
+ * the team's trail uses, and the same text on the server and in the browser.
+ */
+export function whenText(iso: string, now = new Date(), timeZone?: string): string {
   const at = new Date(iso);
-  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const day = (d: Date) => Date.parse(new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d));
   const diff = Math.round((day(now) - day(at)) / 86_400_000);
-  const time = at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  const time = at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone });
   if (diff <= 0) return `Today, ${time}`;
   if (diff === 1) return `Yesterday, ${time}`;
   if (diff < 7) return `${diff} days ago`;
-  return at.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return at.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone });
 }

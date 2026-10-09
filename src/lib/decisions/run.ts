@@ -88,7 +88,7 @@ export async function refreshDecisions(
     worsened.map((w) => ({ kind: w.kind, mairoCampaignId: w.mairoCampaignId, at: w.decidedAt! })),
     now,
   ).kept;
-  const ids = await persistDrafts(organizationId, merged, "daily");
+  const ids = await persistDrafts(organizationId, merged, "daily", { reviewRunId: review });
 
   // Who proposed what. The Optimization Agent always reports, even when it
   // found nothing; the others only when they had something to say.

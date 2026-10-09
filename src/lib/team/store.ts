@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import type { AgentRole } from "@/generated/prisma/enums";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { AGENTS, agentForDecision } from "./agents";
-import { agentStatus, teamWelcome, type AgentStatus, type RunLite } from "./status";
+import { agentStatus, nextScheduledReview, teamWelcome, type AgentStatus, type RunLite } from "./status";
 
 // Everything the AI Team screen shows, from records that already exist:
 // the team's runs, the decisions waiting on the business, the campaigns,
@@ -32,6 +32,12 @@ export type TeamView = {
   /** The latest daily team review's steps, for the Daily Brief. */
   brief: { at: Date; lines: FeedItem[] } | null;
   metaConnected: boolean;
+  /** Campaigns running now. */
+  liveCampaigns: number;
+  /** The business's timezone, for every time shown. */
+  timeZone: string;
+  /** The next scheduled daily review, when there's something live to review. */
+  nextReview: Date | null;
 };
 
 const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
@@ -39,7 +45,7 @@ const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : 
 export async function loadTeam(organizationId: string, opts: { agent?: AgentRole | null; now?: Date } = {}): Promise<TeamView> {
   const now = opts.now ?? new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const [runs, pendingRows, meta, live, plan, waitingLaunch, troubled, trackingIssue, appliedThisMonth, protectionThisMonth, launchedThisMonth, reportsThisMonth, creativeThisMonth, lastReview] = await Promise.all([
+  const [runs, pendingRows, meta, live, plan, waitingLaunch, troubled, trackingIssue, appliedThisMonth, protectionThisMonth, launchedThisMonth, reportsThisMonth, creativeThisMonth, lastReview, org] = await Promise.all([
     db.agentRun.findMany({ where: { organizationId, startedAt: { gte: new Date(now.getTime() - 30 * DAY) } }, orderBy: { startedAt: "desc" }, take: 300 }),
     db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, select: { kind: true, category: true } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true } }),
@@ -62,7 +68,9 @@ export async function loadTeam(organizationId: string, opts: { agent?: AgentRole
     db.weeklyReport.count({ where: { organizationId, generatedAt: { gte: monthStart } } }),
     db.agentRun.count({ where: { organizationId, agent: "CREATIVE", task: { in: ["ad-concept", "studio-image"] }, status: "DONE", startedAt: { gte: monthStart } } }),
     db.agentRun.findFirst({ where: { organizationId, task: "team-review", status: { in: ["DONE", "NOTHING"] } }, orderBy: { startedAt: "desc" }, select: { id: true, finishedAt: true, startedAt: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
   ]);
+  const timeZone = org?.timezone || "America/New_York";
   const metaConnected = meta?.status === "CONNECTED";
 
   // Meta's answer about the payment method, only when something is live to
@@ -102,6 +110,7 @@ export async function loadTeam(organizationId: string, opts: { agent?: AgentRole
     agentStatus({
       role: a.role,
       now,
+      timeZone,
       metaConnected,
       liveCampaigns: live,
       runs: byAgent.get(a.role) ?? [],
@@ -136,12 +145,15 @@ export async function loadTeam(organizationId: string, opts: { agent?: AgentRole
 
   return {
     statuses,
-    welcome: teamWelcome({ now, statuses, pending: pendingRows.length, lastReviewAt: lastReview ? (lastReview.finishedAt ?? lastReview.startedAt) : null }),
+    welcome: teamWelcome({ now, statuses, pending: pendingRows.length, lastReviewAt: lastReview ? (lastReview.finishedAt ?? lastReview.startedAt) : null, timeZone }),
     pending: pendingRows.length,
     pendingByAgent,
     contribution,
     feed,
     brief: lastReview && briefLines.length ? { at: lastReview.finishedAt ?? lastReview.startedAt, lines: briefLines } : null,
     metaConnected,
+    liveCampaigns: live,
+    timeZone,
+    nextReview: metaConnected && live > 0 ? nextScheduledReview(now) : null,
   };
 }

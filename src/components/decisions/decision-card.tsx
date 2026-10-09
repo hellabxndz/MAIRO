@@ -3,8 +3,11 @@
 import { AGENT, agentForDecision } from "@/lib/team/agents";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import type { DecisionView } from "@/lib/decisions/store";
+import { budgetImpact, type ApprovalFacts } from "@/lib/decisions/approval";
+import { describeChange } from "@/lib/decisions/guardrails";
+import { AgentIcon } from "@/components/team/agent-ui";
 import { ignoreDecisionAction, markDecisionDoneAction, rejectDecisionAction } from "@/lib/actions/decision-actions";
 import { ApprovalModal } from "./approval-modal";
 import {
@@ -17,15 +20,17 @@ import {
   whenText,
 } from "./labels";
 
-// One Mairo Decision: what MAIRO noticed, why it matters, what it would do,
-// the figures behind it, the risk, how sure it is — and the buttons.
+// One proposed change, as the Approval Center shows it: the specialist
+// responsible, what it noticed, the change itself (before → after), the
+// reason, the figures behind it, what it does to spending, the risk, what has
+// to authorize it, how the team got here — and Approve, Reject or ask for an
+// explanation.
 //
 // Simple mode says it in plain words; Advanced mode swaps in the advertising
 // terms, each with an ⓘ that explains it. Same decision either way.
 
-export function MairoDecisionCard({ decision, advanced }: { decision: DecisionView; advanced: boolean }) {
+export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }: { decision: DecisionView; advanced: boolean; facts?: ApprovalFacts; trail?: ReactNode; timeZone?: string }) {
   const [open, setOpen] = useState<false | "approve" | "modify">(false);
-  const [why, setWhy] = useState(false);
   const [pending, start] = useTransition();
   const [gone, setGone] = useState<string | null>(null);
   const [approved, setApproved] = useState(false);
@@ -39,6 +44,9 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
   // Amounts the owner can change before approving: a budget, a radius.
   const modifiable = !creative && decision.changes.some((c) => c.type === "set-budget" || (c.type === "widen-audience" && c.to.geoRadius !== null));
   const tone = CATEGORY_TONE[decision.category];
+  const owner = facts?.owner ?? agentForDecision(decision.kind, decision.category);
+  const budget = facts?.budget ?? budgetImpact(decision.changes);
+  const changeRows = decision.changes.filter((c) => c.type !== "guide").map(describeChange);
   const askHref = `/dashboard/agents?ask=${encodeURIComponent(`Why are you recommending this: "${decision.title}"?`)}${
     decision.mairoCampaignId ? `&about=${decision.mairoCampaignId}` : ""
   }`;
@@ -61,7 +69,8 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
 
   return (
     <article
-      className="rounded-2xl border p-5 sm:p-6"
+      id={`d-${decision.id}`}
+      className="scroll-mt-24 rounded-2xl border p-5 sm:p-6"
       style={{ borderColor: decision.urgent ? "rgba(248,113,113,0.35)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
     >
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -74,36 +83,49 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
         </span>
         <span className="text-faint">·</span>
         <span className="text-faint">{RISK_LABEL[decision.risk]}</span>
-        <span className="ml-auto text-faint">{whenText(decision.createdAt)}</span>
+        <span className="ml-auto text-faint">{whenText(decision.createdAt, undefined, timeZone)}</span>
       </div>
 
-      <h3 className="mt-3 text-[16px] font-medium leading-snug text-white">{decision.title}</h3>
+      <div className="mt-3 flex items-center gap-2.5">
+        <AgentIcon role={owner} size={28} />
+        <p className="text-[12.5px] text-muted">
+          Responsible: <span className="font-medium text-white">{AGENT[owner].name}</span>
+        </p>
+      </div>
+      <h3 className="mt-2.5 text-[16px] font-medium leading-snug text-white">{decision.title}</h3>
 
       <dl className="mt-4 space-y-3 text-[13px] leading-relaxed">
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What your {AGENT[agentForDecision(decision.kind, decision.category)].name} noticed</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What it noticed</dt>
           <dd className="mt-1 text-white/90">{advanced ? decision.noticedAdvanced : decision.noticed}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Recommended change</dt>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Proposed change</dt>
           <dd className="mt-1 text-white/90">{decision.recommendation}</dd>
+          {changeRows.length > 0 && (
+            <dd className="mt-2 space-y-1">
+              {changeRows.map((c, i) => (
+                <p key={i} className="text-[12.5px]">
+                  <span className="text-faint">{c.label}: </span>
+                  {c.before && <span className="text-muted">{c.before} → </span>}
+                  <span className="text-white">{c.after}</span>
+                </p>
+              ))}
+            </dd>
+          )}
         </div>
-        {why && (
-          <>
-            <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Why</dt>
-              <dd className="mt-1 text-muted">{decision.whyItMatters}</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Expected purpose</dt>
-              <dd className="mt-1 text-muted">{decision.impact}</dd>
-            </div>
-          </>
-        )}
+        <div>
+          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Reason</dt>
+          <dd className="mt-1 text-white/85">{decision.whyItMatters}</dd>
+          {decision.impact && <dd className="mt-1 text-[12.5px] text-muted">What it&rsquo;s for: {decision.impact}</dd>}
+        </div>
       </dl>
 
       {decision.evidence.length > 0 && (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Supporting evidence</p>
+      )}
+      {decision.evidence.length > 0 && (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {decision.evidence.map((e) => {
             const label = advanced && e.advancedLabel ? e.advancedLabel : e.label;
             const help = advanced ? termHelp(label) : null;
@@ -122,6 +144,28 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
             );
           })}
         </div>
+      )}
+
+      <dl className="mt-4 grid gap-2 text-[12.5px] sm:grid-cols-3">
+        <div className={`rounded-lg px-3 py-2 ${budget.direction === "up" ? "bg-warn/10" : "bg-white/[0.03]"}`}>
+          <dt className="text-[11px] text-faint">Budget impact</dt>
+          <dd className={`mt-0.5 ${budget.direction === "up" ? "text-warn" : "text-white/85"}`}>{budget.text}</dd>
+        </div>
+        <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+          <dt className="text-[11px] text-faint">Risk level</dt>
+          <dd className="mt-0.5 text-white/85">{RISK_LABEL[decision.risk]}</dd>
+        </div>
+        <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+          <dt className="text-[11px] text-faint">Required authorization</dt>
+          <dd className="mt-0.5 text-white/85">{facts?.authorization.text ?? "Your approval."}</dd>
+        </div>
+      </dl>
+
+      {trail && (
+        <details className="mt-3 rounded-xl bg-white/[0.025] px-3.5 py-2.5">
+          <summary className="cursor-pointer text-[12.5px] text-white/85">How your team got here</summary>
+          <div className="mt-3">{trail}</div>
+        </details>
       )}
 
       {decision.status === "FAILED" && decision.result?.some((r) => !r.ok) && (
@@ -180,17 +224,14 @@ export function MairoDecisionCard({ decision, advanced }: { decision: DecisionVi
             Ignore
           </button>
         ) : (
-          <button type="button" disabled={pending} onClick={() => act(rejectDecisionAction, "Declined")}
+          <button type="button" disabled={pending} onClick={() => act(rejectDecisionAction, "Rejected")}
             className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
-            Decline
+            Reject
           </button>
         )}
         <Link href={askHref} className="px-2 py-2 text-[12.5px] text-blue-bright hover:text-white">
-          Ask Mairo why
+          Ask for an explanation
         </Link>
-        <button type="button" onClick={() => setWhy((v) => !v)} className="ml-auto px-1 py-2 text-[12px] text-muted hover:text-white">
-          {why ? "Less" : "Why"}
-        </button>
       </div>
 
       {open && (

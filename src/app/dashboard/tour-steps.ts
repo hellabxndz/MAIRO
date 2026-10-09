@@ -56,9 +56,9 @@ export const OWNER_TOUR: Step[] = [
   },
   {
     target: "nav:/dashboard/decisions",
-    title: "Recommendations",
+    title: "Approvals",
     body:
-      "What your AI team suggests changing, with the numbers behind it. Nothing changes until you approve.",
+      "Everything waiting for your say-so: launches, plans and the changes your AI team suggests, with the numbers behind them. Nothing changes until you approve.",
   },
   {
     target: "nav:/dashboard/settings",

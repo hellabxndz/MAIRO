@@ -187,8 +187,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     <>
       {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
       {askSocial && <SocialManagerPrompt />}
-      {/* MAIRO acted on its own, so it says so — before the customer finds a
-          live campaign they did not press anything to start. */}
+      {/* Something went live on this visit, so it says so — the launch the
+          owner approved happened just now, after Meta's review cleared. */}
       {launched.launched && (
         <Card className="mb-6 border-emerald-400/25 bg-emerald-400/[0.05]">
           <p className="font-medium text-emerald-200">
@@ -197,9 +197,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
               : `MAIRO put ${launched.names.length} campaigns live`}
           </p>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
-            Everything it needed was done, so it started{" "}
-            {launched.names.length === 1 ? "it" : "them"} rather than waiting for you.
-            Meta will begin charging your ad account as the ads deliver. You can pause
+            You approved {launched.names.length === 1 ? "it" : "them"} at the budget you agreed to, and once Meta
+            approved the ads and confirmed your ad account can be charged, MAIRO switched{" "}
+            {launched.names.length === 1 ? "it" : "them"} on. Meta charges your ad account as the ads deliver. You can pause
             {launched.names.length === 1 ? " it" : " them"} any time from Campaigns.
           </p>
         </Card>

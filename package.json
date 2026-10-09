@@ -60,7 +60,9 @@
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts",
     "check:results": "tsx scripts/check-results.ts",
-    "check:results-db": "tsx scripts/check-results-db.ts"
+    "check:results-db": "tsx scripts/check-results-db.ts",
+    "check:command-center": "tsx scripts/check-command-center.ts",
+    "check:command-center-db": "tsx scripts/check-command-center-db.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

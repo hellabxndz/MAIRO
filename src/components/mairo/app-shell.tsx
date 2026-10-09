@@ -151,7 +151,7 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 
 /**
  * The day-to-day destinations, deliberately few: Overview, AI Team,
- * Recommendations, Campaigns, Creatives, Analytics, (Social Manager) — and Settings at
+ * Approvals, Campaigns, Creatives, Analytics, (Social Manager) — and Settings at
  * the bottom. Everything else lives inside one of them: creative tools inside
  * Creatives, reports and activity inside Analytics, the business profile,
  * integrations, billing and account inside Settings, the mission and
@@ -162,7 +162,7 @@ export const PRIMARY_NAV: NavEntry[] = [
   // The AI Team (and asking it), then what it recommends.
   { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.mairo} />, also: ["/dashboard/agents"] },
   { href: "/dashboard/coach", label: "Performance Coach", icon: <Icon d={I.coach} /> },
-  { href: "/dashboard/decisions", label: "Recommendations", icon: <Icon d={I.decisions} /> },
+  { href: "/dashboard/decisions", label: "Approvals", icon: <Icon d={I.decisions} /> },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
   { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
   { href: "/dashboard/analytics", label: "Analytics", icon: <Icon d={I.analytics} />, also: ["/dashboard/reports", "/dashboard/activity"] },

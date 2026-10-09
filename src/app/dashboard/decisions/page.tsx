@@ -13,12 +13,26 @@ import { DecisionHistory } from "@/components/decisions/history";
 import { CATEGORY_LABEL } from "@/components/decisions/labels";
 import { levelInfo } from "@/lib/automation/levels";
 import { RefreshDecisionsButton } from "./refresh-button";
+import { approvalFacts, type ApprovalFacts } from "@/lib/decisions/approval";
+import { otherApprovals } from "@/lib/approvals/queue";
+import { loadTrails } from "@/lib/team/trail-store";
+import { TrailChain, TrailSteps } from "@/components/team/trail";
+import { AgentIcon } from "@/components/team/agent-ui";
+import { AGENT } from "@/lib/team/agents";
+import { LaunchApprove } from "@/components/decisions/launch-approve";
+import type { ReactNode } from "react";
 
-// Mairo Decisions.
-//
-// Every day MAIRO looks at the account and writes down the few things worth
-// doing — usually one to five, often none. None is a real answer and the page
+// The Approval Center: everything waiting for the business's say-so, in one
+// place. Campaigns built and waiting to launch, plans, Performance Coach
+// plans and posts — then the changes the AI team recommends from its daily
+// look, usually one to five, often none. None is a real answer and the page
 // says so, rather than inventing something to fill the space.
+//
+// Every proposed change shows the specialist responsible, the change itself,
+// the reason, the evidence, what it does to spending, the risk, what has to
+// authorize it and how the team got there. Launches and anything that raises
+// spending always wait for an explicit yes, and nothing is reported as done
+// until Meta confirms it.
 
 export const dynamic = "force-dynamic";
 // Reading several windows of figures from the networks, on a stale page.
@@ -65,7 +79,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
     // so it can be tried again or turned down — not quietly filed away.
     filter === "completed" ? ["APPLIED"] : filter === "rejected" ? ["REJECTED", "IGNORED"] : ["PENDING", "FAILED"];
 
-  const [rows, counts, dataStatus, mode, level, campaigns] = await Promise.all([
+  const [rows, counts, dataStatus, mode, level, campaigns, others, switchesRow, org] = await Promise.all([
     db.mairoDecision.findMany({
       where: {
         organizationId,
@@ -81,23 +95,45 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
     viewMode(),
     effectiveLevel(organizationId),
     db.mairoCampaign.findMany({ where: { organizationId }, select: { id: true, name: true } }),
+    history ? Promise.resolve([]) : otherApprovals(organizationId),
+    db.autoOptimizeSettings.findUnique({ where: { organizationId }, select: { requireApprovalNewCreatives: true, requireApprovalAudience: true, requireApprovalPlatformShift: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true } }),
   ]);
+  const switches = {
+    requireApprovalNewCreatives: switchesRow?.requireApprovalNewCreatives ?? true,
+    requireApprovalAudience: switchesRow?.requireApprovalAudience ?? true,
+    requireApprovalPlatformShift: switchesRow?.requireApprovalPlatformShift ?? true,
+  };
+  const now = new Date();
+  const timeZone = org?.timezone || "America/New_York";
+  const trailMap = await loadTrails(organizationId, rows.map((r) => r.id));
   const decisions = rows.map(toView);
   const names = Object.fromEntries(campaigns.map((c) => [c.id, c.name]));
   const advanced = mode === "advanced";
+  const facts: Record<string, ApprovalFacts> = Object.fromEntries(decisions.map((d) => [d.id, approvalFacts(d, { level, switches })]));
+  const trails: Record<string, ReactNode> = Object.fromEntries(
+    [...trailMap.values()].map((t) => [
+      t.decisionId,
+      <div key={t.decisionId} className="space-y-3">
+        <TrailChain steps={t.steps} />
+        <TrailSteps steps={t.steps} now={now} timeZone={timeZone} />
+      </div>,
+    ]),
+  );
+  const waitingTotal = counts.pending + others.length;
 
   return (
     <div>
       <PageHeader
-        title="AI Recommendations"
-        description="Once a day your AI team looks at your campaigns and writes down what's worth changing — only when there's something real to act on, with the numbers behind it. Nothing changes until you approve it, unless you've let MAIRO act within your limits."
+        title="Approval Center"
+        description="Everything your AI team needs your say-so on, in one place. Launches and anything that raises what you spend always wait for you, and nothing is reported as done until Meta confirms it."
         action={<RefreshDecisionsButton />}
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
         <span className="text-white">
-          <span className="text-[20px] font-medium tabular-nums">{counts.pending}</span>{" "}
-          <span className="text-muted">to review</span>
+          <span className="text-[20px] font-medium tabular-nums">{history ? counts.pending : waitingTotal}</span>{" "}
+          <span className="text-muted">waiting for you</span>
         </span>
         {counts.urgent > 0 && <span className="text-red-300">{counts.urgent} need attention</span>}
         {counts.growth > 0 && <span className="text-live">{counts.growth} growth opportunit{counts.growth === 1 ? "y" : "ies"}</span>}
@@ -106,6 +142,37 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
         </Link>
       </div>
 
+      {others.length > 0 && (
+        <section aria-labelledby="waiting" className="mb-8">
+          <h2 id="waiting" className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Launches, plans and posts</h2>
+          <ul className="grid gap-3 lg:grid-cols-2">
+            {others.map((o) => (
+              <li key={o.key} className="flex flex-col rounded-2xl border p-4 sm:p-5" style={{ borderColor: o.kind === "launch" ? "rgba(245,158,11,0.4)" : "var(--mairo-line)" }}>
+                <div className="flex items-center gap-2.5">
+                  <AgentIcon role={o.agent} size={28} />
+                  <p className="text-[12.5px] text-muted">
+                    Responsible: <span className="font-medium text-white">{AGENT[o.agent].name}</span>
+                  </p>
+                </div>
+                <p className="mt-2.5 text-[15px] font-medium text-white">{o.title}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">{o.text}</p>
+                <dl className="mt-3 grid gap-1.5 text-[12.5px]">
+                  <div><dt className="inline text-faint">Budget impact: </dt><dd className={`inline ${o.kind === "launch" ? "font-medium text-warn" : "text-white/85"}`}>{o.budget}</dd></div>
+                  <div><dt className="inline text-faint">Required authorization: </dt><dd className="inline text-white/85">{o.authorization}</dd></div>
+                </dl>
+                <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
+                  {o.launch ? <LaunchApprove campaignId={o.launch.campaignId} name={o.title.replace(/^Launch “|”$/g, "")} budget={o.launch.budget} /> : null}
+                  <Link href={o.href} className={o.launch ? "text-[12.5px] text-muted hover:text-white" : "rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[12.5px] font-medium text-white"}>
+                    {o.launch ? "See the campaign" : "Review"}
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Changes your AI team recommends</h2>
       <nav className="mb-6 flex gap-2 overflow-x-auto pb-1" aria-label="Filter decisions">
         {FILTERS.map((x) => (
           <Link
@@ -126,9 +193,9 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
       </nav>
 
       {history ? (
-        <DecisionHistory decisions={decisions} campaignNames={names} />
+        <DecisionHistory decisions={decisions} campaignNames={names} timeZone={timeZone} />
       ) : decisions.length > 0 ? (
-        <DecisionList key={filter} decisions={decisions} advanced={advanced} />
+        <DecisionList key={filter} decisions={decisions} advanced={advanced} facts={facts} trails={trails} timeZone={timeZone} />
       ) : (
         <Empty filter={filter} dataStatus={dataStatus} />
       )}

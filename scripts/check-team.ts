@@ -12,7 +12,8 @@
 
 import assert from "node:assert/strict";
 import { AGENTS, agentForDecision } from "../src/lib/team/agents";
-import { agentStatus, STUCK_AFTER_MS, teamWelcome, type AgentFacts } from "../src/lib/team/status";
+import { agentStatus, DAILY_REVIEW_UTC, nextScheduledReview, STATE_LABEL, STUCK_AFTER_MS, teamWelcome, type AgentFacts } from "../src/lib/team/status";
+import { readFileSync } from "node:fs";
 import { guardianCheck, nothingToChange, proposalsByAgent, reviewSummary } from "../src/lib/team/review";
 import type { DecisionDraft, Guardrails } from "../src/lib/decisions/types";
 
@@ -70,13 +71,50 @@ check("waiting for approval when its recommendations are waiting", () => {
   assert.match(s.line, /2 recommendations waiting/);
 });
 
-check("monitoring: only after a recent check, with something live, and said to be daily", () => {
+check("monitoring scheduled: only after a recent check, with something live, and with its next check", () => {
   const s = agentStatus(base({ runs: [run("NOTHING", 60)] }));
   assert.equal(s.state, "MONITORING");
-  assert.match(s.line, /once a day/);
+  assert.equal(s.label, "Monitoring scheduled");
+  assert.match(s.line, /Next scheduled check/);
+  assert.equal(s.nextCheck?.getTime(), nextScheduledReview(now).getTime());
   assert.doesNotMatch(s.line, /continuous|24\/7|constantly/i);
   assert.equal(agentStatus(base({ liveCampaigns: 0, runs: [run("NOTHING", 60)] })).state, "COMPLETED");
   assert.equal(agentStatus(base({ runs: [run("DONE", 60 * 48)] })).state, "COMPLETED");
+});
+
+check("the eight states carry the owner's words", () => {
+  assert.deepEqual(Object.values(STATE_LABEL).sort(), ["Completed", "Connection required", "Failed", "Idle", "Monitoring scheduled", "Needs attention", "Waiting for approval", "Working"].sort());
+});
+
+check("the next scheduled check is the daily review in vercel.json", () => {
+  const cron = (JSON.parse(readFileSync("vercel.json", "utf8")) as { crons: { path: string; schedule: string }[] }).crons.find((c) => c.path === "/api/cron/review")!;
+  const [minute, hour] = cron.schedule.split(" ").map(Number);
+  assert.deepEqual({ hour, minute }, { ...DAILY_REVIEW_UTC });
+  assert.equal(nextScheduledReview(new Date("2026-10-09T08:00:00Z")).toISOString(), "2026-10-09T09:30:00.000Z");
+  assert.equal(nextScheduledReview(new Date("2026-10-09T09:30:00Z")).toISOString(), "2026-10-10T09:30:00.000Z");
+});
+
+check("a failure says what failed, from its record", () => {
+  const s = agentStatus(base({ runs: [{ ...run("FAILED", 10), summary: "Couldn't read your results from Meta this time." }] }));
+  assert.equal(s.label, "Failed");
+  assert.match(s.line, /Couldn't read your results from Meta/);
+});
+
+check("working shows the task in words, and never a spinner's promise", () => {
+  const s = agentStatus(base({ runs: [{ ...run("RUNNING", 2), task: "read-results", summary: null }] }));
+  assert.equal(s.current, "Reading your latest results");
+  assert.match(s.line, /only while the task is actually running/);
+});
+
+check("times are in the business's own timezone", () => {
+  const s = agentStatus(base({ timeZone: "America/Los_Angeles", runs: [{ ...run("DONE", 0), finishedAt: new Date("2026-10-09T16:00:00Z") }], now: new Date("2026-10-09T17:00:00Z") }));
+  assert.match(s.line, /9:00 AM/, s.line);
+});
+
+check("recent history is the specialty's own finished runs, newest first", () => {
+  const s = agentStatus(base({ runs: [run("RUNNING", 1), run("DONE", 30), run("FAILED", 60), run("NOTHING", 90), run("DONE", 120)] }));
+  assert.equal(s.recent.length, 3);
+  assert.deepEqual(s.recent.map((r) => r.status), ["DONE", "FAILED", "NOTHING"]);
 });
 
 check("idle when nothing has happened — never pretends", () => {

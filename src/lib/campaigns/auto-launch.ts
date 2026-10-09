@@ -19,7 +19,14 @@ import { sendSms } from "@/lib/sms/send";
 // the ad actually exist on the network. That last one matters — a campaign
 // with no ad under it cannot deliver, so "switching it on" would be theatre.
 //
-// Three rules it keeps:
+// Four rules it keeps:
+//
+// A person said yes, and it is on record. A campaign goes live only once
+// someone authorized it: ticked "I agree to spend …" with the budget shown
+// when building it, or pressed Approve or Launch Campaign. That moment is
+// stored as launchApprovedAt. A campaign the AI team built on its own waits
+// in the Approval Center until someone approves it there — MAIRO never
+// decides on its own to start spending.
 //
 // Funding must be confirmed, not assumed. Meta is asked directly, and an
 // answer of "unknown" — a timeout, a permissions problem — blocks the launch.
@@ -95,9 +102,11 @@ export async function maybeGoLive(
   // Cheap when there is nothing to do: one indexed read that returns no rows.
   await finishHalfBuilt(organizationId);
 
-  // Held means nothing goes live that a person hasn't said yes to. A campaign
-  // somebody already pressed Launch or Approve on has been said yes to — it
-  // was only waiting for Meta's review — so it still goes live when ready.
+  // Nothing goes live that a person hasn't said yes to, on record. Held adds
+  // one more thing: the spend agreement ticked while building doesn't count
+  // as approval to launch (see createCampaignAction), so only an Approve or
+  // Launch Campaign press does. Either way the query below only ever finds
+  // campaigns with launchApprovedAt set.
   const heldForPerson = org.autoLaunchHeld && !opts.approvedByPerson;
 
   // Is there anything to do at all? Asked before the funding check, which is a
@@ -105,7 +114,7 @@ export async function maybeGoLive(
   // nothing waiting.
   const waiting = await db.platformCampaign.findMany({
     where: {
-      mairoCampaign: { organizationId, ...(heldForPerson ? { launchApprovedAt: { not: null } } : {}) },
+      mairoCampaign: { organizationId, launchApprovedAt: { not: null } },
       // Scoped when a person approved one campaign. Without this, approving
       // one would also switch on every other campaign that happened to be
       // ready — which is a surprising way to start spending money.
@@ -122,7 +131,11 @@ export async function maybeGoLive(
     },
   });
   if (waiting.length === 0) {
-    return heldForPerson ? { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." } : NOTHING;
+    if (heldForPerson) return { ...NOTHING, heldBecause: "You've asked MAIRO to wait before putting anything live." };
+    const unapproved = opts.onlyCampaignId
+      ? 0
+      : await db.platformCampaign.count({ where: { mairoCampaign: { organizationId, launchApprovedAt: null, status: { not: "ARCHIVED" } }, status: "PENDING_REVIEW", externalCampaignId: { not: null } } });
+    return unapproved ? { ...NOTHING, heldBecause: "A campaign is built and waiting for your approval to launch — see your Approval Center." } : NOTHING;
   }
 
   // Anything booked for later is not this run's business. Reported rather than

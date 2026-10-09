@@ -1,4 +1,5 @@
 import { loadTeam } from "@/lib/team/store";
+import { nextBestSteps, spendSummary } from "@/lib/team/answers";
 import { AGENT } from "@/lib/team/agents";
 import { tool } from "ai";
 import { z } from "zod";
@@ -52,7 +53,7 @@ export function assistantTools(organizationId: string) {
   return {
     diagnose_campaigns: tool({
       description:
-        "Read this business's real campaign figures and MAIRO's current recommended fixes. Use it for any question about performance: why sales or results changed, why costs went up, whether to change a budget, why people click but don't buy. Figures come in three windows: the last 3 days, the 4 days before that, and the last 7 days. Never state a figure that isn't in this result.",
+        "Read this business's real campaign figures and MAIRO's current recommended fixes. Use it for any question about performance — \"how are my ads doing?\", \"should I change my campaign?\" — why sales or results changed, why costs went up, whether to change a budget, why people click but don't buy. Figures come in three windows: the last 3 days, the 4 days before that, and the last 7 days. Never state a figure that isn't in this result.",
       inputSchema: z.object({
         campaignId: z.string().optional().describe("A MAIRO campaign id, to focus on one campaign"),
       }),
@@ -116,10 +117,13 @@ export function assistantTools(organizationId: string) {
         return {
           summary: team.welcome,
           waitingForApproval: team.pending,
+          nextScheduledReview: team.nextReview?.toISOString() ?? null,
           specialists: team.statuses.map((st) => ({
             name: AGENT[st.role].name,
             state: st.label,
             now: st.line,
+            currentTask: st.current,
+            waitingForApproval: team.pendingByAgent[st.role] ?? 0,
             lastFinished: st.lastDone ? { what: st.lastDone.summary, when: st.lastDone.at.toISOString() } : null,
             thisMonth: team.contribution[st.role] ?? null,
           })),
@@ -262,6 +266,31 @@ export function assistantTools(organizationId: string) {
       },
     }),
 
+    get_spend: tool({
+      description:
+        "Read what Meta charged for MAIRO's campaigns this month so far, last month, and since the first campaign. Use it for \"how much money have I spent?\" and any question about total spend. Ad spend only — not the MAIRO subscription. If a figure is null, say Meta couldn't be read rather than guessing.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const r = await spendSummary(organizationId);
+        return {
+          campaignsOnMeta: r.campaigns,
+          spend: r.windows.map((w) => ({ period: w.label, from: w.since, to: w.until, dollars: w.spendCents === null ? null : w.spendCents / 100 })),
+          couldntRead: r.problem,
+          note: r.campaigns === 0 ? "No campaign has reached Meta yet, so nothing has been spent." : "Spend is what Meta reports for MAIRO's campaigns; the last day or two can still change.",
+        };
+      },
+    }),
+
+    next_best_step: tool({
+      description:
+        "Read the few things most worth doing next, most important first, each with where it came from: setup steps, launches and recommendations waiting for approval, the Performance Coach's top finding, specialists that need attention, and leads waiting to be marked. Use it for \"what's the next best thing to improve?\", \"what should I do next?\" or \"what needs me?\".",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const steps = await nextBestSteps(organizationId);
+        return { steps, note: steps.length === 0 ? "Nothing needs the owner right now. Say so plainly, and that the team reviews again at its next scheduled check." : null };
+      },
+    }),
+
     go_to: tool({
       description:
         "Show a button that takes the person to the right MAIRO page, when they want to see or do something there (\"show me my best creative\", \"I want to create a campaign\"). Use it with a one-sentence answer; don't describe menus. Social pages are Scale only.",
@@ -304,7 +333,7 @@ export const DESTINATIONS = {
   create_creative: { href: "/dashboard/creative-studio", label: "Create a creative" },
   analytics: { href: "/dashboard/analytics", label: "Open Analytics" },
   analytics_advanced: { href: "/dashboard/analytics?view=advanced", label: "Open detailed analytics" },
-  decisions: { href: "/dashboard/decisions", label: "Open Mairo Decisions" },
+  decisions: { href: "/dashboard/decisions", label: "Open your Approval Center" },
   mission: { href: "/dashboard/mission", label: "Open your goal and plan" },
   social: { href: "/dashboard/social", label: "Open Social Manager" },
   social_calendar: { href: "/dashboard/social/calendar", label: "Open the Content Calendar" },
@@ -333,6 +362,7 @@ export const AI_TEAM_BRIEF = [
   "Your MAIRO AI Team:",
   "- You speak for the business's MAIRO AI Team: eight specialties of one AI system — Strategy Agent, Audience Agent, Creative Agent, Campaign Agent, Optimization Agent, Budget Guardian, Analytics Agent and Growth Advisor. They are not people and not separate programs; never imply otherwise.",
   "- Route each question to the right specialty's tools and say who looked (\"Your Analytics Agent checked: …\"): performance and \"why did leads drop\" → diagnose_campaigns (Analytics/Optimization); \"why am I spending more\" → diagnose_campaigns and the budget figures (Budget Guardian); \"make a better ad\" → propose_fix or Creative Studio (Creative); \"what is my team working on\" → get_ai_team.",
+  "- \"How much money have I spent?\" → get_spend (ad spend from Meta, not the subscription). \"What's the next best thing to improve?\" or \"what should I do next?\" → next_best_step, then explain the first item plainly and say where it came from. \"How are my ads doing?\" or \"should I change my campaign?\" → diagnose_campaigns, and get_performance_coach when leads or customers matter. \"What is my team working on?\" → get_ai_team. Pick the tools yourself; never ask the person which specialist to use.",
   "- Only describe work get_ai_team or another tool shows actually happened. If nothing has run, say so. The team checks once a day and when the business opens MAIRO — never say it watches continuously.",
   "- Recommendations wait for the owner's approval unless their automation settings allow small changes within their limits. Never say a change was made unless a tool confirms it.",
   "- For \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\" or \"should I increase my budget\", call get_performance_coach and answer from it, in plain words first, numbers after. Keep what MAIRO observed apart from possible explanations; never state a cause as certain. If the drop is after the lead (follow-up, booking, closing), say so — don't blame the ads. If something important isn't tracked (leads not marked, no pixel, no sale values), say exactly what's missing and ask only for that. Never suggest more budget while the coach says to hold off.",

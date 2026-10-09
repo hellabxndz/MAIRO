@@ -501,14 +501,22 @@ export async function createCampaignAction(
   // Every ad that reached a network carries the Strategy Engine's brief.
   if (failures.length < outcome.results.length) {
     await briefCampaignAds(organizationId, outcome.mairoCampaignId).catch((error) => console.error("Writing creative briefs failed:", error));
-    // The Campaign Agent's record, once Meta has the campaign. Built paused:
-    // nothing spends until the business approves the launch.
+    // The owner ticked "I agree to spend …" with the budget shown: that is
+    // their approval to launch, recorded — unless they've asked MAIRO to hold
+    // before going live, when only an Approve press counts. Auto-launch never
+    // starts a campaign without this on record.
+    const held = (await db.organization.findUnique({ where: { id: organizationId }, select: { autoLaunchHeld: true } }))?.autoLaunchHeld ?? true;
+    const agreed = formData.get("spendAgreed") === "1" && !held;
+    if (agreed) await db.mairoCampaign.updateMany({ where: { id: outcome.mairoCampaignId, organizationId }, data: { launchApprovedAt: new Date() } });
+    // The Campaign Agent's record, once Meta has the campaign. Built paused.
     await recordRun({
       organizationId,
       agent: "ARCHITECT",
       task: "build-campaign",
       status: "DONE",
-      summary: `Built “${name}” on Meta, switched off — it waits for your approval before anything is spent.`,
+      summary: agreed
+        ? `Built “${name}” on Meta, switched off. It goes live once Meta approves the ads and your ad account can be charged, at the budget you agreed to.`
+        : `Built “${name}” on Meta, switched off — it waits for your approval before anything is spent.`,
       href: `/dashboard/campaigns/${outcome.mairoCampaignId}`,
     });
   } else {
