@@ -21,14 +21,14 @@ const QUESTIONS: { n: number; q: string; suites: string[]; production: string }[
   { n: 5, q: "Publishes through Meta's real API", suites: ["meta-contract", "payment-gate", "decision-claim", "readiness", "command-center-db", "onboarding-db"], production: "Only a real, approved launch proves Meta accepts it — not done in this audit (it would spend)." },
   { n: 6, q: "Analytics reads real data", suites: ["analytics", "graph-cache", "account-history", "reports", "weekly-report", "results", "results-db"], production: "Live Meta check: campaigns and results readable." },
   { n: 7, q: "Optimization finds real problems", suites: ["decisions", "intelligence", "engine", "coach", "coach-db"], production: "Needs a live campaign past its learning period." },
-  { n: 8, q: "Budget Guardian protects the budget", suites: ["budget", "readiness", "automation", "decisions", "team", "command-center"], production: "Spend Protection runs nightly and on every Overview visit." },
+  { n: 8, q: "Budget Guardian protects the budget", suites: ["budget", "readiness", "automation", "decisions", "team", "command-center", "pricing"], production: "Spend Protection runs nightly and on every Overview visit." },
   { n: 9, q: "Tracks leads, purchases and conversions", suites: ["tracking", "gtm", "leads", "lead-report", "live-meta"], production: "Live Meta check: pixel firing in the last week." },
   { n: 10, q: "Separates what Meta reports from verified results", suites: ["lead-outcomes", "tracking", "analytics", "success", "decisions", "coach", "results"], production: "Depends on the owner marking leads and connecting a store." },
   { n: 11, q: "Task statuses are genuine", suites: ["team", "notifications", "command-center-db"], production: "AIOS → Customers lists failed and stuck runs." },
   { n: 12, q: "The Daily Brief uses only real data", suites: ["team", "intelligence", "weekly-report", "command-center"], production: "Brief appears after the first daily review of a live campaign." },
   { n: 13, q: "Ask your AI team answers from facts", suites: ["assistant", "team", "memory"], production: "Needs ANTHROPIC_API_KEY." },
-  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db", "results-db", "command-center-db", "onboarding-db"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
-  { n: 15, q: "Works for owners with no advertising experience", suites: ["simple-ui", "success", "campaign-wizard", "ad-score", "onboarding", "onboarding-db"], production: "Only real owners can prove this — watch first-30-days progress in AIOS." },
+  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db", "results-db", "command-center-db", "onboarding-db", "pricing"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
+  { n: 15, q: "Works for owners with no advertising experience", suites: ["simple-ui", "success", "campaign-wizard", "ad-score", "onboarding", "onboarding-db", "pricing"], production: "Only real owners can prove this — watch first-30-days progress in AIOS." },
 ];
 
 const scripts = Object.keys((JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> }).scripts)

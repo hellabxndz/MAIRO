@@ -265,7 +265,7 @@ export async function saveAutoOptimizeAction(
   }
   // Autopilot is gated separately, and enforced here rather than only in the
   // UI — a disabled card somebody can walk around by posting the form is not
-  // a gate, and this one decides whether MAIRO may change targeting and bids.
+  // a gate, and this one decides whether MAIRO may widen who sees an ad.
   if (wantsLevel === "AUTOPILOT" && !(await can(organizationId, "autopilot"))) {
     return { error: `Full Autopilot is part of the ${planFor("SCALE").name} plan.` };
   }

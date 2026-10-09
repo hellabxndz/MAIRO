@@ -83,7 +83,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
           </p>
           {status === "past_due" ? (
             <p className="mt-1 text-sm text-amber-300">
-              Your last payment didn&rsquo;t go through. Update your card below — nothing has been switched off.
+              Your last payment didn&rsquo;t go through. Update your card below. Your campaigns keep running, but MAIRO can&rsquo;t build or change anything until it&rsquo;s fixed — you can still pause them.
             </p>
           ) : status === "trialing" && periodEnd ? (
             <p className="mt-1 text-sm text-neutral-400">Free trial until {periodEnd.toLocaleDateString()}.</p>
@@ -187,6 +187,15 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         Payment is handled by Stripe; MAIRO never sees your card. Your plan pays for MAIRO. What your ads
         cost is separate and goes straight from you to Meta.
       </p>
+      <div className="mt-4 max-w-2xl rounded-xl border border-white/10 p-4 text-xs leading-relaxed text-neutral-400">
+        <p className="font-medium text-neutral-200">If you cancel</p>
+        <p className="mt-1">
+          Cancelling stops the next renewal; the current month isn&rsquo;t refunded. When the plan ends, MAIRO stops
+          building, changing and launching campaigns. Campaigns already running stay in your Meta account and keep
+          spending at the budgets you approved until you pause them — you can still pause them in Campaigns or in
+          Meta Ads Manager. Your plan, settings and history are kept if you come back.
+        </p>
+      </div>
       {subscribed && organization.stripeCustomerId && <CancelReason />}
     </div>
   );

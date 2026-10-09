@@ -201,7 +201,7 @@ export function AutomationSection({
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Maximum daily budget"
-              hint="Across every platform. MAIRO will never take total spend above this."
+              hint="Across all your campaigns. MAIRO will never take total spend above this."
             >
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-500">
@@ -221,7 +221,7 @@ export function AutomationSection({
 
             <Field
               label="Maximum increase per day"
-              hint="As a share of a platform's current budget. Stops a good week compounding into a bad month."
+              hint="As a share of a campaign's current budget. Stops a good week compounding into a bad month."
             >
               <div className="relative">
                 <input

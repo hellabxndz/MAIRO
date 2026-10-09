@@ -43,8 +43,20 @@ export default function TermsPage() {
             <><strong className="text-neutral-200">You pay Meta directly for ad spend.</strong> That is
               separate from anything you pay us. We never take custody of your ad budget.</>,
             "You set the budget. We work within it, but you are responsible for the money spent on ads.",
-            "You can revoke our access at any time by disconnecting in your dashboard or in Meta's own settings.",
+            "You can revoke our access at any time by disconnecting in your dashboard or in Meta's own settings. Revoking access doesn't pause campaigns already running — pause them first if you want them to stop.",
             "Your advertising must comply with Meta's Advertising Policies. If Meta rejects or restricts your ads, that is Meta's decision, not ours.",
+          ]}
+        />
+      </Section>
+
+      <Section heading="Approvals and automation">
+        <Bullets
+          items={[
+            "Every campaign needs your approval before it can spend, with the budget shown first.",
+            "At every automation level we never launch a campaign, raise your total budget, spend above the limit you set, or connect a new ad account without your approval.",
+            "AI Assist and Full Autopilot are optional. When you switch one on, it only makes the changes listed for it in Settings, inside the limits you set, and every change is logged with its reason. You can switch it off at any time.",
+            "Spend Protection can pause a campaign for you if you set it to. It never raises a budget.",
+            "A change is shown as done only after Meta confirms it.",
           ]}
         />
       </Section>
@@ -56,8 +68,25 @@ export default function TermsPage() {
           you before a change affects you.
         </p>
         <p>
+          When a paid subscription ends, we stop building, changing and launching campaigns.
+          Campaigns already running stay in your Meta ad account and keep running at the budgets you
+          approved until you pause them; pausing stays available in {LEGAL.productName} and in Meta
+          Ads Manager. If a free trial ends without a successful payment, we pause the campaigns we
+          run for you. Your plan and settings are kept either way.
+        </p>
+        <p>
           Plan limits — how many campaigns and creative requests you get each month — are shown on
           the pricing page and enforced in the product.
+        </p>
+      </Section>
+
+      <Section heading="Integrations">
+        <p>
+          {LEGAL.productName} manages advertising on Meta (Facebook and Instagram) only. Shopify and
+          Google Tag Manager connections are used to measure results, and Stripe processes your
+          subscription payment. Posting to your own Instagram and Facebook (on the Scale plan)
+          depends on Meta approving our posting permissions; until then, posts can be planned and
+          written but not published by us.
         </p>
       </Section>
 

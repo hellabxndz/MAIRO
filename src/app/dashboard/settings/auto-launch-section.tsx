@@ -4,18 +4,20 @@ import { useState, useTransition } from "react";
 import { Card } from "@/components/ui";
 import { setAutoLaunchHeldAction } from "@/lib/actions/settings-actions";
 
-// Whether MAIRO may switch a finished campaign on by itself.
+// When the owner's spending agreement counts as their approval to launch.
 //
-// The default is that it may, and that is the right default: the alternative
-// is an account that has paid, connected, funded and approved an ad, and then
-// sits at zero because nobody knew there was one more button. Most people
-// buying this are buying it precisely so they do not have to know that.
+// Nothing goes live without a person's recorded approval (launchApprovedAt —
+// see campaigns/auto-launch.ts). What this switch decides is which press
+// counts. On: ticking "I agree to spend …" with the budget shown, while
+// building a campaign, is that approval, and MAIRO switches the campaign on
+// once Meta has approved the ad and confirmed the account can be charged —
+// the owner doesn't have to come back. Held: building only builds, and the
+// campaign waits in the Approval Center for an Approve press.
 //
-// But it spends real money without anyone pressing anything, so it is stated
-// in full on this screen rather than buried in terms, and there is a switch.
-// Off is a pause on future launches — it never stops a campaign that is
-// already running, and saying so here avoids someone flipping it in a panic
-// expecting their spend to stop.
+// Either way MAIRO never starts a campaign nobody approved and never raises
+// a budget. Holding only affects future launches — it never stops a campaign
+// that is already running, and saying so here avoids someone flipping it in a
+// panic expecting their spend to stop.
 
 export function AutoLaunchSection({
   held,
@@ -41,12 +43,13 @@ export function AutoLaunchSection({
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-base text-white">Go live without asking me</h2>
+          <h2 className="text-base text-white">Launch as soon as Meta is ready, once I&rsquo;ve agreed the budget</h2>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-neutral-400">
-            With this on, MAIRO switches a campaign on as soon as everything it needs is
-            done — your plan is paid, your Meta account is connected and can be charged,
-            and you&rsquo;ve approved an ad. You don&rsquo;t have to come back and press
-            anything.
+            Every campaign needs your approval before it can spend. With this on, ticking
+            &ldquo;I agree to spend&nbsp;…&rdquo; with the budget shown when you build a campaign is that
+            approval: MAIRO switches it on once Meta approves the ad and confirms your ad
+            account can be charged, so you don&rsquo;t have to come back. Held: MAIRO builds
+            campaigns switched off and waits for you to press Approve in your Approval Center.
           </p>
         </div>
 
@@ -72,10 +75,9 @@ export function AutoLaunchSection({
         <p className="text-xs font-medium text-neutral-300">What it will and won&rsquo;t do</p>
         <ul className="mt-2.5 space-y-1.5 text-xs leading-relaxed text-neutral-500">
           <li>
-            It only starts campaigns MAIRO already built for you, at the daily budget you
-            set. It never{" "}
-            <span className="text-neutral-300">creates</span> a campaign you haven&rsquo;t
-            asked for and never raises a budget.
+            It only starts campaigns you approved, at the budget you agreed to. It never{" "}
+            <span className="text-neutral-300">launches</span> a campaign you haven&rsquo;t
+            approved and never raises a budget — at any automation level.
           </li>
           <li>
             It asks Meta whether your ad account can actually be charged. If Meta
@@ -95,9 +97,8 @@ export function AutoLaunchSection({
       {waitingCount > 0 && (
         <p className="mt-4 text-xs text-neutral-400">
           {waitingCount} campaign{waitingCount === 1 ? "" : "s"} built and waiting.{" "}
-          {on
-            ? `MAIRO will start ${waitingCount === 1 ? "it" : "them"} the moment your setup is finished.`
-            : `MAIRO is holding ${waitingCount === 1 ? "it" : "them"} because this is switched off.`}
+          Any you&rsquo;ve approved start once Meta is ready; anything not yet approved waits in
+          your Approval Center.
         </p>
       )}
 

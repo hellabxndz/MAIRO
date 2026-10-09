@@ -41,6 +41,16 @@ export default function PrivacyPage() {
               from Meta.</>,
             <><strong className="text-neutral-200">Your conversations.</strong> Messages you exchange
               with the AI specialists inside the app.</>,
+            <><strong className="text-neutral-200">Your leads.</strong> If your ads use a form we host,
+              the details people submit to you — such as name, email and phone — so you can see and
+              follow up your enquiries.</>,
+            <><strong className="text-neutral-200">Your store&apos;s orders.</strong> If you add our order
+              webhook to your store, each order&apos;s value and time. Customer emails and phone numbers
+              are hashed on arrival and never stored in the clear; the hashed details and the order
+              value are passed to Meta to count conversions.</>,
+            <><strong className="text-neutral-200">Optional connections.</strong> If you connect Google
+              Tag Manager, an access token from Google that lets us add your tracking tags. If you turn
+              on text alerts, the phone number we text.</>,
           ]}
         />
         <p>
@@ -94,6 +104,14 @@ export default function PrivacyPage() {
             <><strong className="text-neutral-200">Anthropic</strong> — powers the AI that writes your
               plans, ad copy, and specialist replies. Your prompts and business context are sent to
               generate those responses.</>,
+            <><strong className="text-neutral-200">OpenAI</strong> — makes ad images in the Creative
+              Studio. Your image requests, and any picture you upload to change, are sent to make them.</>,
+            <><strong className="text-neutral-200">Stripe</strong> — takes payment for your
+              subscription. Your card details go to Stripe, never to us.</>,
+            <><strong className="text-neutral-200">Google</strong> — only if you connect Google Tag
+              Manager or sign in with Google.</>,
+            <><strong className="text-neutral-200">Twilio</strong> — sends text alerts, only if you turn
+              them on.</>,
             <><strong className="text-neutral-200">Neon</strong> — hosts our database.</>,
             <><strong className="text-neutral-200">Vercel</strong> — hosts and serves the application.</>,
           ]}

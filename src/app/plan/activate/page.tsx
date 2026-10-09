@@ -40,15 +40,17 @@ const UNLOCKS = [
   "Full dashboard access",
 ];
 
+// What MAIRO may do on its own on each plan — the modes the server lets each
+// plan switch on (pricing/compare.ts). AI Assist and Full Autopilot are opt-in.
 const OPTIMIZATION: Record<string, string> = {
-  STARTER: "Mairo recommends, you approve every change",
-  GROWTH: "AI Assist makes small, reversible fixes for you",
-  SCALE: "Full Autopilot manages budgets and targeting inside your limits",
+  STARTER: "Manual: Mairo recommends, you approve every change",
+  GROWTH: "Manual, or AI Assist if you switch it on: pauses losing ads, tests new ones, moves budget between campaigns",
+  SCALE: "Manual, AI Assist or Full Autopilot if you switch it on: also widens who sees your ads",
 };
 const REPORTING: Record<string, string> = {
-  STARTER: "Weekly Reports, Business Health, Profit First",
-  GROWTH: "Adds advanced analytics for every ad",
-  SCALE: "Adds advanced analytics for every ad",
+  STARTER: "Daily Brief, weekly report, monthly results, Business Health, Profit First",
+  GROWTH: "Adds every ad's results side by side",
+  SCALE: "Adds every ad's results side by side",
 };
 const FAILED = ["incomplete", "incomplete_expired", "past_due", "unpaid", "canceled"];
 
@@ -201,7 +203,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                       ["AI creatives", p.features.find((f) => /image credits/i.test(f)) ?? `${ent.studio_credits_monthly} AI image credits a month`],
                       ["Optimization", OPTIMIZATION[p.tier] ?? ""],
                       ["Reporting", REPORTING[p.tier] ?? ""],
-                      ["Autopilot", ent.autopilot ? "Included" : "Not included"],
+                      ["Full Autopilot", ent.autopilot ? "Available — off until you switch it on" : "Not included"],
                       ["Support", p.features.some((f) => /priority support/i.test(f)) ? "Priority support" : "Standard support"],
                     ];
                     return (
@@ -227,7 +229,8 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                   })}
                 </div>
               )}
-              <p className="mt-4 text-[12px] text-faint">Payment is handled by Stripe; Mairo never sees your card.</p>
+              <p className="mt-4 text-[12.5px] text-muted">On every plan, launching a campaign, raising your total budget, spending past your limit and connecting a new ad account always wait for your approval.</p>
+              <p className="mt-1 text-[12px] text-faint">Payment is handled by Stripe; Mairo never sees your card. Cancel any time — cancelling stops the next renewal.</p>
             </section>
           )}
         </div>

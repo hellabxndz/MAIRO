@@ -20,9 +20,14 @@ import type { AutomationLevel } from "@/generated/prisma/enums";
 //                 that is losing money, start another creative test, shift a
 //                 slice of an existing budget. Anything that changes what the
 //                 account spends in total still waits.
-//   Autopilot   — adds the changes that need a steadier hand — audiences and
-//                 bids — still inside the ceilings the customer set, and still
-//                 never raising the total.
+//   Autopilot   — adds the change that needs a steadier hand — widening who
+//                 sees an ad (location radius, ages) — still inside the
+//                 ceilings the customer set, and still never raising the total.
+//
+// Bid changes were once listed here and never implemented; nothing proposes
+// or makes one, so they are not offered at any level. A list that promises a
+// change the product cannot make is as wrong as one that hides a change it
+// does.
 //
 // What no level permits is the same at every level and is not configurable:
 // raising the total budget, launching a campaign, spending past the ceiling,
@@ -37,7 +42,6 @@ export type AutomationAction =
   | "duplicate-winner"
   | "shift-budget"
   | "adjust-audience"
-  | "change-bid"
   | "raise-total-budget"
   | "launch-campaign"
   | "spend-above-limit"
@@ -72,21 +76,15 @@ export const ACTIONS: ActionInfo[] = [
   },
   {
     action: "shift-budget",
-    label: "Move budget between campaigns and platforms",
+    label: "Move budget between your campaigns",
     detail:
-      "Moves money from what is not working to what is, up to the share you set below. The total never changes.",
+      "Moves money from a campaign that is not working to one that is, up to the share you set below. The total never changes.",
   },
   {
     action: "adjust-audience",
-    label: "Adjust who sees your ads",
+    label: "Widen who sees your ads",
     detail:
-      "Widens or narrows targeting when the platform has run out of cheap people to show an ad to. Harder to undo cleanly, because the platform restarts its learning.",
-  },
-  {
-    action: "change-bid",
-    label: "Change how much you bid",
-    detail:
-      "Adjusts what you are willing to pay per result. Affects delivery quickly and takes a few days to settle.",
+      "Widens the location radius or age range when Meta has run out of people to show an ad to. Harder to undo cleanly, because Meta restarts its learning.",
   },
   {
     action: "raise-total-budget",
@@ -105,7 +103,7 @@ export const ACTIONS: ActionInfo[] = [
   },
   {
     action: "connect-platform",
-    label: "Connect another ad platform",
+    label: "Connect a new ad account",
     detail: "A new account, new permissions and a new place your money can go.",
   },
 ];
@@ -133,7 +131,6 @@ const AUTOMATIC: Record<AutomationLevel, AutomationAction[]> = {
     "duplicate-winner",
     "shift-budget",
     "adjust-audience",
-    "change-bid",
   ],
 };
 
@@ -164,9 +161,9 @@ export const LEVELS: LevelInfo[] = [
   {
     level: "AUTOPILOT",
     label: "Full Autopilot",
-    summary: "Mairo actively optimizes your campaigns inside strict guardrails you set.",
+    summary: "Mairo also widens who sees your ads, inside strict guardrails you set.",
     detail:
-      "Everything in Assisted, plus targeting and bids. Your ceiling still holds, your total budget still cannot go up without you, and every change is written down with the numbers behind it.",
+      "Everything in AI Assist, plus widening an ad's location radius or age range when it runs out of people to reach. Your ceiling still holds, your total budget still cannot go up without you, and every change is written down with the numbers behind it.",
   },
 ];
 

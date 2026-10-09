@@ -9,16 +9,18 @@ import { useEffect, useState } from "react";
 const LINKS = [
   { href: "#ai-team", label: "AI Team" },
   { href: "#product-preview", label: "Product" },
-  { href: "#how-it-works", label: "How It Works" },
+  { href: "#why-mairo", label: "Why MAIRO" },
   { href: "#pricing", label: "Pricing" },
 ];
 
 const RESOURCES = [
   { href: "#faq", label: "FAQ" },
+  { href: "#how-it-works", label: "How it works" },
   { href: "#free-plan", label: "Your free plan" },
-  { href: "#trust", label: "You stay in control" },
+  { href: "#control", label: "Money and control" },
+  { href: "#integrations", label: "Integrations" },
   { href: "#performance-coach", label: "Performance Coach" },
-  { href: "/for-freelancers", label: "For freelancers & agencies" },
+  { href: "/for-freelancers", label: "Sign up as a freelancer or agency" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ];

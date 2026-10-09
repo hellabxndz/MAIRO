@@ -12,23 +12,9 @@ import type { CreativeStudioActionKind } from "@/generated/prisma/enums";
 // which plan is asking. What differs per plan is the MONTHLY ALLOWANCE
 // (Entitlements.studio_credits_monthly), which is a different number entirely.
 
-export type CreditCosts = {
-  /** One image, gpt-image "medium" quality. */
-  standard: number;
-  /** One image, "high" quality — visibly better, costs roughly 4x more to make. */
-  premium: number;
-  /** One natural-language change to an existing image. */
-  edit: number;
-  /** ONE image inside a "generate N variations" batch — multiply by N yourself. */
-  variation: number;
-};
+import { DEFAULT_COSTS, type CreditCosts } from "./costs";
 
-const DEFAULT_COSTS: CreditCosts = {
-  standard: 5,
-  premium: 15,
-  edit: 5,
-  variation: 4,
-};
+export type { CreditCosts } from "./costs";
 
 let cached: { costs: CreditCosts; at: number } | null = null;
 const CACHE_MS = 60_000;

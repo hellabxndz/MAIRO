@@ -46,7 +46,7 @@ export type Entitlements = {
    */
   auto_optimize: boolean;
   /**
-   * Autopilot: adds targeting and bids on top of Assisted.
+   * Autopilot: adds widening who sees an ad (location radius, ages) on top of Assisted.
    *
    * Its own flag rather than a level on auto_optimize, because the two are
    * sold separately and the settings screen has to be able to offer Assisted

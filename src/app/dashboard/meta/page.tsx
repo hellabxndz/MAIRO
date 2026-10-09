@@ -138,6 +138,11 @@ export default async function MetaConnectionPage({
                 </button>
               </form>
             </div>
+            <p className="text-xs leading-relaxed text-neutral-500">
+              Disconnecting removes MAIRO&rsquo;s access straight away. Campaigns already running in your ad
+              account keep running — pause them first in Campaigns if you want them to stop. You can also
+              remove MAIRO in Facebook → Settings &amp; Privacy → Settings → Business Integrations.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

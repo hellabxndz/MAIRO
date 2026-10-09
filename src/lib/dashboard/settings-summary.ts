@@ -27,10 +27,10 @@ export function advancedSettingsSummary(s: SettingsSummaryInput): SummaryLine[] 
   const level: Record<AutomationLevel, string> = {
     MANUAL: "Manual — MAIRO recommends, you approve every change",
     ASSISTED: "AI Assist — small changes inside your limits, without asking",
-    AUTOPILOT: "Full Autopilot — MAIRO optimizes inside your limits",
+    AUTOPILOT: "Full Autopilot — AI Assist, plus widening who sees your ads, inside your limits",
   };
   return [
-    { anchor: "go-live", label: "Go live without asking me", value: s.autoLaunchOn ? "On" : "Off — MAIRO waits for you to press launch" },
+    { anchor: "go-live", label: "Launch once Meta is ready, after I agree the budget", value: s.autoLaunchOn ? "On — agreeing the budget while building is your approval" : "Held — MAIRO waits for you to press Approve" },
     { anchor: "spend-protection", label: "Spend Protection", value: protection.length ? capitalize(protection.join(" · ")) : "Off" },
     { anchor: "automation", label: "What MAIRO may do on its own", value: s.autoOptimizeAllowed || s.level === "MANUAL" ? level[s.level] : `${level.MANUAL} (your plan doesn't include automatic changes)` },
     { anchor: "brief", label: "Your brief", value: "Your sign-up answers — goal, budget, audience, brand voice" },

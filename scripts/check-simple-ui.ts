@@ -142,11 +142,11 @@ async function main() {
     const base = { autoLaunchOn: false, stopLossCents: null, stopLossAction: "NOTIFY" as const, monthlyCapCents: null, level: "MANUAL" as const, autoOptimizeAllowed: true };
     const off = advancedSettingsSummary(base);
     assert.deepEqual(off.map((l) => l.anchor), ["go-live", "spend-protection", "automation", "brief"], "anchors match the section ids links use");
-    assert.match(off[0].value, /^Off/);
+    assert.match(off[0].value, /^Held — MAIRO waits for you to press Approve/);
     assert.equal(off[1].value, "Off");
     assert.match(off[2].value, /^Manual/);
     const on = advancedSettingsSummary({ ...base, autoLaunchOn: true, stopLossCents: 5000, stopLossAction: "PAUSE", monthlyCapCents: 150_000, level: "AUTOPILOT" });
-    assert.equal(on[0].value, "On");
+    assert.match(on[0].value, /^On — agreeing the budget while building is your approval/);
     assert.equal(on[1].value, "Pauses a campaign that spends $50 with no result · $1,500 monthly limit");
     assert.match(on[2].value, /^Full Autopilot/);
   });
