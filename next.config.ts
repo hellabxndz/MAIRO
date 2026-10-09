@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { canonicalHostRedirects } from "./src/lib/canonical-host";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -12,6 +13,9 @@ const nextConfig: NextConfig = {
 
   async redirects() {
     return [
+      // Other addresses of the live site (the .vercel.app domain, www) send
+      // visitors to the real one in NEXT_PUBLIC_APP_URL. See canonical-host.ts.
+      ...canonicalHostRedirects({ VERCEL_ENV: process.env.VERCEL_ENV, NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL }),
       // Audiences was removed; old links and bookmarks land on the dashboard.
       { source: "/dashboard/audiences", destination: "/dashboard", permanent: false },
     ];

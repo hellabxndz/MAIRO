@@ -21,7 +21,7 @@ const TIMEOUT_MS = 12_000;
  * A request with no user agent is what a scraper looks like, and being blocked
  * as one is a failure mode with no error message worth showing the customer.
  */
-const UA = "MAIRO-catalog/1.0 (+https://mairo.app)";
+const UA = "MAIRO-catalog/1.0 (+https://mairo.io)";
 
 async function get(url: string): Promise<{ ok: boolean; status: number; body: string }> {
   const controller = new AbortController();

@@ -317,7 +317,7 @@ check("follow-up state comes from what was recorded", () => {
 });
 
 check("only MAIRO's own form links carry the campaign", () => {
-  assert.equal(tagFormUrl("https://mairo.app/f/abc123", "c9"), "https://mairo.app/f/abc123?c=c9");
+  assert.equal(tagFormUrl("https://mairo.io/f/abc123", "c9"), "https://mairo.io/f/abc123?c=c9");
   assert.equal(tagFormUrl("https://shop.example/contact", "c9"), "https://shop.example/contact");
   assert.equal(tagFormUrl(null, "c9"), null);
 });

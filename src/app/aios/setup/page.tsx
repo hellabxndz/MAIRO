@@ -1,6 +1,8 @@
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
 import { metaRedirectUri } from "@/lib/meta/oauth";
+import { addressesToRegister } from "@/lib/domain";
+import { siteUrl } from "@/lib/site";
 import { checkPrices, type PriceCheck } from "@/lib/stripe/price-check";
 import { checkAnthropicKey, type KeyCheck } from "@/lib/ai/key-check";
 import { stripeMode } from "@/lib/stripe/client";
@@ -100,6 +102,9 @@ export default async function SetupPage() {
     redirectError = error instanceof Error ? error.message : "Could not determine redirect URI";
   }
 
+  const site = siteUrl();
+  const addresses = addressesToRegister(site);
+
   const results = CHECKS.map((c) => ({ ...c, ok: present(c.name) }));
   const missing = results.filter((r) => !r.ok);
 
@@ -135,6 +140,29 @@ export default async function SetupPage() {
             <p className="text-sm text-red-300">{redirectError}</p>
           )}
         </div>
+      </Card>
+
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-sm font-medium text-white">Addresses outside services keep</h2>
+          <span className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">{site}</span>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
+          Meta, Google and Stripe each keep their own copy of this site&apos;s address, and none of
+          them follows a move. When the address changes, add these — before switching, and keep the
+          old ones until nobody uses them. The site&apos;s address comes from{" "}
+          <code className="text-neutral-300">NEXT_PUBLIC_APP_URL</code>, or Vercel&apos;s production
+          domain when that&apos;s unset.
+        </p>
+        <dl className="mt-5 flex flex-col gap-5">
+          {addresses.map((a) => (
+            <div key={a.key}>
+              <dt className="text-sm text-neutral-200">{a.label}</dt>
+              <dd className="mt-1 text-xs text-neutral-500">{a.where}</dd>
+              <dd className="mt-2"><CopyField value={a.value} /></dd>
+            </div>
+          ))}
+        </dl>
       </Card>
 
       <Card className="mb-6">

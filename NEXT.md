@@ -121,8 +121,34 @@ value and old tables stay so existing rows still load.
 **8. Google Cloud project** for the Tag Manager API, so MAIRO can install the
 tracking tags itself instead of handing over a file. The file works today.
 
-**9. A real domain.** Set `NEXT_PUBLIC_APP_URL` and the social previews,
-sitemap and canonical links all point at it automatically.
+**9. mairo.io — bought, not connected yet.** In this order, so Facebook and
+Google sign-in keep working throughout:
+
+1. Vercel → the project → Settings → Domains: add `mairo.io` and
+   `www.mairo.io` (set www to redirect to mairo.io). Vercel shows the DNS
+   records to create.
+2. At the registrar: create exactly those records (usually an A record for
+   `mairo.io` and a CNAME for `www`), or switch the nameservers to Vercel's.
+   Wait for both domains to show **Valid Configuration** and a certificate.
+3. Before anything points at the new address, add the new copies everywhere
+   that keeps one. `/aios/setup` → "Addresses outside services keep" lists
+   each with its exact value: Meta's Valid OAuth Redirect URIs, App domains and
+   policy links; the Google OAuth client's redirect URIs and origin; Stripe's
+   webhook endpoint (edit its URL — that keeps the signing secret). Keep the
+   old `.vercel.app` entries until nobody uses them.
+4. Vercel → Environment Variables (Production): `NEXT_PUBLIC_APP_URL=https://mairo.io`.
+   If `AUTH_URL` or `NEXTAUTH_URL` is set, change it to the same or remove it.
+   Leave `META_REDIRECT_URI` and `GOOGLE_REDIRECT_URI` unset — they follow
+   the production domain. Redeploy.
+5. Check: the `.vercel.app` address now redirects pages to mairo.io (API
+   routes are left alone on purpose), Facebook login and Google sign-in work
+   from mairo.io, and the next Stripe event shows as delivered.
+
+Only set `NEXT_PUBLIC_APP_URL` after step 2 shows Valid Configuration: once it
+is set, the old address sends every visitor to the new one.
+
+Later: a `support@mairo.io` inbox (needs email hosting and MX records) to
+replace the Gmail address in `src/lib/legal.ts`.
 
 ## Standing caveat
 
