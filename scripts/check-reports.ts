@@ -25,6 +25,11 @@ import {
   reportAsText,
   type MonthlyReport,
 } from "@/lib/reports/monthly";
+import { resultsModel, type ResultsInput } from "@/lib/results/model";
+
+const LABELS = { QUALIFIED: "Good lead", BOOKED: "Booked", WON: "Customer" };
+const outcomesOf = (over: Partial<ResultsInput> = {}) =>
+  resultsModel({ kind: "leads", labels: LABELS, meta: { spendCents: null, clicks: null, leads: null, purchases: null, revenueCents: null }, metaProblem: null, leads: [], store: { connected: false, orders: 0, valueCents: 0 }, salesTracked: false, ...over });
 
 let failures = 0;
 function check(name: string, cond: boolean, extra = "") {
@@ -85,6 +90,12 @@ const blank: MonthlyReport = {
   recommendationWhy: "There is no spend to base a recommendation on yet.",
   summary: "Nothing ran this month, so there is nothing to report.",
   thin: true,
+  partial: false,
+  kind: "leads",
+  kindWhy: "your campaigns bring in enquiries",
+  outcomes: outcomesOf(),
+  team: [],
+  metaProblem: null,
 };
 const blankText = reportAsText(blank, "Bell Plumbing");
 check("spend reads 'not reported'", /Advertising spend\s+not reported/.test(blankText));
@@ -114,6 +125,8 @@ const real: MonthlyReport = {
   recommendationWhy: "gradual increase",
   summary: "a real summary",
   thin: false,
+  kind: "sales",
+  outcomes: outcomesOf({ kind: "sales", meta: { spendCents: 620000, clicks: 9100, leads: null, purchases: 83, revenueCents: 2485000 }, salesTracked: true }),
 };
 const realText = reportAsText(real, "Bell Plumbing");
 check("spend is formatted as money", realText.includes("$6,200"));
@@ -135,6 +148,17 @@ const leadsMonth: MonthlyReport = {
   work: { campaignsCreated: 1, recommendations: 6, approved: 3, declined: 1, problemsFound: 2, reportsGenerated: 4, accepted: ["Move budget to the roofing estimates ad"] },
   leadOutcomes: { reported: 32, spam: 2, real: 30, contacted: 14, qualified: 12, booked: 5, estimates: 3, won: 2, lost: 3, unmarked: 13, wonValueCents: 1_800_000 },
   thin: false,
+  outcomes: outcomesOf({
+    meta: { spendCents: 90000, clicks: 1200, leads: 30, purchases: null, revenueCents: null },
+    leads: [
+      ...Array.from({ length: 2 }, () => ({ status: "WON" as const, valueCents: 900_000, attributed: true })),
+      ...Array.from({ length: 3 }, () => ({ status: "BOOKED" as const, valueCents: null, attributed: true })),
+      ...Array.from({ length: 7 }, () => ({ status: "QUALIFIED" as const, valueCents: null, attributed: true })),
+      ...Array.from({ length: 3 }, () => ({ status: "LOST" as const, valueCents: null, attributed: true })),
+      ...Array.from({ length: 2 }, () => ({ status: "SPAM" as const, valueCents: null, attributed: false })),
+      ...Array.from({ length: 15 }, () => ({ status: "NEW" as const, valueCents: null, attributed: true })),
+    ],
+  }),
 };
 const leadsText = reportAsText(leadsMonth, "Peak Roofing");
 check("leads are the headline result, not a dash", /Leads\s+30/.test(leadsText));
@@ -142,6 +166,10 @@ check("cost per lead is shown", /Cost per result\s+\$30/.test(leadsText));
 check("MAIRO's work is listed", /Recommendations MAIRO made\s+6/.test(leadsText) && /You approved\s+3/.test(leadsText) && /Problems MAIRO caught\s+2/.test(leadsText));
 check("what the business marked is kept apart from what Meta reported", /Marked good leads\s+12/.test(leadsText) && /Paying customers\s+2/.test(leadsText));
 check("and says a lead isn't revenue", /not revenue/.test(leadsText));
+check("the download carries cost per qualified lead", /Cost per qualified lead\s+\$75/.test(leadsText), leadsText.match(/Cost per qualified lead.*/)?.[0] ?? "");
+check("and customer acquisition cost", /Customer acquisition cost\s+\$450/.test(leadsText));
+check("and the verified return, from ad-linked customers", /Return on ad spend\s+20\.0×/.test(leadsText), leadsText.match(/Return on ad spend\s+20.*/)?.[0] ?? leadsText.match(/^Return on ad spend.*$/m)?.[0] ?? "");
+check("every figure names its source", /\(You marked\)/.test(leadsText) && /\(Meta\)/.test(leadsText));
 
 console.log("\n— the recommendation never flatters a bad month —");
 // Exercised through the exported report shape: the rule is that a losing month

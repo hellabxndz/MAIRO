@@ -88,7 +88,8 @@ export function funnelFor(input: CoachInput, which: "current" | "previous", camp
     spam,
     judged: ls.filter(isJudged).length,
     unmarked: ls.filter((l) => l.status === "NEW").length,
-    contacted: ls.filter((l) => at(l.status, "CONTACTED") || l.firstContactedAt).length,
+    // Spam isn't a lead, so it isn't counted as contacted either — or this step could exceed the leads before it.
+    contacted: ls.filter((l) => l.status !== "SPAM" && (at(l.status, "CONTACTED") || l.firstContactedAt)).length,
     qualified,
     appointments: count("BOOKED"),
     estimates: count("ESTIMATE_SENT"),

@@ -19,15 +19,15 @@ const QUESTIONS: { n: number; q: string; suites: string[]; production: string }[
   { n: 3, q: "Specialists coordinate on real work", suites: ["team", "decisions", "coach-db"], production: "AI Team activity shows each recorded run." },
   { n: 4, q: "Builds campaigns and submits them for approval", suites: ["campaign-wizard", "ads", "ad-score", "readiness", "schedule", "creative-studio"], production: "A first campaign built (switched off) on a real account." },
   { n: 5, q: "Publishes through Meta's real API", suites: ["meta-contract", "payment-gate", "decision-claim", "readiness"], production: "Only a real, approved launch proves Meta accepts it — not done in this audit (it would spend)." },
-  { n: 6, q: "Analytics reads real data", suites: ["analytics", "graph-cache", "account-history", "reports", "weekly-report"], production: "Live Meta check: campaigns and results readable." },
+  { n: 6, q: "Analytics reads real data", suites: ["analytics", "graph-cache", "account-history", "reports", "weekly-report", "results", "results-db"], production: "Live Meta check: campaigns and results readable." },
   { n: 7, q: "Optimization finds real problems", suites: ["decisions", "intelligence", "engine", "coach", "coach-db"], production: "Needs a live campaign past its learning period." },
   { n: 8, q: "Budget Guardian protects the budget", suites: ["budget", "readiness", "automation", "decisions", "team"], production: "Spend Protection runs nightly and on every Overview visit." },
   { n: 9, q: "Tracks leads, purchases and conversions", suites: ["tracking", "gtm", "leads", "lead-report", "live-meta"], production: "Live Meta check: pixel firing in the last week." },
-  { n: 10, q: "Separates what Meta reports from verified results", suites: ["lead-outcomes", "tracking", "analytics", "success", "decisions", "coach"], production: "Depends on the owner marking leads and connecting a store." },
+  { n: 10, q: "Separates what Meta reports from verified results", suites: ["lead-outcomes", "tracking", "analytics", "success", "decisions", "coach", "results"], production: "Depends on the owner marking leads and connecting a store." },
   { n: 11, q: "Task statuses are genuine", suites: ["team", "notifications"], production: "AIOS → Customers lists failed and stuck runs." },
   { n: 12, q: "The Daily Brief uses only real data", suites: ["team", "intelligence", "weekly-report"], production: "Brief appears after the first daily review of a live campaign." },
   { n: 13, q: "Ask your AI team answers from facts", suites: ["assistant", "team", "memory"], production: "Needs ANTHROPIC_API_KEY." },
-  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
+  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db", "results-db"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
   { n: 15, q: "Works for owners with no advertising experience", suites: ["simple-ui", "success", "campaign-wizard", "ad-score"], production: "Only real owners can prove this — watch first-30-days progress in AIOS." },
 ];
 

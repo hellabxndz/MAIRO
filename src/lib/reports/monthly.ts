@@ -1,5 +1,8 @@
 import { leadFunnel, type LeadFunnel } from "@/lib/leads/outcomes";
+import { stageLabels } from "@/lib/leads/details";
 import { db } from "@/lib/db";
+import { resultsKind, resultsModel, type ResultsKind, type ResultsModel } from "@/lib/results/model";
+import { teamWork, type WorkItem } from "@/lib/results/work";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { platformName } from "@/lib/ad-platforms/registry";
 import type { AdPlatform } from "@/generated/prisma/enums";
@@ -31,9 +34,11 @@ import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 export type MonthKey = { year: number; month: number };
 
 export type MonthlyReport = {
-  /** The month this covers, already formatted — "August 2026". */
+  /** The month this covers, already formatted — "August 2026", or "October 2026 so far". */
   label: string;
   range: { since: Date; until: Date };
+  /** The month hasn't finished: figures run to today. */
+  partial: boolean;
 
   spendCents: number | null;
   revenueCents: number | null;
@@ -80,6 +85,16 @@ export type MonthlyReport = {
 
   /** True when there is not enough to report on at all. */
   thin: boolean;
+
+  /** Which figures this business is measured by, and why. */
+  kind: ResultsKind;
+  kindWhy: string;
+  /** The month from ad to customer, each figure with its source. */
+  outcomes: ResultsModel;
+  /** What the AI team did in the month, from its records. */
+  team: WorkItem[];
+  /** Why Meta couldn't be read, when it couldn't — so a dash isn't mistaken for "nothing ran". */
+  metaProblem: string | null;
 };
 
 /** First and last instant of a month, in the server's zone. */
@@ -97,6 +112,19 @@ export function monthLabel({ year, month }: MonthKey): string {
 export function lastCompleteMonth(now = new Date()): MonthKey {
   const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   return { year: d.getFullYear(), month: d.getMonth() };
+}
+
+/** The month containing `now`. */
+export function currentMonth(now = new Date()): MonthKey {
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
+export const sameMonth = (a: MonthKey, b: MonthKey) => a.year === b.year && a.month === b.month;
+
+/** The month's range, ending now for the month still running. */
+export function reportRange(key: MonthKey, now = new Date()): { since: Date; until: Date; partial: boolean } {
+  const range = monthRange(key);
+  return range.until > now ? { since: range.since, until: now, partial: true } : { ...range, partial: false };
 }
 
 function money(cents: number | null): string {
@@ -117,13 +145,17 @@ function money(cents: number | null): string {
  * so a recommendation to double would be advice that hurts the thing it was
  * meant to help.
  */
-function recommendNext(
+export function recommendNext(
   spendCents: number | null,
   roas: number | null,
+  opts: { basis?: "verified" | "meta"; hold?: string | null } = {},
 ): { cents: number | null; why: string } {
   if (spendCents === null || spendCents <= 0) {
     return { cents: null, why: "There is no spend to base a recommendation on yet." };
   }
+  // An open question about the leads themselves comes before more money.
+  if (opts.hold) return { cents: spendCents, why: opts.hold };
+  const said = opts.basis === "meta" ? "Meta reports that your advertising" : "Your advertising";
   if (roas === null) {
     return {
       cents: spendCents,
@@ -133,18 +165,18 @@ function recommendNext(
   if (roas < 1) {
     return {
       cents: Math.round(spendCents * 0.8),
-      why: "Your advertising cost more than it brought back this month, so MAIRO suggests easing off while it works out what is not landing rather than spending more on it.",
+      why: `${said} cost more than it brought back this month, so MAIRO suggests easing off while it works out what is not landing rather than spending more on it.`,
     };
   }
   if (roas < 2) {
     return {
       cents: spendCents,
-      why: "Your advertising roughly paid for itself. MAIRO suggests holding the budget steady and letting it improve what is running before adding money to it.",
+      why: `${said} roughly paid for itself. MAIRO suggests holding the budget steady and letting it improve what is running before adding money to it.`,
     };
   }
   return {
     cents: Math.round(spendCents * 1.2),
-    why: "Your advertising returned more than it cost, so MAIRO suggests a gradual increase. It is deliberately a step rather than a leap — a budget that jumps too far restarts the platform's learning and usually performs worse for a fortnight.",
+    why: `${said} returned more than it cost, so MAIRO suggests a gradual increase.${opts.basis === "meta" ? " That is Meta's own estimate, not sales your store confirmed." : ""} It is deliberately a step rather than a leap — a budget that jumps too far restarts the platform's learning and usually performs worse for a fortnight.`,
   };
 }
 
@@ -159,16 +191,20 @@ function writeSummary(input: {
   changesMade: number;
   creativesTested: number;
   bestPlatformName: string | null;
+  metaProblem?: string | null;
+  partial?: boolean;
 }): string {
   const parts: string[] = [];
+  const month = input.partial ? "this month so far" : "this month";
 
   if (input.spendCents === null) {
-    return "Nothing ran this month, so there is nothing to report. The figures here fill in once a campaign has been live for a few days.";
+    if (input.metaProblem) return "MAIRO couldn't read your results from Meta just now, so this month's spend and results are missing here — not zero. Try again in a minute.";
+    return `Meta hasn't reported any advertising spend ${month}, so there are no results to show yet. The figures here fill in once a campaign has been live on Meta for a few days.`;
   }
 
   if (input.roas !== null && input.revenueCents !== null) {
     parts.push(
-      `You spent ${money(input.spendCents)} and your advertising brought back ${money(input.revenueCents)} — about ${input.roas.toFixed(1)}x what it cost.`,
+      `You spent ${money(input.spendCents)}, and Meta reports your advertising brought back ${money(input.revenueCents)} — about ${input.roas.toFixed(1)}x what it cost, by Meta's own attribution.`,
     );
   } else if (input.purchases !== null && input.purchases > 0) {
     parts.push(
@@ -208,15 +244,20 @@ function writeSummary(input: {
 export async function monthlyReport(
   organizationId: string,
   key: MonthKey,
+  opts: { now?: Date } = {},
 ): Promise<MonthlyReport> {
-  const range = monthRange(key);
+  const { partial, ...range } = reportRange(key, opts.now);
 
   // Everything scoped to the month. The counts are of things that HAPPENED in
   // it, not of things that exist now — a report about August that changes when
   // somebody deletes a creative in October is not a report.
   const inMonth = { gte: range.since, lte: range.until };
-  const [report, creativesTested, adsPaused, optimizerChanges, activityChanges, campaignsCreated, recommendations, approvedRows, declined, problemsFound, reportsGenerated, monthLeads, pixel] = await Promise.all([
-    fetchOrganizationPerformance(organizationId, range).catch(() => null),
+  let metaProblem: string | null = null;
+  const [report, creativesTested, adsPaused, team, approvedRows, declined, monthLeads, pixel, org, profile, campaigns, store, orders, qualityFinding] = await Promise.all([
+    fetchOrganizationPerformance(organizationId, range).catch((e: unknown) => {
+      metaProblem = e instanceof Error ? e.message : "Meta didn't answer";
+      return null;
+    }),
     db.platformCreative.count({
       where: { organizationId, createdAt: { gte: range.since, lte: range.until } },
     }),
@@ -227,30 +268,29 @@ export async function monthlyReport(
         updatedAt: { gte: range.since, lte: range.until },
       },
     }),
-    db.optimizationRecommendation.count({
-      where: {
-        mairoCampaign: { organizationId },
-        appliedAt: { gte: range.since, lte: range.until },
-      },
-    }),
-    // Changes carried out through Mairo Decisions (approved or automatic),
-    // each one a row in Mairo Activity once the network accepted it.
-    db.mairoActivity.count({ where: { organizationId, createdAt: inMonth } }),
-    db.mairoCampaign.count({ where: { organizationId, createdAt: inMonth } }),
-    db.mairoDecision.count({ where: { organizationId, createdAt: inMonth } }),
+    teamWork(organizationId, range),
+    // Only the ones a person said yes to — changes made within the business's
+    // limits are counted with the optimizations, not as approvals.
     db.mairoDecision.findMany({
-      where: { organizationId, status: "APPLIED", decidedAt: inMonth },
+      where: { organizationId, status: "APPLIED", automatic: false, decidedAt: inMonth },
       orderBy: { decidedAt: "desc" },
       select: { title: true },
       take: 50,
     }),
     db.mairoDecision.count({ where: { organizationId, status: "REJECTED", decidedAt: inMonth } }),
-    db.mairoInsight.count({ where: { organizationId, createdAt: inMonth } }),
-    db.weeklyReport.count({ where: { organizationId, generatedAt: inMonth } }),
-    db.lead.findMany({ where: { organizationId, createdAt: inMonth }, select: { status: true, valueCents: true } }),
+    db.lead.findMany({ where: { organizationId, createdAt: inMonth }, select: { status: true, valueCents: true, source: true, mairoCampaignId: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { industry: true, leadStagesJson: true, intake: { select: { primaryGoal: true } } } }),
+    db.trackingProfile.findUnique({ where: { organizationId }, select: { nicheId: true, nicheConfirmed: true } }),
+    db.mairoCampaign.findMany({ where: { organizationId, status: { notIn: ["DRAFT", "ARCHIVED"] } }, select: { objective: true } }),
+    db.storeIngest.findUnique({ where: { organizationId }, select: { id: true } }),
+    db.conversionEvent.aggregate({ where: { organizationId, eventName: "Purchase", occurredAt: inMonth }, _count: { _all: true }, _sum: { valueCents: true } }),
+    // The Performance Coach is looking into lead quality: more budget waits.
+    db.coachFinding.findFirst({ where: { organizationId, category: "LEAD_QUALITY", status: { in: ["OPEN", "APPROVED"] } }, select: { title: true } }),
   ]);
-  const changesMade = optimizerChanges + activityChanges;
+  if (!metaProblem && report?.problems.length) metaProblem = report.problems[0].message;
+  const work = Object.fromEntries(team.map((w) => [w.key, w.count])) as Record<WorkItem["key"], number>;
+  const changesMade = work.optimizations;
 
   const total: PlatformMetrics | null = report?.total ?? null;
   const spendCents = total?.spendCents ?? null;
@@ -287,11 +327,40 @@ export async function monthlyReport(
   const costPerResultCents = spendCents !== null && results !== null && results > 0 ? Math.round(spendCents / results) : null;
   const leadOutcomes = leadFunnel(monthLeads);
 
-  const recommendation = recommendNext(spendCents, roas);
+  const { kind, why: kindWhy } = resultsKind({
+    nicheId: profile?.nicheId ?? null,
+    nicheConfirmed: profile?.nicheConfirmed ?? false,
+    industry: org?.industry ?? null,
+    goal: org?.intake?.primaryGoal ?? null,
+    objectives: [...new Set(campaigns.map((c) => c.objective))],
+    storedLeads: monthLeads.length,
+  });
+  const labels = stageLabels(org?.industry, org?.leadStagesJson);
+  const outcomes = resultsModel({
+    kind,
+    labels,
+    // Meta unreadable is "couldn't read", never "reported nothing".
+    meta: report && !(metaProblem && !report.hasData) ? { spendCents, clicks: total?.clicks ?? null, leads, purchases: sales, revenueCents } : null,
+    metaProblem,
+    // Linked to a campaign MAIRO built, or from Meta's own form: only these count towards a return.
+    leads: monthLeads.map((l) => ({ status: l.status, valueCents: l.valueCents, attributed: Boolean(l.mairoCampaignId) || l.source === "META_INSTANT" })),
+    store: { connected: Boolean(store), orders: orders._count._all, valueCents: orders._sum.valueCents ?? 0 },
+    salesTracked: pixel?.status === "ACTIVE",
+  });
+
+  // A confirmed return beats Meta's estimate of one.
+  const verifiedRoas = outcomes.verifiedRoas;
+  const recommendation = recommendNext(spendCents, verifiedRoas ?? roas, {
+    basis: verifiedRoas !== null ? "verified" : "meta",
+    hold: qualityFinding
+      ? `Your Performance Coach is looking into lead quality ("${qualityFinding.title.toLowerCase()}"), so MAIRO suggests holding the budget steady until that's understood — more budget would mostly buy more of the same leads.`
+      : null,
+  });
 
   return {
-    label: monthLabel(key),
+    label: partial ? `${monthLabel(key)} so far` : monthLabel(key),
     range,
+    partial,
     spendCents,
     revenueCents,
     roas,
@@ -305,12 +374,12 @@ export async function monthlyReport(
     adsPaused,
     changesMade,
     work: {
-      campaignsCreated,
-      recommendations,
+      campaignsCreated: work.campaigns,
+      recommendations: work.recommendations,
       approved: approvedRows.length,
       declined,
-      problemsFound,
-      reportsGenerated,
+      problemsFound: work.issues,
+      reportsGenerated: work.reports,
       accepted: [...new Set(approvedRows.map((r) => r.title))].slice(0, 5),
     },
     leadOutcomes,
@@ -335,15 +404,24 @@ export async function monthlyReport(
       changesMade,
       creativesTested,
       bestPlatformName: best ? platformName(best.platform) : null,
+      metaProblem,
+      partial,
     }),
-    // Nothing spent and nothing made is a month with no report in it.
-    thin: spendCents === null && creativesTested === 0 && changesMade === 0,
+    // Nothing spent and nothing made is a month with no report in it — unless
+    // Meta simply couldn't be read, which is a different thing to say.
+    thin: spendCents === null && !metaProblem && creativesTested === 0 && changesMade === 0 && monthLeads.length === 0,
+    kind,
+    kindWhy,
+    outcomes,
+    team,
+    metaProblem,
   };
 }
 
 /** Plain text, for the download. Deliberately not a PDF — see the route. */
 export function reportAsText(report: MonthlyReport, businessName: string): string {
-  const line = (k: string, v: string) => `${k.padEnd(34)}${v}`;
+  const line = (k: string, v: string) => `${k.padEnd(38)}${v}`;
+  const figure = (m: MonthlyReport["outcomes"]["metrics"][number]) => line(m.label, m.value === null ? "not known" : `${m.value}  (${m.source})`);
   return [
     `MAIRO — ${report.label}`,
     businessName,
@@ -354,13 +432,19 @@ export function reportAsText(report: MonthlyReport, businessName: string): strin
     line(report.resultLabel, report.results === null ? "not reported" : String(report.results)),
     line("Cost per result", money(report.costPerResultCents)),
     "",
+    `Your results (${report.kind === "sales" ? "sales" : "leads and appointments"} — ${report.kindWhy})`,
+    ...report.outcomes.metrics.map(figure),
+    ...(report.outcomes.extra ? ["", report.outcomes.extra.title, ...report.outcomes.extra.metrics.map(figure)] : []),
+    ...(report.metaProblem ? [`Meta couldn't be read: ${report.metaProblem}`] : []),
+    "",
+    "What your AI team did",
     line("Ads running this month", String(report.creativesTested)),
     line("Campaigns paused", String(report.adsPaused)),
     line("Changes MAIRO made", String(report.changesMade)),
     line("Recommendations MAIRO made", String(report.work.recommendations)),
     line("You approved", String(report.work.approved)),
     line("Problems MAIRO caught", String(report.work.problemsFound)),
-    line("Weekly reports", String(report.work.reportsGenerated)),
+    ...report.team.filter((w) => w.key === "campaigns" || w.key === "experiments" || w.key === "reports").map((w) => line(w.label, String(w.count))),
     ...(report.leadOutcomes.reported
       ? ["", line("Enquiries", String(report.leadOutcomes.real)), line("Marked good leads", String(report.leadOutcomes.qualified)), line("Booked", String(report.leadOutcomes.booked)), line("Paying customers", String(report.leadOutcomes.won))]
       : []),
@@ -377,8 +461,9 @@ export function reportAsText(report: MonthlyReport, businessName: string): strin
     "",
     "Figures come from the advertising platforms' own reporting and may differ",
     "slightly from what they show in their dashboards. A reported lead or",
-    "conversion is not revenue, and ad results are not profit.",
-    "MAIRO cannot promise sales, leads or a particular return.",
+    "conversion is not revenue, and ad results are not profit. Leads, bookings",
+    "and customers are what you marked; sales values are what you or your store",
+    "recorded. MAIRO cannot promise sales, leads or a particular return.",
   ].join("\n");
 }
 

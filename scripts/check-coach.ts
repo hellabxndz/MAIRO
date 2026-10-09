@@ -123,6 +123,13 @@ check("the funnel keeps each number's source", () => {
   assert.equal(f.roasVerified, null);
 });
 
+check("spam with a logged contact isn't counted as a contacted lead", () => {
+  const contactedAt = new Date(now.getTime() - 3 * DAY);
+  const f = funnelFor(input({ leads: [lead("SPAM", 4, { firstContactedAt: contactedAt }), lead("SPAM", 4, { firstContactedAt: contactedAt }), lead("NEW", 4, { firstContactedAt: contactedAt }), lead("QUALIFIED", 4)] }), "current");
+  assert.equal(f.leads, 2);
+  assert.equal(f.contacted, 2, "never more contacted than leads");
+});
+
 check("a roofer with mostly poor leads hears about lead quality, with the reasons it recorded", () => {
   const r = diagnose(roof);
   const q = r.findings.find((f) => f.key === "quality:low");

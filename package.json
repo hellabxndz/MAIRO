@@ -58,7 +58,9 @@
     "check:coach": "tsx scripts/check-coach.ts",
     "check:coach-db": "tsx scripts/check-coach-db.ts",
     "check:business": "tsx scripts/check-business.ts",
-    "check:ad-score": "tsx scripts/check-ad-score.ts"
+    "check:ad-score": "tsx scripts/check-ad-score.ts",
+    "check:results": "tsx scripts/check-results.ts",
+    "check:results-db": "tsx scripts/check-results-db.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

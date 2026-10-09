@@ -11,6 +11,8 @@ import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 import { TeamConstellation } from "@/components/landing/team-constellation";
 import { TeamExplorer } from "@/components/landing/team-explorer";
 import { ProductPreview } from "@/components/landing/product-preview";
+import { CoachDemo } from "@/components/landing/coach-demo";
+import { coachExample, EXAMPLE_STEPS, type ExampleStep, type ExampleView } from "@/lib/coach/example";
 
 // The marketing page. Its one job: a business owner understands within
 // seconds that MAIRO gives them an AI advertising team that handles the
@@ -25,6 +27,16 @@ import { ProductPreview } from "@/components/landing/product-preview";
 //   - FREE shows what Mairo would do (the plan); PAID is Mairo doing it
 //     (building, launching, optimizing). Nothing here implies a campaign runs
 //     before a subscription.
+
+// The Performance Coach demonstration: an invented business's figures, run
+// through the real diagnostic engine once, when the page is built.
+const COACH_EXAMPLE = Object.fromEntries(EXAMPLE_STEPS.map((s) => [s, coachExample(s)])) as Record<ExampleStep, ExampleView>;
+
+const COACH_POINTS: { title: string; body: string }[] = [
+  { title: "Follows every lead past the click", body: "You mark which enquiries were good, which booked and which paid. Your AI team follows each one from the ad to the job." },
+  { title: "Finds where customers slip away", body: "Advertising, leads, qualified leads, bookings, customers, revenue — it shows the step where people drop out, and what might explain it." },
+  { title: "Says what it knows — and what it doesn't", body: "Every finding shows the figures behind it and what's missing. A possible reason is never presented as the cause." },
+];
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
 
@@ -260,6 +272,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Performance Coach ────────────────────────────────────────── */}
+      <section id="performance-coach" aria-labelledby="coach-title" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-[820px] text-center">
+          <Badge>PERFORMANCE COACH</Badge>
+          <h2 id="coach-title" className="mt-4 text-[clamp(30px,4.2vw,50px)] font-bold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">
+            Your AI Team Doesn&rsquo;t Just Run Ads. <span className={GRADIENT_TEXT}>It Helps You Understand Why They Work.</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-[660px] text-[16.5px] leading-relaxed text-white/65">
+            A click isn&rsquo;t a customer. MAIRO&rsquo;s Performance Coach looks past the ad — at which leads were good, which booked and which paid — and when results slip, it shows you where, what might explain it, and what your AI team would do about it.
+          </p>
+        </div>
+        <ul className="mx-auto mt-10 grid max-w-[1120px] gap-4 md:grid-cols-3">
+          {COACH_POINTS.map((p) => (
+            <li key={p.title} className="rounded-[22px] border border-white/10 bg-paper p-5">
+              <p className="text-[15px] font-semibold text-white">{p.title}</p>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/65">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="mx-auto mt-10 max-w-[1120px]">
+          <p className="mb-3 text-center text-[13.5px] text-muted">
+            Step through an example: a roofing company gets 25 leads, but only 4 turn out to be qualified.
+          </p>
+          <CoachDemo views={COACH_EXAMPLE} />
+        </div>
+      </section>
+
       {/* ── How it works ─────────────────────────────────────────────── */}
       <section id="how-it-works" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-24 sm:px-8 lg:px-12">
         <SectionHead
@@ -458,7 +497,7 @@ export default function Home() {
             <p className="mt-4 text-[12px] text-white/35">© {new Date().getFullYear()} Mairo</p>
           </div>
           {[
-            { h: "Product", l: [["Your AI team", "#ai-team"], ["See MAIRO at work", "#product-preview"], ["How It Works", "#how-it-works"], ["Pricing", "#pricing"], ["Integrations", "#platforms"]] },
+            { h: "Product", l: [["Your AI team", "#ai-team"], ["See MAIRO at work", "#product-preview"], ["Performance Coach", "#performance-coach"], ["How It Works", "#how-it-works"], ["Pricing", "#pricing"], ["Integrations", "#platforms"]] },
             { h: "Resources", l: [["Your free plan", "#free-plan"], ["You stay in control", "#trust"], ["FAQ", "#faq"], ["For freelancers & agencies", "/for-freelancers"]] },
             { h: "Company", l: [["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
           ].map((col) => (

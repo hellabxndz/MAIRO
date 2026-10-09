@@ -10,11 +10,12 @@ import { FixThisForMe } from "@/components/decisions/fix-this-for-me";
 import { anotherRecommendationAction, approveFindingAction, dismissFindingAction, findingFeedbackAction, setStepStatusAction } from "@/lib/actions/coach-actions";
 import type { PlanStep } from "@/lib/coach/types";
 
-// One Performance Coach insight: what MAIRO noticed, the possible
-// explanations (marked as seen in the records or only a possibility), the
-// recommended improvement and why, how sure MAIRO is and what it can't see,
-// the improvement plan, who on the AI team worked on it — and the business's
-// choices: approve the plan, investigate, dismiss, or ask for another idea.
+// One Performance Coach insight, in six parts: what MAIRO noticed; why it
+// might be happening (each reason marked as seen in the records or only a
+// possibility — never a confirmed cause); what the AI team recommends and how
+// sure it is; the figures that support it; the data that's missing; and the
+// business's choice — approve the plan, investigate, dismiss, or ask for
+// another idea.
 
 export type FindingCardData = {
   id: string;
@@ -94,7 +95,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/90">{f.noticed}</p>
         </section>
         <section>
-          <h4 className={h}>Possible explanation{f.explanations.length === 1 ? "" : "s"}</h4>
+          <h4 className={h}>Why it might be happening</h4>
           <ul className="mt-1.5 space-y-1.5">
             {f.explanations.map((e) => (
               <li key={e.text} className="flex items-start gap-2 text-[13.5px] leading-relaxed text-white/90">
@@ -103,9 +104,14 @@ export function FindingCard({ f }: { f: FindingCardData }) {
               </li>
             ))}
           </ul>
+          <p className="mt-1.5 text-[11.5px] leading-relaxed text-faint">
+            {f.explanations.some((e) => e.basis === "evidence")
+              ? "\u201cIn your records\u201d means MAIRO saw it in your data. It still isn\u2019t proof that it\u2019s the cause."
+              : "Possible reasons only — MAIRO hasn\u2019t confirmed the cause."}
+          </p>
         </section>
         <section>
-          <h4 className={h}>Recommended improvement</h4>
+          <h4 className={h}>What your AI team recommends</h4>
           <p className="mt-1.5 text-[14px] font-medium leading-relaxed text-white">{f.shownRecommendation}</p>
           {f.hasAnother && f.status !== "DISMISSED" && (
             <button type="button" disabled={pending} onClick={() => act(() => anotherRecommendationAction(f.id))} className="mt-1.5 text-[12.5px] text-violet-bright hover:underline disabled:opacity-60">
@@ -114,59 +120,76 @@ export function FindingCard({ f }: { f: FindingCardData }) {
           )}
         </section>
         <section>
-          <h4 className={h}>Confidence and limitations</h4>
-          <p className="mt-1.5 text-[13.5px] text-white/90">
-            <span className="font-medium text-white">{CONFIDENCE[f.confidence].label}.</span> {CONFIDENCE[f.confidence].text}
+          <h4 className={h}>What information supports this recommendation</h4>
+          {f.evidence.length > 0 ? (
+            <dl className="mt-1.5 grid gap-x-6 gap-y-1.5">
+              {f.evidence.map((e) => (
+                <div key={e.label} className="flex justify-between gap-3 border-b border-[color:var(--mairo-line)] pb-1.5 text-[13px]">
+                  <dt className="text-muted">{e.label}</dt>
+                  <dd className="tabular-nums text-white">{e.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-1.5 text-[13px] text-muted">The figures are in what MAIRO noticed.</p>
+          )}
+          <p className="mt-2 text-[12.5px] text-muted">
+            <span className="text-white/85">{CONFIDENCE[f.confidence].label}</span> in what it noticed. {CONFIDENCE[f.confidence].text}
           </p>
-          <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{f.limitations}</p>
-          {f.missing.length > 0 && <p className="mt-1 text-[12.5px] leading-relaxed text-muted">What MAIRO can&rsquo;t see: {f.missing.join(" ")}</p>}
+          <p className="mt-1 text-[12px] leading-relaxed text-muted">{f.limitations}</p>
+        </section>
+        <section className="lg:col-span-2">
+          <h4 className={h}>What data is missing</h4>
+          {f.missing.length > 0 ? (
+            <ul className="mt-1.5 space-y-1 text-[13px] leading-relaxed text-white/85">
+              {f.missing.map((m) => (
+                <li key={m} className="flex gap-2">
+                  <span aria-hidden className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-warn" />
+                  {m}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1.5 text-[13px] text-muted">Nothing essential for this one — MAIRO has the records it needs to say this much.</p>
+          )}
         </section>
       </div>
 
-      <details className="mt-4 rounded-2xl bg-white/[0.025] px-4 py-3">
-        <summary className="cursor-pointer text-[13px] text-white">Why we recommend this — the numbers</summary>
-        <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-          {f.evidence.map((e) => (
-            <div key={e.label} className="flex justify-between gap-3 border-b border-[color:var(--mairo-line)] pb-1.5 text-[13px]">
-              <dt className="text-muted">{e.label}</dt>
-              <dd className="tabular-nums text-white">{e.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
-
-      <details className="mt-3 rounded-2xl bg-white/[0.025] px-4 py-3" open={f.status === "APPROVED"}>
-        <summary className="cursor-pointer text-[13px] text-white">Your improvement plan · {f.steps.filter((s) => s.status === "done").length} of {f.steps.length} done</summary>
-        <ol className="mt-3 space-y-3">
-          {f.steps.map((s) => (
-            <li key={s.id} className="rounded-xl border border-[color:var(--mairo-line)] px-3.5 py-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className={`text-[13.5px] font-medium ${s.status === "done" ? "text-muted line-through" : "text-white"}`}>
-                  {s.priority}. {s.href ? <Link href={s.href} className="hover:underline">{s.title}</Link> : s.title}
-                </p>
-                <span className="text-[11.5px] text-faint">{RISK[s.risk]}</span>
-              </div>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{s.detail}</p>
-              <dl className="mt-2 grid gap-1 text-[12px] sm:grid-cols-3">
-                <div><dt className="inline text-faint">Approval: </dt><dd className="inline text-white/80">{s.approval}</dd></div>
-                <div><dt className="inline text-faint">May help: </dt><dd className="inline text-white/80">{s.benefit}</dd></div>
-                <div><dt className="inline text-faint">How we&rsquo;ll know: </dt><dd className="inline text-white/80">{s.verify}</dd></div>
-              </dl>
-              {f.status !== "DISMISSED" && s.kind !== "meta-change" && (
-                <div className="mt-2 flex gap-2">
-                  {(["done", "skipped", "todo"] as const)
-                    .filter((st) => st !== s.status)
-                    .map((st) => (
-                      <button key={st} type="button" disabled={pending} onClick={() => act(() => setStepStatusAction(f.id, s.id, st))} className="rounded-full border border-[color:var(--mairo-line)] px-2.5 py-1 text-[11.5px] text-white/80 hover:text-white disabled:opacity-60">
-                        {st === "done" ? "Mark done" : st === "skipped" ? "Skip" : "Back to to-do"}
-                      </button>
-                    ))}
+      <section className="mt-5 border-t border-[color:var(--mairo-line)] pt-4">
+        <h4 className={h}>Approve or investigate</h4>
+        <details className="mt-2.5 rounded-2xl bg-white/[0.025] px-4 py-3" open={f.status === "APPROVED"}>
+          <summary className="cursor-pointer text-[13px] text-white">Your improvement plan · {f.steps.filter((s) => s.status === "done").length} of {f.steps.length} done</summary>
+          <ol className="mt-3 space-y-3">
+            {f.steps.map((s) => (
+              <li key={s.id} className="rounded-xl border border-[color:var(--mairo-line)] px-3.5 py-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className={`text-[13.5px] font-medium ${s.status === "done" ? "text-muted line-through" : "text-white"}`}>
+                    {s.priority}. {s.href ? <Link href={s.href} className="hover:underline">{s.title}</Link> : s.title}
+                  </p>
+                  <span className="text-[11.5px] text-faint">{RISK[s.risk]}</span>
                 </div>
-              )}
-            </li>
-          ))}
-        </ol>
-      </details>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{s.detail}</p>
+                <dl className="mt-2 grid gap-1 text-[12px] sm:grid-cols-3">
+                  <div><dt className="inline text-faint">Approval: </dt><dd className="inline text-white/80">{s.approval}</dd></div>
+                  <div><dt className="inline text-faint">May help: </dt><dd className="inline text-white/80">{s.benefit}</dd></div>
+                  <div><dt className="inline text-faint">How we&rsquo;ll know: </dt><dd className="inline text-white/80">{s.verify}</dd></div>
+                </dl>
+                {f.status !== "DISMISSED" && s.kind !== "meta-change" && (
+                  <div className="mt-2 flex gap-2">
+                    {(["done", "skipped", "todo"] as const)
+                      .filter((st) => st !== s.status)
+                      .map((st) => (
+                        <button key={st} type="button" disabled={pending} onClick={() => act(() => setStepStatusAction(f.id, s.id, st))} className="rounded-full border border-[color:var(--mairo-line)] px-2.5 py-1 text-[11.5px] text-white/80 hover:text-white disabled:opacity-60">
+                          {st === "done" ? "Mark done" : st === "skipped" ? "Skip" : "Back to to-do"}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        </details>
+      </section>
 
       {f.verdictNote && <p className="mt-3 rounded-xl bg-white/[0.03] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-muted">{f.verdictNote}</p>}
       {f.status === "APPROVED" && f.checkAfter && !f.verdictNote && <p className="mt-3 text-[12.5px] text-muted">MAIRO looks at the figure again on {new Date(f.checkAfter).toLocaleDateString("en-US", { month: "long", day: "numeric" })} and tells you what changed.</p>}

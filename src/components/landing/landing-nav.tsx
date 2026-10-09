@@ -17,6 +17,7 @@ const RESOURCES = [
   { href: "#faq", label: "FAQ" },
   { href: "#free-plan", label: "Your free plan" },
   { href: "#trust", label: "You stay in control" },
+  { href: "#performance-coach", label: "Performance Coach" },
   { href: "/for-freelancers", label: "For freelancers & agencies" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
