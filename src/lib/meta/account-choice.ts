@@ -44,7 +44,7 @@ export function switchRefusal(input: { current: string | null; next: string; man
   const which = input.managed.count === 1 ? "a campaign" : `${input.managed.count} campaigns`;
   return (
     `MAIRO is managing ${which} in ad account ${input.current} (${listed(input.managed.names, input.managed.count)}). ` +
-    `Switching now would leave ${input.managed.count === 1 ? "it" : "them"} running there with nothing in MAIRO able to pause ${input.managed.count === 1 ? "it" : "them"}. ` +
+    `Switching now would leave ${input.managed.count === 1 ? "it" : "them"} there with nothing in MAIRO able to see, change or pause ${input.managed.count === 1 ? "it" : "them"}. ` +
     `Delete ${input.managed.count === 1 ? "it" : "them"} in Campaigns first — that pauses ${input.managed.count === 1 ? "it" : "them"} in Meta — then switch.`
   );
 }
