@@ -15,6 +15,9 @@ import { GoalSetup } from "./goal-setup";
 import { ApprovalModePicker, ChangeGoal, PlanButtons, PostingSettings, ResumeBanner } from "./manager-controls";
 import { PostCard } from "./post-card";
 import { POST_SELECT, toCalendarPost } from "./manager-data";
+import { findInstagramAccount } from "@/lib/instagram/publish";
+import { findFacebookPage } from "@/lib/facebook/page-posting";
+import { executionAllowed } from "@/lib/billing/execution";
 
 // MAIRO Social Manager (Scale only). The business says what it wants to
 // achieve; MAIRO works out the strategy, plans the posts, and shows each one
@@ -73,6 +76,19 @@ export default async function SocialManagerPage() {
     db.instagramPost.count({ where: { organizationId, status: "PAUSED" } }),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { pageName: true } }),
   ]);
+  // Whether a post can actually go out on each network right now: connected,
+  // with the posting permission granted, and paid execution allowed. The
+  // approve-and-post buttons follow this, rather than offering a publish that
+  // can only fail.
+  const [ig, fb, allowed] = await Promise.all([
+    findInstagramAccount(organizationId).catch(() => null),
+    findFacebookPage(organizationId).catch(() => null),
+    executionAllowed(organizationId),
+  ]);
+  const canPostOn = {
+    INSTAGRAM: Boolean(allowed && ig?.ok && ig.data),
+    FACEBOOK: Boolean(allowed && fb?.ok && fb.data.canPublish),
+  };
   const posts = upcoming.map((p) => toCalendarPost(p, zone));
   const awaiting = posts.filter((p) => p.status === "SUGGESTED").length;
   const g = goalInfo(view.strategy.goal);
@@ -153,7 +169,7 @@ export default async function SocialManagerPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {posts.map((p) => (
-              <PostCard key={p.id} post={p} library={library} accountName={p.network === "FACEBOOK" ? meta?.pageName || businessName : businessName || "your_business"} canPost compact />
+              <PostCard key={p.id} post={p} library={library} accountName={p.network === "FACEBOOK" ? meta?.pageName || businessName : businessName || "your_business"} canPost={canPostOn[p.network === "FACEBOOK" ? "FACEBOOK" : "INSTAGRAM"]} compact />
             ))}
           </div>
         )}

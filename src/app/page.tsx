@@ -121,6 +121,7 @@ const WHY_NOT = [
 const STATUS_TONE: Record<IntegrationStatus, string> = {
   full: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
   limited: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
+  pending: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   tracking: "border-[#3b6bff]/30 bg-[#3b6bff]/[0.07] text-[#2f5fd6]",
   billing: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
   unsupported: "border-white/15 bg-white/[0.04] text-white/60",

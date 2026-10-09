@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
+import { metaPostingApproved } from "@/lib/social/publishing-status";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · MAIRO",
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  const postingLive = metaPostingApproved();
   return (
     <LegalPage
       title="Privacy policy"
@@ -29,7 +31,8 @@ export default function PrivacyPage() {
               cryptographic hash of your password. We never store your password itself and cannot
               read it.</>,
             <><strong className="text-neutral-200">Your business.</strong> Business name, website,
-              industry, and time zone.</>,
+              industry, and time zone. If you give us your website, we read its public pages to learn what
+              you sell and how you describe it, and keep what we learned where you can see and correct it.</>,
             <><strong className="text-neutral-200">What you tell us during onboarding.</strong> Your
               advertising goal, monthly budget, target audience, brand voice, competitors, and any
               notes you add.</>,
@@ -43,14 +46,25 @@ export default function PrivacyPage() {
               with the AI specialists inside the app.</>,
             <><strong className="text-neutral-200">Your leads.</strong> If your ads use a form we host,
               the details people submit to you — such as name, email and phone — so you can see and
-              follow up your enquiries.</>,
+              follow up your enquiries. If your Meta pixel is connected, a lead&apos;s email and phone number
+              are hashed (scrambled one way) and sent to Meta so it can count the lead as a result of your
+              ads; the readable details are not sent.</>,
+            <><strong className="text-neutral-200">What you tell us about results.</strong> Whether a lead
+              was good, booked an appointment or became a customer, and what a sale was worth — only what
+              you mark.</>,
             <><strong className="text-neutral-200">Your store&apos;s orders.</strong> If you add our order
               webhook to your store, each order&apos;s value and time. Customer emails and phone numbers
               are hashed on arrival and never stored in the clear; the hashed details and the order
               value are passed to Meta to count conversions.</>,
+            <><strong className="text-neutral-200">Your social posts (Scale plan).</strong> The posts we
+              plan and write for you, the pictures and videos you upload or we make for them, and which
+              Instagram account and Facebook Page you connect for posting.</>,
             <><strong className="text-neutral-200">Optional connections.</strong> If you connect Google
               Tag Manager, an access token from Google that lets us add your tracking tags. If you turn
               on text alerts, the phone number we text.</>,
+            <><strong className="text-neutral-200">What you tell us.</strong> Feedback you send, including
+              why you&apos;re cancelling if you choose to say, and whether you agreed to let us use your
+              results anonymously in a case study.</>,
           ]}
         />
         <p>
@@ -65,7 +79,8 @@ export default function PrivacyPage() {
             "To sign you in and keep your account secure.",
             "To build your monthly advertising plan from the goal and budget you gave us.",
             "To create, run, and adjust campaigns on the ad account you connected.",
-            "To show you how those campaigns are performing.",
+            "To show you how those campaigns are performing, and which of them bring in leads and sales.",
+            "On the Scale plan, to publish the social posts you approve, once Meta allows it.",
             "To answer your questions through the AI specialists.",
             "To contact you about your account or a problem with your campaigns.",
           ]}
@@ -86,7 +101,8 @@ export default function PrivacyPage() {
             "We only ever touch the ad account you explicitly connected. We do not access other accounts, even if your Facebook login can reach them.",
             "Everything we create stays in your account. You can see, edit, pause, or delete any of it in Meta Ads Manager at any time, with or without us.",
             "We read performance figures for your campaigns only, and show them back to you alone. We do not pool them with other businesses' data.",
-            "We do not post to your Facebook Page, read your messages, or access your personal profile content.",
+            "We do not read your messages or access your personal profile content.",
+            `We post on your Facebook Page or Instagram only on the Scale plan, only if you turn on Social Manager and grant Meta's separate posting permission, and only as you choose: each post you approve, a week you approve at once, or — if you switch on Social Autopilot — posts it schedules itself, following the strategy and the posts you have already approved.${postingLive ? "" : " Meta has not yet approved MAIRO's posting permissions, so publishing is not available to customers yet."}`,
             "You can disconnect at any time from the Meta connection page in your dashboard. That deletes the access token immediately.",
           ]}
         />
@@ -108,12 +124,14 @@ export default function PrivacyPage() {
               Studio. Your image requests, and any picture you upload to change, are sent to make them.</>,
             <><strong className="text-neutral-200">Stripe</strong> — takes payment for your
               subscription. Your card details go to Stripe, never to us.</>,
-            <><strong className="text-neutral-200">Google</strong> — only if you connect Google Tag
-              Manager or sign in with Google.</>,
+            <><strong className="text-neutral-200">Google</strong> — makes and edits ad pictures with its
+              Gemini image model: your picture requests, and any photo you upload to change, are sent to
+              it. Also used if you sign in with Google or connect Google Tag Manager.</>,
             <><strong className="text-neutral-200">Twilio</strong> — sends text alerts, only if you turn
               them on.</>,
             <><strong className="text-neutral-200">Neon</strong> — hosts our database.</>,
-            <><strong className="text-neutral-200">Vercel</strong> — hosts and serves the application.</>,
+            <><strong className="text-neutral-200">Vercel</strong> — hosts and serves the application, and
+              stores the pictures and videos you upload.</>,
           ]}
         />
       </Section>
@@ -121,9 +139,15 @@ export default function PrivacyPage() {
       <Section heading="How long we keep it">
         <p>
           Account and campaign data is kept while your account is open, because the service can&apos;t
-          work without it. Meta access tokens are deleted the moment you disconnect. When you close
-          your account we delete your data within {LEGAL.deletionWindowDays} days, other than
-          anything we&apos;re legally required to retain.
+          work without it. Meta access tokens are deleted the moment you disconnect. When you delete
+          your account, its records are removed from the live service straight away; backup copies
+          and server logs expire within {LEGAL.deletionWindowDays} days; information already sent to
+          the providers above is kept under their own retention rules; and billing records are kept
+          for as long as tax law requires. The{" "}
+          <a href="/data-deletion" className="text-neutral-200 underline underline-offset-4 hover:text-white">
+            data deletion page
+          </a>{" "}
+          has the details.
         </p>
       </Section>
 

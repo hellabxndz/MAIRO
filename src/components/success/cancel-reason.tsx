@@ -16,7 +16,7 @@ const REASONS = [
   "Something else",
 ];
 
-export function CancelReason() {
+export function CancelReason({ onCancelPage = false }: { onCancelPage?: boolean } = {}) {
   const [reason, setReason] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
@@ -26,17 +26,17 @@ export function CancelReason() {
   if (sent) {
     return (
       <p className="mt-6 rounded-2xl bg-white/[0.035] px-4 py-3 text-[13px] text-white/80">
-        Thank you for telling us. You can cancel in <span className="text-white">Manage billing</span> above — nothing
+        Thank you for telling us. {onCancelPage ? "You can finish cancelling below" : <>You can cancel in <span className="text-white">Manage billing</span> above</>} — nothing
         changes until you do, and your campaigns, plan and connections are kept if you come back.
       </p>
     );
   }
 
   return (
-    <details className="mt-6 rounded-2xl bg-white/[0.025] px-4 py-3">
+    <details open={onCancelPage || undefined} className="mt-6 rounded-2xl bg-white/[0.025] px-4 py-3">
       <summary className="cursor-pointer text-[13px] text-muted hover:text-white">Thinking about cancelling?</summary>
       <p className="mt-3 text-[13px] text-white/75">
-        Before you go, would you tell us why? It&rsquo;s optional — you can cancel in Manage billing either way.
+        Before you go, would you tell us why? It&rsquo;s optional — you can cancel either way.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {REASONS.map((r) => (

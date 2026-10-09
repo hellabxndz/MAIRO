@@ -290,3 +290,43 @@ export async function openBillingPortalAction(): Promise<void> {
   });
   redirect(portal.url);
 }
+
+/**
+ * Stripe's cancellation step, reached from "Before you cancel" — after the
+ * business has seen which Meta campaigns keep running and had the chance to
+ * pause them. Opens the portal straight on cancelling this subscription; a
+ * portal set up without that flow falls back to the portal's home, where
+ * cancelling is one click.
+ */
+export async function openCancelPortalAction(): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/sign-in");
+
+  const organization = await db.organization.findUnique({
+    where: { id: session.user.organizationId },
+    select: { stripeCustomerId: true, stripeSubscriptionId: true },
+  });
+  if (!organization?.stripeCustomerId) redirect("/dashboard/billing");
+  if (!(await customerStillExists(organization.stripeCustomerId))) {
+    await db.organization.update({ where: { id: session.user.organizationId }, data: { stripeCustomerId: null } });
+    redirect("/dashboard/billing");
+  }
+
+  const returnUrl = `${await originUrl()}/dashboard/billing`;
+  let url: string;
+  try {
+    const portal = await stripe().billingPortal.sessions.create({
+      customer: organization.stripeCustomerId,
+      return_url: returnUrl,
+      ...(organization.stripeSubscriptionId
+        ? { flow_data: { type: "subscription_cancel" as const, subscription_cancel: { subscription: organization.stripeSubscriptionId }, after_completion: { type: "redirect" as const, redirect: { return_url: `${returnUrl}?cancelled=1` } } } }
+        : {}),
+    });
+    url = portal.url;
+  } catch (error) {
+    console.error("Stripe wouldn't open the cancellation step; opening the portal instead:", error);
+    const portal = await stripe().billingPortal.sessions.create({ customer: organization.stripeCustomerId, return_url: returnUrl });
+    url = portal.url;
+  }
+  redirect(url);
+}

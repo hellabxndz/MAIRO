@@ -11,6 +11,8 @@ import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 import { pauseSocialSweep } from "@/lib/social/pause";
 import { runAllPlatformIntelligence } from "@/lib/platform-intelligence/registry";
+import { sweepOrphanedFiles } from "@/lib/account/close";
+import { ORGANIZATION_FOLDERS, deleteFilesUnder, organizationFolderIds } from "@/lib/storage/blob";
 
 // The backstop for a safety check that couldn't run.
 //
@@ -123,6 +125,15 @@ export async function GET(req: Request) {
     return null;
   });
 
+  // Pictures and videos left behind by deleted accounts (storage unreachable
+  // at the moment of deletion). The deletion page promises this daily check.
+  const orphanedFiles = left() > 5_000
+    ? await sweepOrphanedFiles({ folders: ORGANIZATION_FOLDERS, folderIds: organizationFolderIds, deleteFiles: deleteFilesUnder }).catch((error) => {
+        console.error("Orphaned file sweep failed:", error);
+        return null;
+      })
+    : null;
+
   // Creatives whose safety check couldn't run (see above), as many as the
   // time left allows — each is a model call made in sequence. A backlog that
   // takes three nights to clear is better than a run that times out every
@@ -142,5 +153,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, ms: Date.now() - startedAt });
 }

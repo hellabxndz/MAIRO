@@ -87,6 +87,9 @@ enum NotificationKind {
   MAIRO_ACTED
   /// The Performance Coach found something worth knowing.
   COACH_ALERT
+  /// The MAIRO subscription was cancelled or ended. Says what that means for
+  /// the Meta campaigns still running, which it doesn't change.
+  SUBSCRIPTION_CHANGE
 }
 
 enum NotificationSeverity {
@@ -242,6 +245,11 @@ model Organization {
   // When the paid period ends. A cancelled subscription keeps working until
   // this passes, which is what the client paid for.
   currentPeriodEnd     DateTime?
+  /// When Stripe will end the subscription because the owner cancelled it
+  /// (cancel at period end). Null while it renews. The plan stays active until
+  /// then; MAIRO-managed Meta campaigns are a separate question the billing
+  /// page answers on its own.
+  subscriptionCancelAt DateTime?
 
   users            User[]
   intake           OnboardingIntake?

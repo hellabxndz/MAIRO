@@ -5,6 +5,8 @@ import { stripe, tierForPriceId } from "@/lib/stripe/client";
 import { STOPPED_STATUSES, stopUnpaidExecution } from "@/lib/billing/stop-unpaid";
 import { pauseSocialIfLocked } from "@/lib/social/pause";
 import { supersededSubscription } from "@/lib/billing/checkout-guard";
+import { scheduledEnd } from "@/lib/billing/cancellation-notice";
+import { announceCancellation } from "@/lib/billing/announce-cancellation";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -127,7 +129,7 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
 
   const before = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { hasPaid: true, canceledAt: true, stripeSubscriptionId: true },
+    select: { hasPaid: true, canceledAt: true, stripeSubscriptionId: true, subscriptionCancelAt: true },
   });
   const live = subscription.status === "active" || subscription.status === "trialing";
 
@@ -168,6 +170,9 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
   }
 
   const paidNow = subscription.status === "active";
+  // Cancelled but still running until the period ends: recorded so the
+  // billing page can say "cancelled, active until …" instead of "renews".
+  const cancelAt = finished ? null : scheduledEnd(subscription, periodEnd ? new Date(periodEnd * 1000) : null);
 
   await db.organization.update({
     where: { id: organizationId },
@@ -184,8 +189,19 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
       // Left untouched when the price is unrecognised, rather than reset.
       ...(finished ? { subscriptionTier: "NONE" as const } : tier ? { subscriptionTier: tier } : {}),
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+      subscriptionCancelAt: cancelAt,
     },
   });
+
+  // The cancellation, and what it doesn't change: Meta campaigns keep running.
+  await announceCancellation({
+    organizationId,
+    subscriptionId: subscription.id,
+    cancelAtBefore: before?.subscriptionCancelAt ?? null,
+    cancelAtNow: cancelAt,
+    ended: finished,
+    hadPaid: Boolean(before?.hasPaid || paidNow),
+  }).catch((error) => console.error("Couldn't announce the cancellation:", error));
 
   // Never paid, and now failed or ended — the trial ran out and the card was
   // declined, or it was cancelled before any payment. Stop everything, and

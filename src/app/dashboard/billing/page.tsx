@@ -6,7 +6,8 @@ import { PageHeader, secondaryButtonClass } from "@/components/ui";
 import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, planFor, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
-import { CancelReason } from "@/components/success/cancel-reason";
+import Link from "next/link";
+import { runningMetaCampaigns } from "@/lib/billing/running-campaigns";
 import { PlanButton } from "../settings/plan-button";
 
 // Where "Upgrade" goes: every plan side by side, and one button from each
@@ -36,11 +37,16 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
 
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { subscriptionTier: true, subscriptionStatus: true, currentPeriodEnd: true, stripeCustomerId: true },
+    select: { subscriptionTier: true, subscriptionStatus: true, currentPeriodEnd: true, stripeCustomerId: true, subscriptionCancelAt: true },
   });
   if (!organization) redirect("/sign-in");
 
-  const { subscribed: justSubscribed, checkout } = await searchParams;
+  const { subscribed: justSubscribed, checkout, cancelled } = await searchParams;
+  // Campaigns are a separate question from the plan, answered separately:
+  // cancelling one never changes the other.
+  const running = await runningMetaCampaigns([organizationId]);
+  const cancelAt = organization.subscriptionCancelAt;
+  const fmt = (d: Date) => d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const configured = billingConfigured();
   const buyable = configured ? purchasableTiers() : [];
   const tier = organization.subscriptionTier;
@@ -65,6 +71,16 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
           You&rsquo;re subscribed. Thank you — everything in your plan is switched on.
         </p>
       )}
+      {cancelled === "1" && (
+        <p role="status" className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-300">
+          {cancelAt
+            ? `Your MAIRO subscription is cancelled. Your plan stays active until ${fmt(cancelAt)}.`
+            : "Stripe is confirming your cancellation. This page shows it as soon as Stripe tells MAIRO — usually within a minute."}{" "}
+          {running.length > 0
+            ? `${running.length === 1 ? "One campaign is" : `${running.length} campaigns are`} still running in Meta; cancelling didn't pause ${running.length === 1 ? "it" : "them"}.`
+            : "No MAIRO campaigns are running in Meta."}
+        </p>
+      )}
       {checkout === "cancelled" && (
         <p className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-300">
           Checkout was cancelled, and nothing was charged. Pick a plan whenever you&rsquo;re ready.
@@ -87,6 +103,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
             </p>
           ) : status === "trialing" && periodEnd ? (
             <p className="mt-1 text-sm text-neutral-400">Free trial until {periodEnd.toLocaleDateString()}.</p>
+          ) : subscribed && cancelAt ? (
+            <p className="mt-1 text-sm text-amber-200">Cancelled — stays active until {fmt(cancelAt)}, then ends. Undo it in Manage billing.</p>
           ) : subscribed && periodEnd ? (
             <p className="mt-1 text-sm text-neutral-400">Renews {periodEnd.toLocaleDateString()}.</p>
           ) : status === "canceled" ? (
@@ -102,7 +120,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
             <button type="submit" className={secondaryButtonClass}>
               Manage billing
             </button>
-            <p className="mt-1.5 text-[11px] text-neutral-500">Card, invoices, cancel</p>
+            <p className="mt-1.5 text-[11px] text-neutral-500">Card, invoices, plan changes</p>
           </form>
         )}
       </div>
@@ -187,16 +205,24 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         Payment is handled by Stripe; MAIRO never sees your card. Your plan pays for MAIRO. What your ads
         cost is separate and goes straight from you to Meta.
       </p>
-      <div className="mt-4 max-w-2xl rounded-xl border border-white/10 p-4 text-xs leading-relaxed text-neutral-400">
-        <p className="font-medium text-neutral-200">If you cancel</p>
+      <div className="mt-4 max-w-2xl rounded-xl border border-amber-400/30 bg-amber-400/[0.05] p-5 text-sm leading-relaxed text-neutral-300">
+        <p className="font-medium text-amber-100">Cancelling MAIRO doesn&rsquo;t stop your Meta ads</p>
         <p className="mt-1">
-          Cancelling stops the next renewal; the current month isn&rsquo;t refunded. When the plan ends, MAIRO stops
-          building, changing and launching campaigns. Campaigns already running stay in your Meta account and keep
-          spending at the budgets you approved until you pause them — you can still pause them in Campaigns or in
-          Meta Ads Manager. Your plan, settings and history are kept if you come back.
+          When the plan ends, MAIRO stops building, changing and launching campaigns. Campaigns already running stay in
+          your Meta account and keep spending at the budgets you approved until they&rsquo;re paused. The current month
+          isn&rsquo;t refunded; your plan, settings and history are kept if you come back.
         </p>
+        <p className="mt-2 text-neutral-200">
+          {running.length > 0
+            ? `${running.length === 1 ? "1 MAIRO campaign is" : `${running.length} MAIRO campaigns are`} running in Meta right now.`
+            : "No MAIRO campaigns are running in Meta right now."}
+        </p>
+        {subscribed && organization.stripeCustomerId && !cancelAt && (
+          <Link href="/dashboard/billing/cancel" className="mt-3 inline-block text-sm text-white underline underline-offset-4 hover:text-amber-100">
+            Cancel my subscription — see what keeps running first
+          </Link>
+        )}
       </div>
-      {subscribed && organization.stripeCustomerId && <CancelReason />}
     </div>
   );
 }

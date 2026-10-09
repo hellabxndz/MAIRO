@@ -73,7 +73,7 @@ export function AutomationSection({
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
           Right now MAIRO recommends changes and waits for you to approve every one. On
           {" "}{upgradePlanName} you can let it handle the small things itself — pausing an
-          ad that is losing money, testing a new creative, moving budget between what you
+          ad that is underperforming by Meta&rsquo;s figures, testing a new creative, moving budget between what you
           already run — inside limits you set. It never raises your total budget, launches
           a campaign or spends past your ceiling, on any plan.
         </p>

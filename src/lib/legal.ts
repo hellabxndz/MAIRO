@@ -9,12 +9,15 @@ export const LEGAL = {
   companyName: "BLING Marketing",
   productName: "MAIRO",
 
-  // CHANGE THIS to a monitored business address before submitting for App
-  // Review. Meta may email it, and users have a legal right to reach you here.
-  contactEmail: "hellabxndz11@gmail.com",
+  // Where customers, Meta's reviewers and anyone exercising a privacy right
+  // reach a person. Set NEXT_PUBLIC_SUPPORT_EMAIL to a monitored address on a
+  // domain the business owns (e.g. support@ on mairo.io, once its mail is set
+  // up) and every legal page, error message and support link follows. Until
+  // then, the address that has always been published here.
+  contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "hellabxndz11@gmail.com",
 
   // Bump when the substance changes, not for typo fixes.
-  lastUpdated: "1 September 2026",
+  lastUpdated: "9 October 2026",
 
   // How long a deletion request takes to complete, stated as a promise on the
   // data deletion page. Keep the page and reality in agreement.

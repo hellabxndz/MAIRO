@@ -16,8 +16,8 @@ import type { AutomationLevel } from "@/generated/prisma/enums";
 // Three levels, and the boundary between them is reversibility, not size:
 //
 //   Manual      — MAIRO proposes. A person applies. Nothing moves on its own.
-//   Assisted    — MAIRO may do things that are cheap to undo: pause something
-//                 that is losing money, start another creative test, shift a
+//   Assisted    — MAIRO may do things that are cheap to undo: pause an ad that
+//                 is underperforming, start another creative test, shift a
 //                 slice of an existing budget. Anything that changes what the
 //                 account spends in total still waits.
 //   Autopilot   — adds the change that needs a steadier hand — widening who
@@ -58,9 +58,9 @@ export type ActionInfo = {
 export const ACTIONS: ActionInfo[] = [
   {
     action: "pause-underperformer",
-    label: "Pause ads that are losing money",
+    label: "Pause underperforming ads",
     detail:
-      "Stops an ad that has spent past your limits without producing. Costs nothing to undo — you can switch it back on.",
+      "Switches off an ad that, by Meta's figures, costs far more per result than the best ad in the same campaign, or has spent without any results. That's an advertising measure, not proof of a loss — MAIRO can't tell profit without your costs and sales. Costs nothing to undo; you can switch it back on."
   },
   {
     action: "test-new-creative",
@@ -156,7 +156,7 @@ export const LEVELS: LevelInfo[] = [
     label: "AI Assist",
     summary: "Mairo makes minor optimizations on its own, inside your limits. You approve the rest.",
     detail:
-      "MAIRO can pause an ad that is losing money, test a new creative, make more of a winner, and move budget between what you are already running. Anything that changes what you spend in total still waits for you.",
+      "MAIRO can pause an ad that is underperforming by Meta's figures, test a new creative, make more of an ad that's doing well, and move budget between what you are already running. Anything that changes what you spend in total still waits for you.",
   },
   {
     level: "AUTOPILOT",

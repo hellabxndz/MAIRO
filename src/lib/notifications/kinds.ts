@@ -88,11 +88,20 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "MAIRO made a change",
     severity: "INFO",
     sms: "budget-change",
-  },  COACH_ALERT: {
+  },
+  COACH_ALERT: {
     kind: "COACH_ALERT",
     label: "Performance Coach",
     severity: "WARNING",
     sms: null,
+  },
+  // Cancelling MAIRO doesn't stop Meta spending. Worth a text when campaigns
+  // are still running, because that's the money that keeps moving.
+  SUBSCRIPTION_CHANGE: {
+    kind: "SUBSCRIPTION_CHANGE",
+    label: "Subscription",
+    severity: "WARNING",
+    sms: "needs-attention",
   },
 
 };

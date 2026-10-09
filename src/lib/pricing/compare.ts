@@ -7,6 +7,7 @@
 // the decision engine obeys), and every limit from the entitlement numbers.
 // If a plan changes, the page changes with it.
 
+import { metaPostingApproved } from "@/lib/social/publishing-status";
 import { PLANS, type Plan } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from "@/lib/entitlements";
 import { ALWAYS_NEEDS_APPROVAL, actionInfo, automaticActions, levelInfo } from "@/lib/automation/levels";
@@ -154,11 +155,12 @@ export function alwaysYours(): { label: string; detail: string }[] {
 
 // --- Integrations, said exactly as they are -----------------------------------------
 
-export type IntegrationStatus = "full" | "limited" | "tracking" | "billing" | "unsupported";
+export type IntegrationStatus = "full" | "limited" | "pending" | "tracking" | "billing" | "unsupported";
 
 export const STATUS_LABEL: Record<IntegrationStatus, string> = {
   full: "Fully supported",
   limited: "Limited for now",
+  pending: "Waiting for Meta's approval",
   tracking: "For tracking only",
   billing: "For billing only",
   unsupported: "Not supported",
@@ -189,7 +191,9 @@ export const INTEGRATIONS: Integration[] = [
   {
     key: "social-posting",
     name: "Instagram and Facebook posting",
-    status: "limited",
+    // Built, but customers can't use it until Meta approves the posting
+    // permissions (see lib/social/publishing-status.ts).
+    status: metaPostingApproved() ? "limited" : "pending",
     what: "Scale's Social Manager plans and writes your organic posts and can publish the ones you approve.",
     limits: "Publishing needs Meta's approval of MAIRO's posting permissions. Until Meta grants it, you can plan and write posts, but MAIRO can't publish them for you.",
   },
@@ -267,7 +271,7 @@ export const MONEY_AND_CONTROL: { key: string; title: string; body: string }[] =
   {
     key: "ending",
     title: "If your subscription ends",
-    body: "MAIRO stops building, changing and launching campaigns. Campaigns already running stay in your Meta account and keep spending at the budgets you approved until you pause them — pausing still works. If a free trial ends without a successful payment, MAIRO pauses your campaigns for you. Your plan and settings are kept.",
+    body: "Cancelling MAIRO doesn't cancel your Meta advertising. MAIRO stops building, changing and launching campaigns. Campaigns already running stay in your Meta account and keep spending at the budgets you approved until you pause them — before you cancel, MAIRO lists them so you can pause them, and pausing still works afterwards. If a free trial ends without a successful payment, MAIRO pauses your campaigns for you. Your plan and settings are kept.",
   },
   {
     key: "disconnect",

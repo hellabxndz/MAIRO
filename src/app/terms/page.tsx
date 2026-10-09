@@ -64,14 +64,17 @@ export default function TermsPage() {
       <Section heading="Subscription and payment">
         <p>
           Paid plans are billed monthly in advance and renew until you cancel. Cancelling stops the
-          next renewal; it does not refund the current month. Prices can change, but we will tell
-          you before a change affects you.
+          next renewal; it does not refund the current month, and your plan stays active until the
+          end of the period you paid for. Prices can change, but we will tell you before a change
+          affects you.
         </p>
         <p>
           When a paid subscription ends, we stop building, changing and launching campaigns.
           Campaigns already running stay in your Meta ad account and keep running at the budgets you
-          approved until you pause them; pausing stays available in {LEGAL.productName} and in Meta
-          Ads Manager. If a free trial ends without a successful payment, we pause the campaigns we
+          approved until you pause them — cancelling {LEGAL.productName} doesn&apos;t cancel your
+          advertising with Meta. Before you cancel, {LEGAL.productName} lists the campaigns still running
+          and lets you pause them; pausing also stays available afterwards, in {LEGAL.productName} and in
+          Meta Ads Manager. If a free trial ends without a successful payment, we pause the campaigns we
           run for you. Your plan and settings are kept either way.
         </p>
         <p>
@@ -137,9 +140,10 @@ export default function TermsPage() {
           <a href="/data-deletion" className="text-neutral-200 underline underline-offset-4 hover:text-white">
             data deletion page
           </a>
-          . We may suspend or close an account that breaks these terms, doesn&apos;t pay, or puts
-          other users at risk. Campaigns we created stay in your Meta ad account either way; they
-          are yours.
+          . Deleting your account cancels your {LEGAL.productName} subscription with Stripe; the
+          current month isn&apos;t refunded. We may suspend or close an account that breaks these
+          terms, doesn&apos;t pay, or puts other users at risk. Campaigns we created stay in your Meta
+          ad account either way and keep running until you pause them; they are yours.
         </p>
       </Section>
 

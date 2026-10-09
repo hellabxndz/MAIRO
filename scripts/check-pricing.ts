@@ -19,7 +19,7 @@ import { PLANS, FREELANCER_PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
 import { DEFAULT_ENTITLEMENTS } from "../src/lib/entitlements";
 import { ACTIONS, ALWAYS_NEEDS_APPROVAL, automaticActions, mayDoAutomatically } from "../src/lib/automation/levels";
 import { actionFor } from "../src/lib/decisions/guardrails";
-import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, alwaysYours, automationModes, comparison, pictures, planStories } from "../src/lib/pricing/compare";
+import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationModes, comparison, pictures, planStories } from "../src/lib/pricing/compare";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -111,7 +111,10 @@ check("Shopify and Tag Manager are for tracking, Stripe for billing, posting lim
   assert.equal(by.gtm.status, "tracking");
   assert.equal(by.stripe.status, "billing");
   assert.match(by.stripe.limits ?? "", /Meta charges your ad account/);
-  assert.equal(by["social-posting"].status, "limited");
+  // Until Meta approves posting, it's shown as waiting for Meta, not as a
+  // working feature with limits.
+  assert.equal(by["social-posting"].status, process.env.META_POSTING_APPROVED === "1" ? "limited" : "pending");
+  assert.equal(STATUS_LABEL.pending, "Waiting for Meta's approval");
   assert.match(by["social-posting"].limits ?? "", /Meta's approval/);
 });
 check("Scale's posting lines say they depend on Meta's approval", () => {
