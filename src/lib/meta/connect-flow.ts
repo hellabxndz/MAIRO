@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { META_CONNECTION_NOTICES } from "@/lib/meta/token-expiry";
+import { managedMetaCampaigns } from "@/lib/meta/account-switch";
 import { metaGraphRequest } from "@/lib/meta/client";
 import { saveMetaConnection } from "@/lib/meta/connection";
 import { exchangeCodeForToken, exchangeForLongLivedToken, fetchAdAccounts, fetchPages, metaRedirectUri, metaScopes } from "@/lib/meta/oauth";
@@ -65,6 +67,15 @@ export async function completeMetaConnection(organizationId: string, code: strin
   // Reconnecting (to grant one more permission, say) keeps the ad account
   // and Page already chosen, while this login can still reach them.
   const previous = await db.metaAdAccount.findUnique({ where: { organizationId }, select: { metaAdAccountId: true, pageId: true } });
+
+  // A login that can't reach the account MAIRO's running campaigns are in
+  // would quietly move MAIRO to another account and leave them unmanaged.
+  // The existing connection is kept instead (see account-choice.ts).
+  if (previous?.metaAdAccountId && !adAccounts.some((a) => a.id === previous.metaAdAccountId)) {
+    const managed = await managedMetaCampaigns(organizationId);
+    if (managed.count > 0) return { ok: false, code: "lost_account", technical: previous.metaAdAccountId };
+  }
+
   const chosen = adAccounts.find((a) => a.id === previous?.metaAdAccountId) ?? adAccounts.find((a) => a.account_status === 1) ?? adAccounts[0];
 
   // No Page isn't a reason to throw the connection away: the ad account is
@@ -82,6 +93,11 @@ export async function completeMetaConnection(organizationId: string, code: strin
     accessToken: token,
     tokenExpiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : null,
   });
+  // The old "disconnected" or "running out" notice is over. Clearing it frees
+  // its key, so the next time this connection has trouble it's said again.
+  await db.notification
+    .deleteMany({ where: { organizationId, dedupeKey: { in: META_CONNECTION_NOTICES } } })
+    .catch((error) => console.error("Couldn't clear old Meta connection notices:", error));
   return { ok: true, adAccountId: chosen.id, accountStatus: chosen.account_status, pageId: page?.id ?? null, pageName: page?.name ?? null };
 }
 

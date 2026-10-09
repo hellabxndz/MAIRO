@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { buildContainer } from "@/lib/tracking/gtm";
 import { nicheById } from "@/lib/tracking/niches";
-import { ensureTrackingProfile } from "@/lib/actions/tracking-actions";
+import { ensureTrackingProfile } from "@/lib/tracking/profile";
 
 // Hands over the Tag Manager container as a file.
 //

@@ -1,11 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  applyRecommendationAction,
-  dismissRecommendationAction,
-  type CampaignRecommendation,
-} from "@/lib/actions/optimize-actions";
+import { applyRecommendationAction, dismissRecommendationAction } from "@/lib/actions/optimize-actions";
+import type { CampaignRecommendation } from "@/lib/budget/recommendations";
 import { Card } from "@/components/ui";
 import { PlatformIcon } from "@/components/platform-icons";
 import type { AdPlatform } from "@/generated/prisma/enums";

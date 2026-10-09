@@ -1,5 +1,6 @@
 "use server";
 
+import { checkoutGuard } from "@/lib/billing/checkout-guard";
 import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -159,6 +160,16 @@ export async function startCheckoutAction(
 
   const organizationId = session.user.organizationId;
   const email = session.user.email;
+
+  // Never a second subscription for one business (see checkoutGuard).
+  const onFile = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true, subscriptionStatus: true } });
+  const guard = checkoutGuard({ stripeSubscriptionId: onFile?.stripeSubscriptionId ?? null, subscriptionStatus: onFile?.subscriptionStatus ?? null });
+  if (guard.kind === "refuse") return { error: guard.message };
+  if (guard.kind === "replace-incomplete") {
+    await stripe()
+      .subscriptions.cancel(guard.subscriptionId)
+      .catch((error) => console.error(`Couldn't cancel incomplete subscription ${guard.subscriptionId}:`, error));
+  }
 
   // The redirect has to happen outside the try: Next signals a redirect by
   // throwing, so catching around it would swallow the navigation and report a

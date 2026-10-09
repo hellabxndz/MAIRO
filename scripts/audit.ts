@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const QUESTIONS: { n: number; q: string; suites: string[]; production: string }[] = [
-  { n: 1, q: "Connects to a real Meta account", suites: ["account-history", "graph-cache", "live-meta", "meta-contract", "onboarding", "onboarding-db"], production: "Live Meta check: token, permissions, ad account, Page." },
+  { n: 1, q: "Connects to a real Meta account", suites: ["account-history", "graph-cache", "live-meta", "meta-contract", "onboarding", "onboarding-db", "hardening-db", "notifications"], production: "Live Meta check: token, permissions, ad account, Page." },
   { n: 2, q: "Understands the business and builds a strategy", suites: ["business", "brain", "strategy-plan", "engine", "mission", "memory", "onboarding-db"], production: "Needs ANTHROPIC_API_KEY for the AI reading; without it, the literal page reading still runs." },
   { n: 3, q: "Specialists coordinate on real work", suites: ["team", "decisions", "coach-db", "command-center", "command-center-db", "onboarding-db"], production: "AI Team activity shows each recorded run." },
   { n: 4, q: "Builds campaigns and submits them for approval", suites: ["campaign-wizard", "ads", "ad-score", "readiness", "schedule", "creative-studio", "onboarding", "onboarding-db"], production: "A first campaign built (switched off) on a real account." },
@@ -27,7 +27,7 @@ const QUESTIONS: { n: number; q: string; suites: string[]; production: string }[
   { n: 11, q: "Task statuses are genuine", suites: ["team", "notifications", "command-center-db"], production: "AIOS → Customers lists failed and stuck runs." },
   { n: 12, q: "The Daily Brief uses only real data", suites: ["team", "intelligence", "weekly-report", "command-center"], production: "Brief appears after the first daily review of a live campaign." },
   { n: 13, q: "Ask your AI team answers from facts", suites: ["assistant", "team", "memory"], production: "Needs ANTHROPIC_API_KEY." },
-  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db", "results-db", "command-center-db", "onboarding-db", "pricing"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
+  { n: 14, q: "Subscriptions, permissions and data isolation", suites: ["entitlements", "payment-gate", "social-manager", "google", "decision-claim", "env", "coach-db", "results-db", "command-center-db", "onboarding-db", "pricing", "hardening-db"], production: "Needs Stripe keys, prices and BILLING_ENFORCED before charging anyone." },
   { n: 15, q: "Works for owners with no advertising experience", suites: ["simple-ui", "success", "campaign-wizard", "ad-score", "onboarding", "onboarding-db", "pricing"], production: "Only real owners can prove this — watch first-30-days progress in AIOS." },
 ];
 

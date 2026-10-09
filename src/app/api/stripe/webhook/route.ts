@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { stripe, tierForPriceId } from "@/lib/stripe/client";
 import { STOPPED_STATUSES, stopUnpaidExecution } from "@/lib/billing/stop-unpaid";
 import { pauseSocialIfLocked } from "@/lib/social/pause";
+import { supersededSubscription } from "@/lib/billing/checkout-guard";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
         await applySubscription(subscription);
       }
     } else {
-      await applySubscription(event.data.object as Stripe.Subscription);
+      await applySubscription(await current(event.data.object as Stripe.Subscription));
     }
   } catch (error) {
     // A 500 asks Stripe to retry, which is what we want for a transient
@@ -85,12 +86,31 @@ export async function POST(req: NextRequest) {
 }
 
 /**
+ * The subscription as Stripe has it now, not as it was when the event fired.
+ *
+ * Stripe doesn't promise delivery order. An event carries the subscription as
+ * it was at that moment, so a late "created" (status incomplete) landing after
+ * the "updated" that made it active would put a customer who just paid back
+ * on "incomplete" and lock them out. Reading the live object makes every event
+ * — whatever order they arrive in — write the same, current answer. If Stripe
+ * can't be reached the event's own copy is used, and a later event or the
+ * daily sweep corrects it.
+ */
+async function current(fromEvent: Stripe.Subscription): Promise<Stripe.Subscription> {
+  try {
+    return await stripe().subscriptions.retrieve(fromEvent.id);
+  } catch (error) {
+    console.error(`Couldn't read subscription ${fromEvent.id} from Stripe; using the event's copy.`, error);
+    return fromEvent;
+  }
+}
+
+/**
  * Writes Stripe's view of a subscription onto the organization it belongs to.
  *
  * Sets absolute values rather than adjusting anything, so replaying an event
- * lands in the same place. Events can also arrive out of order on retry; every
- * one of them carries the subscription's current state, so the last write wins
- * and that is the right answer.
+ * lands in the same place, and the caller passes the live subscription (see
+ * current()), so events arriving out of order still end on the right state.
  */
 async function applySubscription(subscription: Stripe.Subscription): Promise<void> {
   const organizationId = await resolveOrganizationId(subscription);
@@ -101,6 +121,22 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     // a permanently failing webhook is noise that hides real failures.
     console.warn(
       `Stripe subscription ${subscription.id} could not be matched to an organization.`
+    );
+    return;
+  }
+
+  const before = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { hasPaid: true, canceledAt: true, stripeSubscriptionId: true },
+  });
+  const live = subscription.status === "active" || subscription.status === "trialing";
+
+  // News about an older subscription than the one on record must not
+  // overwrite it (see supersededSubscription).
+  if (supersededSubscription(before?.stripeSubscriptionId, subscription)) {
+    console.info(
+      `Stripe webhook: ignoring ${subscription.status} subscription ${subscription.id}; ` +
+        `${before?.stripeSubscriptionId} is the one on record.`
     );
     return;
   }
@@ -131,9 +167,7 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
     );
   }
 
-  const before = await db.organization.findUnique({ where: { id: organizationId }, select: { hasPaid: true, canceledAt: true } });
   const paidNow = subscription.status === "active";
-  const live = subscription.status === "active" || subscription.status === "trialing";
 
   await db.organization.update({
     where: { id: organizationId },

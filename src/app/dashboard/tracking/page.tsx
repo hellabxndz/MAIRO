@@ -23,7 +23,7 @@ import { ManualOrderForm, StoreCard } from "./store-card";
 import { GtmCard } from "./gtm-card";
 import { allNiches, nicheById } from "@/lib/tracking/niches";
 import { dataLayerSnippet, gtmSnippet } from "@/lib/tracking/gtm";
-import { ensureTrackingProfile } from "@/lib/actions/tracking-actions";
+import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
 import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
 import type { AdPlatform } from "@/generated/prisma/enums";

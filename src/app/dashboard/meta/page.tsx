@@ -8,6 +8,9 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { fetchMetaBillingStatus, fetchMonthToDateSpendCents } from "@/lib/meta/billing";
 import { AdSpendCard } from "@/components/ad-spend-card";
 import { MetaPagePicker } from "@/components/meta-page-picker";
+import { MetaAdAccountPicker } from "@/components/meta-ad-account-picker";
+import { expiryWarning } from "@/lib/meta/token-expiry";
+import { connectHref } from "@/lib/onboarding/problems";
 
 // The billing figures are live Graph calls. Same budget as the other pages that
 // read from Meta, for the same reason.
@@ -42,8 +45,10 @@ export default async function MetaConnectionPage({
       connectedAt: true,
       pageId: true,
       pageName: true,
+      tokenExpiresAt: true,
     },
   });
+  const expiring = metaAccount?.status === "CONNECTED" ? expiryWarning(metaAccount.tokenExpiresAt) : null;
 
   // Only worth asking Meta about money once there is a connection to ask
   // through. The intake's monthly budget is what the customer *said* they would
@@ -118,12 +123,21 @@ export default async function MetaConnectionPage({
             <p className="text-sm text-neutral-500">
               Connected {metaAccount.connectedAt.toLocaleDateString()}
             </p>
+            {expiring && (
+              <p className="max-w-xl text-sm text-amber-300">
+                {expiring.text}{" "}
+                <a href={connectHref("/dashboard/meta")} className="underline underline-offset-4">
+                  Reconnect Meta
+                </a>
+              </p>
+            )}
 
             {/* An ad is published by a Page, always. Showing which one — and
                 letting it be changed — is the difference between a business
                 with two brands running ads under the right name and finding
                 out from a comment notification. */}
-            <div className="border-t border-white/10 pt-4">
+            <div className="space-y-4 border-t border-white/10 pt-4">
+              <MetaAdAccountPicker accountId={metaAccount.metaAdAccountId} />
               <MetaPagePicker pageId={metaAccount.pageId} pageName={metaAccount.pageName} />
             </div>
             <div className="flex flex-wrap gap-3">

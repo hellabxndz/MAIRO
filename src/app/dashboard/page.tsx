@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { Card } from "@/components/ui";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
-import { buildRecommendations } from "@/lib/actions/optimize-actions";
+import { buildRecommendations } from "@/lib/budget/recommendations";
 import { OptimizationCard } from "@/components/optimization-card";
 import { activeOrganizationId } from "@/lib/active-org";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";

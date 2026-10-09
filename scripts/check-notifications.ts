@@ -20,6 +20,7 @@
 
 import { KINDS, kindInfo, severityTone } from "@/lib/notifications/kinds";
 import { whenLabel } from "@/lib/notifications/present";
+import { META_CONNECTION_NOTICES, daysLeft, expiryWarning } from "@/lib/meta/token-expiry";
 
 let failures = 0;
 function check(name: string, cond: boolean, extra = "") {
@@ -70,6 +71,7 @@ const KEYS = [
   "no-results:camp_123:0",
   "platform-gap:TIKTOK:META:3",
   "disconnected:META",
+  "expiring:META",
 ];
 const DATEISH = /\d{4}-\d{2}-\d{2}|\d{10,}|T\d{2}:\d{2}/;
 for (const key of KEYS) {
@@ -87,6 +89,19 @@ check(
   `no-results:camp_123:${Math.floor(5000 / 5000)}` !==
     `no-results:camp_123:${Math.floor(15000 / 5000)}`,
 );
+
+console.log("\n— Meta's permission running out is said a week ahead —");
+{
+  const at = new Date("2026-10-01T12:00:00Z");
+  const inDays = (d: number) => new Date(at.getTime() + d * 24 * 60 * 60 * 1000);
+  check("eight days left says nothing yet", expiryWarning(inDays(8), at) === null);
+  check("seven days left warns", expiryWarning(inDays(7), at)?.days === 7);
+  check("half a day left reads 'within a day'", /within a day/.test(expiryWarning(inDays(0.5), at)?.text ?? ""));
+  check("an expired token isn't 'running out' — the disconnected notice covers it", expiryWarning(inDays(-1), at) === null && daysLeft(inDays(-1), at) === null);
+  check("no recorded expiry, no warning", expiryWarning(null, at) === null);
+  check("the warning says how to fix it and that nothing is lost", /Reconnect/.test(expiryWarning(inDays(3), at)!.text) && /stay as they are/.test(expiryWarning(inDays(3), at)!.text));
+  check("reconnecting clears both connection notices, so the next problem is said again", META_CONNECTION_NOTICES.includes("disconnected:META") && META_CONNECTION_NOTICES.includes("expiring:META"));
+}
 
 console.log("\n— how long ago reads correctly —");
 const now = new Date("2026-09-18T12:00:00Z");

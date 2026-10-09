@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { platformName } from "@/lib/ad-platforms/registry";
-import { connectionSummaries } from "@/lib/ad-platforms/connections";
+import { connectionSummaries, markConnectionProblem } from "@/lib/ad-platforms/connections";
 import { notify } from "./notify";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import { runSpendProtection } from "@/lib/protection/run";
+import { EXPIRY_WARNING_DAYS, expiryWarning } from "@/lib/meta/token-expiry";
 
 // MAIRO noticing things nobody asked it to look at.
 //
@@ -72,6 +73,9 @@ export async function detectFor(organizationId: string): Promise<DetectResult> {
 
   // A disconnected account is worth saying even with nothing running, because
   // it is the one problem that silently stops everything else from working.
+  // Expiry first: a permission whose date has passed is recorded as expired,
+  // so the disconnected notice below says so on this same run.
+  await detectMetaExpiring(organizationId, live.length > 0, result);
   await detectDisconnected(organizationId, live.length > 0, result);
 
   // Meta's verdict on each ad, including ones not live yet — a rejection is
@@ -248,6 +252,42 @@ async function detectDisconnected(
 }
 
 /**
+ * Meta's permission running out within the week.
+ *
+ * Renewing it needs the owner to log in again, so this says so while there's
+ * still time — rather than after Meta starts refusing and MAIRO can no longer
+ * see or pause what's spending.
+ */
+async function detectMetaExpiring(organizationId: string, hasLive: boolean, result: DetectResult) {
+  const meta = await db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true, tokenExpiresAt: true } });
+  if (meta?.status !== "CONNECTED") return;
+  if (meta.tokenExpiresAt && meta.tokenExpiresAt.getTime() <= Date.now()) {
+    // Past its date, Meta refuses the token — no need to wait for a failed
+    // request to find out.
+    await markConnectionProblem(organizationId, "META", "TOKEN_EXPIRED", "Meta's permission for MAIRO has expired.");
+    return;
+  }
+  const warning = expiryWarning(meta.tokenExpiresAt);
+  if (!warning) return;
+
+  result.found += 1;
+  const written = await notify({
+    organizationId,
+    kind: "ACCOUNT_DISCONNECTED",
+    dedupeKey: "expiring:META",
+    title: warning.days <= 1 ? "Your Meta connection runs out today" : `Your Meta connection runs out in ${warning.days} days`,
+    body: hasLive
+      ? `${warning.text} If it runs out, MAIRO can't read results or pause anything, and your running ads keep spending.`
+      : warning.text,
+    actionLabel: "Reconnect Meta",
+    actionHref: "/api/meta/connect?returnTo=%2Fdashboard%2Fmeta",
+    evidence: { platform: "META", expiresAt: meta.tokenExpiresAt?.toISOString() ?? null },
+    smsBody: `Your Meta connection to MAIRO runs out in ${warning.days} day${warning.days === 1 ? "" : "s"}. Reconnect it from MAIRO to keep your ads managed.`,
+  });
+  if (written.created) result.created += 1;
+}
+
+/**
  * Every business with something running.
  *
  * For the daily cron. Bounded and sequential — each business costs a live
@@ -262,7 +302,14 @@ export async function detectAll(limit = 50, budgetMs = Number.POSITIVE_INFINITY)
   // reach, the overnight check rotates through all of them instead of
   // checking the same ones every night.
   const organizations = await db.organization.findMany({
-    where: { mairoCampaigns: { some: { status: "ACTIVE" } } },
+    // Plus anyone whose Meta permission is about to run out, running or not —
+    // a campaign waiting to launch needs it too.
+    where: {
+      OR: [
+        { mairoCampaigns: { some: { status: "ACTIVE" } } },
+        { metaAdAccount: { status: "CONNECTED", tokenExpiresAt: { lte: new Date(Date.now() + EXPIRY_WARNING_DAYS * 24 * 60 * 60 * 1000) } } },
+      ],
+    },
     select: { id: true },
     orderBy: { spendProtection: { checkedAt: { sort: "asc", nulls: "first" } } },
     take: limit,

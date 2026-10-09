@@ -8,6 +8,7 @@ import { startExploring } from "@/lib/explore-mode";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { fetchPages } from "@/lib/meta/oauth";
 import { activeOrganizationId } from "@/lib/active-org";
+import { listAdAccounts, switchMetaAdAccount, type AdAccountChoice } from "@/lib/meta/account-switch";
 
 export async function disconnectMetaAction() {
   const session = await auth();
@@ -105,6 +106,40 @@ export async function selectMetaPageAction(
 
 // Lets a signed-in client look around the dashboard before connecting Meta.
 // See src/lib/explore-mode.ts for why this exists and why it is a cookie.
+/**
+ * The ad accounts this Meta login can reach, read live — the set changes in
+ * Business Manager without MAIRO hearing about it.
+ */
+export async function listMetaAdAccountsAction(): Promise<
+  { ok: true; current: string; accounts: AdAccountChoice[] } | { ok: false; error: string }
+> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  const connection = await loadMetaConnection(organizationId);
+  if (!connection) return { ok: false, error: "Connect a Meta account first." };
+  try {
+    return { ok: true, current: connection.metaAdAccountId, accounts: await listAdAccounts(connection.accessToken) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? `Meta wouldn't list your ad accounts: ${error.message}` : "Meta wouldn't list your ad accounts." };
+  }
+}
+
+/** Chooses which ad account MAIRO works in. See switchMetaAdAccount for the rules. */
+export async function selectMetaAdAccountAction(adAccountId: string): Promise<{ error: string } | undefined> {
+  const session = await auth();
+  if (!session?.user?.organizationId) return { error: "Not signed in." };
+  const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+
+  const result = await switchMetaAdAccount({ organizationId, adAccountId: String(adAccountId).slice(0, 64), actorUserId: session.user.id ?? null });
+  if (!result.ok) return { error: result.error };
+
+  revalidatePath("/dashboard/meta");
+  revalidatePath("/dashboard");
+  revalidatePath("/plan/activate");
+}
+
 export async function exploreWithoutMetaAction() {
   await startExploring();
   redirect("/dashboard");

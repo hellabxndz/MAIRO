@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { expiryWarning } from "@/lib/meta/token-expiry";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import type { AdPlatform, PlatformConnectionStatus } from "@/generated/prisma/enums";
 import { loadMetaConnection } from "@/lib/meta/connection";
@@ -196,7 +197,7 @@ export async function connectionSummaries(
   const [meta, rows] = await Promise.all([
     db.metaAdAccount.findUnique({
       where: { organizationId },
-      select: { metaAdAccountId: true, status: true, connectedAt: true },
+      select: { metaAdAccountId: true, status: true, connectedAt: true, tokenExpiresAt: true },
     }),
     db.platformConnection.findMany({ where: { organizationId } }),
   ]);
@@ -216,7 +217,7 @@ export async function connectionSummaries(
           ? "Meta's permission for MAIRO has expired. Reconnect to keep campaigns running."
           : meta.status === "ERROR"
             ? "Meta rejected the last request on this account. Reconnecting usually fixes it."
-            : null,
+            : (expiryWarning(meta.tokenExpiresAt)?.text ?? null),
     });
   }
 

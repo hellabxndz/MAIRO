@@ -65,7 +65,8 @@
     "check:command-center-db": "tsx scripts/check-command-center-db.ts",
     "check:onboarding": "tsx scripts/check-onboarding.ts",
     "check:onboarding-db": "tsx scripts/check-onboarding-db.ts",
-    "check:pricing": "tsx scripts/check-pricing.ts"
+    "check:pricing": "tsx scripts/check-pricing.ts",
+    "check:hardening-db": "tsx scripts/check-hardening-db.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

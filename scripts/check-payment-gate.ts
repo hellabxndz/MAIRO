@@ -14,6 +14,7 @@ import { stopUnpaidExecution, stopUnpaidSweep } from "../src/lib/billing/stop-un
 import { safeReturnTo } from "../src/lib/meta/return-to";
 import { isFreePage } from "../src/components/strategy/free-access";
 import { ALL_PLANS, trialDaysFor } from "../src/lib/plans";
+import { checkoutGuard, supersededSubscription } from "../src/lib/billing/checkout-guard";
 
 let passed = 0;
 async function check(name: string, fn: () => Promise<void> | void) {
@@ -44,6 +45,21 @@ async function main() {
     assert.equal(trialDaysFor("STARTER"), 7);
     for (const p of ALL_PLANS.filter((x) => x.tier !== "STARTER")) assert.equal(trialDaysFor(p.tier), 0, p.tier);
     assert.equal(trialDaysFor("NONE"), 0);
+  });
+  await check("a second checkout is refused while a subscription is live; a declined one can be replaced", () => {
+    for (const status of ["active", "trialing", "past_due", "unpaid"]) {
+      assert.equal(checkoutGuard({ stripeSubscriptionId: "sub_1", subscriptionStatus: status }).kind, "refuse", status);
+    }
+    assert.deepEqual(checkoutGuard({ stripeSubscriptionId: "sub_1", subscriptionStatus: "incomplete" }), { kind: "replace-incomplete", subscriptionId: "sub_1" });
+    assert.equal(checkoutGuard({ stripeSubscriptionId: null, subscriptionStatus: null }).kind, "ok");
+    assert.equal(checkoutGuard({ stripeSubscriptionId: "sub_1", subscriptionStatus: "canceled" }).kind, "ok");
+  });
+  await check("a late 'canceled' for an older subscription can't wipe out the current one", () => {
+    assert.equal(supersededSubscription("sub_new", { id: "sub_old", status: "canceled" }), true);
+    assert.equal(supersededSubscription("sub_new", { id: "sub_old", status: "incomplete" }), true);
+    assert.equal(supersededSubscription("sub_new", { id: "sub_new", status: "canceled" }), false, "the current one ending still counts");
+    assert.equal(supersededSubscription("sub_old", { id: "sub_new", status: "active" }), false, "a live replacement is taken");
+    assert.equal(supersededSubscription(null, { id: "sub_1", status: "incomplete" }), false);
   });
   const billingOff = process.env.BILLING_ENFORCED?.trim() !== "1";
 

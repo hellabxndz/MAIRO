@@ -54,6 +54,7 @@ export type MetaConnectCode =
   | "no_page"
   | "link_expired"
   | "wrong_account"
+  | "lost_account"
   | "setup"
   | "unavailable"
   | "unknown";
@@ -134,6 +135,16 @@ export function explainMetaConnect(code: MetaConnectCode, ctx: { returnTo: strin
         code,
         title: "That connection was for a different MAIRO account",
         message: "You may be signed in to MAIRO with another business open. Check which business you're working on, then connect again.",
+        kept: KEPT,
+        fix: again,
+        technical,
+      };
+    case "lost_account":
+      return {
+        code,
+        title: "That Facebook login can't reach the ad account your campaigns are in",
+        // The account id arrives in the URL, so only something shaped like one is repeated back.
+        message: `MAIRO is managing campaigns in ${/^act_\d{1,20}$/.test(technical ?? "") ? `ad account ${technical}` : "the ad account you connected before"}, and this login doesn't have access to it — so MAIRO kept your existing connection rather than lose sight of them. Connect again with the Facebook login that manages that account, or delete those campaigns in MAIRO first (that pauses them in Meta) if you want to move to a different account.`,
         kept: KEPT,
         fix: again,
         technical,
@@ -294,7 +305,7 @@ export const UNEXPECTED: Problem = {
   fix: null,
 };
 
-const CONNECT_CODES: MetaConnectCode[] = ["denied", "permissions", "no_ad_account", "no_page", "link_expired", "wrong_account", "setup", "unavailable", "unknown"];
+const CONNECT_CODES: MetaConnectCode[] = ["denied", "permissions", "no_ad_account", "no_page", "link_expired", "wrong_account", "lost_account", "setup", "unavailable", "unknown"];
 
 /** The connection problem a page was sent back with (?metaError=…), if any. */
 export function connectProblemFromParams(p: { metaError?: string | null; missing?: string | null; metaDetail?: string | null; acct?: string | null }, returnTo: string): Problem | null {
