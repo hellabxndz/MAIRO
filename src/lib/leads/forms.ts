@@ -166,7 +166,7 @@ export async function submitLead(input: {
   slug: string;
   values: Record<string, string>;
   clickId?: string | null;
-}): Promise<SubmitOutcome> {
+}): Promise<SubmitOutcome & { leadId?: string }> {
   const form = await db.leadForm.findUnique({ where: { slug: input.slug } });
   if (!form) return { ok: false, errors: { _form: "This form is no longer available." } };
 
@@ -201,7 +201,7 @@ export async function submitLead(input: {
   // back to the ad that produced it.
   const phone = contact.phone ? normalizePhone(contact.phone) : null;
 
-  await db.lead.create({
+  const lead = await db.lead.create({
     data: {
       organizationId: form.organizationId,
       leadFormId: form.id,
@@ -213,5 +213,5 @@ export async function submitLead(input: {
     },
   });
 
-  return { ok: true, thankYou: form.thankYou };
+  return { ok: true, thankYou: form.thankYou, leadId: lead.id };
 }

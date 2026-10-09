@@ -149,7 +149,8 @@ export async function refreshDecisions(
 }
 
 /** Every account with something running, for the daily cron. */
-export async function refreshAllDecisions(limit = 40): Promise<{ accounts: number; autoApplied: number }> {
+export async function refreshAllDecisions(limit = 40, budgetMs = Number.POSITIVE_INFINITY): Promise<{ accounts: number; autoApplied: number }> {
+  const startedAt = Date.now();
   const orgs = await db.organization.findMany({
     where: { mairoCampaigns: { some: { status: "ACTIVE" } } },
     select: { id: true },
@@ -157,7 +158,12 @@ export async function refreshAllDecisions(limit = 40): Promise<{ accounts: numbe
     take: limit,
   });
   let autoApplied = 0;
+  let accounts = 0;
   for (const o of orgs) {
+    // Out of time: the rest are first in line tomorrow (oldest-checked first),
+    // and anyone opening the dashboard before then is reviewed on the spot.
+    if (Date.now() - startedAt > budgetMs) break;
+    accounts++;
     try {
       const r = await refreshDecisions(o.id, { force: true });
       autoApplied += r.autoApplied;
@@ -165,7 +171,7 @@ export async function refreshAllDecisions(limit = 40): Promise<{ accounts: numbe
       console.error(`Mairo Decisions failed for ${o.id}:`, error);
     }
   }
-  return { accounts: orgs.length, autoApplied };
+  return { accounts, autoApplied };
 }
 
 /**

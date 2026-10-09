@@ -92,6 +92,13 @@ export type DecisionInput = {
   guardrails: Guardrails;
   /** A landing-page check for campaigns where people click and don't convert. */
   landing: Record<string, LandingProbe | null>;
+  /**
+   * What the business itself said about its recent leads (last 30 days):
+   * how many it has marked, and how many of those were spam or not a fit.
+   * Account-wide — a lead belongs to a form, not a campaign. Absent when
+   * nothing has been marked; Meta's lead count is all there is then.
+   */
+  leadQuality?: { marked: number; junk: number; good: number } | null;
 };
 
 /** A figure behind a decision. `metric` names a tooltip in Advanced mode. */

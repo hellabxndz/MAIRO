@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "audit": "tsx scripts/audit.ts",
     "check:budget": "tsx scripts/check-budget-math.ts",
     "check:entitlements": "tsx scripts/check-entitlements.ts",
     "check:tracking": "tsx scripts/check-tracking.ts",
@@ -52,6 +53,8 @@
     "check:lead-outcomes": "tsx scripts/check-lead-outcomes.ts",
     "check:success": "tsx scripts/check-success.ts",
     "check:team": "tsx scripts/check-team.ts",
+    "check:live-meta": "tsx scripts/check-live-meta.ts",
+    "check:lead-report": "tsx scripts/check-lead-report.ts",
     "check:business": "tsx scripts/check-business.ts",
     "check:ad-score": "tsx scripts/check-ad-score.ts"
   },

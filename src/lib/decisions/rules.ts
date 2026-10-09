@@ -502,6 +502,18 @@ function shiftBudget(input: DecisionInput): DecisionDraft[] {
   return out;
 }
 
+/**
+ * The business's verdict on its recent leads: "poor" when at least half of
+ * five or more marked leads were spam or not a fit, "good" when at least half
+ * were good, booked or customers, otherwise null (not enough marked to say).
+ */
+export function leadQualityCheck(q: DecisionInput["leadQuality"]): "poor" | "good" | null {
+  if (!q || q.marked < 5) return null;
+  if (q.junk / q.marked >= 0.5) return "poor";
+  if (q.good / q.marked >= 0.5) return "good";
+  return null;
+}
+
 /** A campaign paying for itself against the customer's own targets: offer more budget. */
 function scaleWinners(input: DecisionInput): DecisionDraft[] {
   const { now, guardrails: g } = input;
@@ -526,6 +538,11 @@ function scaleWinners(input: DecisionInput): DecisionDraft[] {
     if (!byRoas && !byCpa) continue;
     // Only if it's actually using what it has.
     if ((c.week?.spendCents ?? 0) < c.dailyBudgetCents * 7 * 0.7) continue;
+    // Cheap leads aren't good leads if the business says they're junk: when
+    // at least half of the leads it has marked lately were spam or not a fit,
+    // Meta's count isn't a reason to spend more.
+    const quality = c.objective === "LEADS" ? leadQualityCheck(input.leadQuality) : null;
+    if (quality === "poor") continue;
 
     let raise = roundDollars(c.dailyBudgetCents * Math.min(0.2, g.maxDailyIncreasePercent / 100));
     if (g.maxDailyBudgetCents !== null) raise = Math.min(raise, roundDollars(g.maxDailyBudgetCents - totalDaily));
@@ -555,6 +572,9 @@ function scaleWinners(input: DecisionInput): DecisionDraft[] {
         ...(cpr !== null ? [{ label: `Cost per ${word}`, value: usd(cpr), advancedLabel: "CPA (7d)" }] : []),
         { label: `${word[0].toUpperCase()}${word.slice(1)}s this week`, value: String(r) },
         { label: "Spent of what it could", value: `${usd(c.week?.spendCents ?? 0)} of ${usd(c.dailyBudgetCents * 7)}` },
+        ...(quality === "good" && input.leadQuality
+          ? [{ label: "Leads you marked good (30 days)", value: `${input.leadQuality.good} of ${input.leadQuality.marked}` }]
+          : []),
       ],
       changes: [
         {

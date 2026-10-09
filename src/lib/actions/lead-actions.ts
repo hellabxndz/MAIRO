@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/leads/forms";
 import { validateFields, type LeadField } from "@/lib/leads/fields";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
+import { reportLeadToMeta } from "@/lib/leads/report";
 import { LEAD_OUTCOMES } from "@/lib/leads/outcomes";
 import type { LeadStatus } from "@/generated/prisma/enums";
 
@@ -23,13 +25,20 @@ import type { LeadStatus } from "@/generated/prisma/enums";
  * only thing identifying the form, which is why it is random rather than
  * derived from the business name, and why every answer is re-validated
  * server-side against the question that asked it.
+ *
+ * The lead is then reported to Meta after the answer has gone back, so the
+ * person who filled the form in never waits on Meta.
  */
 export async function submitLeadAction(input: {
   slug: string;
   values: Record<string, string>;
   clickId?: string | null;
 }): Promise<SubmitOutcome> {
-  return submitLead(input);
+  const result = await submitLead(input);
+  if (!result.ok) return result;
+  const leadId = result.leadId;
+  if (leadId) after(() => reportLeadToMeta(leadId).then(() => undefined));
+  return { ok: true, thankYou: result.thankYou };
 }
 
 /** Rewrites a form's questions. Owner of the organization only. */

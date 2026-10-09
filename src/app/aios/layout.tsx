@@ -10,6 +10,7 @@ const NAV = [
   { href: "/aios/creatives", label: "Creative pipeline" },
   { href: "/aios/copilot", label: "Copilot" },
   { href: "/aios/setup", label: "Setup check" },
+  { href: "/aios/meta-check", label: "Live Meta check" },
   { href: "/aios/meta-intelligence", label: "Meta Intelligence" },
 ];
 

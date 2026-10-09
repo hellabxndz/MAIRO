@@ -198,6 +198,17 @@ console.log("\n— raising a winner's budget —");
   ok("cheap results alone, with no return or target to judge by, don't earn more budget", !decide(input([noRevenue])).decisions.some((x) => x.kind === "scale-winner"));
   const capped = decide(input([winner], { guardrails: { ...DEFAULT_GUARDRAILS, maxDailyBudgetCents: 4000 } }));
   ok("the daily maximum stops a raise it would break", !capped.decisions.some((x) => x.kind === "scale-winner"));
+
+  // Cheap leads aren't good leads when the business says they're junk.
+  const leadWinner = campaign({ objective: "LEADS", dailyBudgetCents: 4000, week: m({ spendCents: 27000, conversions: 30 }) });
+  const target = { ...DEFAULT_GUARDRAILS, maxCpaCents: 2000 };
+  const scales = (q: DecisionInput["leadQuality"]) => decide(input([leadWinner], { guardrails: target, leadQuality: q })).decisions.find((x) => x.kind === "scale-winner");
+  ok("leads well under the cost limit earn a raise when nothing has been marked", Boolean(scales(null)));
+  ok("not when most of the leads the business marked were spam or not a fit", !scales({ marked: 10, junk: 6, good: 4 }));
+  ok("a handful of marked leads isn't enough to overrule Meta's count", Boolean(scales({ marked: 4, junk: 4, good: 0 })));
+  const good = scales({ marked: 10, junk: 2, good: 8 });
+  ok("when they were mostly good, the raise says so", Boolean(good?.evidence.some((e) => e.label.startsWith("Leads you marked good") && e.value === "8 of 10")));
+  ok("a sales campaign isn't held back by lead quality", Boolean(decide(input([winner], { leadQuality: { marked: 10, junk: 9, good: 1 } })).decisions.find((x) => x.kind === "scale-winner")));
 }
 
 console.log("\n— widening an audience —");

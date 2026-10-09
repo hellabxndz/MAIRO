@@ -1726,6 +1726,14 @@ model Lead {
   valueCents      Int?
   statusChangedAt DateTime?
 
+  /// When this lead was reported to Meta as a "Lead" (Conversions API), so
+  /// Meta can count and optimize towards leads that arrive on MAIRO's own
+  /// form — otherwise invisible to it. Null until sent. Only for MAIRO_FORM
+  /// leads: a native form's lead is already Meta's.
+  metaReportedAt  DateTime?
+  /// Why it couldn't be sent, or a warning about how well it can be matched.
+  metaReportError String?   @db.Text
+
   createdAt DateTime @default(now())
 
   @@index([organizationId, createdAt])

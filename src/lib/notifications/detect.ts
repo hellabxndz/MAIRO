@@ -254,17 +254,28 @@ async function detectDisconnected(
  * performance fetch, and a parallel sweep across every account is how an
  * operator discovers a rate limit.
  */
-export async function detectAll(limit = 50): Promise<DetectResult> {
+export async function detectAll(limit = 50, budgetMs = Number.POSITIVE_INFINITY): Promise<DetectResult> {
   const total: DetectResult = { found: 0, created: 0 };
+  const startedAt = Date.now();
 
+  // Least recently checked first, so with more businesses than one night can
+  // reach, the overnight check rotates through all of them instead of
+  // checking the same ones every night.
   const organizations = await db.organization.findMany({
     where: { mairoCampaigns: { some: { status: "ACTIVE" } } },
     select: { id: true },
+    orderBy: { spendProtection: { checkedAt: { sort: "asc", nulls: "first" } } },
     take: limit,
   });
 
   for (const org of organizations) {
+    if (Date.now() - startedAt > budgetMs) break;
     try {
+      await db.spendProtection.upsert({
+        where: { organizationId: org.id },
+        create: { organizationId: org.id, checkedAt: new Date() },
+        update: { checkedAt: new Date() },
+      });
       const one = await detectFor(org.id);
       total.found += one.found;
       total.created += one.created;

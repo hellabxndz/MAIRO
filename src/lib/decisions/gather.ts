@@ -178,5 +178,17 @@ export async function gatherDecisionInput(organizationId: string, now = new Date
       }),
   );
 
-  return { now, campaigns: snapshots, guardrails, landing };
+  // The business's own word on its recent leads, so a campaign Meta says is
+  // bringing in cheap leads isn't given more money when the business has been
+  // marking those leads as junk.
+  const marked = await db.lead.groupBy({
+    by: ["status"],
+    where: { organizationId, createdAt: { gte: new Date(now.getTime() - 30 * 86_400_000) }, status: { not: "NEW" } },
+    _count: { _all: true },
+  });
+  const count = (statuses: string[]) => marked.filter((m) => statuses.includes(m.status)).reduce((n, m) => n + m._count._all, 0);
+  const total = count(["QUALIFIED", "BOOKED", "WON", "LOST", "SPAM"]);
+  const leadQuality = total > 0 ? { marked: total, junk: count(["LOST", "SPAM"]), good: count(["QUALIFIED", "BOOKED", "WON"]) } : null;
+
+  return { now, campaigns: snapshots, guardrails, landing, leadQuality };
 }
