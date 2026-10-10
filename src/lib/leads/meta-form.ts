@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { metaGraphRequest } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
+import { pageAccessToken } from "@/lib/meta/page-token";
 import { hashEmail, hashPhone } from "@/lib/tracking/hash";
 import { normalizePhone } from "@/lib/campaigns/destination";
 import { contactFrom, toMetaQuestion, type LeadField } from "@/lib/leads/fields";
@@ -69,10 +70,18 @@ export async function pushFormToMeta(leadFormId: string): Promise<MetaFormResult
   const fields = parseFields(form.fieldsJson);
   if (fields.length === 0) return { ok: false, error: "This form has no questions yet." };
 
+  // An instant form is created as the Page, with the Page's own token (see
+  // page-token.ts); the person's token gets Meta's code 210.
+  const page = await pageAccessToken(connection.pageId, connection.accessToken);
+  if (!page.ok) {
+    await db.leadForm.update({ where: { id: leadFormId }, data: { metaError: page.error } }).catch(() => undefined);
+    return { ok: false, error: page.error };
+  }
+
   try {
     const res = await metaGraphRequest<{ id: string }>(`/${connection.pageId}/leadgen_forms`, {
       method: "POST",
-      accessToken: connection.accessToken,
+      accessToken: page.token,
       params: {
         name: form.name.slice(0, 200),
         // Meta refuses a form without one, and it is the right refusal — the
@@ -149,9 +158,14 @@ export async function syncMetaLeads(
 
   const fields = parseFields(form.fieldsJson);
 
+  // The form belongs to the Page, so its leads are read as the Page too.
+  if (!connection.pageId) return { ok: false, error: "No Facebook Page is picked yet. Choose one on the Meta connection screen first." };
+  const page = await pageAccessToken(connection.pageId, connection.accessToken);
+  if (!page.ok) return { ok: false, error: page.error };
+
   try {
     const res = await metaGraphRequest<{ data?: MetaLead[] }>(`/${form.metaFormId}/leads`, {
-      accessToken: connection.accessToken,
+      accessToken: page.token,
       params: {
         fields: "id,created_time,field_data,campaign_id",
         limit: 200,

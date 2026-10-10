@@ -1,5 +1,6 @@
 import { metaGraphRequest } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
+import { pageAccessToken } from "@/lib/meta/page-token";
 import { findInstagramAccount } from "@/lib/instagram/publish";
 import type { PagePost } from "@/lib/campaigns/sales-source";
 
@@ -60,6 +61,10 @@ export async function listPagePosts(
     };
   }
 
+  // Meta answers this only when asked as the Page (see page-token.ts).
+  const page = await pageAccessToken(connection.pageId, connection.accessToken);
+  if (!page.ok) return { ok: false, error: page.error };
+
   try {
     const res = await metaGraphRequest<{
       data?: {
@@ -70,7 +75,7 @@ export async function listPagePosts(
         created_time?: string;
       }[];
     }>(`/${connection.pageId}/published_posts`, {
-      accessToken: connection.accessToken,
+      accessToken: page.token,
       params: {
         fields: "id,message,full_picture,permalink_url,created_time",
         limit,
