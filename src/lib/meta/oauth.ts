@@ -1,4 +1,4 @@
-import { configuredOrigin } from "@/lib/canonical-host";
+import { configuredOrigin, requestOrigin } from "@/lib/canonical-host";
 import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 
 // business_management is here for a reason that is not obvious from grepping
@@ -162,9 +162,15 @@ function requireEnv(name: string): string {
 // The path must stay in sync with src/app/api/meta/callback/route.ts.
 export const META_CALLBACK_PATH = "/api/meta/callback";
 
-export function metaRedirectUri(): string {
+export function metaRedirectUri(origin?: string | null): string {
   const explicit = process.env.META_REDIRECT_URI?.trim();
   if (explicit) return explicit.replace(/\/+$/, "");
+
+  // The address the visitor is on, so Facebook brings them back to where the
+  // login started (see requestOrigin). The start and the finish both pass it,
+  // and Meta requires the two to match exactly.
+  const here = requestOrigin(origin);
+  if (here) return `${here}${META_CALLBACK_PATH}`;
 
   // The site's own address, when one is set, so moving to a custom domain is
   // one setting rather than three. Vercel's production-domain variable is the
@@ -186,9 +192,9 @@ export function metaRedirectUri(): string {
   );
 }
 
-export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean; rerequest?: boolean } = {}): string {
+export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean; rerequest?: boolean; origin?: string } = {}): string {
   const appId = requireEnv("META_APP_ID");
-  const redirectUri = metaRedirectUri();
+  const redirectUri = metaRedirectUri(opts.origin);
 
   const url = new URL(`https://www.facebook.com/${graphApiVersion()}/dialog/oauth`);
   url.searchParams.set("client_id", appId);
@@ -208,10 +214,10 @@ export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; i
 
 type TokenResponse = { access_token: string; token_type: string; expires_in?: number };
 
-export async function exchangeCodeForToken(code: string): Promise<TokenResponse> {
+export async function exchangeCodeForToken(code: string, origin?: string): Promise<TokenResponse> {
   const appId = requireEnv("META_APP_ID");
   const appSecret = requireEnv("META_APP_SECRET");
-  const redirectUri = metaRedirectUri();
+  const redirectUri = metaRedirectUri(origin);
 
   return metaGraphRequest<TokenResponse>("/oauth/access_token", {
     params: {

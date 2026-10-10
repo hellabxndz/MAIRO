@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   });
 
   try {
-    return NextResponse.redirect(buildGtmAuthUrl(state));
+    return NextResponse.redirect(buildGtmAuthUrl(state, req.nextUrl.origin));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Couldn't start the Google connection.";
     return NextResponse.redirect(

@@ -1,5 +1,6 @@
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { CopyField } from "@/components/copy-field";
+import { headers } from "next/headers";
 import { metaRedirectUri } from "@/lib/meta/oauth";
 import { addressesToRegister } from "@/lib/domain";
 import { siteUrl } from "@/lib/site";
@@ -96,8 +97,13 @@ const CHECKS: { name: string; label: string; why: string; optional?: true }[] = 
 export default async function SetupPage() {
   let redirectUri: string | null = null;
   let redirectError: string | null = null;
+  // The address this page is open on — the one a Facebook login started
+  // from here would return to.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const here = host ? `${h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")}://${host}` : null;
   try {
-    redirectUri = metaRedirectUri();
+    redirectUri = metaRedirectUri(here);
   } catch (error) {
     redirectError = error instanceof Error ? error.message : "Could not determine redirect URI";
   }
@@ -131,7 +137,9 @@ export default async function SetupPage() {
         <p className="mt-2 text-sm leading-relaxed text-neutral-400">
           Paste this into your Meta app under{" "}
           <span className="text-neutral-200">Facebook Login → Settings → Valid OAuth Redirect URIs</span>{" "}
-          and save. Facebook compares it character for character — copy it, don&apos;t retype it.
+          and save. Facebook compares it character for character — copy it, don&apos;t retype it. It&apos;s
+          the address for the site you&apos;re on now: each address customers use (the vercel.app one, and
+          www.mairo.io once you switch) needs its own entry.
         </p>
         <div className="mt-4">
           {redirectUri ? (

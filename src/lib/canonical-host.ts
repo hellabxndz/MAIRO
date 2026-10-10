@@ -20,6 +20,31 @@ export function configuredOrigin(raw: string | undefined): URL | null {
   return url;
 }
 
+/**
+ * The address a request arrived on, as an origin a login may return to — or
+ * null when it isn't one.
+ *
+ * Facebook and Google send the visitor back to the address in the login link,
+ * and that must be the address the login started on: the check that the login
+ * is genuine lives in a cookie, and a cookie stays on the address that set it.
+ * So the return address is the one the visitor is on, not whichever of the
+ * site's addresses Vercel calls "production" (with a custom domain added, that
+ * changes on its own). Only https counts, plus plain http on this computer for
+ * development. The provider still refuses any address not registered with it.
+ */
+export function requestOrigin(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+  if (url.protocol === "https:" || (url.protocol === "http:" && local)) return url.origin;
+  return null;
+}
+
 type HostRedirect = {
   source: string;
   missing: { type: "host"; value: string }[];

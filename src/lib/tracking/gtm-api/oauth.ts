@@ -1,4 +1,4 @@
-import { configuredOrigin } from "@/lib/canonical-host";
+import { configuredOrigin, requestOrigin } from "@/lib/canonical-host";
 // Google's OAuth, for the Tag Manager API.
 //
 // The third OAuth flow in this codebase and the one with the sharpest edges,
@@ -72,9 +72,14 @@ function requireEnv(name: string): string {
  * including the scheme and any trailing slash, and rejects the whole flow on a
  * mismatch with an error that names redirect_uri and nothing else useful.
  */
-export function gtmRedirectUri(): string {
+export function gtmRedirectUri(origin?: string | null): string {
   const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
   if (explicit) return explicit.replace(/\/+$/, "");
+
+  // The address the visitor is on, so Google brings them back to where the
+  // connection started (see requestOrigin in canonical-host.ts).
+  const here = requestOrigin(origin);
+  if (here) return `${here}${GTM_CALLBACK_PATH}`;
 
   // The site's own address, when one is set, so moving to a custom domain is
   // one setting rather than three. Vercel's production-domain variable is the
@@ -95,10 +100,10 @@ export function gtmRedirectUri(): string {
   );
 }
 
-export function buildGtmAuthUrl(state: string): string {
+export function buildGtmAuthUrl(state: string, origin?: string): string {
   const url = new URL(AUTH_URL);
   url.searchParams.set("client_id", requireEnv("GOOGLE_CLIENT_ID"));
-  url.searchParams.set("redirect_uri", gtmRedirectUri());
+  url.searchParams.set("redirect_uri", gtmRedirectUri(origin));
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", GTM_SCOPES.join(" "));
   url.searchParams.set("state", state);
@@ -138,13 +143,13 @@ async function tokenRequest(params: Record<string, string>): Promise<GoogleToken
   return json;
 }
 
-export async function exchangeGoogleCode(code: string): Promise<GoogleTokenResponse> {
+export async function exchangeGoogleCode(code: string, origin?: string): Promise<GoogleTokenResponse> {
   return tokenRequest({
     client_id: requireEnv("GOOGLE_CLIENT_ID"),
     client_secret: requireEnv("GOOGLE_CLIENT_SECRET"),
     code,
     grant_type: "authorization_code",
-    redirect_uri: gtmRedirectUri(),
+    redirect_uri: gtmRedirectUri(origin),
   });
 }
 

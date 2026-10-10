@@ -9,7 +9,7 @@
 //   npm run check:domain   (pure; no network)
 
 import assert from "node:assert/strict";
-import { canonicalHostRedirects, configuredOrigin } from "../src/lib/canonical-host";
+import { canonicalHostRedirects, configuredOrigin, requestOrigin } from "../src/lib/canonical-host";
 import { addressesToRegister } from "../src/lib/domain";
 import { metaRedirectUri } from "../src/lib/meta/oauth";
 import { gtmRedirectUri } from "../src/lib/tracking/gtm-api/oauth";
@@ -91,6 +91,40 @@ check("the login return addresses follow the site's address, and an explicit set
       if (v === undefined) delete process.env[k]; else process.env[k] = v;
     }
   }
+});
+
+check("a login returns to the address it started on, whatever Vercel calls production", () => {
+  const keep = { a: process.env.NEXT_PUBLIC_APP_URL, m: process.env.META_REDIRECT_URI, g: process.env.GOOGLE_REDIRECT_URI, v: process.env.VERCEL_PROJECT_PRODUCTION_URL };
+  try {
+    delete process.env.META_REDIRECT_URI;
+    delete process.env.GOOGLE_REDIRECT_URI;
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    // The case that broke: www.mairo.io added in Vercel became the production
+    // domain, while customers still use the .vercel.app address.
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "www.mairo.io";
+    const here = "https://mairo-three.vercel.app";
+    assert.equal(metaRedirectUri(here), "https://mairo-three.vercel.app/api/meta/callback");
+    assert.equal(gtmRedirectUri(here), "https://mairo-three.vercel.app/api/gtm/callback");
+    process.env.NEXT_PUBLIC_APP_URL = "https://www.mairo.io";
+    assert.equal(metaRedirectUri(here), "https://mairo-three.vercel.app/api/meta/callback", "the visitor's own address beats the configured one");
+    assert.equal(metaRedirectUri("https://www.mairo.io"), "https://www.mairo.io/api/meta/callback");
+    assert.equal(metaRedirectUri(), "https://www.mairo.io/api/meta/callback", "with no request, the configured address");
+    process.env.META_REDIRECT_URI = "https://mairo-three.vercel.app/api/meta/callback";
+    assert.equal(metaRedirectUri("https://www.mairo.io"), "https://mairo-three.vercel.app/api/meta/callback", "a pinned address still wins");
+  } finally {
+    for (const [k, v] of [["NEXT_PUBLIC_APP_URL", keep.a], ["META_REDIRECT_URI", keep.m], ["GOOGLE_REDIRECT_URI", keep.g], ["VERCEL_PROJECT_PRODUCTION_URL", keep.v]] as const) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  }
+});
+
+check("only https (or plain http on this computer) counts as a return address", () => {
+  assert.equal(requestOrigin("https://mairo-three.vercel.app/dashboard/meta?x=1"), "https://mairo-three.vercel.app");
+  assert.equal(requestOrigin("http://localhost:3100"), "http://localhost:3100");
+  assert.equal(requestOrigin("http://evil.example"), null);
+  assert.equal(requestOrigin("javascript:alert(1)"), null);
+  assert.equal(requestOrigin(""), null);
+  assert.equal(requestOrigin(null), null);
 });
 
 check("www as the main address: the apex and the .vercel.app domain are sent to it, /api stays", () => {

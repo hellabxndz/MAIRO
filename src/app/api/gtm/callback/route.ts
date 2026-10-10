@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const token = await exchangeGoogleCode(code);
+    const token = await exchangeGoogleCode(code, req.nextUrl.origin);
     const scopes = googleScopes(token);
 
     // Granting nothing useful is not a connection worth keeping: it would sit

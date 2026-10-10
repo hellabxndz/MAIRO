@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await completeMetaConnection(organizationId, code);
+    const result = await completeMetaConnection(organizationId, code, origin);
     if (!result.ok) return failed(origin, returnTo, result.code, { missing: result.missing, technical: result.technical });
 
     // A real connection makes "looking around first" moot — drop the flag so

@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     // posting, each asked for on its own, never in the everyday dialog.
     const also = req.nextUrl.searchParams.get("also");
     // ?rerequest=1: connecting again after switching a permission off.
-    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram", rerequest: req.nextUrl.searchParams.get("rerequest") === "1" });
+    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram", rerequest: req.nextUrl.searchParams.get("rerequest") === "1", origin: req.nextUrl.origin });
     return NextResponse.redirect(authUrl);
   } catch (error) {
     // Usually a missing setting on this deployment. The business goes back

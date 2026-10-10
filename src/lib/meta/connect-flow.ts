@@ -33,17 +33,17 @@ export async function missingPermissions(accessToken: string, asked: string[] = 
   }
 }
 
-export async function completeMetaConnection(organizationId: string, code: string): Promise<ConnectResult> {
+export async function completeMetaConnection(organizationId: string, code: string, origin?: string): Promise<ConnectResult> {
   let token: string;
   let expiresIn: number | undefined;
   try {
-    const shortLived = await exchangeCodeForToken(code);
+    const shortLived = await exchangeCodeForToken(code, origin);
     const longLived = await exchangeForLongLivedToken(shortLived.access_token);
     token = longLived.access_token;
     expiresIn = longLived.expires_in;
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error);
-    return { ok: false, code: classifyMetaConnect({ message: raw }), technical: explainMetaSetupError(raw) };
+    return { ok: false, code: classifyMetaConnect({ message: raw }), technical: explainMetaSetupError(raw, origin) };
   }
 
   const missing = await missingPermissions(token);
@@ -106,7 +106,7 @@ export async function completeMetaConnection(organizationId: string, code: strin
  * whoever runs this deployment, shown under "Details for support". The
  * business sees the plain explanation instead.
  */
-export function explainMetaSetupError(raw: string): string {
+export function explainMetaSetupError(raw: string, origin?: string): string {
   if (/client secret/i.test(raw)) {
     return "Meta rejected this app's client secret. The META_APP_SECRET set on this deployment doesn't match the App Secret on the Meta app — most often because the secret was reset in Meta and never updated here, or it was updated but the project hasn't been redeployed since. Copy it again from App settings > Basic, save it, and redeploy.";
   }
@@ -114,7 +114,7 @@ export function explainMetaSetupError(raw: string): string {
     return "This Meta app is still unpublished, so only people with a role on it (Administrator, Developer or Tester) can connect. Either add this Facebook account under App roles, or finish App Review to open it to everyone.";
   }
   if (/redirect|url is blocked|uri/i.test(raw)) {
-    return `Meta blocked the redirect. Register exactly this URL under Valid OAuth Redirect URIs on the Meta app, with no trailing slash: ${safeRedirectUri()}`;
+    return `Meta blocked the redirect. Register exactly this URL under Valid OAuth Redirect URIs on the Meta app, with no trailing slash: ${safeRedirectUri(origin)}`;
   }
   if (/invalid scope|permission|ads_management|business_management/i.test(raw)) {
     return "Meta refused one of the permissions this app asks for. A permission App Review hasn't approved only works for accounts with a role on the app — check META_SCOPES isn't asking for one (such as ads_read).";
@@ -122,9 +122,9 @@ export function explainMetaSetupError(raw: string): string {
   return raw;
 }
 
-function safeRedirectUri(): string {
+function safeRedirectUri(origin?: string): string {
   try {
-    return metaRedirectUri();
+    return metaRedirectUri(origin);
   } catch {
     return "(META_REDIRECT_URI isn't set)";
   }
