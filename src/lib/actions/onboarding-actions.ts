@@ -147,12 +147,12 @@ export async function completeOnboardingAction(
   // The intake is the record from here on; the half-finished answers are done with.
   await db.organization.update({ where: { id: organizationId }, data: { onboardingDraft: Prisma.DbNull } });
 
-  // A business signing itself up gets the free plan next: Mairo writes it,
+  // A business signing itself up gets the free plan next: MAIRO writes it,
   // they review, change and approve it, and only then choose a subscription.
   // A freelancer's client keeps the old path — its freelancer already pays.
   // A lead form's questions are asked after activation, from the launch checklist.
-  // From here this business needs a subscription before Mairo executes
-  // anything paid: the free plan shows what Mairo would do, paying makes it do it.
+  // From here this business needs a subscription before MAIRO executes
+  // anything paid: the free plan shows what MAIRO would do, paying makes it do it.
   if (!organization.parentId) {
     await db.organization.update({ where: { id: organizationId }, data: { paymentRequired: true } });
     redirect("/plan");

@@ -89,7 +89,7 @@ export const MAIRO_SYSTEMS = [
   "Meta connection and permissions",
   "Lead forms",
   "Tracking and conversions",
-  "Mairo Decisions and optimization",
+  "MAIRO Decisions and optimization",
   "Strategy Engine",
   "Reporting and analytics",
   "Billing and ad account payments",

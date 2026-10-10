@@ -12,7 +12,7 @@ import { notify } from "@/lib/notifications/notify";
 // all kept, so choosing a plan again picks up where they left off.
 
 export const TRIAL_UNPAID_REASON =
-  "Your free trial ended and the payment didn't go through, so Mairo paused your campaigns. Your plan and settings are saved — choose a plan to turn them back on.";
+  "Your free trial ended and the payment didn't go through, so MAIRO paused your campaigns. Your plan and settings are saved — choose a plan to turn them back on.";
 
 export const STOPPED_STATUSES = ["past_due", "unpaid", "incomplete_expired", "canceled"];
 
@@ -34,7 +34,7 @@ export async function stopUnpaidExecution(organizationId: string, reason = TRIAL
         failed++;
         await db.platformCampaign.update({
           where: { id: row.id },
-          data: { lastError: `Mairo couldn't pause this on Meta: ${result && !result.ok ? result.error.message : "not connected"}. Pause it in Ads Manager to stop spending.` },
+          data: { lastError: `MAIRO couldn't pause this on Meta: ${result && !result.ok ? result.error.message : "not connected"}. Pause it in Ads Manager to stop spending.` },
         });
         continue;
       }
@@ -60,9 +60,9 @@ export async function stopUnpaidExecution(organizationId: string, reason = TRIAL
   await notify({
     organizationId,
     kind: "PAYMENT_ISSUE",
-    title: failed ? "Payment didn't go through — some campaigns need pausing in Ads Manager" : "Payment didn't go through — Mairo paused your campaigns",
+    title: failed ? "Payment didn't go through — some campaigns need pausing in Ads Manager" : "Payment didn't go through — MAIRO paused your campaigns",
     body: failed
-      ? `${reason} ${failed} campaign${failed === 1 ? "" : "s"} couldn't be paused from Mairo; pause ${failed === 1 ? "it" : "them"} in Meta Ads Manager to stop spending.`
+      ? `${reason} ${failed} campaign${failed === 1 ? "" : "s"} couldn't be paused from MAIRO; pause ${failed === 1 ? "it" : "them"} in Meta Ads Manager to stop spending.`
       : reason,
     actionLabel: "Choose a plan",
     actionHref: "/plan/activate",

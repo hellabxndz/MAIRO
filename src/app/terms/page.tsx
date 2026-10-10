@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
+import { STARTER_TRIAL_DAYS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Terms of Service · MAIRO",
@@ -63,10 +64,16 @@ export default function TermsPage() {
 
       <Section heading="Subscription and payment">
         <p>
-          Paid plans are billed monthly in advance and renew until you cancel. Cancelling stops the
-          next renewal; it does not refund the current month, and your plan stays active until the
-          end of the period you paid for. Prices can change, but we will tell you before a change
-          affects you.
+          Your advertising plan is free to make and needs no card. Paid plans are billed monthly in
+          advance and renew until you cancel. Cancelling stops the next renewal; it does not refund
+          the current month, and your plan stays active until the end of the period you paid for.
+          Prices can change, but we will tell you before a change affects you.
+        </p>
+        <p>
+          The Starter plan begins with a {STARTER_TRIAL_DAYS}-day free trial. You enter a card at
+          checkout; it isn&apos;t charged during the trial, and the first monthly payment is taken when
+          the trial ends unless you cancel before then. Growth and Scale have no trial and are charged
+          when you subscribe. Your Meta ad spend is never part of the trial or the subscription.
         </p>
         <p>
           When a paid subscription ends, we stop building, changing and launching campaigns.

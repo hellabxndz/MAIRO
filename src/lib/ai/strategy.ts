@@ -21,7 +21,7 @@ import {
   type StrategyContent,
 } from "@/lib/strategy/plan-logic";
 
-// Writing the free Mairo Advertising Plan, and revising it when the business
+// Writing the free MAIRO Advertising Plan, and revising it when the business
 // asks. The AI writes the words — audience, product, creative, hooks, website
 // advice. The numbers that follow from the budget (split, structure,
 // retargeting) are worked out by plan-logic, so they always agree with it.
@@ -82,10 +82,10 @@ const generated = z.object({
   website: z.array(z.string()).min(1).max(5).describe("Concrete things to fix or add on the website/landing page before ads run."),
 });
 
-const SYSTEM = `You are Mairo's advertising strategist. You write a first Meta (Facebook + Instagram) advertising plan for a small business owner who has never run ads.
+const SYSTEM = `You are MAIRO's advertising strategist. You write a first Meta (Facebook + Instagram) advertising plan for a small business owner who has never run ads.
 
 Rules:
-- Mairo only runs Facebook and Instagram. Never mention TikTok, Google or other networks.
+- MAIRO only runs Facebook and Instagram. Never mention TikTok, Google or other networks.
 - Be realistic for the budget. Never promise results or quote expected numbers of sales, leads or ROAS.
 - Only use facts the business gave or the website showed. Never invent prices, discounts, awards, reviews or claims.
 - An offer must come from the business's own words or website; if there is none, return an empty offer and say in offerWhy that the ads lead with the product.
@@ -152,10 +152,10 @@ export function plainStrategy(i: StrategyInput): StrategyContent {
     campaignType: type,
     campaignTypeWhy: `Fits the goal and how your customers get in touch: ${campaignTypeInfo(type).label.split(" — ")[1] ?? ""}.`,
     product,
-    productWhy: i.offering ? "What you told Mairo you want to advertise." : "Your business as a whole — tell Mairo if you'd rather lead with one product.",
+    productWhy: i.offering ? "What you told MAIRO you want to advertise." : "Your business as a whole — tell MAIRO if you'd rather lead with one product.",
     offer: i.offer ?? "",
     offerWhy: i.offer ? "The offer you mentioned at setup." : "No offer yet — the ads lead with the product itself.",
-    creativeStrategy: "Show the product or service clearly in the first second, say who it's for, and end with one simple next step. Mairo tests a few versions and keeps the one people respond to.",
+    creativeStrategy: "Show the product or service clearly in the first second, say who it's for, and end with one simple next step. MAIRO tests a few versions and keeps the one people respond to.",
     concepts: [
       { title: "The product up close", description: `A clear photo or short video of ${product}, with one line on why it's worth it.`, format: "image" },
       { title: "Before and after", description: "Show the problem your customer has, then how things look once you've helped.", format: "video" },
@@ -169,7 +169,7 @@ export function plainStrategy(i: StrategyInput): StrategyContent {
     website: i.siteIssues.length
       ? i.siteIssues.slice(0, 5).map((s) => s.fix)
       : [
-          "General advice (Mairo hasn't read your site yet): make sure the page the ad opens says the same thing as the ad.",
+          "General advice (MAIRO hasn't read your site yet): make sure the page the ad opens says the same thing as the ad.",
           "Put one clear button near the top — Buy, Book or Call.",
           "Check the page loads quickly on a phone; most people will see your ads there.",
         ],
@@ -194,7 +194,7 @@ export async function generateStrategy(i: StrategyInput): Promise<{ plan: Strate
       model: agentModel,
       schema: generated,
       system: SYSTEM,
-      prompt: `${strategyFacts(i)}\n\nWrite this business's first Mairo Advertising Plan. Keep the goal they chose (${i.goal}).`,
+      prompt: `${strategyFacts(i)}\n\nWrite this business's first MAIRO Advertising Plan. Keep the goal they chose (${i.goal}).`,
     });
     const goal = goalFor(i);
     const type = campaignTypeInfo(object.campaignType).goal === goal ? object.campaignType : defaultCampaignType(goal, i.destination);

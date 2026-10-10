@@ -1,5 +1,6 @@
 import { googleSignInEnabled } from "@/lib/google-sign-in";
 import { signInErrorMessage } from "@/lib/google-sign-in-rules";
+import { AuthCard } from "@/components/auth-card";
 import { FreelancerSignUpForm } from "./freelancer-sign-up-form";
 
 // Server half of the studio sign-up: whether Google is configured, and any
@@ -7,9 +8,11 @@ import { FreelancerSignUpForm } from "./freelancer-sign-up-form";
 export default async function Page({ searchParams }: PageProps<"/for-freelancers">) {
   const { error } = await searchParams;
   return (
-    <FreelancerSignUpForm
-      googleEnabled={googleSignInEnabled()}
-      initialError={signInErrorMessage(typeof error === "string" ? error : null)}
-    />
+    <AuthCard>
+      <FreelancerSignUpForm
+        googleEnabled={googleSignInEnabled()}
+        initialError={signInErrorMessage(typeof error === "string" ? error : null)}
+      />
+    </AuthCard>
   );
 }

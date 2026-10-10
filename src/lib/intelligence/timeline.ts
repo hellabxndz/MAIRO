@@ -7,12 +7,12 @@ import { parseChanges } from "@/lib/decisions/store";
 import { usd } from "@/lib/protection/rules";
 
 // Campaign Journey: what has happened to one campaign since it launched, and
-// what Mairo did about it, day by day.
+// what MAIRO did about it, day by day.
 //
-// Every event is a row that exists — the campaign itself, its ads, Mairo
-// Decisions and what came of them, Mairo Activity, Insights, Spend
+// Every event is a row that exists — the campaign itself, its ads, MAIRO
+// Decisions and what came of them, MAIRO Activity, Insights, Spend
 // Protection, the earlier optimizer. Nothing is written for the timeline;
-// it is read from what the rest of Mairo already records.
+// it is read from what the rest of MAIRO already records.
 
 export type TimelineKind = "launch" | "data" | "winner" | "budget" | "creative" | "audience" | "retargeting" | "website" | "warning" | "optimization" | "review";
 
@@ -30,7 +30,7 @@ export type TimelineEvent = {
   body: string;
   /** The figures behind it, for Advanced mode. */
   details: { label: string; value: string }[];
-  /** Mairo did or proposed this. */
+  /** MAIRO did or proposed this. */
   ai: boolean;
 };
 
@@ -131,7 +131,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       kind: "data",
       filters: [],
       title: "Data collection",
-      body: `Mairo gathers early performance signals for the first ${LEARNING_DAYS} days and recommends no changes — Meta is still learning who responds.`,
+      body: `MAIRO gathers early performance signals for the first ${LEARNING_DAYS} days and recommends no changes — Meta is still learning who responds.`,
       details: [{ label: "Learning period", value: `${LEARNING_DAYS} days and $20 spent` }],
       ai: true,
     });
@@ -157,7 +157,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
     const byCategory: Partial<Record<string, TimelineKind>> = { CREATIVE: "creative", TESTING: "creative", AUDIENCE: "audience", RETARGETING: "retargeting", BUDGET: "budget", WEBSITE: "website", NEEDS_ATTENTION: "warning" };
     const kind = d.kind === "scale-winner" ? "winner" : (byCategory[d.category] ?? k.kind);
     const filters = [...new Set([...k.filters, ...(d.category === "WEBSITE" ? (["website"] as const) : []), "ai" as const])];
-    push({ id: `dec:${d.id}`, at: d.createdAt, kind, filters, title: d.title, body: `${d.noticed} Mairo recommended: ${d.recommendation}`, details: [{ label: "What Mairo saw", value: d.noticedAdvanced }], ai: true });
+    push({ id: `dec:${d.id}`, at: d.createdAt, kind, filters, title: d.title, body: `${d.noticed} MAIRO recommended: ${d.recommendation}`, details: [{ label: "What MAIRO saw", value: d.noticedAdvanced }], ai: true });
     if (d.decidedAt && (d.status === "REJECTED" || d.status === "IGNORED")) {
       push({ id: `dec-no:${d.id}`, at: d.decidedAt, kind: "optimization", filters: ["ai"], title: "Recommendation declined", body: `You chose not to: ${d.title.toLowerCase()}.`, details: [], ai: false });
     }
@@ -185,8 +185,8 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       kind: k.kind,
       filters: [...k.filters, "ai"],
       title: i.title,
-      body: `${i.happened} Mairo recommendation: ${i.recommendation}`,
-      details: [{ label: "What Mairo saw", value: i.happenedAdvanced }, ...(i.metric && i.currentValue ? [{ label: i.metric, value: `${i.previousValue ? `${i.previousValue} → ` : ""}${i.currentValue}` }] : [])],
+      body: `${i.happened} MAIRO recommendation: ${i.recommendation}`,
+      details: [{ label: "What MAIRO saw", value: i.happenedAdvanced }, ...(i.metric && i.currentValue ? [{ label: i.metric, value: `${i.previousValue ? `${i.previousValue} → ` : ""}${i.currentValue}` }] : [])],
       ai: true,
     });
   }

@@ -111,7 +111,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // cannot see past this screen at all.
   if (!intake) redirect("/onboarding");
 
-  // FREE shows what Mairo would do; PAID is Mairo doing it. A business that
+  // FREE shows what MAIRO would do; PAID is MAIRO doing it. A business that
   // signed up through the free plan and hasn't subscribed gets its plan, its
   // business, connected accounts and pricing; every page that runs real
   // advertising shows a locked preview instead. The server refuses those

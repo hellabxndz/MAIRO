@@ -57,12 +57,13 @@ export const metadata: Metadata = {
 // Separate from metadata on purpose — Next moved both of these out of it, and
 // leaving colorScheme behind logs a deprecation on every render.
 //
-// The page is dark end to end. Telling the browser so means the scrollbar, the
-// form controls and the space above a bounced scroll are dark too, rather than
-// flashing white on the way in.
+// The site is light. Telling the browser so means the scrollbar, the form
+// controls and the first paint before the stylesheet arrives are light too,
+// rather than flashing dark on the way in. Dark panels set their own scheme
+// in CSS (the classic palette in globals.css).
 export const viewport: Viewport = {
   themeColor: "#ffffff",
-  colorScheme: "dark",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

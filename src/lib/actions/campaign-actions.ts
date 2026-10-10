@@ -138,7 +138,7 @@ export type CampaignActionState =
   | undefined;
 
 /**
- * Creates one Mairo campaign, on however many networks the customer chose.
+ * Creates one MAIRO campaign, on however many networks the customer chose.
  *
  * The shape of this used to be "create a campaign on Meta". The change is not
  * that it loops: it is that the customer's campaign and the networks' campaigns

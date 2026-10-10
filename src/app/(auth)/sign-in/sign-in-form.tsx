@@ -6,9 +6,7 @@ import Link from "next/link";
 import { signInAction } from "@/lib/actions/auth-actions";
 import { signInErrorMessage } from "@/lib/google-sign-in-rules";
 import { GoogleButton, OrDivider } from "@/components/google-button";
-
-const inputClass =
-  "w-full rounded-lg border border-white/10 bg-field px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:border-white/30";
+import { AuthField, PasswordField } from "@/components/auth-field";
 
 export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
   const [state, formAction, pending] = useActionState(signInAction, undefined);
@@ -21,28 +19,24 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-white">Welcome back</h1>
+      <h1 className="mb-1 text-[22px] font-bold tracking-[-0.02em] text-white">Welcome back</h1>
       <p className="mb-6 text-sm text-neutral-400">Sign in to your MAIRO dashboard.</p>
 
       <form action={formAction} className="space-y-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-neutral-400">Email</label>
-          <input
-            name="email"
-            type="email"
-            required
-            className={inputClass}
-            placeholder="you@business.com"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-neutral-400">Password</label>
-          <input name="password" type="password" required className={inputClass} />
-        </div>
+        <AuthField
+          name="email"
+          label="Email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="you@business.com"
+          defaultValue={state?.values?.email}
+        />
+        <PasswordField autoComplete="current-password" />
 
         {error && (
-          <p role="alert" className="text-sm text-red-400">
+          <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/[0.06] px-3 py-2 text-[13.5px] text-red-400">
             {error}
           </p>
         )}
@@ -50,9 +44,9 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-lg bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-3 py-2 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+          className="min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60"
         >
-          {pending ? "Signing in..." : "Sign in"}
+          {pending ? "Signing in…" : "Sign in"}
         </button>
 
         {googleEnabled && (

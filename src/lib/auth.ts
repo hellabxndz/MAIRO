@@ -32,7 +32,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await db.user.findUnique({ where: { email } });
+        // Exact match first; then the same address in any capitalisation, so
+        // "Jane@Shop.com" signs in to the account made as "jane@shop.com" (and
+        // to accounts made before addresses were stored lower-case).
+        const typed = email.trim();
+        const user =
+          (await db.user.findUnique({ where: { email: typed } })) ??
+          (await db.user.findFirst({ where: { email: { equals: typed, mode: "insensitive" } } }));
         if (!user) return null;
         // Someone who signed up with Google has no password, and must not be
         // let in by one. Refused before bcrypt ever sees an empty hash.

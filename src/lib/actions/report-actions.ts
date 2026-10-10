@@ -35,7 +35,7 @@ export async function generateWeeklyReportNowAction(): Promise<{ ok: false; erro
     id = (await generateWeeklyReport(ctx.organizationId, week)).id;
   } catch (error) {
     console.error("Weekly report on demand failed:", error);
-    return { ok: false, error: "Mairo couldn't write the report just now. Try again in a minute." };
+    return { ok: false, error: "MAIRO couldn't write the report just now. Try again in a minute." };
   }
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard");
@@ -112,7 +112,7 @@ export async function revokeShareAction(reportId: string): Promise<{ ok: boolean
   return { ok: res.count > 0 };
 }
 
-/** Switch a lesson off so Mairo stops using it. */
+/** Switch a lesson off so MAIRO stops using it. */
 export async function toggleLearningAction(id: string, active: boolean): Promise<{ ok: boolean }> {
   const ctx = await context();
   if (!ctx) return { ok: false };

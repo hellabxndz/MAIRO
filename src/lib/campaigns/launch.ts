@@ -33,7 +33,7 @@ import { uploadAdVideo, waitForVideo } from "@/lib/meta/videos";
 import { creativeOfAccountAd } from "@/lib/meta/existing-ads";
 import type { CreateAdInput } from "@/lib/ad-platforms/types";
 
-// Turning one Mairo campaign into real campaigns on real networks.
+// Turning one MAIRO campaign into real campaigns on real networks.
 //
 // The hard part here is not the API calls, it is what to do when some of them
 // work and some do not. A customer with a half-launched campaign — a campaign
@@ -161,7 +161,7 @@ export type CampaignAdInput = {
 };
 
 /**
- * Creates the Mairo campaign and everything under it.
+ * Creates the MAIRO campaign and everything under it.
  *
  * Never throws for a network failure — the outcome describes what happened on
  * each one, and the caller renders it.
@@ -1194,7 +1194,7 @@ async function pageIdFor(organizationId: string, platform: AdPlatform): Promise<
  * on the campaign now.
  *
  * The launch builds the same thing inline; this is for changing the audience
- * of an ad set that already exists (Mairo Decisions), so the two can't drift.
+ * of an ad set that already exists (MAIRO Decisions), so the two can't drift.
  */
 export async function metaTargetingForCampaign(
   mairoCampaignId: string,
@@ -1217,7 +1217,7 @@ export async function metaTargetingForCampaign(
  * Builds one more ad in a campaign that is already running, from a CampaignAd
  * row, and switches it on when the campaign is on.
  *
- * Used when a customer approves a new version (Mairo Decisions). The row has
+ * Used when a customer approves a new version (MAIRO Decisions). The row has
  * to exist first; if the network refuses, the caller removes it, so a version
  * never shows in MAIRO that isn't really running.
  */

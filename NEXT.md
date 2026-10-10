@@ -125,7 +125,15 @@ account deletion) holds where your customers are; the "within 30 days"
 backup and log promise — confirm Neon's history retention and Vercel's log
 retention on your plans are 30 days or less; and whether the processors list
 (Meta, Anthropic, OpenAI, Google, Stripe, Twilio, Neon, Vercel) needs data
-processing agreements referenced.
+processing agreements referenced. Also: whether MAIRO is a controller or a
+processor for customers' leads and store shoppers (the privacy policy now says
+those are "held on your behalf" — confirm that's the right legal footing);
+whether the Terms should require customers to have their own lawful basis for
+collecting leads and for sending hashed shopper details, IP addresses and
+click IDs to Meta; whether the policy needs an international-transfer section
+(every processor above is US-based); and which privacy laws (GDPR, UK GDPR,
+CCPA/CPRA) apply to where your first customers are, and whether the "Your
+rights" section needs to name them.
 
 ## TikTok (retired)
 
@@ -185,63 +193,6 @@ Building the domain's reputation (security filters rate new domains low):
 
 Later: a support mailbox on the domain (needs email hosting and MX records) to
 replace the Gmail address — set `NEXT_PUBLIC_SUPPORT_EMAIL`.
-
-**11. Two switches to flip when the time comes.** `META_POSTING_APPROVED=1`
-once Meta approves the posting permissions (round 2) — until then every
-Social page, the pricing page and the privacy policy say publishing is
-waiting for Meta. `NEXT_PUBLIC_SUPPORT_EMAIL` once a monitored mailbox exists
-on a business domain (e.g. on mairo.io); until then the legal pages show the
-current Gmail address. Redeploy after either.
-
-**12. Legal review before charging the first customers.** Have a qualified
-person check: the exact registered name of the operating company (the pages
-say "BLING Marketing"); the missing governing-law/jurisdiction clause in the
-Terms; whether "the current month isn't refunded" (on cancelling and on
-account deletion) holds where your customers are; the "within 30 days"
-backup and log promise — confirm Neon's history retention and Vercel's log
-retention on your plans are 30 days or less; and whether the processors list
-(Meta, Anthropic, OpenAI, Google, Stripe, Twilio, Neon, Vercel) needs data
-processing agreements referenced.
-
-## TikTok (retired)
-
-MAIRO no longer runs TikTok. The `TIKTOK_*` variables in Vercel can be deleted,
-and the pending app on TikTok's developer portal can be withdrawn. The enum
-value and old tables stay so existing rows still load.
-
-## Smaller, whenever
-
-**8. Google Cloud project** for the Tag Manager API, so MAIRO can install the
-tracking tags itself instead of handing over a file. The file works today.
-
-**9. mairo.io — bought, not connected yet.** In this order, so Facebook and
-Google sign-in keep working throughout:
-
-1. Vercel → the project → Settings → Domains: add `mairo.io` and
-   `www.mairo.io` (set www to redirect to mairo.io). Vercel shows the DNS
-   records to create.
-2. At the registrar: create exactly those records (usually an A record for
-   `mairo.io` and a CNAME for `www`), or switch the nameservers to Vercel's.
-   Wait for both domains to show **Valid Configuration** and a certificate.
-3. Before anything points at the new address, add the new copies everywhere
-   that keeps one. `/aios/setup` → "Addresses outside services keep" lists
-   each with its exact value: Meta's Valid OAuth Redirect URIs, App domains and
-   policy links; the Google OAuth client's redirect URIs and origin; Stripe's
-   webhook endpoint (edit its URL — that keeps the signing secret). Keep the
-   old `.vercel.app` entries until nobody uses them.
-4. Vercel → Environment Variables (Production): `NEXT_PUBLIC_APP_URL=https://mairo.io`.
-   If `AUTH_URL` or `NEXTAUTH_URL` is set, change it to the same or remove it.
-   Leave `META_REDIRECT_URI` and `GOOGLE_REDIRECT_URI` unset — they follow
-   the production domain. Redeploy.
-5. Check: the `.vercel.app` address now redirects pages to mairo.io (API
-   routes are left alone on purpose), Facebook login and Google sign-in work
-   from mairo.io, and the next Stripe event shows as delivered.
-
-Only set `NEXT_PUBLIC_APP_URL` after step 2 shows Valid Configuration: once it
-is set, the old address sends every visitor to the new one.
-
-Later: a `support@mairo.io` inbox (needs email hosting and MX records) to
-replace the Gmail address in `src/lib/legal.ts`.
 
 ## Standing caveat
 

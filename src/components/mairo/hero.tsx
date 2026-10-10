@@ -460,7 +460,7 @@ export function MairoHero() {
                   className="bg-clip-text text-transparent"
                   style={{ backgroundImage: "var(--mairo-ramp-soft)" }}
                 >
-                  Let Mairo Run Your Ads.
+                  Let MAIRO Run Your Ads.
                 </span>
               </h1>
 

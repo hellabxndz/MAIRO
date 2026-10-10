@@ -98,12 +98,12 @@ export function ProblemSection() {
                 One system
               </p>
               <h3 className="mt-4 max-w-2xl text-[clamp(20px,2.6vw,30px)] font-medium leading-[1.2] tracking-[-0.02em] text-white">
-                Mairo combines strategy, creative, campaign management, analytics and
+                MAIRO combines strategy, creative, campaign management, analytics and
                 optimisation into one AI-powered system.
               </h3>
               <p className="mt-5 max-w-2xl text-[14.5px] leading-relaxed text-white/70">
                 One login. One bill. One thing to ask when you want to know how it is going.
-                The advertising budget still goes to Meta directly — Mairo decides
+                The advertising budget still goes to Meta directly — MAIRO decides
                 how it gets used, and shows you every decision.
               </p>
             </div>

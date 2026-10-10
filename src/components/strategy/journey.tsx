@@ -4,8 +4,8 @@ import { SetupProgress } from "@/components/onboarding/setup-progress";
 import type { OnboardingStep, StepId } from "@/lib/onboarding/progress";
 
 // The one journey from sign-up to a live first campaign, in ten steps read
-// from the records (lib/onboarding/progress). FREE shows what Mairo would do
-// — the plan, and connecting the account. PAID is Mairo doing it — building
+// from the records (lib/onboarding/progress). FREE shows what MAIRO would do
+// — the plan, and connecting the account. PAID is MAIRO doing it — building
 // and launching.
 
 /** The onboarding frame: no sidebar, just where they are and a way out. */

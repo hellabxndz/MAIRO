@@ -241,7 +241,7 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
           onDone={(anyApplied) => setApproved(anyApplied)}
           onClose={() => {
             setOpen(false);
-            if (approved) setGone("Handled — see Mairo Activity for what changed");
+            if (approved) setGone("Handled — see MAIRO Activity for what changed");
           }}
         />
       )}

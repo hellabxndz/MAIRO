@@ -29,7 +29,7 @@ export default async function ReportSettingsPage() {
         ← Settings
       </Link>
       <h1 className="mt-3 text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.02em] text-white">Reports</h1>
-      <p className="mt-1 mb-6 text-[14.5px] text-muted">Your Mairo Weekly Report: a two-minute read on what happened, what Mairo did, and what&rsquo;s next.</p>
+      <p className="mt-1 mb-6 text-[14.5px] text-muted">Your MAIRO Weekly Report: a two-minute read on what happened, what MAIRO did, and what&rsquo;s next.</p>
       <ReportSettings
         values={{
           weeklyEnabled: s?.weeklyEnabled ?? true,

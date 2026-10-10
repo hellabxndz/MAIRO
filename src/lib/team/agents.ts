@@ -128,7 +128,7 @@ export const AGENTS: AgentInfo[] = [
     ],
     helps: "Spots what is costing too much and proposes a fix, with the numbers behind it.",
     uses: ["Your campaign results from Meta", "How each ad is doing", "The leads you mark as good ones"],
-    runsOn: ["Mairo Decisions"],
+    runsOn: ["MAIRO Decisions"],
     mayDo: ["Small changes your automation level allows, within your limits"],
     asks: ["Anything outside your automation level"],
     needsMeta: true,
@@ -166,7 +166,7 @@ export const AGENTS: AgentInfo[] = [
     ],
     helps: "You know what is working in plain words, without reading ad reports.",
     uses: ["Your results from Meta", "The leads and sales you record", "Whether your tracking is working"],
-    runsOn: ["Mairo Intelligence", "Daily Brief", "Weekly and monthly reports"],
+    runsOn: ["MAIRO Intelligence", "Daily Brief", "Weekly and monthly reports"],
     mayDo: ["Write reports"],
     asks: [],
     needsMeta: true,
@@ -195,7 +195,7 @@ export const AGENTS: AgentInfo[] = [
 export const AGENT = Object.fromEntries(AGENTS.map((a) => [a.role, a])) as Record<AgentRole, AgentInfo>;
 
 /**
- * Which specialty a Mairo Decision belongs to — the one that noticed it.
+ * Which specialty a MAIRO Decision belongs to — the one that noticed it.
  * By kind first (each rule is one specialty's finding), then by category.
  */
 export function agentForDecision(kind: string, category: string): AgentRole {

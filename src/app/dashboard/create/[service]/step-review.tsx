@@ -11,7 +11,7 @@ import type { AdScore } from "@/lib/score/rules";
 import { compareScores, type Comparison } from "@/lib/score/review";
 import { CampaignReviewPanel } from "@/components/score/campaign-review";
 
-/** Step 6 — Mairo's checks before any money is spent, as a review that explains itself. */
+/** Step 6 — MAIRO's checks before any money is spent, as a review that explains itself. */
 export function StepReview({
   review,
   error,
@@ -128,7 +128,7 @@ function FindingList({ title, findings, onFix }: { title: string; findings: Find
             {f.fix && (
               <button type="button" onClick={() => onFix(f.fix!)}
                 className="mt-3 rounded-full px-4 py-1.5 text-[12px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
-                Fix With Mairo
+                Fix With MAIRO
               </button>
             )}
           </li>

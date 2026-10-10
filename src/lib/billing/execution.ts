@@ -3,8 +3,8 @@ import { hasActivePlan } from "@/lib/readiness";
 
 // The paid line, enforced on the server.
 //
-// FREE: Mairo shows what it would do — the plan, the analysis, edits, and
-// connecting an ad account. PAID: Mairo does it — building campaigns, ad
+// FREE: MAIRO shows what it would do — the plan, the analysis, edits, and
+// connecting an ad account. PAID: MAIRO does it — building campaigns, ad
 // sets and ads, changing budgets and schedules, switching delivery on,
 // generating creatives and publishing.
 //
@@ -15,7 +15,7 @@ import { hasActivePlan } from "@/lib/readiness";
 export const CHOOSE_PLAN_PATH = "/plan/activate";
 
 export const NEEDS_PLAN_MESSAGE =
-  "Choose a Mairo plan to activate your strategy. After subscribing, Mairo builds and launches the real campaign.";
+  "Choose a MAIRO plan to activate your strategy. After subscribing, MAIRO builds and launches the real campaign.";
 
 /** Null when paid execution is allowed, otherwise the reason to show. */
 export async function executionBlock(organizationId: string): Promise<string | null> {

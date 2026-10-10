@@ -71,7 +71,7 @@ export default async function WeeklyReportPage({ params, searchParams }: { param
       )}
       <WeeklyReport data={data} mode={mode} pendingDecisionIds={pending} />
       <p className="mt-6 text-[12px] text-faint">
-        Written {row.generatedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} from Meta&rsquo;s figures and Mairo&rsquo;s own records. Mairo can&rsquo;t promise results; it shows what the numbers support.
+        Written {row.generatedAt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} from Meta&rsquo;s figures and MAIRO&rsquo;s own records. MAIRO can&rsquo;t promise results; it shows what the numbers support.
       </p>
     </div>
   );

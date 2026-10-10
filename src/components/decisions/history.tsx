@@ -43,7 +43,7 @@ export function DecisionHistory({
                 </>
               )}
               <span className="ml-auto font-medium" style={{ color: s.color }}>
-                {d.status === "APPLIED" && d.automatic ? "Done by Mairo (within your limits)" : s.label}
+                {d.status === "APPLIED" && d.automatic ? "Done by MAIRO (within your limits)" : s.label}
               </span>
             </div>
             <p className="mt-1.5 text-[14px] text-white">{d.title}</p>
@@ -63,7 +63,7 @@ export function DecisionHistory({
               </ul>
             )}
             {d.status === "APPLIED" && rows.length === 0 && (
-              <p className="mt-2 text-[12.5px] text-muted">Nothing changed by Mairo — you took care of it.</p>
+              <p className="mt-2 text-[12.5px] text-muted">Nothing changed by MAIRO — you took care of it.</p>
             )}
           </li>
         );

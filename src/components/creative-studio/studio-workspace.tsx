@@ -242,7 +242,7 @@ export function StudioWorkspace({
 
               <div className="flex flex-wrap items-center gap-3">
                 <button type="submit" disabled={busy || !prompt.trim()} className={primaryButtonClass}>
-                  {generating ? "Working on it…" : "Generate with Mairo AI"}
+                  {generating ? "Working on it…" : "Generate with MAIRO AI"}
                 </button>
                 {mode === "advanced" && (
                   <button
@@ -310,7 +310,7 @@ export function StudioWorkspace({
                 nothing here is promised pixel-perfect.
               </p>
               <button type="submit" disabled={busy || !productImage} className={primaryButtonClass}>
-                {transforming ? "Working on it…" : "Generate with Mairo AI"}
+                {transforming ? "Working on it…" : "Generate with MAIRO AI"}
               </button>
               {transformState?.error && <p className="text-[12.5px] text-red-400">{transformState.error}</p>}
             </form>

@@ -12,7 +12,7 @@ import type {
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import type { LandingProbe } from "@/lib/campaigns/landing-probe";
 
-// The shapes Mairo Decisions works in.
+// The shapes MAIRO Decisions works in.
 //
 // Deliberately network-agnostic. A campaign snapshot names its platform and
 // the ids that platform gave it; a change names the platform it runs on and is

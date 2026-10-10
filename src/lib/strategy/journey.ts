@@ -88,16 +88,16 @@ export async function loadJourney(organizationId: string, opts: { checkFunding: 
     "connect",
     "Ad Account Connected",
     connected && Boolean(meta?.metaAdAccountId),
-    connected ? `${meta?.metaAdAccountId}${meta?.pageName ? ` · Page: ${meta.pageName}` : " · choose a Page on the Meta screen"}` : "Sign in with Facebook so Mairo can build in your own ad account.",
+    connected ? `${meta?.metaAdAccountId}${meta?.pageName ? ` · Page: ${meta.pageName}` : " · choose a Page on the Meta screen"}` : "Sign in with Facebook so MAIRO can build in your own ad account.",
     connected ? "/dashboard/meta" : "/api/meta/connect?returnTo=%2Fdashboard%2Flaunch",
   );
-  add("selected", "Mairo Plan Selected", paid, null, "/dashboard/billing");
+  add("selected", "MAIRO Plan Selected", paid, null, "/dashboard/billing");
   add("subscription", "Subscription Active", paid, org?.subscriptionStatus === "trialing" ? "Free trial — the first charge is after the trial" : null, "/dashboard/billing");
   add(
     "funding",
     "Meta Payment Method Verified",
     funding?.done ?? false,
-    !connected ? null : funding ? (funding.done ? "Meta can charge your ad account" : funding.unknown ? "Mairo couldn't confirm this with Meta just now — it will check again" : funding.detail) : null,
+    !connected ? null : funding ? (funding.done ? "Meta can charge your ad account" : funding.unknown ? "MAIRO couldn't confirm this with Meta just now — it will check again" : funding.detail) : null,
     funding?.href ?? "/dashboard/meta",
     Boolean(funding?.unknown),
   );

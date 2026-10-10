@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Wordmark } from "@/components/wordmark";
 
 // The landing page's top bar: Product, Pricing, Resources, Log in, and the
 // one call to action. On a phone the links fold into a menu.
@@ -9,15 +10,14 @@ import { useEffect, useState } from "react";
 const LINKS = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#ai-team", label: "AI Team" },
-  { href: "#outcomes", label: "Results" },
+  { href: "#performance-coach", label: "Results" },
   { href: "#pricing", label: "Pricing" },
 ];
 
 const RESOURCES = [
-  { href: "#performance-coach", label: "Performance Coach" },
   { href: "#product-preview", label: "See MAIRO at work" },
+  { href: "#why-mairo", label: "What MAIRO does" },
   { href: "#free-plan", label: "Your free plan" },
-  { href: "#why-mairo", label: "Why MAIRO" },
   { href: "#trust", label: "Security and budget control" },
   { href: "#integrations", label: "Integrations" },
   { href: "#faq", label: "FAQ" },
@@ -46,9 +46,7 @@ export function LandingNav() {
     >
       <nav className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
         <div className="flex items-center gap-[clamp(40px,10vw,190px)]">
-          <Link href="/" className="text-[19px] font-light tracking-[0.34em] text-white">
-            MAIRO
-          </Link>
+          <Wordmark />
 
           <div className="hidden items-center gap-7 whitespace-nowrap xl:gap-9 text-[14px] font-medium text-white/90 lg:flex">
             {LINKS.map((l) => (

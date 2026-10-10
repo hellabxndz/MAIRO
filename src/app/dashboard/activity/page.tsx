@@ -8,7 +8,7 @@ import { ActivityTimeline } from "@/components/decisions/activity-timeline";
 import { effectiveLevel } from "@/lib/decisions/store";
 import { levelInfo } from "@/lib/automation/levels";
 
-// Mairo Activity: what MAIRO did with this account's advertising, and why.
+// MAIRO Activity: what MAIRO did with this account's advertising, and why.
 // Every entry is a change a network accepted, or a Spend Protection warning
 // that was really sent.
 
@@ -23,8 +23,8 @@ export default async function ActivityPage() {
   return (
     <div>
       <PageHeader
-        title="Mairo Activity"
-        description="Every change Mairo has made to your advertising, with the reason. Changes you approved and changes Mairo made on its own inside your limits are both here."
+        title="MAIRO Activity"
+        description="Every change MAIRO has made to your advertising, with the reason. Changes you approved and changes MAIRO made on its own inside your limits are both here."
       />
       <p className="mb-8 text-[13px] text-muted">
         Mode: <span className="text-white">{levelInfo(level).label}</span> — {levelInfo(level).summary}{" "}

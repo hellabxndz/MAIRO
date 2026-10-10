@@ -240,7 +240,7 @@ function HeroOrb() {
 
 export type SimpleDashboardProps = {
   firstName: string;
-  /** Mairo Today above already says good morning. */
+  /** MAIRO Today above already says good morning. */
   hideGreeting?: boolean;
   performance: OrganizationReport;
   campaigns: { id: string; name: string; status: string; platforms: string[] }[];
@@ -325,7 +325,7 @@ export function SimpleDashboard({
             )}
 
             <h1 className="mt-2.5 text-[clamp(26px,4.4vw,40px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white">
-              Let Mairo{" "}
+              Let MAIRO{" "}
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: "var(--mairo-ramp-soft)" }}
@@ -360,7 +360,7 @@ export function SimpleDashboard({
               className="absolute -top-1 right-0 flex items-center gap-2 rounded-xl border px-3 py-2"
               style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.85)" }}
             >
-              <span className="text-[12px] font-medium text-white">Mairo AI</span>
+              <span className="text-[12px] font-medium text-white">MAIRO AI</span>
               <AIStatus label="Online" />
             </div>
           </div>
@@ -432,7 +432,7 @@ export function SimpleDashboard({
 
         <GlassPanel className="mb-6 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[16px] font-medium text-white">What Mairo is doing</h2>
+            <h2 className="text-[16px] font-medium text-white">What MAIRO is doing</h2>
             {actions.length > 0 && (
               <Link
                 href="/dashboard/campaigns"
@@ -445,8 +445,8 @@ export function SimpleDashboard({
           {actions.length === 0 ? (
             <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-muted">
               {anyConnected
-                ? "Nothing has needed changing yet. Mairo leaves a campaign alone while the platform is still learning who to show it to — and every change it does make will appear here, with the numbers behind it."
-                : "Once a campaign is running, everything Mairo changes shows up here — what it changed, and why."}
+                ? "Nothing has needed changing yet. MAIRO leaves a campaign alone while the platform is still learning who to show it to — and every change it does make will appear here, with the numbers behind it."
+                : "Once a campaign is running, everything MAIRO changes shows up here — what it changed, and why."}
             </p>
           ) : (
             <div className="mt-4 space-y-3">
@@ -471,7 +471,7 @@ export function SimpleDashboard({
             <div className="py-10 text-center sm:py-14">
               <h3 className="text-[16px] font-medium text-white">No campaigns yet</h3>
               <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-muted">
-                Tell Mairo what you sell and what you want to happen. It builds the campaign and
+                Tell MAIRO what you sell and what you want to happen. It builds the campaign and
                 brings it back for you to approve — nothing spends until you say so.
               </p>
               <div className="mt-6 flex justify-center">
@@ -561,7 +561,7 @@ export function SimpleDashboard({
           )}
         </GlassPanel>
 
-        {/* ---- Mairo AI assistant ---- */}
+        {/* ---- MAIRO AI assistant ---- */}
         <GlassPanel className="flex flex-col p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-[16px] font-medium text-white">{assistantName}</h2>
@@ -598,11 +598,11 @@ export function SimpleDashboard({
             </span>
           </Link>
 
-          {/* What Mairo actually noticed, under the prompts rather than in its
+          {/* What MAIRO actually noticed, under the prompts rather than in its
               own panel — a recommendation is the assistant talking. */}
           <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">
-              Mairo noticed
+              MAIRO noticed
             </p>
             {notices.length > 0 ? (
               <ul className="mt-2.5 space-y-2">
@@ -615,8 +615,8 @@ export function SimpleDashboard({
             ) : (
               <p className="mt-2.5 text-[12px] leading-relaxed text-muted">
                 {campaigns.length === 0
-                  ? "Once your first campaign is running, Mairo will show what it finds here."
-                  : "Your campaigns are collecting data. Mairo will show recommendations when there is enough of it to say something useful."}
+                  ? "Once your first campaign is running, MAIRO will show what it finds here."
+                  : "Your campaigns are collecting data. MAIRO will show recommendations when there is enough of it to say something useful."}
               </p>
             )}
           </div>
@@ -636,8 +636,8 @@ export function SimpleDashboard({
             ? {
                 href: "/dashboard/decisions",
                 icon: ICONS.people,
-                title: "Mairo Decisions",
-                body: "What Mairo thinks is worth changing, and why.",
+                title: "MAIRO Decisions",
+                body: "What MAIRO thinks is worth changing, and why.",
               }
             : {
                 href: "/dashboard/integrations",

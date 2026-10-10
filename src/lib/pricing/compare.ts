@@ -8,7 +8,7 @@
 // If a plan changes, the page changes with it.
 
 import { metaPostingApproved } from "@/lib/social/publishing-status";
-import { PLANS, type Plan } from "@/lib/plans";
+import { PLANS, STARTER_TRIAL_DAYS, type Plan } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from "@/lib/entitlements";
 import { ALWAYS_NEEDS_APPROVAL, actionInfo, automaticActions, levelInfo } from "@/lib/automation/levels";
 import { DEFAULT_COSTS } from "@/lib/creative-studio/costs";
@@ -144,6 +144,53 @@ export function comparison(): Group[] {
       key: "support",
       title: "Support",
       rows: [{ key: "support", label: "Support", cells: each((t) => text(prioritySupport(t) ? "Priority" : "Standard")) }],
+    },
+  ];
+}
+
+/** Manual, AI Assist and Full Autopilot side by side: what each does, and which plans offer it. */
+export function automationLevels(): { level: "MANUAL" | "ASSISTED" | "AUTOPILOT"; label: string; plans: string; summary: string; does: string[] }[] {
+  return (["MANUAL", "ASSISTED", "AUTOPILOT"] as const).map((level) => {
+    const on = BUSINESS_TIERS.filter((t) => automationModes(t).includes(level)).map((t) => plan(t).name);
+    return {
+      level,
+      label: levelInfo(level).label,
+      plans: on.length === BUSINESS_TIERS.length ? "Every plan" : on.join(" and "),
+      summary: levelInfo(level).summary,
+      does: level === "MANUAL" ? ["Recommends changes with the numbers behind them", "Changes nothing until you approve"] : automaticActions(level).map((a) => a.label),
+    };
+  });
+}
+
+/** The questions people ask before paying, answered from the same numbers the product enforces. */
+export function pricingFacts(): { key: string; title: string; body: string }[] {
+  const names = (f: (t: BusinessTier) => string) => BUSINESS_TIERS.map((t) => `${plan(t).name} ${f(t)}`).join(", ");
+  const trial = PLANS.filter((p) => (p.trialDays ?? 0) > 0).map((p) => p.name);
+  const social = BUSINESS_TIERS.filter((t) => ent(t).social_posting).map((t) => plan(t).name);
+  return [
+    {
+      key: "trial",
+      title: "The free trial",
+      body: `${trial.join(" and ")} starts with a ${STARTER_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and charges it when the trial ends, unless you cancel first. ${BUSINESS_TIERS.filter((t) => !(plan(t).trialDays ?? 0)).map((t) => plan(t).name).join(" and ")} are billed from the day you subscribe. Your free advertising plan never needs a card.`,
+    },
+    {
+      key: "credits",
+      title: "AI image credits",
+      body: `Credits pay for pictures made in the Creative Studio: a standard picture uses ${DEFAULT_COSTS.standard}, a high-quality one ${DEFAULT_COSTS.premium}, and each change to a picture ${DEFAULT_COSTS.edit}. They reset on the 1st of each month; unused credits don't carry over. Your own photos and videos cost nothing.`,
+    },
+    {
+      key: "limits",
+      title: "Campaign and creative limits",
+      body: `Campaigns live or waiting at once: ${names((t) => (Number.isFinite(ent(t).campaign_limit) ? String(ent(t).campaign_limit) : "unlimited"))}. Archived ones don't count. Creative requests on the Creatives page (an ad idea with up to two pictures): ${names((t) => `${ent(t).creative_limit} a month`)}, separate from image credits.`,
+    },
+    {
+      key: "social",
+      title: "MAIRO Social Manager",
+      body: `${social.join(" and ")} only. Plans, writes and schedules posts for your own Instagram and Facebook — organic posts, not ads. ${
+        metaPostingApproved()
+          ? "It publishes only the posts you approve, or that Social Autopilot schedules if you switch it on."
+          : "Publishing is waiting for Meta to approve MAIRO's posting access. Until then you can plan and write posts, but MAIRO can't publish them for you."
+      }`,
     },
   ];
 }

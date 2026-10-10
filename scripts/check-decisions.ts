@@ -1,4 +1,4 @@
-// Checks the rules behind Mairo Decisions and the guardrails around them.
+// Checks the rules behind MAIRO Decisions and the guardrails around them.
 //
 //   npm run check:decisions
 //

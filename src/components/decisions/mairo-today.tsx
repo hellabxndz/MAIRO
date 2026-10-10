@@ -9,11 +9,11 @@ import { ActivityTimeline } from "./activity-timeline";
 //
 //   Good morning.
 //   Your ads spent $184 yesterday and generated $742 in tracked revenue.
-//   Mairo found 3 ways to improve your campaigns.   [Review Decisions]
+//   MAIRO found 3 ways to improve your campaigns.   [Review Decisions]
 //
 // Every number is the account's own. Revenue is "tracked revenue" because
 // that's what it is; profit only appears when the business has told MAIRO
-// its margin; and "What Mairo is doing" only lists what is actually running.
+// its margin; and "What MAIRO is doing" only lists what is actually running.
 
 export type DoingItem = { label: string; status: string; on: boolean };
 
@@ -63,7 +63,7 @@ export function MairoToday({
       ? "Your ads didn't spend anything yesterday."
       : revenueYesterday !== null && revenueYesterday > 0
         ? `Your ads spent ${money(spentYesterday)} yesterday and generated ${money(revenueYesterday)} in tracked revenue.`
-        : `Your ads spent ${money(spentYesterday)} yesterday. No revenue was tracked — set up Tracking so Mairo can see sales.`;
+        : `Your ads spent ${money(spentYesterday)} yesterday. No revenue was tracked — set up Tracking so MAIRO can see sales.`;
 
   const metrics: { label: string; advancedLabel: string; value: string; help: string }[] = [
     { label: "Campaign health", advancedLabel: "Account health", value: health.label, help: health.summary },
@@ -79,7 +79,7 @@ export function MairoToday({
 
   return (
     <section className="mb-8 rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-bright">Mairo today</p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-bright">MAIRO today</p>
       <h2 className="mt-2 text-[20px] font-medium text-white">
         {greeting(hour)}
         {firstName ? `, ${firstName}` : ""}.
@@ -91,11 +91,11 @@ export function MairoToday({
           <p className="text-[15px] text-white">
             {counts.pending === 0
               ? "Nothing needs deciding right now."
-              : `Mairo found ${counts.pending} way${counts.pending === 1 ? "" : "s"} to improve your campaigns.`}
+              : `MAIRO found ${counts.pending} way${counts.pending === 1 ? "" : "s"} to improve your campaigns.`}
           </p>
           {counts.pending > 0 && (
             <p className="mt-1 text-[12.5px] text-muted">
-              {counts.pending} Mairo Decision{counts.pending === 1 ? "" : "s"}
+              {counts.pending} MAIRO Decision{counts.pending === 1 ? "" : "s"}
               {counts.urgent > 0 && <span className="text-red-300"> · {counts.urgent} need{counts.urgent === 1 ? "s" : ""} attention</span>}
               {counts.growth > 0 && <span className="text-live"> · {counts.growth} growth opportunit{counts.growth === 1 ? "y" : "ies"}</span>}
             </p>
@@ -125,7 +125,7 @@ export function MairoToday({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What Mairo is doing</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What MAIRO is doing</p>
           <ul className="mt-3 space-y-2">
             {doing.map((d) => (
               <li key={d.label} className="flex items-start gap-2.5 text-[13px]">
@@ -140,7 +140,7 @@ export function MairoToday({
         </div>
         <div>
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Mairo activity</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">MAIRO activity</p>
             <Link href="/dashboard/activity" className="text-[12px] text-muted hover:text-white">All activity →</Link>
           </div>
           <div className="mt-3">

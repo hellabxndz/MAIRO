@@ -175,7 +175,7 @@ export type Finding = {
   steps: PlanStep[];
   agents: AgentRole[];
   measure: Measure | null;
-  /** A change on Meta, for the business to approve through Mairo Decisions. */
+  /** A change on Meta, for the business to approve through MAIRO Decisions. */
   change: DecisionDraft | null;
   priority: number;
 };

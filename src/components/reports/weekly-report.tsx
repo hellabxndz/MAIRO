@@ -4,9 +4,9 @@ import type { DecisionConfidence } from "@/generated/prisma/enums";
 import { change, usd, type ChangeBy, type Figures, type WeeklyReportData } from "@/lib/reports/weekly-logic";
 import { PlanActions, ReportSection } from "./report-client";
 
-// Your Mairo Weekly Report: the week in about two minutes. Every section is a
+// Your MAIRO Weekly Report: the week in about two minutes. Every section is a
 // view over the report written on delivery day; nothing here recalculates or
-// guesses. "clientFacing" is the version an agency shares — Mairo's internal
+// guesses. "clientFacing" is the version an agency shares — MAIRO's internal
 // notes and buttons are left out.
 
 export type ReportMode = "simple" | "advanced" | "profit";
@@ -144,7 +144,7 @@ export function WeeklyReport({
       </ReportSection>
 
       <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(124,92,255,0.16),transparent_55%),var(--color-field)] p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo summary</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO summary</p>
         <p className="mt-2 text-[15.5px] leading-relaxed text-white/90">{mode === "advanced" ? data.summary.advanced : data.summary.simple}</p>
       </section>
 
@@ -166,7 +166,7 @@ export function WeeklyReport({
               </ul>
               {internal && (
                 <p className="mt-3 rounded-lg bg-violet/10 p-3 text-[13px] text-white/85">
-                  <span className="font-semibold text-violet-bright">What Mairo learned: </span>
+                  <span className="font-semibold text-violet-bright">What MAIRO learned: </span>
                   {data.win.learned}
                 </p>
               )}
@@ -191,18 +191,18 @@ export function WeeklyReport({
                     </p>
                   )}
                   <p className="mt-1 text-[13px] text-muted">{mode === "advanced" ? a.happenedAdvanced : a.happened}</p>
-                  <p className="mt-1.5 text-[13px] text-white/80"><span className="text-violet-bright">Mairo&rsquo;s read:</span> {a.interpretation}</p>
+                  <p className="mt-1.5 text-[13px] text-white/80"><span className="text-violet-bright">MAIRO&rsquo;s read:</span> {a.interpretation}</p>
                   <p className="mt-1 text-[13px] text-white/80"><span className="text-violet-bright">Recommended:</span> {a.recommendation}</p>
                   {!clientFacing && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Link href={fixHref(a.decisionId, a.action)} className="inline-flex min-h-[38px] items-center rounded-lg bg-[#7c5cff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
-                        Fix with Mairo →
+                        Fix with MAIRO →
                       </Link>
                       <Link
                         href={`/dashboard/agents?ask=${encodeURIComponent(`Why is this happening: "${a.title}"?`)}${a.campaignId ? `&about=${a.campaignId}` : ""}`}
                         className="inline-flex min-h-[38px] items-center rounded-lg border border-white/12 px-3.5 text-[12.5px] text-white/85 hover:border-white/30"
                       >
-                        Ask Mairo why
+                        Ask MAIRO why
                       </Link>
                     </div>
                   )}
@@ -213,9 +213,9 @@ export function WeeklyReport({
         </ReportSection>
       </div>
 
-      <ReportSection title="What Mairo changed" eyebrow="This week">
+      <ReportSection title="What MAIRO changed" eyebrow="This week">
         {data.changes.length === 0 ? (
-          <Empty>Mairo didn&rsquo;t change anything this week.</Empty>
+          <Empty>MAIRO didn&rsquo;t change anything this week.</Empty>
         ) : (
           <ol className="space-y-3">
             {data.changes.map((c, i) => (
@@ -244,9 +244,9 @@ export function WeeklyReport({
       </ReportSection>
 
       {internal && (
-        <ReportSection title="What Mairo learned" eyebrow="Learning Memory">
+        <ReportSection title="What MAIRO learned" eyebrow="Learning Memory">
           {data.learnings.length === 0 ? (
-            <Empty>Nothing strong enough to call a lesson this week — Mairo only saves what the numbers clearly support.</Empty>
+            <Empty>Nothing strong enough to call a lesson this week — MAIRO only saves what the numbers clearly support.</Empty>
           ) : (
             <ol className="space-y-3">
               {data.learnings.map((l, i) => (
@@ -283,7 +283,7 @@ export function WeeklyReport({
                   </div>
                 ))}
               </div>
-              {data.platforms.note && <p className="mt-3 text-[13.5px] text-white/80"><span className="text-violet-bright">Mairo&rsquo;s read:</span> {data.platforms.note}</p>}
+              {data.platforms.note && <p className="mt-3 text-[13.5px] text-white/80"><span className="text-violet-bright">MAIRO&rsquo;s read:</span> {data.platforms.note}</p>}
             </>
           )}
         </ReportSection>
@@ -373,9 +373,9 @@ export function WeeklyReport({
         </ReportSection>
       </div>
 
-      <ReportSection title="Mairo's plan for next week" eyebrow="Next week">
+      <ReportSection title="MAIRO's plan for next week" eyebrow="Next week">
         {data.plan.length === 0 ? (
-          <Empty>Nothing needs changing — Mairo will keep watching and tell you if that changes.</Empty>
+          <Empty>Nothing needs changing — MAIRO will keep watching and tell you if that changes.</Empty>
         ) : (
           <ol className="space-y-3">
             {data.plan.map((p, i) => (
@@ -398,7 +398,7 @@ export function WeeklyReport({
             ))}
           </ol>
         )}
-        <p className="mt-3 text-[12px] text-faint">Mairo recommends testing these because the signals above suggest they may help — no change is certain to improve results.</p>
+        <p className="mt-3 text-[12px] text-faint">MAIRO recommends testing these because the signals above suggest they may help — no change is certain to improve results.</p>
         {!clientFacing && data.plan.length > 0 && <PlanActions plan={data.plan} pending={pendingDecisionIds} />}
       </ReportSection>
     </div>
@@ -416,7 +416,7 @@ export function ReportHeader({ data, brandName, brandLogoUrl, clientName }: { da
         </div>
       )}
       <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{clientName ? `${clientName} · ` : ""}{data.period.label}</p>
-      <h1 className="mt-1.5 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{clientName ? `${clientName}'s weekly report` : "Your Mairo Weekly Report"}</h1>
+      <h1 className="mt-1.5 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{clientName ? `${clientName}'s weekly report` : "Your MAIRO Weekly Report"}</h1>
       <p className="mt-1 text-[14.5px] text-muted">Here&rsquo;s what happened with your advertising this week.</p>
     </header>
   );

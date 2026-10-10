@@ -86,7 +86,7 @@ export async function readWebsiteForPlanAction(): Promise<{ ok: boolean; note: s
     return { ok: true, note: r.note };
   } catch (error) {
     console.error("Plan website read failed:", error);
-    return { ok: true, note: "Mairo couldn't read your website just now, so its website advice is general." };
+    return { ok: true, note: "MAIRO couldn't read your website just now, so its website advice is general." };
   }
 }
 
@@ -99,7 +99,7 @@ export async function generatePlanAction(): Promise<{ ok: true } | { ok: false; 
   return { ok: true };
 }
 
-// --- Ask Mairo ------------------------------------------------------------------------
+// --- Ask MAIRO ------------------------------------------------------------------------
 
 const CREATIVE: SectionKey[] = ["creativeStrategy", "concepts", "hooks"];
 
@@ -107,7 +107,7 @@ export async function askMairoAction(request: string, expectedVersion: number): 
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const text = request.trim().slice(0, 1000);
-  if (text.length < 3) return { ok: false, error: "Tell Mairo what you'd like to change." };
+  if (text.length < 3) return { ok: false, error: "Tell MAIRO what you'd like to change." };
   const loaded = await loadStrategy(ctx.organizationId);
   if (!loaded) return { ok: false, error: "There's no plan yet." };
   if (loaded.row.activatedAt) return { ok: false, error: "Your plan is locked in now that your subscription is active." };
@@ -142,14 +142,14 @@ export async function askMairoAction(request: string, expectedVersion: number): 
       const first = touched.find((k) => ["budget", "platforms", "goal", "campaignType", "audience"].includes(k));
       suggestion = first ? suggestionFor(plan, first, ptx) : null;
     } else {
-      // No AI: only the plain requests Mairo can read with certainty.
+      // No AI: only the plain requests MAIRO can read with certainty.
       const patch = parseRequest(text);
       if (!patch) {
         return {
           ok: false,
           error: aiAvailable()
-            ? "Mairo couldn't make that change just now. Try again in a minute, or use the Edit buttons."
-            : "Mairo can change the budget, platforms, ages, location, goal, product or offer from a message like “Change my budget to $35/day”. For anything else, use the Edit buttons.",
+            ? "MAIRO couldn't make that change just now. Try again in a minute, or use the Edit buttons."
+            : "MAIRO can change the budget, platforms, ages, location, goal, product or offer from a message like “Change my budget to $35/day”. For anything else, use the Edit buttons.",
         };
       }
       const r = applyEdits(prev, patchToEdits(prev, patch), ptx, "You asked for this.");
@@ -215,7 +215,7 @@ export async function editPlanAction(raw: ManualEdit, expectedVersion: number): 
   let { plan, changes } = r;
   let note: string | null = null;
 
-  // A new product or offer means the ads' words should follow. Mairo rewrites
+  // A new product or offer means the ads' words should follow. MAIRO rewrites
   // the creative for it when it can, and says so; otherwise it says it didn't.
   if ((edit.section === "product" || edit.section === "offer") && changes.length > 0) {
     const input = await strategyInputFor(ctx.organizationId);
@@ -236,7 +236,7 @@ export async function editPlanAction(raw: ManualEdit, expectedVersion: number): 
       plan = rewritten;
       changes = mergeChanges(prev, plan, [...changes, ...extra]);
     } else {
-      note = `Your ${SECTION_LABEL.hooks.toLowerCase()} and creative concepts were written for the previous ${edit.section}. Ask Mairo to rewrite them if you'd like.`;
+      note = `Your ${SECTION_LABEL.hooks.toLowerCase()} and creative concepts were written for the previous ${edit.section}. Ask MAIRO to rewrite them if you'd like.`;
     }
   }
 
@@ -326,7 +326,7 @@ export async function approvePlanNowAction(expectedVersion: number): Promise<{ o
   return { ok: true };
 }
 
-/** "Get Started With Mairo": subscription first, or straight on when there's nothing to pay. */
+/** "Get Started With MAIRO": subscription first, or straight on when there's nothing to pay. */
 export async function getStartedAction(): Promise<void> {
   const ctx = await context();
   if (!ctx) redirect("/sign-in");

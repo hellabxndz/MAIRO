@@ -34,7 +34,7 @@ import type { RevisionView } from "@/lib/strategy/store";
 import { FacebookMark, InstagramMark } from "@/components/mairo/marks";
 
 // The free plan's review screen: every section of the plan, the Edit buttons,
-// "Ask Mairo" for changes in plain words, a lightweight version history, and
+// "Ask MAIRO" for changes in plain words, a lightweight version history, and
 // the approval that unlocks "Get Started".
 
 type Status = "DRAFT" | "REVISING" | "APPROVED";
@@ -133,7 +133,7 @@ export function PlanReview(props: {
     setOutcome(null);
     setSuggestion(null);
     start(async () => {
-      const r = await askMairoAction(t, version).catch(() => ({ ok: false as const, error: "Mairo couldn't reach the server. Try again." }));
+      const r = await askMairoAction(t, version).catch(() => ({ ok: false as const, error: "MAIRO couldn't reach the server. Try again." }));
       if (!r.ok || "answer" in r) setStatus((s) => (s === "REVISING" ? "DRAFT" : s));
       apply(r, t);
       if (r.ok) setRequest("");
@@ -203,12 +203,12 @@ export function PlanReview(props: {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free plan · {props.businessName}</p>
-          <h1 className="mt-1 text-[clamp(26px,3.4vw,36px)] font-semibold tracking-[-0.02em]">Your Mairo Advertising Plan</h1>
+          <h1 className="mt-1 text-[clamp(26px,3.4vw,36px)] font-semibold tracking-[-0.02em]">Your MAIRO Advertising Plan</h1>
           <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
-            Review the strategy Mairo created for your business. You can change anything before moving forward.
+            Review the strategy MAIRO created for your business. You can change anything before moving forward.
           </p>
           <p className="mt-3 max-w-[680px] rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-[13px] text-white/80">
-            Your free plan shows you how Mairo would advertise your business. A subscription is required before Mairo builds or launches the real campaign.
+            Your free plan shows you how MAIRO would advertise your business. A subscription is required before MAIRO builds or launches the real campaign.
           </p>
         </div>
         <StatusBadge status={status} version={version} />
@@ -216,7 +216,7 @@ export function PlanReview(props: {
 
       {plan.summary && (
         <div className={`${card} mt-6 p-5`}>
-          {version > 0 && <p className="mb-1.5 text-[11.5px] uppercase tracking-[0.14em] text-faint">Mairo&rsquo;s overview of the Original Plan · the sections below are current</p>}
+          {version > 0 && <p className="mb-1.5 text-[11.5px] uppercase tracking-[0.14em] text-faint">MAIRO&rsquo;s overview of the Original Plan · the sections below are current</p>}
           <p className="text-[15px] leading-relaxed text-white/90">{plan.summary}</p>
         </div>
       )}
@@ -255,7 +255,7 @@ export function PlanReview(props: {
                     </label>
                   ))}
                 </div>
-                <p className="mt-2 text-[12px] text-faint">Mairo runs on Meta: Facebook and Instagram.</p>
+                <p className="mt-2 text-[12px] text-faint">MAIRO runs on Meta: Facebook and Instagram.</p>
               </EditForm>
             )}
           </Section>
@@ -418,11 +418,11 @@ export function PlanReview(props: {
           </Section>
         </div>
 
-        {/* Ask Mairo */}
+        {/* Ask MAIRO */}
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
           <div className={`${card} p-5`}>
             <p className="text-[15px] font-semibold text-white">Want to change something?</p>
-            <p className="mt-1 text-[13px] text-muted">Ask Mairo to adjust your plan before you approve it.</p>
+            <p className="mt-1 text-[13px] text-muted">Ask MAIRO to adjust your plan before you approve it.</p>
             <form
               className="mt-3"
               onSubmit={(e) => {
@@ -442,12 +442,12 @@ export function PlanReview(props: {
                 }}
                 rows={3}
                 maxLength={1000}
-                aria-label="Tell Mairo what you want to change"
-                placeholder={`Tell Mairo what you want to change… e.g. “${EXAMPLES[example]}”`}
+                aria-label="Tell MAIRO what you want to change"
+                placeholder={`Tell MAIRO what you want to change… e.g. “${EXAMPLES[example]}”`}
                 className="w-full resize-none rounded-lg border border-white/10 bg-field-2 px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60"
               />
               <button type="submit" disabled={pending || !request.trim()} className={`${primary} mt-2 w-full`}>
-                {status === "REVISING" ? "Mairo is updating your plan…" : "Ask Mairo"}
+                {status === "REVISING" ? "MAIRO is updating your plan…" : "Ask MAIRO"}
               </button>
             </form>
           </div>
@@ -456,9 +456,9 @@ export function PlanReview(props: {
 
           {outcome?.kind === "answer" && (
             <div className={`${card} p-5`}>
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo</p>
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO</p>
               <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-white/90">{outcome.text}</p>
-              <button type="button" onClick={focusAsk} className={`${secondary} mt-3`}>Ask Mairo Something Else</button>
+              <button type="button" onClick={focusAsk} className={`${secondary} mt-3`}>Ask MAIRO Something Else</button>
             </div>
           )}
 
@@ -482,18 +482,18 @@ export function PlanReview(props: {
                 <button type="button" disabled={pending || version !== outcome.version} onClick={() => undo(outcome.version)} className={secondary}>
                   Undo Change
                 </button>
-                <button type="button" onClick={focusAsk} className={secondary}>Ask Mairo Something Else</button>
+                <button type="button" onClick={focusAsk} className={secondary}>Ask MAIRO Something Else</button>
               </div>
             </div>
           )}
 
           {suggestion && (
             <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-5">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-amber-200">Mairo Suggestion</p>
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-amber-200">MAIRO Suggestion</p>
               <p className="mt-2 text-[13.5px] leading-relaxed text-white/90">{suggestion.message}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" disabled={pending} onClick={() => takeSuggestion(suggestion)} className={primary}>
-                  Use Mairo Recommendation
+                  Use MAIRO Recommendation
                 </button>
                 <button type="button" onClick={() => setSuggestion(null)} className={secondary}>Keep My Choice</button>
               </div>
@@ -514,16 +514,16 @@ export function PlanReview(props: {
             <p className="mt-1 text-[15px] text-white/90">Your advertising strategy is ready.</p>
             {props.connected ? (
               <>
-                <p className="mt-4 text-[14px] text-white/90">Your ad account is connected. Choose a Mairo plan to activate your strategy.</p>
+                <p className="mt-4 text-[14px] text-white/90">Your ad account is connected. Choose a MAIRO plan to activate your strategy.</p>
                 <Link href="/plan/activate" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
-                  Choose a Mairo Plan
+                  Choose a MAIRO Plan
                 </Link>
-                <p className="mt-3 max-w-[560px] text-[13px] text-muted">After subscribing, Mairo will build the real campaign for you to review.</p>
+                <p className="mt-3 max-w-[560px] text-[13px] text-muted">After subscribing, MAIRO will build the real campaign for you to review.</p>
               </>
             ) : (
               <>
                 <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
-                <p className="mt-1 text-[14px] text-white/90">Connect your advertising account so Mairo knows where your campaign will eventually run.</p>
+                <p className="mt-1 text-[14px] text-white/90">Connect your advertising account so MAIRO knows where your campaign will eventually run.</p>
                 {/* A full page load: this hands off to Facebook's sign-in. */}
                 <a href="/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
                   Connect My Ad Account
@@ -531,13 +531,13 @@ export function PlanReview(props: {
                 <p className="mt-3 max-w-[560px] text-[13px] text-muted">Connecting your account does not launch anything or spend money.</p>
               </>
             )}
-            <p className="mt-4 text-[12px] text-faint">Changed your mind about something? You can still ask Mairo or edit a section — you&rsquo;ll just approve the plan again.</p>
+            <p className="mt-4 text-[12px] text-faint">Changed your mind about something? You can still ask MAIRO or edit a section — you&rsquo;ll just approve the plan again.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[20px] font-semibold text-white">Happy with your plan?</p>
-              <p className="mt-1 text-[14px] text-muted">Approve your strategy and Mairo will save it for your first campaign.</p>
+              <p className="mt-1 text-[14px] text-muted">Approve your strategy and MAIRO will save it for your first campaign.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" disabled={pending || status === "REVISING"} onClick={approve} className={`${primary} min-h-[48px] px-7`}>
@@ -636,7 +636,7 @@ function History({ revisions, current, pending, onRestore }: { revisions: Revisi
                 {r.version === current && <span className="ml-2 text-[11.5px] font-normal text-emerald-300">current</span>}
               </p>
               <p className="text-[11.5px] text-faint">
-                {r.requestedBy === "you" ? "Requested by you" : "Written by Mairo"} · {new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                {r.requestedBy === "you" ? "Requested by you" : "Written by MAIRO"} · {new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
               </p>
             </div>
             {r.request && <p className="mt-1 text-[12.5px] text-muted">&ldquo;{r.request}&rdquo;</p>}

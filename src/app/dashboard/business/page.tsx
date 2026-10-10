@@ -12,7 +12,7 @@ import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { db } from "@/lib/db";
 import { resultsFor, resultWord, usd } from "@/lib/protection/rules";
 
-// Mairo Business Analyzer, and the Business Brain it fills.
+// MAIRO Business Analyzer, and the Business Brain it fills.
 //
 // Paste the website, MAIRO reads it, and the business never types its own
 // description into a campaign again. Anything the pages didn't show says "Not
@@ -62,8 +62,8 @@ export default async function BusinessPage() {
   return (
     <div>
       <PageHeader
-        title="Mairo Business Analyzer"
-        description="Paste your website and Mairo works out what you sell, who to reach and how to advertise it — then remembers it in your Business Brain, so every campaign starts from it."
+        title="MAIRO Business Analyzer"
+        description="Paste your website and MAIRO works out what you sell, who to reach and how to advertise it — then remembers it in your Business Brain, so every campaign starts from it."
         action={
           <Link href="/dashboard/settings/business-brain" className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
             Edit Business Brain
@@ -102,7 +102,7 @@ export default async function BusinessPage() {
       ) : (
         <div className="mt-8 space-y-6">
           {a?.strategy && (
-            <Section title="Mairo recommendation" lit>
+            <Section title="MAIRO recommendation" lit>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Fact label="Primary product" value={a.strategy.primaryProduct} />
                 <Fact label="Best audience" value={a.strategy.audience} />
@@ -220,7 +220,7 @@ export default async function BusinessPage() {
       )}
 
       <div className="mt-6">
-        <Section title="What Mairo has learned from your campaigns">
+        <Section title="What MAIRO has learned from your campaigns">
           {learned.length ? (
             <ul className="space-y-2 text-[13px]">
               {learned.slice(0, 5).map((c) => (

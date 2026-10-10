@@ -1,13 +1,13 @@
 import { db } from "@/lib/db";
 import { organizationActions } from "@/lib/campaigns/action-log";
 
-// Mairo Activity: everything MAIRO did to an account, with the reason.
+// MAIRO Activity: everything MAIRO did to an account, with the reason.
 //
 // One timeline over three sources, because they were written at different
 // times for different features and a customer asking "what did MAIRO do?"
 // shouldn't have to know that:
 //
-//   MairoActivity         — Mairo Decisions and One-Click Fix
+//   MairoActivity         — MAIRO Decisions and One-Click Fix
 //   OptimizationRecommendation (applied) — the earlier budget optimizer
 //   ProtectionEvent       — Spend Protection's warnings, pauses and resumes
 //

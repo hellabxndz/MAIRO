@@ -77,7 +77,7 @@ export default async function SettingsPage() {
         <div>
           <h2 className="mb-1 text-sm font-medium">Business Brain</h2>
           <p className="max-w-xl text-sm text-neutral-400">
-            What Mairo remembers about your business — products, prices, brand voice, who to reach, and which offers
+            What MAIRO remembers about your business — products, prices, brand voice, who to reach, and which offers
             worked. Every campaign starts from it.
           </p>
         </div>
@@ -93,7 +93,7 @@ export default async function SettingsPage() {
         <div>
           <h2 className="mb-1 text-sm font-medium">Reports</h2>
           <p className="max-w-xl text-sm text-neutral-400">
-            Your Mairo Weekly Report — which day it arrives, how you&rsquo;re told, and the view it opens in.
+            Your MAIRO Weekly Report — which day it arrives, how you&rsquo;re told, and the view it opens in.
           </p>
         </div>
         <Link href="/dashboard/settings/reports" className={secondaryButtonClass}>
@@ -228,9 +228,9 @@ export default async function SettingsPage() {
           { href: "/dashboard/mission", label: "Your goal & plan", hint: "The mission MAIRO is working toward" },
           { href: "/dashboard/integrations", label: "Connected accounts", hint: "Facebook, Instagram and Meta" },
           { href: "/dashboard/tracking", label: "Measuring sales", hint: "Website tracking and conversions" },
-          { href: "/dashboard/decisions", label: "Mairo Decisions", hint: "Every recommendation and what happened" },
+          { href: "/dashboard/decisions", label: "MAIRO Decisions", hint: "Every recommendation and what happened" },
           { href: "/dashboard/reports", label: "Reports", hint: "Weekly and monthly summaries" },
-          { href: "/dashboard/activity", label: "Mairo Activity", hint: "Everything MAIRO did, in order" },
+          { href: "/dashboard/activity", label: "MAIRO Activity", hint: "Everything MAIRO did, in order" },
           { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
           { href: "/dashboard/account", label: "Account", hint: "Login, team and more" },
         ].map((e) => (

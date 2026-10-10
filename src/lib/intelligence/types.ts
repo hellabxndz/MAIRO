@@ -1,14 +1,14 @@
 import type { AdPlatform, DecisionConfidence, InsightCategory, InsightSeverity } from "@/generated/prisma/enums";
 import type { Evidence } from "@/lib/decisions/types";
 
-// Mairo Intelligence: one normalized shape for everything Mairo notices.
+// MAIRO Intelligence: one normalized shape for everything MAIRO notices.
 //
-// Business Health, the Opportunity Radar, the Morning Brief, "Mairo found
+// Business Health, the Opportunity Radar, the Morning Brief, "MAIRO found
 // this before you did" and the Campaign Timeline all read Insights, and none
 // of them detects anything itself. A finding is made once, here, and every
 // screen that should mention it does — creative fatigue lowers Creative
 // Health, lights the radar's Creative area, appears as an early warning, sits
-// in the timeline and carries the Mairo Decision that fixes it.
+// in the timeline and carries the MAIRO Decision that fixes it.
 
 export type ActionType =
   | "adjust_budget"
@@ -61,9 +61,9 @@ export type Insight = {
   actionType: ActionType | null;
   action: { label: string; href: string } | null;
   radarArea: RadarArea | null;
-  /** A problem caught early, for "Mairo found this before you did". */
+  /** A problem caught early, for "MAIRO found this before you did". */
   earlyWarning: boolean;
-  /** The Mairo Decision carrying the change, when there is one. */
+  /** The MAIRO Decision carrying the change, when there is one. */
   decisionDedupeKey: string | null;
 };
 

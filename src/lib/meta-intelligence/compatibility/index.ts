@@ -27,7 +27,7 @@ export function affectedSystems(input: { changeType: ChangeType; areas: string[]
   const out = new Set<string>(input.featureSystems);
   const a = new Set(input.areas);
   if (a.has("campaign-creation") || a.has("optimization") || a.has("targeting") || a.has("placements")) out.add("Campaign builder (Create / launch)").add("Meta adapter (ad sets, ads, insights)");
-  if (a.has("optimization")) out.add("Mairo Decisions and optimization").add("Strategy Engine");
+  if (a.has("optimization")) out.add("MAIRO Decisions and optimization").add("Strategy Engine");
   if (a.has("creative") || a.has("ai")) out.add("Creative builder and media checks");
   if (a.has("publishing")) out.add("Instagram / Facebook publishing (Social Manager)");
   if (a.has("permissions")) out.add("Meta connection and permissions");

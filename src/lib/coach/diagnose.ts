@@ -601,7 +601,7 @@ function noGoodLeads(input: CoachInput): Finding[] {
 /**
  * Move budget toward the campaign whose good leads cost less — total budget
  * unchanged, within the business's limits, never on its own: it goes through
- * Mairo Decisions' approval like every other change on Meta.
+ * MAIRO Decisions' approval like every other change on Meta.
  */
 function reallocateByQuality(input: CoachInput): Finding[] {
   const g = input.guardrails;

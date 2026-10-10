@@ -17,12 +17,12 @@ import { ProblemCard } from "@/components/onboarding/problem-card";
 
 // Connect the ad account, then CHOOSE YOUR MAIRO PLAN.
 //
-// The free plan showed what Mairo would do. Connecting the account tells it
+// The free plan showed what MAIRO would do. Connecting the account tells it
 // where the campaign will eventually run — nothing is built or spent. The
-// subscription is what lets Mairo actually do it; nothing about the campaign
+// subscription is what lets MAIRO actually do it; nothing about the campaign
 // is created before it, and the server refuses it if asked.
 
-export const metadata = { title: "Activate Mairo" };
+export const metadata = { title: "Activate MAIRO" };
 export const dynamic = "force-dynamic";
 
 const UNLOCKS = [
@@ -30,7 +30,7 @@ const UNLOCKS = [
   "Campaign publishing",
   "Creative generation",
   "Live analytics",
-  "Mairo Decisions",
+  "MAIRO Decisions",
   "AI optimization",
   "Business Health",
   "Profit First",
@@ -43,7 +43,7 @@ const UNLOCKS = [
 // What MAIRO may do on its own on each plan — the modes the server lets each
 // plan switch on (pricing/compare.ts). AI Assist and Full Autopilot are opt-in.
 const OPTIMIZATION: Record<string, string> = {
-  STARTER: "Manual: Mairo recommends, you approve every change",
+  STARTER: "Manual: MAIRO recommends, you approve every change",
   GROWTH: "Manual, or AI Assist if you switch it on: pauses losing ads, tests new ones, moves budget between campaigns",
   SCALE: "Manual, AI Assist or Full Autopilot if you switch it on: also widens who sees your ads",
 };
@@ -82,14 +82,14 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   ]);
   if (!org) redirect("/sign-in");
 
-  // Back from Stripe before its confirmation reached Mairo: say so and look again.
+  // Back from Stripe before its confirmation reached MAIRO: say so and look again.
   if (subscribed === "1" && !FAILED.includes(org.subscriptionStatus ?? "")) {
     return (
       <JourneyFrame steps={steps} here="subscribe">
         <div className="mx-auto mt-6 max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-8 text-center">
           <meta httpEquiv="refresh" content="4" />
           <p className="text-[18px] font-semibold text-white">Confirming your subscription with Stripe…</p>
-          <p className="mt-2 text-[14px] text-muted">This usually takes a few seconds. The page checks again on its own, then Mairo is ready to build your campaign.</p>
+          <p className="mt-2 text-[14px] text-muted">This usually takes a few seconds. The page checks again on its own, then MAIRO is ready to build your campaign.</p>
         </div>
       </JourneyFrame>
     );
@@ -115,7 +115,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
         <div className="min-w-0 space-y-6">
           {org.executionStoppedAt && (
             <div className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
-              <p className="text-[15px] font-semibold text-white">Mairo paused your campaigns</p>
+              <p className="text-[15px] font-semibold text-white">MAIRO paused your campaigns</p>
               <p className="mt-1 text-[13.5px] text-white/85">{org.executionStoppedReason}</p>
             </div>
           )}
@@ -131,7 +131,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
               <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Meta Ads</dt><dd className="text-[14px] text-white">Connected</dd></div>
                 <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Ad account</dt><dd className="text-[14px] text-white">{meta?.metaAdAccountId}{meta?.pageName ? ` · ${meta.pageName}` : ""}</dd></div>
-                <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Status</dt><dd className="text-[14px] text-white">Ready for Mairo</dd></div>
+                <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Status</dt><dd className="text-[14px] text-white">Ready for MAIRO</dd></div>
               </dl>
               {justConnected === "1" && <p className="mt-3 text-[12.5px] text-muted">Nothing was created in your account and nothing was spent.</p>}
             </div>
@@ -139,7 +139,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-6">
               <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Plan approved ✓</p>
               <p className="mt-2 text-[20px] font-semibold text-white">Connect your ad account</p>
-              <p className="mt-1 text-[14px] text-muted">So Mairo knows where your campaign will eventually run. You&rsquo;ll sign in with Facebook and choose your ad account and Facebook Page — keep every option switched on so MAIRO can build your campaign.</p>
+              <p className="mt-1 text-[14px] text-muted">So MAIRO knows where your campaign will eventually run. You&rsquo;ll sign in with Facebook and choose your ad account and Facebook Page — keep every option switched on so MAIRO can build your campaign.</p>
               <a href={connectHref("/plan/activate?connected=1")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
                 {connected ? "Reconnect My Ad Account" : "Connect My Ad Account"}
               </a>
@@ -154,11 +154,11 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
 
           {showPlans && (
             <section id="plans" className="scroll-mt-6">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Choose your Mairo plan</p>
+              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Choose your MAIRO plan</p>
               <h1 className="mt-1 text-[clamp(26px,3.4vw,34px)] font-semibold leading-tight tracking-[-0.02em]">
                 Your strategy is ready.
                 <br />
-                Now activate Mairo.
+                Now activate MAIRO.
               </h1>
               <p className="mt-1.5 text-[14.5px] text-muted">Choose a plan to turn your approved strategy into a real advertising campaign.</p>
 
@@ -170,13 +170,13 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
 
               {selected ? (
                 <div className="mt-5 rounded-2xl border border-violet/35 bg-violet/[0.05] p-6">
-                  <p className="text-[16px] font-semibold text-white">Your Mairo Setup</p>
+                  <p className="text-[16px] font-semibold text-white">Your MAIRO Setup</p>
                   <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 text-[13.5px] sm:grid-cols-2">
                     <div><dt className="text-faint">Business</dt><dd className="text-white">{org.name}</dd></div>
                     <div><dt className="text-faint">Goal</dt><dd className="text-white">{head.goal}</dd></div>
                     <div><dt className="text-faint">Platforms</dt><dd className="text-white">{head.platform}</dd></div>
                     <div><dt className="text-faint">Recommended ad budget</dt><dd className="text-white">{usd(plan.dailyBudget)}/day, paid to Meta</dd></div>
-                    <div><dt className="text-faint">Selected Mairo plan</dt><dd className="text-white">{selected.name} — {money(selected.priceMonthly)}/month</dd></div>
+                    <div><dt className="text-faint">Selected MAIRO plan</dt><dd className="text-white">{selected.name} — {money(selected.priceMonthly)}/month</dd></div>
                   </dl>
                   {buyable.includes(selected.tier as (typeof buyable)[number]) ? (
                     <PlanButton tier={selected.tier} label="Continue to Payment" />
@@ -185,7 +185,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                   )}
                   {trialDaysFor(selected.tier) > 0 ? (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                      Starts with a {trialDaysFor(selected.tier)}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, Mairo pauses your campaigns and cancels the subscription — your plan stays saved.
+                      Starts with a {trialDaysFor(selected.tier)}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, MAIRO pauses your campaigns and cancels the subscription — your plan stays saved.
                     </p>
                   ) : (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
@@ -230,7 +230,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                 </div>
               )}
               <p className="mt-4 text-[12.5px] text-muted">On every plan, launching a campaign, raising your total budget, spending past your limit and connecting a new ad account always wait for your approval.</p>
-              <p className="mt-1 text-[12px] text-faint">Payment is handled by Stripe; Mairo never sees your card. Cancel any time — cancelling stops the next renewal.</p>
+              <p className="mt-1 text-[12px] text-faint">Payment is handled by Stripe; MAIRO never sees your card. Cancel any time — cancelling stops the next renewal.</p>
             </section>
           )}
         </div>
@@ -248,10 +248,10 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
           <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">Your ad budget is separate</p>
             <dl className="mt-3 space-y-2 text-[13px]">
-              <div><dt className="text-faint">Mairo subscription</dt><dd className="text-white">{selected ? `${money(selected.priceMonthly)}/month` : `From ${money(Math.min(...PLANS.map((p) => p.priceMonthly)))}/month`}</dd></div>
+              <div><dt className="text-faint">MAIRO subscription</dt><dd className="text-white">{selected ? `${money(selected.priceMonthly)}/month` : `From ${money(Math.min(...PLANS.map((p) => p.priceMonthly)))}/month`}</dd></div>
               <div><dt className="text-faint">Advertising budget</dt><dd className="text-white">Paid directly to Meta (your plan suggests {usd(plan.dailyBudget)}/day)</dd></div>
             </dl>
-            <p className="mt-3 text-[12.5px] text-muted">Mairo never treats your subscription as ad spend, and never charges your ad budget.</p>
+            <p className="mt-3 text-[12.5px] text-muted">MAIRO never treats your subscription as ad spend, and never charges your ad budget.</p>
           </div>
           <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">Your approved plan</p>

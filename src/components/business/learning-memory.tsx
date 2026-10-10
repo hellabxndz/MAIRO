@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react";
 import { toggleLearningAction } from "@/lib/actions/report-actions";
 
-// Mairo Learning Memory: what Mairo has learned from this business's own
+// MAIRO Learning Memory: what MAIRO has learned from this business's own
 // results. Only lessons with enough data behind them are kept, and any of
-// them can be switched off — Mairo stops using it at once.
+// them can be switched off — MAIRO stops using it at once.
 
 export type LearningRow = { id: string; statement: string; detail: string; confidence: "HIGH" | "MEDIUM" | "EARLY"; timesSeen: number; lastSeen: string; active: boolean };
 
@@ -43,8 +43,8 @@ function Row({ l }: { l: LearningRow }) {
 export function LearningMemory({ items }: { items: LearningRow[] }) {
   return (
     <section className="mt-8 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo Learning Memory</p>
-      <p className="mt-1 text-[13.5px] text-muted">What Mairo has learned from your own results. Mairo&rsquo;s assistant and new ad versions use these; weak signals are never saved.</p>
+      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO Learning Memory</p>
+      <p className="mt-1 text-[13.5px] text-muted">What MAIRO has learned from your own results. MAIRO&rsquo;s assistant and new ad versions use these; weak signals are never saved.</p>
       {items.length === 0 ? (
         <p className="mt-4 text-[13.5px] text-muted">Nothing yet — lessons are added from your Weekly Report once the numbers clearly support them.</p>
       ) : (

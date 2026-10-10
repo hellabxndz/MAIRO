@@ -2,7 +2,7 @@
 
 import { inputClass } from "@/components/ui";
 
-// Small pieces every screen of the Create wizard is built from, in Mairo's
+// Small pieces every screen of the Create wizard is built from, in MAIRO's
 // own look: dark glass cards, blue-purple selection glow, plain words.
 
 export function Question({

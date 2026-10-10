@@ -96,7 +96,7 @@ export type WorkRow = { icon: string; text: string; href: string };
 export function WorkingOnCard({ rows }: { rows: WorkRow[] }) {
   return (
     <section aria-labelledby="working-on" className={card} style={surface}>
-      <h2 id="working-on" className={eyebrow}>Mairo is working on</h2>
+      <h2 id="working-on" className={eyebrow}>MAIRO is working on</h2>
       <ul className="mt-3 -mx-3">
         {rows.map((r) => (
           <li key={r.text}>
@@ -159,7 +159,7 @@ export function BrainCard({ learnedCount, latest, questions }: { learnedCount: n
   return (
     <section aria-labelledby="brain-card" className="flex flex-col gap-3 rounded-[22px] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6" style={surface}>
       <div className="min-w-0">
-        <h2 id="brain-card" className={eyebrow}>Mairo knows your business</h2>
+        <h2 id="brain-card" className={eyebrow}>MAIRO knows your business</h2>
         <p className="mt-1.5 text-[14.5px] text-white">
           {learnedCount > 0
             ? `MAIRO has learned ${learnedCount} useful thing${learnedCount === 1 ? "" : "s"} about your business and marketing.`
@@ -172,7 +172,7 @@ export function BrainCard({ learnedCount, latest, questions }: { learnedCount: n
         ) : null}
       </div>
       <Link href={questions > 0 && !latest ? "/dashboard/settings/business-brain#improve" : "/dashboard/settings/business-brain"} className={`${quietClass} shrink-0`}>
-        {questions > 0 && !latest ? "Help Mairo Learn" : "View Business Brain"}
+        {questions > 0 && !latest ? "Help MAIRO Learn" : "View Business Brain"}
       </Link>
     </section>
   );
@@ -182,7 +182,7 @@ export function BrainCard({ learnedCount, latest, questions }: { learnedCount: n
 export function InsightCard({ insight }: { insight: { text: string; why: string; evidence: { label: string; value: string }[]; href: string } | null }) {
   return (
     <section aria-labelledby="insight" className={card} style={surface}>
-      <h2 id="insight" className={eyebrow}>Mairo insight</h2>
+      <h2 id="insight" className={eyebrow}>MAIRO insight</h2>
       {insight ? (
         <>
           <p className="mt-3 text-[18px] leading-snug text-white">&ldquo;{insight.text}&rdquo;</p>

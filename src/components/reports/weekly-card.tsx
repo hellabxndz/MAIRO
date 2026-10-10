@@ -26,7 +26,7 @@ export function WeeklyReportCard({ report, nextDay, enabled }: { report: { id: s
         ) : (
           <>
             <p className="mt-1 text-[16px] font-semibold text-white">{enabled ? `Next report: ${nextDay}` : "Weekly reports are off"}</p>
-            <p className="text-[13px] text-muted">{enabled ? "A two-minute summary of the week, what Mairo changed and learned, and what's next." : "Switch them on in Settings › Reports."}</p>
+            <p className="text-[13px] text-muted">{enabled ? "A two-minute summary of the week, what MAIRO changed and learned, and what's next." : "Switch them on in Settings › Reports."}</p>
           </>
         )}
       </div>

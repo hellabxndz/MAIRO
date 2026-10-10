@@ -550,7 +550,7 @@ export function HeroCommand() {
   }, [idx, reduced, focused, value]);
 
   const placeholder = focused
-    ? "Tell Mairo what you sell…"
+    ? "Tell MAIRO what you sell…"
     : reduced || value
       ? PROMPTS[idx]
       : typed;
@@ -595,7 +595,7 @@ export function HeroCommand() {
           className="inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110"
           style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
         >
-          Ask Mairo
+          Ask MAIRO
           <span aria-hidden>→</span>
         </button>
       </div>

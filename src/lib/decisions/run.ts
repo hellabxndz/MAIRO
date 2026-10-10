@@ -21,7 +21,7 @@ import { agentForDecision } from "@/lib/team/agents";
 //
 // Runs from the daily cron, and on a page load when the last look is older
 // than REFRESH_AFTER_MS — Vercel's Hobby plan allows one cron run a day, and
-// a customer opening Mairo Decisions in the afternoon shouldn't be looking at
+// a customer opening MAIRO Decisions in the afternoon shouldn't be looking at
 // the morning's numbers.
 
 export const REFRESH_AFTER_MS = 6 * 60 * 60 * 1000;
@@ -149,12 +149,12 @@ export async function refreshDecisions(
     }
   }
 
-  // Mairo Intelligence reads the same snapshot: every finding (not only the
+  // MAIRO Intelligence reads the same snapshot: every finding (not only the
   // few kept as decisions), health, the radar and the Morning Brief.
   const briefed = await runIntelligence(organizationId, input, allDrafts(input))
     .then(() => true)
     .catch((error) => {
-      console.error(`Mairo Intelligence failed for ${organizationId}:`, error);
+      console.error(`MAIRO Intelligence failed for ${organizationId}:`, error);
       return false;
     });
   await step(
@@ -190,7 +190,7 @@ export async function refreshAllDecisions(limit = 40, budgetMs = Number.POSITIVE
       const r = await refreshDecisions(o.id, { force: true });
       autoApplied += r.autoApplied;
     } catch (error) {
-      console.error(`Mairo Decisions failed for ${o.id}:`, error);
+      console.error(`MAIRO Decisions failed for ${o.id}:`, error);
     }
   }
   return { accounts, autoApplied };

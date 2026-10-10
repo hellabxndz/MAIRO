@@ -43,7 +43,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Mairo demo"
+            aria-label="MAIRO demo"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           >
@@ -63,7 +63,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
                 <LiveDemo />
               </div>
               <p className="mt-3 text-center text-[12px] text-[#fff]/70">
-                A worked example of how Mairo plans a campaign — not a
+                A worked example of how MAIRO plans a campaign — not a
                 customer&rsquo;s results.
               </p>
             </div>

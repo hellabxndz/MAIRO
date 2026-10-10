@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import type { AdGoal } from "@/generated/prisma/enums";
 import type { FactMeta, FactSource } from "@/lib/brain/catalog";
 
-// The Mairo Business Brain: what MAIRO knows about a business, in one place.
+// The MAIRO Business Brain: what MAIRO knows about a business, in one place.
 //
 // Filled by the Business Analyzer from the business's own website and edited
 // by the business under Settings > Business Brain. Every campaign, ad and
@@ -289,7 +289,7 @@ export async function saveBrain(
   });
 
   // The older places campaigns read from, filled where they're empty, so the
-  // Create wizard and Mairo Memory pick the brain up without a second source.
+  // Create wizard and MAIRO Memory pick the brain up without a second source.
   const p = input.profile;
   const [org, intake] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { website: true, industry: true } }),

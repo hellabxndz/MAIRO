@@ -380,7 +380,7 @@ export function AutomationSection({
               </li>
               <li>
                 Every change it makes is recorded with the figures behind it, in{" "}
-                <span className="text-neutral-300">Mairo Activity</span> on your dashboard.
+                <span className="text-neutral-300">MAIRO Activity</span> on your dashboard.
               </li>
               <li>Changing back to Manual stops it acting immediately.</li>
             </ul>
@@ -436,7 +436,7 @@ export function GuardrailSettings({ values }: { values: AutoOptimizeValues }) {
           <input type="checkbox" checked disabled className="mt-0.5 h-4 w-4 accent-sky-400" aria-label="Require approval for new campaigns (always on)" />
           <span>
             <span className="text-sm text-white">Require approval for new campaigns</span>
-            <span className="mt-0.5 block text-xs text-neutral-500">Always on. Mairo never starts spending on a new campaign without you.</span>
+            <span className="mt-0.5 block text-xs text-neutral-500">Always on. MAIRO never starts spending on a new campaign without you.</span>
           </span>
         </li>
         {rows.map((r) => (

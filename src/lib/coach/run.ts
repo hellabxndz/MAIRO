@@ -12,7 +12,7 @@ import { persistFindings } from "./store";
 import type { CoachResult, Finding } from "./types";
 
 // One Performance Coach review: read the journey, investigate, save what was
-// found, put any change on Meta up for approval through Mairo Decisions, look
+// found, put any change on Meta up for approval through MAIRO Decisions, look
 // at what followed earlier changes — and record which specialists did what.
 //
 // The activity log is the work itself: a specialist appears only when a

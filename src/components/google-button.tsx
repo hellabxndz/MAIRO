@@ -11,7 +11,7 @@ import { googleSignInAction } from "@/lib/actions/auth-actions";
 // above travels with it, along with the sign-in page's callbackUrl.
 //
 // On a sign-up form the one field it does need is the name: the account is
-// created with it and it can't be changed later, so the button refuses to set
+// created with it, so the button refuses to set
 // off to Google until it's filled in.
 
 function GoogleMark() {

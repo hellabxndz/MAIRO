@@ -14,7 +14,7 @@ export const TABS: { key: TabKey; label: string }[] = [
   { key: "creatives", label: "Creatives" },
   { key: "audience", label: "Audience" },
   { key: "budget", label: "Budget" },
-  { key: "decisions", label: "Mairo Decisions" },
+  { key: "decisions", label: "MAIRO Decisions" },
   { key: "history", label: "History" },
   { key: "advanced", label: "Advanced Settings" },
 ];

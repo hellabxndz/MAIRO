@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { saveReportSettingsAction, type ReportSettingsState } from "@/lib/actions/report-actions";
 
-// Settings › Reports. Only delivery methods Mairo can actually use are shown:
+// Settings › Reports. Only delivery methods MAIRO can actually use are shown:
 // in the app always, a text when this deployment can send them — and only
 // switchable once the business has a verified number that agreed to texts.
 
@@ -51,7 +51,7 @@ export function ReportSettings({
       <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <h2 className="text-[16px] font-semibold text-white">Weekly report</h2>
         <div className="mt-4 space-y-4">
-          <Toggle name="weeklyEnabled" label="Send me a weekly report" hint="A summary of the previous 7 days: what happened, what Mairo changed and learned, and what's next." defaultChecked={values.weeklyEnabled} />
+          <Toggle name="weeklyEnabled" label="Send me a weekly report" hint="A summary of the previous 7 days: what happened, what MAIRO changed and learned, and what's next." defaultChecked={values.weeklyEnabled} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-[13px] text-white">Delivery day</span>
@@ -107,7 +107,7 @@ export function ReportSettings({
       {agency && (
         <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
           <h2 className="text-[16px] font-semibold text-white">Client reports</h2>
-          <p className="mt-1 text-[13px] text-muted">Each client gets their own weekly report. You review it, approve it, and share the link — Mairo never sends a client report by itself.</p>
+          <p className="mt-1 text-[13px] text-muted">Each client gets their own weekly report. You review it, approve it, and share the link — MAIRO never sends a client report by itself.</p>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-[13px] text-white">Agency name</span>
@@ -119,7 +119,7 @@ export function ReportSettings({
             </label>
           </div>
           <div className="mt-4 space-y-4">
-            <Toggle name="hideInternal" label="Hide Mairo's internal notes in shared reports" hint="Leaves out what Mairo learned and who approved each change; clients see performance only." defaultChecked={values.hideInternal} />
+            <Toggle name="hideInternal" label="Hide MAIRO's internal notes in shared reports" hint="Leaves out what MAIRO learned and who approved each change; clients see performance only." defaultChecked={values.hideInternal} />
             <Toggle name="autoApprove" label="Approve client reports automatically" hint="Creates the share link as soon as the report is written. It still isn't sent to anyone." defaultChecked={values.autoApprove} />
           </div>
         </section>

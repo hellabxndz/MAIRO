@@ -38,20 +38,20 @@ export function isFreePage(pathname: string): boolean {
 }
 
 const LOCKED: { prefix: string; title: string; text: string }[] = [
-  { prefix: "/dashboard/analytics", title: "Analytics", text: "Activate Mairo to see live campaign performance." },
+  { prefix: "/dashboard/analytics", title: "Analytics", text: "Activate MAIRO to see live campaign performance." },
   { prefix: "/dashboard/campaigns", title: "Campaigns", text: "Subscribe to turn your approved plan into a real campaign." },
   { prefix: "/dashboard/create", title: "Create", text: "Subscribe to turn your approved plan into a real campaign." },
   { prefix: "/dashboard/mission", title: "MAIRO Mission", text: "Your approved free plan becomes MAIRO's mission once you subscribe — then MAIRO runs it, measures it and improves it." },
-  { prefix: "/dashboard/decisions", title: "Mairo Decisions", text: "Once your campaign is running, Mairo tells you what to change and why." },
-  { prefix: "/dashboard/creative-studio", title: "Creative Studio", text: "Creative generation is part of your Mairo plan." },
+  { prefix: "/dashboard/decisions", title: "MAIRO Decisions", text: "Once your campaign is running, MAIRO tells you what to change and why." },
+  { prefix: "/dashboard/creative-studio", title: "Creative Studio", text: "Creative generation is part of your MAIRO plan." },
   { prefix: "/dashboard/reports", title: "Reports", text: "Weekly Reports start once a real campaign is running." },
-  { prefix: "/dashboard/activity", title: "Mairo Activity", text: "See everything Mairo does for you once it's running your ads." },
-  { prefix: "/dashboard/agents", title: "Mairo AI", text: "Chat with Mairo about your live ads after activating. You can already ask Mairo to change your free plan." },
+  { prefix: "/dashboard/activity", title: "MAIRO Activity", text: "See everything MAIRO does for you once it's running your ads." },
+  { prefix: "/dashboard/agents", title: "MAIRO AI", text: "Chat with MAIRO about your live ads after activating. You can already ask MAIRO to change your free plan." },
   { prefix: "/dashboard/health", title: "Business Health", text: "Business Health appears after a real campaign has run long enough to measure." },
 ];
 
 function lockInfo(pathname: string) {
-  return LOCKED.find((l) => pathname.startsWith(l.prefix)) ?? { title: "Full Mairo", text: "This is part of the full Mairo platform. Activate Mairo to use it." };
+  return LOCKED.find((l) => pathname.startsWith(l.prefix)) ?? { title: "Full MAIRO", text: "This is part of the full MAIRO platform. Activate MAIRO to use it." };
 }
 
 function ChooseButton({ approved }: { approved: boolean }) {
@@ -120,21 +120,21 @@ export function FreeHome({
   steps: OnboardingStep[] | null;
 }) {
   const next = !approved
-    ? { title: "Review and approve your free plan", text: "Change anything you like — ask Mairo or edit it yourself — then approve it.", href: "/plan", label: "Open my free plan", external: false }
+    ? { title: "Review and approve your free plan", text: "Change anything you like — ask MAIRO or edit it yourself — then approve it.", href: "/plan", label: "Open my free plan", external: false }
     : !connected
-      ? { title: "Connect your ad account", text: "So Mairo knows where your campaign will eventually run. Connecting doesn't launch anything or spend money.", href: "/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1", label: "Connect My Ad Account", external: true }
-      : { title: "Choose your Mairo plan", text: "Your ad account is connected. After subscribing, Mairo builds the real campaign for you to review.", href: "/plan/activate", label: "Choose a Plan", external: false };
+      ? { title: "Connect your ad account", text: "So MAIRO knows where your campaign will eventually run. Connecting doesn't launch anything or spend money.", href: "/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1", label: "Connect My Ad Account", external: true }
+      : { title: "Choose your MAIRO plan", text: "Your ad account is connected. After subscribing, MAIRO builds the real campaign for you to review.", href: "/plan/activate", label: "Choose a Plan", external: false };
 
   const tiles = [
     { title: "My Free Plan", text: "Your advertising strategy", href: "/plan" },
-    { title: "My Business", text: "What Mairo knows about you", href: "/dashboard/business" },
+    { title: "My Business", text: "What MAIRO knows about you", href: "/dashboard/business" },
     { title: "Connected Accounts", text: connected ? "Meta connected" : "Nothing connected yet", href: "/dashboard/integrations" },
     { title: "Pricing", text: "Plans and what they unlock", href: approved ? "/plan/activate" : "/plan" },
   ];
   const locked = [
-    { title: "Analytics", text: "Activate Mairo to see live campaign performance." },
+    { title: "Analytics", text: "Activate MAIRO to see live campaign performance." },
     { title: "Campaigns", text: "Subscribe to turn your approved plan into a real campaign." },
-    { title: "Mairo Decisions", text: "What to change and why, once a campaign runs." },
+    { title: "MAIRO Decisions", text: "What to change and why, once a campaign runs." },
     { title: "Creative Studio", text: "Creative generation comes with your plan." },
     { title: "Business Health", text: "Measured once a real campaign is running." },
     { title: "Weekly Reports", text: "Start with your first live week." },
@@ -145,14 +145,14 @@ export function FreeHome({
       {steps && <SetupProgress steps={steps} />}
       {stoppedReason && (
         <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-5">
-          <p className="text-[15px] font-semibold text-white">Mairo paused your campaigns</p>
+          <p className="text-[15px] font-semibold text-white">MAIRO paused your campaigns</p>
           <p className="mt-1 text-[13.5px] text-white/85">{stoppedReason}</p>
         </div>
       )}
       <p className="mt-8 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{businessName}</p>
       <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{approved ? "Your strategy is ready." : "Your free plan is ready to review."}</h1>
       <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
-        Your free plan shows you how Mairo would advertise your business. A subscription is required before Mairo builds or launches the real campaign.
+        Your free plan shows you how MAIRO would advertise your business. A subscription is required before MAIRO builds or launches the real campaign.
       </p>
 
       <div className="mt-6 rounded-2xl border border-violet/30 bg-violet/[0.06] p-6">
@@ -175,7 +175,7 @@ export function FreeHome({
         ))}
       </div>
 
-      <h2 className="mt-10 text-[16px] font-semibold text-white">Unlocks with your Mairo plan</h2>
+      <h2 className="mt-10 text-[16px] font-semibold text-white">Unlocks with your MAIRO plan</h2>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {locked.map((l) => (
           <div key={l.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">

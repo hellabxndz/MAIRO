@@ -5,7 +5,7 @@ import { aggregateMetrics } from "./metrics";
 import type { BriefFigures, BriefReport, Insight } from "./types";
 
 // Your Morning Brief: yesterday (or last week) in four numbers, the ad that
-// did the most with the least, and what Mairo is keeping an eye on. Built to
+// did the most with the least, and what MAIRO is keeping an eye on. Built to
 // be read in half a minute; the actions for today are the top open Insights,
 // chosen on the screen, so the brief and everything else agree.
 

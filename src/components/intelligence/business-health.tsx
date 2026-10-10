@@ -66,7 +66,7 @@ export function HealthCategory({ area, open, onToggle }: { area: HealthArea; ope
             <p className="text-[13px] text-muted">{area.needs}</p>
           ) : (
             <>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">Mairo noticed</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">MAIRO noticed</p>
               <ul className="mt-1.5 space-y-1.5">
                 {area.reasons.length === 0 && <li className="text-[13px] text-muted">Nothing is pulling this score down.</li>}
                 {area.reasons.map((r) => (
@@ -107,7 +107,7 @@ export function BusinessHealthScore({ health, showReportLink = true, defaultOpen
         )}
       </div>
       {!health ? (
-        <p className="mt-4 text-[13.5px] text-muted">Mairo scores your business after its first look at a running campaign.</p>
+        <p className="mt-4 text-[13.5px] text-muted">MAIRO scores your business after its first look at a running campaign.</p>
       ) : (
         <div className="mt-4 grid gap-5 md:grid-cols-[auto_1fr] md:items-start">
           <div className="flex items-center gap-4 md:flex-col md:items-center">

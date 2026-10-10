@@ -1,4 +1,4 @@
-// Checks Mairo Intelligence: the insight engine, Business Health, the
+// Checks MAIRO Intelligence: the insight engine, Business Health, the
 // Opportunity Radar, the Morning Brief and Profit First.
 //
 //   npm run check:intelligence
@@ -102,7 +102,7 @@ console.log("\n— one finding reaches every screen —");
   const creative = h.areas.find((a) => a.key === "creative")!;
   ok("Creative Health drops below 100 for it", creative.score !== null && creative.score < 100, String(creative.score));
   ok("and says why", creative.reasons.some((r) => !r.good && r.text === fatigue?.title));
-  ok("with Fix with Mairo pointing at Decisions", creative.recommendation?.href === "/dashboard/decisions" && creative.recommendation.actionLabel === "Fix with Mairo");
+  ok("with Fix with MAIRO pointing at Decisions", creative.recommendation?.href === "/dashboard/decisions" && creative.recommendation.actionLabel === "Fix with MAIRO");
   const r = radar(insights, true);
   ok("the radar rates Creative higher than Low", r.areas.find((a) => a.area === "creative")?.level !== "LOW");
   ok("and features a creative insight", r.top.includes(fatigue!.dedupeKey));
@@ -204,7 +204,7 @@ console.log("\n— the Morning Brief —");
   });
   ok("finds yesterday's winner", brief.winner?.label === "Creative #4");
   ok("by share of results against share of spend", Math.round((brief.winner?.resultShare ?? 0) * 100) === 50 && Math.round((brief.winner?.spendShare ?? 0) * 100) === 28);
-  ok("lists what Mairo is watching", brief.watching.length >= 3);
+  ok("lists what MAIRO is watching", brief.watching.length >= 3);
   const none = buildBrief({ period: "yesterday", since: "x", until: "x", figures: null, before: null, ads: [{ label: "A", campaignName: "c", spendCents: 100, results: 1 }], input: input([]), insights: [] });
   ok("no winner from one purchase", none.winner === null);
 }

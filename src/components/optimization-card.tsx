@@ -116,7 +116,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
             disabled={applying}
             className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
-            {applying ? "Applying…" : "Apply Mairo Recommendation"}
+            {applying ? "Applying…" : "Apply MAIRO Recommendation"}
           </button>
         </form>
         <form action={dismiss}>

@@ -42,7 +42,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <div>
           <h1 className="text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Reports</h1>
           <p className="mt-1 text-[14.5px] text-muted">
-            {enabled ? `Your Mairo Weekly Report arrives every ${day}.` : "Weekly reports are switched off."}{" "}
+            {enabled ? `Your MAIRO Weekly Report arrives every ${day}.` : "Weekly reports are switched off."}{" "}
             <Link href="/dashboard/settings/reports" className="text-violet-bright hover:text-white">
               Report settings
             </Link>
@@ -62,7 +62,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {failed && (
         <p className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 text-[13px] text-amber-200">
-          Mairo couldn&rsquo;t write the report just now — usually Meta being slow. Try again in a minute.
+          MAIRO couldn&rsquo;t write the report just now — usually Meta being slow. Try again in a minute.
         </p>
       )}
 

@@ -1,4 +1,4 @@
-// Checks the free Mairo Advertising Plan's rules: dependent recommendations,
+// Checks the free MAIRO Advertising Plan's rules: dependent recommendations,
 // suggestions, the plain-language request reader, the approved-vs-real
 // comparison and the Create draft prefill. Pure — no database, no AI.
 //
@@ -111,7 +111,7 @@ check("one platform keeps the choice and offers both as a suggestion", () => {
   assert.equal(r.suggestion?.id, "both-platforms");
   const back = applySuggestion(r.plan, r.suggestion!.patch);
   assert.deepEqual(back.plan.platforms, ["FACEBOOK", "INSTAGRAM"]);
-  assert.equal(back.changes[0].reason, "You accepted Mairo's suggestion.");
+  assert.equal(back.changes[0].reason, "You accepted MAIRO's suggestion.");
   assert.equal(applyEdit(base, { section: "platforms", platforms: [] }, ctx).ok, false);
 });
 

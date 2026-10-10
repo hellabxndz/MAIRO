@@ -6,7 +6,7 @@ import { ReportHeader, WeeklyReport } from "@/components/reports/weekly-report";
 // A client's weekly report, shared by their agency.
 //
 // Only reports the agency approved have a token, and turning the link off
-// removes it. The version shown is client-facing: no buttons, and Mairo's
+// removes it. The version shown is client-facing: no buttons, and MAIRO's
 // internal notes left out unless the agency chose to include them.
 
 export const metadata = { title: "Weekly report", robots: { index: false, follow: false } };

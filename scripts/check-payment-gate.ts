@@ -77,7 +77,7 @@ async function main() {
 
   try {
     await check("an unpaid free-plan account is refused paid execution", async () => {
-      assert.match((await executionBlock(unpaid)) ?? "", /Choose a Mairo plan/);
+      assert.match((await executionBlock(unpaid)) ?? "", /Choose a MAIRO plan/);
       assert.equal(await executionBlock(trialing), null);
       if (billingOff) assert.equal(await executionBlock(legacy), null);
     });

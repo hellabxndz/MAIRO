@@ -201,14 +201,14 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
       )}
 
       <p className="mt-10 max-w-2xl text-[12px] leading-relaxed text-faint">
-        Mairo compares your campaigns with their own recent results — never with made-up benchmarks — and doesn&rsquo;t promise
+        MAIRO compares your campaigns with their own recent results — never with made-up benchmarks — and doesn&rsquo;t promise
         what a change will earn. Confidence shows how much data a decision rests on.{" "}
         <Link href="/dashboard/decisions?f=completed" className="underline underline-offset-4 hover:text-white">
           Decision history
         </Link>{" "}
         ·{" "}
         <Link href="/dashboard/activity" className="underline underline-offset-4 hover:text-white">
-          Mairo Activity
+          MAIRO Activity
         </Link>
       </p>
     </div>
@@ -217,16 +217,16 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
 
 function Empty({ filter, dataStatus }: { filter: string; dataStatus: "no-campaigns" | "learning" | "enough" }) {
   let title = "Nothing needs changing right now";
-  let body = "Mairo looked at your campaigns and nothing stands out enough to act on. It checks again every day, and shows up here when something does.";
+  let body = "MAIRO looked at your campaigns and nothing stands out enough to act on. It checks again every day, and shows up here when something does.";
   if (filter === "retargeting") {
     title = "No retargeting decisions";
-    body = "Mairo will suggest retargeting — ads for people who visited but didn't buy — once it can build those audiences for you. That isn't available yet, so it won't suggest something it can't do.";
+    body = "MAIRO will suggest retargeting — ads for people who visited but didn't buy — once it can build those audiences for you. That isn't available yet, so it won't suggest something it can't do.";
   } else if (dataStatus === "no-campaigns") {
     title = "No campaigns running yet";
-    body = "Mairo makes decisions from real results. Once a campaign is running, this is where it tells you what to change.";
+    body = "MAIRO makes decisions from real results. Once a campaign is running, this is where it tells you what to change.";
   } else if (dataStatus === "learning") {
-    title = "Mairo needs more campaign data before making recommendations";
-    body = "Meta spends a campaign's first few days learning who responds, and the numbers jump around. Mairo starts judging after 3 days and $20 spent, so it doesn't have you change something that was about to work.";
+    title = "MAIRO needs more campaign data before making recommendations";
+    body = "Meta spends a campaign's first few days learning who responds, and the numbers jump around. MAIRO starts judging after 3 days and $20 spent, so it doesn't have you change something that was about to work.";
   } else if (filter !== "all") {
     title = `Nothing in ${CATEGORY_LABEL[CATEGORY_OF[filter] ?? "NEEDS_ATTENTION"].toLowerCase()} right now`;
   }

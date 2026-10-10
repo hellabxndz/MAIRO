@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generatePlanAction, readWebsiteForPlanAction } from "@/lib/actions/strategy-actions";
 
-// "Mairo is building your free plan." Two calls, one after the other, so each
+// "MAIRO is building your free plan." Two calls, one after the other, so each
 // fits in a request: read the website (when there is one), then write the plan.
 
 type Stage = "website" | "plan" | "done" | "error";
@@ -20,11 +20,11 @@ export function PlanBuilder({ website }: { website: string | null }) {
     setError(null);
     if (website) {
       setStage("website");
-      const r = await readWebsiteForPlanAction().catch(() => ({ ok: true, note: "Mairo couldn't read your website just now, so its website advice is general." }));
+      const r = await readWebsiteForPlanAction().catch(() => ({ ok: true, note: "MAIRO couldn't read your website just now, so its website advice is general." }));
       if (r.note) setNote(r.note);
     }
     setStage("plan");
-    const g = await generatePlanAction().catch(() => ({ ok: false as const, error: "Mairo couldn't finish your plan. Try again." }));
+    const g = await generatePlanAction().catch(() => ({ ok: false as const, error: "MAIRO couldn't finish your plan. Try again." }));
     if (!g.ok) {
       setStage("error");
       setError(g.error);
@@ -54,7 +54,7 @@ export function PlanBuilder({ website }: { website: string | null }) {
   return (
     <div className="mx-auto max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-6 sm:p-8">
       <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free plan</p>
-      <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.02em]">Mairo is building your advertising plan</h1>
+      <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.02em]">MAIRO is building your advertising plan</h1>
       <p className="mt-2 text-[14px] text-muted">This takes under a minute. You&rsquo;ll review everything and can change any part before moving on.</p>
       <ul className="mt-6 space-y-3">
         {steps.map((s, i) => {

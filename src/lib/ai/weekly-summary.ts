@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { agentModel } from "@/lib/ai/model";
 
-// The Weekly Report's "Mairo summary": the week's facts, told the way an
+// The Weekly Report's "MAIRO summary": the week's facts, told the way an
 // advertising manager would tell them. The AI is given the facts and the
 // plain version already written from them, and may reword — never add a
 // figure, a cause or a promise. Any failure falls back to the plain version.
@@ -19,7 +19,7 @@ Rules:
 - "simple": plain English for someone who has never used Ads Manager. No jargon (no CTR, CPA, CPM, ROAS — say "cost per sale", "return on ad spend" only if needed).
 - "advanced": the same story with the key figures and standard terms.
 - Use ONLY the facts given. Never add a number, a cause, a platform, or an ad that is not in the facts.
-- Never promise results. No "will increase sales". If you suggest anything, say Mairo recommends testing it.
+- Never promise results. No "will increase sales". If you suggest anything, say MAIRO recommends testing it.
 - Don't call higher spend good or bad in itself.
 - If the facts say there wasn't enough data, say so plainly.`;
 

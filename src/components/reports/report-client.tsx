@@ -46,7 +46,7 @@ export function PlanActions({ plan, pending }: { plan: PlanItem[]; pending: stri
     start(async () => {
       const r = await approveDecisionsAction({ decisionIds: approvable.map((p) => p.decisionId!) });
       setConfirming(false);
-      setResult(r.ok ? `Done — ${r.applied.length} change${r.applied.length === 1 ? "" : "s"} made${r.partial ? ", some couldn't be" : ""}. Each is in Mairo Activity with its reason.` : r.error);
+      setResult(r.ok ? `Done — ${r.applied.length} change${r.applied.length === 1 ? "" : "s"} made${r.partial ? ", some couldn't be" : ""}. Each is in MAIRO Activity with its reason.` : r.error);
     });
 
   return (
@@ -85,7 +85,7 @@ export function PlanActions({ plan, pending }: { plan: PlanItem[]; pending: stri
             href={`/dashboard/agents?ask=${encodeURIComponent("Walk me through your plan for next week and why.")}`}
             className="inline-flex min-h-[42px] items-center rounded-lg px-3 text-[13.5px] text-violet-bright hover:text-white"
           >
-            Ask Mairo
+            Ask MAIRO
           </Link>
         </div>
       )}
@@ -116,7 +116,7 @@ export function SharePanel({ reportId, token, origin }: { reportId: string; toke
         </>
       ) : (
         <>
-          <p className="mt-1 text-[13px] text-muted">Review it, then approve to get a link you can send your client. Mairo never sends client reports on its own.</p>
+          <p className="mt-1 text-[13px] text-muted">Review it, then approve to get a link you can send your client. MAIRO never sends client reports on its own.</p>
           <button type="button" disabled={busy} onClick={() => start(async () => { const r = await approveReportAction(reportId); if (r.ok && r.token) setCurrent(r.token); })} className="mt-3 min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white disabled:opacity-60">
             {busy ? "Approving…" : "Approve for client"}
           </button>

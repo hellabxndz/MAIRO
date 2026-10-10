@@ -68,7 +68,8 @@
     "check:pricing": "tsx scripts/check-pricing.ts",
     "check:hardening-db": "tsx scripts/check-hardening-db.ts",
     "check:domain": "tsx scripts/check-domain.ts",
-    "check:trust-db": "tsx scripts/check-trust-db.ts"
+    "check:trust-db": "tsx scripts/check-trust-db.ts",
+    "check:signup": "tsx scripts/check-signup.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",

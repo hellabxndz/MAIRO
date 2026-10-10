@@ -20,7 +20,7 @@ import {
   type StrategyContent,
 } from "./plan-logic";
 
-// Reading and writing the free Mairo Advertising Plan.
+// Reading and writing the free MAIRO Advertising Plan.
 //
 // Every change goes through commit(), which:
 //   - refuses once the plan is locked (the subscription is active and the
@@ -247,7 +247,7 @@ export async function commit(
   return { ok: true, version };
 }
 
-/** Marks the plan as being revised while Mairo works on a request. */
+/** Marks the plan as being revised while MAIRO works on a request. */
 export async function markRevising(organizationId: string, revising: boolean): Promise<void> {
   await db.strategyPlan.updateMany({
     where: { organizationId, activatedAt: null, ...(revising ? {} : { status: "REVISING" }) },
@@ -267,9 +267,9 @@ export async function approve(organizationId: string, expectedVersion: number): 
   if (!row) return { ok: false, error: "There's no plan yet." };
   if (row.activatedAt) return { ok: true, version: row.version };
   if (row.version !== expectedVersion) return { ok: false, error: "Your plan changed in another tab. Reload and approve the latest version." };
-  if (row.status === "REVISING") return { ok: false, error: "Mairo is still updating your plan. Try again in a moment." };
+  if (row.status === "REVISING") return { ok: false, error: "MAIRO is still updating your plan. Try again in a moment." };
   const plan = parseStrategy(row.planJson);
-  if (!plan) return { ok: false, error: "This plan couldn't be read. Ask Mairo to write it again." };
+  if (!plan) return { ok: false, error: "This plan couldn't be read. Ask MAIRO to write it again." };
 
   const claim = await db.strategyPlan.updateMany({
     where: { id: row.id, version: expectedVersion, activatedAt: null },
@@ -332,7 +332,7 @@ export async function strategyBrief(organizationId: string): Promise<string> {
   if (!plan) return "";
   const h = planHeadline(plan);
   return [
-    "The business's approved Mairo Advertising Plan (they reviewed and approved it; don't contradict it without saying why):",
+    "The business's approved MAIRO Advertising Plan (they reviewed and approved it; don't contradict it without saying why):",
     `- Goal: ${h.goal}; platforms: ${h.platform}; budget: ${h.budget}; campaign: ${h.campaign}`,
     `- Audience: ${plan.audience.location || "location not set"}, ages ${plan.audience.ageMin}-${plan.audience.ageMax}; ${plan.audience.summary}`,
     `- Product: ${plan.product || "not set"}; offer: ${plan.offer || "none"}`,

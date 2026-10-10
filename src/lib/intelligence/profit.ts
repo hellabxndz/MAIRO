@@ -2,7 +2,7 @@
 // is taken out.
 //
 // Every figure is an estimate built from numbers the business entered (or its
-// Business Brain margin) and Meta's tracked revenue — Mairo has no accounting
+// Business Brain margin) and Meta's tracked revenue — MAIRO has no accounting
 // data, and the screen says "Estimated profit" for that reason. When the one
 // number that can't be guessed is missing (the margin), profit is shown as
 // unknown and the screen asks for it. Nothing is filled in to make it look

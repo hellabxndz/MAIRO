@@ -1,20 +1,18 @@
-import Link from "next/link";
 import { AmbientSky } from "@/components/ambient-sky";
+import { Wordmark } from "@/components/wordmark";
+import { brandFont } from "@/lib/fonts";
 
+// The backdrop and the wordmark for sign-in and sign-up. Each page draws its
+// own card (AuthCard), so sign-up can set what happens next beside its form.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+    <div className={`${brandFont.className} relative flex min-h-screen items-center justify-center px-4 py-12 sm:py-16`}>
       <AmbientSky />
-      <div className="relative w-full max-w-sm">
-        <Link
-          href="/"
-          className="mb-8 block text-center text-lg font-semibold tracking-tight text-white"
-        >
-          MAIRO
-        </Link>
-        <div className="rounded-2xl border border-white/10 bg-paper p-8 shadow-[0_24px_60px_-30px_rgba(18,21,43,0.28)]">
-          {children}
+      <div className="relative w-full max-w-[960px]">
+        <div className="mb-8 text-center">
+          <Wordmark />
         </div>
+        {children}
       </div>
     </div>
   );

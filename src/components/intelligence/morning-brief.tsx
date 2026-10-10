@@ -9,7 +9,7 @@ import { FixWithMairo } from "./explain";
 
 // Your Morning Brief: the first thing on the dashboard. Four numbers for
 // yesterday (or last week), the ad that did most with least, the actions for
-// today, and what Mairo is keeping an eye on — readable in half a minute.
+// today, and what MAIRO is keeping an eye on — readable in half a minute.
 
 function money(cents: number | null): string {
   if (cents === null) return "—";
@@ -105,7 +105,7 @@ export function MorningBrief({
 
           <div>
             <p className="text-[14px] font-semibold text-white">
-              {count === 0 ? "Nothing needs doing today." : `Mairo found ${count} action${count === 1 ? "" : "s"} for today.`}
+              {count === 0 ? "Nothing needs doing today." : `MAIRO found ${count} action${count === 1 ? "" : "s"} for today.`}
             </p>
             <ul className="mt-2.5 space-y-2.5">
               {actions.map((a, i) => (
@@ -125,7 +125,7 @@ export function MorningBrief({
         </div>
 
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
-          <p className="text-[13px] font-semibold text-white">What Mairo is watching today</p>
+          <p className="text-[13px] font-semibold text-white">What MAIRO is watching today</p>
           {brief && brief.watching.length > 0 ? (
             <ul className="mt-2.5 space-y-2">
               {brief.watching.map((w) => (

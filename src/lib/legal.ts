@@ -6,7 +6,12 @@
 export const LEGAL = {
   // The operating company behind MAIRO. This is the entity that appears on the
   // Meta business portfolio and must match business verification documents.
-  companyName: "BLING Marketing",
+  // NEXT_PUBLIC_COMPANY_NAME replaces it once the exact registered name is
+  // confirmed (see NEXT.md, legal review).
+  companyName: process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "BLING Marketing",
+  // The company's registered or business address. Shown in the site footer and
+  // on the legal pages only when set — never guessed.
+  companyAddress: process.env.NEXT_PUBLIC_COMPANY_ADDRESS?.trim() || null,
   productName: "MAIRO",
 
   // Where customers, Meta's reviewers and anyone exercising a privacy right
@@ -17,7 +22,7 @@ export const LEGAL = {
   contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "hellabxndz11@gmail.com",
 
   // Bump when the substance changes, not for typo fixes.
-  lastUpdated: "9 October 2026",
+  lastUpdated: "10 October 2026",
 
   // How long a deletion request takes to complete, stated as a promise on the
   // data deletion page. Keep the page and reality in agreement.

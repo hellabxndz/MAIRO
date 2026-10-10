@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { CampaignJourney, TimelineEvent as Event, TimelineFilter, TimelineKind } from "@/lib/intelligence/timeline";
 
 // Campaign Journey: everything that has happened to a campaign since launch,
-// and what Mairo did about it. Simple mode tells it in words; Advanced mode
+// and what MAIRO did about it. Simple mode tells it in words; Advanced mode
 // adds the figures under each event.
 
 const ICON: Record<TimelineKind, { tone: string; d: React.ReactNode }> = {
@@ -45,7 +45,7 @@ export function TimelineEvent({ event, advanced, last = false }: { event: Event;
       <div className="min-w-0 flex-1 pt-0.5">
         <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-faint">
           Day {event.day}
-          {event.ai && <span className="ml-2 rounded bg-violet/15 px-1.5 py-0.5 text-[10px] normal-case tracking-normal text-violet-bright">Mairo</span>}
+          {event.ai && <span className="ml-2 rounded bg-violet/15 px-1.5 py-0.5 text-[10px] normal-case tracking-normal text-violet-bright">MAIRO</span>}
         </p>
         <p className="mt-0.5 text-[14.5px] font-semibold text-white">{event.title}</p>
         <p className="mt-0.5 text-[13.5px] leading-relaxed text-muted">{event.body}</p>
@@ -96,7 +96,7 @@ export function CampaignTimeline({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Campaign journey</h2>
-          <p className="mt-1 text-[14px] text-muted">See what Mairo has done since this campaign launched.</p>
+          <p className="mt-1 text-[14px] text-muted">See what MAIRO has done since this campaign launched.</p>
         </div>
         {campaigns.length > 1 && journey && (
           <select

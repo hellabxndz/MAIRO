@@ -14,7 +14,7 @@ import {
 //
 // Pure, so it's checked by scripts/check-strategy-plan.ts. Every row says
 // whether the campaign matches the plan; where it doesn't, it says why in
-// plain words. A difference Mairo expects (interests aren't hard limits on
+// plain words. A difference MAIRO expects (interests aren't hard limits on
 // Meta) is "explained" rather than hidden.
 
 export type RealCampaign = {
@@ -149,7 +149,7 @@ export function compareWithPlan(plan: StrategyContent, real: RealCampaign, ctx: 
       approved: plan.audience.interests.join(", "),
       real: "Not set as hard limits",
       status: "explained",
-      note: "Meta finds people like these on its own and does better without strict interest limits, so Mairo uses them to shape the ads rather than to fence the audience.",
+      note: "Meta finds people like these on its own and does better without strict interest limits, so MAIRO uses them to shape the ads rather than to fence the audience.",
     });
   }
 
@@ -174,7 +174,7 @@ export function compareWithPlan(plan: StrategyContent, real: RealCampaign, ctx: 
     note:
       planned === real.adSets
         ? null
-        : "Mairo builds the new-customer ad set first. The retargeting and test ad sets in your plan need people who've already seen your ads, so Mairo will suggest adding them from your dashboard once there are enough — it won't add them on its own.",
+        : "MAIRO builds the new-customer ad set first. The retargeting and test ad sets in your plan need people who've already seen your ads, so MAIRO will suggest adding them from your dashboard once there are enough — it won't add them on its own.",
   });
 
   const ads = real.ads;
@@ -196,7 +196,7 @@ export function compareWithPlan(plan: StrategyContent, real: RealCampaign, ctx: 
     real: realTracking.text,
     status: !realTracking.ok ? "different" : approvedTracking.text === realTracking.text ? "same" : "explained",
     note: !realTracking.ok
-      ? "Mairo won't report purchases it can't see. Set up the Meta Pixel in Tracking before launching, or launch knowing sales won't be counted."
+      ? "MAIRO won't report purchases it can't see. Set up the Meta Pixel in Tracking before launching, or launch knowing sales won't be counted."
       : approvedTracking.text === realTracking.text
         ? null
         : "Follows the campaign's goal and where people go.",

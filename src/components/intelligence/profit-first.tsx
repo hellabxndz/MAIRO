@@ -3,7 +3,7 @@ import { ProfitSettingsModal, type ProfitSettingsValues } from "./profit-setting
 
 // PROFIT FIRST: is the business actually making money from its advertising?
 // Revenue and estimated profit first, the advertising figures after. Profit is
-// always labelled an estimate — Mairo has the ad figures and what the business
+// always labelled an estimate — MAIRO has the ad figures and what the business
 // told it, not its accounts.
 
 function money(cents: number | null, whole = false): string {
@@ -142,7 +142,7 @@ export function ProfitFirstView({
                 ? `Your ads return ${r.roas.toFixed(1)}x; they need ${r.breakEvenRoas.toFixed(1)}x to pay for themselves. Every dollar above that is estimated profit.`
                 : r.status === "below" && r.roas !== null && r.breakEvenRoas !== null
                   ? `Your ads return ${r.roas.toFixed(1)}x, under the ${r.breakEvenRoas.toFixed(1)}x they need to pay for themselves at your margin.`
-                  : r.missing[0] ?? "Mairo needs tracked revenue and your margin to work this out."}
+                  : r.missing[0] ?? "MAIRO needs tracked revenue and your margin to work this out."}
             </p>
           </div>
           <ProfitSettingsModal values={settings} products={products} />
@@ -164,7 +164,7 @@ export function ProfitFirstView({
         <h3 className="text-[15px] font-semibold text-white">Product profitability</h3>
         <p className="mt-0.5 text-[12.5px] text-faint">Each product&rsquo;s margin and the ROAS an ad for it needs to break even. Meta doesn&rsquo;t report sales per product, so this is per unit, not per campaign.</p>
         {products.length === 0 ? (
-          <p className="mt-3 text-[13px] text-muted">No products yet — they appear here once your store&rsquo;s products are in Mairo.</p>
+          <p className="mt-3 text-[13px] text-muted">No products yet — they appear here once your store&rsquo;s products are in MAIRO.</p>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[460px] text-[13px]">

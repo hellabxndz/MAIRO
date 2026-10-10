@@ -15,7 +15,7 @@ import {
   type BrainRecord,
 } from "./brain";
 
-// Mairo Business Analyzer: read a business's website and turn it into a
+// MAIRO Business Analyzer: read a business's website and turn it into a
 // Business Brain.
 //
 // Reads the page the business gave plus up to three of its own shop, pricing

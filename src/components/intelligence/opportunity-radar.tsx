@@ -79,7 +79,7 @@ export function OpportunityRadar({ radar, insights }: { radar: RadarReport | nul
   const judged = radar?.areas.some((a) => a.level !== null) ?? false;
   return (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo opportunity radar</h2>
+      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO opportunity radar</h2>
       <p className="mt-1 text-[14px] text-muted">Where should you focus next?</p>
       {!radar || !judged ? (
         <p className="mt-4 text-[13.5px] text-muted">Not enough data yet — the radar fills in once a campaign has run for a few days.</p>
@@ -98,7 +98,7 @@ export function OpportunityRadar({ radar, insights }: { radar: RadarReport | nul
               ))}
             </ul>
             {top.length === 0 ? (
-              <p className="text-[13.5px] text-muted">No clear opportunity right now — everything Mairo watches is steady.</p>
+              <p className="text-[13.5px] text-muted">No clear opportunity right now — everything MAIRO watches is steady.</p>
             ) : (
               <div className="grid gap-3 xl:grid-cols-2">
                 {top.map((i, n) => (

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// The free Mairo Advertising Plan: its shape, and the rules that keep it
+// The free MAIRO Advertising Plan: its shape, and the rules that keep it
 // consistent when the business changes one part of it.
 //
 // Pure — no database, no AI — so every rule here is checked by
@@ -24,7 +24,7 @@ export const GOAL_LABEL: Record<PlanGoal, string> = {
   APP_PROMOTION: "More app installs",
 };
 
-/** Mairo runs Meta only: Facebook and Instagram. */
+/** MAIRO runs Meta only: Facebook and Instagram. */
 export const PLATFORMS = ["FACEBOOK", "INSTAGRAM"] as const;
 export type PlanPlatform = (typeof PLATFORMS)[number];
 export const PLATFORM_LABEL: Record<PlanPlatform, string> = { FACEBOOK: "Facebook", INSTAGRAM: "Instagram" };
@@ -209,7 +209,7 @@ export function budgetWhyFor(daily: number, platforms: PlanPlatform[]): string {
     return `At ${usd(daily)}/day results will build slowly — Meta needs a steady number of results each week to learn who responds. Expect the first weeks to be about learning, not volume.`;
   }
   if (daily < RETARGET_FROM) {
-    return `At ${usd(daily)}/day Mairo keeps everything in one ad set${both ? ", shared across Facebook and Instagram," : ""} so Meta can learn faster instead of splitting a small budget.`;
+    return `At ${usd(daily)}/day MAIRO keeps everything in one ad set${both ? ", shared across Facebook and Instagram," : ""} so Meta can learn faster instead of splitting a small budget.`;
   }
   if (daily < TEST_FROM) {
     return `${usd(daily)}/day is enough to reach new customers and remind people who already showed interest, in two ad sets.`;
@@ -233,7 +233,7 @@ export function recommendedSplit(p: Pick<StrategyContent, "dailyBudget" | "platf
 export function recommendedRetargeting(p: Pick<StrategyContent, "dailyBudget" | "offer" | "product">): string {
   const hook = p.offer || p.product || "your best offer";
   if (p.dailyBudget < RETARGET_FROM) {
-    return `Hold retargeting for now. At ${usd(p.dailyBudget)}/day Mairo puts everything into reaching new customers first. Once around 1,000 people have visited or engaged, Mairo will suggest adding reminder ads with about 20% of the budget.`;
+    return `Hold retargeting for now. At ${usd(p.dailyBudget)}/day MAIRO puts everything into reaching new customers first. Once around 1,000 people have visited or engaged, MAIRO will suggest adding reminder ads with about 20% of the budget.`;
   }
   return `About 20% of the budget shows reminder ads to people who visited your website or engaged with you on Facebook or Instagram in the last 30 days, leading with ${hook}.`;
 }
@@ -280,7 +280,7 @@ function change(prev: StrategyContent, next: StrategyContent, key: SectionKey, r
 /**
  * Brings the rest of the plan in line after some sections changed.
  *
- * `touched` are the sections the business (or Mairo, at their request) changed
+ * `touched` are the sections the business (or MAIRO, at their request) changed
  * on purpose; those are never overwritten here. Everything this does change
  * comes back with its reason.
  */
@@ -321,7 +321,7 @@ export function reconcile(prev: StrategyContent, input: StrategyContent, touched
     const before = next;
     next = { ...next, retargeting: recommendedRetargeting(next) };
     dependent.push(change(before, next, "retargeting", next.dailyBudget < RETARGET_FROM
-      ? `Below ${usd(RETARGET_FROM)}/day Mairo holds reminder ads until there are enough visitors to remind.`
+      ? `Below ${usd(RETARGET_FROM)}/day MAIRO holds reminder ads until there are enough visitors to remind.`
       : `From ${usd(RETARGET_FROM)}/day there's enough budget for reminder ads.`, true));
   }
 
@@ -356,7 +356,7 @@ export function suggestionFor(p: StrategyContent, section: SectionKey, ctx: { pu
   if (section === "budget" && p.dailyBudget < SLOW_BELOW) {
     return {
       id: "budget-floor",
-      message: `At ${usd(p.dailyBudget)}/day results will build slowly. Mairo recommends at least ${usd(SLOW_BELOW)}/day so Meta can learn who responds within the first couple of weeks.`,
+      message: `At ${usd(p.dailyBudget)}/day results will build slowly. MAIRO recommends at least ${usd(SLOW_BELOW)}/day so Meta can learn who responds within the first couple of weeks.`,
       applyLabel: `Use ${usd(SLOW_BELOW)}/day`,
       patch: { dailyBudget: SLOW_BELOW },
     };
@@ -365,7 +365,7 @@ export function suggestionFor(p: StrategyContent, section: SectionKey, ctx: { pu
     const only = PLATFORM_LABEL[p.platforms[0]];
     return {
       id: "both-platforms",
-      message: `Running only on ${only} limits where Meta can show your ads, which usually raises the cost of each result. Mairo recommends keeping Facebook and Instagram together and letting Meta put each dollar where it works best.`,
+      message: `Running only on ${only} limits where Meta can show your ads, which usually raises the cost of each result. MAIRO recommends keeping Facebook and Instagram together and letting Meta put each dollar where it works best.`,
       applyLabel: "Use Facebook + Instagram",
       patch: { platforms: ["FACEBOOK", "INSTAGRAM"] },
     };
@@ -373,7 +373,7 @@ export function suggestionFor(p: StrategyContent, section: SectionKey, ctx: { pu
   if ((section === "goal" || section === "campaignType") && p.goal === "SALES" && !ctx.purchaseTracking) {
     return {
       id: "sales-tracking",
-      message: "Sales campaigns need purchase tracking (the Meta Pixel) on your website so Meta can learn who buys. It isn't set up yet — Mairo suggests starting with website visits and switching to sales once tracking is in place.",
+      message: "Sales campaigns need purchase tracking (the Meta Pixel) on your website so Meta can learn who buys. It isn't set up yet — MAIRO suggests starting with website visits and switching to sales once tracking is in place.",
       applyLabel: "Start with website visits",
       patch: { goal: "TRAFFIC", campaignType: "TRAFFIC" },
     };
@@ -382,7 +382,7 @@ export function suggestionFor(p: StrategyContent, section: SectionKey, ctx: { pu
     const fit = defaultCampaignType(p.goal);
     return {
       id: "type-goal",
-      message: `“${campaignTypeInfo(p.campaignType).label}” is built for a different goal than “${GOAL_LABEL[p.goal]}”. Mairo recommends a campaign type that matches your goal, so Meta optimises for the result you want.`,
+      message: `“${campaignTypeInfo(p.campaignType).label}” is built for a different goal than “${GOAL_LABEL[p.goal]}”. MAIRO recommends a campaign type that matches your goal, so Meta optimises for the result you want.`,
       applyLabel: `Use ${campaignTypeInfo(fit).label.split(" — ")[0]}`,
       patch: { campaignType: fit },
     };
@@ -394,7 +394,7 @@ export function suggestionFor(p: StrategyContent, section: SectionKey, ctx: { pu
       const ageMax = Math.min(AGE_MAX, p.audience.ageMax + 5);
       return {
         id: "age-span",
-        message: `Ages ${agesText(p.audience)} is a narrow range for ${usd(p.dailyBudget)}/day, which makes each result cost more. Mairo recommends ${agesText({ ageMin, ageMax })} and letting Meta find the people most likely to respond.`,
+        message: `Ages ${agesText(p.audience)} is a narrow range for ${usd(p.dailyBudget)}/day, which makes each result cost more. MAIRO recommends ${agesText({ ageMin, ageMax })} and letting Meta find the people most likely to respond.`,
         applyLabel: `Use ${agesText({ ageMin, ageMax })}`,
         patch: { audience: { ageMin, ageMax } },
       };
@@ -428,7 +428,7 @@ export function applyEdit(prev: StrategyContent, edit: ManualEdit, ctx: { purcha
   switch (edit.section) {
     case "budget":
       if (!Number.isFinite(edit.dailyBudget) || edit.dailyBudget < MIN_DAILY) return { ok: false, error: `The daily budget has to be at least ${usd(MIN_DAILY)}.` };
-      if (edit.dailyBudget > MAX_DAILY) return { ok: false, error: `Mairo plans up to ${usd(MAX_DAILY)}/day.` };
+      if (edit.dailyBudget > MAX_DAILY) return { ok: false, error: `MAIRO plans up to ${usd(MAX_DAILY)}/day.` };
       next.dailyBudget = clampBudget(edit.dailyBudget);
       break;
     case "platforms": {
@@ -485,13 +485,13 @@ export function applySuggestion(prev: StrategyContent, patch: SuggestionPatch): 
     ...prev,
     ...(patch.dailyBudget !== undefined ? { dailyBudget: clampBudget(patch.dailyBudget), budgetWhy: budgetWhyFor(patch.dailyBudget, prev.platforms) } : {}),
     ...(patch.platforms ? { platforms: PLATFORMS.filter((p) => patch.platforms!.includes(p)), platformsWhy: "Facebook and Instagram together, so Meta can show each ad where it costs least." } : {}),
-    ...(patch.goal ? { goal: patch.goal, goalWhy: "Mairo's recommendation, accepted by you." } : {}),
-    ...(patch.campaignType ? { campaignType: patch.campaignType, campaignTypeWhy: "Mairo's recommendation, accepted by you." } : {}),
+    ...(patch.goal ? { goal: patch.goal, goalWhy: "MAIRO's recommendation, accepted by you." } : {}),
+    ...(patch.campaignType ? { campaignType: patch.campaignType, campaignTypeWhy: "MAIRO's recommendation, accepted by you." } : {}),
     audience: patch.audience ? { ...prev.audience, ...patch.audience } : prev.audience,
   };
   if (next.platforms.length === 0) next.platforms = prev.platforms;
   const touched = changedSections(prev, next);
-  const primary = touched.map((k) => change(prev, next, k, "You accepted Mairo's suggestion.", false));
+  const primary = touched.map((k) => change(prev, next, k, "You accepted MAIRO's suggestion.", false));
   const { plan, dependent } = reconcile(prev, next, touched);
   return { plan, changes: [...primary, ...dependent] };
 }

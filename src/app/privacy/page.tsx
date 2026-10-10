@@ -19,7 +19,8 @@ export default function PrivacyPage() {
         <p>
           {LEGAL.productName} is operated by {LEGAL.companyName}. Where this policy says
           &ldquo;we&rdquo;, it means {LEGAL.companyName}. We are the data controller for the
-          information described below.
+          information described below. The details of your leads and your store&apos;s shoppers are
+          held on your behalf: we use them only to provide {LEGAL.productName} to you.
         </p>
       </Section>
 
@@ -44,6 +45,11 @@ export default function PrivacyPage() {
               from Meta.</>,
             <><strong className="text-neutral-200">Your conversations.</strong> Messages you exchange
               with the AI specialists inside the app.</>,
+            <><strong className="text-neutral-200">What your AI team did.</strong> A record of the work
+              MAIRO&apos;s AI specialists do for you — what each one checked, recommended or changed, the
+              figures it used, and what you approved or turned down, and when — along with your Daily
+              Brief, reports and Performance Coach findings. It&apos;s kept so you can always see what
+              happened and why.</>,
             <><strong className="text-neutral-200">Your leads.</strong> If your ads use a form we host,
               the details people submit to you — such as name, email and phone — so you can see and
               follow up your enquiries. If your Meta pixel is connected, a lead&apos;s email and phone number
@@ -53,9 +59,12 @@ export default function PrivacyPage() {
               was good, booked an appointment or became a customer, and what a sale was worth — only what
               you mark.</>,
             <><strong className="text-neutral-200">Your store&apos;s orders.</strong> If you add our order
-              webhook to your store, each order&apos;s value and time. Customer emails and phone numbers
-              are hashed on arrival and never stored in the clear; the hashed details and the order
-              value are passed to Meta to count conversions.</>,
+              webhook to your store (Shopify, for example), each order&apos;s value, currency and time.
+              Shoppers&apos; emails and phone numbers are hashed on arrival and never stored in the clear.
+              Where your store sends them, we also keep the shopper&apos;s country, IP address, browser
+              type and ad click ID. The hashed details, those identifiers and the order value are passed
+              to Meta so it can match the sale to your ads. If you give us your store&apos;s address, we
+              also read its public product list.</>,
             <><strong className="text-neutral-200">Your social posts (Scale plan).</strong> The posts we
               plan and write for you, the pictures and videos you upload or we make for them, and which
               Instagram account and Facebook Page you connect for posting.</>,
@@ -69,7 +78,8 @@ export default function PrivacyPage() {
         />
         <p>
           We do not collect payment card details. We do not use advertising cookies or third-party
-          trackers on this site.
+          trackers on this site; the only cookies we set keep you signed in, protect the Meta and
+          Google sign-in steps, and remember your settings.
         </p>
       </Section>
 
@@ -134,6 +144,10 @@ export default function PrivacyPage() {
               stores the pictures and videos you upload.</>,
           ]}
         />
+        <p>
+          If you run ads for clients and turn on a share link for a client&apos;s weekly report, anyone
+          with that link can see the report until you turn the link off.
+        </p>
       </Section>
 
       <Section heading="How long we keep it">
@@ -153,7 +167,9 @@ export default function PrivacyPage() {
 
       <Section heading="Your rights">
         <p>
-          You can ask us for a copy of what we hold about you, ask us to correct it, or ask us to
+          You can see and correct what {LEGAL.productName} has learned about your business under
+          Settings → Business Brain, and delete your account yourself on the data deletion page.
+          You can also ask us for a copy of what we hold about you, ask us to correct it, or ask us to
           delete it. See the{" "}
           <a href="/data-deletion" className="text-neutral-200 underline underline-offset-4 hover:text-white">
             data deletion page

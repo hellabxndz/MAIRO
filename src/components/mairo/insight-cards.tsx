@@ -57,7 +57,7 @@ export function InsightCards({
               </span>
               <div className="min-w-0 flex-1">
                 <p className={`font-mono text-[10px] uppercase tracking-[0.18em] ${tone.text}`}>
-                  Mairo noticed · {kindInfo(n.kind).label}
+                  MAIRO noticed · {kindInfo(n.kind).label}
                 </p>
                 <h3 className="mt-1.5 text-[14.5px] font-medium leading-snug text-white">
                   {n.title}

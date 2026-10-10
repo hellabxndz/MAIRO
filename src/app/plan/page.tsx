@@ -8,10 +8,10 @@ import { PlanBuilder } from "@/components/strategy/plan-builder";
 import { PlanReview } from "@/components/strategy/plan-review";
 import { loadOnboarding } from "@/lib/onboarding/progress-store";
 
-// The free stage: Mairo writes the plan, the business reviews it, asks for
+// The free stage: MAIRO writes the plan, the business reviews it, asks for
 // changes, and approves it. No dashboard yet — that comes with activation.
 
-export const metadata = { title: "Your Mairo Advertising Plan" };
+export const metadata = { title: "Your MAIRO Advertising Plan" };
 export const dynamic = "force-dynamic";
 // Reading the website and writing the plan are AI calls.
 export const maxDuration = 60;

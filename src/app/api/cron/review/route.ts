@@ -100,11 +100,11 @@ export async function GET(req: Request) {
   // businesses whose month had advertising in it.
   const reports = await announceMonthlyReports();
 
-  // Mairo Decisions' daily look, oldest-checked accounts first, for as long as
+  // MAIRO Decisions' daily look, oldest-checked accounts first, for as long as
   // the run allows; anyone not reached today is first tomorrow, and is
   // refreshed when they next open the dashboard.
   const decisions = await refreshAllDecisions(40, Math.min(15_000, left())).catch((error) => {
-    console.error("Mairo Decisions cron failed:", error);
+    console.error("MAIRO Decisions cron failed:", error);
     return null;
   });
 

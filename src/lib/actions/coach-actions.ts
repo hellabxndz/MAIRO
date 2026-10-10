@@ -9,7 +9,7 @@ import type { PlanStep, StepStatus } from "@/lib/coach/types";
 
 // What the Performance Coach page calls. Every one is scoped to the business
 // asking — a finding's id is guessable, and this is what makes guessing
-// useless. A change on Meta is never made here: it goes through Mairo
+// useless. A change on Meta is never made here: it goes through MAIRO
 // Decisions' approval (preview, limits, permissions, one-at-a-time claim).
 
 async function context() {

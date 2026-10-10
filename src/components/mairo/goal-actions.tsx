@@ -23,12 +23,12 @@ export function ChangeGoalModalButton({ label = "Change goal", primary = false }
   );
 }
 
-export function TellMairoModalButton({ label = "Tell Mairo something", initialText = "", primary = false }: { label?: string; initialText?: string; primary?: boolean }) {
+export function TellMairoModalButton({ label = "Tell MAIRO something", initialText = "", primary = false }: { label?: string; initialText?: string; primary?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={primary ? actionClass : quietClass}>{label}</button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Tell Mairo something">
+      <Modal open={open} onClose={() => setOpen(false)} title="Tell MAIRO something">
         <p className="mb-3 text-[13.5px] text-muted">A promotion, a launch, something sold out, a new goal. MAIRO works out what to change and shows you before anything happens.</p>
         <TellMairo initialText={initialText} />
       </Modal>
@@ -41,7 +41,7 @@ const STARTERS: { label: string; goal: MissionGoal | null; placeholder?: string 
   { label: "Get More Leads", goal: "GENERATE_LEADS" },
   { label: "Get More Bookings", goal: "GET_BOOKINGS" },
   { label: "Promote Something", goal: null, placeholder: 'What do you want to promote? e.g. "Our new summer menu" or "20% off this weekend"' },
-  { label: "Let Mairo Recommend", goal: "RECOMMEND" },
+  { label: "Let MAIRO Recommend", goal: "RECOMMEND" },
 ];
 
 /** The empty state's five starting points, each opening the goal flow. */

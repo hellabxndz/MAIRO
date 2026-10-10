@@ -34,7 +34,7 @@ export function MemoryPanel({
     <GlassPanel className={`p-5 sm:p-6 ${className}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <HudLabel className="mb-3">Mairo memory</HudLabel>
+          <HudLabel className="mb-3">MAIRO memory</HudLabel>
           <h2 className="text-[16px] font-medium text-white">
             {assistantName} is learning your business
           </h2>

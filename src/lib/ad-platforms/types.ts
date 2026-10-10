@@ -468,7 +468,7 @@ export interface AdPlatformAdapter {
    * Switches one ad off, leaving its campaign and the other ads running.
    *
    * Optional, like the one below: a network without ad-level control leaves
-   * it out, and Mairo Decisions simply doesn't offer the changes that need it
+   * it out, and MAIRO Decisions simply doesn't offer the changes that need it
    * there rather than pretending to make them.
    */
   pauseAd?(input: { organizationId: string; externalAdId: string }): Promise<PlatformResult<void>>;

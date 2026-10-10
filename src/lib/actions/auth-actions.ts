@@ -9,22 +9,65 @@ import { signIn, signOut } from "@/lib/auth";
 import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
 import { googleSignInEnabled, rememberGoogleIntent } from "@/lib/google-sign-in";
 import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
+import { PASSWORD_MAX, normalizeEmail, passwordProblem } from "@/lib/auth-rules/password";
+
+// The sign-up fields, checked on the server whatever the form did. Text is
+// trimmed and capped (a name is shown across the product; a 10,000-character
+// one breaks layouts and fills logs), the email is stored lower-case, and the
+// password follows the same rule the form shows as you type.
+const text = (missing: string, max = 120) =>
+  z.string({ error: missing }).trim().min(1, missing).max(max, `Keep it under ${max} characters.`);
+const email = z
+  .string({ error: "Enter your email address." })
+  .transform(normalizeEmail)
+  .pipe(z.string().min(1, "Enter your email address.").email("That email address doesn't look right — check for a typo."));
+const password = z.string({ error: "Choose a password." }).max(PASSWORD_MAX);
 
 const signUpSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  businessName: z.string().min(1, "Business name is required"),
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  name: text("Enter your name."),
+  businessName: text("Enter your business name."),
+  email,
+  password,
 });
 
-export type AuthActionState = { error?: string } | undefined;
+/**
+ * What a form action hands back. `field` names the input the message is
+ * about, so the form can point at it; `values` are what was typed (never the
+ * password), so a rejected submission doesn't clear the form.
+ */
+export type AuthActionState = { error?: string; field?: string; values?: Record<string, string> } | undefined;
 
 const freelancerSignUpSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  studioName: z.string().min(1, "Give your studio a name"),
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  name: text("Enter your name."),
+  studioName: text("Give your studio a name."),
+  email,
+  password,
 });
+
+/** The first problem with a sign-up, as the form shows it. */
+function signUpProblem(
+  parsed: { success: true; data: { email: string; password: string } } | { success: false; error: z.ZodError },
+): { error: string; field?: string } | null {
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { error: issue?.message ?? "Check the form and try again.", field: typeof issue?.path[0] === "string" ? issue.path[0] : undefined };
+  }
+  const weak = passwordProblem(parsed.data.password, parsed.data.email);
+  return weak ? { error: weak, field: "password" } : null;
+}
+
+/** An account already using this address, whatever its capitalisation. */
+async function emailTaken(address: string): Promise<boolean> {
+  const found = await db.user.findFirst({ where: { email: { equals: address, mode: "insensitive" } }, select: { id: true } });
+  return Boolean(found);
+}
+
+const TAKEN = "There's already an account with that email. Sign in instead, or use a different address.";
+
+/** What was typed, minus the password, to put back in the form. */
+function typed(formData: FormData, fields: string[]): Record<string, string> {
+  return Object.fromEntries(fields.map((f) => [f, String(formData.get(f) ?? "")]));
+}
 
 /**
  * Signs up someone who runs ads for other people rather than for themselves.
@@ -45,16 +88,13 @@ export async function freelancerSignUpAction(
     email: formData.get("email"),
     password: formData.get("password"),
   });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
+  const values = typed(formData, ["name", "studioName", "email"]);
+  const problem = signUpProblem(parsed);
+  if (problem || !parsed.success) return { ...(problem ?? { error: "Check the form and try again." }), values };
 
   const { name, studioName, email, password } = parsed.data;
 
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "An account with that email already exists." };
-  }
+  if (await emailTaken(email)) return { error: TAKEN, field: "email", values };
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -88,17 +128,13 @@ export async function signUpAction(
     email: formData.get("email"),
     password: formData.get("password"),
   });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
+  const values = typed(formData, ["name", "businessName", "email"]);
+  const problem = signUpProblem(parsed);
+  if (problem || !parsed.success) return { ...(problem ?? { error: "Check the form and try again." }), values };
 
   const { name, businessName, email, password } = parsed.data;
 
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "An account with that email already exists." };
-  }
+  if (await emailTaken(email)) return { error: TAKEN, field: "email", values };
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -126,7 +162,7 @@ export async function signUpAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Account created, but sign-in failed. Please sign in manually." };
+      return { error: "Your account was created, but signing you in didn't work. Sign in with the same email and password." };
     }
     throw error;
   }
@@ -220,7 +256,7 @@ export async function createOwnerAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Account created, but sign-in failed. Please sign in manually." };
+      return { error: "Your account was created, but signing you in didn't work. Sign in with the same email and password." };
     }
     throw error;
   }
@@ -245,7 +281,10 @@ export async function signInAction(
   // would otherwise bounce an OWNER away from /dashboard, or a CLIENT away
   // from /aios) never runs for it. Pick the right destination here instead
   // of leaning on the proxy to correct it after the fact.
-  const targetUser = await db.user.findUnique({ where: { email }, select: { role: true } });
+  const typedEmail = email.trim();
+  const targetUser =
+    (await db.user.findUnique({ where: { email: typedEmail }, select: { role: true } })) ??
+    (await db.user.findFirst({ where: { email: { equals: typedEmail, mode: "insensitive" } }, select: { role: true } }));
   const defaultPath = targetUser?.role === "OWNER" ? "/aios" : "/dashboard";
   const isSafeForRole =
     targetUser?.role === "OWNER"
@@ -261,7 +300,7 @@ export async function signInAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "Invalid email or password." };
+      return { error: "That email and password don't match an account. Check them and try again.", values: { email } };
     }
     throw error;
   }

@@ -7,7 +7,7 @@ import { OneClickFixModal } from "./approval-modal";
 
 /**
  * The button the assistant puts under its answer (One-Click Fix). Opens the
- * confirmation panel with exactly what Mairo wants to change.
+ * confirmation panel with exactly what MAIRO wants to change.
  */
 export function FixThisForMe({ decisionIds, label = "Fix This For Me" }: { decisionIds: string[]; label?: string }) {
   const [decisions, setDecisions] = useState<DecisionView[] | null>(null);
@@ -22,7 +22,7 @@ export function FixThisForMe({ decisionIds, label = "Fix This For Me" }: { decis
         onClick={() =>
           start(async () => {
             const loaded = await loadDecisionsAction(decisionIds);
-            if (loaded.length === 0) setNote("These changes have already been dealt with — see Mairo Decisions.");
+            if (loaded.length === 0) setNote("These changes have already been dealt with — see MAIRO Decisions.");
             else setDecisions(loaded);
           })
         }

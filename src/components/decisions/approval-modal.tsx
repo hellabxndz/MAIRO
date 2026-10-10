@@ -9,7 +9,7 @@ import type { AppliedChange } from "@/lib/decisions/apply";
 
 // The confirmation panel every change goes through.
 //
-// "Mairo wants to make these changes" — each one with what it is now and what
+// "MAIRO wants to make these changes" — each one with what it is now and what
 // it would become — then Approve, Edit or Cancel. Nothing is sent until
 // Approve, and after it the panel says exactly what happened, including a
 // change the network refused. One-Click Fix opens the same panel with several
@@ -23,7 +23,7 @@ function dollars(cents: number): string {
 
 export function ApprovalModal({
   decisions,
-  title = "Mairo wants to make these changes",
+  title = "MAIRO wants to make these changes",
   onClose,
   onDone,
   startEditing = false,
@@ -188,7 +188,7 @@ export function ApprovalModal({
               {madeCount === 0 ? "Nothing changed" : onMeta ? "Confirmed by Meta" : "Done"}
             </p>
             <h2 className="mt-1.5 text-[18px] font-medium text-white">
-              {madeCount === 0 ? "Mairo couldn't make the changes" : onMeta ? `Meta confirmed ${madeCount} change${madeCount === 1 ? "" : "s"}.` : `Mairo made ${madeCount} change${madeCount === 1 ? "" : "s"}.`}
+              {madeCount === 0 ? "MAIRO couldn't make the changes" : onMeta ? `Meta confirmed ${madeCount} change${madeCount === 1 ? "" : "s"}.` : `MAIRO made ${madeCount} change${madeCount === 1 ? "" : "s"}.`}
             </h2>
             {result.error && <p className="mt-2 text-[13px] text-amber-200/90">{result.error}</p>}
             {result.partial && !result.error && (
@@ -211,7 +211,7 @@ export function ApprovalModal({
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-[12px] text-muted">Every change, with the reason, is in Mairo Activity.</p>
+            <p className="mt-4 text-[12px] text-muted">Every change, with the reason, is in MAIRO Activity.</p>
             <div className="mt-5 flex gap-3">
               <button
                 type="button"
@@ -222,7 +222,7 @@ export function ApprovalModal({
                 Close
               </button>
               <a href="/dashboard/activity" className="rounded-full border px-5 py-2.5 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>
-                See Mairo Activity
+                See MAIRO Activity
               </a>
             </div>
           </>
@@ -234,5 +234,5 @@ export function ApprovalModal({
 
 /** One-Click Fix: the same panel, for everything the assistant proposed at once. */
 export function OneClickFixModal(props: { decisions: DecisionView[]; onClose: () => void; onDone?: (anyApplied: boolean) => void }) {
-  return <ApprovalModal {...props} title="Mairo wants to make these changes" />;
+  return <ApprovalModal {...props} title="MAIRO wants to make these changes" />;
 }

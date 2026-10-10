@@ -99,7 +99,7 @@ export function LiveDemo() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live/60" />
           <span className="relative h-1.5 w-1.5 rounded-full bg-live" />
         </span>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Mairo</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">MAIRO</p>
         {done && (
           <button
             type="button"

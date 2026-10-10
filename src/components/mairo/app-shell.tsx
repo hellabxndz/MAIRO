@@ -274,7 +274,7 @@ export function AppShell({
    *
    * The label is the name rather than a product noun because that is what the
    * customer thinks of it as — somebody who renamed theirs to Jess and then
-   * has to click "Mairo AI" to reach Jess has been told the rename did not
+   * has to click "MAIRO AI" to reach Jess has been told the rename did not
    * really take.
    */
   assistantName?: string;
@@ -283,7 +283,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const primary = [...PRIMARY_NAV, ...extraNav, ...(ASSISTANT_NAV ? [ASSISTANT_NAV] : [])];
-  const askName = assistantName || "Mairo";
+  const askName = assistantName || "MAIRO";
 
   const row = (item: NavEntry, active: boolean) => (
     <Link

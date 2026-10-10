@@ -313,7 +313,7 @@ export default async function AnalyticsPage({
       </>)}
 
       <p className="mt-10 text-[13px] text-faint">
-        More: <Link href="/dashboard/reports" className="text-violet-bright hover:underline">Weekly reports</Link> · <Link href="/dashboard/activity" className="text-violet-bright hover:underline">Mairo activity</Link> · <Link href="/dashboard/decisions" className="text-violet-bright hover:underline">Mairo decisions</Link>
+        More: <Link href="/dashboard/reports" className="text-violet-bright hover:underline">Weekly reports</Link> · <Link href="/dashboard/activity" className="text-violet-bright hover:underline">MAIRO activity</Link> · <Link href="/dashboard/decisions" className="text-violet-bright hover:underline">MAIRO decisions</Link>
       </p>
     </div>
   );
@@ -378,7 +378,7 @@ async function SimpleAnalytics({ organizationId, shown, hasData, campaigns }: { 
               <p className="mt-1 text-[14px] text-muted">{resultPhrase(family, best.results)} · {fmtMoney(Math.round(best.spend! / best.results!))} each</p>
             </Link>
           ) : <p className="mt-3 text-[14px] text-muted">Not enough results to pick one yet.</p>}
-          <h2 className="mt-7 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Mairo insights</h2>
+          <h2 className="mt-7 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">MAIRO insights</h2>
           {insights.length ? <ul className="mt-3 space-y-2 text-[14px] text-white/85">{insights.map((t) => <li key={t}>• {t}</li>)}</ul> : <p className="mt-3 text-[14px] text-muted">MAIRO is still learning what works for you.</p>}
         </section>
       </div>

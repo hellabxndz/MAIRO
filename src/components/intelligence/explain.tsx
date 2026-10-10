@@ -4,15 +4,15 @@ import { basedOnLine } from "@/lib/intelligence/format";
 import type { BasedOn } from "@/lib/intelligence/types";
 import type { InsightView } from "@/lib/intelligence/run";
 
-// The pieces every Mairo finding is explained with: how sure Mairo is and on
-// what, the five questions (what happened, why it matters, what Mairo
+// The pieces every MAIRO finding is explained with: how sure MAIRO is and on
+// what, the five questions (what happened, why it matters, what MAIRO
 // recommends, what supports it, what approving does), and the one button
 // that acts on it.
 
 const CONFIDENCE: Record<DecisionConfidence, { label: string; tone: string; note: string | null }> = {
   HIGH: { label: "High confidence", tone: "bg-emerald-400/12 text-emerald-300", note: null },
   MEDIUM: { label: "Medium confidence", tone: "bg-sky-400/12 text-sky-300", note: null },
-  EARLY: { label: "Early signal", tone: "bg-amber-400/12 text-amber-300", note: "Mairo needs more data before making an automatic change." },
+  EARLY: { label: "Early signal", tone: "bg-amber-400/12 text-amber-300", note: "MAIRO needs more data before making an automatic change." },
 };
 
 export function ConfidenceBadge({ confidence, basedOn, compact = false }: { confidence: DecisionConfidence; basedOn?: BasedOn; compact?: boolean }) {
@@ -42,7 +42,7 @@ export function InsightExplanation({ insight, advanced }: { insight: InsightView
   const rows: [string, string][] = [
     ["What happened?", advanced ? insight.happenedAdvanced : insight.happened],
     ["Why does it matter?", insight.whyItMatters],
-    ["Mairo recommends", insight.recommendation],
+    ["MAIRO recommends", insight.recommendation],
     ["Why this?", insight.reason],
     ["If you approve", insight.ifApproved],
   ];
@@ -72,10 +72,10 @@ export function InsightExplanation({ insight, advanced }: { insight: InsightView
   );
 }
 
-/** The one button that acts on a finding: its Mairo Decision when there is one, otherwise where to go. */
+/** The one button that acts on a finding: its MAIRO Decision when there is one, otherwise where to go. */
 export function FixWithMairo({ insight, label, className = "" }: { insight: Pick<InsightView, "decisionId" | "action" | "decisionDedupeKey">; label?: string; className?: string }) {
   const href = insight.decisionId ? "/dashboard/decisions" : (insight.action?.href ?? "/dashboard/decisions");
-  const text = label ?? (insight.decisionId || insight.decisionDedupeKey ? "Fix with Mairo" : (insight.action?.label ?? "Take a look"));
+  const text = label ?? (insight.decisionId || insight.decisionDedupeKey ? "Fix with MAIRO" : (insight.action?.label ?? "Take a look"));
   const external = /^https?:\/\//.test(href);
   const cls = `inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#7c5cff] px-3.5 text-[13px] font-medium text-white transition hover:brightness-110 ${className}`;
   return external ? (

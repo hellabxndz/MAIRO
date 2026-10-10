@@ -177,7 +177,7 @@ async function publisherSplit(organizationId: string, campaigns: CampaignWithChi
     .sort((a, b) => (b.metrics.spendCents ?? 0) - (a.metrics.spendCents ?? 0));
 }
 
-/** Each campaign's ads for the period, labelled as the rest of Mairo labels them. One call per campaign. */
+/** Each campaign's ads for the period, labelled as the rest of MAIRO labels them. One call per campaign. */
 async function adBreakdown(
   organizationId: string,
   campaigns: { id: string; platformCampaigns: { platform: string; externalCampaignId: string | null; externalAdId: string | null; extraExternalAdIds: string[] }[] }[],

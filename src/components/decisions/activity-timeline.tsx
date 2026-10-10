@@ -1,8 +1,8 @@
 import type { ActivityEntry } from "@/lib/activity/log";
 
-// Mairo Activity: every action MAIRO took, newest first, with the reason.
+// MAIRO Activity: every action MAIRO took, newest first, with the reason.
 //
-//   10:42 AM  Mairo reduced "Spring sale" from $40/day to $30/day.
+//   10:42 AM  MAIRO reduced "Spring sale" from $40/day to $30/day.
 //             Reason: cost per purchase was over your target three days running.
 
 function when(at: Date, now = new Date()): { day: string; time: string } {
@@ -18,7 +18,7 @@ export function ActivityTimeline({ entries, compact = false }: { entries: Activi
   if (entries.length === 0) {
     return (
       <p className="text-[13px] leading-relaxed text-muted">
-        Mairo hasn&rsquo;t changed anything yet. Every change it makes — whether you approved it or it acted inside your
+        MAIRO hasn&rsquo;t changed anything yet. Every change it makes — whether you approved it or it acted inside your
         limits — shows up here with the reason.
       </p>
     );
@@ -38,7 +38,7 @@ export function ActivityTimeline({ entries, compact = false }: { entries: Activi
             />
             {showDay && !compact && <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{w.day}</p>}
             <p className="text-[11.5px] text-faint">
-              {compact ? `${w.day}, ${w.time}` : w.time} · {e.automatic ? "Mairo, within your limits" : e.source === "protection" ? "You" : "You approved"}
+              {compact ? `${w.day}, ${w.time}` : w.time} · {e.automatic ? "MAIRO, within your limits" : e.source === "protection" ? "You" : "You approved"}
             </p>
             <p className="mt-0.5 text-[13.5px] text-white">{e.summary}</p>
             {!compact && (

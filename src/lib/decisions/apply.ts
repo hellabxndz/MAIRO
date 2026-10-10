@@ -255,7 +255,7 @@ export async function applyDecision(input: {
     data: { applyingAt: new Date() },
   });
   if (claim.count === 0) {
-    return { ok: false, error: "MAIRO is already making this change. It will show in Mairo Activity in a moment.", applied: [] };
+    return { ok: false, error: "MAIRO is already making this change. It will show in MAIRO Activity in a moment.", applied: [] };
   }
 
   try {
@@ -341,7 +341,7 @@ async function carryOut(
       kind: "MAIRO_ACTED",
       dedupeKey: `decision:${decision.id}`,
       title: `MAIRO made ${applied.filter((a) => a.ok).length === 1 ? "a change" : `${applied.filter((a) => a.ok).length} changes`}: ${decision.title}`,
-      body: `${decision.recommendation} Every change is in Mairo Activity, with the reason.`,
+      body: `${decision.recommendation} Every change is in MAIRO Activity, with the reason.`,
       actionLabel: "See what changed",
       actionHref: "/dashboard/activity",
       mairoCampaignId: decision.mairoCampaignId ?? undefined,

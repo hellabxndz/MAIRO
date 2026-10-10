@@ -7,7 +7,7 @@ import type { InsightView } from "@/lib/intelligence/run";
 import { askMairoHref, FixWithMairo, InsightExplanation, SeverityChip } from "./explain";
 
 // MAIRO FOUND THIS BEFORE YOU DID: problems caught while they're still small.
-// Each card says what Mairo noticed, what it means and what to do, with the
+// Each card says what MAIRO noticed, what it means and what to do, with the
 // full reasoning one tap away. Severity is honest — most things are "needs
 // attention", not "urgent".
 
@@ -34,7 +34,7 @@ export function EarlyWarningCard({ insight, advanced }: { insight: InsightView; 
         {insight.campaignName && <span className="truncate text-[11.5px] text-faint">· {insight.campaignName}</span>}
       </div>
       <h3 className="mt-2 text-[15px] font-semibold leading-snug text-white">{insight.title}</h3>
-      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">Mairo noticed</p>
+      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">MAIRO noticed</p>
       <p className="mt-0.5 text-[13.5px] leading-relaxed text-white/85">{advanced ? insight.happenedAdvanced : insight.happened}</p>
       {insight.metric && insight.currentValue && (
         <dl className="mt-2.5 grid grid-cols-2 gap-2 text-[12.5px]">
@@ -59,7 +59,7 @@ export function EarlyWarningCard({ insight, advanced }: { insight: InsightView; 
         <div className="mt-3 rounded-lg border border-violet/25 bg-violet/[0.06] p-3.5">
           <InsightExplanation insight={insight} advanced={advanced} />
           <Link href={askMairoHref(insight)} className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">
-            Ask Mairo about it →
+            Ask MAIRO about it →
           </Link>
         </div>
       )}
@@ -88,10 +88,10 @@ export function EarlyWarnings({ insights, advanced }: { insights: InsightView[];
   const shown = early.filter((i) => filter === "all" || i.category === filter);
   return (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo found this before you did</h2>
+      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO found this before you did</h2>
       <p className="mt-1 text-[14px] text-muted">Small problems become expensive when nobody notices them.</p>
       {early.length === 0 ? (
-        <p className="mt-4 text-[13.5px] text-muted">Nothing caught early right now. Mairo checks every day for rising costs, tired ads, audience fatigue, website and tracking problems.</p>
+        <p className="mt-4 text-[13.5px] text-muted">Nothing caught early right now. MAIRO checks every day for rising costs, tired ads, audience fatigue, website and tracking problems.</p>
       ) : (
         <>
           {categories.length > 1 && (

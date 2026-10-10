@@ -73,7 +73,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[18px] font-semibold text-white">Profit settings</h2>
-                  <p className="mt-1 text-[13px] text-muted">What a sale costs you beyond advertising. Mairo uses these to estimate profit — leave anything you don&rsquo;t know blank.</p>
+                  <p className="mt-1 text-[13px] text-muted">What a sale costs you beyond advertising. MAIRO uses these to estimate profit — leave anything you don&rsquo;t know blank.</p>
                 </div>
                 <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/12 text-white/70 hover:text-white">
                   ✕
@@ -88,7 +88,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
                   defaultValue={values.averageMarginPercent === null ? "" : String(values.averageMarginPercent)}
                   suffix="%"
                 />
-                <p className="mt-3 text-[12px] text-faint">Or give a typical price and cost and Mairo works the margin out:</p>
+                <p className="mt-3 text-[12px] text-faint">Or give a typical price and cost and MAIRO works the margin out:</p>
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   <Field name="sellingPrice" label="Selling price" defaultValue={dollars(values.sellingPriceCents)} prefix="$" />
                   <Field name="productCost" label="Product cost" defaultValue={dollars(values.productCostCents)} prefix="$" />

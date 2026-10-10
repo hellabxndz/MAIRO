@@ -53,7 +53,7 @@ export function StepAudience({
         <Choice
           selected={plan.audienceMode === "ai"}
           onClick={() => update({ audienceMode: "ai" })}
-          label="Let Mairo find my customers"
+          label="Let MAIRO find my customers"
           sub="MAIRO suggests an audience from your business, and Meta refines it as results come in"
         />
         <Choice

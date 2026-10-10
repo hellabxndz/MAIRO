@@ -5,11 +5,11 @@ import { resultsFor } from "@/lib/protection/rules";
 // The Weekly Report's judgement, as pure functions over the week's figures.
 //
 // No database and no network: src/lib/reports/weekly.ts gathers the week from
-// the ad networks and Mairo's own records, and everything that decides what
-// the report says — the win, what needs attention, what Mairo learned, the
+// the ad networks and MAIRO's own records, and everything that decides what
+// the report says — the win, what needs attention, what MAIRO learned, the
 // plan — happens here, where scripts/check-weekly-report.ts can assert it.
 //
-// The rules are the same as everywhere else in Mairo: compare the account
+// The rules are the same as everywhere else in MAIRO: compare the account
 // with itself, say nothing rather than something weak, and never promise a
 // result. A conclusion without enough data behind it is shown as an early
 // signal and never saved to Learning Memory.
@@ -42,7 +42,7 @@ export type AdWeek = {
   campaignName: string;
   objective: AdGoal;
   kind: CampaignAdKind | null;
-  /** When Mairo added it, if Mairo did. ISO. */
+  /** When MAIRO added it, if MAIRO did. ISO. */
   createdAt: string | null;
   current: PlatformMetrics | null;
   previous: PlatformMetrics | null;
@@ -195,7 +195,7 @@ export function pickWin(ads: AdWeek[], account: Figures): { win: Win | null; not
     .filter((x) => x.res >= 3 && x.spend > 0)
     .map((x) => ({ ...x, cpa: Math.round(x.spend / x.res) }));
   if (candidates.length === 0) {
-    return { win: null, note: `Mairo does not have enough ${word} data yet to determine your strongest creative.` };
+    return { win: null, note: `MAIRO does not have enough ${word} data yet to determine your strongest creative.` };
   }
   const best = [...candidates].sort((x, y) => x.cpa - y.cpa)[0];
   const accountCpa = account.costPerResultCents;
@@ -235,7 +235,7 @@ export function pickWin(ads: AdWeek[], account: Figures): { win: Win | null; not
   };
 }
 
-// --- what Mairo learned -----------------------------------------------------------
+// --- what MAIRO learned -----------------------------------------------------------
 
 function compare(
   key: string,
@@ -364,7 +364,7 @@ export function budgetNote(planned: number | null, spent: number | null, budgetC
           : `Spend tracked the budget closely (${pct(u)}).`,
     );
   }
-  if (budgetChanges > 0) parts.push(`Mairo made ${budgetChanges} budget change${budgetChanges === 1 ? "" : "s"}, moving money toward what was working.`);
+  if (budgetChanges > 0) parts.push(`MAIRO made ${budgetChanges} budget change${budgetChanges === 1 ? "" : "s"}, moving money toward what was working.`);
   if (testingShare !== null && testingShare > 0) parts.push(`${pct(testingShare)} of spend went to campaigns testing more than one version of an ad.`);
   return parts.join(" ") || "No budget changes this week.";
 }
@@ -450,7 +450,7 @@ export function plainSummary(d: Pick<WeeklyReportData, "glance" | "win" | "atten
   if (bits.length) s.push(`${bits.join(" while ")[0].toUpperCase()}${bits.join(" while ").slice(1)}${advanced && c.revenueCents !== null ? ` (${usd(c.revenueCents, true)} in tracked sales on ${usd(c.spendCents, true)} spent, ${c.roas?.toFixed(1) ?? "—"}x ROAS)` : ""}.`);
   else s.push(`You spent ${usd(c.spendCents, true)}${c.results !== null ? ` and got ${c.results} ${word}${c.results === 1 ? "" : "s"}` : ""}.`);
   if (d.win) s.push(`${d.win.label} in "${d.win.campaignName}" was your strongest ad${advanced ? ` at ${usd(d.win.costPerResultCents)} per ${word}` : ""}.`);
-  if (d.attention[0]) s.push(`Mairo also spotted something worth a look: ${d.attention[0].title.charAt(0).toLowerCase()}${d.attention[0].title.slice(1)}.`);
-  if (d.changes.length) s.push(`Mairo made ${d.changes.length} change${d.changes.length === 1 ? "" : "s"} during the week.`);
+  if (d.attention[0]) s.push(`MAIRO also spotted something worth a look: ${d.attention[0].title.charAt(0).toLowerCase()}${d.attention[0].title.slice(1)}.`);
+  if (d.changes.length) s.push(`MAIRO made ${d.changes.length} change${d.changes.length === 1 ? "" : "s"} during the week.`);
   return s.slice(0, 5).join(" ");
 }

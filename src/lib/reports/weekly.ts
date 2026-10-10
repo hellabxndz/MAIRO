@@ -35,12 +35,12 @@ import {
   type WeeklyReportData,
 } from "./weekly-logic";
 
-// The Automatic Weekly Report: a summary layer over what Mairo already knows.
+// The Automatic Weekly Report: a summary layer over what MAIRO already knows.
 //
 // Nothing here detects anything. The week's figures come from the ad networks
 // through the same adapters the dashboard uses; what needs attention and the
 // plan for next week are the open Insights; health is Business Health; the
-// changes are Mairo Activity. This file gathers the week, hands it to the
+// changes are MAIRO Activity. This file gathers the week, hands it to the
 // pure judgement in weekly-logic.ts, and keeps the result — so a report reads
 // the way the week actually looked, even months later.
 
@@ -195,7 +195,7 @@ export async function buildWeeklyReport(organizationId: string, week: DateRange)
   const { win, note: winNote } = pickWin(ads, current);
   const learned = findLearnings(ads, platformRows, win, word);
 
-  // What changed, from Mairo's own records.
+  // What changed, from MAIRO's own records.
   const [activity, optimizer, protection] = await Promise.all([
     db.mairoActivity.findMany({ where: { organizationId, createdAt: { gte: week.since, lt: end } }, orderBy: { createdAt: "asc" } }),
     organizationActions(organizationId, 50),
@@ -395,13 +395,13 @@ async function deliver(organizationId: string, reportId: string, data: WeeklyRep
   const c = data.glance.current;
   const actions = data.attention.length;
   const body = `${data.period.label}: ${usd(c.revenueCents, true)} in tracked sales${c.roas !== null ? `, ${c.roas.toFixed(1)}x ROAS` : ""}. ${actions ? `${actions} thing${actions === 1 ? "" : "s"} need${actions === 1 ? "s" : ""} your attention.` : "No major issues this week."}`;
-  const smsBody = `Your Mairo weekly report is ready. ${body}`;
+  const smsBody = `Your MAIRO weekly report is ready. ${body}`;
   if (inApp) {
     await notify({
       organizationId,
       kind: "WEEKLY_REPORT",
       dedupeKey: `weekly:${data.period.since}`,
-      title: "Your Mairo Weekly Report is ready",
+      title: "Your MAIRO Weekly Report is ready",
       body,
       actionLabel: "Open report",
       actionHref: `/dashboard/reports/weekly/${reportId}`,

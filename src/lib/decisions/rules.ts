@@ -11,7 +11,7 @@ import type {
   Evidence,
 } from "./types";
 
-// What Mairo Decisions notices, as rules over an account's own figures.
+// What MAIRO Decisions notices, as rules over an account's own figures.
 //
 // Pure: no database, no network, no clock but the one passed in. Every rule
 // is asserted in scripts/check-decisions.ts, which is what lets this file be
@@ -611,7 +611,7 @@ export function dataStatusOf(input: DecisionInput): DataStatus {
  */
 /**
  * Every finding the rules make, before the top few are picked as decisions.
- * Mairo Intelligence reads these too, so a finding is detected once and a
+ * MAIRO Intelligence reads these too, so a finding is detected once and a
  * decision and an insight about it can never disagree.
  */
 export function allDrafts(input: DecisionInput): DecisionDraft[] {

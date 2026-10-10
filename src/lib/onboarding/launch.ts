@@ -28,7 +28,7 @@ export async function launchPlanCampaign(organizationId: string): Promise<Launch
       db.organization.findUnique({ where: { id: ctx.organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } }),
     ]);
     if (!row?.campaignId) return { ok: false, error: "The campaign hasn't been built yet." };
-    if (!org || !hasActivePlan(org)) return { ok: false, error: "Choose a Mairo plan first — your subscription isn't active, so nothing can be launched." };
+    if (!org || !hasActivePlan(org)) return { ok: false, error: "Choose a MAIRO plan first — your subscription isn't active, so nothing can be launched." };
     const campaign = await db.mairoCampaign.findFirst({
       where: { id: row.campaignId, organizationId: ctx.organizationId },
       select: { status: true, platformCampaigns: { select: { status: true, externalAdId: true } } },

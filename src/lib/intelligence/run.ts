@@ -14,7 +14,7 @@ import { aggregateMetrics } from "./metrics";
 import { radar, scoreHealth } from "./score";
 import type { BriefFigures, BriefReport, Insight, IntelligenceReportData } from "./types";
 
-// The daily look, second half: after Mairo Decisions has read the account and
+// The daily look, second half: after MAIRO Decisions has read the account and
 // written its decisions, this turns the same snapshot into Insights, Business
 // Health, the Opportunity Radar and the Morning Brief, and keeps them so the
 // dashboard doesn't have to ask Meta again.
@@ -191,7 +191,7 @@ export type InsightView = Insight & {
   id: string;
   status: InsightStatus;
   firstSeenAt: string;
-  /** The pending Mairo Decision that carries the fix, when there is one. */
+  /** The pending MAIRO Decision that carries the fix, when there is one. */
   decisionId: string | null;
 };
 

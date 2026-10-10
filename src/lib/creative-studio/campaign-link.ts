@@ -65,7 +65,7 @@ export async function attachAssetToCampaign(
   const brief =
     version.instruction?.trim() ||
     (asset.preset ? presetInfo(asset.preset).description : "An advertising image") ||
-    "An advertising image made in Mairo AI Creative Studio";
+    "An advertising image made in MAIRO AI Creative Studio";
 
   let imageDataUrl: string;
   try {
@@ -154,7 +154,7 @@ export async function attachAssetToCampaign(
       creativeRequestId: request.id,
       version: 1,
       imageData: imageDataUrl,
-      instruction: "Made in Mairo AI Creative Studio",
+      instruction: "Made in MAIRO AI Creative Studio",
     },
   });
 

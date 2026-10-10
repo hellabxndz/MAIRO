@@ -222,7 +222,7 @@ export function StepAd({
         <div className="grid gap-2.5 sm:grid-cols-2">
           {studio.configured && (
             <Choice selected={false} onClick={() => update({ adChoice: "generate", ...RESET_WORDS })}
-              label="Create an Ad With AI" sub="Let Mairo create a professional advertisement for your business" />
+              label="Create an Ad With AI" sub="Let MAIRO create a professional advertisement for your business" />
           )}
           {studio.storageReady && (
             <Choice selected={false} onClick={() => setMenu("upload")}

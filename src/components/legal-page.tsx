@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AmbientSky } from "@/components/ambient-sky";
+import { Wordmark } from "@/components/wordmark";
+import { brandFont } from "@/lib/fonts";
 import { LEGAL } from "@/lib/legal";
 
 // Shared shell for the public legal pages. These have to stay reachable
@@ -17,20 +19,20 @@ export function LegalPage({
   children: ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen text-white">
+    <div className={`${brandFont.className} relative min-h-screen text-white`}>
       <AmbientSky />
 
-      <div className="relative mx-auto max-w-3xl px-6 py-16 sm:px-10 sm:py-24">
-        <Link
-          href="/"
-          className="text-xs uppercase tracking-[0.2em] text-neutral-500 transition hover:text-white"
-        >
-          ← {LEGAL.productName}
-        </Link>
+      <div className="relative mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-20">
+        <div className="flex items-center justify-between gap-4">
+          <Wordmark />
+          <Link href="/" className="text-[13px] text-neutral-500 transition hover:text-white">
+            ← Back to the home page
+          </Link>
+        </div>
 
-        <h1 className="mt-10 text-4xl font-medium leading-[1.05] sm:text-5xl">{title}</h1>
+        <h1 className="mt-12 text-4xl font-bold leading-[1.05] tracking-[-0.035em] sm:text-5xl">{title}</h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400">{intro}</p>
-        <p className="mt-6 text-xs uppercase tracking-[0.15em] text-neutral-600">
+        <p className="mt-6 text-xs uppercase tracking-[0.15em] text-neutral-500">
           Last updated {LEGAL.lastUpdated}
         </p>
 
@@ -47,7 +49,11 @@ export function LegalPage({
             </a>
             .
           </p>
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.15em] text-neutral-600">
+          <p className="mt-3">
+            {LEGAL.productName} is operated by {LEGAL.companyName}
+            {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.15em] text-neutral-500">
             <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
             <Link href="/terms" className="transition hover:text-white">Terms</Link>
             <Link href="/data-deletion" className="transition hover:text-white">Data deletion</Link>
@@ -61,7 +67,7 @@ export function LegalPage({
 export function Section({ heading, children }: { heading: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="text-xl font-medium text-white">{heading}</h2>
+      <h2 className="text-xl font-semibold tracking-[-0.02em] text-white">{heading}</h2>
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-neutral-400">{children}</div>
     </section>
   );

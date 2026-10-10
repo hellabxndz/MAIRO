@@ -44,7 +44,7 @@ export default async function AccountPage() {
       entries: [
         { href: "/dashboard/reports/monthly", label: "Results", hint: "What your ads achieved and what MAIRO did, month by month" },
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
-        { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad Mairo has made for you" },
+        { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad MAIRO has made for you" },
         { href: "/dashboard/social", label: "Social Manager", hint: "AI social media management (Scale only)" },
         { href: "/dashboard/social/calendar", label: "Content Calendar", hint: "Your planned and published posts (Scale only)" },
         ...(showsEnquiries({ hasForm: Boolean(leadForm) })
@@ -63,9 +63,9 @@ export default async function AccountPage() {
     {
       title: "Account",
       entries: [
-        { href: "/dashboard/billing", label: "Billing", hint: "Your Mairo subscription and invoices" },
+        { href: "/dashboard/billing", label: "Billing", hint: "Your MAIRO subscription and invoices" },
         { href: "/dashboard/settings", label: "Settings", hint: "Business details and brand" },
-        { href: "/dashboard/guide", label: "How it works", hint: "What Mairo does, and when" },
+        { href: "/dashboard/guide", label: "How it works", hint: "What MAIRO does, and when" },
       ],
     },
   ];

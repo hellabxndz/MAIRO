@@ -6,10 +6,10 @@ import type { CampaignSnapshot, DecisionDraft, DecisionInput, Evidence } from "@
 import { resultsFor, resultWord, usd } from "@/lib/protection/rules";
 import type { ActionType, BasedOn, Insight, RadarArea } from "./types";
 
-// Everything Mairo notices, as Insights.
+// Everything MAIRO notices, as Insights.
 //
-// Two sources, one output. The Mairo Decisions rules (src/lib/decisions/rules)
-// already find the things Mairo can change; each of their findings becomes an
+// Two sources, one output. The MAIRO Decisions rules (src/lib/decisions/rules)
+// already find the things MAIRO can change; each of their findings becomes an
 // Insight linked to its decision. The detectors below add what those rules
 // don't cover — mostly early warnings, where the right move is to look before
 // anything changes.
@@ -170,12 +170,12 @@ const cpaRising: Detector = (c, { now }, _ctx, drafts) => {
       happenedAdvanced: `CPA ${usd(now3)} (3d) vs ${usd(before)} (prior 4d), +${pct(rise)}. ${recentR} vs ${priorR} ${word}s.`,
       whyItMatters: `The same budget is buying fewer ${word}s. Caught early, it's usually one ad or audience rather than the whole campaign.`,
       recommendation: culprit
-        ? `${culprit.a.label} is taking ${pct(culprit.spendShare)} of the budget but bringing ${pct(culprit.resultShare)} of the ${word}s. Reduce what it gets${pauseDraft ? " — Mairo has a decision ready to switch it off" : ""}.`
+        ? `${culprit.a.label} is taking ${pct(culprit.spendShare)} of the budget but bringing ${pct(culprit.resultShare)} of the ${word}s. Reduce what it gets${pauseDraft ? " — MAIRO has a decision ready to switch it off" : ""}.`
         : "Watch it for another day or two before changing anything — a short rise can settle on its own.",
       reason: culprit
         ? `The biggest single change inside the campaign is ${culprit.a.label}: most of the extra cost is going through it.`
         : "No single ad explains it yet, so a change now would be a guess.",
-      ifApproved: culprit ? `Less of your budget goes to ${culprit.a.label}, and more to the ads bringing ${word}s.` : "Nothing changes; Mairo keeps watching it.",
+      ifApproved: culprit ? `Less of your budget goes to ${culprit.a.label}, and more to the ads bringing ${word}s.` : "Nothing changes; MAIRO keeps watching it.",
       evidence: [
         { label: `Cost per ${word}, last 3 days`, value: usd(now3), advancedLabel: "CPA (3d)" },
         { label: `Cost per ${word}, the 4 days before`, value: usd(before), advancedLabel: "CPA (prior 4d)" },
@@ -273,7 +273,7 @@ const afterTheClick: Detector = (c, { now }, _ctx, drafts) => {
         whyItMatters: `A drop this sudden, with traffic steady, is more often a tracking problem than a real fall in ${word}s. If Meta can't see ${word}s, it can't find more people like the ones who ${c.objective === "SALES" ? "buy" : "get in touch"}.`,
         recommendation: "Check your pixel and purchase tracking before changing the campaign.",
         reason: "Clicks and click rate barely moved, so the ads are still working; what changed is what's being recorded after the click.",
-        ifApproved: "Nothing in the campaign changes. Mairo opens your tracking setup so you can see whether events are still arriving.",
+        ifApproved: "Nothing in the campaign changes. MAIRO opens your tracking setup so you can see whether events are still arriving.",
         evidence: [
           { label: "Clicks per day, last 3 days", value: clicksR.toFixed(0), advancedLabel: "Link clicks/day (3d)" },
           { label: "Clicks per day, the 4 days before", value: clicksP.toFixed(0), advancedLabel: "Link clicks/day (prior 4d)" },
@@ -302,9 +302,9 @@ const afterTheClick: Detector = (c, { now }, _ctx, drafts) => {
       happened: `Your ads are still getting clicks, but fewer of those people ${c.objective === "SALES" ? "complete a purchase" : "send an enquiry"} — down ${pct(drop)}.`,
       happenedAdvanced: `CTR stable (${((ctrR ?? 0) * 100).toFixed(2)}% vs ${((ctrP ?? 0) * 100).toFixed(2)}%); conversion rate ${(convR * 100).toFixed(1)}% vs ${(convP * 100).toFixed(1)}% (−${pct(drop)}).`,
       whyItMatters: "The problem is probably happening after the click rather than inside the ad — on the page, the price, stock, or checkout.",
-      recommendation: "Have Mairo analyze the landing page, and check it on your own phone.",
+      recommendation: "Have MAIRO analyze the landing page, and check it on your own phone.",
       reason: "The ad side is steady, so changing the ad would be fixing the wrong thing.",
-      ifApproved: "Mairo reads your page and lists what's most likely stopping people, with a fix for each.",
+      ifApproved: "MAIRO reads your page and lists what's most likely stopping people, with a fix for each.",
       evidence: [
         { label: "Clicks per 100 people who saw the ad", value: "Stable", advancedLabel: "CTR" },
         { label: `Visitors who became a ${word}, last 3 days`, value: `${(convR * 100).toFixed(1)}%`, advancedLabel: "CVR (3d)" },
@@ -341,8 +341,8 @@ const nearTargetCpa: Detector = (c, { now, guardrails }) => {
       happenedAdvanced: `CPA ${usd(cpa)} (7d) vs max CPA ${usd(target)} (${Math.round((cpa / target) * 100)}% of target).`,
       whyItMatters: over ? `Every ${word} this campaign brings now costs more than you said one is worth.` : "One more expensive day would put it over.",
       recommendation: over ? "Hold the budget, and look at which ad is driving the cost before spending more." : "Watch this campaign closely before increasing its budget.",
-      reason: "It's your own limit, set in Automation — Mairo compares against it rather than an industry average.",
-      ifApproved: "Nothing changes automatically. Mairo won't raise this campaign's budget while it's over target.",
+      reason: "It's your own limit, set in Automation — MAIRO compares against it rather than an industry average.",
+      ifApproved: "Nothing changes automatically. MAIRO won't raise this campaign's budget while it's over target.",
       evidence: [
         { label: `Cost per ${word}, this week`, value: usd(cpa), advancedLabel: "CPA (7d)" },
         { label: "Your target", value: usd(target), advancedLabel: "Max CPA" },
@@ -415,7 +415,7 @@ const retargeting: Detector = (c, { now }, ctx) => {
         ? "Create a website-visitors audience in Meta and run a small retargeting campaign to it."
         : "Get your Meta pixel recording visits first — retargeting audiences are built from it.",
       reason: "The visitors already exist; retargeting spends a little to bring back people who showed interest.",
-      ifApproved: pixelWorks ? "Meta opens on your audiences, where the visitors audience is made in a few clicks." : "Mairo opens your tracking setup.",
+      ifApproved: pixelWorks ? "Meta opens on your audiences, where the visitors audience is made in a few clicks." : "MAIRO opens your tracking setup.",
       evidence: [
         { label: "Clicks to your website, this week", value: clicks.toLocaleString("en-US"), advancedLabel: "Link clicks (7d)" },
         { label: `${word[0].toUpperCase()}${word.slice(1)}s from them`, value: String(r) },
@@ -459,9 +459,9 @@ function trackingSetup(input: DecisionInput, ctx: IntelligenceContext): Insight[
         : "Your Meta pixel exists, but Meta hasn't seen any events from it recently.",
       happenedAdvanced: none ? "No TrackingPixel for this account." : "Pixel status: no events in the last 48h.",
       whyItMatters: "Without tracking, Meta can't tell which clicks became customers — so it can't find more of them, and results here stay blank.",
-      recommendation: "Finish tracking setup — Mairo walks you through it.",
+      recommendation: "Finish tracking setup — MAIRO walks you through it.",
       reason: "Every other number on this page depends on it.",
-      ifApproved: "Mairo opens tracking setup.",
+      ifApproved: "MAIRO opens tracking setup.",
       evidence: [{ label: "Campaigns sending people to your website", value: String(needs.length) }],
       basedOn: { days: 2, impressions: null, clicks: null, results: null, resultWord: "event" },
       actionType: "fix_tracking",
@@ -539,12 +539,12 @@ function pageProblems(input: DecisionInput, ctx: IntelligenceContext, drafts: De
       previousValue: null,
       currentValue: p.ok ? "Not mobile-ready" : "Unreachable",
       title: p.ok ? `"${c.name}" sends people to a page that isn't built for phones` : `"${c.name}" sends people to a page that won't open`,
-      happened: p.ok ? "Mairo opened the page as a phone would and it has no mobile layout — it likely shows zoomed out." : `Mairo tried to open the page and couldn't: ${p.message}`,
+      happened: p.ok ? "MAIRO opened the page as a phone would and it has no mobile layout — it likely shows zoomed out." : `MAIRO tried to open the page and couldn't: ${p.message}`,
       happenedAdvanced: p.ok ? `No viewport meta tag on ${p.finalUrl}.` : `Probe failed (${p.reason}${p.status ? ` ${p.status}` : ""}).`,
       whyItMatters: "Most people who click an ad on Facebook or Instagram are on a phone. Every click that lands on a broken page is paid for and wasted.",
       recommendation: p.ok ? "Fix the page's mobile layout, or point the campaign at a page that has one." : "Check the link — pause the campaign if the page stays down.",
       reason: "It's the page, not the ad — no change to the campaign would fix it.",
-      ifApproved: "Mairo opens the Business Analyzer on this page.",
+      ifApproved: "MAIRO opens the Business Analyzer on this page.",
       evidence: [...(c.destinationUrl ? [{ label: "Page", value: c.destinationUrl }] : [])],
       actionType: "analyze_website",
       action: { label: "Analyze website", href: "/dashboard/business" },

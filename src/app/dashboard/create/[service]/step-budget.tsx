@@ -87,7 +87,7 @@ export function StepBudget({
           <p className="mt-1 text-[12px] text-muted">Networks can spend a little over the daily amount on a busy day, but not more than this over the run.</p>
         </div>
         <Note>
-          Your Mairo subscription pays for the platform. Your advertising budget is paid to {networks} for delivering
+          Your MAIRO subscription pays for the platform. Your advertising budget is paid to {networks} for delivering
           your advertisements, straight from your own ad account — MAIRO never holds it.
         </Note>
       </div>

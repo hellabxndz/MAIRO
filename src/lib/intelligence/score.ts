@@ -9,7 +9,7 @@ import type { HealthArea, HealthAreaKey, HealthReason, HealthReport, Insight, Op
 
 // Business Health and the Opportunity Radar, from the same Insights.
 //
-// A score starts at 100 and loses points only for something Mairo can name —
+// A score starts at 100 and loses points only for something MAIRO can name —
 // each deduction is a line under the score saying what it was. An area with
 // nothing to judge it on has no score at all ("Not enough data yet"), never a
 // comfortable-looking default.
@@ -42,7 +42,7 @@ function recommend(insights: Insight[]): HealthArea["recommendation"] {
   if (!top) return null;
   return {
     text: top.recommendation,
-    actionLabel: top.decisionDedupeKey ? "Fix with Mairo" : (top.action?.label ?? "Take a look"),
+    actionLabel: top.decisionDedupeKey ? "Fix with MAIRO" : (top.action?.label ?? "Take a look"),
     href: top.decisionDedupeKey ? "/dashboard/decisions" : (top.action?.href ?? "/dashboard/decisions"),
     insightKey: top.dedupeKey,
   };
@@ -135,7 +135,7 @@ function advertising(
 
 function creative(judged: DecisionInput["campaigns"], insights: Insight[], recent: PlatformMetrics, prior: PlatformMetrics): HealthArea {
   const ads = judged.flatMap((c) => c.ads).filter((a) => (a.week?.impressions ?? 0) >= 1000);
-  if (ads.length === 0) return empty("creative", "Mairo needs a thousand or so impressions on an ad before judging how it's holding up.");
+  if (ads.length === 0) return empty("creative", "MAIRO needs a thousand or so impressions on an ad before judging how it's holding up.");
   const s = new Scorer();
   capped(by(insights, "creative-fatigue"), 15, 30, s);
   capped(by(insights, "pause-ad"), 10, 20, s);
@@ -153,7 +153,7 @@ function website(input: DecisionInput, insights: Insight[], ctx: IntelligenceCon
   const pages = Object.entries(ctx.pages).filter(([, p]) => p.probe);
   const issues = analysis?.conversionIssues ?? [];
   const siteFindings = insights.filter((i) => i.category === "WEBSITE");
-  if (pages.length === 0 && !analysis && siteFindings.length === 0) return empty("website", "Run the Business Analyzer on your website, or send a campaign to it, and Mairo can check it.");
+  if (pages.length === 0 && !analysis && siteFindings.length === 0) return empty("website", "Run the Business Analyzer on your website, or send a campaign to it, and MAIRO can check it.");
   const s = new Scorer();
   for (const [id, p] of pages) {
     const name = input.campaigns.find((c) => c.mairoCampaignId === id)?.name ?? "a campaign";
@@ -179,13 +179,13 @@ function website(input: DecisionInput, insights: Insight[], ctx: IntelligenceCon
   const rec =
     recommend(insights.filter((i) => i.category === "WEBSITE")) ??
     (issues[0] ? { text: issues[0].fix, actionLabel: "See the full analysis", href: "/dashboard/business", insightKey: null } : null) ??
-    (!analysis ? { text: "Let Mairo read your website for what might stop people buying.", actionLabel: "Analyze website", href: "/dashboard/business", insightKey: null } : null);
+    (!analysis ? { text: "Let MAIRO read your website for what might stop people buying.", actionLabel: "Analyze website", href: "/dashboard/business", insightKey: null } : null);
   return { key: "website", label: LABEL.website, score: s.result(), reasons: s.reasons, recommendation: rec, needs: null };
 }
 
 function audience(judged: boolean, insights: Insight[], week: PlatformMetrics): HealthArea {
   const f = frequency(week);
-  if (!judged || f === null) return empty("audience", "Mairo needs a week of reach figures to judge how your audience is holding up.");
+  if (!judged || f === null) return empty("audience", "MAIRO needs a week of reach figures to judge how your audience is holding up.");
   const s = new Scorer();
   if (f > 4) s.lose(20, `People saw your ads ${f.toFixed(1)} times each this week — that's a lot of repeats`);
   else if (f > 3) s.lose(10, `People saw your ads ${f.toFixed(1)} times each this week`);

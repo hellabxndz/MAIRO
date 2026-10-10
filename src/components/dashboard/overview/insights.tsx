@@ -4,7 +4,7 @@ import type { DecisionCategory } from "@/generated/prisma/enums";
 import { CATEGORY_TONE } from "@/components/decisions/labels";
 import { PANEL } from "./format";
 
-// Mairo's open decisions, on the dashboard. The same rows the Decisions screen
+// MAIRO's open decisions, on the dashboard. The same rows the Decisions screen
 // shows — approving, rejecting and the full reasoning live there, so each one
 // here links through rather than acting on a summary.
 
@@ -42,7 +42,7 @@ const SPARK = (
 function Nothing({ checkedAt }: { checkedAt: string | null }) {
   return (
     <p className="text-[13px] leading-relaxed text-muted">
-      Nothing worth changing right now — Mairo looks again every day.
+      Nothing worth changing right now — MAIRO looks again every day.
       {checkedAt && <span className="block text-faint">Last looked {checkedAt}.</span>}
     </p>
   );
@@ -54,7 +54,7 @@ export function InsightsList({ items, total, checkedAt }: { items: DecisionView[
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-[16px] font-semibold text-white">
-          {SPARK} Mairo insights
+          {SPARK} MAIRO insights
         </h2>
         <Link href="/dashboard/decisions" className="text-[12.5px] text-violet-bright hover:text-white">
           View all{total > items.length ? ` ${total}` : ""} →
@@ -89,7 +89,7 @@ export function InsightsList({ items, total, checkedAt }: { items: DecisionView[
 const ACTION_WORD: Record<string, string> = {
   "set-budget": "Review budget",
   "pause-ad": "Review ad",
-  "new-ad-variation": "Fix with Mairo",
+  "new-ad-variation": "Fix with MAIRO",
   "widen-audience": "Review audience",
   guide: "See details",
 };
@@ -100,7 +100,7 @@ export function Recommendations({ items, total, checkedAt }: { items: DecisionVi
     <section className={`${PANEL} p-5`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-[17px] font-semibold text-white">
-          {SPARK} What Mairo recommends
+          {SPARK} What MAIRO recommends
         </h2>
         <Link href="/dashboard/decisions" className="text-[13px] text-violet-bright hover:text-white">
           View all recommendations{total > items.length ? ` (${total})` : ""} →

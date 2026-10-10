@@ -19,7 +19,8 @@ import { PLANS, FREELANCER_PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
 import { DEFAULT_ENTITLEMENTS } from "../src/lib/entitlements";
 import { ACTIONS, ALWAYS_NEEDS_APPROVAL, automaticActions, mayDoAutomatically } from "../src/lib/automation/levels";
 import { actionFor } from "../src/lib/decisions/guardrails";
-import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationModes, comparison, pictures, planStories } from "../src/lib/pricing/compare";
+import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, automationModes, comparison, pictures, planStories, pricingFacts } from "../src/lib/pricing/compare";
+import { DEFAULT_COSTS } from "../src/lib/creative-studio/costs";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -127,6 +128,34 @@ check("no plan carries a service promise nothing in the product backs", () => {
   assert.doesNotMatch(all, /48-hour|turnaround|Video creative included|guarantee/i);
 });
 
+console.log("\n— plan explainers —");
+check("Manual, AI Assist and Full Autopilot name the plans the server lets switch them on", () => {
+  const levels = automationLevels();
+  assert.deepEqual(levels.map((l) => [l.level, l.plans]), [
+    ["MANUAL", "Every plan"],
+    ["ASSISTED", "Growth and Scale"],
+    ["AUTOPILOT", "Scale"],
+  ]);
+  for (const l of levels.slice(1)) {
+    assert.deepEqual(l.does, automaticActions(l.level).map((a) => a.label));
+    assert.ok(!l.does.some((d) => /raise|launch/i.test(d)), `${l.label} must not list raising budgets or launching`);
+  }
+});
+check("the trial, credits, limits and Social facts are the enforced numbers", () => {
+  const facts = Object.fromEntries(pricingFacts().map((f) => [f.key, f.body]));
+  assert.match(facts.trial, new RegExp(`^Starter starts with a ${STARTER_TRIAL_DAYS}-day free trial`));
+  assert.match(facts.trial, /charges it when the trial ends, unless you cancel first/);
+  assert.match(facts.trial, /Growth and Scale are billed from the day you subscribe/);
+  assert.match(facts.trial, /never needs a card/);
+  assert.match(facts.credits, new RegExp(`standard picture uses ${DEFAULT_COSTS.standard}`));
+  assert.match(facts.credits, /don't carry over/);
+  const e = DEFAULT_ENTITLEMENTS;
+  assert.match(facts.limits, new RegExp(`Starter ${e.STARTER.campaign_limit}, Growth ${e.GROWTH.campaign_limit}, Scale unlimited`));
+  assert.match(facts.limits, new RegExp(`Starter ${e.STARTER.creative_limit} a month, Growth ${e.GROWTH.creative_limit} a month, Scale ${e.SCALE.creative_limit} a month`));
+  assert.match(facts.social, /^Scale only/);
+  if (process.env.META_POSTING_APPROVED !== "1") assert.match(facts.social, /waiting for Meta/);
+});
+
 console.log("\n— money and control —");
 check("the money-and-control facts cover all eight questions", () => {
   assert.deepEqual(MONEY_AND_CONTROL.map((m) => m.key), ["budget", "who-pays", "automation", "approvals", "performance", "pause", "ending", "disconnect"]);
@@ -141,8 +170,9 @@ const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8
 check("the landing page uses the shared pricing, integration and control data", () => {
   for (const name of ["planStories", "comparison", "alwaysYours", "INTEGRATIONS", "MONEY_AND_CONTROL", "EVERY_PLAN"]) assert.ok(page.includes(name), name);
 });
-check("the landing page has the 'Why pay for MAIRO?' section, and no fake urgency or testimonials", () => {
-  assert.match(page, /Why pay for MAIRO\?/);
+check("the landing page says what MAIRO does, and has no fake urgency or testimonials", () => {
+  assert.match(page, /What MAIRO actually does for you/);
+  for (const name of ["automationLevels", "pricingFacts"]) assert.ok(page.includes(name), name);
   assert.doesNotMatch(page, /limited time|only \d+ (spots|left)|hurry|act now|testimonial|★★★★★/i);
 });
 check("the freelancer link promises a sign-up, not plans the page doesn't show", () => {

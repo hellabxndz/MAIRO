@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-// "See how Mairo would advertise your business." Each tab is an example of
+// "See how MAIRO would advertise your business." Each tab is an example of
 // the kind of plan the free plan writes — not anyone's results.
 
 const TYPES = [

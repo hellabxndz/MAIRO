@@ -25,7 +25,7 @@ import { displayValue, hasValue } from "@/lib/brain/rules";
 // Two tools, and the split is the safety:
 //
 //   diagnose_campaigns reads the account's real figures (the same windows
-//   Mairo Decisions uses) and the decisions the rules produce. The assistant
+//   MAIRO Decisions uses) and the decisions the rules produce. The assistant
 //   explains from these numbers only.
 //
 //   propose_fix puts a "Fix This For Me" button under the answer, for

@@ -367,7 +367,7 @@ export default async function CampaignPage({
               <div><dd className="text-[26px] font-light tabular-nums text-white">{money(metrics?.spendCents)}</dd><dt className="text-[13px] text-muted">Spent so far</dt></div>
               <div><dd className="text-[26px] font-light tabular-nums text-white">{campaign.endDate ? campaign.endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No end date"}</dd><dt className="text-[13px] text-muted">Runs until</dt></div>
             </dl>
-            <p className="mt-5 text-[13px] text-muted">MAIRO never raises your budget on its own. Any change it suggests waits for your approval in Mairo Decisions.</p>
+            <p className="mt-5 text-[13px] text-muted">MAIRO never raises your budget on its own. Any change it suggests waits for your approval in MAIRO Decisions.</p>
           </GlassPanel>
           {protectionLog.length > 0 && (
             <GlassPanel className="p-5">
@@ -383,7 +383,7 @@ export default async function CampaignPage({
         </div>
       )}
 
-      {/* ---- Mairo Decisions ---- */}
+      {/* ---- MAIRO Decisions ---- */}
       {tab === "decisions" && (
         <div className="space-y-6">
           <section>

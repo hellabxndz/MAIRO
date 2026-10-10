@@ -5,7 +5,7 @@ import { probeLandingPage } from "@/lib/campaigns/landing-probe";
 import { resultsFor } from "@/lib/protection/rules";
 import type { AdSnapshot, CampaignSnapshot, DecisionInput, Guardrails } from "./types";
 
-// Reads what Mairo Decisions needs from the ad networks: every running
+// Reads what MAIRO Decisions needs from the ad networks: every running
 // campaign's figures over three windows, and the same per ad.
 //
 // Network-agnostic. Campaigns are grouped by platform and each platform's

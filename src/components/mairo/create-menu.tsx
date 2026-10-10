@@ -62,14 +62,14 @@ export function CreateMenu({ scale, variant = "sidebar" }: { scale: boolean; var
           <span className="text-[10px] leading-none text-faint">Create</span>
         </button>
       )}
-      <Modal open={open} onClose={close} title={view === "menu" ? "Create" : view === "promotion" ? "Add a promotion" : "Tell Mairo something"}>
+      <Modal open={open} onClose={close} title={view === "menu" ? "Create" : view === "promotion" ? "Add a promotion" : "Tell MAIRO something"}>
         {view === "menu" ? (
           <nav aria-label="Create" className="-mx-2 space-y-1">
             {row("campaign", "Create campaign", "Tell MAIRO the goal; it builds the campaign for you to confirm.", { href: "/dashboard/create" })}
             {row("creative", "Create creative", "An ad image or video idea, made with AI.", { href: "/dashboard/creative-studio" })}
             {row("promotion", "Add promotion", "A sale, an offer, a launch — MAIRO plans around it.", scale ? { href: "/dashboard/social/promotions" } : { view: "promotion" })}
             {scale && row("social", "Create social post", "Plan a post for Instagram or Facebook.", { href: "/dashboard/social/calendar" })}
-            {row("tell", "Tell Mairo something", "Something sold out, a new goal, news about your business.", { view: "tell" })}
+            {row("tell", "Tell MAIRO something", "Something sold out, a new goal, news about your business.", { view: "tell" })}
           </nav>
         ) : view === "promotion" ? (
           <>
@@ -84,7 +84,7 @@ export function CreateMenu({ scale, variant = "sidebar" }: { scale: boolean; var
   );
 }
 
-/** "✨ Ask Mairo": opens the assistant panel from anywhere. */
+/** "✨ Ask MAIRO": opens the assistant panel from anywhere. */
 export function AskMairoButton({ name, compact = false }: { name: string; compact?: boolean }) {
   return (
     <button

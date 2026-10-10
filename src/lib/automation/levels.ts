@@ -147,21 +147,21 @@ export const LEVELS: LevelInfo[] = [
   {
     level: "MANUAL",
     label: "Manual",
-    summary: "Mairo only recommends. You approve every change.",
+    summary: "MAIRO only recommends. You approve every change.",
     detail:
       "Nothing changes in your account unless you press a button. MAIRO still watches, still works out what it would do, and still tells you — it just never acts on it. The safest setting and the most work.",
   },
   {
     level: "ASSISTED",
     label: "AI Assist",
-    summary: "Mairo makes minor optimizations on its own, inside your limits. You approve the rest.",
+    summary: "MAIRO makes minor optimizations on its own, inside your limits. You approve the rest.",
     detail:
       "MAIRO can pause an ad that is underperforming by Meta's figures, test a new creative, make more of an ad that's doing well, and move budget between what you are already running. Anything that changes what you spend in total still waits for you.",
   },
   {
     level: "AUTOPILOT",
     label: "Full Autopilot",
-    summary: "Mairo also widens who sees your ads, inside strict guardrails you set.",
+    summary: "MAIRO also widens who sees your ads, inside strict guardrails you set.",
     detail:
       "Everything in AI Assist, plus widening an ad's location radius or age range when it runs out of people to reach. Your ceiling still holds, your total budget still cannot go up without you, and every change is written down with the numbers behind it.",
   },

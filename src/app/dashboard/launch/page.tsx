@@ -54,7 +54,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
   const stepOf = (id: string) => steps?.find((s) => s.id === id) ?? null;
   const tz = org?.timezone ?? undefined;
 
-  // Back from Stripe before its confirmation reached Mairo: say so and look again.
+  // Back from Stripe before its confirmation reached MAIRO: say so and look again.
   if (!journey.activated) {
     if (subscribed !== "1") redirect("/plan/activate");
     return (
@@ -76,8 +76,8 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
             <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> Live
           </span>
-          <h1 className="mt-3 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Welcome to your full Mairo dashboard.</h1>
-          <p className="mt-2 text-[15px] text-muted">Meta confirmed your first campaign is live. Mairo is now monitoring performance.</p>
+          <h1 className="mt-3 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Welcome to your full MAIRO dashboard.</h1>
+          <p className="mt-2 text-[15px] text-muted">Meta confirmed your first campaign is live. MAIRO is now monitoring performance.</p>
           <p className="mt-1 text-[13px] text-faint">The first numbers usually arrive from Meta within a few hours; until then your dashboard says it&rsquo;s collecting data rather than showing anything made up.</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href="/dashboard" className="inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">Open my dashboard</Link>
@@ -122,7 +122,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
 
       {(welcome === "1" || subscribed === "1") && (
         <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-6">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Welcome to full Mairo</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Welcome to full MAIRO</p>
           <p className="mt-1 text-[19px] font-semibold text-white">Your plan is active.</p>
           <p className="mt-1 text-[14px] text-muted">Your approved strategy is ready to become a real campaign. Everything is prefilled from your plan — nothing to answer again.</p>
         </div>
@@ -152,7 +152,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
             ) : (
               <div className={`${card} p-6`}>
                 <p className="text-[17px] font-semibold text-white">Connect Facebook & Instagram</p>
-                <p className="mt-1 text-[13.5px] text-muted">Mairo builds your campaign inside your own Meta ad account. Your login stays with Meta — Mairo never sees your password. Connecting doesn&rsquo;t build or spend anything.</p>
+                <p className="mt-1 text-[13.5px] text-muted">MAIRO builds your campaign inside your own Meta ad account. Your login stays with Meta — MAIRO never sees your password. Connecting doesn&rsquo;t build or spend anything.</p>
                 <a href={connectHref("/dashboard/launch")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
                   Connect Facebook & Instagram
                 </a>
@@ -166,7 +166,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
               <div className={`${card} p-6`}>
                 <p className="text-[17px] font-semibold text-white">{journey.draftId ? "Finish building your campaign" : "Build my campaign"}</p>
                 <p className="mt-1 text-[13.5px] text-muted">
-                  Mairo opens the campaign builder with your approved plan already filled in. You confirm the location, make the final ads from your plan&rsquo;s ideas and check the budget. It&rsquo;s built in your ad account switched off — then you see the full review here, and nothing spends until you approve it.
+                  MAIRO opens the campaign builder with your approved plan already filled in. You confirm the location, make the final ads from your plan&rsquo;s ideas and check the budget. It&rsquo;s built in your ad account switched off — then you see the full review here, and nothing spends until you approve it.
                 </p>
                 <form action={buildFromPlanAction} className="mt-4">
                   <PendingButton pendingText="Opening the builder…" className="min-h-[46px] rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
@@ -187,7 +187,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
                     <p className="text-[15px] font-semibold text-white">Waiting for Meta</p>
                     <p className="mt-1 text-[13.5px] text-white/85">
                       {journey.campaign?.reviewState ? `Meta's review: ${journey.campaign.reviewState.toLowerCase().replace(/_/g, " ")}. ` : ""}
-                      Mairo switches it on as soon as Meta clears the ad and confirms your payment method — you don&rsquo;t need to come back. It&rsquo;s only called live once Meta confirms it.
+                      MAIRO switches it on as soon as Meta clears the ad and confirms your payment method — you don&rsquo;t need to come back. It&rsquo;s only called live once Meta confirms it.
                     </p>
                     <div className="mt-3"><CancelLaunch /></div>
                   </div>

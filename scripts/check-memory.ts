@@ -1,4 +1,4 @@
-// Checks that "Mairo is learning your business" cannot become a lie.
+// Checks that "MAIRO is learning your business" cannot become a lie.
 //
 // This feature makes a promise — MAIRO gets better the longer you use it — and
 // carries a matching risk: that the promise becomes a progress bar which fills

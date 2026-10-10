@@ -85,7 +85,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
 
   // The upkeep that rides along with opening MAIRO — spend limits (the
   // scheduled run is only daily), approved Instagram posts that are due, and
-  // the daily look behind Mairo Decisions once it has gone stale — runs after
+  // the daily look behind MAIRO Decisions once it has gone stale — runs after
   // the page has been sent, not before. Each one used to hold the screen
   // until it finished: publishing a post alone was allowed eight seconds.
   // None of them changes what this render shows in a way worth waiting for;
@@ -306,14 +306,14 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const decisionsSection = (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Mairo decisions</h2>
+        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO decisions</h2>
         <Link href="/dashboard/decisions" className="text-[12.5px] text-violet-bright hover:text-white">
           View all{overview.pendingCount > 0 ? ` ${overview.pendingCount}` : ""} →
         </Link>
       </div>
       {overview.insights.length === 0 ? (
         <p className="mt-3 text-[13.5px] text-muted">
-          Nothing worth changing right now — Mairo looks again every day.{checkedAt ? ` Last looked ${checkedAt}.` : ""}
+          Nothing worth changing right now — MAIRO looks again every day.{checkedAt ? ` Last looked ${checkedAt}.` : ""}
         </p>
       ) : (
         <div className="mt-4 grid gap-3 xl:grid-cols-2">
