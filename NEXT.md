@@ -14,13 +14,16 @@ connecting Meta failed with "URL Blocked" because the return address followed
 Vercel's production domain, www.mairo.io; it now follows the address the
 visitor is on, and the connection then went through.)
 
-**2. Meta App Review.** Still pending. Until it clears, only accounts added as
-testers can connect, so nobody outside that list can use the product at all.
+**2. Meta App Review — approved (October 2026).** Any Facebook account can now
+connect, not only people with a role on the app. (The posting permissions are
+a separate review — item 7.)
 
-**3. Turn billing on.** `BILLING_ENFORCED` is off, so everyone — including
-people who have never paid — is treated as a Starter customer. Leave it off
-until App Review is through (the submission promises the reviewer full access),
-then switch it on.
+**3. Turn billing on — next.** `BILLING_ENFORCED` is off, so everyone —
+including people who have never paid — is treated as a Starter customer. App
+Review is through, so this is now the switch to flip: set `BILLING_ENFORCED=1`
+in Vercel (Production) and redeploy. Accounts with no plan, the owner's own
+test business included, then need a subscription (or a plan set in
+`/aios/organizations/<id>`) before MAIRO builds or launches for them.
 
 This is now the switch that makes two other things real, so nothing else needs
 changing when it flips: the AI specialists are locked behind a paid plan (the
@@ -68,8 +71,7 @@ customer id the new key can't see; checkout replaces it automatically.
 
 Studio and Agency have no Stripe prices yet, so they show "Not available yet".
 
-**Billing isn't enforced.** `BILLING_ENFORCED` is unset, so an account with no
-plan gets Growth free. Set it to `1` only once the Meta App Review is through.
+**Billing isn't enforced yet** — see item 3.
 
 **6. Old plan rows are cleared on deploy.** PlanConfig overrides the compiled
 plans, so rows seeded under the old pricing would have kept the old prices and
