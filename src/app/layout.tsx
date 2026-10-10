@@ -45,6 +45,13 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   alternates: { canonical: "/" },
+  // Ownership proofs for Google Search Console and Meta's domain
+  // verification, when their codes are set. Either can also be done with a
+  // DNS record instead, which needs no code at all.
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION?.trim() ? { google: process.env.GOOGLE_SITE_VERIFICATION.trim() } : {}),
+    ...(process.env.META_DOMAIN_VERIFICATION?.trim() ? { other: { "facebook-domain-verification": process.env.META_DOMAIN_VERIFICATION.trim() } } : {}),
+  },
 };
 
 // Separate from metadata on purpose — Next moved both of these out of it, and

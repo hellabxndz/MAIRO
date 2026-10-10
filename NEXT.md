@@ -171,6 +171,18 @@ which may now name mairo.io. If it does, either register it in Meta or pin
 `META_REDIRECT_URI=https://mairo-three.vercel.app/api/meta/callback` (and
 `GOOGLE_REDIRECT_URI` likewise) until you switch.
 
+Building the domain's reputation (security filters rate new domains low):
+- Google Search Console: add `mairo.io` as a Domain property (DNS TXT record),
+  then submit `https://www.mairo.io/sitemap.xml`. Or set
+  `GOOGLE_SITE_VERIFICATION` and use the HTML-tag method.
+- Meta Business Settings → Brand safety → Domains: add mairo.io and verify it
+  (DNS TXT, or set `META_DOMAIN_VERIFICATION`). Needed before ads link to it.
+- Until there's a mailbox on the domain, publish "no mail" records so nobody
+  can send email pretending to be mairo.io: TXT `@` = `v=spf1 -all` and TXT
+  `_dmarc` = `v=DMARC1; p=reject;`. Replace them when email is set up.
+- The site already sends HSTS and other security headers and serves
+  `/.well-known/security.txt`.
+
 Later: a support mailbox on the domain (needs email hosting and MX records) to
 replace the Gmail address — set `NEXT_PUBLIC_SUPPORT_EMAIL`.
 

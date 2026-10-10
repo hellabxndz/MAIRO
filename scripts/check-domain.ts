@@ -13,12 +13,19 @@ import { canonicalHostRedirects, configuredOrigin } from "../src/lib/canonical-h
 import { addressesToRegister } from "../src/lib/domain";
 import { metaRedirectUri } from "../src/lib/meta/oauth";
 import { gtmRedirectUri } from "../src/lib/tracking/gtm-api/oauth";
+import nextConfig from "../next.config";
+import { GET as securityTxt } from "../src/app/.well-known/security.txt/route";
 
 let passed = 0;
-function check(name: string, fn: () => void) {
-  fn();
-  passed++;
-  console.log(`  ok  ${name}`);
+// Checks run one after another; some are async, and this script runs as a
+// plain module where top-level await isn't available.
+let chain: Promise<void> = Promise.resolve();
+function check(name: string, fn: () => void | Promise<void>) {
+  chain = chain.then(async () => {
+    await fn();
+    passed++;
+    console.log(`  ok  ${name}`);
+  });
 }
 
 check("only a plain https origin counts as the site's address", () => {
@@ -92,4 +99,30 @@ check("www as the main address: the apex and the .vercel.app domain are sent to 
   assert.equal(r.destination, "https://www.mairo.io/:path");
 });
 
-console.log(`\nDomain: ${passed} checks passed`);
+check("every page sends HTTPS-only, no-sniffing, referrer and anti-framing headers", async () => {
+  const headerRules = await nextConfig.headers!();
+  const all = headerRules.find((r) => r.source === "/:path*")?.headers ?? [];
+  const header = (k: string) => all.find((h) => h.key === k)?.value ?? "";
+  assert.match(header("Strict-Transport-Security"), /max-age=63072000/);
+  assert.equal(header("X-Content-Type-Options"), "nosniff");
+  assert.equal(header("Referrer-Policy"), "strict-origin-when-cross-origin");
+  assert.equal(header("X-Frame-Options"), "SAMEORIGIN");
+  assert.equal(header("Content-Security-Policy"), "frame-ancestors 'self'");
+  assert.match(header("Permissions-Policy"), /camera=\(\)/);
+});
+check("security.txt names a contact and an expiry under a year away", async () => {
+  const res = securityTxt();
+  const text = await res.text();
+  assert.match(text, /^Contact: mailto:\S+@\S+$/m);
+  const exp = new Date(/^Expires: (.+)$/m.exec(text)![1]);
+  assert.ok(exp.getTime() > Date.now() && exp.getTime() < Date.now() + 366 * 86_400_000);
+  assert.match(text, /^Canonical: https?:\/\/\S+\/\.well-known\/security\.txt$/m);
+});
+
+chain.then(
+  () => console.log(`\nDomain: ${passed} checks passed`),
+  (error) => {
+    console.error(error);
+    process.exit(1);
+  },
+);

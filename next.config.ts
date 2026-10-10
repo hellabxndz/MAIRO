@@ -24,6 +24,22 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Standard protections on every response. They're also what the
+        // security companies that rate a new domain look for. No full
+        // Content-Security-Policy: Next's inline scripts, Stripe and Meta's
+        // previews would each need careful allowances, and a wrong one breaks
+        // pages silently. frame-ancestors alone stops other sites framing MAIRO.
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+        ],
+      },
+      {
         // The sky panorama. Files under public/ are served no-cache by
         // default, because Next has no way to know whether one has changed —
         // which for a background image means every visit spends a round trip
