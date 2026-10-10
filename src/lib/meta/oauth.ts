@@ -1,3 +1,4 @@
+import { configuredOrigin } from "@/lib/canonical-host";
 import { metaGraphRequest, graphApiVersion } from "@/lib/meta/client";
 
 // business_management is here for a reason that is not obvious from grepping
@@ -164,6 +165,12 @@ export const META_CALLBACK_PATH = "/api/meta/callback";
 export function metaRedirectUri(): string {
   const explicit = process.env.META_REDIRECT_URI?.trim();
   if (explicit) return explicit.replace(/\/+$/, "");
+
+  // The site's own address, when one is set, so moving to a custom domain is
+  // one setting rather than three. Vercel's production-domain variable is the
+  // fallback; with several custom domains it isn't documented which it picks.
+  const site = configuredOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  if (site) return `${site.origin}${META_CALLBACK_PATH}`;
 
   const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   if (productionDomain) return `https://${productionDomain}${META_CALLBACK_PATH}`;

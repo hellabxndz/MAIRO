@@ -11,6 +11,8 @@
 import assert from "node:assert/strict";
 import { canonicalHostRedirects, configuredOrigin } from "../src/lib/canonical-host";
 import { addressesToRegister } from "../src/lib/domain";
+import { metaRedirectUri } from "../src/lib/meta/oauth";
+import { gtmRedirectUri } from "../src/lib/tracking/gtm-api/oauth";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -62,6 +64,32 @@ check("the addresses to register are built from the one address, with the served
   assert.equal(by.privacy, "https://mairo.io/privacy");
   assert.equal(by.terms, "https://mairo.io/terms");
   assert.equal(by["data-deletion"], "https://mairo.io/data-deletion");
+});
+
+check("the login return addresses follow the site's address, and an explicit setting still wins", () => {
+  const keep = { a: process.env.NEXT_PUBLIC_APP_URL, m: process.env.META_REDIRECT_URI, g: process.env.GOOGLE_REDIRECT_URI, v: process.env.VERCEL_PROJECT_PRODUCTION_URL };
+  try {
+    delete process.env.META_REDIRECT_URI;
+    delete process.env.GOOGLE_REDIRECT_URI;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "mairo.io";
+    process.env.NEXT_PUBLIC_APP_URL = "https://www.mairo.io";
+    assert.equal(metaRedirectUri(), "https://www.mairo.io/api/meta/callback");
+    assert.equal(gtmRedirectUri(), "https://www.mairo.io/api/gtm/callback");
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    assert.equal(metaRedirectUri(), "https://mairo.io/api/meta/callback", "Vercel's production domain is the fallback");
+    process.env.META_REDIRECT_URI = "https://mairo-three.vercel.app/api/meta/callback";
+    assert.equal(metaRedirectUri(), "https://mairo-three.vercel.app/api/meta/callback", "a pinned address wins");
+  } finally {
+    for (const [k, v] of [["NEXT_PUBLIC_APP_URL", keep.a], ["META_REDIRECT_URI", keep.m], ["GOOGLE_REDIRECT_URI", keep.g], ["VERCEL_PROJECT_PRODUCTION_URL", keep.v]] as const) {
+      if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    }
+  }
+});
+
+check("www as the main address: the apex and the .vercel.app domain are sent to it, /api stays", () => {
+  const [r] = canonicalHostRedirects({ VERCEL_ENV: "production", NEXT_PUBLIC_APP_URL: "https://www.mairo.io" });
+  assert.deepEqual(r.missing, [{ type: "host", value: "www\\.mairo\\.io" }]);
+  assert.equal(r.destination, "https://www.mairo.io/:path");
 });
 
 console.log(`\nDomain: ${passed} checks passed`);

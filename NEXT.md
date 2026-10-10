@@ -138,6 +138,70 @@ value and old tables stay so existing rows still load.
 **8. Google Cloud project** for the Tag Manager API, so MAIRO can install the
 tracking tags itself instead of handing over a file. The file works today.
 
+**9. www.mairo.io — connected in Vercel, not switched on yet.** Vercel shows
+mairo.io (308 → www.mairo.io) and www.mairo.io (Production) as Valid
+Configuration. www is the main address, as Vercel recommends; the app follows
+whatever `NEXT_PUBLIC_APP_URL` says. To switch over, in this order, so Facebook
+and Google sign-in keep working throughout:
+
+1. Confirm https://www.mairo.io loads with a valid certificate from outside
+   Xfinity (phone on mobile data, or ssllabs.com). Xfinity's "Advanced
+   Security" flagged the new domain; get it reviewed through Xfinity's report
+   form and check VirusTotal before customers or Meta see it.
+2. Add the new addresses everywhere that keeps one — `/aios/setup` → "Addresses
+   outside services keep" lists each with its exact value once
+   `NEXT_PUBLIC_APP_URL` is set; before that they are, on www.mairo.io:
+   Meta Valid OAuth Redirect URI `https://www.mairo.io/api/meta/callback`,
+   App domains `mairo.io`, privacy/terms/data-deletion links; Google
+   redirect URIs `https://www.mairo.io/api/auth/callback/google` and
+   `https://www.mairo.io/api/gtm/callback`, origin `https://www.mairo.io`;
+   Stripe webhook endpoint `https://www.mairo.io/api/stripe/webhook` (edit the
+   URL — that keeps the signing secret). Keep the old `.vercel.app` entries.
+3. Vercel → Environment Variables (Production):
+   `NEXT_PUBLIC_APP_URL=https://www.mairo.io`. The Facebook and Tag Manager
+   return addresses follow it. If `AUTH_URL` or `NEXTAUTH_URL` is set, change
+   it to the same or remove it. Redeploy.
+4. Check: mairo-three.vercel.app pages redirect to www.mairo.io (API routes
+   stay, on purpose), Facebook login and Google sign-in work, and the next
+   Stripe event shows as delivered.
+
+Until step 3, keep an eye on `/aios/setup` → "Meta OAuth redirect URI": with
+no `NEXT_PUBLIC_APP_URL` it comes from Vercel's production-domain variable,
+which may now name mairo.io. If it does, either register it in Meta or pin
+`META_REDIRECT_URI=https://mairo-three.vercel.app/api/meta/callback` (and
+`GOOGLE_REDIRECT_URI` likewise) until you switch.
+
+Later: a support mailbox on the domain (needs email hosting and MX records) to
+replace the Gmail address — set `NEXT_PUBLIC_SUPPORT_EMAIL`.
+
+**11. Two switches to flip when the time comes.** `META_POSTING_APPROVED=1`
+once Meta approves the posting permissions (round 2) — until then every
+Social page, the pricing page and the privacy policy say publishing is
+waiting for Meta. `NEXT_PUBLIC_SUPPORT_EMAIL` once a monitored mailbox exists
+on a business domain (e.g. on mairo.io); until then the legal pages show the
+current Gmail address. Redeploy after either.
+
+**12. Legal review before charging the first customers.** Have a qualified
+person check: the exact registered name of the operating company (the pages
+say "BLING Marketing"); the missing governing-law/jurisdiction clause in the
+Terms; whether "the current month isn't refunded" (on cancelling and on
+account deletion) holds where your customers are; the "within 30 days"
+backup and log promise — confirm Neon's history retention and Vercel's log
+retention on your plans are 30 days or less; and whether the processors list
+(Meta, Anthropic, OpenAI, Google, Stripe, Twilio, Neon, Vercel) needs data
+processing agreements referenced.
+
+## TikTok (retired)
+
+MAIRO no longer runs TikTok. The `TIKTOK_*` variables in Vercel can be deleted,
+and the pending app on TikTok's developer portal can be withdrawn. The enum
+value and old tables stay so existing rows still load.
+
+## Smaller, whenever
+
+**8. Google Cloud project** for the Tag Manager API, so MAIRO can install the
+tracking tags itself instead of handing over a file. The file works today.
+
 **9. mairo.io — bought, not connected yet.** In this order, so Facebook and
 Google sign-in keep working throughout:
 

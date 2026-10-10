@@ -1,3 +1,4 @@
+import { configuredOrigin } from "@/lib/canonical-host";
 // Google's OAuth, for the Tag Manager API.
 //
 // The third OAuth flow in this codebase and the one with the sharpest edges,
@@ -74,6 +75,12 @@ function requireEnv(name: string): string {
 export function gtmRedirectUri(): string {
   const explicit = process.env.GOOGLE_REDIRECT_URI?.trim();
   if (explicit) return explicit.replace(/\/+$/, "");
+
+  // The site's own address, when one is set, so moving to a custom domain is
+  // one setting rather than three. Vercel's production-domain variable is the
+  // fallback; with several custom domains it isn't documented which it picks.
+  const site = configuredOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  if (site) return `${site.origin}${GTM_CALLBACK_PATH}`;
 
   const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   if (productionDomain) return `https://${productionDomain}${GTM_CALLBACK_PATH}`;

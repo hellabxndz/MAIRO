@@ -1,6 +1,6 @@
 // Every copy of the site's address an outside service keeps.
 //
-// MAIRO lives on one address (NEXT_PUBLIC_APP_URL, e.g. https://mairo.io; see
+// MAIRO lives on one address (NEXT_PUBLIC_APP_URL, e.g. https://www.mairo.io; see
 // canonical-host.ts for the redirect to it). Meta's redirect list, Google's,
 // Stripe's webhook endpoint and the policy links Meta reviews each hold their
 // own copy, and each has to be updated by hand when the address changes. The
