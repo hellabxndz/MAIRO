@@ -75,7 +75,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         <p role="status" className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-300">
           {cancelAt
             ? `Your MAIRO subscription is cancelled. Your plan stays active until ${fmt(cancelAt)}.`
-            : "Stripe is confirming your cancellation. This page shows it as soon as Stripe tells MAIRO — usually within a minute."}{" "}
+            : !subscribed && status === "canceled"
+              ? "Your MAIRO subscription is cancelled and has ended. Nothing more will be charged."
+              : "Stripe is confirming your cancellation. This page shows it as soon as Stripe tells MAIRO — usually within a minute."}{" "}
           {running.length > 0
             ? `${running.length === 1 ? "One campaign is" : `${running.length} campaigns are`} still running in Meta; cancelling didn't pause ${running.length === 1 ? "it" : "them"}.`
             : "No MAIRO campaigns are running in Meta."}
