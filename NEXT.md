@@ -5,15 +5,14 @@ Ordered by what blocks what. Updated as things land.
 
 ## Blocking a real launch
 
-**1. Test one live Meta campaign.** The full pipeline — campaign → ad set → ad,
-including uploading the picture to Meta — is built but has never talked to the
-real Meta API. Launch one campaign on a live ad account at $1/day, leave it
-PAUSED, and see what Meta objects to. This is the only way to find out whether
-the enum spellings, the `promoted_object` shape and the image upload are right.
-
-Needs first: a connected ad account with a Page picked, an approved creative
-with a final picture, and the business's website filled in. The ad is refused
-without any of those, on purpose.
+**1. Test one live Meta campaign — done (10 October 2026).** A campaign built
+in MAIRO was launched on the owner's live ad account at $1/day, Meta approved
+it, and pausing it from MAIRO showed "Paused · confirmed by Meta" with the
+campaign Off in Ads Manager. That proves the campaign → ad set → ad pipeline,
+the picture upload and pause against the real Meta API. (Earlier the same day,
+connecting Meta failed with "URL Blocked" because the return address followed
+Vercel's production domain, www.mairo.io; it now follows the address the
+visitor is on, and the connection then went through.)
 
 **2. Meta App Review.** Still pending. Until it clears, only accounts added as
 testers can connect, so nobody outside that list can use the product at all.
