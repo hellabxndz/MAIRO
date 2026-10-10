@@ -18,12 +18,12 @@ visitor is on, and the connection then went through.)
 connect, not only people with a role on the app. (The posting permissions are
 a separate review — item 7.)
 
-**3. Turn billing on — next.** `BILLING_ENFORCED` is off, so everyone —
-including people who have never paid — is treated as a Starter customer. App
-Review is through, so this is now the switch to flip: set `BILLING_ENFORCED=1`
-in Vercel (Production) and redeploy. Accounts with no plan, the owner's own
-test business included, then need a subscription (or a plan set in
-`/aios/organizations/<id>`) before MAIRO builds or launches for them.
+**3. Billing is on (10 October 2026).** `BILLING_ENFORCED=1` is set in Vercel
+(Production) and deployed. Checked live: an account with no plan sees "Choose a
+plan" in its first steps, Create answers "Choose a MAIRO plan to activate your
+strategy", the free advertising plan still works, and pausing is never blocked.
+Next: one live Starter trial, cancelled inside the 7 days, to see the cancel
+flow end to end on the live Stripe account.
 
 This is now the switch that makes two other things real, so nothing else needs
 changing when it flips: the AI specialists are locked behind a paid plan (the
@@ -71,7 +71,7 @@ customer id the new key can't see; checkout replaces it automatically.
 
 Studio and Agency have no Stripe prices yet, so they show "Not available yet".
 
-**Billing isn't enforced yet** — see item 3.
+**Billing is enforced** — see item 3.
 
 **6. Old plan rows are cleared on deploy.** PlanConfig overrides the compiled
 plans, so rows seeded under the old pricing would have kept the old prices and
