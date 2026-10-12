@@ -10,6 +10,7 @@ import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
 import { googleSignInEnabled, rememberGoogleIntent } from "@/lib/google-sign-in";
 import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
 import { PASSWORD_MAX, normalizeEmail, passwordProblem } from "@/lib/auth-rules/password";
+import { businessTypeFrom } from "@/lib/onboarding/business-types";
 
 // The sign-up fields, checked on the server whatever the form did. Text is
 // trimmed and capped (a name is shown across the product; a 10,000-character
@@ -155,10 +156,12 @@ export async function signUpAction(
   });
 
   try {
+    // A business type picked in the website's walkthrough opens setup with it chosen.
+    const type = businessTypeFrom(String(formData.get("businessType") ?? ""));
     await signIn("credentials", {
       email,
       password,
-      redirectTo: "/onboarding",
+      redirectTo: type ? `/onboarding?type=${type.id}` : "/onboarding",
     });
   } catch (error) {
     if (error instanceof AuthError) {

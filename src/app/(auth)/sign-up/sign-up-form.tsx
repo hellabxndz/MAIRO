@@ -9,10 +9,13 @@ import { AuthField, PasswordField } from "@/components/auth-field";
 export function SignUpForm({
   googleEnabled,
   initialError,
+  businessType = null,
 }: {
   googleEnabled: boolean;
   /** Sent back from a Google login that needs this page, e.g. no account yet. */
   initialError: string | null;
+  /** A business type chosen in the website's walkthrough, carried into setup. */
+  businessType?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(signUpAction, undefined);
   const fieldError = (name: string) => (state?.field === name ? state.error : null);
@@ -26,6 +29,7 @@ export function SignUpForm({
       <p className="mt-1 text-[14px] text-neutral-400">Get a personalized advertising plan for your business. No credit card needed.</p>
 
       <form action={formAction} className="mt-6 space-y-4">
+        {businessType && <input type="hidden" name="businessType" value={businessType} />}
         <AuthField name="name" label="Your name" autoComplete="name" placeholder="Jane Diaz" defaultValue={state?.values?.name} error={fieldError("name")} />
         <AuthField
           name="businessName"

@@ -543,7 +543,7 @@ export function PlanReview(props: {
               <button type="button" disabled={pending || status === "REVISING"} onClick={approve} className={`${primary} min-h-[48px] px-7`}>
                 Approve My Plan
               </button>
-              <button type="button" onClick={focusAsk} className={`${secondary} min-h-[48px]`}>Make More Changes</button>
+              <button type="button" onClick={focusAsk} className={`${secondary} min-h-[48px]`}>Change My Plan</button>
             </div>
           </div>
         )}

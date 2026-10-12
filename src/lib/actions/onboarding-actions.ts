@@ -10,7 +10,8 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { normalizePhone, normalizeUrl, requiredDetailFor } from "@/lib/campaigns/destination";
 import { Prisma } from "@/generated/prisma/client";
 import { recommendGoal } from "@/lib/onboarding/goal";
-import { businessSchema, goalDraftSchema, learnBusiness, saveBusinessStep, saveGoalDraft, type LearnResult } from "@/lib/onboarding/setup";
+import { CORRECTABLE, businessSchema, goalDraftSchema, learnBusiness, saveBusinessStep, saveGoalDraft, type LearnResult } from "@/lib/onboarding/setup";
+import { changeBrain } from "@/lib/brain/store";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
@@ -40,6 +41,8 @@ const intakeSchema = z.object({
   offering: z.string().max(200).optional(),
   currentOffer: z.string().max(200).optional(),
   customerLocation: z.string().max(120).optional(),
+  serviceReach: z.string().max(60).optional(),
+  budgetSuggested: z.enum(["1", "0"]).optional(),
 });
 
 export type OnboardingState = { error?: string } | undefined;
@@ -68,6 +71,8 @@ export async function completeOnboardingAction(
     offering: formData.get("offering") || undefined,
     currentOffer: formData.get("currentOffer") || undefined,
     customerLocation: formData.get("customerLocation") || undefined,
+    serviceReach: formData.get("serviceReach") || undefined,
+    budgetSuggested: formData.get("budgetSuggested") || undefined,
   });
 
   if (!parsed.success) {
@@ -130,6 +135,8 @@ export async function completeOnboardingAction(
       offering: data.offering?.trim() || null,
       currentOffer: data.currentOffer?.trim() || null,
       customerLocation: data.customerLocation?.trim() || null,
+      serviceReach: data.serviceReach?.trim() || null,
+      budgetSuggested: data.budgetSuggested === "1",
     },
     update: {
       primaryGoal: data.primaryGoal,
@@ -141,6 +148,8 @@ export async function completeOnboardingAction(
       offering: data.offering?.trim() || null,
       currentOffer: data.currentOffer?.trim() || null,
       customerLocation: data.customerLocation?.trim() || null,
+      serviceReach: data.serviceReach?.trim() || null,
+      budgetSuggested: data.budgetSuggested === "1",
     },
   });
 
@@ -240,7 +249,7 @@ export async function saveBusinessStepAction(input: z.input<typeof businessSchem
 
 export async function learnBusinessAction(): Promise<LearnResult> {
   const organizationId = await orgId();
-  if (!organizationId) return { ok: true, read: false, learned: [], note: "You need to be signed in.", suggestion: recommendGoal({}) };
+  if (!organizationId) return { ok: true, read: false, learned: [], unknown: [], pagesRead: [], note: "You need to be signed in.", suggestion: recommendGoal({}) };
   return learnBusiness(organizationId);
 }
 
@@ -248,4 +257,20 @@ export async function saveGoalDraftAction(input: z.input<typeof goalDraftSchema>
   const organizationId = await orgId();
   if (!organizationId) return { ok: false };
   return saveGoalDraft(organizationId, input);
+}
+
+/**
+ * The owner correcting, confirming or removing something MAIRO read on their
+ * website, from the setup screen. Saved to Business Brain as the owner's word,
+ * so a later re-read of the website never overwrites it.
+ */
+export async function correctLearnedAction(input: { field: string; op: "set" | "remove" | "confirm"; value?: string }): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  const organizationId = await orgId();
+  if (!organizationId) return { ok: false, error: "You need to be signed in." };
+  if (!(CORRECTABLE as readonly string[]).includes(input.field)) return { ok: false, error: "That one is corrected in Business Brain." };
+  const value = (input.value ?? "").trim().slice(0, 300);
+  if (input.op === "set" && !value) return { ok: false, error: "Type what it should say, or press Remove." };
+  const change = input.op === "set" ? { op: "set" as const, field: input.field, value } : input.op === "remove" ? { op: "remove" as const, field: input.field } : { op: "confirm" as const, field: input.field };
+  const r = await changeBrain(organizationId, change, "customer").catch(() => ({ ok: false as const, error: "MAIRO couldn't save that just now. Try again." }));
+  return r.ok ? { ok: true, text: r.text } : { ok: false, error: r.error };
 }

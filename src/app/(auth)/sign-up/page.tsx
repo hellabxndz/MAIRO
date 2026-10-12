@@ -2,6 +2,7 @@ import { googleSignInEnabled } from "@/lib/google-sign-in";
 import { signInErrorMessage } from "@/lib/google-sign-in-rules";
 import { AuthCard } from "@/components/auth-card";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { SignUpForm } from "./sign-up-form";
 
 // The form is a client component; this server half decides whether Google is
@@ -25,7 +26,9 @@ function money(n: number): string {
 }
 
 export default async function Page({ searchParams }: PageProps<"/sign-up">) {
-  const { error } = await searchParams;
+  const { error, type } = await searchParams;
+  // The business type picked in the website's walkthrough, carried into setup.
+  const businessType = businessTypeFrom(typeof type === "string" ? type : null);
   const starter = PLANS.find((p) => p.tier === "STARTER");
   const noTrial = PLANS.filter((p) => !(p.trialDays ?? 0)).map((p) => p.name);
   return (
@@ -34,6 +37,7 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
         <SignUpForm
           googleEnabled={googleSignInEnabled()}
           initialError={signInErrorMessage(typeof error === "string" ? error : null)}
+          businessType={businessType?.id ?? null}
         />
       </AuthCard>
 

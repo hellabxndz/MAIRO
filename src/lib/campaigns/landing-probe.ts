@@ -1,5 +1,4 @@
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
+import { safeFetch } from "@/lib/net/safe-fetch";
 
 // A quick look at the page an ad sends people to, before money is spent on
 // sending them there: does it load, is it built for phones, and does it carry
@@ -29,102 +28,31 @@ export type LandingProbe =
   | { ok: false; reason: "unreachable" | "blocked" | "error_status"; status?: number; message: string };
 
 const MAX_BYTES = 400_000;
-const TIMEOUT_MS = 8_000;
-const MAX_REDIRECTS = 4;
-
-function isPrivateAddress(address: string): boolean {
-  if (isIP(address) === 6) {
-    const a = address.toLowerCase();
-    if (a === "::1" || a === "::") return true;
-    if (a.startsWith("fc") || a.startsWith("fd") || a.startsWith("fe80")) return true;
-    const mapped = a.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    return mapped ? isPrivateAddress(mapped[1]) : false;
-  }
-  const [a, b] = address.split(".").map(Number);
-  return (
-    a === 10 ||
-    a === 127 ||
-    a === 0 ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    a >= 224
-  );
-}
-
-async function publicHost(url: URL): Promise<boolean> {
-  if (url.protocol !== "https:" && url.protocol !== "http:") return false;
-  if (url.hostname === "localhost" || url.hostname.endsWith(".local") || url.hostname.endsWith(".internal")) {
-    return false;
-  }
-  try {
-    const addresses = await lookup(url.hostname, { all: true });
-    return addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a.address));
-  } catch {
-    return false;
-  }
-}
+const PHONE_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
 
 /** Reads the page, following redirects one at a time so each hop is checked. */
 export async function probeLandingPage(rawUrl: string): Promise<LandingProbe> {
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    return { ok: false, reason: "unreachable", message: "That address isn't a web page MAIRO can open." };
+  // A phone, because that's how most people will open the ad. The fetch
+  // itself refuses anything that isn't the public internet (net/safe-fetch).
+  const r = await safeFetch(rawUrl, { maxBytes: MAX_BYTES, userAgent: `${PHONE_UA} MAIRO-check` });
+  if (!r.ok) {
+    if (r.reason === "blocked") return { ok: false, reason: "blocked", message: "MAIRO can only check public web pages." };
+    if (r.reason === "error_status") return { ok: false, reason: "error_status", status: r.status, message: `The page answered with an error (${r.status}). People clicking the ad would land on it.` };
+    if (r.reason === "invalid") return { ok: false, reason: "unreachable", message: "That address isn't a web page MAIRO can open." };
+    if (r.reason === "too_many_redirects") return { ok: false, reason: "unreachable", message: "The page redirected too many times." };
+    return { ok: false, reason: "unreachable", message: "The page didn't answer. It may be down, or blocking automated checks." };
   }
-
-  const signal = AbortSignal.timeout(TIMEOUT_MS);
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    if (!(await publicHost(url))) {
-      return { ok: false, reason: "blocked", message: "MAIRO can only check public web pages." };
-    }
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        redirect: "manual",
-        signal,
-        headers: {
-          // A phone, because that's how most people will open the ad.
-          "user-agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MAIRO-check",
-          accept: "text/html",
-        },
-      });
-    } catch {
-      return {
-        ok: false,
-        reason: "unreachable",
-        message: "The page didn't answer. It may be down, or blocking automated checks.",
-      };
-    }
-
-    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
-      url = new URL(res.headers.get("location")!, url);
-      continue;
-    }
-    if (res.status >= 400) {
-      return {
-        ok: false,
-        reason: "error_status",
-        status: res.status,
-        message: `The page answered with an error (${res.status}). People clicking the ad would land on it.`,
-      };
-    }
-
-    const html = await readCapped(res);
-    return {
-      ok: true,
-      status: res.status,
-      finalUrl: url.toString(),
-      mobileReady: /<meta[^>]+name=["']?viewport["']?[^>]*>/i.test(html),
-      hasMetaPixel: /connect\.facebook\.net\/[^"']*fbevents\.js|fbq\(\s*['"]init['"]/i.test(html),
-      title: html.match(/<title[^>]*>([^<]{1,200})<\/title>/i)?.[1]?.trim() ?? null,
-      text: visibleText(html),
-    };
-  }
-  return { ok: false, reason: "unreachable", message: "The page redirected too many times." };
+  const html = r.body;
+  return {
+    ok: true,
+    status: r.status,
+    finalUrl: r.finalUrl,
+    mobileReady: /<meta[^>]+name=["']?viewport["']?[^>]*>/i.test(html),
+    hasMetaPixel: /connect\.facebook\.net\/[^"']*fbevents\.js|fbq\(\s*['"]init['"]/i.test(html),
+    title: html.match(/<title[^>]*>([^<]{1,200})<\/title>/i)?.[1]?.trim() ?? null,
+    text: visibleText(html),
+  };
 }
 
 /** The words a person would see, without scripts, styles or markup. */
@@ -141,21 +69,6 @@ export function visibleText(html: string, max = 12_000): string {
     .slice(0, max);
 }
 
-async function readCapped(res: Response, maxBytes = MAX_BYTES): Promise<string> {
-  const reader = res.body?.getReader();
-  if (!reader) return "";
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  while (total < maxBytes) {
-    const { done, value } = await reader.read();
-    if (done || !value) break;
-    chunks.push(value);
-    total += value.byteLength;
-  }
-  await reader.cancel().catch(() => {});
-  return new TextDecoder().decode(Buffer.concat(chunks));
-}
-
 export type PublicPage =
   | { ok: true; html: string; finalUrl: string; status: number; bytes: number }
   | { ok: false; message: string };
@@ -168,36 +81,7 @@ export type PublicPage =
  * site. The URL is still customer input, so it gets the same treatment.
  */
 export async function fetchPublicPage(rawUrl: string, maxBytes = MAX_BYTES): Promise<PublicPage> {
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    return { ok: false, message: "That isn't a web address MAIRO can open." };
-  }
-  const signal = AbortSignal.timeout(TIMEOUT_MS);
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    if (!(await publicHost(url))) return { ok: false, message: "MAIRO can only read public web pages." };
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        redirect: "manual",
-        signal,
-        headers: {
-          "user-agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MAIRO-analyzer",
-          accept: "text/html",
-        },
-      });
-    } catch {
-      return { ok: false, message: "The site didn't answer. It may be down, or blocking automated visits." };
-    }
-    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
-      url = new URL(res.headers.get("location")!, url);
-      continue;
-    }
-    if (res.status >= 400) return { ok: false, message: `The site answered with an error (${res.status}).` };
-    const html = await readCapped(res, maxBytes);
-    return { ok: true, html, finalUrl: url.toString(), status: res.status, bytes: html.length };
-  }
-  return { ok: false, message: "The site redirected too many times." };
+  const r = await safeFetch(rawUrl, { maxBytes, userAgent: `${PHONE_UA} MAIRO-analyzer` });
+  if (!r.ok) return { ok: false, message: r.message };
+  return { ok: true, html: r.body, finalUrl: r.finalUrl, status: r.status, bytes: r.bytes };
 }

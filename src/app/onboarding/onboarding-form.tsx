@@ -4,14 +4,16 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   completeOnboardingAction,
+  correctLearnedAction,
   learnBusinessAction,
   saveBusinessStepAction,
   saveGoalDraftAction,
-  type Learned,
 } from "@/lib/actions/onboarding-actions";
 import { needsSiteTracking, requiredDetailFor, MESSAGE_CHANNELS, DEFAULT_MESSAGE_CHANNEL } from "@/lib/campaigns/destination";
 import { RECOMMENDED_MONTHLY, SETUP_GOALS, budgetMeaning, recommendGoal, type SetupGoal } from "@/lib/onboarding/goal";
 import type { Screen } from "@/lib/onboarding/draft";
+import type { LearnResult } from "@/lib/onboarding/setup";
+import { BUSINESS_TYPES, UNSURE, businessTypeFrom, reachQuestion } from "@/lib/onboarding/business-types";
 import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
 
 // Setting up, in three screens — steps 1 to 3 of ten:
@@ -45,7 +47,7 @@ const GENERAL_DESTINATIONS = [
   { key: "PHONE_CALL" as const, label: "They call me", sub: "A tap-to-call button on the ad" },
 ];
 
-export type Business = { website: string; industry: string; offering: string; customerLocation: string };
+export type Business = { website: string; industry: string; offering: string; customerLocation: string; businessType: string; reach: string };
 export type GoalDraft = {
   primaryGoal?: string;
   monthlyBudget?: number;
@@ -57,6 +59,7 @@ export type GoalDraft = {
   brandVoice?: string;
   competitors?: string;
   notes?: string;
+  budgetSuggested?: boolean;
 };
 
 function Why({ children }: { children: React.ReactNode }) {
@@ -84,7 +87,8 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
 
   // Screen 2's result.
   const [learning, setLearning] = useState(false);
-  const [learnt, setLearnt] = useState<{ read: boolean; learned: Learned; note: string | null } | null>(null);
+  const [learnt, setLearnt] = useState<Pick<LearnResult, "read" | "learned" | "unknown" | "pagesRead" | "note"> | null>(null);
+  const [locationUnsure, setLocationUnsure] = useState(!initialBusiness.customerLocation && initialBusiness.reach === "Not sure");
   const [suggestion, setSuggestion] = useState(initialSuggestion);
 
   async function saveBusiness() {
@@ -114,10 +118,10 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
     setLearning(true);
     learnBusinessAction()
       .then((r) => {
-        setLearnt({ read: r.read, learned: r.learned, note: r.note });
+        setLearnt({ read: r.read, learned: r.learned, unknown: r.unknown, pagesRead: r.pagesRead, note: r.note });
         setSuggestion(r.suggestion);
       })
-      .catch(() => setLearnt({ read: false, learned: [], note: "MAIRO couldn't read your website just now, so your plan's website advice will be general. You can carry on." }))
+      .catch(() => setLearnt({ read: false, learned: [], unknown: [], pagesRead: [], note: "MAIRO couldn't read your website just now, so your plan's website advice will be general. You can carry on." }))
       .finally(() => {
         setLearning(false);
         router.refresh();
@@ -137,8 +141,25 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
       {screen === "business" && (
         <section className={card} aria-labelledby="s-business">
           <h1 id="s-business" className="text-[24px] font-semibold tracking-[-0.02em] text-white">Tell MAIRO about your business</h1>
-          <p className="mt-1.5 text-[14px] text-muted">Four quick questions. Only the first is needed — the more MAIRO knows, the more your free plan is about you.</p>
+          <p className="mt-1.5 text-[14px] text-muted">A few quick questions. Only the first is needed — &ldquo;not sure&rdquo; is always a fine answer, and the more MAIRO knows, the more your free plan is about you.</p>
           <div className="mt-6 space-y-5">
+            <fieldset>
+              <legend className="text-[13.5px] font-medium text-white">What kind of business is it? <span className="font-normal text-faint">· optional</span></legend>
+              <Why>It decides what MAIRO measures for you — leads and bookings, or orders and sales.</Why>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {[...BUSINESS_TYPES, { id: UNSURE, label: "Not sure" }].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    aria-pressed={business.businessType === t.id}
+                    onClick={() => setBusiness({ ...business, businessType: t.id, reach: business.businessType === t.id ? business.reach : "" })}
+                    className={`min-h-[40px] rounded-full border px-3.5 text-[13px] transition ${business.businessType === t.id ? "border-violet/60 bg-violet/[0.1] text-white" : "border-white/10 bg-white/[0.03] text-white/80 hover:border-white/25"}`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <Field label="What does your business do?" required why="So your plan and ads talk about what you actually sell.">
               <input className={input} value={business.offering} maxLength={200} onChange={(e) => setBusiness({ ...business, offering: e.target.value })} placeholder="e.g. Family dentistry and teeth whitening" />
             </Field>
@@ -149,10 +170,29 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
               <Field label="Industry" why="Helps MAIRO suggest a sensible starting goal.">
                 <input className={input} value={business.industry} maxLength={120} onChange={(e) => setBusiness({ ...business, industry: e.target.value })} placeholder="e.g. Dental practice" />
               </Field>
-              <Field label="Where are your customers?" why="Where your ads are shown. You can make it more precise later.">
-                <input className={input} value={business.customerLocation} maxLength={120} onChange={(e) => setBusiness({ ...business, customerLocation: e.target.value })} placeholder="e.g. Austin, TX — or all of the US" />
-              </Field>
+              <div>
+                <Field label="Where are your customers?" why="Where your ads are shown. You can make it more precise later.">
+                  <input className={input} value={business.customerLocation} disabled={locationUnsure} maxLength={120} onChange={(e) => setBusiness({ ...business, customerLocation: e.target.value })} placeholder="e.g. Austin, TX — or all of the US" />
+                </Field>
+                {/* Its own label, not inside the field's — a label inside a label names both inputs. */}
+                <label className="mt-2 flex items-center gap-2 text-[12.5px] text-muted">
+                  <input type="checkbox" className="accent-[#7c5cff]" checked={locationUnsure} onChange={(e) => { setLocationUnsure(e.target.checked); if (e.target.checked) setBusiness({ ...business, customerLocation: "" }); }} />
+                  Not sure yet — MAIRO will assume people near you and say so on your plan
+                </label>
+              </div>
             </div>
+            {(() => {
+              const q = reachQuestion(businessTypeFrom(business.businessType)?.kind ?? null);
+              if (!q) return null;
+              return (
+                <Field label={q.label} why="So your ads reach people you can actually serve.">
+                  <select className={`${input} max-w-[320px]`} value={business.reach} onChange={(e) => setBusiness({ ...business, reach: e.target.value })}>
+                    <option value="">Choose…</option>
+                    {q.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </Field>
+              );
+            })()}
           </div>
           {error && <p role="alert" className="mt-5 rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{error}</p>}
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -173,18 +213,28 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
             </p>
           ) : learnt?.read ? (
             <>
-              <p className="mt-2 text-[14px] text-muted">Here&rsquo;s what your Strategy Agent found on your website. If something&rsquo;s wrong, carry on — you can correct it any time in Business Brain.</p>
+              <p className="mt-2 text-[14px] text-muted">Here&rsquo;s what your Strategy Agent found on your website. Confirm it, fix it or remove it — your word always wins over the website.</p>
+              {learnt.pagesRead.length > 0 && (
+                <p className="mt-2 text-[12.5px] text-faint">
+                  Read: {learnt.pagesRead.slice(0, 4).map((u, i) => (
+                    <span key={u}>{i > 0 && ", "}<a href={u} target="_blank" rel="noopener noreferrer nofollow" className="underline underline-offset-2 hover:text-white">{u.replace(/^https?:\/\//, "").replace(/\/$/, "")}</a></span>
+                  ))}
+                </p>
+              )}
               {learnt.learned.length ? (
                 <dl className="mt-5 space-y-3">
-                  {learnt.learned.map((l) => (
-                    <div key={l.label} className="rounded-xl border border-white/[0.07] px-4 py-3">
-                      <dt className="text-[12px] text-faint">{l.label}</dt>
-                      <dd className="mt-0.5 text-[14px] text-white">{l.value}</dd>
-                    </div>
-                  ))}
+                  {learnt.learned.map((l) => <LearnedFact key={l.field} item={l} />)}
                 </dl>
               ) : (
                 <p className="mt-4 text-[14px] text-white/85">It read your website but didn&rsquo;t find much to go on, so your plan will lean on your answers.</p>
+              )}
+              {learnt.unknown.length > 0 && (
+                <div className="mt-5 rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3">
+                  <p className="text-[13.5px] font-medium text-white">Not on your website</p>
+                  <ul className="mt-1.5 space-y-1 text-[13px] text-white/80">
+                    {learnt.unknown.map((u) => <li key={u.field}><span className="text-white">{u.label}:</span> {u.ask}</li>)}
+                  </ul>
+                </div>
               )}
             </>
           ) : learnt ? (
@@ -318,11 +368,14 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
 
       <div className="mt-7">
         <Field label="Monthly ad budget (USD)" required why={<>{budget.text} Paid to Meta, not to MAIRO — and you approve the exact amount before anything is spent.</>}>
-          <input name="monthlyBudget" type="number" min={100} step={50} required className={`${input} max-w-[220px]`} value={goal.monthlyBudget ?? ""} onChange={(e) => set({ monthlyBudget: e.target.value === "" ? undefined : Number(e.target.value) })} />
+          <input name="monthlyBudget" type="number" min={100} step={50} required className={`${input} max-w-[220px]`} value={goal.monthlyBudget ?? ""} onChange={(e) => set({ monthlyBudget: e.target.value === "" ? undefined : Number(e.target.value), budgetSuggested: false })} />
         </Field>
-        {goal.monthlyBudget !== RECOMMENDED_MONTHLY && (
-          <button type="button" className="mt-1 text-[12.5px] text-violet-bright hover:text-white" onClick={() => set({ monthlyBudget: RECOMMENDED_MONTHLY })}>
-            Use MAIRO&rsquo;s suggestion (${RECOMMENDED_MONTHLY.toLocaleString("en-US")} a month)
+        <input type="hidden" name="budgetSuggested" value={goal.budgetSuggested ? "1" : "0"} />
+        {goal.budgetSuggested ? (
+          <p className="mt-1 text-[12.5px] text-muted">Using MAIRO&rsquo;s starting suggestion. Your plan marks it as a suggestion, and you can change it any time before you approve.</p>
+        ) : (
+          <button type="button" className="mt-1 text-[12.5px] text-violet-bright hover:text-white" onClick={() => set({ monthlyBudget: RECOMMENDED_MONTHLY, budgetSuggested: true })}>
+            I&rsquo;m not sure — start with MAIRO&rsquo;s suggestion (${RECOMMENDED_MONTHLY.toLocaleString("en-US")} a month)
           </button>
         )}
       </div>
@@ -356,6 +409,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
       <input type="hidden" name="industry" value={business.industry} />
       <input type="hidden" name="offering" value={business.offering} />
       <input type="hidden" name="customerLocation" value={business.customerLocation} />
+      <input type="hidden" name="serviceReach" value={business.reach} />
 
       {state?.error && <p role="alert" className="mt-5 rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{state.error} Your answers are saved.</p>}
 
@@ -368,5 +422,64 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
       </div>
       <p className="mt-3 text-[12.5px] text-muted">Next, your Strategy Agent writes your free plan. It&rsquo;s free and builds nothing on Meta.</p>
     </form>
+  );
+}
+
+/** One fact MAIRO read, with Confirm, Fix and Remove — saved to Business Brain as the owner's word. */
+function LearnedFact({ item }: { item: LearnResult["learned"][number] }) {
+  const [value, setValue] = useState(item.value);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.value);
+  const [state, setState] = useState<"idle" | "saving" | "confirmed" | "removed" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(op: "set" | "remove" | "confirm") {
+    setState("saving");
+    setError(null);
+    const r = await correctLearnedAction({ field: item.field, op, value: op === "set" ? draft : undefined }).catch(() => ({ ok: false as const, error: "MAIRO couldn't save that just now." }));
+    if (!r.ok) {
+      setState("error");
+      setError(r.error);
+      return;
+    }
+    if (op === "set") {
+      setValue(draft);
+      setEditing(false);
+    }
+    setState(op === "remove" ? "removed" : "confirmed");
+  }
+
+  if (state === "removed") {
+    return (
+      <div className="rounded-xl border border-white/[0.07] px-4 py-3 text-[13px] text-muted">
+        <dt className="text-[12px] text-faint">{item.label}</dt>
+        <dd className="mt-0.5">Removed. MAIRO won&rsquo;t use it.</dd>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-white/[0.07] px-4 py-3">
+      <dt className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-faint">
+        <span>{item.label} · <span className="text-white/60">{state === "confirmed" ? "confirmed by you" : "from your website"}</span></span>
+        {item.editable && !editing && state !== "saving" && (
+          <span className="flex gap-3">
+            {state !== "confirmed" && <button type="button" className="text-violet-bright hover:text-white" onClick={() => void run("confirm")}>Confirm</button>}
+            <button type="button" className="text-violet-bright hover:text-white" onClick={() => setEditing(true)}>Fix</button>
+            <button type="button" className="text-violet-bright hover:text-white" onClick={() => void run("remove")}>Remove</button>
+          </span>
+        )}
+        {!item.editable && <a href="/dashboard/settings/business-brain" className="text-violet-bright hover:text-white">Edit later in Business Brain</a>}
+      </dt>
+      {editing ? (
+        <dd className="mt-2 flex flex-wrap gap-2">
+          <input aria-label={`Correct: ${item.label}`} className={`${input} min-w-0 flex-1`} value={draft} maxLength={300} onChange={(e) => setDraft(e.target.value)} />
+          <button type="button" className={secondary} onClick={() => void run("set")} disabled={state === "saving"}>Save</button>
+          <button type="button" className="text-[13px] text-muted hover:text-white" onClick={() => { setEditing(false); setDraft(value); }}>Cancel</button>
+        </dd>
+      ) : (
+        <dd className="mt-0.5 text-[14px] text-white">{value}</dd>
+      )}
+      {error && <p role="alert" className="mt-1 text-[12.5px] text-alert">{error}</p>}
+    </div>
   );
 }

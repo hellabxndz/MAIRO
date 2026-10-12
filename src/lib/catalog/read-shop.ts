@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { safeFetch } from "@/lib/net/safe-fetch";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import {
   dedupe,
@@ -24,21 +25,10 @@ const TIMEOUT_MS = 12_000;
 const UA = "MAIRO-catalog/1.0 (+https://mairo.io)";
 
 async function get(url: string): Promise<{ ok: boolean; status: number; body: string }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      headers: { "user-agent": UA, accept: "application/json, text/html;q=0.9" },
-      redirect: "follow",
-      cache: "no-store",
-      signal: controller.signal,
-    });
-    return { ok: res.ok, status: res.status, body: res.ok ? await res.text() : "" };
-  } catch {
-    return { ok: false, status: 0, body: "" };
-  } finally {
-    clearTimeout(timer);
-  }
+  // The shop's address is customer input: fetched only if it's on the public
+  // internet, every redirect checked (net/safe-fetch).
+  const r = await safeFetch(url, { timeoutMs: TIMEOUT_MS, accept: "application/json, text/html;q=0.9", userAgent: UA, maxBytes: 2_000_000 });
+  return r.ok ? { ok: true, status: r.status, body: r.body } : { ok: false, status: r.status ?? 0, body: "" };
 }
 
 /**

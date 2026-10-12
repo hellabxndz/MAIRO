@@ -106,7 +106,9 @@ export async function strategyInputFor(organizationId: string): Promise<Strategy
     notes: intake.notes,
     offering: intake.offering,
     offer: intake.currentOffer,
-    location: intake.customerLocation,
+    // The service area with how far they travel, when they said; "Not sure"
+    // leaves it to the plan, which marks it as an assumption.
+    location: [intake.customerLocation, intake.serviceReach && intake.serviceReach !== "Not sure" ? intake.serviceReach.toLowerCase() : null].filter(Boolean).join(", ") || null,
     brainBrief: brain.analyzedAt ? brainBrief(brain.profile) : null,
     siteIssues: (brain.analysis?.conversionIssues ?? []).slice(0, 5).map((c) => ({ issue: c.issue, fix: c.fix })),
     purchaseTracking: pixel ? canOptimizeTowards(pixel.status) : false,

@@ -19,6 +19,10 @@ export const draftSchema = z.object({
       industry: text(120),
       offering: text(200),
       customerLocation: text(120),
+      /** The business type chosen (a niche id), "unsure", or nothing yet. */
+      businessType: text(40),
+      /** The answer to the reach follow-up, in the owner's words. */
+      reach: text(60),
       savedAt: z.string().optional().catch(undefined),
     })
     .optional()
@@ -43,6 +47,8 @@ export const draftSchema = z.object({
       brandVoice: text(1000),
       competitors: text(500),
       notes: text(2000),
+      /** They said they don't know their budget and took MAIRO's suggestion. */
+      budgetSuggested: z.boolean().optional().catch(undefined),
     })
     .optional()
     .catch(undefined),

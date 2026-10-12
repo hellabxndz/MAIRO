@@ -41,7 +41,8 @@ export async function reportLeadToMeta(leadId: string, now = new Date()): Promis
         leadForm: { select: { slug: true } },
       },
     });
-    if (!lead || lead.source !== "MAIRO_FORM" || lead.metaReportedAt) return "skipped";
+    // Only leads from a MAIRO form are the ads' own: one added by hand or imported may never have seen an ad.
+    if (!lead || lead.source !== "MAIRO_FORM" || !lead.leadForm || lead.metaReportedAt) return "skipped";
     if (now.getTime() - lead.createdAt.getTime() > MAX_AGE_MS) return "skipped";
 
     const skip = async (why: string) => {
@@ -68,7 +69,7 @@ export async function reportLeadToMeta(leadId: string, now = new Date()): Promis
           hashedPhone: lead.hashedPhone,
           // Meta wants its click id wrapped, versioned and timestamped.
           fbc: lead.clickId ? `fb.1.${lead.createdAt.getTime()}.${lead.clickId}` : null,
-          sourceUrl: leadFormUrl(lead.leadForm.slug, siteUrl()),
+          sourceUrl: leadFormUrl(lead.leadForm!.slug, siteUrl()),
         },
       ]);
       await db.lead.update({

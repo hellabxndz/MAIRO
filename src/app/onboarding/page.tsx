@@ -10,6 +10,7 @@ import { recommendGoal } from "@/lib/onboarding/goal";
 import { setupWork } from "@/lib/onboarding/team";
 import { loadBrain } from "@/lib/business/brain";
 import { JourneyFrame } from "@/components/strategy/journey";
+import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { SetupTeam } from "@/components/onboarding/setup-team";
 
 // Steps 1 to 3 of ten: the business, what MAIRO learns from its website, and
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
 // Reading the website is a web fetch (and an AI call when configured).
 export const maxDuration = 60;
 
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string }> }) {
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string; type?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -30,7 +31,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const existingIntake = await db.onboardingIntake.findUnique({ where: { organizationId } });
   if (existingIntake) redirect("/dashboard");
 
-  const { step } = await searchParams;
+  const { step, type } = await searchParams;
   const [org, steps, work, brain] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { website: true, industry: true, onboardingDraft: true, timezone: true } }),
     loadOnboarding(organizationId),
@@ -47,6 +48,10 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     industry: draft.business?.industry ?? org.industry ?? "",
     offering: draft.business?.offering ?? "",
     customerLocation: draft.business?.customerLocation ?? "",
+    // A type chosen earlier wins; otherwise the one carried from the website's
+    // walkthrough (?type=), which the owner can still change.
+    businessType: draft.business?.businessType ?? businessTypeFrom(type)?.id ?? "",
+    reach: draft.business?.reach ?? "",
   };
   const suggestion = recommendGoal({ industry: business.industry, offering: business.offering, primaryCta: brain.analyzedAt ? brain.profile.primaryCta : null, presence: brain.analyzedAt ? brain.profile.presence : null });
 

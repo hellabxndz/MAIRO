@@ -312,32 +312,39 @@ model Organization {
 
   /// Customer success. What the business tells MAIRO about MAIRO, and what
   /// the MAIRO team recorded talking to them.
-  feedback     CustomerFeedback[]
-  supportNotes SupportNote[]
+  feedback           CustomerFeedback[]
+  supportNotes       SupportNote[]
   /// One of the first businesses on MAIRO, looked after more closely.
-  foundingCustomer Boolean   @default(false)
-  foundingSince    DateTime?
+  foundingCustomer   Boolean            @default(false)
+  foundingSince      DateTime?
   /// The business agreed its results may be shared in an anonymized case
   /// study. Null means no — never assumed, and withdrawable at any time.
   caseStudyConsentAt DateTime?
   /// Last time anyone from the business opened the dashboard (to the hour).
-  lastActiveAt DateTime?
+  lastActiveAt       DateTime?
   /// When the subscription ended, for retention. Cleared by a new one.
-  canceledAt   DateTime?
+  canceledAt         DateTime?
 
   /// The MAIRO AI Team's work log for this business.
-  agentRuns AgentRun[]
+  agentRuns     AgentRun[]
   coachFindings CoachFinding[]
+
+  // Lead history, creative angles and tests, funnel measurement and case studies.
+  leadEvents          LeadEvent[]
+  adAngles            AdAngle[]
+  creativeExperiments CreativeExperiment[]
+  funnelEvents        FunnelEvent[]
+  caseStudies         CaseStudy[]
   /// Notification preferences. Problems that stop ads are always shown;
   /// these switch off the optional kinds.
-  notifyOpportunities Boolean @default(true)
-  notifyReports       Boolean @default(true)
+  notifyOpportunities Boolean              @default(true)
+  notifyReports       Boolean              @default(true)
   /// Performance Coach alerts: slower follow-up, rising cost per good lead,
   /// tracking that stopped, lead quality slipping. Optional, like the above.
-  notifyCoachAlerts   Boolean @default(true)
+  notifyCoachAlerts   Boolean              @default(true)
   /// The business's own names for its lead stages (JSON: stage → label), e.g.
   /// "Inspection booked" for an appointment. Null uses MAIRO's defaults.
-  leadStagesJson      String? @db.Text
+  leadStagesJson      String?              @db.Text
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -455,6 +462,13 @@ model OnboardingIntake {
   currentOffer       String?
   /// Where their customers are, in their words ("Austin, TX").
   customerLocation   String?
+
+  /// True when the owner said they didn't know their budget and took MAIRO's
+  /// starting suggestion — shown on the plan as an assumption, not a fact.
+  budgetSuggested Boolean @default(false)
+  /// How far a service business travels, or where a shop sells, in the
+  /// owner's words ("Within 20 miles", "Nationwide", "Not sure").
+  serviceReach    String?
 
   completedAt DateTime @default(now())
 }
@@ -1054,10 +1068,10 @@ model MairoCampaign {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// Leads known to have come from this campaign.
+  leads     Lead[]
 
   @@index([organizationId])
-  /// Leads known to have come from this campaign.
-  leads Lead[]
 }
 
 /// What one campaign ad is made of.
@@ -1101,6 +1115,11 @@ model CampaignAd {
   /// marketing objective, audience, hook, message, CTA, format and the reason
   /// it was made. See briefFor in lib/engine/core.ts.
   briefJson String? @db.Text
+
+  /// The exact words and picture versions this ad runs, so results are tied
+  /// to what was published rather than to whatever the creative is now.
+  angleRevisionId String?
+  studioVersionId String?
 
   createdAt DateTime @default(now())
 
@@ -1690,6 +1709,10 @@ model LeadForm {
 enum LeadSource {
   MAIRO_FORM
   META_INSTANT
+  /// Typed in by the business — a phone call, a walk-in, an email.
+  MANUAL
+  /// From a CSV the business uploaded, checked row by row.
+  CSV_IMPORT
 }
 
 /// What became of a lead. NEW is all a form or Meta can tell MAIRO; every
@@ -1717,8 +1740,9 @@ model Lead {
   id             String       @id @default(cuid())
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  leadForm       LeadForm     @relation(fields: [leadFormId], references: [id], onDelete: Cascade)
-  leadFormId     String
+  /// The form it came through. Empty for a lead added by hand or imported.
+  leadForm       LeadForm?    @relation(fields: [leadFormId], references: [id], onDelete: Cascade)
+  leadFormId     String?
 
   source LeadSource @default(MAIRO_FORM)
 
@@ -1769,23 +1793,36 @@ model Lead {
 
   /// Follow-up, as the business records it. The first contact is what
   /// response time is measured from; nothing here is inferred.
-  firstContactedAt DateTime?
-  lastContactedAt  DateTime?
+  firstContactedAt    DateTime?
+  lastContactedAt     DateTime?
   /// When the next follow-up is due, if the business set one.
-  nextFollowUpAt   DateTime?
-  appointmentAt    DateTime?
+  nextFollowUpAt      DateTime?
+  appointmentAt       DateTime?
   /// What the business expects the job to be worth (an estimate). Never revenue.
   estimatedValueCents Int?
   /// Why it didn't go anywhere, for LOST: one of the reasons in lib/leads/details.
-  lostReason       String?
+  lostReason          String?
   /// The business's own notes. Private to the business.
-  notes            String?   @db.Text
+  notes               String?   @db.Text
+
+  /// Money actually received for this job, as the business recorded it —
+  /// separate from what it was estimated at and what the deal was worth.
+  collectedCents Int?
+  /// Where the lead came from, for the business to check: a Meta lead id, an
+  /// import file and row, the form's address.
+  sourceRef      String?
+  /// Hashed email or phone, the same for the same person whichever way they
+  /// arrived — what duplicates are found by. Never the address itself.
+  contactKey     String?
+
+  events LeadEvent[]
 
   createdAt DateTime @default(now())
 
   @@index([organizationId, createdAt])
   @@index([leadFormId])
   @@index([mairoCampaignId])
+  @@index([organizationId, contactKey])
 }
 
 /// Where an order came from.
@@ -2536,16 +2573,22 @@ model MairoDecision {
   source    String         @default("daily")
 
   /// What was actually done, with the before and after of each change.
-  resultJson  String?   @db.Text
-  decidedAt   DateTime?
+  resultJson          String?   @db.Text
+  /// The approval, recorded before anything runs: who, when, and exactly
+  /// what they approved. Executing and the result come after; a queued or
+  /// running change is never shown as done.
+  approvedAt          DateTime?
+  approvedById        String?
+  approvedPayloadJson String?   @db.Text
+  decidedAt           DateTime?
   /// Set while an approval is being carried out, so a second approval (a
   /// double click, two tabs, MAIRO acting at the same moment) can't send the
   /// same change to Meta twice. A lease: an approval that crashed frees it
   /// after two minutes.
-  applyingAt  DateTime?
-  decidedById String?
+  applyingAt          DateTime?
+  decidedById         String?
   /// True when MAIRO carried it out itself under AI Assist or Full Autopilot.
-  automatic   Boolean   @default(false)
+  automatic           Boolean   @default(false)
 
   /// What happened after it was carried out, once enough time has passed
   /// to compare (IMPROVED, WORSENED, INCONCLUSIVE, NOT_MEASURABLE). Describes
@@ -3388,41 +3431,41 @@ model CoachFinding {
   /// Higher first, as the investigation ranked it, so the list keeps its order.
   priority   Int             @default(50)
 
-  title          String
+  title            String
   /// The plain-language sentence for someone with no advertising knowledge.
-  plain          String @db.Text
+  plain            String  @db.Text
   /// What MAIRO noticed: observed, measured.
-  noticed        String @db.Text
+  noticed          String  @db.Text
   /// Possible explanations: [{ text, basis: "evidence" | "possibility" }].
-  explanationsJson String @db.Text
-  recommendation String @db.Text
+  explanationsJson String  @db.Text
+  recommendation   String  @db.Text
   /// Other recommendations, for "another recommendation".
-  alternativesJson String @db.Text
-  alternativeIndex Int    @default(0)
+  alternativesJson String  @db.Text
+  alternativeIndex Int     @default(0)
   /// The numbers behind it: [{ label, value, detail? }].
-  evidenceJson   String @db.Text
-  limitations    String @db.Text
+  evidenceJson     String  @db.Text
+  limitations      String  @db.Text
   /// What MAIRO can't see that would settle it.
-  missingJson    String @db.Text
+  missingJson      String  @db.Text
   /// The improvement plan: steps with priority, risk, approval, verification and status.
-  stepsJson      String @db.Text
+  stepsJson        String  @db.Text
   /// The specialists that worked on it.
-  agentsJson     String @db.Text
+  agentsJson       String  @db.Text
   /// The figure that would show the plan worked: { metric, value, betterWhen, unit }.
-  measureJson    String? @db.Text
+  measureJson      String? @db.Text
 
   /// A change on Meta it proposed, through Mairo Decisions' approval path.
   decisionId String?
 
-  status     CoachFindingStatus @default(OPEN)
+  status      CoachFindingStatus @default(OPEN)
   /// HELPFUL or NOT_HELPFUL, if the business said.
-  feedback   String?
-  decidedAt  DateTime?
-  resolvedAt DateTime?
+  feedback    String?
+  decidedAt   DateTime?
+  resolvedAt  DateTime?
   /// When to look again at an approved plan, and what was seen.
   checkAfter  DateTime?
   verdict     String?
-  verdictNote String?   @db.Text
+  verdictNote String?            @db.Text
   verdictAt   DateTime?
 
   firstSeenAt DateTime @default(now())
@@ -3432,4 +3475,143 @@ model CoachFinding {
 
   @@index([organizationId, status])
   @@index([organizationId, key])
+}
+
+/// One change in a lead's life: created, imported, a status moved, a value
+/// set, a note, a correction or a merge. Kept so a business can see who
+/// changed what and when, and so a corrected mistake is visible as one.
+model LeadEvent {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId         String
+  /// created | imported | status | value | note | corrected | merged
+  kind           String
+  fromStatus     LeadStatus?
+  toStatus       LeadStatus?
+  field          String?
+  before         String?      @db.Text
+  after          String?      @db.Text
+  actorUserId    String?
+  /// Who did it, as shown: "You", "Meta", "CSV import", "MAIRO".
+  actorLabel     String
+  note           String?      @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([leadId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// An advertising angle: one way of saying why someone should get in touch,
+/// with every edited version kept.
+model AdAngle {
+  id             String            @id @default(cuid())
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  title          String
+  /// DRAFT | APPROVED | ARCHIVED
+  status         String            @default("DRAFT")
+  createdById    String?
+  revisions      AdAngleRevision[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([organizationId, updatedAt])
+}
+
+model AdAngleRevision {
+  id              String   @id @default(cuid())
+  angle           AdAngle  @relation(fields: [angleId], references: [id], onDelete: Cascade)
+  angleId         String
+  organizationId  String
+  version         Int
+  hook            String   @db.Text
+  body            String   @db.Text
+  cta             String
+  /// Why this angle might work, from the business's confirmed facts.
+  why             String   @db.Text
+  /// ai | owner | template
+  source          String
+  /// The brand check's findings when the version was saved (JSON).
+  brandIssuesJson String?  @db.Text
+  createdById     String?
+  createdAt       DateTime @default(now())
+
+  @@unique([angleId, version])
+  @@index([organizationId])
+}
+
+/// A creative test: what it's trying to learn, the one thing that differs,
+/// the exact versions compared, where it runs and for how long. A winner is
+/// named only when the evidence supports one.
+model CreativeExperiment {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  mairoCampaignId String?
+  hypothesis      String       @db.Text
+  /// hook | image | offer | format | audience
+  variable        String
+  /// [{ label, angleRevisionId?, studioVersionId?, campaignAdId? }]
+  variantsJson    String       @db.Text
+  /// PROPOSED | APPROVED | RUNNING | CONCLUDED | CANCELED
+  status          String       @default("PROPOSED")
+  startsAt        DateTime?
+  endsAt          DateTime?
+  approvedAt      DateTime?
+  approvedById    String?
+  /// The verdict and the figures it rests on (JSON), once concluded.
+  resultJson      String?      @db.Text
+  conclusion      String?      @db.Text
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([organizationId, status])
+}
+
+/// A step in the sign-up-to-results funnel, for measuring where people stop.
+/// Never carries personal details, uploaded content or secrets: a name, an
+/// anonymous visitor id or the organization, and a few whitelisted fields.
+model FunnelEvent {
+  id             String        @id @default(cuid())
+  name           String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  /// A random id kept in a first-party cookie, for steps before sign-up.
+  anonId         String?
+  propsJson      String?       @db.Text
+  /// For once-only steps ("first launch"): the same key is recorded once.
+  dedupeKey      String?       @unique
+  createdAt      DateTime      @default(now())
+
+  @@index([name, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+/// A customer's results, published only with their recorded permission, the
+/// period measured, and what MAIRO can and can't take credit for.
+model CaseStudy {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  /// DRAFT | CONSENTED | PUBLISHED | WITHDRAWN
+  status         String       @default("DRAFT")
+  title          String
+  summary        String       @db.Text
+  periodStart    DateTime
+  periodEnd      DateTime
+  /// What the figures include and exclude, and how results were attributed.
+  attribution    String       @db.Text
+  metricsJson    String       @db.Text
+  consentAt      DateTime?
+  consentByName  String?
+  consentText    String?      @db.Text
+  publishedAt    DateTime?
+  withdrawnAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([status, publishedAt])
 }

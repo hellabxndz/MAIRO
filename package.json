@@ -70,7 +70,11 @@
     "check:domain": "tsx scripts/check-domain.ts",
     "check:trust-db": "tsx scripts/check-trust-db.ts",
     "check:signup": "tsx scripts/check-signup.ts",
-    "check:page-token": "tsx scripts/check-page-token.ts"
+    "check:page-token": "tsx scripts/check-page-token.ts",
+    "check:safe-fetch": "tsx scripts/check-safe-fetch.ts",
+    "check:plan-guide": "tsx scripts/check-plan-guide.ts",
+    "check:capabilities": "tsx scripts/check-capabilities.ts",
+    "capabilities:doc": "tsx scripts/capabilities-doc.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.99",
