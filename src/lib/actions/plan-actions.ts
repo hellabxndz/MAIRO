@@ -18,6 +18,8 @@ export async function regeneratePlanAction() {
   ]);
 
   if (!organization || !intake) throw new Error("Complete onboarding first");
+  // A business with a MAIRO Advertising Plan has one plan: that one.
+  if (await hasAdvertisingPlan(organizationId)) throw new Error("Your advertising plan is the plan. Change it on your plan page.");
 
   const plan = await generateMonthlyPlan({
     businessName: organization.name,
@@ -60,6 +62,7 @@ export async function approvePlanAction() {
 
   const organizationId =
     (await activeOrganizationId()) ?? session.user.organizationId;
+  if (await hasAdvertisingPlan(organizationId)) throw new Error("Approve your advertising plan on your plan page.");
 
   await db.monthlyPlan.update({
     where: {
@@ -73,4 +76,8 @@ export async function approvePlanAction() {
 
   revalidatePath("/dashboard/plan");
   revalidatePath("/dashboard");
+}
+
+async function hasAdvertisingPlan(organizationId: string): Promise<boolean> {
+  return Boolean(await db.strategyPlan.findUnique({ where: { organizationId }, select: { id: true } }));
 }

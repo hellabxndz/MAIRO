@@ -36,7 +36,7 @@ check("every capability's evidence exists in the repository", () => {
       const [path, anchor] = e.split("#");
       if (!existsSync(join(root, path))) missing.push(`${c.id}: ${path}`);
       else if (path === "prisma/schema.prisma" && anchor && !new RegExp(`^model ${anchor} \\{`, "m").test(schema)) missing.push(`${c.id}: model ${anchor}`);
-      else if (path.endsWith(".ts") && anchor && !read(path).includes(anchor)) missing.push(`${c.id}: ${path}#${anchor}`);
+      else if (anchor && path !== "prisma/schema.prisma" && !statSync(join(root, path)).isDirectory() && !read(path).includes(anchor)) missing.push(`${c.id}: ${path}#${anchor}`);
     }
   }
   assert.deepEqual(missing, []);
@@ -44,6 +44,27 @@ check("every capability's evidence exists in the repository", () => {
 check("every cited check suite is a real npm script", () => {
   const missing = CAPABILITIES.flatMap((c) => c.checks.filter((s) => !scripts.includes(`check:${s}`)).map((s) => `${c.id}: check:${s}`));
   assert.deepEqual(missing, []);
+});
+check("every route a capability names is a real page", () => {
+  // "/dashboard/create" → src/app/dashboard/create/page.tsx, allowing for (groups).
+  const pages: string[] = [];
+  const walk = (dir: string) => {
+    for (const f of readdirSync(join(root, dir))) {
+      const p = join(dir, f);
+      if (statSync(join(root, p)).isDirectory()) walk(p);
+      else if (f === "page.tsx") pages.push("/" + dir.replace(/^src\/app\/?/, "").split("/").filter((s) => s && !/^\(.*\)$/.test(s)).join("/"));
+    }
+  };
+  walk("src/app");
+  const missing = CAPABILITIES.flatMap((c) => c.routes.filter((r) => !pages.includes(r.replace(/\/$/, "") || "/")).map((r) => `${c.id}: ${r}`));
+  assert.deepEqual(missing, []);
+});
+check("working and partial capabilities are backed by a check suite or a live run", () => {
+  for (const c of CAPABILITIES.filter((x) => x.status === "working" || x.status === "partial")) assert.ok(c.checks.length > 0 || c.verifiedLive, c.id);
+});
+check("unavailable capabilities have no customer route, and say what they still need", () => {
+  for (const c of CAPABILITIES.filter((x) => x.status === "unavailable" && x.area === "Free tools")) assert.deepEqual(c.routes, [], c.id);
+  for (const c of CAPABILITIES.filter((x) => x.status === "unavailable" && x.id !== "tiktok" && x.id !== "google-ads" && x.area !== "Free tools")) assert.ok(c.needs.length > 0, c.id);
 });
 check("ids are unique", () => {
   const ids = CAPABILITIES.map((c) => c.id);
@@ -61,7 +82,7 @@ check("partially working capabilities state their condition", () => {
 });
 
 console.log("\n— public pages —");
-const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough"];
+const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/tools", "src/app/tools", "src/lib/tools"];
 const PUBLIC_FILES = ["src/app/page.tsx", "src/app/founding/page.tsx", "src/lib/pricing/compare.ts", "src/lib/walkthrough/script.ts"];
 function filesIn(dir: string): string[] {
   const abs = join(root, dir);

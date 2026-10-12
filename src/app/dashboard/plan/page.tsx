@@ -35,6 +35,14 @@ export default async function PlanPage() {
     },
   });
 
+  // One plan, not two. A business with a MAIRO Advertising Plan changes it on
+  // /plan until it's activated; after that this page shows what was approved,
+  // and the separate monthly generator (Regenerate) is not offered, so it can't
+  // write a strategy that disagrees with the approved one.
+  const strategy = await db.strategyPlan.findUnique({ where: { organizationId }, select: { activatedAt: true, approvedAt: true } });
+  if (strategy && !strategy.activatedAt) redirect("/plan");
+  const fromStrategy = Boolean(strategy);
+
   const budgetAllocation: BudgetLine[] = plan ? JSON.parse(plan.budgetAllocationJson || "[]") : [];
   const keyMetrics: MetricLine[] = plan?.keyMetrics ? JSON.parse(plan.keyMetrics) : [];
 
@@ -42,8 +50,12 @@ export default async function PlanPage() {
     <div>
       <PageHeader
         title={`${formatMonthKey(currentMonthKey())} plan`}
-        description="Your AI-generated strategy for this month. Regenerate it any time your goal or budget changes."
-        action={<RegenerateButton action={regeneratePlanAction} />}
+        description={
+          fromStrategy
+            ? `The advertising plan you approved${strategy?.approvedAt ? ` on ${strategy.approvedAt.toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : ""}. Changes now go through your campaign, where you approve each one.`
+            : "Your AI-generated strategy for this month. Regenerate it any time your goal or budget changes."
+        }
+        action={fromStrategy ? undefined : <RegenerateButton action={regeneratePlanAction} />}
       />
 
       {!plan ? (
@@ -56,7 +68,7 @@ export default async function PlanPage() {
           <Card>
             <div className="mb-4 flex items-center gap-3">
               <Badge tone={statusTone[plan.status]}>{plan.status}</Badge>
-              {plan.status === "IN_REVIEW" && (
+              {plan.status === "IN_REVIEW" && !fromStrategy && (
                 <form action={approvePlanAction}>
                   <button type="submit" className="text-xs font-medium text-emerald-400 hover:underline">
                     Approve this plan

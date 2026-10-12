@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LandingNav } from "@/components/landing/landing-nav";
+import { SiteFooter } from "@/components/landing/site-footer";
+import { USABLE_TOOLS } from "@/lib/tools/registry";
 import { BusinessSelector } from "@/components/landing/business-selector";
 import { FreePlanDemo } from "@/components/landing/free-plan-demo";
 import { Faq } from "@/components/faq";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
-import { LEGAL } from "@/lib/legal";
 import { brandFont } from "@/lib/fonts";
-import { Wordmark } from "@/components/wordmark";
 import { STARTER_TRIAL_DAYS } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { EVERY_PLAN, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, comparison, planStories, pricingFacts, type Cell, type IntegrationStatus } from "@/lib/pricing/compare";
@@ -231,9 +231,10 @@ function money(n: number): string {
 }
 
 export default function Home() {
+  const toolsLive = USABLE_TOOLS().length > 0;
   return (
     <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
-      <LandingNav />
+      <LandingNav toolsLive={toolsLive} />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section id="product" className="relative isolate scroll-mt-20 overflow-hidden pt-[104px] sm:pt-[120px]">
@@ -255,7 +256,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
-                Get My Free Advertising Plan <span aria-hidden>→</span>
+                Build my free ad plan <span aria-hidden>→</span>
               </Link>
               <a href="#ai-team" className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-full border border-white/15 bg-paper px-7 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
                 Meet My AI Team
@@ -361,7 +362,7 @@ export default function Home() {
         </p>
         <div className="mt-8 text-center">
           <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[54px] items-center gap-2 rounded-full px-8 text-[15.5px] font-semibold`}>
-            Get My Free Advertising Plan <span aria-hidden>→</span>
+            Build my free ad plan <span aria-hidden>→</span>
           </Link>
         </div>
       </section>
@@ -501,7 +502,7 @@ export default function Home() {
                 href="/sign-up"
                 className={`mt-6 rounded-full py-3 text-center text-[14px] font-medium ${plan.featured ? PRIMARY : "border border-white/15 transition hover:border-white/35"}`}
               >
-                Start with your free plan <span aria-hidden>→</span>
+                Build my free ad plan <span aria-hidden>→</span>
               </Link>
             </article>
           ))}
@@ -685,7 +686,7 @@ export default function Home() {
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[58px] items-center gap-2 rounded-full px-9 text-[16px] font-semibold`}>
-              Get My Free Advertising Plan <span aria-hidden>→</span>
+              Build my free ad plan <span aria-hidden>→</span>
             </Link>
             <a href="#ai-team" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
               Meet My AI Team
@@ -700,41 +701,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.06] px-5 py-14 sm:px-8">
-        <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
-          <div className="col-span-2 sm:col-span-1">
-            <Wordmark href={null} className="text-[18px]" />
-            <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-white/50">Your AI Advertising Team for Facebook &amp; Instagram. You run the business — your AI team handles the advertising.</p>
-            <p className="mt-3 text-[12.5px] text-white/55">Questions? <a href={`mailto:${LEGAL.contactEmail}`} className="underline underline-offset-4 hover:text-white">{LEGAL.contactEmail}</a></p>
-            <p className="mt-4 text-[12px] leading-relaxed text-white/45">
-              {LEGAL.productName} is operated by {LEGAL.companyName}
-              {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.
-              <br />© {new Date().getFullYear()} {LEGAL.companyName}
-            </p>
-          </div>
-          {[
-            { h: "Product", l: [["How it works", "#how-it-works"], ["Your AI team", "#ai-team"], ["See MAIRO at work", "#product-preview"], ["Performance Coach", "#performance-coach"], ["What MAIRO does", "#why-mairo"], ["Pricing", "#pricing"]] },
-            { h: "Resources", l: [["Your free plan", "#free-plan"], ["Money and control", "#control"], ["Integrations", "#integrations"], ["FAQ", "#faq"], ["Sign up as a freelancer or agency", "/for-freelancers"]] },
-            { h: "Company", l: [["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
-          ].map((col) => (
-            <div key={col.h}>
-              <p className="text-[13px] font-semibold text-white">{col.h}</p>
-              <ul className="mt-4 space-y-2.5 text-[13px] text-white/55">
-                {col.l.map(([label, href]) => (
-                  <li key={label}>
-                    {href.startsWith("#") ? (
-                      <a href={href} className="hover:text-white">{label}</a>
-                    ) : (
-                      <Link href={href} className="hover:text-white">{label}</Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </footer>
+      <SiteFooter toolsLive={toolsLive} />
     </div>
   );
 }
