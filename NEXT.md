@@ -3,28 +3,24 @@
 Honest running list of what stands between MAIRO and paying customers.
 Ordered by what blocks what. Updated as things land.
 
-## Waiting to deploy (13 October 2026)
+## Deployed 13 October 2026 — check it live
 
-Production is built from `claude/myro-ad-platform-u3ynfe`, which is at
-b430c36 on GitHub. Everything since — the capability matrix, `/tools`, the
-website reader, `/preview`, the story hero and its videos, Website &
-Tracking, suggested ads and video editing, confirmed economics, lead import,
-the brand check — is committed locally and not pushed, so the live site still
-shows the AI-team diagram, sends "free plan" straight to sign-up, and returns
-404 for `/tools`. `docs/REQUIREMENTS-MATRIX.md` lists every requirement
-against what's in the code and what's deployed.
+Pushed 9f17d87 (everything since b430c36). Vercel's Production deployment
+of `mairo` succeeded at 20:47 UTC (GitHub deployment 7049695675,
+https://mairo-hocu3avgs-mairo1.vercel.app), so `vercel-build` applied the four
+new migrations (website tracking, suggested ads, confirmed economics, video
+render). It hasn't been looked at live yet — the session that deployed it
+couldn't reach the site. Check:
 
-Pushing deploys. `vercel-build` runs four new migrations, all additive:
-`20261101120000_website_tracking`, `20261113120000_suggested_ads`,
-`20261114120000_confirmed_economics` and `20261115120000_video_render`.
-After deploying:
+- `/` shows the 24-second story, not the AI-team diagram (HERO_CLASSIC_PERCENT
+  now defaults to 0; setting it brings the old page back for that share);
+- `/preview`, `/tools` and a tool page load, and the hero's button opens the
+  preview with the typed address;
+- "Watch as a video" plays in a real browser;
+- on a test account, one edited video renders (needs the ffmpeg-static binary
+  in the function bundle and BLOB_READ_WRITE_TOKEN).
 
-- check `/`, `/preview`, `/tools` and a tool page;
-- `HERO_CLASSIC_PERCENT` now defaults to 0, so everyone sees the story;
-  setting it brings the old page back for that share;
-- video rendering needs the ffmpeg-static binary in the function bundle
-  (traced for `/dashboard/creatives/suggested`) and BLOB_READ_WRITE_TOKEN;
-  render one edited video on a test account to confirm.
+`docs/REQUIREMENTS-MATRIX.md` lists every requirement against the code.
 
 ## Blocking a real launch
 

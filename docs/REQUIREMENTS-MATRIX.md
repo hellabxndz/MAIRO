@@ -6,6 +6,12 @@ The capability inventory these rows draw on is `docs/CAPABILITIES.md`,
 generated from `src/lib/capabilities.ts` and checked by
 `npm run check:capabilities`.
 
+> **Update, 13 October 2026, 20:47 UTC.** The commits below were pushed, and
+> Vercel's Production deployment of `mairo` succeeded: GitHub deployment
+> 7049695675, https://mairo-hocu3avgs-mairo1.vercel.app. The "Not deployed"
+> column describes the state before that push. The live site still hasn't
+> been observed from here, so nothing below is "verified in production".
+
 ## What "deployed" means here
 
 - **Production (https://mairo-three.vercel.app/) could not be opened from the
