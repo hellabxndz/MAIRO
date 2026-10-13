@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/tools/[slug]">): 
   const { slug } = await params;
   const t = tool(slug);
   if (!t || !usable(t)) return {};
-  return { title: `${t.name} — free tool | MAIRO`, description: t.summary, alternates: { canonical: `/tools/${t.slug}` } };
+  return { title: `${t.name} — free tool`, description: t.summary, alternates: { canonical: `/tools/${t.slug}` } };
 }
 
 const BUSINESS_PLANS = PLANS.filter((p) => p.tier === "STARTER" || p.tier === "GROWTH" || p.tier === "SCALE").map((p) => ({ id: p.tier, name: p.name, price: p.priceMonthly }));

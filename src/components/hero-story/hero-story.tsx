@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { EXAMPLES, EXAMPLE_ORDER, type ExampleType } from "@/lib/demo/examples";
 import { CHAPTERS, HERO_DURATION, HERO_SCENES, STAGE, chapterStart, restingTime, sceneAt, type ChapterId, type Layout } from "@/lib/demo/timeline";
 import { heroVariant, track } from "@/lib/analytics/track";
+import { RENDERED_MEDIA } from "@/lib/demo/media";
 import { StoryStage } from "./stage";
 
 // The landing page's animated story. A deterministic 20-second timeline,
@@ -31,6 +32,7 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
   const [layout, setLayout] = useState<Layout>("wide");
   const [scale, setScale] = useState(0);
   const [announce, setAnnounce] = useState("");
+  const [asVideo, setAsVideo] = useState(false);
   const loops = useRef(0);
   const box = useRef<HTMLDivElement>(null);
   const variant = useRef("story");
@@ -55,7 +57,7 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
       ro.disconnect();
       mq.removeEventListener("change", fit);
     };
-  }, []);
+  }, [asVideo]);
 
   // Respect reduced motion: no autoplay, still frames per chapter.
   useEffect(() => {
@@ -89,7 +91,7 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
       io.disconnect();
       document.removeEventListener("visibilitychange", apply);
     };
-  }, []);
+  }, [asVideo]);
 
   // The clock.
   useEffect(() => {
@@ -149,6 +151,9 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
 
   const ex = EXAMPLES[type];
   const stage = STAGE[layout];
+  const rendered = RENDERED_MEDIA.story[type];
+  const posters = { wide: rendered?.wide?.poster, narrow: rendered?.narrow?.poster };
+  const clip = rendered?.[layout] ?? rendered?.wide;
   const progress = t / HERO_DURATION;
 
   return (
@@ -170,7 +175,16 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
       </div>
 
       <div className="relative mt-3">
-        <p className="absolute left-3 top-3 z-20 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">Example campaign — sample data</p>
+        {/* The rendered video and poster carry the same label in the picture; the live stage gets it here. */}
+        {!asVideo && (scale > 0 || !posters.wide) && (
+          <p className="absolute left-3 top-3 z-20 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">Example campaign — sample data</p>
+        )}
+        {asVideo && clip && RENDERED_MEDIA.captions.story ? (
+          <video key={clip.mp4} controls autoPlay muted playsInline poster={clip.poster} className="aspect-[760/560] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[360/600]" aria-label={`The story as a video, ${ex.label.toLowerCase()} example, without sound`}>
+            <source src={clip.mp4} type="video/mp4" />
+            <track kind="captions" src={RENDERED_MEDIA.captions.story} srcLang="en" label="English" />
+          </video>
+        ) : (
         <div
           ref={box}
           role="img"
@@ -185,13 +199,16 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
               <StoryStage ex={ex} t={t} layout={layout} />
             </div>
           ) : (
-            // Before the stage is measured: the same first scene, as a still, in the shape CSS already chose.
-            <picture>
-              <source media={NARROW_QUERY} srcSet={`/walkthrough/hero-${type}-narrow-poster.webp`} />
-              <img src={`/walkthrough/hero-${type}-wide-poster.webp`} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
-            </picture>
+            // Before the stage is measured: the rendered first frame, in the shape CSS already chose.
+            posters.wide && (
+              <picture>
+                {posters.narrow && <source media={NARROW_QUERY} srcSet={posters.narrow} />}
+                <img src={posters.wide} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" fetchPriority="low" decoding="async" />
+              </picture>
+            )
           )}
         </div>
+        )}
       </div>
 
       {/* Controls: play, pause, replay, and the five chapters. */}
@@ -202,6 +219,19 @@ export function HeroStory({ initialType = "service", onTypeChange }: { initialTy
         <button type="button" onClick={replay} className="flex h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 text-[12.5px] font-medium text-white hover:border-white/35">
           <span aria-hidden>↺</span> Replay
         </button>
+        {clip && (
+          <button
+            type="button"
+            onClick={() => {
+              setPlaying(false);
+              setAsVideo((v) => !v);
+            }}
+            aria-pressed={asVideo}
+            className="order-last ml-auto h-9 rounded-full px-3 text-[12.5px] text-white/65 underline-offset-4 hover:text-white hover:underline"
+          >
+            {asVideo ? "Back to the interactive story" : "Watch as a video"}
+          </button>
+        )}
         <nav aria-label="Story chapters" className="flex flex-wrap gap-1.5">
           {CHAPTERS.map((c) => {
             const here = scene.id === c.id;

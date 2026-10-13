@@ -18,19 +18,21 @@ import { ProductPreview } from "@/components/landing/product-preview";
 import { CoachDemo } from "@/components/landing/coach-demo";
 import { StoryHero } from "@/components/landing/story-hero";
 import { LandingBeacon } from "@/components/landing/landing-beacon";
+import { WalkthroughSection } from "@/components/walkthrough/walkthrough-section";
 import { CreativeExamples } from "@/components/landing/creative-examples";
 import { VerifiedCapabilities } from "@/components/landing/verified-capabilities";
 import { coachExample, EXAMPLE_STEPS, type ExampleStep, type ExampleView } from "@/lib/coach/example";
 
-// The marketing page. Its one job: a business owner understands within
-// seconds that MAIRO gives them an AI advertising team that handles the
-// complicated work while they stay in control. White, with MAIRO's violet,
-// soft cards, and MAIRO's own software as the only imagery — no people, no
-// stock photos.
+// The marketing page, in two versions while they're compared (see Home below).
 //
-// The order, top to bottom: hero, how it works (three steps), the AI team,
-// the product itself, the Performance Coach and real results, what MAIRO does,
-// pricing, trust and spending protections, questions, and the free-plan CTA.
+// "story" (the default): the animated product story beside the website box
+// that starts a real preview, then three steps, the 60-second walkthrough,
+// example ads, owner controls, what works today, free tools, pricing, FAQ and
+// a final call — with one primary action, "Preview my campaign".
+//
+// "classic": the page as it was — hero, how it works, the AI team, the product
+// itself, the Performance Coach, what MAIRO does, free tools, pricing, trust,
+// questions, and the free-plan call to action.
 //
 // Two rules above the design:
 //   - Nothing claims what isn't true. No invented customer counts, ratings or
@@ -817,6 +819,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
         <>
           <StoryHero />
           {howItWorks}
+          <WalkthroughSection />
           <CreativeExamples />
           {trust}
           <VerifiedCapabilities />

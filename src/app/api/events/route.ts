@@ -17,6 +17,7 @@ const event = z.discriminatedUnion("name", [
   z.object({ name: z.literal("preview_complete"), props: z.object({ kind: z.enum(["shop", "service", "appointments"]), variant: v }) }),
   z.object({ name: z.literal("preview_save"), props: z.object({ variant: v }) }),
   z.object({ name: z.literal("tool_result"), props: z.object({ tool: z.string().regex(/^[a-z-]{3,40}$/) }) }),
+  z.object({ name: z.literal("walkthrough"), props: z.object({ action: z.enum(["play", "chapter", "video"]) }) }),
 ]);
 const body = z.object({ anonId: z.string().uuid().nullable().optional() }).and(event);
 

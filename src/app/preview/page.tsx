@@ -14,7 +14,7 @@ import { USABLE_TOOLS } from "@/lib/tools/registry";
 // /api/tools/scan, so this page stays fast and every progress line is real.
 
 export const metadata: Metadata = {
-  title: "Preview your campaign — free | MAIRO",
+  title: "Preview your campaign — free",
   description: "Give MAIRO your website. See what it finds, correct anything that's wrong, and get a first draft of a Facebook and Instagram campaign built around your business.",
   alternates: { canonical: "/preview" },
 };

@@ -58,11 +58,11 @@ export function describeHandoff(h: Handoff): { title: string; detail: string } {
     case "budget":
       return { title: `Monthly budget: $${Math.round(h.monthlyBudget).toLocaleString("en-US")}`, detail: h.label };
     case "website":
-      return { title: `Website: ${h.url}`, detail: "From a free website tool" };
+      return { title: `Website: ${h.url}`, detail: h.tool === "preview" ? "From your campaign preview" : "From a free website tool" };
     case "hooks":
       return { title: `${h.hooks.length} ad hook${h.hooks.length === 1 ? "" : "s"} to test`, detail: h.hooks.slice(0, 2).map((x) => `“${x}”`).join(" · ") };
     case "offer":
-      return { title: `Offer: ${h.offer}`, detail: "From the offer clarity checker" };
+      return { title: `Offer: ${h.offer}`, detail: h.tool === "preview" ? "From your campaign preview" : "From the offer clarity checker" };
     case "note":
       return { title: h.label, detail: h.text };
   }

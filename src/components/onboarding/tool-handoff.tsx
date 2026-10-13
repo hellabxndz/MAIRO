@@ -33,9 +33,9 @@ export function ToolHandoff({ kinds, onUse }: { kinds: Handoff["kind"][]; onUse:
   );
   if (!items.length && !used.length) return null;
   return (
-    <section aria-label="From the free tools" className="mt-5 rounded-xl border border-violet/35 bg-violet/[0.06] p-4">
-      <p className="text-[13.5px] font-medium text-white">From MAIRO&rsquo;s free tools</p>
-      <p className="mt-0.5 text-[12.5px] text-muted">Saved on this device when you used a tool. Use what&rsquo;s right — you can change it after.</p>
+    <section aria-label="From your preview and the free tools" className="mt-5 rounded-xl border border-violet/35 bg-violet/[0.06] p-4">
+      <p className="text-[13.5px] font-medium text-white">From your preview and MAIRO&rsquo;s free tools</p>
+      <p className="mt-0.5 text-[12.5px] text-muted">Saved on this device when you used them. Use what&rsquo;s right — you can change it after.</p>
       <ul className="mt-3 space-y-2.5">
         {items.map((h) => {
           const d = describeHandoff(h);
@@ -79,7 +79,7 @@ export function ToolHandoff({ kinds, onUse }: { kinds: Handoff["kind"][]; onUse:
         </ul>
       )}
       <p className="mt-2 text-[11.5px] text-white/45">
-        <Link href="/tools" className="underline underline-offset-2 hover:text-white" target="_blank">Free tools</Link> run in your browser; nothing reached MAIRO until now.
+        Kept on this device by MAIRO&rsquo;s <Link href="/tools" className="underline underline-offset-2 hover:text-white" target="_blank">free tools</Link> and campaign preview. Nothing here is used until you press Use.
       </p>
     </section>
   );

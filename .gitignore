@@ -45,3 +45,6 @@ next-env.d.ts
 /src/generated/prisma
 
 /src/generated/prisma
+
+# the video renderer's own dependencies
+/video/node_modules

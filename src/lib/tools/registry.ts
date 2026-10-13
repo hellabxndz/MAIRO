@@ -35,7 +35,6 @@ export type Tool = {
   featured?: boolean;
 };
 
-const REGISTRY = "src/lib/tools/registry.ts";
 
 export const TOOLS: Tool[] = [
   // --- Numbers ---------------------------------------------------------------

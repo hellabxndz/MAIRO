@@ -14,7 +14,7 @@
 //   npm run check:preview   (reads the fixture websites in scripts/fixtures/sites; no network, no database)
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { scanWebsite } from "../src/lib/website/scan";
 import { buildPreview, emptyFacts, factsFromScan, missingFacts, type PreviewFacts } from "../src/lib/preview/build";
@@ -22,6 +22,8 @@ import { exampleFacts } from "../src/lib/preview/example";
 import { EXAMPLES, EXAMPLE_ORDER } from "../src/lib/demo/examples";
 import { CHAPTERS, HERO_DURATION, HERO_SCENES, STAGE, boxes, captionsVtt, restingTime, sceneAt, type ElementId, type Layout } from "../src/lib/demo/timeline";
 import { PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
+import { RENDERED_MEDIA } from "../src/lib/demo/media";
+import { WALK_CAPTIONS, WALK_CHAPTERS, WALK_DURATION, WALK_SCENES, walkBoxes, walkCaptionsVtt, walkRestingTime, walkSceneAt, type WalkElement } from "../src/lib/demo/walkthrough";
 
 let passed = 0;
 async function check(name: string, fn: () => void | Promise<void>) {
@@ -191,6 +193,61 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
       assert.ok(ex.url.endsWith(".example"));
       for (const m of ex.dashboard.metrics) assert.doesNotMatch(m.label, /revenue|roas|return|customers|profit/i, `${k}: ${m.label}`);
     }
+  });
+
+  console.log("— the 60-second walkthrough —");
+  await check("six chapters in the storyboard's order and timing", () => {
+    assert.deepEqual(WALK_SCENES.map((s) => [s.id, s.start, s.end]), [["website", 0, 8000], ["facts", 8000, 17000], ["plan", 17000, 27000], ["creative", 27000, 38000], ["approval", 38000, 49000], ["results", 49000, 60000]]);
+    assert.equal(WALK_DURATION, 60000);
+    assert.equal(WALK_CHAPTERS.length, 6);
+    for (const c of WALK_CHAPTERS) assert.equal(walkSceneAt(walkRestingTime(c.id)).id, c.id);
+  });
+  await check("captions cover every moment, back to back, and the transcript matches the captions file", () => {
+    assert.equal(WALK_CAPTIONS[0].start, 0);
+    assert.equal(WALK_CAPTIONS[WALK_CAPTIONS.length - 1].end, WALK_DURATION);
+    for (let i = 1; i < WALK_CAPTIONS.length; i++) assert.equal(WALK_CAPTIONS[i].start, WALK_CAPTIONS[i - 1].end);
+    const vtt = walkCaptionsVtt();
+    for (const c of WALK_CAPTIONS) assert.ok(vtt.includes(c.text), c.text);
+    assert.ok(vtt.includes("00:00:57.000 --> 00:01:00.000"));
+    assert.doesNotMatch(WALK_CAPTIONS.map((c) => c.text).join(" "), FORECAST);
+  });
+  await check("every fully visible walkthrough element sits inside the stage, below the label and above the captions", () => {
+    const PEEK = new Set<WalkElement>(["c0", "c2"]);
+    const captionZone = { wide: 56, narrow: 84 };
+    for (const layout of ["wide", "narrow"] as Layout[]) {
+      const { w, h } = STAGE[layout];
+      for (let t = 0; t < WALK_DURATION; t += 50) {
+        const b = walkBoxes(t, layout);
+        for (const [id, x] of Object.entries(b) as [WalkElement, (typeof b)[WalkElement]][]) {
+          if (x.o < 0.95) continue;
+          const where = `${layout} ${id} at ${t}ms`;
+          assert.ok(x.y >= 44, `${where}: top ${x.y} under the label`);
+          assert.ok(x.y + x.h <= h - captionZone[layout], `${where}: bottom ${x.y + x.h} over the captions`);
+          if (layout === "narrow" && PEEK.has(id)) continue;
+          assert.ok(x.x >= 0 && x.x + x.w <= w, `${where}: outside the stage`);
+        }
+      }
+    }
+  });
+
+  console.log("— rendered video —");
+  await check("every video the pages offer exists, at the size recorded, with its poster and captions", () => {
+    const clips = [...Object.values(RENDERED_MEDIA.story).flatMap((byLayout) => Object.values(byLayout ?? {})), ...Object.values(RENDERED_MEDIA.walkthrough)].filter(Boolean);
+    for (const c of clips) {
+      const mp4 = join(process.cwd(), "public", c!.mp4);
+      assert.ok(existsSync(mp4), c!.mp4);
+      assert.equal(statSync(mp4).size, c!.bytes, `${c!.mp4} changed since it was rendered`);
+      assert.ok(existsSync(join(process.cwd(), "public", c!.poster)), c!.poster);
+    }
+    if (Object.keys(RENDERED_MEDIA.story).length) {
+      assert.ok(RENDERED_MEDIA.captions.story);
+      assert.equal(readFileSync(join(process.cwd(), "public", RENDERED_MEDIA.captions.story!), "utf8"), captionsVtt(), "story captions out of date — re-render");
+    }
+    if (Object.keys(RENDERED_MEDIA.walkthrough).length) {
+      assert.ok(RENDERED_MEDIA.captions.walkthrough);
+      assert.equal(readFileSync(join(process.cwd(), "public", RENDERED_MEDIA.captions.walkthrough!), "utf8"), walkCaptionsVtt(), "walkthrough captions out of date — re-render");
+    }
+    console.log(`      (${clips.length} clips listed)`);
   });
 
   console.log(`\n${passed} checks passed.`);

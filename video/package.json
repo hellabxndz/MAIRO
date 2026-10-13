@@ -1,0 +1,12 @@
+{
+  "name": "mairo-video",
+  "private": true,
+  "description": "Renders the landing story and the 60-second walkthrough to MP4, posters and captions. Not part of the app build.",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "^1.48.0"
+  }
+}

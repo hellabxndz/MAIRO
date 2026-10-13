@@ -7,7 +7,7 @@ import { brandFont } from "@/lib/fonts";
 import { TOOL_CATEGORIES, TOOLS, usable } from "@/lib/tools/registry";
 
 export const metadata: Metadata = {
-  title: "Free advertising tools for small businesses — MAIRO",
+  title: "Free advertising tools for small businesses",
   description: "Free calculators and copy tools for Facebook and Instagram ads: break-even ROAS, cost per lead, budget planning, ad hooks, creative briefs, UTM links and more. No account needed.",
   alternates: { canonical: "/tools" },
 };

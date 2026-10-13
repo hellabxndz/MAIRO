@@ -11,9 +11,9 @@ import { BusinessArt } from "./art";
 // Everything visible is labelled sample data. Nothing here is clickable: it's
 // a picture of the product, kept apart from the real preview controls.
 
-const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(167,139,250,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(124,92,255,0.06)" };
+export const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(167,139,250,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(124,92,255,0.06)" };
 
-function Layer({ b, children, style, className = "" }: { b: Box; children: ReactNode; style?: CSSProperties; className?: string }) {
+export function Layer({ b, children, style, className = "" }: { b: Box; children: ReactNode; style?: CSSProperties; className?: string }) {
   if (b.o <= 0.001) return null;
   return (
     <div
@@ -25,10 +25,10 @@ function Layer({ b, children, style, className = "" }: { b: Box; children: React
   );
 }
 
-function Browser({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean }) {
+export function Browser({ ex, t, narrow, marks = { start: 3700, end: 5600 } }: { ex: Example; t: number; narrow: boolean; marks?: { start: number; end: number } }) {
   const c = ex.colors;
   // Each highlight hugs the thing MAIRO read, so it stays on it as the browser changes size.
-  const scan = (a: number) => reveal(t, a, a + 350) * (1 - reveal(t, 5600, 6000));
+  const scan = (a: number) => reveal(t, a, a + 350) * (1 - reveal(t, marks.end, marks.end + 400));
   return (
     <div className="flex h-full flex-col rounded-[14px] bg-white text-[#111]" style={{ boxShadow: "0 30px 80px -30px rgba(0,0,0,0.85)" }}>
       <div className="flex items-center gap-1.5 border-b border-black/10 bg-[#f1f1f4] px-3 py-2">
@@ -44,16 +44,16 @@ function Browser({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean })
         </div>
         <div className={narrow ? "flex flex-col-reverse gap-2 px-4" : "grid grid-cols-[1.1fr_1fr] gap-3 px-4"}>
           <div className="pt-1">
-            <Mark label="Offer" o={scan(3700)}>
+            <Mark label="Offer" o={scan(marks.start)}>
               <p className="text-[19px] font-extrabold leading-[1.1] tracking-[-0.02em]" style={{ color: c.ink }}>{ex.site.headline}</p>
             </Mark>
             <p className="mt-1.5 text-[11.5px] leading-snug" style={{ color: c.ink, opacity: 0.75 }}>{ex.site.sub}</p>
-            <Mark label="Location" o={scan(4200)} className="mt-1">
+            <Mark label="Location" o={scan(marks.start + 500)} className="mt-1">
               <p className="text-[11px]" style={{ color: c.ink, opacity: 0.7 }}>{ex.profile.location}</p>
             </Mark>
             <span className="mt-2.5 inline-block rounded-md px-3 py-1.5 text-[11.5px] font-semibold text-white" style={{ background: c.a }}>{ex.site.button}</span>
           </div>
-          <Mark label="Brand style" o={scan(4700)}>
+          <Mark label="Brand style" o={scan(marks.start + 1000)}>
             <div className={`overflow-hidden rounded-lg ${narrow ? "h-[120px]" : "h-[178px]"}`}>
               <BusinessArt type={ex.type} variant="site" className="h-full w-full" />
             </div>
@@ -77,7 +77,7 @@ function Mark({ label, o, className = "", children }: { label: string; o: number
   );
 }
 
-function InputPill({ ex, t, invite = false }: { ex: Example; t: number; invite?: boolean }) {
+export function InputPill({ ex, t, invite = false }: { ex: Example; t: number; invite?: boolean }) {
   const chars = invite ? 0 : Math.floor(ex.url.length * reveal(t, 800, 2300));
   const typed = ex.url.slice(0, chars);
   const caret = !invite && Math.floor(t / 450) % 2 === 0;
@@ -135,9 +135,9 @@ function Profile({ ex, t, strip }: { ex: Example; t: number; strip: boolean }) {
   );
 }
 
-function ConceptCard({ ex, i, t, selected }: { ex: Example; i: number; t: number; selected: boolean }) {
+export function ConceptCard({ ex, i, t, selected, ringAt = 8000, hook }: { ex: Example; i: number; t: number; selected: boolean; ringAt?: number; hook?: string }) {
   const c = ex.concepts[i];
-  const ring = selected ? reveal(t, 8000, 8600) : 0;
+  const ring = selected ? reveal(t, ringAt, ringAt + 600) : 0;
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white text-[#111]" style={{ boxShadow: `0 24px 60px -24px rgba(0,0,0,0.9), 0 0 0 ${3 * ring}px rgba(167,139,250,${0.9 * ring})` }}>
       <div className="relative min-h-0 flex-[1.15]">
@@ -147,7 +147,7 @@ function ConceptCard({ ex, i, t, selected }: { ex: Example; i: number; t: number
       </div>
       <div className="flex flex-1 flex-col p-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: ex.colors.a }}>{c.angle}</p>
-        <p className="mt-1 text-[16px] font-bold leading-[1.15] tracking-[-0.01em]">{c.hook}</p>
+        <p className="mt-1 text-[16px] font-bold leading-[1.15] tracking-[-0.01em]">{hook ?? c.hook}</p>
         <div className="mt-auto flex items-center justify-between pt-2">
           <span className="text-[10.5px] text-black/50">{ex.name}</span>
           <span className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: ex.colors.a }}>{c.cta}</span>
@@ -157,7 +157,7 @@ function ConceptCard({ ex, i, t, selected }: { ex: Example; i: number; t: number
   );
 }
 
-function FeedPreview({ ex }: { ex: Example }) {
+export function FeedPreview({ ex, hook }: { ex: Example; hook?: string }) {
   const c = ex.concepts[ex.selected];
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[26px] border-[6px] border-[#141428] bg-white text-[#111]">
@@ -174,14 +174,14 @@ function FeedPreview({ ex }: { ex: Example }) {
         <BusinessArt type={ex.type} variant={c.art} className="absolute inset-0 h-full w-full" />
       </div>
       <div className="flex items-center justify-between gap-2 bg-[#f0f2f5] px-3 py-2.5">
-        <p className="min-w-0 truncate text-[12.5px] font-semibold">{c.hook}</p>
+        <p className="min-w-0 truncate text-[12.5px] font-semibold">{hook ?? c.hook}</p>
         <span className="shrink-0 rounded-md bg-[#e4e6eb] px-2.5 py-1 text-[11px] font-semibold">{c.cta}</span>
       </div>
     </div>
   );
 }
 
-function StoryPreview({ ex }: { ex: Example }) {
+export function StoryPreview({ ex, hook }: { ex: Example; hook?: string }) {
   const c = ex.concepts[ex.selected];
   return (
     <div className="relative h-full overflow-hidden rounded-[22px] border-[5px] border-[#141428] bg-black">
@@ -193,16 +193,16 @@ function StoryPreview({ ex }: { ex: Example }) {
         <span className="h-5 w-5 rounded-full ring-2 ring-white" style={{ background: ex.colors.a }} />
         <span className="text-[10px] font-semibold text-white">{ex.name}</span>
       </div>
-      <p className="absolute left-3 right-3 top-[22%] text-[15px] font-extrabold leading-tight text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>{c.hook}</p>
+      <p className="absolute left-3 right-3 top-[22%] text-[15px] font-extrabold leading-tight text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>{hook ?? c.hook}</p>
       <span className="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-black">{c.cta}</span>
       <span className="absolute right-2.5 top-2.5 rounded bg-black/40 px-1.5 text-[9px] text-white/80">9:16</span>
     </div>
   );
 }
 
-function Review({ ex, t, compact }: { ex: Example; t: number; compact: boolean }) {
-  const approved = t >= 12800;
-  const pressed = t >= 12500 && t < 12800;
+export function Review({ ex, t, compact, pressAt = 12500 }: { ex: Example; t: number; compact: boolean; pressAt?: number }) {
+  const approved = t >= pressAt + 300;
+  const pressed = t >= pressAt && t < pressAt + 300;
   const rows: [string, string][] = [
     ["Budget (example)", ex.review.budget],
     ["Where", ex.review.where],
@@ -232,9 +232,18 @@ function Review({ ex, t, compact }: { ex: Example; t: number; compact: boolean }
   );
 }
 
-function Dashboard({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean }) {
+/** The metric the sample lead moves into counts it only once it has moved, so the figures agree with the row below them. */
+function countedValue(label: string, value: string, movesTo: string, moved: boolean): string {
+  if (moved || label !== movesTo || !/^\d+$/.test(value)) return value;
+  return String(Math.max(0, Number(value) - 1));
+}
+
+export type DashboardTimes = { metrics: number; lead: number; move: number; next: number };
+const HERO_DASHBOARD: DashboardTimes = { metrics: 14900, lead: 15600, move: 16200, next: 16500 };
+
+export function Dashboard({ ex, t, narrow, times = HERO_DASHBOARD }: { ex: Example; t: number; narrow: boolean; times?: DashboardTimes }) {
   const d = ex.dashboard;
-  const moved = t >= 16200;
+  const moved = t >= times.move;
   return (
     <div className={`flex h-full flex-col rounded-2xl ${narrow ? "p-3.5" : "p-5"}`} style={surface}>
       <div className="flex items-center justify-between gap-2">
@@ -246,22 +255,22 @@ function Dashboard({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean 
       </div>
       <div className={`mt-3 grid gap-2 ${narrow ? "grid-cols-2" : "grid-cols-4"}`}>
         {d.metrics.map((m, i) => {
-          const o = reveal(t, 14900 + i * 180, 15300 + i * 180);
+          const o = reveal(t, times.metrics + i * 180, times.metrics + 400 + i * 180);
           return (
             <div key={m.label} className="rounded-xl bg-white/[0.05] px-3 py-2.5" style={{ opacity: 0.15 + 0.85 * o }}>
               <p className="text-[10.5px] text-white/55">{m.label}</p>
-              <p className={`mt-0.5 font-semibold ${m.unavailable ? "text-[12px] text-white/60" : "text-[20px] text-white"}`}>{m.value}</p>
+              <p className={`mt-0.5 font-semibold ${m.unavailable ? "text-[12px] text-white/60" : "text-[20px] text-white"}`}>{countedValue(m.label, m.value, d.lead.to, moved)}</p>
             </div>
           );
         })}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5" style={{ opacity: reveal(t, 15600, 16000) }}>
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-white/[0.04] px-3 py-2.5" style={{ opacity: reveal(t, times.lead, times.lead + 400) }}>
         <p className="min-w-0 truncate text-[12px] text-white/85">{d.lead.name}</p>
         <span className="shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style={{ background: moved ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.08)", color: moved ? "#6fe0b4" : "rgba(255,255,255,0.75)" }}>
           {moved ? d.lead.to : d.lead.from}
         </span>
       </div>
-      <div className="mt-3 rounded-xl border border-[#a78bfa]/35 bg-[#7c5cff]/[0.08] p-3" style={{ opacity: reveal(t, 16500, 17000), transform: `translateY(${(1 - reveal(t, 16500, 17000)) * 8}px)` }}>
+      <div className="mt-3 rounded-xl border border-[#a78bfa]/35 bg-[#7c5cff]/[0.08] p-3" style={{ opacity: reveal(t, times.next, times.next + 500), transform: `translateY(${(1 - reveal(t, times.next, times.next + 500)) * 8}px)` }}>
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c4b5fd]">Proposed next action</p>
         <p className="mt-0.5 text-[14px] font-semibold text-white">{d.next.title}</p>
         <p className="mt-1 text-[11.5px] leading-snug text-white/70">{d.next.why}</p>
