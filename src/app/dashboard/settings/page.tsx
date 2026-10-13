@@ -227,6 +227,7 @@ export default async function SettingsPage() {
           { href: "/dashboard/settings/business-brain", label: "Business Brain", hint: "What MAIRO knows about your business" },
           { href: "/dashboard/mission", label: "Your goal & plan", hint: "The mission MAIRO is working toward" },
           { href: "/dashboard/integrations", label: "Connected accounts", hint: "Facebook, Instagram and Meta" },
+          { href: "/dashboard/website", label: "Before you spend on ads", hint: "What your website needs, with evidence" },
           { href: "/dashboard/tracking", label: "Measuring sales", hint: "Website tracking and conversions" },
           { href: "/dashboard/decisions", label: "MAIRO Decisions", hint: "Every recommendation and what happened" },
           { href: "/dashboard/reports", label: "Reports", hint: "Weekly and monthly summaries" },

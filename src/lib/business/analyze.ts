@@ -1,9 +1,10 @@
 import { recordRun } from "@/lib/team/runs";
 import { newMeta } from "@/lib/brain/rules";
-import { fetchPublicPage } from "@/lib/campaigns/landing-probe";
+import { scanWebsite } from "@/lib/website/scan";
+import { saveScan } from "@/lib/website/store";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import { analyzeWithAi, type AiBusinessAnalysis } from "@/lib/ai/business-analyzer";
-import { literalConversionIssues, readSiteFacts, type SiteFacts } from "./site-facts";
+import { literalConversionIssues, type SiteFacts } from "./site-facts";
 import {
   loadBrain,
   newProduct,
@@ -60,13 +61,14 @@ export async function analyzeBusiness(organizationId: string, rawUrl: string): P
   const url = normalizeUrl(rawUrl);
   if (!url) return { ok: false, error: "That doesn't look like a web address. Try something like https://yourshop.com" };
 
-  const home = await fetchPublicPage(url);
-  if (!home.ok) return { ok: false, error: home.message };
-  const pages: SiteFacts[] = [readSiteFacts(home.html, home.finalUrl)];
-  for (const link of pages[0].keyLinks) {
-    const page = await fetchPublicPage(link, 250_000);
-    if (page.ok) pages.push(readSiteFacts(page.html, page.finalUrl));
-  }
+  // The same reading the free tools and the "Before you spend on ads" report
+  // use — one scanner. Its report is saved to this business either way, so a
+  // failed reading is on record with its reason.
+  const { result: scan, siteFacts } = await scanWebsite(url);
+  await saveScan({ result: scan, source: "onboarding", organizationId }).catch((error) => console.error("Saving the website reading failed:", error instanceof Error ? error.message : "unknown"));
+  if ((scan.status !== "OK" && scan.status !== "PARTIAL") || !siteFacts.length || !scan.finalUrl) return { ok: false, error: scan.error ?? "MAIRO couldn't read that website." };
+  const pages: SiteFacts[] = siteFacts;
+  const home = { finalUrl: scan.finalUrl };
 
   const current = await loadBrain(organizationId);
   const fromFacts = profileFromFacts(pages, home.finalUrl);

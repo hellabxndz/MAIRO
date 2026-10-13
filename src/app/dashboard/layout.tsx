@@ -49,6 +49,7 @@ const ALWAYS_REACHABLE = [
   // The first-campaign checklist, which is where connecting Meta starts for
   // a business that came through the free plan.
   "/dashboard/launch",
+  "/dashboard/website",
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",

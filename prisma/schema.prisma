@@ -335,16 +335,19 @@ model Organization {
   creativeExperiments CreativeExperiment[]
   funnelEvents        FunnelEvent[]
   caseStudies         CaseStudy[]
+  websiteScans        WebsiteScan[]
+  websiteFindings     WebsiteFinding[]
+  trackingChecks      TrackingVerification[]
   /// Notification preferences. Problems that stop ads are always shown;
   /// these switch off the optional kinds.
-  notifyOpportunities Boolean              @default(true)
-  notifyReports       Boolean              @default(true)
+  notifyOpportunities Boolean                @default(true)
+  notifyReports       Boolean                @default(true)
   /// Performance Coach alerts: slower follow-up, rising cost per good lead,
   /// tracking that stopped, lead quality slipping. Optional, like the above.
-  notifyCoachAlerts   Boolean              @default(true)
+  notifyCoachAlerts   Boolean                @default(true)
   /// The business's own names for its lead stages (JSON: stage → label), e.g.
   /// "Inspection booked" for an appointment. Null uses MAIRO's defaults.
-  leadStagesJson      String?              @db.Text
+  leadStagesJson      String?                @db.Text
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -1644,9 +1647,18 @@ model TrackingPixel {
   platform       AdPlatform
 
   /// The network's own id, which is what goes in the snippet.
-  externalPixelId String
-  name            String
-  origin          PixelOrigin @default(CREATED_BY_MAIRO)
+  externalPixelId   String
+  name              String
+  origin            PixelOrigin @default(CREATED_BY_MAIRO)
+  /// The Meta business that owns the pixel, as Meta reports it (owner_business).
+  /// Null when no business has claimed it — common for pixels made on a
+  /// personal ad account.
+  ownerBusinessId   String?
+  ownerBusinessName String?
+  /// Who chose it, and when — selecting an existing pixel or asking MAIRO to
+  /// create one is always the owner's decision.
+  selectedAt        DateTime?
+  selectedById      String?
 
   status        PixelStatus @default(PENDING)
   /// When the network last saw an event. The only honest proof it works.
@@ -1975,6 +1987,20 @@ model TrackingProfile {
   /// When they last took the container file. Not proof it was imported —
   /// only that they got as far as downloading it.
   containerBuiltAt DateTime?
+
+  /// Set while MAIRO is creating a pixel on Meta, so a double click or a
+  /// second tab can't create two. Cleared when the attempt ends; a stale one
+  /// expires (see lib/tracking/setup.ts).
+  pixelCreateStartedAt DateTime?
+  /// How the owner is installing the pixel: shopify_app, wordpress_plugin,
+  /// gtm, manual or other. Guidance only; nothing is installed for them.
+  installRoute         String?
+  /// The owner said it's installed. Not proof — the checks decide that.
+  installMarkedAt      DateTime?
+  /// Server-side events and consent: "respect_denied" sends an order unless
+  /// the store says the shopper refused tracking; "require_granted" sends only
+  /// orders the store marks as consented.
+  serverEventsConsent  String    @default("respect_denied")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3614,4 +3640,93 @@ model CaseStudy {
 
   @@index([organizationId])
   @@index([status, publishedAt])
+}
+
+/// One reading of a website by MAIRO's server: the pages fetched, what they
+/// show, and the audit built from them. The same record backs onboarding,
+/// the "Before you spend on ads" report and the public free tools.
+///
+/// Public tool scans have no organization; they carry a one-way hash of the
+/// requester (anonKey) for rate limits only — never an address or IP.
+model WebsiteScan {
+  id             String        @id @default(cuid())
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  /// onboarding | report | recheck | tool
+  source         String
+  /// The normalised address asked for, and where redirects ended.
+  url            String
+  finalUrl       String?
+  /// OK | PARTIAL | FAILED | BLOCKED
+  status         String
+  error          String?
+  /// Pages read, detections, business facts and the audit, as JSON (capped).
+  resultJson     String        @db.Text
+  pagesRead      Int           @default(0)
+  anonKey        String?
+  durationMs     Int?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([url, createdAt])
+  @@index([anonKey, createdAt])
+}
+
+/// The owner's decision on one audit finding. Outlives the scan that found it,
+/// so "Mark resolved" survives a rescan and a recheck can confirm it's gone.
+model WebsiteFinding {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  /// Stable across scans: the rule plus the page it's about.
+  key            String
+  url            String
+  /// OPEN | RESOLVED | DISMISSED
+  status         String       @default("OPEN")
+  resolvedAt     DateTime?
+  resolvedById   String?
+  /// The last scan that saw it, and when a later scan no longer did.
+  lastSeenScanId String?
+  lastSeenAt     DateTime?
+  goneAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, key])
+}
+
+/// Anonymous use of the server-backed free tools, counted per window, so free
+/// scans have a disclosed limit and a server-wide budget.
+model ToolUsage {
+  id          String   @id @default(cuid())
+  /// e.g. "scan:anon:<hash>:<hour>" or "scan:all:<day>"
+  bucket      String   @unique
+  count       Int      @default(0)
+  windowStart DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([windowStart])
+}
+
+/// What MAIRO actually checked about a business's tracking, from which source,
+/// and when. Kept as history: the latest row per check is the current answer.
+model TrackingVerification {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  /// Meta's pixel id the check was about.
+  pixelId        String
+  /// "install" or "event:<EventName>", e.g. "event:Lead".
+  check          String
+  /// VERIFIED | NOT_SEEN | NOT_DETECTED | MISSING_PERMISSION | FAILED
+  status         String
+  /// meta_stats | meta_last_fired | public_scan
+  source         String
+  detail         String?      @db.Text
+  count          Int?
+  windowStart    DateTime?
+  windowEnd      DateTime?
+  checkedAt      DateTime     @default(now())
+
+  @@index([organizationId, check, checkedAt])
 }

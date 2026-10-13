@@ -31,7 +31,7 @@ const NAMES = Object.fromEntries(TOOLS.filter(usable).map((t) => [t.slug, t.name
 
 const PROCESSING = {
   browser: "Runs in your browser. What you type stays on this device — saved here so it's still there next time. MAIRO only receives a result if you choose to use it when you set up your plan.",
-  server: "MAIRO's server fetches the public pages you name. Nothing else you type is stored.",
+  server: "MAIRO's server reads the public pages you name. The reading is kept for a few hours so a repeat check is quick, counted against a free limit by a one-way code — your IP address isn't stored, and no account is needed.",
   ai: "What you enter is sent to MAIRO's server and an AI provider to write the result.",
 } as const;
 

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import { urlProblem } from "@/lib/net/safe-fetch";
+import { socialProfileFrom } from "@/lib/website/detect";
 import { readWebsiteForPlan } from "@/lib/strategy/store";
 import { loadBrain } from "@/lib/business/brain";
 import { parseDraft, type OnboardingDraft } from "./draft";
@@ -40,6 +41,10 @@ export async function saveBusinessStep(organizationId: string, input: z.input<ty
   if (!d.offering && !d.industry) return { ok: false, error: "Tell MAIRO what your business does — a few words is enough." };
   const website = d.website ? normalizeUrl(d.website) : null;
   if (d.website && !website) return { ok: false, error: "That doesn't look like a web address. Something like yourbusiness.com — or leave it empty." };
+  // A social profile isn't a website MAIRO can read: those networks only allow
+  // it through their own approved access. Said here, with what to do instead.
+  const social = website ? socialProfileFrom(website) : null;
+  if (social) return { ok: false, error: `That's your ${social.network} page. MAIRO can't read ${social.network} profiles — add your website if you have one, or leave it empty and tell MAIRO about your business here. You can add your photos later.` };
   // Refused here, before it's saved, rather than failing quietly when MAIRO tries to read it.
   if (website && urlProblem(website)) return { ok: false, error: "MAIRO can only read public websites — something like yourbusiness.com. Leave it empty if your site isn't public yet." };
   try {

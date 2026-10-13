@@ -74,6 +74,7 @@
     "check:safe-fetch": "tsx scripts/check-safe-fetch.ts",
     "check:plan-guide": "tsx scripts/check-plan-guide.ts",
     "check:calculators": "tsx scripts/check-calculators.ts",
+    "check:website": "tsx scripts/check-website.ts",
     "check:capabilities": "tsx scripts/check-capabilities.ts",
     "capabilities:doc": "tsx scripts/capabilities-doc.ts"
   },

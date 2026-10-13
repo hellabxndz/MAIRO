@@ -11,6 +11,7 @@ import { googleSignInEnabled, rememberGoogleIntent } from "@/lib/google-sign-in"
 import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
 import { PASSWORD_MAX, normalizeEmail, passwordProblem } from "@/lib/auth-rules/password";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
+import { normalizeUrl } from "@/lib/campaigns/destination";
 
 // The sign-up fields, checked on the server whatever the form did. Text is
 // trimmed and capped (a name is shown across the product; a 10,000-character
@@ -158,10 +159,15 @@ export async function signUpAction(
   try {
     // A business type picked in the website's walkthrough opens setup with it chosen.
     const type = businessTypeFrom(String(formData.get("businessType") ?? ""));
+    // …and a website typed on the landing page fills in the website question.
+    const website = normalizeUrl(String(formData.get("website") ?? "").slice(0, 300));
+    const params = new URLSearchParams();
+    if (type) params.set("type", type.id);
+    if (website) params.set("website", website);
     await signIn("credentials", {
       email,
       password,
-      redirectTo: type ? `/onboarding?type=${type.id}` : "/onboarding",
+      redirectTo: params.size ? `/onboarding?${params.toString()}` : "/onboarding",
     });
   } catch (error) {
     if (error instanceof AuthError) {

@@ -191,4 +191,56 @@ export const TOOL_CONTENT: Record<string, ToolContent> = {
     limits: ["Tags label visits; they don't count leads or purchases on their own — that needs your Meta pixel or a lead form.", "Never put personal details (names, emails, phone numbers) in a link."],
     related: ["budget-planner", "creative-brief", "offer-clarity"],
   },
+  "landing-page-audit": {
+    intro: "What a visitor from an ad would find on your page — the three changes that matter most first, each with the evidence MAIRO saw, why it matters, a concrete change and wording you can use. Then everything else, including what a public check can't tell.",
+    method: [
+      { label: "What's read", text: "Your page plus up to three of your own pages (contact, booking, services, shop), and up to eight links, through MAIRO's server — public addresses only, every redirect checked, with time and size limits." },
+      { label: "Three kinds of statement", text: "Seen on the page (a missing button, a broken link); MAIRO's judgement (a headline that doesn't say what you offer); and Not checked (does the form send? is it fast for real visitors?)." },
+      { label: "Speed", text: "Measured only with Google's PageSpeed Insights, keeping the lab test and real-visitor data apart. Without it, speed is \"Not checked\" — never guessed from page size." },
+      { label: "Suggested wording", text: "Built from what's on your site and what you type — no invented offers, reviews or prices, and no guarantees." },
+    ],
+    limits: [
+      "A rubric, not a conversion forecast. Each change is a hypothesis until your results say otherwise.",
+      "Pages behind a login and content that appears only after scripts run aren't seen.",
+      "MAIRO can't edit your website — a web address doesn't give access to change it.",
+    ],
+    related: ["offer-clarity", "tracking-readiness", "competitor-website"],
+  },
+  "tracking-readiness": {
+    intro: "Checks a page for Meta's pixel, Google Tag Manager, analytics tags and a consent banner — and says plainly what that does and doesn't prove, with the events a business like yours should send.",
+    method: [
+      { label: "Detected", text: "The pixel ID from the page's own fbq('init') call, Tag Manager and Google tag IDs, other ad tags, and known consent tools." },
+      { label: "Can't tell from outside", text: "Shopify's web pixels run in a sandbox, Tag Manager tags load later, and consent tools hold tracking back until a visitor accepts — so \"not detected\" isn't proof of absence." },
+      { label: "Events", text: "Purchase for shops; Lead (after the form is accepted), Schedule (when a booking is confirmed) and Contact for services — fired on the outcome, never on a click." },
+    ],
+    limits: ["A detected pixel doesn't prove events reach Meta. Only Meta's own records — checked after you connect — can.", "A tag doesn't mean a business is advertising on that platform now."],
+    related: ["utm-builder", "landing-page-audit", "shopify-app-detector"],
+  },
+  "shopify-app-detector": {
+    intro: "Which apps and scripts a Shopify store shows on its public pages — reviews, email, subscriptions, chat, page builders, payments — each with the evidence MAIRO matched.",
+    method: [
+      { label: "Signatures", text: "Each app is recognised by a file or address only that app loads, and the matched address is shown." },
+      { label: "App extensions", text: "Shopify app extensions are counted, but Shopify's public files don't say which app each belongs to." },
+    ],
+    limits: ["\"Not detected\" doesn't mean \"not installed\": admin-only and checkout apps don't appear on public pages.", "Only apps MAIRO has a signature for are named."],
+    related: ["shopify-theme-detector", "tracking-readiness", "landing-page-audit"],
+  },
+  "shopify-theme-detector": {
+    intro: "The theme a Shopify store declares on its public pages — the name it uses, the original theme where shown, and whether it came from Shopify's Theme Store.",
+    method: [
+      { label: "Where it comes from", text: "Shopify stores publish a small Shopify.theme object in the page; MAIRO reads the name and Theme Store ID from it and shows the snippet." },
+      { label: "Unknown", text: "When the page doesn't declare it, the answer is unknown — not a guess." },
+    ],
+    limits: ["Stores can rename their theme, so the name may not be the original.", "Custom themes have no Theme Store ID."],
+    related: ["shopify-app-detector", "shopify-fees", "landing-page-audit"],
+  },
+  "competitor-website": {
+    intro: "Your website and up to two competitors', side by side: headline, main button, offers, prices shown, where they work, proof, how to buy or book, and brand presentation — only what's on the public pages.",
+    method: [
+      { label: "Same reading for each", text: "Each site is read the same way as the landing page audit, through MAIRO's server, with the same limits." },
+      { label: "Only what's shown", text: "Every cell is something on the page or in its structured data; \"None found\" when it isn't." },
+    ],
+    limits: ["No traffic, revenue, bestsellers or ad spend — none of that is visible on a website, and MAIRO doesn't estimate it.", "Use it to find what's true about you that they don't say — not to copy their words or pictures."],
+    related: ["landing-page-audit", "competitor-ads", "offer-clarity"],
+  },
 };

@@ -82,16 +82,26 @@ export function urlProblem(raw: string): UrlProblem | null {
   return null;
 }
 
-/** Resolves the host and says whether every address it has is public. */
-export async function resolvesPublicly(hostname: string): Promise<boolean> {
+/**
+ * Resolves the host: "public" when every address is public, "private" when
+ * any isn't, "unresolved" when the name doesn't resolve at all — a domain
+ * that doesn't exist is a different answer from one that's off-limits.
+ */
+export async function resolveHost(hostname: string): Promise<"public" | "private" | "unresolved"> {
   const host = hostname.replace(/^\[|\]$/g, "");
-  if (isIP(host)) return !isPrivateAddress(host);
+  if (isIP(host)) return isPrivateAddress(host) ? "private" : "public";
   try {
     const addresses = await dnsLookupAsync(host, { all: true });
-    return addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a.address));
+    if (!addresses.length) return "unresolved";
+    return addresses.every((a) => !isPrivateAddress(a.address)) ? "public" : "private";
   } catch {
-    return false;
+    return "unresolved";
   }
+}
+
+/** Resolves the host and says whether every address it has is public. */
+export async function resolvesPublicly(hostname: string): Promise<boolean> {
+  return (await resolveHost(hostname)) === "public";
 }
 
 /**
@@ -159,7 +169,9 @@ export async function safeFetch(raw: string, opts: SafeFetchOptions = {}): Promi
     const problem = urlProblem(current);
     if (problem) return { ok: false, reason: problem === "not-a-url" || problem === "scheme" ? "invalid" : "blocked", message: MESSAGE[problem] };
     const url = new URL(current);
-    if (!(await resolvesPublicly(url.hostname))) return { ok: false, reason: "blocked", message: "MAIRO can only open public web pages, and this one didn't resolve to one." };
+    const resolved = await resolveHost(url.hostname);
+    if (resolved === "private") return { ok: false, reason: "blocked", message: "MAIRO can only open public web pages." };
+    if (resolved === "unresolved") return { ok: false, reason: "unreachable", message: "That address doesn't exist, or its domain isn't answering. Check the spelling." };
 
     let res: Awaited<ReturnType<typeof undiciFetch>>;
     try {

@@ -11,6 +11,7 @@ import { setupWork } from "@/lib/onboarding/team";
 import { loadBrain } from "@/lib/business/brain";
 import { JourneyFrame } from "@/components/strategy/journey";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
+import { normalizeUrl } from "@/lib/campaigns/destination";
 import { SetupTeam } from "@/components/onboarding/setup-team";
 
 // Steps 1 to 3 of ten: the business, what MAIRO learns from its website, and
@@ -22,7 +23,7 @@ export const dynamic = "force-dynamic";
 // Reading the website is a web fetch (and an AI call when configured).
 export const maxDuration = 60;
 
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string; type?: string }> }) {
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string; type?: string; website?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -31,7 +32,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const existingIntake = await db.onboardingIntake.findUnique({ where: { organizationId } });
   if (existingIntake) redirect("/dashboard");
 
-  const { step, type } = await searchParams;
+  const { step, type, website: carriedWebsite } = await searchParams;
   const [org, steps, work, brain] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { website: true, industry: true, onboardingDraft: true, timezone: true } }),
     loadOnboarding(organizationId),
@@ -44,7 +45,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   const screen = resumeScreen(draft, org.website, step);
 
   const business = {
-    website: draft.business?.website ?? org.website ?? "",
+    // Saved answers win; otherwise the address typed on the landing page.
+    website: draft.business?.website ?? org.website ?? (carriedWebsite ? normalizeUrl(carriedWebsite.slice(0, 300)) ?? "" : ""),
     industry: draft.business?.industry ?? org.industry ?? "",
     offering: draft.business?.offering ?? "",
     customerLocation: draft.business?.customerLocation ?? "",

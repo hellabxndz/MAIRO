@@ -72,14 +72,14 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Ad examples by goal | Working | `/tools/ad-examples` | — | `check:calculators` |
 | Free tools | Product and offer readiness checklist | Working | `/tools/offer-readiness` | — | `check:calculators` |
 | Free tools | Competitor ad research (guided) | Working | `/tools/competitor-ads` | — | `check:calculators` |
-| Free tools | Competitor website comparison | Unavailable | — | — | — |
-| Free tools | Landing page audit | Unavailable | — | — | — |
-| Free tools | Shopify app detector | Unavailable | — | — | — |
-| Free tools | Shopify theme detector | Unavailable | — | — | — |
-| Free tools | Tracking readiness checker | Unavailable | — | — | — |
+| Free tools | Competitor website comparison | Working | `/tools/competitor-website` | — | `check:website`, `check:safe-fetch` |
+| Free tools | Landing page audit | Working | `/tools/landing-page-audit` | — | `check:website`, `check:safe-fetch` |
+| Free tools | Shopify app detector | Working | `/tools/shopify-app-detector` | — | `check:website`, `check:safe-fetch` |
+| Free tools | Shopify theme detector | Working | `/tools/shopify-theme-detector` | — | `check:website`, `check:safe-fetch` |
+| Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (31)
+## Working (36)
 
 ### Free advertising plan
 
@@ -567,6 +567,86 @@ A guided search of Meta's public Ad Library for a competitor, with a template fo
 
 **Public claim:** “A guided search of Meta's public Ad Library for a competitor, with a template for noting what you see — and what it can't tell you.”
 
+### Competitor website comparison
+
+*Free tools* · `tool:competitor-website`
+
+Compare public pages side by side: offer, positioning, calls to action, prices shown and brand presentation.
+
+**Routes:** `/tools/competitor-website`
+
+**Verification:** Only what's on the public pages, with the page it came from; no traffic or revenue invented.
+
+**Evidence:** `src/components/tools/competitor-website.tsx`, `src/lib/website/scan.ts`, `src/app/api/tools/scan/route.ts`
+
+**Checks:** `check:website`, `check:safe-fetch`
+
+**Public claim:** “Compare public pages side by side: offer, positioning, calls to action, prices shown and brand presentation.”
+
+### Landing page audit
+
+*Free tools* · `tool:landing-page-audit`
+
+What a visitor from an ad would find on your page: the three changes that matter most, each with the evidence, then the full list.
+
+**Routes:** `/tools/landing-page-audit`
+
+**Verification:** SSRF-safe fetch; every finding cites the page; unmeasured things say "Not checked".
+
+**Evidence:** `src/components/tools/landing-page-audit.tsx`, `src/lib/website/scan.ts`, `src/app/api/tools/scan/route.ts`
+
+**Checks:** `check:website`, `check:safe-fetch`
+
+**Public claim:** “What a visitor from an ad would find on your page: the three changes that matter most, each with the evidence, then the full list.”
+
+### Shopify app detector
+
+*Free tools* · `tool:shopify-app-detector`
+
+Which apps a Shopify store shows publicly, with the evidence for each and what a public scan can't see.
+
+**Routes:** `/tools/shopify-app-detector`
+
+**Verification:** Evidence per detection; "not detected" never presented as "not installed".
+
+**Evidence:** `src/components/tools/shopify-app-detector.tsx`, `src/lib/website/scan.ts`, `src/app/api/tools/scan/route.ts`
+
+**Checks:** `check:website`, `check:safe-fetch`
+
+**Public claim:** “Which apps a Shopify store shows publicly, with the evidence for each and what a public scan can't see.”
+
+### Shopify theme detector
+
+*Free tools* · `tool:shopify-theme-detector`
+
+The theme a Shopify store uses, when it's publicly visible, with the evidence.
+
+**Routes:** `/tools/shopify-theme-detector`
+
+**Verification:** Evidence shown; unknown when the theme isn't visible.
+
+**Evidence:** `src/components/tools/shopify-theme-detector.tsx`, `src/lib/website/scan.ts`, `src/app/api/tools/scan/route.ts`
+
+**Checks:** `check:website`, `check:safe-fetch`
+
+**Public claim:** “The theme a Shopify store uses, when it's publicly visible, with the evidence.”
+
+### Tracking readiness checker
+
+*Free tools* · `tool:tracking-readiness`
+
+Checks a page for the Meta pixel, Tag Manager and a consent banner, and says what that does and doesn't prove.
+
+**Routes:** `/tools/tracking-readiness`
+
+**Verification:** A detected script is never reported as working events.
+
+**Evidence:** `src/components/tools/tracking-readiness.tsx`, `src/lib/website/scan.ts`, `src/app/api/tools/scan/route.ts`
+
+**Checks:** `check:website`, `check:safe-fetch`
+
+**Public claim:** “Checks a page for the Meta pixel, Tag Manager and a consent banner, and says what that does and doesn't prove.”
+
 ### UTM link builder
 
 *Free tools* · `tool:utm-builder`
@@ -903,7 +983,7 @@ Interactive views of the dashboard, recommendations, Coach and Daily Brief on an
 
 **Public claim:** none — not advertised
 
-## Unavailable (15)
+## Unavailable (10)
 
 ### TikTok ads
 
@@ -1044,65 +1124,5 @@ The table for permission-based case studies exists, but there's no real customer
 **Verification:** Only published with recorded consent, dates, measurement period and limitations.
 
 **Evidence:** `prisma/schema.prisma#CaseStudy`
-
-**Public claim:** none — not advertised
-
-### Competitor website comparison
-
-*Free tools* · `tool:competitor-website`
-
-Compare public pages side by side: offer, positioning, calls to action, prices shown and brand presentation.
-
-**Verification:** Only what's on the public pages, with the page it came from; no traffic or revenue invented.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Landing page audit
-
-*Free tools* · `tool:landing-page-audit`
-
-What a visitor from an ad would find on your page: the three changes that matter most, each with the evidence, then the full list.
-
-**Verification:** SSRF-safe fetch; every finding cites the page; unmeasured things say "Not checked".
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Shopify app detector
-
-*Free tools* · `tool:shopify-app-detector`
-
-Which apps a Shopify store shows publicly, with the evidence for each and what a public scan can't see.
-
-**Verification:** Evidence per detection; "not detected" never presented as "not installed".
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Shopify theme detector
-
-*Free tools* · `tool:shopify-theme-detector`
-
-The theme a Shopify store uses, when it's publicly visible, with the evidence.
-
-**Verification:** Evidence shown; unknown when the theme isn't visible.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Tracking readiness checker
-
-*Free tools* · `tool:tracking-readiness`
-
-Checks a page for the Meta pixel, Tag Manager and a consent banner, and says what that does and doesn't prove.
-
-**Verification:** A detected script is never reported as working events.
-
-**Evidence:** `src/lib/tools/registry.ts`
 
 **Public claim:** none — not advertised

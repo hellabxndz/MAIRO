@@ -15,6 +15,8 @@ export const FREE_PAGES = [
   "/dashboard/integrations",
   "/dashboard/billing",
   "/dashboard/guide",
+  // "Before you spend on ads" — free, because it's worth fixing before paying for anything.
+  "/dashboard/website",
   // Opens to the Social Manager upgrade screen (Scale only), not a preview.
   "/dashboard/social",
 ];

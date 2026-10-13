@@ -25,6 +25,11 @@ const TOOLS: Record<string, ComponentType<Props>> = {
   "offer-readiness": dynamic(() => import("./offer-readiness").then((m) => m.OfferReadinessTool)),
   "competitor-ads": dynamic(() => import("./competitor-ads").then((m) => m.CompetitorAdsTool)),
   "utm-builder": dynamic(() => import("./utm-builder").then((m) => m.UtmBuilderTool)),
+  "landing-page-audit": dynamic(() => import("./landing-page-audit").then((m) => m.LandingPageAuditTool)),
+  "tracking-readiness": dynamic(() => import("./tracking-readiness").then((m) => m.TrackingReadinessTool)),
+  "shopify-app-detector": dynamic(() => import("./shopify-app-detector").then((m) => m.ShopifyAppDetectorTool)),
+  "shopify-theme-detector": dynamic(() => import("./shopify-theme-detector").then((m) => m.ShopifyThemeDetectorTool)),
+  "competitor-website": dynamic(() => import("./competitor-website").then((m) => m.CompetitorWebsiteTool)),
 };
 
 
