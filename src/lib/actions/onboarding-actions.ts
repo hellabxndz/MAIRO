@@ -10,6 +10,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { normalizePhone, normalizeUrl, requiredDetailFor } from "@/lib/campaigns/destination";
 import { Prisma } from "@/generated/prisma/client";
 import { recommendGoal } from "@/lib/onboarding/goal";
+import { parseEconomics } from "@/lib/calc/assumptions";
 import { CORRECTABLE, businessSchema, goalDraftSchema, learnBusiness, saveBusinessStep, saveGoalDraft, type LearnResult } from "@/lib/onboarding/setup";
 import { changeBrain } from "@/lib/brain/store";
 
@@ -81,6 +82,10 @@ export async function completeOnboardingAction(
 
   const data = parsed.data;
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  // Calculator numbers the owner chose to use. Ones that don't add up are refused, not repaired.
+  const economicsRaw = formData.get("economics");
+  const economics = typeof economicsRaw === "string" && economicsRaw ? parseEconomics(economicsRaw) : null;
+  if (economicsRaw && !economics) return { error: "Those calculator numbers don't add up. Remove them, or run the calculator again." };
   const monthlyBudgetCents = Math.round(data.monthlyBudget * 100);
 
   // Normalized on the way in, so nothing downstream has to wonder whether a
@@ -137,6 +142,7 @@ export async function completeOnboardingAction(
       customerLocation: data.customerLocation?.trim() || null,
       serviceReach: data.serviceReach?.trim() || null,
       budgetSuggested: data.budgetSuggested === "1",
+      economicsJson: economics ? JSON.stringify(economics) : null,
     },
     update: {
       primaryGoal: data.primaryGoal,
@@ -150,6 +156,7 @@ export async function completeOnboardingAction(
       customerLocation: data.customerLocation?.trim() || null,
       serviceReach: data.serviceReach?.trim() || null,
       budgetSuggested: data.budgetSuggested === "1",
+      economicsJson: economics ? JSON.stringify(economics) : null,
     },
   });
 

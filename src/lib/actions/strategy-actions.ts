@@ -42,6 +42,7 @@ import {
 } from "@/lib/strategy/store";
 import { draftFromApprovedPlan } from "@/lib/strategy/campaign";
 import { executionBlock } from "@/lib/billing/execution";
+import { parseEconomics } from "@/lib/calc/assumptions";
 import { recordRun } from "@/lib/team/runs";
 import { cancelPlanLaunch, launchPlanCampaign, type CancelResult, type LaunchResult } from "@/lib/onboarding/launch";
 
@@ -375,4 +376,20 @@ export async function dismissWelcomeAction(): Promise<void> {
   if (!ctx) return;
   await db.strategyPlan.updateMany({ where: { organizationId: ctx.organizationId }, data: { welcomedAt: new Date() } });
   revalidatePath("/dashboard");
+}
+
+/**
+ * The owner's own break-even, from a free calculator, used in (or taken out
+ * of) the plan. Figures that don't add up are refused. Changes only the
+ * numbers the plan is measured against — never the plan itself.
+ */
+export async function setPlanEconomicsAction(raw: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not signed in." };
+  const economics = raw === null ? null : parseEconomics(raw);
+  if (raw !== null && !economics) return { ok: false, error: "Those calculator numbers don't add up. Run the calculator again." };
+  const updated = await db.onboardingIntake.updateMany({ where: { organizationId: ctx.organizationId }, data: { economicsJson: economics ? JSON.stringify(economics) : null } });
+  if (updated.count === 0) return { ok: false, error: "Finish setup first." };
+  refresh();
+  return { ok: true };
 }

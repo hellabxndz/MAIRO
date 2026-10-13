@@ -1,5 +1,6 @@
 "use client";
 
+import { economicsFromService } from "@/lib/calc/assumptions";
 import { CURRENCIES, currencySymbol, money, num, percent, serviceEconomics, type Currency } from "@/lib/calc/economics";
 import { Choice, CopyButton, ExampleBadge, ExampleButton, NextStep, Notes, NumberField, Panel, Problems, ResultPanel, SelectField, Stat, useLocalState } from "./ui";
 
@@ -94,7 +95,11 @@ export function ServiceLeadEconomicsTool() {
             title="Run ads against this number"
             body="Your free MAIRO plan uses lead quality, bookings and paid jobs — not just lead count — to judge your ads, and you mark each lead's outcome."
             action="Use this in my free plan"
-            handoff={{ kind: "note", tool: "service-lead-economics", label: "Lead economics from the cost-per-lead calculator", text: summary }}
+            handoff={(() => {
+              // Example numbers aren't the owner's, so they're never carried into a plan.
+              const e = !s.example && r.ok && s.jobValue ? economicsFromService(r.value, s.jobValue, s.currency, "service-lead-economics") : null;
+              return e ? { kind: "economics" as const, tool: "service-lead-economics", economics: e } : null;
+            })()}
           />
         )}
       </div>

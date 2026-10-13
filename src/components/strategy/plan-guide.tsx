@@ -1,4 +1,6 @@
 import type { StrategyContent } from "@/lib/strategy/plan-logic";
+import { PlanNumbers } from "./plan-numbers";
+import { economicsFitGoal } from "@/lib/calc/assumptions";
 import { channelAdvice, creativeDirections, factsAndAssumptions, landingIssues, testingSchedule, trackingNeeds, type FactInput, type TrackingContext } from "@/lib/strategy/plan-guide";
 
 // The parts of the free plan that follow from facts: where to advertise and
@@ -22,7 +24,7 @@ export function PlanGuide({ plan, facts, tracking, siteIssues }: { plan: Strateg
   const directions = creativeDirections(plan);
   const issues = landingIssues(plan, siteIssues);
   const needs = trackingNeeds(plan, tracking);
-  const schedule = testingSchedule(plan);
+  const schedule = testingSchedule(plan, facts.economics ?? null);
 
   return (
     <div className="mt-8 space-y-4" aria-label="How this plan works">
@@ -61,6 +63,7 @@ export function PlanGuide({ plan, facts, tracking, siteIssues }: { plan: Strateg
               </ul>
             </div>
           )}
+          <PlanNumbers stored={!facts.economics ? "none" : economicsFitGoal(facts.economics, plan.goal) ? "used" : "other-goal"} goal={plan.goal} />
         </section>
       </div>
 

@@ -16,7 +16,7 @@ or a public page makes a claim this inventory can't back.
 
 | Area | Capability | Status | Routes | Still needs | Checks |
 | --- | --- | --- | --- | --- | --- |
-| Plan | Free advertising plan | Working | `/onboarding`, `/plan` | — | `check:strategy-plan`, `check:plan-guide`, `check:onboarding`, `check:onboarding-db` |
+| Plan | Free advertising plan | Working | `/onboarding`, `/plan` | — | `check:strategy-plan`, `check:plan-guide`, `check:calculators`, `check:onboarding`, `check:onboarding-db` |
 | Plan | Change and approve the plan | Working | `/plan` | — | `check:strategy-plan`, `check:onboarding-db` |
 | Plan | Reading the business's website | Partially working | `/onboarding`, `/dashboard/settings/business-brain` | ANTHROPIC_API_KEY | `check:business`, `check:safe-fetch` |
 | Plan | Campaign preview before sign-up | Partially working | `/preview` | — | `check:preview`, `check:website`, `check:safe-fetch` |
@@ -86,15 +86,15 @@ or a public page makes a claim this inventory can't back.
 
 *Plan* · `free-plan`
 
-From a short setup, MAIRO writes a plan: goal, campaign type, audience and why, budget and why, three creative directions, landing-page issues, tracking needs and a testing schedule — with what it had to assume listed apart from what the owner said.
+From a short setup, MAIRO writes a plan: goal, campaign type, audience and why, budget and why, three creative directions, landing-page issues, tracking needs and a testing schedule — with what it had to assume listed apart from what the owner said. A break-even from the free calculators, once the owner chooses to use it, becomes one of the plan's facts and the line its first test is judged against; without one, the plan says it's judging by cost alone.
 
 **Routes:** `/onboarding`, `/plan`
 
-**Verification:** Browser journey (desktop and phone): sign-up → setup → plan with every section → approve; the free plan can't reach a launch button.
+**Verification:** Browser journey (desktop and phone): sign-up → setup → plan with every section → approve; the free plan can't reach a launch button. Calculator numbers: offered in setup and on the plan, used only when pressed, refused if they don't add up, never carried from example numbers, removable (check:calculators, check:plan-guide, browser-checked).
 
-**Evidence:** `src/lib/strategy/plan-logic.ts`, `src/lib/strategy/plan-guide.ts`, `src/lib/strategy/store.ts`, `src/app/plan/page.tsx`, `src/components/strategy/plan-guide.tsx`
+**Evidence:** `src/lib/strategy/plan-logic.ts`, `src/lib/strategy/plan-guide.ts`, `src/lib/strategy/store.ts`, `src/app/plan/page.tsx`, `src/components/strategy/plan-guide.tsx`, `src/lib/calc/assumptions.ts`, `src/components/strategy/plan-numbers.tsx`
 
-**Checks:** `check:strategy-plan`, `check:plan-guide`, `check:onboarding`, `check:onboarding-db`
+**Checks:** `check:strategy-plan`, `check:plan-guide`, `check:calculators`, `check:onboarding`, `check:onboarding-db`
 
 **Public claim:** “A free advertising plan for your business before you pay anything.”
 

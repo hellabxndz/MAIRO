@@ -6,12 +6,16 @@
 // filled in, visibly, where they can still change it. Items expire after 30
 // days and are removed once used or dismissed.
 
+import { costLimit, TOOL_NAME, type ConfirmedEconomics } from "@/lib/calc/assumptions";
+
 export type HandoffInput =
   | { kind: "budget"; monthlyBudget: number; label: string; tool: string }
   | { kind: "website"; url: string; tool: string }
   | { kind: "hooks"; hooks: string[]; tool: string }
   | { kind: "offer"; offer: string; tool: string }
-  | { kind: "note"; text: string; label: string; tool: string };
+  | { kind: "note"; text: string; label: string; tool: string }
+  /** A calculator's break-even, as numbers the plan can measure against. */
+  | { kind: "economics"; economics: ConfirmedEconomics; tool: string };
 
 export type Handoff = HandoffInput & { at: string };
 
@@ -65,5 +69,7 @@ export function describeHandoff(h: Handoff): { title: string; detail: string } {
       return { title: `Offer: ${h.offer}`, detail: h.tool === "preview" ? "From your campaign preview" : "From the offer clarity checker" };
     case "note":
       return { title: h.label, detail: h.text };
+    case "economics":
+      return { title: `Most a ${h.economics.basis} can cost: ${costLimit(h.economics).text}`, detail: `From the ${TOOL_NAME[h.tool] ?? "calculator"}` };
   }
 }

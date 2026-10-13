@@ -1,4 +1,6 @@
 import { GOAL_LABEL, RETARGET_FROM, SLOW_BELOW, TEST_FROM, campaignTypeInfo, usd, type StrategyContent } from "./plan-logic";
+import { costLimit, economicsFacts, economicsFitGoal, type ConfirmedEconomics } from "@/lib/calc/assumptions";
+import { money } from "@/lib/calc/economics";
 
 // The parts of the free plan that follow from facts rather than from writing:
 // which channel and objective, what tracking the campaign needs, how to test,
@@ -82,12 +84,17 @@ export type TestPhase = { when: string; what: string; why: string };
  * When to look, what to change, and what not to touch. Slower at small
  * budgets, because fewer results take longer to mean anything.
  */
-export function testingSchedule(p: StrategyContent): TestPhase[] {
+export function testingSchedule(p: StrategyContent, economics: ConfirmedEconomics | null = null): TestPhase[] {
   const slow = p.dailyBudget < SLOW_BELOW;
   const room = p.dailyBudget >= TEST_FROM;
   const learn = slow ? "Weeks 1–2" : "Week 1";
   const test = slow ? "Weeks 3–5" : "Weeks 2–3";
   const decide = slow ? "Week 6" : "Week 4";
+  // The owner's own break-even, when they worked it out and it fits the goal.
+  const limit = economics && economicsFitGoal(economics, p.goal) ? costLimit(economics) : null;
+  const m = (n: number) => money(n, economics?.currency ?? "USD");
+  // Only compared with the budget in the same currency.
+  const daysPerResult = limit && economics?.currency === "USD" ? limit.breakEven / p.dailyBudget : null;
   return [
     {
       when: learn,
@@ -101,10 +108,16 @@ export function testingSchedule(p: StrategyContent): TestPhase[] {
     },
     {
       when: decide,
-      what: "Compare cost per qualified lead or per sale — not clicks — and keep what's better.",
-      why: slow
-        ? "At this budget, results come slowly. If there still aren't enough to compare, the right step is to keep collecting data, not to change things."
-        : "If one isn't clearly better yet, keep both running rather than guess.",
+      what: limit
+        ? `Compare cost per ${limit.per === "sale" ? "sale" : "qualified lead"} with your number — ${limit.text} — not clicks, and keep what stays under it.`
+        : "Compare cost per qualified lead or per sale — not clicks — and keep what's better.",
+      why: [
+        limit ? `Above ${m(limit.breakEven)} a ${limit.per} costs more than it brings in, before fixed costs.` : null,
+        daysPerResult !== null && daysPerResult > 3 ? `At ${usd(p.dailyBudget)} a day, one ${limit!.per} at that price is about ${Math.round(daysPerResult)} days of budget, so expect only a few to compare.` : null,
+        slow
+          ? "At this budget, results come slowly. If there still aren't enough to compare, the right step is to keep collecting data, not to change things."
+          : "If one isn't clearly better yet, keep both running rather than guess.",
+      ].filter(Boolean).join(" "),
     },
     ...(p.dailyBudget >= RETARGET_FROM
       ? [{ when: "After that", what: "Add the retargeting step from this plan: people who visited but didn't enquire or buy.", why: "Once there's traffic worth reaching again." }]
@@ -146,6 +159,8 @@ export type FactInput = {
   targetAudience: string | null;
   /** The budget the owner chose, or null when they said they didn't know. */
   monthlyBudgetCents: number | null;
+  /** A calculator's break-even the owner chose to use, if any. */
+  economics?: ConfirmedEconomics | null;
 };
 
 /** What the plan is built on: what the business said or the website showed, and what MAIRO had to assume. */
@@ -164,6 +179,18 @@ export function factsAndAssumptions(p: StrategyContent, i: FactInput): { facts: 
 
   if (i.offer) facts.push({ label: "Current offer", value: i.offer, source: said });
   else assumptions.push({ label: "Offer", assumed: "No offer — your ads won't promise a discount or deal you don't run.", fix: "Add an offer you really run", href: "#plan-offer" });
+
+  // What a result may cost: the owner's own numbers, or said plainly that there are none.
+  if (i.economics && economicsFitGoal(i.economics, p.goal)) facts.push(...economicsFacts(i.economics));
+  else if (p.goal === "SALES" || p.goal === "LEADS") {
+    const sales = p.goal === "SALES";
+    assumptions.push({
+      label: sales ? "Most a sale can cost" : "Most a lead can cost",
+      assumed: "Not worked out yet, so the first test is judged by cost per result alone — without knowing where it stops paying.",
+      fix: "Work it out in two minutes",
+      href: sales ? "/tools/break-even-roas" : "/tools/service-lead-economics",
+    });
+  }
 
   if (i.targetAudience) facts.push({ label: "Who you want to reach", value: i.targetAudience, source: said });
   else assumptions.push({ label: "Who to reach", assumed: `MAIRO worked it out from your goal: ${p.audience.summary || `${p.audience.ageMin}–${p.audience.ageMax}, ${p.audience.location || "near you"}`}.`, fix: "Describe your best customers", href: "#plan-audience" });

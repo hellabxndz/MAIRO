@@ -5,6 +5,7 @@
 // Cleared once the intake is saved — from then on the intake is the record.
 
 import { z } from "zod";
+import { parseEconomics, type ConfirmedEconomics } from "@/lib/calc/assumptions";
 
 export const SCREENS = ["business", "learn", "goal"] as const;
 export type Screen = (typeof SCREENS)[number];
@@ -49,6 +50,8 @@ export const draftSchema = z.object({
       notes: text(2000),
       /** They said they don't know their budget and took MAIRO's suggestion. */
       budgetSuggested: z.boolean().optional().catch(undefined),
+      /** A calculator's break-even the owner chose to use; dropped if it doesn't add up. */
+      economics: z.custom<ConfirmedEconomics>((v) => parseEconomics(v) !== null).nullable().optional().catch(undefined),
     })
     .optional()
     .catch(undefined),

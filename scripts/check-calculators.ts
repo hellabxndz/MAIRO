@@ -18,6 +18,7 @@ import { READINESS_ITEMS, scoreReadiness } from "../src/lib/tools/readiness";
 import { adLibraryUrl, hypothesesFrom } from "../src/lib/tools/ad-library";
 import { AD_EXAMPLES } from "../src/lib/tools/ad-examples";
 import { DEFAULT_PROFIT_INPUTS, breakEvenRoas, contributionRate, marginOf } from "../src/lib/intelligence/profit";
+import { costLimit, economicsFacts, economicsFitGoal, economicsFromSale, economicsFromService, parseEconomics } from "../src/lib/calc/assumptions";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -346,6 +347,60 @@ check("both say there's no break-even when a sale loses money before advertising
   assert.equal(breakEven(sale).breakEvenRoas, null);
   const inputs = { ...DEFAULT_PROFIT_INPUTS, sellingPriceCents: 2000, productCostCents: 2100, paymentFeePercent: 0, paymentFeeFixedCents: 0 };
   assert.equal(breakEvenRoas(contributionRate(marginOf(inputs)!.percent, inputs, 2000)), null);
+});
+
+console.log("\n— numbers carried into the plan —");
+check("a break-even carried into the plan is exactly the calculator's, and reads back the same", () => {
+  const sale = ok(saleEconomics({ price: 100, productCost: 60 }));
+  const be = breakEven(sale, 10);
+  const e = economicsFromSale(sale, be, "USD", "break-even-roas")!;
+  assert.equal(e.basis, "sale");
+  if (e.basis !== "sale") return;
+  close(e.breakEvenCpa, be.breakEvenCpa!, 0.005);
+  close(e.breakEvenRoas, be.breakEvenRoas!, 1e-4);
+  close(e.targetCpa, be.targetCpa!, 0.005);
+  assert.deepEqual(parseEconomics(JSON.stringify(e)), e);
+  assert.equal(costLimit(e).text, "$30.00 per sale (break-even $40.00)");
+});
+check("a cost per lead carried into the plan matches the calculator, with uneven rates and large values", () => {
+  for (const [value, cost, book, sale] of [[600, 200, 50, 40], [12_345, 4_321, 37, 23], [90, 30, 100, 100]] as const) {
+    const r = ok(serviceEconomics({ jobValue: value, jobCost: cost, rates: { mode: "two-step", leadToBookingPct: book, bookingToSalePct: sale } }));
+    const e = economicsFromService(r, value, "GBP", "service-lead-economics")!;
+    assert.ok(e && e.basis === "lead");
+    if (e.basis !== "lead") return;
+    close(e.breakEvenCpl, r.breakEvenCpl!, 0.006);
+    assert.deepEqual(parseEconomics(e), e, `${value}`);
+  }
+});
+check("no break-even, nothing to carry: a losing sale or job hands nothing to the plan", () => {
+  const sale = ok(saleEconomics({ price: 20, productCost: 21 }));
+  assert.equal(economicsFromSale(sale, breakEven(sale), "USD", "break-even-roas"), null);
+  const job = ok(serviceEconomics({ jobValue: 100, jobCost: 120, rates: { mode: "total", leadToSalePct: 20 } }));
+  assert.equal(economicsFromService(job, 100, "USD", "service-lead-economics"), null);
+});
+check("figures that don't add up are refused, not repaired", () => {
+  const sale = ok(saleEconomics({ price: 100, productCost: 60 }));
+  const e = economicsFromSale(sale, breakEven(sale), "USD", "break-even-roas")!;
+  assert.equal(parseEconomics({ ...e, breakEvenCpa: 400 }), null, "a break-even that isn't the contribution");
+  assert.equal(parseEconomics({ ...e, breakEvenRoas: 9 }), null, "a ROAS that doesn't follow");
+  assert.equal(parseEconomics({ ...e, targetCpa: 99 }), null, "a target above break-even");
+  assert.equal(parseEconomics({ ...e, currency: "XYZ" }), null);
+  assert.equal(parseEconomics("{not json"), null);
+  assert.equal(parseEconomics(null), null);
+  const job = ok(serviceEconomics({ jobValue: 600, jobCost: 200, rates: { mode: "total", leadToSalePct: 20 } }));
+  const l = economicsFromService(job, 600, "USD", "service-lead-economics")!;
+  assert.equal(parseEconomics({ ...l, leadToSale: 1.5 }), null);
+  assert.equal(parseEconomics({ ...l, breakEvenCpl: 1000 }), null);
+});
+check("the plan shows them as the owner's numbers, and only for the goal they belong to", () => {
+  const sale = ok(saleEconomics({ price: 100, productCost: 60 }));
+  const e = economicsFromSale(sale, breakEven(sale), "EUR", "break-even-roas")!;
+  const facts = economicsFacts(e);
+  assert.match(facts[0].value, /€40\.00/);
+  assert.match(facts[0].source, /break-even ROAS calculator — you chose to use it/);
+  assert.equal(economicsFitGoal(e, "SALES"), true);
+  assert.equal(economicsFitGoal(e, "LEADS"), false);
+  assert.equal(economicsFitGoal(e, "AWARENESS"), false);
 });
 
 console.log(`\nCalculators: ${passed} checks passed.`);

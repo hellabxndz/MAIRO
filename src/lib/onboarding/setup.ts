@@ -7,6 +7,7 @@ import { socialProfileFrom } from "@/lib/website/detect";
 import { readWebsiteForPlan } from "@/lib/strategy/store";
 import { loadBrain } from "@/lib/business/brain";
 import { parseDraft, type OnboardingDraft } from "./draft";
+import { parseEconomics, type ConfirmedEconomics } from "@/lib/calc/assumptions";
 import { recommendGoal, type SetupGoal } from "./goal";
 import { UNSURE, businessTypeFrom } from "./business-types";
 
@@ -150,6 +151,8 @@ export const goalDraftSchema = z.object({
   competitors: z.string().max(500).optional(),
   notes: z.string().max(2000).optional(),
   budgetSuggested: z.boolean().optional(),
+  // A calculator's break-even the owner chose to use; refused if its figures don't add up.
+  economics: z.custom<ConfirmedEconomics>((v) => parseEconomics(v) !== null, "Those numbers don't add up.").nullable().optional(),
 });
 
 /** Screen 3, saved as they go (and by "Save and finish later"). */

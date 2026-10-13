@@ -474,6 +474,11 @@ model OnboardingIntake {
   /// How far a service business travels, or where a shop sells, in the
   /// owner's words ("Within 20 miles", "Nationwide", "Not sure").
   serviceReach    String?
+  /// A free calculator's break-even the owner chose to use during setup —
+  /// the figures exactly as the calculator made them, with the tool and the
+  /// date (lib/calc/assumptions.ts). The plan shows them as the owner's
+  /// numbers and measures its first test against them. Null when none.
+  economicsJson   String? @db.Text
 
   completedAt DateTime @default(now())
 }

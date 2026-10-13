@@ -16,6 +16,7 @@ import type { LearnResult } from "@/lib/onboarding/setup";
 import { BUSINESS_TYPES, UNSURE, businessTypeFrom, reachQuestion } from "@/lib/onboarding/business-types";
 import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
 import { ToolHandoff } from "@/components/onboarding/tool-handoff";
+import { economicsFacts, economicsFitGoal, type ConfirmedEconomics } from "@/lib/calc/assumptions";
 
 // Setting up, in three screens — steps 1 to 3 of ten:
 //
@@ -61,6 +62,8 @@ export type GoalDraft = {
   competitors?: string;
   notes?: string;
   budgetSuggested?: boolean;
+  /** A calculator's break-even the owner chose to use (lib/calc/assumptions.ts). */
+  economics?: ConfirmedEconomics | null;
 };
 
 function Why({ children }: { children: React.ReactNode }) {
@@ -305,7 +308,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
       <h1 id="s-goal" className="text-[24px] font-semibold tracking-[-0.02em] text-white">Choose your goal</h1>
       <p className="mt-1.5 text-[14px] text-muted">MAIRO has filled in suggestions — each says why. Change anything; nothing is built or spent until you approve your campaign.</p>
       <ToolHandoff
-        kinds={["budget", "offer", "hooks", "note"]}
+        kinds={["budget", "offer", "hooks", "note", "economics"]}
         onUse={(h) => {
           const append = (text: string) => setGoal((g) => ({ ...g, notes: [g.notes?.trim(), text].filter(Boolean).join("\n\n").slice(0, 2000) }));
           if (h.kind === "budget") {
@@ -320,6 +323,10 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
             append(`Hooks I'd like to test:\n${h.hooks.map((x) => `- ${x}`).join("\n")}`);
             setMoreOpen(true);
             return "added to “Anything else MAIRO should know?”";
+          }
+          if (h.kind === "economics") {
+            set({ economics: h.economics });
+            return "added to “Your numbers” below";
           }
           if (h.kind === "note") {
             append(`${h.label}:\n${h.text}`);
@@ -414,6 +421,27 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
           </button>
         )}
       </div>
+
+      {goal.economics && (
+        <section aria-labelledby="g-numbers" className="mt-6 rounded-xl border border-white/[0.08] p-4">
+          <h2 id="g-numbers" className="text-[13.5px] font-medium text-white">Your numbers</h2>
+          <dl className="mt-2 space-y-1.5">
+            {economicsFacts(goal.economics).map((f) => (
+              <div key={f.label}>
+                <dt className="text-[12px] text-faint">{f.label}</dt>
+                <dd className="text-[13.5px] text-white">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-[12px] text-muted">
+            {goal.primaryGoal && !economicsFitGoal(goal.economics, goal.primaryGoal)
+              ? `These are ${goal.economics.basis === "sale" ? "sales" : "lead"} numbers, so your plan uses them only if your goal is ${goal.economics.basis === "sale" ? "sales" : "leads"}.`
+              : "Your plan measures its first test against these — whether each result pays, not clicks."}
+          </p>
+          <button type="button" onClick={() => set({ economics: null })} className="mt-2 text-[12.5px] text-violet-bright hover:text-white">Don&rsquo;t use these numbers</button>
+          <input type="hidden" name="economics" value={JSON.stringify(goal.economics)} />
+        </section>
+      )}
 
       <div className="mt-6">
         <Field label="Any offer right now?" why="Only one you really run — ads can't promise one you don't.">

@@ -8,6 +8,7 @@ import { PlanBuilder } from "@/components/strategy/plan-builder";
 import { PlanReview } from "@/components/strategy/plan-review";
 import { loadOnboarding } from "@/lib/onboarding/progress-store";
 import { PlanGuide } from "@/components/strategy/plan-guide";
+import { parseEconomics } from "@/lib/calc/assumptions";
 import { loadBrain } from "@/lib/business/brain";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
 
@@ -45,7 +46,7 @@ export default async function PlanPage() {
   const [input, meta, intakeFull, pixel, store, brain] = await Promise.all([
     strategyInputFor(organizationId),
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true } }),
-    db.onboardingIntake.findUnique({ where: { organizationId }, select: { offering: true, customerLocation: true, serviceReach: true, currentOffer: true, targetAudience: true, monthlyBudgetCents: true, budgetSuggested: true } }),
+    db.onboardingIntake.findUnique({ where: { organizationId }, select: { offering: true, customerLocation: true, serviceReach: true, currentOffer: true, targetAudience: true, monthlyBudgetCents: true, budgetSuggested: true, economicsJson: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     db.storeIngest.findUnique({ where: { organizationId }, select: { lastReceivedAt: true } }),
     loadBrain(organizationId),
@@ -73,6 +74,7 @@ export default async function PlanPage() {
           offer: intakeFull?.currentOffer ?? null,
           targetAudience: intakeFull?.targetAudience ?? null,
           monthlyBudgetCents: intakeFull && !intakeFull.budgetSuggested ? intakeFull.monthlyBudgetCents : null,
+          economics: parseEconomics(intakeFull?.economicsJson ?? null),
         }}
         tracking={{ pixelActive: pixel ? canOptimizeTowards(pixel.status) : false, storeConnected: Boolean(store?.lastReceivedAt) }}
         siteIssues={brain.analysis?.conversionIssues ?? []}

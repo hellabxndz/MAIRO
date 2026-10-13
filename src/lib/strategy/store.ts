@@ -1,5 +1,6 @@
 import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
+import { costLimit, parseEconomics, TOOL_NAME } from "@/lib/calc/assumptions";
 import type { StrategyPlan } from "@/generated/prisma/client";
 import { analyzeBusiness } from "@/lib/business/analyze";
 import { brainBrief, loadBrain } from "@/lib/business/brain";
@@ -85,6 +86,12 @@ function asPlanGoal(goal: string): PlanGoal {
 }
 
 /** Everything the plan is written from. */
+function economicsNote(raw: string | null): string | null {
+  const e = parseEconomics(raw);
+  if (!e) return null;
+  return `The owner's own numbers, from MAIRO's ${TOOL_NAME[e.tool] ?? "calculator"}: the most ${e.basis === "sale" ? "a sale" : "a lead"} can cost is ${costLimit(e).text}, before fixed costs. Don't promise results; judge the test against this.`;
+}
+
 export async function strategyInputFor(organizationId: string): Promise<StrategyInput | null> {
   const [org, intake, pixel, brain] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, industry: true, website: true, defaultDestination: true } }),
@@ -103,7 +110,8 @@ export async function strategyInputFor(organizationId: string): Promise<Strategy
     targetAudience: intake.targetAudience,
     brandVoice: intake.brandVoice,
     competitors: intake.competitors,
-    notes: intake.notes,
+    // The owner's own break-even, when they chose to use one, so the plan's budget reasoning can respect it.
+    notes: [intake.notes, economicsNote(intake.economicsJson)].filter(Boolean).join("\n\n") || null,
     offering: intake.offering,
     offer: intake.currentOffer,
     // The service area with how far they travel, when they said; "Not sure"

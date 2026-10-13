@@ -8,6 +8,8 @@
 import assert from "node:assert/strict";
 import { plainStrategy, type StrategyInput } from "../src/lib/ai/strategy";
 import { RETARGET_FROM, SLOW_BELOW, TEST_FROM, type StrategyContent } from "../src/lib/strategy/plan-logic";
+import { economicsFromSale, economicsFromService } from "../src/lib/calc/assumptions";
+import { breakEven, saleEconomics, serviceEconomics } from "../src/lib/calc/economics";
 import { channelAdvice, creativeDirections, factsAndAssumptions, landingIssues, testingSchedule, trackingNeeds } from "../src/lib/strategy/plan-guide";
 
 let passed = 0;
@@ -127,13 +129,14 @@ check("what the owner didn't say is listed as an assumption with a way to fix it
   const { facts, assumptions } = factsAndAssumptions(plan, { website: "https://northside.example", pagesRead: [], offering: "Emergency plumbing repairs", location: null, offer: null, targetAudience: null, monthlyBudgetCents: null });
   assert.deepEqual(facts.map((f) => f.label), ["What you do", "Website"]);
   assert.equal(facts[1].source, "Not read yet");
-  assert.deepEqual(assumptions.map((a) => a.href), ["#plan-audience", "#plan-budget", "#plan-offer", "#plan-audience"]);
+  assert.deepEqual(assumptions.map((a) => a.href), ["#plan-audience", "#plan-budget", "#plan-offer", "/tools/service-lead-economics", "#plan-audience"]);
   assert.match(assumptions[1].assumed, /weren't sure/);
   assert.match(assumptions[2].assumed, /won't promise a discount/);
 });
 check("what the owner did say is a fact with its source, and pages read are named", () => {
   const { facts, assumptions } = factsAndAssumptions(plan, { website: "https://northside.example", pagesRead: ["https://northside.example/", "https://northside.example/services"], offering: "Repairs", location: "Leeds", offer: "Free quote", targetAudience: "Homeowners", monthlyBudgetCents: 60000 });
-  assert.equal(assumptions.length, 0);
+  // Everything they said is a fact; the one thing left is a break-even they haven't worked out.
+  assert.deepEqual(assumptions.map((a) => a.label), ["Most a lead can cost"]);
   assert.match(facts.find((f) => f.label === "Website")!.source, /^Read: .*services/);
   assert.equal(facts.find((f) => f.label === "Monthly budget")!.value, "$600");
 });
@@ -148,12 +151,47 @@ check("issues from the website reading come first, the plan's own advice is not 
   assert.equal(many.length, 6);
 });
 
+console.log("\n— the owner's own numbers —");
+const svc = serviceEconomics({ jobValue: 600, jobCost: 200, rates: { mode: "two-step", leadToBookingPct: 50, bookingToSalePct: 40 }, reservePerJob: 100 });
+const leadNums = svc.ok ? economicsFromService(svc.value, 600, "USD", "service-lead-economics") : null;
+const saleR = saleEconomics({ price: 100, productCost: 60 });
+const saleNums = saleR.ok ? economicsFromSale(saleR.value, breakEven(saleR.value), "USD", "break-even-roas") : null;
+const noFacts = { website: null, pagesRead: [], offering: null, location: null, offer: null, targetAudience: null, monthlyBudgetCents: null };
+check("with the owner's lead numbers, they're plan facts and the test is measured against them", () => {
+  const p = at(20, { goal: "LEADS" });
+  const { facts, assumptions } = factsAndAssumptions(p, { ...noFacts, economics: leadNums });
+  assert.ok(facts.some((f) => f.label === "Most a lead can cost" && /\$80\.00/.test(f.value) && /you chose to use it/.test(f.source)));
+  assert.ok(!assumptions.some((a) => /Most a lead/.test(a.label)));
+  const decide = testingSchedule(p, leadNums).find((x) => /Compare/.test(x.what))!;
+  assert.match(decide.what, /\$60\.00 per lead \(break-even \$80\.00\)/);
+  assert.match(decide.why, /Above \$80\.00 a lead costs more than it brings in/);
+  assert.match(decide.why, /about 4 days of budget/);
+});
+check("without numbers, a sales or leads plan says it had to judge by cost alone — and links the calculator", () => {
+  const s1 = factsAndAssumptions(at(20, { goal: "SALES" }), noFacts).assumptions.find((a) => a.label === "Most a sale can cost")!;
+  assert.equal(s1.href, "/tools/break-even-roas");
+  const l1 = factsAndAssumptions(at(20, { goal: "LEADS" }), noFacts).assumptions.find((a) => a.label === "Most a lead can cost")!;
+  assert.equal(l1.href, "/tools/service-lead-economics");
+  assert.ok(!factsAndAssumptions(at(20, { goal: "AWARENESS" }), noFacts).assumptions.some((a) => /can cost/.test(a.label)));
+  assert.match(testingSchedule(at(20, { goal: "LEADS" }), null).find((x) => /Compare/.test(x.what))!.what, /per qualified lead or per sale/);
+});
+check("numbers for another goal aren't used, and another currency is never compared with the budget", () => {
+  const p = at(20, { goal: "LEADS" });
+  assert.ok(!factsAndAssumptions(p, { ...noFacts, economics: saleNums }).facts.some((f) => /can cost/.test(f.label)));
+  assert.doesNotMatch(testingSchedule(p, saleNums).map((x) => x.what).join(" "), /your number/);
+  const gbp = leadNums ? { ...leadNums, currency: "GBP" as const } : null;
+  const why = testingSchedule(p, gbp).find((x) => /Compare/.test(x.what))!.why;
+  assert.match(why, /£80\.00/);
+  assert.doesNotMatch(why, /days of budget/);
+});
+
 console.log("\n— no promises —");
 check("nothing in the guide promises a number of leads, sales or returns", () => {
   for (const daily of [5, SLOW_BELOW, RETARGET_FROM, TEST_FROM, 200]) {
     for (const campaignType of ["LEAD_FORM", "LEADS_WEBSITE", "CALLS", "MESSAGES", "SALES_WEBSITE"] as const) {
       const p = at(daily, { campaignType, goal: campaignType === "SALES_WEBSITE" ? "SALES" : campaignType === "MESSAGES" ? "ENGAGEMENT" : "LEADS" });
-      const text = JSON.stringify([channelAdvice(p), trackingNeeds(p, none), testingSchedule(p), creativeDirections(p), factsAndAssumptions(p, { website: null, pagesRead: [], offering: null, location: null, offer: null, targetAudience: null, monthlyBudgetCents: null })]);
+      const nums = p.goal === "SALES" ? saleNums : leadNums;
+      const text = JSON.stringify([channelAdvice(p), trackingNeeds(p, none), testingSchedule(p), testingSchedule(p, nums), creativeDirections(p), factsAndAssumptions(p, { website: null, pagesRead: [], offering: null, location: null, offer: null, targetAudience: null, monthlyBudgetCents: null }), factsAndAssumptions(p, { website: null, pagesRead: [], offering: null, location: null, offer: null, targetAudience: null, monthlyBudgetCents: null, economics: nums })]);
       assert.doesNotMatch(text, PROMISE, `${daily}/${campaignType}`);
     }
   }

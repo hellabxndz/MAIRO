@@ -1,5 +1,6 @@
 "use client";
 
+import { economicsFromSale } from "@/lib/calc/assumptions";
 import { breakEven, CURRENCIES, currencySymbol, money, percent, saleEconomics, times, type Currency } from "@/lib/calc/economics";
 import { ExampleBadge, ExampleButton, NextStep, Notes, NumberField, Panel, Problems, ResultPanel, SelectField, Stat, CopyButton, useLocalState } from "./ui";
 
@@ -80,9 +81,13 @@ export function BreakEvenRoasTool() {
         {r.ok && be?.breakEvenRoas && (
           <NextStep
             title="Plan campaigns around this number"
-            body="Your free MAIRO plan can start from your break-even point, so you judge ads by whether each sale pays — not by clicks."
+            body={s.example ? "Enter your own numbers and your free MAIRO plan can measure its first test against your break-even — whether each sale pays, not clicks." : "Your free MAIRO plan can start from your break-even point, so you judge ads by whether each sale pays — not by clicks."}
             action="Use this in my free plan"
-            handoff={{ kind: "note", tool: "break-even-roas", label: "Break-even from the ROAS calculator", text: summary }}
+            handoff={(() => {
+              // Example numbers aren't the owner's, so they're never carried into a plan.
+              const e = !s.example && r.ok && be ? economicsFromSale(r.value, be, s.currency, "break-even-roas") : null;
+              return e ? { kind: "economics" as const, tool: "break-even-roas", economics: e } : null;
+            })()}
           />
         )}
       </div>
