@@ -5,17 +5,19 @@ import { authConfig } from "@/lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 // The landing page comparison: the story hero ("story", the default) against
-// the page as it was ("classic"). A visitor is put in one group on their first
-// visit and stays there for 30 days, so the funnel can count plans created per
-// version. HERO_CLASSIC_PERCENT sets the share who see the old page (default
-// 20; 0 turns the comparison off). Crawlers always get the default page.
+// the page as it was ("classic"). Off unless HERO_CLASSIC_PERCENT is set: the
+// story is the landing page, and the old page (the AI-team diagram, with its
+// free-plan button going straight to sign-up) is only shown when a comparison
+// is deliberately switched on. When it is, a visitor is put in one group on
+// their first visit and stays there for 30 days, so the funnel can count
+// plans created per version. Crawlers always get the default page.
 // ?hero=story or ?hero=classic picks one, for checking both.
 const HERO_COOKIE = "mairo_hero";
 const BOT = /bot|crawl|spider|slurp|facebookexternalhit|preview|lighthouse/i;
 
 function classicShare(): number {
-  const n = Number(process.env.HERO_CLASSIC_PERCENT ?? "20");
-  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 20;
+  const n = Number(process.env.HERO_CLASSIC_PERCENT ?? "0");
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
 }
 
 function landing(req: NextRequest): NextResponse {

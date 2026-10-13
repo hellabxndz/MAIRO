@@ -6,13 +6,13 @@
 export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number };
 export type RenderedMedia = {
   renderedAt: string | null;
-  story: Partial<Record<"shop" | "service" | "appointments", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
+  story: Partial<Record<"shop" | "service" | "appointments" | "brands", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
   walkthrough: Partial<Record<"wide" | "narrow", RenderedClip>>;
   captions: { story?: string; walkthrough?: string };
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-13T05:17:57.619Z",
+  "renderedAt": "2026-10-13T19:34:26.598Z",
   "story": {
     "shop": {
       "wide": {
@@ -20,16 +20,16 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "poster": "/walkthrough/story-shop-wide-poster.webp",
         "width": 1140,
         "height": 840,
-        "ms": 20000,
-        "bytes": 982840
+        "ms": 24000,
+        "bytes": 1211394
       },
       "narrow": {
         "mp4": "/walkthrough/story-shop-narrow.mp4",
         "poster": "/walkthrough/story-shop-narrow-poster.webp",
         "width": 540,
         "height": 900,
-        "ms": 20000,
-        "bytes": 694616
+        "ms": 24000,
+        "bytes": 879634
       }
     },
     "service": {
@@ -38,34 +38,34 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "poster": "/walkthrough/story-service-wide-poster.webp",
         "width": 1140,
         "height": 840,
-        "ms": 20000,
-        "bytes": 976621
+        "ms": 24000,
+        "bytes": 1203127
       },
       "narrow": {
         "mp4": "/walkthrough/story-service-narrow.mp4",
         "poster": "/walkthrough/story-service-narrow-poster.webp",
         "width": 540,
         "height": 900,
-        "ms": 20000,
-        "bytes": 676237
+        "ms": 24000,
+        "bytes": 873702
       }
     },
-    "appointments": {
+    "brands": {
       "wide": {
-        "mp4": "/walkthrough/story-appointments-wide.mp4",
-        "poster": "/walkthrough/story-appointments-wide-poster.webp",
+        "mp4": "/walkthrough/story-brands-wide.mp4",
+        "poster": "/walkthrough/story-brands-wide-poster.webp",
         "width": 1140,
         "height": 840,
-        "ms": 20000,
-        "bytes": 987628
+        "ms": 24000,
+        "bytes": 1220502
       },
       "narrow": {
-        "mp4": "/walkthrough/story-appointments-narrow.mp4",
-        "poster": "/walkthrough/story-appointments-narrow-poster.webp",
+        "mp4": "/walkthrough/story-brands-narrow.mp4",
+        "poster": "/walkthrough/story-brands-narrow-poster.webp",
         "width": 540,
         "height": 900,
-        "ms": 20000,
-        "bytes": 690897
+        "ms": 24000,
+        "bytes": 877295
       }
     }
   },

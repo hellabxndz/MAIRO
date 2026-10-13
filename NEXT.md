@@ -3,6 +3,29 @@
 Honest running list of what stands between MAIRO and paying customers.
 Ordered by what blocks what. Updated as things land.
 
+## Waiting to deploy (13 October 2026)
+
+Production is built from `claude/myro-ad-platform-u3ynfe`, which is at
+b430c36 on GitHub. Everything since — the capability matrix, `/tools`, the
+website reader, `/preview`, the story hero and its videos, Website &
+Tracking, suggested ads and video editing, confirmed economics, lead import,
+the brand check — is committed locally and not pushed, so the live site still
+shows the AI-team diagram, sends "free plan" straight to sign-up, and returns
+404 for `/tools`. `docs/REQUIREMENTS-MATRIX.md` lists every requirement
+against what's in the code and what's deployed.
+
+Pushing deploys. `vercel-build` runs four new migrations, all additive:
+`20261101120000_website_tracking`, `20261113120000_suggested_ads`,
+`20261114120000_confirmed_economics` and `20261115120000_video_render`.
+After deploying:
+
+- check `/`, `/preview`, `/tools` and a tool page;
+- `HERO_CLASSIC_PERCENT` now defaults to 0, so everyone sees the story;
+  setting it brings the old page back for that share;
+- video rendering needs the ffmpeg-static binary in the function bundle
+  (traced for `/dashboard/creatives/suggested`) and BLOB_READ_WRITE_TOKEN;
+  render one edited video on a test account to confirm.
+
 ## Blocking a real launch
 
 **1. Test one live Meta campaign — done (10 October 2026).** A campaign built

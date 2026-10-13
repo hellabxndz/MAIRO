@@ -9,9 +9,9 @@ import { db } from "@/lib/db";
 const v = z.enum(["story", "classic"]);
 const event = z.discriminatedUnion("name", [
   z.object({ name: z.literal("hero_view"), props: z.object({ variant: v }) }),
-  z.object({ name: z.literal("hero_example"), props: z.object({ type: z.enum(["shop", "service", "appointments"]), variant: v }) }),
-  z.object({ name: z.literal("hero_chapter"), props: z.object({ chapter: z.enum(["business", "plan", "creative", "approval", "results"]), variant: v }) }),
-  z.object({ name: z.literal("hero_play"), props: z.object({ state: z.enum(["playing", "paused", "replay"]), variant: v }) }),
+  z.object({ name: z.literal("hero_example"), props: z.object({ type: z.enum(["shop", "service", "appointments", "brands"]), variant: v }) }),
+  z.object({ name: z.literal("hero_chapter"), props: z.object({ chapter: z.enum(["business", "understanding", "creatives", "editing", "approval", "results"]), variant: v }) }),
+  z.object({ name: z.literal("hero_play"), props: z.object({ state: z.enum(["playing", "paused", "replay", "invite"]), variant: v }) }),
   z.object({ name: z.literal("preview_start"), props: z.object({ source: z.enum(["url", "manual", "example"]), variant: v }) }),
   z.object({ name: z.literal("preview_result"), props: z.object({ outcome: z.enum(["facts", "failed", "blocked", "manual"]), variant: v }) }),
   z.object({ name: z.literal("preview_complete"), props: z.object({ kind: z.enum(["shop", "service", "appointments"]), variant: v }) }),

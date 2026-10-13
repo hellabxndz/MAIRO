@@ -6,10 +6,14 @@
 //     invented numbers, no forecasts, no place named twice;
 //   - the right event is "needed" for each goal, and the steps before launch
 //     include the visitor's approval and the subscription, at the real price;
-//   - the story's 20-second timeline: the six scenes with the agreed wording,
-//     every fully visible element inside the stage and clear of the "sample
-//     data" label and the caption, in both compositions, and captions that
-//     match the scenes.
+//   - the story's 24-second timeline: the seven scenes with the agreed
+//     wording, six chapters, every fully visible element inside the stage and
+//     clear of the "sample data" label and the caption, in both compositions,
+//     and captions that match the scenes;
+//   - each story example's script: services go lead → qualified → booked,
+//     the shop purchase → confirmed order value; a recommendation with
+//     evidence; and the video edit it shows is one the real editor and
+//     renderer accept (trim to the demonstration, a caption, 9:16).
 //
 //   npm run check:preview   (reads the fixture websites in scripts/fixtures/sites; no network, no database)
 
@@ -19,8 +23,10 @@ import { join } from "node:path";
 import { scanWebsite } from "../src/lib/website/scan";
 import { buildPreview, emptyFacts, factsFromScan, missingFacts, type PreviewFacts } from "../src/lib/preview/build";
 import { exampleFacts } from "../src/lib/preview/example";
-import { EXAMPLES, EXAMPLE_ORDER } from "../src/lib/demo/examples";
+import { EXAMPLES, EXAMPLE_ORDER, HERO_ORDER, PREVIEW_EXAMPLE } from "../src/lib/demo/examples";
 import { CHAPTERS, HERO_DURATION, HERO_SCENES, STAGE, boxes, captionsVtt, restingTime, sceneAt, type ElementId, type Layout } from "../src/lib/demo/timeline";
+import { editsNotInFile, parseEdits, playedRange } from "../src/lib/suggested-ads/video";
+import { renderPlan } from "../src/lib/suggested-ads/render";
 import { PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
 import { RENDERED_MEDIA } from "../src/lib/demo/media";
 import { WALK_CAPTIONS, WALK_CHAPTERS, WALK_DURATION, WALK_SCENES, walkBoxes, walkCaptionsVtt, walkRestingTime, walkSceneAt, type WalkElement } from "../src/lib/demo/walkthrough";
@@ -150,25 +156,27 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
   });
 
   console.log("— the story —");
-  await check("six scenes with the agreed wording, back to back over 20 seconds", () => {
+  await check("seven scenes with the agreed wording, back to back over 24 seconds", () => {
     assert.deepEqual(
       HERO_SCENES.map((s) => s.label),
-      ["Start with your business.", "Build around your offer.", "Explore your campaign.", "Review before launch.", "Understand your results.", "What could MAIRO create for your business?"],
+      ["Start with your business.", "Your offer. Your audience. Your goals.", "See what MAIRO recommends—and why.", "Create a new ad. Or improve your footage.", "Your campaign. Your approval.", "See what's working—and what's next.", "What could MAIRO create for your business?"],
     );
-    assert.deepEqual(HERO_SCENES.map((s) => [s.start, s.end]), [[0, 3000], [3000, 6000], [6000, 10000], [10000, 14000], [14000, 18000], [18000, 20000]]);
-    assert.equal(HERO_DURATION, 20000);
+    assert.deepEqual(HERO_SCENES.map((s) => [s.start, s.end]), [[0, 4000], [4000, 8000], [8000, 13000], [13000, 17000], [17000, 20000], [20000, 22600], [22600, 24000]]);
+    for (let i = 1; i < HERO_SCENES.length; i++) assert.equal(HERO_SCENES[i].start, HERO_SCENES[i - 1].end);
+    assert.equal(HERO_DURATION, 24000);
     assert.equal(sceneAt(0).id, "business");
-    assert.equal(sceneAt(19999).id, "invite");
+    assert.equal(sceneAt(23999).id, "invite");
   });
-  await check("five chapters, each resting on a moment inside its own scene", () => {
-    assert.deepEqual(CHAPTERS.map((c) => c.label), ["Business", "Plan", "Creative", "Approval", "Results"]);
+  await check("six chapters, each resting on a moment inside its own scene", () => {
+    assert.deepEqual(CHAPTERS.map((c) => c.label), ["Business", "Understanding", "Creatives", "Editing", "Approval", "Results"]);
     for (const c of CHAPTERS) assert.equal(sceneAt(restingTime(c.id)).id, c.id);
+    assert.equal(sceneAt(restingTime("invite")).id, "invite");
   });
   await check("captions match the scenes", () => {
     const vtt = captionsVtt();
     assert.ok(vtt.startsWith("WEBVTT"));
     for (const s of HERO_SCENES) assert.ok(vtt.includes(s.label), s.label);
-    assert.ok(vtt.includes("00:00:18.000 --> 00:00:20.000"));
+    assert.ok(vtt.includes("00:00:22.600 --> 00:00:24.000"));
   });
   await check("every fully visible element sits inside the stage, below the sample-data label and above the caption", () => {
     const PEEK = new Set<ElementId>(["c0", "c2"]); // the side concepts peek in from the edges on phones
@@ -188,10 +196,47 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
     }
   });
   await check("the examples' dashboards show sample activity, never revenue, ROAS or customer counts", () => {
-    for (const k of EXAMPLE_ORDER) {
+    for (const k of [...EXAMPLE_ORDER, ...HERO_ORDER]) {
       const ex = EXAMPLES[k];
       assert.ok(ex.url.endsWith(".example"));
       for (const m of ex.dashboard.metrics) assert.doesNotMatch(m.label, /revenue|roas|return|customers|profit/i, `${k}: ${m.label}`);
+      for (const j of ex.story.journey) assert.doesNotMatch(j.label, /revenue|roas|return|customers|profit/i, `${k}: ${j.label}`);
+    }
+  });
+  await check("the story's three examples: online store, service business, multi-brand team", () => {
+    assert.deepEqual(HERO_ORDER.map((k) => EXAMPLES[k].label), ["Online store", "Service business", "Multi-brand team"]);
+    // The team example shows one brand and says brand switching and team sign-off aren't offered.
+    assert.match(EXAMPLES.brands.note ?? "", /switching between brands/i);
+    assert.match(EXAMPLES.brands.note ?? "", /sign-off/i);
+    assert.equal(PREVIEW_EXAMPLE.brands, "appointments");
+    for (const k of HERO_ORDER) assert.ok(PREVIEW_EXAMPLE[k] && EXAMPLE_ORDER.includes(PREVIEW_EXAMPLE[k]), k);
+  });
+  await check("results: services go lead → qualified → booked, the store purchase → confirmed order value; every figure says where it comes from", () => {
+    assert.deepEqual(EXAMPLES.shop.story.journey.map((j) => j.label), ["Purchases", "Confirmed order value"]);
+    for (const k of ["service", "brands"] as const) assert.deepEqual(EXAMPLES[k].story.journey.map((j) => j.label), ["Leads", "Qualified", "Booked"], k);
+    for (const k of HERO_ORDER) {
+      const s = EXAMPLES[k].story;
+      for (const j of s.journey) assert.ok(j.source.trim(), `${k}: ${j.label} has no source`);
+      assert.ok(s.recommendation.evidence.length >= 2, `${k}: a recommendation needs its evidence`);
+      assert.ok(s.recommendation.approve.trim(), `${k}: the recommendation waits for approval`);
+      assert.ok(s.reason.trim() && s.basis.length, `${k}: the recommended test says why`);
+    }
+    assert.equal(EXAMPLES.service.story.reason, "A demonstration makes your service easier to understand.");
+  });
+  await check("the video edit the story shows is one the real editor keeps and the real renderer writes", () => {
+    for (const k of HERO_ORDER) {
+      const v = EXAMPLES[k].story.video;
+      const meta = { durationMs: v.lengthS * 1000, width: 1920, height: 1080 };
+      const asked = { trimStartMs: v.startsAtS * 1000, trimEndMs: null, captions: [{ startMs: v.startsAtS * 1000, endMs: v.startsAtS * 1000 + 3000, text: v.caption }], aspect: "9:16" };
+      const kept = parseEdits(JSON.stringify(asked), meta);
+      assert.deepEqual(kept, asked, `${k}: the editor changed the story's edit`);
+      assert.equal(playedRange(kept, meta).startMs, v.startsAtS * 1000);
+      assert.ok(editsNotInFile(kept).length > 0, `${k}: the edit needs a new file`);
+      const plan = renderPlan({ source: "in.mp4", output: "out.mp4", poster: "p.jpg", assPath: "c.ass", fontsDir: "fonts" }, kept, meta);
+      assert.ok(plan.hasCaptions, k);
+      assert.ok(Math.abs(plan.size.w / plan.size.h - 9 / 16) < 0.01, `${k}: 9:16`); // sides rounded to even pixels
+      assert.equal(plan.args[plan.args.indexOf("-ss") + 1], v.startsAtS.toFixed(3), `${k}: starts at the demonstration`);
+      assert.equal(plan.lengthMs, (v.lengthS - v.startsAtS) * 1000);
     }
   });
 

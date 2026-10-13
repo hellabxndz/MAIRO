@@ -18,7 +18,7 @@ const BASE = [
 
 type Stage = "plan" | "edited" | "approved";
 
-export function FreePlanDemo() {
+export function FreePlanDemo({ cta = { href: "/sign-up", label: "Get Started With MAIRO" } }: { cta?: { href: string; label: string } }) {
   const [stage, setStage] = useState<Stage>("plan");
   const edited = stage !== "plan";
   const value = (k: string, v: string) => (edited && k === "Budget" ? "$30/day" : edited && k === "Platform" ? "Instagram focused" : v);
@@ -43,8 +43,8 @@ export function FreePlanDemo() {
           <div className="mt-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.06] p-4">
             <p className="text-[15px] font-semibold text-emerald-300">Plan Approved ✓</p>
             <p className="mt-1 text-[13px] text-white/70">Next: connect your ad account, then choose a MAIRO plan to activate it.</p>
-            <Link href="/sign-up" className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
-              Get Started With MAIRO <span aria-hidden>→</span>
+            <Link href={cta.href} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
+              {cta.label} <span aria-hidden>→</span>
             </Link>
           </div>
         ) : (

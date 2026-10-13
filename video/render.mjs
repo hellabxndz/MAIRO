@@ -1,4 +1,4 @@
-// Renders the landing story (20 s, three examples, wide and phone) and the
+// Renders the landing story (24 s, three examples, wide and phone) and the
 // 60-second walkthrough (wide and phone) to muted MP4 files, WebP posters and
 // WebVTT captions in public/walkthrough/, then writes src/lib/demo/media.ts
 // listing exactly what was rendered.
@@ -43,7 +43,7 @@ function loadChromium() {
 const STAGE = { wide: { w: 760, h: 560 }, narrow: { w: 360, h: 600 } };
 const jobs = [];
 if (ONLY === "all" || ONLY === "story") {
-  for (const type of ["shop", "service", "appointments"]) for (const layout of ["wide", "narrow"]) jobs.push({ clip: "story", type, layout, ms: 20000, posterAt: 1200, name: `story-${type}-${layout}` });
+  for (const type of ["shop", "service", "brands"]) for (const layout of ["wide", "narrow"]) jobs.push({ clip: "story", type, layout, ms: 24000, posterAt: 1200, name: `story-${type}-${layout}` });
 }
 if (ONLY === "all" || ONLY === "walkthrough") {
   for (const layout of ["wide", "narrow"]) jobs.push({ clip: "walkthrough", type: "service", layout, ms: 60000, posterAt: 36800, name: `walkthrough-${layout}` });
@@ -145,7 +145,7 @@ const header = `// Video files rendered from the landing story and the walkthrou
 export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number };
 export type RenderedMedia = {
   renderedAt: string | null;
-  story: Partial<Record<"shop" | "service" | "appointments", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
+  story: Partial<Record<"shop" | "service" | "appointments" | "brands", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
   walkthrough: Partial<Record<"wide" | "narrow", RenderedClip>>;
   captions: { story?: string; walkthrough?: string };
 };

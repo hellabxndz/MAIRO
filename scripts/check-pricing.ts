@@ -166,7 +166,8 @@ check("the money-and-control facts cover all eight questions", () => {
 });
 
 console.log("\n— the public page —");
-const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+// The landing page itself is a thin route; the page is components/landing/home.tsx.
+const page = readFileSync(new URL("../src/components/landing/home.tsx", import.meta.url), "utf8");
 check("the landing page uses the shared pricing, integration and control data", () => {
   for (const name of ["planStories", "comparison", "alwaysYours", "INTEGRATIONS", "MONEY_AND_CONTROL", "EVERY_PLAN"]) assert.ok(page.includes(name), name);
 });

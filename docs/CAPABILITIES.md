@@ -1046,13 +1046,13 @@ Compare Shopify plans on subscription and card fees for your sales, with the rat
 
 *Public site* · `product-preview`
 
-The landing page's 20-second animated story — a website becoming a profile, three ad directions, placement previews, an owner approval and a results view — on three invented businesses, with chapters, pause, replay and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as an example with sample data.
+The landing page's 24-second animated story in six chapters — a website going into MAIRO; its offer, imagery and call to action becoming what the business sells, who it serves and its goal, which the owner confirms; three ad concepts with one recommended first test and the reason; the draft in the feed and as a story, and the owner's own video trimmed to the demonstration, captioned and cropped to 9:16; a review the owner approves (nothing is sent anywhere); and results with a recommendation and its evidence — for an online store, a service business and a multi-brand team (one brand shown; brand switching and team sign-off aren't offered), with chapters, pause, replay, a hold while the visitor types and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as a product demo with sample data.
 
 **Routes:** `/`, `/landing/classic`
 
-**Verification:** Every view carries the example label; no figure presented as a customer's result; timeline bounds, scenes and captions pinned by check:preview; 390/768/1440, keyboard and reduced motion browser-checked.
+**Verification:** Every view carries the sample-data label; no figure presented as a customer's result; scenes, chapters, bounds, captions, the results steps and the video edit (run through the real editor and renderer) pinned by check:preview; autoplay, chapters, examples, hold while typing, the closing button's hand-over to /preview, 390/768/1440 and reduced motion browser-checked.
 
-**Evidence:** `src/components/hero-story/hero-story.tsx`, `src/components/hero-story/stage.tsx`, `src/lib/demo/timeline.ts`, `src/lib/demo/examples.ts`, `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
+**Evidence:** `src/components/hero-story/hero-story.tsx`, `src/components/hero-story/story-stage.tsx`, `src/lib/demo/timeline.ts`, `src/lib/demo/examples.ts`, `src/components/landing/story-hero.tsx`, `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
 
 **Checks:** `check:capabilities`, `check:preview`
 

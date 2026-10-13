@@ -10,7 +10,7 @@ export type PublicEvent =
   | { name: "hero_view"; props: { variant: string } }
   | { name: "hero_example"; props: { type: string; variant: string } }
   | { name: "hero_chapter"; props: { chapter: string; variant: string } }
-  | { name: "hero_play"; props: { state: "playing" | "paused" | "replay"; variant: string } }
+  | { name: "hero_play"; props: { state: "playing" | "paused" | "replay" | "invite"; variant: string } }
   | { name: "preview_start"; props: { source: "url" | "manual" | "example"; variant: string } }
   | { name: "preview_result"; props: { outcome: "facts" | "failed" | "blocked" | "manual"; variant: string } }
   | { name: "preview_complete"; props: { kind: string; variant: string } }

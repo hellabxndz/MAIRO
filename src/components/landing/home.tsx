@@ -366,7 +366,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             </div>
             <div className="mx-auto mt-6 grid max-w-[1120px] gap-3">
               <Disclosure title="See an example free plan">
-                <FreePlanDemo />
+                <FreePlanDemo cta={story ? cta : undefined} />
               </Disclosure>
               {!story && (
                 <Disclosure title="See how MAIRO would advertise your kind of business">

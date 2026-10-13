@@ -38,6 +38,9 @@ const HOST_PROVIDED = new Set([
   // Vercel injects this into every deployment. metaRedirectUri() prefers it
   // precisely because it cannot be mistyped the way a hand-pasted URL can.
   "VERCEL_PROJECT_PRODUCTION_URL",
+  // Set to "1" on every Vercel build and function; the website reader uses it
+  // to refuse local test fixtures there.
+  "VERCEL",
 ]);
 
 /**

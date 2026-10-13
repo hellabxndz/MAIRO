@@ -19,7 +19,7 @@ export default async function RenderPage({ searchParams }: PageProps<"/demo/rend
         clip={walk ? "walkthrough" : "story"}
         type={walk ? "service" : exampleFrom(typeof type === "string" ? type : null)}
         layout={layout === "narrow" ? "narrow" : "wide"}
-        label={walk ? "Product demo — sample data" : "Example campaign — sample data"}
+        label="Product demo — sample data"
       />
     </div>
   );

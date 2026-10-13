@@ -9,6 +9,7 @@ const EXTRA: Record<ExampleType, Pick<PreviewFacts, "offer" | "proof" | "problem
   shop: { offer: "Free shipping over $60", proof: "Thrown and glazed in our own studio", problem: "", destinations: { booking: null, form: false, phone: false, checkout: true } },
   service: { offer: "Free estimate on every job", proof: "Family-run since 2009. Licensed and insured", problem: "Leak under the sink", destinations: { booking: null, form: false, phone: true, checkout: false } },
   appointments: { offer: "New clients get free fringe trims between cuts", proof: "", problem: "", destinations: { booking: null, form: false, phone: false, checkout: false } },
+  brands: { offer: "New clients get free fringe trims between cuts", proof: "", problem: "", destinations: { booking: null, form: false, phone: false, checkout: false } },
 };
 
 export function exampleFacts(type: ExampleType): PreviewFacts {
@@ -23,7 +24,7 @@ export function exampleFacts(type: ExampleType): PreviewFacts {
     ...extra,
     businessType: ONBOARDING_TYPE[type],
     typeFrom: "example",
-    goal: type === "shop" ? "sales" : type === "appointments" ? "bookings" : "leads",
+    goal: type === "shop" ? "sales" : type === "appointments" || type === "brands" ? "bookings" : "leads",
     pixelSeen: type === "shop" ? true : null,
   });
   for (const k of ["name", "offering", "customer", "location", "offer", "proof", "problem"] as FactKey[]) if (f[k]) f.sources[k] = { from: "example" };

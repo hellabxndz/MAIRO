@@ -5,14 +5,14 @@ import { flushSync } from "react-dom";
 import { EXAMPLES, type ExampleType } from "@/lib/demo/examples";
 import { STAGE, captionsVtt, type Layout } from "@/lib/demo/timeline";
 import { walkCaptionsVtt } from "@/lib/demo/walkthrough";
-import { StoryStage } from "./stage";
+import { STAGE_BACKGROUND, StoryStage } from "./story-stage";
 import { WalkthroughStage } from "@/components/walkthrough/walkthrough-stage";
 
 // One frame of the story (or the 60-second walkthrough) at a time, for the
 // video renderer (video/render.mjs).
 // The renderer sets the time, waits for the paint, and takes a screenshot —
 // so the video is the interactive story, frame for frame, with the same
-// "Example campaign — sample data" label burned in.
+// "Product demo — sample data" label burned in.
 
 declare global {
   interface Window {
@@ -37,6 +37,7 @@ export function RenderFrame({ clip, type, layout, label }: { clip: "story" | "wa
     };
   }, [clip]);
   const { w, h } = STAGE[layout];
+  const walk = clip === "walkthrough";
   return (
     <div
       data-palette="classic"
@@ -44,11 +45,15 @@ export function RenderFrame({ clip, type, layout, label }: { clip: "story" | "wa
       style={{
         width: w,
         height: h,
-        background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(124,92,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(59,107,255,0.12), transparent 70%), #05060d",
+        background: walk ? "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(124,92,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(59,107,255,0.12), transparent 70%), #05060d" : STAGE_BACKGROUND,
       }}
     >
-      {clip === "walkthrough" ? <WalkthroughStage ex={EXAMPLES[type]} t={t} layout={layout} /> : <StoryStage ex={EXAMPLES[type]} t={t} layout={layout} />}
-      <p className="absolute left-3 top-3 z-20 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">{label}</p>
+      {walk ? <WalkthroughStage ex={EXAMPLES[type]} t={t} layout={layout} /> : <StoryStage ex={EXAMPLES[type]} t={t} layout={layout} />}
+      {walk ? (
+        <p className="absolute left-3 top-3 z-20 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">{label}</p>
+      ) : (
+        <p className="absolute left-3 top-3 z-20 rounded-full border border-[#f0c463] bg-[#fff8e6] px-2.5 py-1 text-[11px] font-semibold text-[#7a5200]">{label}</p>
+      )}
     </div>
   );
 }

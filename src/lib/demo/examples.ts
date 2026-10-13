@@ -1,11 +1,16 @@
-// The three fictional businesses the landing-page story shows. Every one is
-// invented, uses a reserved .example address, and is shown under a
-// persistent "Example campaign — sample data" label. The numbers in their
-// dashboards are sample figures that show *where* results appear — never
-// evidence of what MAIRO achieves — and none is revenue, ROAS or a customer
-// count.
+// The fictional businesses the landing-page story, the walkthrough and the
+// preview show. Every one is invented, uses a reserved .example address, and
+// is shown under a persistent "Product demo — sample data" label. The numbers
+// in their dashboards are sample figures that show *where* results appear —
+// never evidence of what MAIRO achieves — and none is revenue, ROAS or a
+// customer count.
+//
+// "brands" is the landing story's multi-brand team. It shows one of the
+// team's brands (the salon), because MAIRO doesn't offer switching between
+// brands or team sign-off in one account — so the story doesn't show either,
+// and says so beside it.
 
-export type ExampleType = "shop" | "service" | "appointments";
+export type ExampleType = "shop" | "service" | "appointments" | "brands";
 
 export type Concept = {
   id: string;
@@ -17,6 +22,25 @@ export type Concept = {
   format: "Short video" | "Picture" | "Carousel";
   /** Which illustration and how it's framed. */
   art: "demo" | "problem" | "offer";
+};
+
+/** What the 24-second landing story shows for this business, scene by scene. */
+export type StoryScript = {
+  /** Understanding: what the website said, as three cards the owner confirms. */
+  cards: { sell: string; serve: string; goal: string };
+  /** Creatives: why the recommended concept is the first test, and what that rests on. */
+  reason: string;
+  basis: string[];
+  /**
+   * Editing: the owner's own clip and the one edit the video editor really
+   * makes — trim the start so it opens on the demonstration, a caption burned
+   * in, cropped to 9:16 — written to a new file, the original kept.
+   */
+  video: { lengthS: number; startsAtS: number; opening: string; demo: string; caption: string };
+  /** Results: what happened after the ads, step by step, with where each figure comes from. */
+  spend: string;
+  journey: { label: string; value: string; source: string }[];
+  recommendation: { title: string; why: string; evidence: string[]; approve: string };
 };
 
 export type DemoMetric = { label: string; value: string; note?: string; unavailable?: boolean };
@@ -43,9 +67,12 @@ export type Example = {
   plan: { channel: string; objective: string; audience: string; why: string; budget: string };
   readiness: { label: string; state: "done" | "needed" | "optional" }[];
   colors: { a: string; b: string; c: string; ink: string; paper: string };
+  story: StoryScript;
+  /** Said beside the landing story when this example is chosen. */
+  note?: string;
 };
 
-export const EXAMPLES: Record<ExampleType, Example> = {
+const BUSINESSES: Record<Exclude<ExampleType, "brands">, Example> = {
   shop: {
     type: "shop",
     label: "Online store",
@@ -83,10 +110,22 @@ export const EXAMPLES: Record<ExampleType, Example> = {
       { label: "Store orders connected", state: "optional" },
     ],
     colors: { a: "#3f6b4f", b: "#e9dcc4", c: "#c2683f", ink: "#24302a", paper: "#f6f1e8" },
+    story: {
+      cards: { sell: "Handmade stoneware mugs, $34", serve: "Coffee lovers, and people buying a gift", goal: "Sell more online" },
+      reason: "Seeing a mug in use shows its size and glaze better than a still photo.",
+      basis: ["Offer: handmade mugs, $34", "Goal: online sales"],
+      video: { lengthS: 18, startsAtS: 6, opening: "The gift box on the shelf", demo: "Coffee poured into a mug", caption: "Made by hand. Used every morning." },
+      spend: "$126",
+      journey: [
+        { label: "Purchases", value: "4", source: "Meta reported" },
+        { label: "Confirmed order value", value: "$148", source: "Your store's orders" },
+      ],
+      recommendation: { title: "Test the free-shipping line next", why: "3 of the 4 orders were over $60, where your free shipping starts.", evidence: ["4 purchases — Meta", "3 orders over $60 — your store", "Free shipping over $60 — your website"], approve: "Approve test" },
+    },
   },
   service: {
     type: "service",
-    label: "Local service",
+    label: "Service business",
     name: "Brightwater Plumbing",
     url: "brightwater-plumbing.example",
     site: { headline: "Leak and drain repair in Eastfield", sub: "Family-run since 2009. Licensed and insured.", nav: ["Services", "Areas", "Contact"], button: "Get a quote" },
@@ -121,6 +160,19 @@ export const EXAMPLES: Record<ExampleType, Example> = {
       { label: "Pixel on your website", state: "optional" },
     ],
     colors: { a: "#123a6b", b: "#3b82f6", c: "#f5b83d", ink: "#10233f", paper: "#f3f7fc" },
+    story: {
+      cards: { sell: "Same-week leak and drain repair", serve: "Homeowners within 15 miles of Eastfield", goal: "More qualified leads" },
+      reason: "A demonstration makes your service easier to understand.",
+      basis: ["Offer: same-week repair", "Goal: qualified leads"],
+      video: { lengthS: 20, startsAtS: 6, opening: "The van pulling up", demo: "Finding the leak under the sink", caption: "Leak under the sink? We'll find it." },
+      spend: "$140",
+      journey: [
+        { label: "Leads", value: "11", source: "MAIRO counted" },
+        { label: "Qualified", value: "6", source: "You marked" },
+        { label: "Booked", value: "2", source: "You marked" },
+      ],
+      recommendation: { title: "Ask which area the job is in", why: "3 of the 5 leads you didn't qualify were outside your 15-mile area.", evidence: ["11 leads, 6 qualified — marked by you", "3 outside 15 miles — from the form", "Service area: 15 miles — confirmed by you"], approve: "Approve change" },
+    },
   },
   appointments: {
     type: "appointments",
@@ -159,14 +211,44 @@ export const EXAMPLES: Record<ExampleType, Example> = {
       { label: "Store orders", state: "optional" },
     ],
     colors: { a: "#4b2142", b: "#e8b4bc", c: "#c9a227", ink: "#2b1326", paper: "#fbf4f4" },
+    story: {
+      cards: { sell: "Cut & finish, booked online", serve: "New clients within a short drive", goal: "More bookings" },
+      reason: "A finished cut shows the result people book for.",
+      basis: ["Offer: cut & finish", "Goal: bookings"],
+      video: { lengthS: 16, startsAtS: 5, opening: "Scissors and comb on the counter", demo: "The finished look in the mirror", caption: "A cut that's still right in week six." },
+      spend: "$98",
+      journey: [
+        { label: "Leads", value: "9", source: "MAIRO counted" },
+        { label: "Qualified", value: "8", source: "You marked" },
+        { label: "Booked", value: "7", source: "You marked" },
+      ],
+      recommendation: { title: "Raise the budget to $20 a day", why: "Bookings cost $14 each — under the $25 you said a booking can cost.", evidence: ["7 bookings — marked by you", "$98 spent — Meta", "Most a booking can cost: $25 — your calculator"], approve: "Approve budget" },
+    },
   },
 };
 
+// The multi-brand team: one of its brands, the salon, with a note that
+// switching brands and team sign-off aren't offered — never pictured.
+export const EXAMPLES: Record<ExampleType, Example> = {
+  ...BUSINESSES,
+  brands: {
+    ...BUSINESSES.appointments,
+    type: "brands",
+    label: "Multi-brand team",
+    note: "Shown for one of the team's brands. Switching between brands and team sign-off aren't available in MAIRO yet, so this story doesn't show them.",
+  },
+};
+
+/** The preview's and the walkthrough's examples: three businesses. */
 export const EXAMPLE_ORDER: ExampleType[] = ["shop", "service", "appointments"];
+/** The landing story's examples, as the visitor picks them. */
+export const HERO_ORDER: ExampleType[] = ["shop", "service", "brands"];
+/** The preview example that matches each story example — the team's brand is the salon. */
+export const PREVIEW_EXAMPLE: Record<ExampleType, ExampleType> = { shop: "shop", service: "service", appointments: "appointments", brands: "appointments" };
 
 export function exampleFrom(raw: string | null | undefined): ExampleType {
-  return raw === "shop" || raw === "service" || raw === "appointments" ? raw : "service";
+  return raw === "shop" || raw === "service" || raw === "appointments" || raw === "brands" ? raw : "service";
 }
 
 /** The business type in setup that matches each example, carried into onboarding. */
-export const ONBOARDING_TYPE: Record<ExampleType, string> = { shop: "ecommerce", service: "home_services", appointments: "beauty" };
+export const ONBOARDING_TYPE: Record<ExampleType, string | null> = { shop: "ecommerce", service: "home_services", appointments: "beauty", brands: null };

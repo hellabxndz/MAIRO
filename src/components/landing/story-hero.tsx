@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { HeroStory } from "@/components/hero-story/hero-story";
-import { type ExampleType } from "@/lib/demo/examples";
+import { ONBOARDING_TYPE, PREVIEW_EXAMPLE, type ExampleType } from "@/lib/demo/examples";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 
 // The landing page's first screen: what MAIRO does in one line, the website
-// box that starts a real preview, and the 20-second story beside it. One
+// box that starts a real preview, and the 24-second story beside it. One
 // primary action — "Preview my campaign" — and the form works without
-// JavaScript (it's a plain GET to /preview).
+// JavaScript (it's a plain GET to /preview). The story holds still while the
+// visitor types, and its closing button hands over to this form: it sends
+// what was typed, or puts the cursor in the box if nothing was.
 //
 // The headline promises a preview, and /preview delivers one: the visitor's
 // own website read, facts confirmed, a first draft of the campaign. Nothing
@@ -21,6 +23,20 @@ export function StoryHero() {
   const [type, setType] = useState<ExampleType>("service");
   // Only an example the visitor picked is carried into the preview as a hint — never the default.
   const [picked, setPicked] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  // The team example implies no business type; the others carry theirs as a hint.
+  const typeHint = picked && ONBOARDING_TYPE[type] ? type : null;
+  const fromStory = () => {
+    const el = input.current;
+    if (!el) return;
+    if (el.value.trim()) form.current?.requestSubmit();
+    else {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.focus({ preventScroll: true });
+    }
+  };
   return (
     <section id="product" aria-labelledby="hero-title" data-palette="classic" className="relative isolate scroll-mt-20 overflow-hidden bg-[#05060d] pb-16 pt-[96px] text-white sm:pb-20 sm:pt-[116px]">
       {/* Near-black with a cosmic violet glow and a faint, static star field — nothing that moves behind the story. */}
@@ -37,10 +53,13 @@ export function StoryHero() {
             Give MAIRO your website. Preview a campaign built around your business, then decide what happens next.
           </p>
 
-          <form action="/preview" method="get" className="mt-7">
+          <form ref={form} action="/preview" method="get" className="mt-7">
             <label htmlFor="hero-website" className="block text-[13.5px] font-medium text-white/90">Enter your business website</label>
             <div className="mt-2 flex flex-col gap-2.5 rounded-[22px] border border-white/12 bg-white/[0.04] p-2 sm:flex-row sm:items-center sm:rounded-full">
               <input
+                ref={input}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTyping(false)}
                 id="hero-website"
                 name="website"
                 required
@@ -50,14 +69,14 @@ export function StoryHero() {
                 placeholder="yourbusiness.com"
                 className="min-h-[50px] w-full min-w-0 flex-1 rounded-full bg-transparent px-4 text-[16px] text-white placeholder:text-white/40 outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/60"
               />
-              {picked && <input type="hidden" name="type" value={type} />}
+              {typeHint && <input type="hidden" name="type" value={typeHint} />}
               <button type="submit" className="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_44px_-12px_rgba(124,92,255,0.95)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c4b5fd]">
                 Preview my campaign <span aria-hidden>→</span>
               </button>
             </div>
           </form>
           <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[14px]">
-            <Link href={`/preview?example=${type}`} className="font-medium text-[#c4b5fd] underline-offset-4 hover:text-white hover:underline">Try an example</Link>
+            <Link href={`/preview?example=${PREVIEW_EXAMPLE[type]}`} className="font-medium text-[#c4b5fd] underline-offset-4 hover:text-white hover:underline">Try an example</Link>
             <Link href="/preview?manual=1" className="text-white/70 underline-offset-4 hover:text-white hover:underline">No website? Describe your business</Link>
           </p>
 
@@ -82,6 +101,8 @@ export function StoryHero() {
         <div className="mx-auto w-full min-w-0 max-w-[880px] xl:max-w-none">
           <HeroStory
             initialType="service"
+            hold={typing}
+            onInvite={fromStory}
             onTypeChange={(t) => {
               setType(t);
               setPicked(true);

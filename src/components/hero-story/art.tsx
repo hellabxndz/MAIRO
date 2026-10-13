@@ -20,6 +20,7 @@ const LABEL: Record<ExampleType, Record<Variant, string>> = {
   shop: { demo: "A handmade stoneware mug of coffee on a wooden table", problem: "Two sturdy stoneware mugs on a shelf", offer: "A gift box with two mugs", site: "A handmade stoneware mug on a table" },
   service: { demo: "Pipes under a kitchen sink with a wrench", problem: "A pipe joint being tightened with a wrench", offer: "A plumber's van and a written estimate", site: "A plumber's tools under a sink" },
   appointments: { demo: "A salon chair in front of a round mirror", problem: "A phone showing an online booking calendar", offer: "Scissors and a comb with a gift tag", site: "A bright hair salon" },
+  brands: { demo: "A salon chair in front of a round mirror", problem: "A phone showing an online booking calendar", offer: "Scissors and a comb with a gift tag", site: "A bright hair salon" },
 };
 
 function ShopArt({ variant }: { variant: Variant }) {

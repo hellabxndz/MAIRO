@@ -10,7 +10,8 @@ import { Wordmark } from "@/components/wordmark";
 // fold into a menu. Everything else lives in the footer.
 //
 // "Free Tools" appears only once at least one tool works (toolsLive), so the
-// bar never leads to an empty hub.
+// bar never leads to an empty hub. The call to action is the free preview —
+// the visitor's own website first, an account only when they want to save.
 
 const linksFor = (toolsLive: boolean, productHref: string) => [
   { href: productHref, label: "Product" },
@@ -21,8 +22,8 @@ const linksFor = (toolsLive: boolean, productHref: string) => [
 
 export function LandingNav({
   toolsLive = false,
-  cta = { href: "/sign-up", label: "Build my free ad plan" },
-  productHref = "/#product-preview",
+  cta = { href: "/preview", label: "Preview my campaign" },
+  productHref = "/#product",
   dark = false,
 }: {
   toolsLive?: boolean;

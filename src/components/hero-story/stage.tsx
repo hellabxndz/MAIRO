@@ -1,12 +1,12 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Example } from "@/lib/demo/examples";
-import { boxes, camera, reveal, sceneAt, STAGE, type Box, type Layout, type Scene, HERO_SCENES } from "@/lib/demo/timeline";
+import { reveal, type Box } from "@/lib/demo/timeline";
 import { BusinessArt } from "./art";
 
-// One frame of the landing-page story: a pure function of time, example and
-// layout. Shared elements carry across scenes — the website becomes the
-// profile, the profile becomes the strip the concepts grow out of, the chosen
-// concept becomes the feed preview, the review panel opens into the dashboard.
+// The pieces of the 60-second walkthrough (components/walkthrough), drawn on
+// a dark surface: the website, the website box, concepts, the feed and story
+// previews, the review and the dashboard. The landing story's own scenes are
+// in story-stage.tsx; it borrows Layer and the two ad previews from here.
 //
 // Everything visible is labelled sample data. Nothing here is clickable: it's
 // a picture of the product, kept apart from the real preview controls.
@@ -96,45 +96,6 @@ export function InputPill({ ex, t, invite = false }: { ex: Example; t: number; i
   );
 }
 
-function Profile({ ex, t, strip }: { ex: Example; t: number; strip: boolean }) {
-  const rows = [
-    { k: "Offer", v: ex.profile.offer, at: 4000 },
-    { k: "Audience", v: ex.profile.audience, at: 4450 },
-    { k: "Location", v: ex.profile.location, at: 4900 },
-    { k: "Brand style", v: ex.profile.style, at: 5300, swatches: true },
-  ];
-  if (strip) {
-    return (
-      <div className="flex h-full items-center gap-2 overflow-hidden rounded-2xl px-3" style={surface}>
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c4b5fd]">Built on</span>
-        {rows.slice(0, 3).map((r) => <span key={r.k} className="truncate rounded-full bg-white/[0.07] px-2.5 py-1 text-[11.5px] text-white/90">{r.v}</span>)}
-        <span className="flex shrink-0 gap-1">{ex.profile.swatches.map((s) => <span key={s} className="h-3.5 w-3.5 rounded-full" style={{ background: s }} />)}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex h-full flex-col rounded-2xl p-4" style={surface}>
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">Business profile</p>
-      <p className="mt-0.5 text-[16px] font-semibold text-white">{ex.name}</p>
-      <ul className="mt-3 space-y-2.5">
-        {rows.map((r) => {
-          const o = reveal(t, r.at, r.at + 400);
-          return (
-            <li key={r.k} className="rounded-xl bg-white/[0.05] px-3 py-2" style={{ opacity: 0.25 + 0.75 * o, transform: `translateY(${(1 - o) * 6}px)` }}>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-white/50">{r.k}</p>
-              <div className="mt-0.5 flex items-center justify-between gap-2">
-                <p className="text-[13px] leading-snug text-white">{o > 0.05 ? r.v : "…"}</p>
-                {r.swatches && o > 0.05 && <span className="flex shrink-0 gap-1">{ex.profile.swatches.map((s) => <span key={s} className="h-4 w-4 rounded-full ring-1 ring-white/20" style={{ background: s }} />)}</span>}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="mt-auto pt-2 text-[11px] text-white/55">From the website · the owner confirms or corrects each line</p>
-    </div>
-  );
-}
-
 export function ConceptCard({ ex, i, t, selected, ringAt = 8000, hook }: { ex: Example; i: number; t: number; selected: boolean; ringAt?: number; hook?: string }) {
   const c = ex.concepts[i];
   const ring = selected ? reveal(t, ringAt, ringAt + 600) : 0;
@@ -191,7 +152,7 @@ export function StoryPreview({ ex, hook }: { ex: Example; hook?: string }) {
       <div className="absolute bottom-[20%] left-0 right-0 border-t border-dashed border-white/25" />
       <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5">
         <span className="h-5 w-5 rounded-full ring-2 ring-white" style={{ background: ex.colors.a }} />
-        <span className="text-[10px] font-semibold text-white">{ex.name}</span>
+        <span className="max-w-[58%] truncate text-[10px] font-semibold text-white">{ex.name}</span>
       </div>
       <p className="absolute left-3 right-3 top-[22%] text-[15px] font-extrabold leading-tight text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>{hook ?? c.hook}</p>
       <span className="absolute bottom-[8%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-black">{c.cta}</span>
@@ -239,9 +200,8 @@ function countedValue(label: string, value: string, movesTo: string, moved: bool
 }
 
 export type DashboardTimes = { metrics: number; lead: number; move: number; next: number };
-const HERO_DASHBOARD: DashboardTimes = { metrics: 14900, lead: 15600, move: 16200, next: 16500 };
 
-export function Dashboard({ ex, t, narrow, times = HERO_DASHBOARD }: { ex: Example; t: number; narrow: boolean; times?: DashboardTimes }) {
+export function Dashboard({ ex, t, narrow, times }: { ex: Example; t: number; narrow: boolean; times: DashboardTimes }) {
   const d = ex.dashboard;
   const moved = t >= times.move;
   return (
@@ -276,52 +236,6 @@ export function Dashboard({ ex, t, narrow, times = HERO_DASHBOARD }: { ex: Examp
         <p className="mt-1 text-[11.5px] leading-snug text-white/70">{d.next.why}</p>
         <p className="mt-1 text-[10.5px] text-white/50">{d.next.when}</p>
       </div>
-    </div>
-  );
-}
-
-function Invite({ ex }: { ex: Example }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-      <p className="text-[22px] font-bold leading-tight tracking-[-0.02em] text-white">What could MAIRO create for your business?</p>
-      <div className="h-[52px] w-full"><InputPill ex={ex} t={0} invite /></div>
-    </div>
-  );
-}
-
-export function StoryStage({ ex, t, layout, scenes = HERO_SCENES, showCaption = true }: { ex: Example; t: number; layout: Layout; scenes?: Scene[]; showCaption?: boolean }) {
-  const b = boxes(t, layout);
-  const cam = camera(t);
-  const narrow = layout === "narrow";
-  const scene = sceneAt(t, scenes);
-  const others = [0, 1, 2].filter((i) => i !== ex.selected);
-  const feedMix = reveal(t, 10000, 10800);
-  const { w, h } = STAGE[layout];
-  const captionO = reveal(t, scene.start, scene.start + 350) * (1 - reveal(t, scene.end - 250, scene.end));
-  return (
-    <div className="relative" style={{ width: w, height: h }}>
-      <div className="absolute inset-0" style={{ perspective: 1400 }}>
-        <div className="absolute inset-0" style={{ transform: `rotateX(${cam.rx}deg) rotateY(${cam.ry}deg) scale(${cam.s})`, transformStyle: "preserve-3d" }}>
-          <Layer b={b.browser}><Browser ex={ex} t={t} narrow={narrow} /></Layer>
-          <Layer b={b.input}><InputPill ex={ex} t={t} /></Layer>
-          <Layer b={b.profile}><Profile ex={ex} t={t} strip={b.profile.h < 120} /></Layer>
-          <Layer b={b.c0}><ConceptCard ex={ex} i={others[0]} t={t} selected={false} /></Layer>
-          <Layer b={b.c2}><ConceptCard ex={ex} i={others[1]} t={t} selected={false} /></Layer>
-          <Layer b={b.c1} style={{ borderRadius: 18 }}>
-            <div className="absolute inset-0" style={{ opacity: 1 - feedMix }}><ConceptCard ex={ex} i={ex.selected} t={t} selected /></div>
-            {feedMix > 0.01 && <div className="absolute inset-0" style={{ opacity: feedMix }}><FeedPreview ex={ex} /></div>}
-          </Layer>
-          <Layer b={b.story}><StoryPreview ex={ex} /></Layer>
-          <Layer b={b.review}><Review ex={ex} t={t} compact={narrow} /></Layer>
-          <Layer b={b.dashboard}><Dashboard ex={ex} t={t} narrow={narrow} /></Layer>
-          <Layer b={b.invite} className="overflow-visible"><Invite ex={ex} /></Layer>
-        </div>
-      </div>
-      {showCaption && (
-        <p aria-hidden className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-[13px] font-semibold tracking-[0.01em] text-white" style={{ opacity: captionO }}>
-          <span className="rounded-full bg-black/55 px-3 py-1.5">{scene.label}</span>
-        </p>
-      )}
     </div>
   );
 }
