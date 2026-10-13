@@ -320,11 +320,17 @@ export async function approveCreative(
  * a campaign; a winner is named only when the evidence supports one.
  */
 async function proposeTest(organizationId: string) {
+  // One test at a time: while one is approved or running, its versions stay as they were approved.
+  const open = await db.creativeExperiment.count({ where: { organizationId, status: { in: ["APPROVED", "RUNNING"] } } });
+  if (open > 0) return;
   const approved = await db.creativeApproval.findMany({ where: { organizationId, revokedAt: null }, orderBy: { approvedAt: "asc" } });
   if (approved.length < 2) return;
   const angles = await db.adAngle.findMany({ where: { organizationId, id: { in: approved.map((a) => a.angleId) } }, select: { id: true, title: true } });
   const title = (id: string) => angles.find((a) => a.id === id)?.title ?? "A direction";
-  const variants = approved.slice(0, 3).map((a) => ({ label: title(a.angleId), angleRevisionId: a.angleRevisionId, studioVersionId: a.studioVersionId ?? undefined }));
+  // Two versions: a fair comparison that small budgets can still decide. The recommended direction goes first — its picture is the one both versions use.
+  const recommended = await db.adAngle.findFirst({ where: { organizationId, recommended: true, id: { in: approved.map((a) => a.angleId) } }, select: { id: true } }).catch(() => null);
+  const ordered = recommended ? [...approved.filter((a) => a.angleId === recommended.id), ...approved.filter((a) => a.angleId !== recommended.id)] : approved;
+  const variants = ordered.slice(0, 2).map((a) => ({ label: title(a.angleId), angleRevisionId: a.angleRevisionId, studioVersionId: a.studioVersionId ?? undefined }));
   const hypothesis = `Which opening brings more of the results you want: ${variants.map((v) => v.label.toLowerCase()).join(" or ")}?`;
   const existing = await db.creativeExperiment.findFirst({ where: { organizationId, status: "PROPOSED", mairoCampaignId: null, variable: "hook" } });
   if (existing) await db.creativeExperiment.update({ where: { id: existing.id }, data: { hypothesis, variantsJson: JSON.stringify(variants) } });
@@ -340,13 +346,31 @@ async function proposeTest(organizationId: string) {
  * nothing spends until the owner presses Launch at the end of the builder.
  */
 export async function draftFromApproval(organizationId: string, userId: string, angleId: string): Promise<{ ok: true; draftId: string } | { ok: false; error: string }> {
+  // Checked first: an ad changed since it was approved can't continue, even to a draft made earlier.
+  const built = await planFromApproval(organizationId, angleId);
+  if (!built.ok) return built;
+  const existing = await db.campaignDraft.findFirst({ where: { organizationId, data: { path: ["suggestedApprovalId"], equals: built.approvalId } }, select: { id: true } });
+  if (existing) return { ok: true, draftId: existing.id };
+  const draft = await db.campaignDraft.create({
+    data: { organizationId, createdByUserId: userId, service: "meta", step: "business", label: `Suggested ad — ${built.title}`.slice(0, 120), data: JSON.parse(JSON.stringify(built.plan)) },
+    select: { id: true },
+  });
+  return { ok: true, draftId: draft.id };
+}
+
+/**
+ * The campaign plan for one approved direction — its exact words and picture
+ * or video — without saving it. Shared by "continue to a campaign" and by a
+ * creative test, which adds a second direction's words to the same picture.
+ */
+export async function planFromApproval(
+  organizationId: string,
+  angleId: string,
+): Promise<{ ok: true; plan: CampaignPlan & { suggestedApprovalId: string }; title: string; approvalId: string } | { ok: false; error: string }> {
   const approval = await db.creativeApproval.findFirst({ where: { organizationId, angleId, revokedAt: null }, orderBy: { approvedAt: "desc" } });
   if (!approval) return { ok: false, error: "Approve this ad first." };
   const view = (await listSuggestions(organizationId)).directions.find((d) => d.id === angleId);
   if (!view?.words || view.approval?.state !== "current") return { ok: false, error: "This ad changed since you approved it. Review it and approve again." };
-
-  const existing = await db.campaignDraft.findFirst({ where: { organizationId, data: { path: ["suggestedApprovalId"], equals: approval.id } }, select: { id: true } });
-  if (existing) return { ok: true, draftId: existing.id };
 
   const [org, { facts }] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { name: true, website: true, defaultMessageChannel: true } }),
@@ -384,11 +408,7 @@ export async function draftFromApproval(organizationId: string, userId: string, 
     chosenCopy: 0,
     suggestedApprovalId: approval.id,
   };
-  const draft = await db.campaignDraft.create({
-    data: { organizationId, createdByUserId: userId, service: "meta", step: "business", label: `Suggested ad — ${view.title}`.slice(0, 120), data: JSON.parse(JSON.stringify(plan)) },
-    select: { id: true },
-  });
-  return { ok: true, draftId: draft.id };
+  return { ok: true, plan, title: view.title, approvalId: approval.id };
 }
 
 /** The test MAIRO proposed once two directions were approved, if any — for "How MAIRO learns which works". */

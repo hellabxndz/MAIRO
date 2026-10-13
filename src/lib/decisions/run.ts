@@ -4,6 +4,7 @@ import { DONT_REPEAT_DAYS, withoutRepeats } from "@/lib/coach/verdict";
 import { gatherDecisionInput } from "./gather";
 import { allDrafts, decide } from "./rules";
 import { effectiveLevel, expireStale, parseChanges, persistDrafts } from "./store";
+import { campaignsUnderTest } from "@/lib/experiments/store";
 import { limitProblem, mayAutoApply } from "./guardrails";
 import { applyDecision } from "./apply";
 import type { DataStatus } from "./types";
@@ -83,8 +84,12 @@ export async function refreshDecisions(
     where: { organizationId, verdict: "WORSENED", decidedAt: { gte: new Date(now.getTime() - DONT_REPEAT_DAYS * 86_400_000) } },
     select: { kind: true, mairoCampaignId: true, decidedAt: true },
   });
+  // A campaign running a creative test is judged by the test: its ads aren't
+  // switched off or replaced by the daily rules while the test is collecting
+  // evidence, so a lucky early week can't end it.
+  const underTest = await campaignsUnderTest(organizationId);
   const merged = withoutRepeats(
-    mergeDrafts(run.decisions, engine),
+    mergeDrafts(run.decisions, engine).filter((d) => !(d.mairoCampaignId && underTest.has(d.mairoCampaignId) && d.category === "CREATIVE")),
     worsened.map((w) => ({ kind: w.kind, mairoCampaignId: w.mairoCampaignId, at: w.decidedAt! })),
     now,
   ).kept;
@@ -109,9 +114,10 @@ export async function refreshDecisions(
   const coachIds = coach?.ok ? coach.decisionIds : [];
 
   // Only daily decisions expire here; a One-Click Fix proposal is the
-  // customer's open question and waits for their answer.
+  // customer's open question and waits for their answer — and so does a
+  // finished creative test's proposal, which rests on the test's own evidence.
   const assistant = await db.mairoDecision.findMany({
-    where: { organizationId, status: "PENDING", source: "assistant" },
+    where: { organizationId, status: "PENDING", OR: [{ source: "assistant" }, { dedupeKey: { startsWith: "experiment:" } }] },
     select: { id: true },
   });
   await expireStale(organizationId, [...ids, ...coachIds, ...assistant.map((a) => a.id)]);

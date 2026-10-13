@@ -24,6 +24,7 @@ import {
 } from "@/lib/budget/allocation";
 import { createMairoCampaign, type CampaignAdInput } from "@/lib/campaigns/launch";
 import { resolveCampaignAds } from "@/lib/campaigns/campaign-ads-input";
+import { linkExperimentCampaign } from "@/lib/experiments/store";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import {
   END_PROBLEM_MESSAGE,
@@ -488,6 +489,8 @@ export async function createCampaignAction(
       await linkBuiltCampaign(organizationId, claimedDraft, outcome.mairoCampaignId);
       // A draft MAIRO made from the mission: the campaign carries its objective and reason.
       await linkMissionCampaign(organizationId, claimedDraft, outcome.mairoCampaignId);
+      // A draft made for a creative test: the test now knows which ad is which version.
+      await linkExperimentCampaign(organizationId, claimedDraft, outcome.mairoCampaignId).catch((error) => console.error("Linking a creative test failed:", error));
       await db.campaignDraft.deleteMany({ where: { id: claimedDraft, organizationId } });
       revalidatePath("/dashboard/create");
     } else {

@@ -35,7 +35,7 @@ or a public page makes a claim this inventory can't back.
 | Creative | Your own pictures and videos | Partially working | `/dashboard/create` | BLOB_READ_WRITE_TOKEN | `check:ads`, `check:creative-studio` |
 | Creative | Brand details and brand check | Partially working | `/dashboard/settings/business-brain`, `/dashboard/create`, `/dashboard/creatives/suggested` | Approved asset library | `check:brand`, `check:brain`, `check:suggested-ads` |
 | Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
-| Creative | Creative tests | Unavailable | — | Experiment workflow and evidence thresholds | `check:suggested-ads` |
+| Creative | Creative tests | Partially working | `/dashboard/creatives/suggested`, `/dashboard/decisions` | A live test on a real ad account | `check:experiments`, `check:suggested-ads`, `check:decisions` |
 | Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads` |
 | Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN | `check:suggested-ads`, `check:video-render` |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
@@ -680,7 +680,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (18)
+## Partially working (19)
 
 ### Reading the business's website
 
@@ -857,6 +857,26 @@ Shows the ad as Meta renders it in the feed, Stories and Reels before anything i
 **Evidence:** `src/lib/meta/previews.ts`, `src/app/dashboard/create/[service]/ad-preview.tsx`, `src/lib/actions/suggested-ads-actions.ts`
 
 **Checks:** `check:ads`
+
+**Public claim:** none — not advertised
+
+### Creative tests
+
+*Creative* · `creative-experiments`
+
+Once two suggested ads are approved, MAIRO proposes a fair test: the same picture or video, budget and audience, with only the words different. The owner approves it, MAIRO makes the campaign draft with both versions as separate ads, and the owner launches it as usual. Each day MAIRO reads Meta's per-ad results and calls a winner only after a week, 20+ results and a gap chance is unlikely to explain; it says so when the ads are about the same, when Meta gave one too little budget to judge, or when four weeks weren't enough. A winner adds a proposal to switch off the other ad, which waits for the owner's approval.
+
+**Condition:** Needs a connected Meta ad account, two approved suggested ads, and the test campaign launched and running.
+
+**Routes:** `/dashboard/creatives/suggested`, `/dashboard/decisions`
+
+**Still needs:** A live test on a real ad account
+
+**Verification:** check:experiments pins the evidence rules and runs the lifecycle on the database with simulated per-ad figures: started only when live, concluded once, the switch-off proposal pending, daily rules kept off the test's ads, isolation between businesses. Not yet run on a real ad account.
+
+**Evidence:** `src/lib/experiments/verdict.ts`, `src/lib/experiments/store.ts`, `src/lib/actions/experiment-actions.ts`, `src/app/dashboard/creatives/suggested/experiment-panel.tsx`, `src/app/api/cron/review/route.ts`
+
+**Checks:** `check:experiments`, `check:suggested-ads`, `check:decisions`
 
 **Public claim:** none — not advertised
 
@@ -1076,7 +1096,7 @@ A 60-second interactive walkthrough of the owner journey on a sample business �
 
 **Public claim:** none — not advertised
 
-## Unavailable (6)
+## Unavailable (5)
 
 ### TikTok ads
 
@@ -1101,22 +1121,6 @@ Not built.
 **Evidence:** `src/lib/pricing/compare.ts#other-ads`
 
 **Checks:** `check:pricing`
-
-**Public claim:** none — not advertised
-
-### Creative tests
-
-*Creative* · `creative-experiments`
-
-Once two suggested ads are approved, MAIRO writes down a proposed test — the question and the exact versions it would compare. Running it and naming a winner aren't built; the page says so.
-
-**Still needs:** Experiment workflow and evidence thresholds
-
-**Verification:** No winner named on thin evidence; results tied to exact published versions.
-
-**Evidence:** `prisma/schema.prisma#CreativeExperiment`, `src/lib/suggested-ads/store.ts`
-
-**Checks:** `check:suggested-ads`
 
 **Public claim:** none — not advertised
 

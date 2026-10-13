@@ -6,6 +6,7 @@ import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
+import { checkAllExperiments } from "@/lib/experiments/store";
 import { sweepStuckRuns } from "@/lib/team/runs";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
@@ -100,6 +101,14 @@ export async function GET(req: Request) {
   // businesses whose month had advertising in it.
   const reports = await announceMonthlyReports();
 
+  // Creative tests: each open test's per-ad figures, checked against the
+  // evidence rules. Before the decisions run, so a test that just ended has
+  // its proposal in place and a running test keeps its ads from the rules.
+  const experiments = await checkAllExperiments(new Date(), Math.min(10_000, left())).catch((error) => {
+    console.error("Creative test cron failed:", error);
+    return null;
+  });
+
   // MAIRO Decisions' daily look, oldest-checked accounts first, for as long as
   // the run allows; anyone not reached today is first tomorrow, and is
   // refreshed when they next open the dashboard.
@@ -153,5 +162,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, ms: Date.now() - startedAt });
 }

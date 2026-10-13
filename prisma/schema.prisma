@@ -3684,13 +3684,22 @@ model CreativeExperiment {
   endsAt          DateTime?
   approvedAt      DateTime?
   approvedById    String?
-  /// The verdict and the figures it rests on (JSON), once concluded.
+  /// The latest figures and verdict (JSON): updated at each daily check while
+  /// running, final once concluded. Never written from anything but Meta's
+  /// per-ad figures for the test's own campaign.
   resultJson      String?      @db.Text
   conclusion      String?      @db.Text
+  /// The campaign draft MAIRO made for the test, until it's built.
+  campaignDraftId String?
+  /// When the figures were last read.
+  checkedAt       DateTime?
+  /// The proposed "switch off the weaker ad" decision, once there's a winner.
+  decisionId      String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   @@index([organizationId, status])
+  @@index([organizationId, campaignDraftId])
 }
 
 /// A step in the sign-up-to-results funnel, for measuring where people stop.

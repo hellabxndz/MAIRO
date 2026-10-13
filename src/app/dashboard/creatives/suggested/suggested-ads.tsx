@@ -25,13 +25,15 @@ import {
   suggestedPreviewAction,
   type CreditQuote,
 } from "@/lib/actions/suggested-ads-actions";
-import type { listSuggestions, proposedTest } from "@/lib/suggested-ads/store";
+import type { listSuggestions } from "@/lib/suggested-ads/store";
+import type { ExperimentView } from "@/lib/experiments/store";
+import { ExperimentPanel } from "./experiment-panel";
 import { VideoEditor } from "./video-editor";
 import { PLACEMENTS, PlacementMock, type MockMedia, type Placement } from "./placements";
 
 type Data = Awaited<ReturnType<typeof listSuggestions>>;
 type Dir = Data["directions"][number];
-type Test = Awaited<ReturnType<typeof proposedTest>>;
+type Test = ExperimentView | null;
 type Panel = { kind: "create" | "edit" | "video" | "review"; id: string } | null;
 
 const CTA_CHOICES = ["Shop now", "Get a quote", "Book now", "Learn more", "Contact us", "Order now", "Sign up"];
@@ -104,7 +106,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
         {notice && <p role="status" className="text-[12.5px] text-muted">{notice}</p>}
       </div>
 
-      <Learn test={test} approved={data.directions.filter((d) => d.approval?.state === "current").length} />
+      <ExperimentPanel test={test} approved={data.directions.filter((d) => d.approval?.state === "current").length} paid={paid} />
 
       {current && panel?.kind === "create" && (
         <CreateDialog d={current} paid={paid} available={imagesAvailable} onClose={close} onMade={() => setPanel({ kind: "review", id: current.id })} onVideo={() => setPanel({ kind: "video", id: current.id })} />
@@ -563,29 +565,3 @@ function ReviewDialog({ d, businessName, paid, onClose }: { d: Dir; businessName
 
 const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 const keyOf = (c: Choice) => (c.kind === "image" ? c.versionId : c.revisionId);
-
-// --- Learning from results ----------------------------------------------------------
-
-function Learn({ test, approved }: { test: Test; approved: number }) {
-  return (
-    <section aria-labelledby="learn-h" className="mt-10 rounded-[var(--radius-panel)] border px-6 py-5" style={{ borderColor: "var(--mairo-line)" }}>
-      <h2 id="learn-h" className="text-[16px] font-semibold text-white">How MAIRO learns which works</h2>
-      {test ? (
-        <>
-          <p className="mt-2 text-[13.5px] text-white/85">{test.hypothesis}</p>
-          <ul className="mt-2 flex flex-wrap gap-2">{test.variants.map((v) => <li key={v.label} className="rounded-full bg-white/[0.06] px-3 py-1 text-[12.5px] text-white/85">{v.label}</li>)}</ul>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-            {test.status === "CONCLUDED" && test.conclusion
-              ? test.conclusion
-              : "Written down, not running: MAIRO doesn't start tests by itself. To run it, launch these ads with the same budget and audience. Each ad's results then show under Top Performing in Creatives, ranked by your goal — and a difference only counts once there are enough results to tell them apart."}
-          </p>
-          <Link href="/dashboard/creatives?tab=top" className="mt-2 inline-block text-[12.5px] text-violet-bright underline-offset-4 hover:underline">See Top Performing</Link>
-        </>
-      ) : (
-        <p className="mt-2 text-[13px] leading-relaxed text-muted">
-          {approved === 1 ? "One approved. " : ""}Approve two directions and MAIRO writes down a fair test between them: same budget and audience, one difference — the opening. Once the ads run, Top Performing in Creatives ranks them by your goal, never by likes.
-        </p>
-      )}
-    </section>
-  );
-}

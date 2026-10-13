@@ -6,7 +6,8 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { executionBlock } from "@/lib/billing/execution";
 import { openAiImageConfigured } from "@/lib/ai/openai-image";
 import { storageConfigured } from "@/lib/storage/blob";
-import { ensureDirections, listSuggestions, proposedTest, suggestedAdsGate } from "@/lib/suggested-ads/store";
+import { ensureDirections, listSuggestions, suggestedAdsGate } from "@/lib/suggested-ads/store";
+import { currentExperiment } from "@/lib/experiments/store";
 import { renderingAvailable } from "@/lib/suggested-ads/render-run";
 import { SuggestedAds } from "./suggested-ads";
 
@@ -45,7 +46,7 @@ export default async function SuggestedAdsPage() {
   }
 
   await ensureDirections(organizationId, session.user.id);
-  const [data, test, blocked, rendering] = await Promise.all([listSuggestions(organizationId), proposedTest(organizationId), executionBlock(organizationId), renderingAvailable()]);
+  const [data, test, blocked, rendering] = await Promise.all([listSuggestions(organizationId), currentExperiment(organizationId), executionBlock(organizationId), renderingAvailable()]);
 
   return (
     <SuggestedAds
