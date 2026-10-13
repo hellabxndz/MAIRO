@@ -46,6 +46,7 @@ import { socialAccess } from "@/lib/social/access";
 import { FreeHome } from "@/components/strategy/free-access";
 import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
+import { SuggestedAdsPrompt } from "@/components/suggested-ads-prompt";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -70,7 +71,14 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
     dashboardMode(),
   ]);
-  if (free) return <FreeHome {...free} />;
+  if (free) {
+    return (
+      <>
+        <SuggestedAdsPrompt organizationId={organizationId} className="mx-auto mb-6 max-w-[1100px]" />
+        <FreeHome {...free} />
+      </>
+    );
+  }
 
   // Active Scale without a Social Manager goal yet: invite them to set one.
   const askSocial = social.ok && !socialStrategy;
@@ -100,7 +108,12 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // anything that needs the owner, one insight, what's next. The Advanced and
   // Profit First views below keep every figure for those who want them.
   if (mode === "simple") {
-    return <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} askFeedback={query.feedback === "1"} />;
+    return (
+      <>
+        <SuggestedAdsPrompt organizationId={organizationId} className="mx-auto mb-6 max-w-[1100px]" />
+        <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} askFeedback={query.feedback === "1"} />
+      </>
+    );
   }
 
   // Read side by side rather than one after another.
@@ -185,6 +198,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
 
   const alerts = (
     <>
+      <SuggestedAdsPrompt organizationId={organizationId} />
       {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
       {askSocial && <SocialManagerPrompt />}
       {/* Something went live on this visit, so it says so — the launch the

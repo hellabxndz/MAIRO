@@ -341,7 +341,8 @@ export function AppShell({
 
         <nav className="flex flex-1 flex-col gap-0.5">
           {primary.map((i, n) => (
-            <Fragment key={i.href}>
+            // Two entries can share an address (before a plan is approved, Pricing opens the plan too).
+            <Fragment key={`${i.href}:${i.label}`}>
               {i.group && i.group !== primary[n - 1]?.group && (
                 <p className="mt-3 px-3 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">{i.group}</p>
               )}

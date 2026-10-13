@@ -5,6 +5,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader, EmptyState, primaryButtonClass } from "@/components/ui";
 import { loadCreativeHub } from "@/lib/creatives/hub";
 import { AdCard, NewCard, PastList } from "./hub-client";
+import { SuggestedAdsPrompt } from "@/components/suggested-ads-prompt";
 
 // Creatives: one page for everything about ads' pictures and videos.
 //
@@ -45,6 +46,8 @@ export default async function CreativesPage({ searchParams }: { searchParams: Pr
         description="Every ad picture and video: what's running, what's new, what ran before, and what works best for your goal."
         action={<Link href="/dashboard/creative-studio" className={primaryButtonClass}>+ Create new creative</Link>}
       />
+
+      <SuggestedAdsPrompt organizationId={organizationId} className="mb-6" />
 
       <nav aria-label="Creatives" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
         {TABS.map((t) => (

@@ -4,51 +4,13 @@ import { useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 import { checkVideo, VIDEO_TYPES, type MediaCheck } from "@/lib/campaigns/media-rules";
 import type { PlanVideo } from "@/lib/campaigns/plan";
+import { measureVideo as measure, type Measured } from "@/lib/media/measure-video";
 import { Note } from "./wizard-parts";
 
 // A customer's own video, checked against Meta's rules in the browser before
 // a byte is uploaded, then sent straight to storage (it's too big to pass
 // through the server). A still from the video is uploaded alongside it —
 // Meta needs a thumbnail for every video ad.
-
-type Measured = { width: number; height: number; durationSec: number; poster: Blob };
-
-/** Reads the video's size and length, and grabs a frame for the thumbnail. */
-function measure(file: File): Promise<Measured> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement("video");
-    video.preload = "metadata";
-    video.muted = true;
-    video.playsInline = true;
-    video.src = url;
-    const fail = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("This browser couldn't read that video. Try an MP4."));
-    };
-    video.onerror = fail;
-    video.onloadedmetadata = () => {
-      // A frame a little way in: the very first is often black.
-      video.currentTime = Math.min(1, (video.duration || 0) / 3);
-    };
-    video.onseeked = () => {
-      const scale = Math.min(1, 1080 / Math.max(video.videoWidth, video.videoHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(video.videoWidth * scale);
-      canvas.height = Math.round(video.videoHeight * scale);
-      canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        (poster) => {
-          URL.revokeObjectURL(url);
-          if (!poster) return fail();
-          resolve({ width: video.videoWidth, height: video.videoHeight, durationSec: video.duration, poster });
-        },
-        "image/jpeg",
-        0.85,
-      );
-    };
-  });
-}
 
 export function VideoUpload({
   organizationId,

@@ -19,6 +19,9 @@ export const FREE_PAGES = [
   "/dashboard/website",
   // Tracking setup: free for the same reason — it has to be right before anything spends.
   "/dashboard/tracking",
+  // Suggested ads: reading and editing the three directions is free; making a
+  // picture, uploading a video and building the campaign are paid, and say so.
+  "/dashboard/creatives/suggested",
   // Opens to the Social Manager upgrade screen (Scale only), not a preview.
   "/dashboard/social",
 ];

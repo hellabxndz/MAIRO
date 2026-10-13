@@ -34,10 +34,10 @@ or a public page makes a claim this inventory can't back.
 | Creative | AI pictures | Partially working | `/dashboard/creative-studio` | OPENAI_API_KEY; BLOB_READ_WRITE_TOKEN | `check:creative-studio` |
 | Creative | Your own pictures and videos | Partially working | `/dashboard/create` | BLOB_READ_WRITE_TOKEN | `check:ads`, `check:creative-studio` |
 | Creative | Brand details | Partially working | `/dashboard/settings/business-brain` | Brand profile screen and pre-save brand check | `check:brain` |
-| Creative | Meta's own ad previews | Partially working | `/dashboard/create` | Connected Meta ad account | `check:ads` |
-| Creative | Creative tests | Unavailable | — | Experiment workflow and evidence thresholds | — |
-| Creative | Suggested ads after connecting Meta | Unavailable | — | Creative-first flow | — |
-| Creative | Editing an uploaded video | Unavailable | — | A video rendering worker | — |
+| Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
+| Creative | Creative tests | Unavailable | — | Experiment workflow and evidence thresholds | `check:suggested-ads` |
+| Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads` |
+| Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | A video rendering worker | `check:suggested-ads` |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
 | Tracking | Meta pixel: choose, install, verify | Partially working | `/dashboard/tracking` | Connected Meta ad account; A live run against a real ad account | `check:tracking`, `check:tracking-setup` |
 | Tracking | Meta pixel through Google Tag Manager | Partially working | `/dashboard/tracking` | Google verification of the Tag Manager scope | `check:gtm`, `check:tracking` |
@@ -664,7 +664,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (16)
+## Partially working (18)
 
 ### Reading the business's website
 
@@ -832,15 +832,55 @@ Shows the ad as Meta renders it in the feed, Stories and Reels before anything i
 
 **Condition:** Needs a connected Meta ad account — the preview is drawn by Meta.
 
-**Routes:** `/dashboard/create`
+**Routes:** `/dashboard/create`, `/dashboard/creatives/suggested`
 
 **Still needs:** Connected Meta ad account
 
 **Verification:** Preview requests create nothing in the ad account.
 
-**Evidence:** `src/lib/meta/previews.ts`, `src/app/dashboard/create/[service]/ad-preview.tsx`
+**Evidence:** `src/lib/meta/previews.ts`, `src/app/dashboard/create/[service]/ad-preview.tsx`, `src/lib/actions/suggested-ads-actions.ts`
 
 **Checks:** `check:ads`
+
+**Public claim:** none — not advertised
+
+### Suggested ads after connecting Meta
+
+*Creative* · `suggested-ads`
+
+Once Meta is connected and the business profile is confirmed, MAIRO suggests three ad directions written only from confirmed facts, with one recommended as the first test and why. Each can become a real picture after its cost is shown, be rewritten (every version kept), or use the owner's own video; approval is bound to the exact words and picture or video version, and continuing opens the campaign builder with that ad. Nothing is published or spent.
+
+**Condition:** Making the picture needs a paid plan, AI credits and the image provider switched on; using an uploaded video needs a paid plan and storage. Not yet run against a live Meta account and the live image provider together.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Still needs:** Connected Meta ad account; Confirmed business profile
+
+**Verification:** Directions from confirmed facts only, one recommended, avoided words never used, no invented figures; revisions kept; approval withdrawn by any change; every record scoped to its business (check:suggested-ads). Live picture generation from this page not yet run.
+
+**Evidence:** `src/lib/suggested-ads/directions.ts`, `src/lib/suggested-ads/store.ts`, `src/lib/actions/suggested-ads-actions.ts`, `src/app/dashboard/creatives/suggested/suggested-ads.tsx`
+
+**Checks:** `check:suggested-ads`
+
+**Public claim:** “After you connect Meta, MAIRO suggests three ads from what you've confirmed, with one marked as the best first test.”
+
+### Editing an uploaded video
+
+*Creative* · `video-editing`
+
+On an owner's own video: start and end, captions at times and a crop, with timestamped suggestions from the video's length and shape. Each save is a new version and the uploaded file is never changed. The edits are a preview — they aren't rendered into the file, so an ad plays the original, and the owner confirms that before approving.
+
+**Condition:** Edits are previewed, not written into the video file — that needs a video rendering worker.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Still needs:** A video rendering worker
+
+**Verification:** Original never overwritten; edits clamped to the video; suggestions timestamped; every edit not in the file named (check:suggested-ads).
+
+**Evidence:** `src/lib/suggested-ads/video.ts`, `src/app/dashboard/creatives/suggested/video-editor.tsx`
+
+**Checks:** `check:suggested-ads`
 
 **Public claim:** none — not advertised
 
@@ -1020,7 +1060,7 @@ A 60-second interactive walkthrough of the owner journey on a sample business �
 
 **Public claim:** none — not advertised
 
-## Unavailable (9)
+## Unavailable (7)
 
 ### TikTok ads
 
@@ -1052,41 +1092,15 @@ Not built.
 
 *Creative* · `creative-experiments`
 
-Records of a test's hypothesis, variable, exact versions and period. Only the database table exists so far.
+Once two suggested ads are approved, MAIRO writes down a proposed test — the question and the exact versions it would compare. Running it and naming a winner aren't built; the page says so.
 
 **Still needs:** Experiment workflow and evidence thresholds
 
 **Verification:** No winner named on thin evidence; results tied to exact published versions.
 
-**Evidence:** `prisma/schema.prisma#CreativeExperiment`
+**Evidence:** `prisma/schema.prisma#CreativeExperiment`, `src/lib/suggested-ads/store.ts`
 
-**Public claim:** none — not advertised
-
-### Suggested ads after connecting Meta
-
-*Creative* · `suggested-ads`
-
-Three personalised creative directions with a recommended first test, then creating the chosen one. Not built yet.
-
-**Still needs:** Creative-first flow
-
-**Verification:** Directions grounded in confirmed facts; nothing paid or launched on connect.
-
-**Evidence:** `prisma/schema.prisma#AdAngle`
-
-**Public claim:** none — not advertised
-
-### Editing an uploaded video
-
-*Creative* · `video-editing`
-
-Trim, reorder, captions and aspect ratios on an owner's video, with the original kept. Not built.
-
-**Still needs:** A video rendering worker
-
-**Verification:** Original never overwritten; only operations the renderer performs are offered.
-
-**Evidence:** `src/lib/meta/videos.ts`
+**Checks:** `check:suggested-ads`
 
 **Public claim:** none — not advertised
 

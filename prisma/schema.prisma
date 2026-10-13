@@ -348,6 +348,8 @@ model Organization {
   /// The business's own names for its lead stages (JSON: stage → label), e.g.
   /// "Inspection booked" for an appointment. Null uses MAIRO's defaults.
   leadStagesJson      String?                @db.Text
+  ownerVideos         OwnerVideo[]
+  creativeApprovals   CreativeApproval[]
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.
@@ -2339,6 +2341,9 @@ model CreativeStudioAsset {
   /// with a click a person is waiting on.
   archivedAt DateTime?
 
+  /// The suggested-ad direction (AdAngle) this picture was made for, if any.
+  angleId String?
+
   versions CreativeStudioVersion[]
 
   createdAt DateTime @default(now())
@@ -2346,6 +2351,7 @@ model CreativeStudioAsset {
 
   @@index([organizationId, archivedAt, updatedAt])
   @@index([organizationId, variationGroupId])
+  @@index([organizationId, angleId])
 }
 
 /// One image. The first version is the generation or the upload; every
@@ -3539,6 +3545,15 @@ model AdAngle {
   /// DRAFT | APPROVED | ARCHIVED
   status         String            @default("DRAFT")
   createdById    String?
+  /// The hook angle it was built from (problem, offer, local, …) — see lib/creative/hooks.ts.
+  angleKind      String?
+  /// Order shown in "Review your suggested ads"; the first is the recommended first test.
+  rank           Int               @default(0)
+  recommended    Boolean           @default(false)
+  /// Why this one is worth testing first, in the owner's terms.
+  recommendedWhy String?           @db.Text
+  /// The format it suits: picture, short video, carousel.
+  format         String?
   revisions      AdAngleRevision[]
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -3566,6 +3581,68 @@ model AdAngleRevision {
 
   @@unique([angleId, version])
   @@index([organizationId])
+}
+
+/// The owner's own video for an ad. The uploaded file is never changed:
+/// every edit is a new revision holding an edit list (trim, captions, crop),
+/// so the original is always there to go back to.
+model OwnerVideo {
+  id             String               @id @default(cuid())
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  /// The suggested-ad direction it was uploaded for, if any.
+  angleId        String?
+  url            String               @db.Text
+  posterUrl      String?              @db.Text
+  fileName       String?
+  durationMs     Int
+  width          Int
+  height         Int
+  bytes          Int
+  createdById    String?
+  archivedAt     DateTime?
+  revisions      OwnerVideoRevision[]
+  createdAt      DateTime             @default(now())
+
+  @@index([organizationId, angleId])
+}
+
+model OwnerVideoRevision {
+  id             String     @id @default(cuid())
+  video          OwnerVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId        String
+  organizationId String
+  version        Int
+  /// { trimStartMs, trimEndMs, captions: [{ startMs, endMs, text }], aspect } — see lib/suggested-ads/video.ts.
+  editsJson      String     @db.Text
+  /// What changed, in words: "Trimmed to 0:00–0:20", "Added the opening line as a caption".
+  note           String?
+  createdById    String?
+  createdAt      DateTime   @default(now())
+
+  @@unique([videoId, version])
+  @@index([organizationId])
+}
+
+/// The owner approved this creative: these exact words with this exact
+/// picture or video edit. The hash covers all of it, so any later change —
+/// a new revision of the words, a new picture version, another video edit —
+/// no longer matches and needs approving again.
+model CreativeApproval {
+  id              String       @id @default(cuid())
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  angleId         String
+  angleRevisionId String
+  studioVersionId String?
+  videoRevisionId String?
+  contentHash     String
+  approvedById    String
+  approvedAt      DateTime     @default(now())
+  /// Set when a newer approval replaces it, or the owner withdraws it.
+  revokedAt       DateTime?
+
+  @@index([organizationId, angleId])
 }
 
 /// A creative test: what it's trying to learn, the one thing that differs,

@@ -77,6 +77,7 @@
     "check:website": "tsx scripts/check-website.ts",
     "check:preview": "tsx scripts/check-preview.ts",
     "check:tracking-setup": "tsx scripts/check-tracking-setup.ts",
+    "check:suggested-ads": "tsx scripts/check-suggested-ads.ts",
     "check:capabilities": "tsx scripts/check-capabilities.ts",
     "capabilities:doc": "tsx scripts/capabilities-doc.ts"
   },
