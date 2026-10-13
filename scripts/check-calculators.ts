@@ -17,6 +17,7 @@ import { checkOfferClarity } from "../src/lib/creative/offer-clarity";
 import { READINESS_ITEMS, scoreReadiness } from "../src/lib/tools/readiness";
 import { adLibraryUrl, hypothesesFrom } from "../src/lib/tools/ad-library";
 import { AD_EXAMPLES } from "../src/lib/tools/ad-examples";
+import { DEFAULT_PROFIT_INPUTS, breakEvenRoas, contributionRate, marginOf } from "../src/lib/intelligence/profit";
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -321,6 +322,30 @@ check("money formats in the chosen currency and shows a dash for no value", () =
   assert.equal(money(80, "USD"), "$80.00");
   assert.equal(money(1234.5, "GBP"), "£1,235");
   assert.equal(money(null), "—");
+});
+
+console.log("\n— the dashboard and the free calculator agree —");
+check("Profit view's break-even ROAS equals the calculator's, with and without fees and shipping", () => {
+  const cases = [
+    { price: 100, cost: 60, feePct: 0, feeFixed: 0, ship: 0 },
+    { price: 100, cost: 60, feePct: 2.9, feeFixed: 0.3, ship: 0 },
+    { price: 49.99, cost: 18, feePct: 2.9, feeFixed: 0.3, ship: 6.5 },
+    { price: 250, cost: 90, feePct: 3.5, feeFixed: 0, ship: 12 },
+  ];
+  for (const c of cases) {
+    const sale = ok(saleEconomics({ price: c.price, productCost: c.cost, paymentFeePct: c.feePct, paymentFeeFixed: c.feeFixed, fulfilmentCost: c.ship }));
+    const fromTool = breakEven(sale).breakEvenRoas;
+    const inputs = { ...DEFAULT_PROFIT_INPUTS, sellingPriceCents: Math.round(c.price * 100), productCostCents: Math.round(c.cost * 100), paymentFeePercent: c.feePct, paymentFeeFixedCents: Math.round(c.feeFixed * 100), shippingCostCents: Math.round(c.ship * 100) };
+    const margin = marginOf(inputs)!;
+    const fromDashboard = breakEvenRoas(contributionRate(margin.percent, inputs, Math.round(c.price * 100)));
+    close(fromDashboard, fromTool!, 1e-6);
+  }
+});
+check("both say there's no break-even when a sale loses money before advertising", () => {
+  const sale = ok(saleEconomics({ price: 20, productCost: 21 }));
+  assert.equal(breakEven(sale).breakEvenRoas, null);
+  const inputs = { ...DEFAULT_PROFIT_INPUTS, sellingPriceCents: 2000, productCostCents: 2100, paymentFeePercent: 0, paymentFeeFixedCents: 0 };
+  assert.equal(breakEvenRoas(contributionRate(marginOf(inputs)!.percent, inputs, 2000)), null);
 });
 
 console.log(`\nCalculators: ${passed} checks passed.`);

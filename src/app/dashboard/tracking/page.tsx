@@ -4,8 +4,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { activeOrganizationId } from "@/lib/active-org";
-import { entitlementsFor } from "@/lib/entitlements";
-import { planFor, PLANS } from "@/lib/plans";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { pixelsFor } from "@/lib/tracking/pixels";
@@ -18,7 +16,10 @@ import {
 } from "@/lib/tracking/roas";
 import { NO_VALUE } from "@/components/metrics";
 import { PlatformIcon } from "@/components/platform-icons";
-import { PixelCard } from "./pixel-card";
+import { TrackingSetup, type SetupView } from "./tracking-setup";
+import { trackingOverview } from "@/lib/tracking/setup";
+import { metaEventSnippet } from "@/lib/tracking/meta-pixel";
+import { recommendedEvents } from "@/lib/tracking/events";
 import { ManualOrderForm, StoreCard } from "./store-card";
 import { GtmCard } from "./gtm-card";
 import { allNiches, nicheById } from "@/lib/tracking/niches";
@@ -26,7 +27,6 @@ import { dataLayerSnippet, gtmSnippet } from "@/lib/tracking/gtm";
 import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
 import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
-import type { AdPlatform } from "@/generated/prisma/enums";
 
 // "Is the advertising actually making me money?"
 //
@@ -69,10 +69,9 @@ export default async function TrackingPage() {
   const until = new Date();
   const since = new Date(until.getTime() - PERIOD_DAYS * 864e5);
 
-  const [pixels, entitlements, organization, connections, ingest, measured, orders, report, profile, gtm] =
+  const [pixels, organization, connections, ingest, measured, orders, report, profile, gtm, overview] =
     await Promise.all([
       pixelsFor(organizationId),
-      entitlementsFor(organizationId),
       db.organization.findUnique({
         where: { id: organizationId },
         select: { subscriptionTier: true, name: true },
@@ -84,13 +83,11 @@ export default async function TrackingPage() {
       fetchOrganizationPerformance(organizationId),
       ensureTrackingProfile(organizationId),
       gtmConnectionSummary(organizationId),
+      trackingOverview(organizationId),
     ]);
 
   const niche = nicheById(profile.nicheId);
 
-  const plan = planFor(organization?.subscriptionTier ?? "NONE");
-  const upgradeTarget =
-    PLANS.find((p) => p.priceMonthly > plan.priceMonthly) ?? PLANS[PLANS.length - 1];
 
   const comparison = compareRoas({
     spendCents: report.total.spendCents ?? 0,
@@ -105,9 +102,29 @@ export default async function TrackingPage() {
       : "http://localhost:3000");
   const ingestUrl = `${appUrl}/api/orders/${ingest.token}`;
 
-  const platforms: { platform: AdPlatform; name: string; allowed: boolean }[] = [
-    { platform: "META", name: "Meta", allowed: entitlements.meta_ads },
-  ];
+  const metaPixel = pixels.find((p) => p.platform === "META");
+  const kind = niche.id === "ecommerce" ? "shop" : "service";
+  const setupView: SetupView = {
+    connected: connections.get("META")?.connected ?? false,
+    allowed: true,
+    pixel: overview.pixel
+      ? { id: overview.pixel.id, name: overview.pixel.name, origin: overview.pixel.origin, owner: overview.pixel.ownerBusinessName, lastFiredAt: overview.pixel.lastFiredAt?.toISOString() ?? null }
+      : null,
+    stage: overview.stage,
+    requiredEvent: overview.requiredEvent,
+    install: overview.install ? { ...overview.install, checkedAt: overview.install.checkedAt.toISOString() } : null,
+    events: Object.fromEntries(Object.entries(overview.events).map(([k, v]) => [k, { ...v, checkedAt: v.checkedAt.toISOString() }])),
+    route: overview.route,
+    suggestedRoute: overview.suggestedRoute,
+    detectedPlatform: overview.detectedPlatform,
+    consent: overview.consent,
+    handoff: overview.handoff,
+    creating: overview.creating,
+    businessName: organization?.name ?? "My business",
+    baseSnippet: metaPixel?.baseSnippet ?? null,
+    eventSnippet: overview.requiredEvent ? metaEventSnippet(overview.requiredEvent) : null,
+    recommended: recommendedEvents(kind, { booking: overview.requiredEvent === "Schedule" }).map((e) => ({ name: e.name, required: e.required, when: e.when, notWhen: e.notWhen })),
+  };
 
   return (
     <div>
@@ -183,44 +200,10 @@ export default async function TrackingPage() {
         </p>
       </Card>
 
-      <h2 className="mb-3 text-sm font-medium text-neutral-300">
-        1. Tell the ad networks when someone buys
-      </h2>
-      <p className="mb-4 max-w-3xl text-sm leading-relaxed text-neutral-400">
-        A pixel is a few lines of code on your website. Without one, Meta has no
-        idea anybody ever bought anything — so they report no revenue, they can&rsquo;t
-        optimise towards buyers, and every ROAS figure MAIRO shows you stays blank.
-      </p>
-
-      <div className="space-y-4">
-        {platforms.map(({ platform, name, allowed }) => {
-          const snapshot = pixels.find((p) => p.platform === platform);
-          return (
-            <PixelCard
-              key={platform}
-              platform={platform}
-              name={name}
-              allowed={allowed}
-              upgradeName={upgradeTarget.name}
-              connected={connections.get(platform)?.connected ?? false}
-              snapshot={
-                snapshot
-                  ? {
-                      platform: snapshot.platform,
-                      pixelId: snapshot.pixelId,
-                      status: snapshot.status,
-                      lastFiredAt: snapshot.lastFiredAt?.toISOString() ?? null,
-                      lastCheckedAt: snapshot.lastCheckedAt?.toISOString() ?? null,
-                      lastError: snapshot.lastError,
-                      baseSnippet: snapshot.baseSnippet,
-                      purchaseSnippet: snapshot.purchaseSnippet,
-                    }
-                  : null
-              }
-            />
-          );
-        })}
-      </div>
+      <h2 className="mb-3 text-sm font-medium text-neutral-300">1. Tell Meta when someone becomes a lead or customer</h2>
+      <Card>
+        <TrackingSetup view={setupView} />
+      </Card>
 
       <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">
         2. Put it on your website, without touching code

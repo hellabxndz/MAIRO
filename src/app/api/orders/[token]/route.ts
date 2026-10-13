@@ -1,3 +1,4 @@
+import { normalizeConsent } from "@/lib/tracking/state";
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { decryptSecret } from "@/lib/crypto/secret-box";
@@ -62,6 +63,8 @@ type GenericOrder = {
   ttclid?: string;
   source_url?: string;
   event_name?: string;
+  /** The shopper's tracking consent: "granted" or "denied" (yes/no and true/false work too). */
+  consent?: string | boolean;
 };
 
 function bad(message: string, status = 400) {
@@ -134,6 +137,7 @@ function fromGeneric(body: GenericOrder): IncomingOrder | string {
     ttclid: body.ttclid ?? null,
     sourceUrl: body.source_url ?? null,
     eventName: body.event_name,
+    consent: normalizeConsent(body.consent),
   };
 }
 

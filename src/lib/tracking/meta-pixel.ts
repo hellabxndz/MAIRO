@@ -23,13 +23,24 @@ export type MetaPixel = {
   name: string;
   /** Unix seconds, from Meta. Null means it has never fired. */
   lastFiredAt: Date | null;
+  /** The Business Manager that owns it, when Meta says (owner_business). */
+  ownerBusiness?: { id: string; name: string } | null;
+  createdAt?: Date | null;
+  /** Meta marks a pixel unavailable when it can't be used (is_unavailable). */
+  unavailable?: boolean;
 };
 
 type PixelNode = {
   id: string;
   name?: string;
   last_fired_time?: string;
+  creation_time?: string;
+  is_unavailable?: boolean;
+  owner_business?: { id?: string; name?: string } | null;
 };
+
+/** The fields read for every pixel: enough to choose between them, and to show who owns each. */
+const PIXEL_FIELDS = "id,name,last_fired_time,creation_time,is_unavailable,owner_business{id,name}";
 
 /** `act_123` or `123` — the pixel endpoints want the prefixed form. */
 function actId(adAccountId: string): string {
@@ -66,7 +77,7 @@ export async function listMetaPixels(
     `/${actId(adAccountId)}/adspixels`,
     {
       accessToken,
-      params: { fields: "id,name,last_fired_time", limit: 25 },
+      params: { fields: PIXEL_FIELDS, limit: 50 },
     }
   );
   return (res.data ?? []).map(toPixel);
@@ -87,9 +98,34 @@ export async function fetchMetaPixel(
 ): Promise<MetaPixel> {
   const res = await metaGraphRequest<PixelNode>(`/${pixelId}`, {
     accessToken,
-    params: { fields: "id,name,last_fired_time" },
+    params: { fields: PIXEL_FIELDS },
   });
   return toPixel(res);
+}
+
+/**
+ * How many of each event Meta received from this pixel since a moment, from
+ * the pixel's stats edge (aggregated by event name). A count of zero, or an
+ * event that isn't listed, means Meta saw none in that window — not that the
+ * setup is broken; the caller says which.
+ */
+export async function fetchPixelEventCounts(
+  pixelId: string,
+  accessToken: string,
+  since: Date
+): Promise<Record<string, number>> {
+  const res = await metaGraphRequest<{ data?: { start_time?: string; data?: { value?: string; count?: number }[] }[] }>(`/${pixelId}/stats`, {
+    accessToken,
+    params: { aggregation: "event", start_time: Math.floor(since.getTime() / 1000) },
+  });
+  const counts: Record<string, number> = {};
+  for (const bucket of res.data ?? []) {
+    for (const row of bucket.data ?? []) {
+      if (!row.value) continue;
+      counts[row.value] = (counts[row.value] ?? 0) + (typeof row.count === "number" ? row.count : 0);
+    }
+  }
+  return counts;
 }
 
 function toPixel(node: PixelNode): MetaPixel {
@@ -98,6 +134,9 @@ function toPixel(node: PixelNode): MetaPixel {
     name: node.name ?? node.id,
     // Meta returns an ISO timestamp here despite the field's name.
     lastFiredAt: node.last_fired_time ? new Date(node.last_fired_time) : null,
+    ownerBusiness: node.owner_business?.id ? { id: node.owner_business.id, name: node.owner_business.name ?? node.owner_business.id } : null,
+    createdAt: node.creation_time ? new Date(node.creation_time) : null,
+    unavailable: node.is_unavailable === true,
   };
 }
 
@@ -243,5 +282,19 @@ fbq('track', 'Purchase', {
   // receives, so strip anything that isn't a letter, number, _ or -.
   eventID: 'mairo_' + String(ORDER_ID).replace(/[^A-Za-z0-9_-]/g, '')
 });
+</script>`;
+}
+
+/**
+ * The code for an outcome other than a purchase — an enquiry accepted, a
+ * booking confirmed. It goes where the outcome is shown (the thank-you or
+ * confirmation page), never on the button, and carries nothing personal.
+ */
+export function metaEventSnippet(eventName: string): string {
+  if (eventName === "Purchase") return metaPurchaseSnippet();
+  const safe = eventName.replace(/[^A-Za-z]/g, "");
+  return `<!-- Put this on the page shown AFTER the ${safe === "Schedule" ? "booking is confirmed" : "enquiry is accepted"} — not on the button -->
+<script>
+fbq('track', '${safe}');
 </script>`;
 }

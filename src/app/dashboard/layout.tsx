@@ -50,6 +50,7 @@ const ALWAYS_REACHABLE = [
   // a business that came through the free plan.
   "/dashboard/launch",
   "/dashboard/website",
+  "/dashboard/tracking",
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",

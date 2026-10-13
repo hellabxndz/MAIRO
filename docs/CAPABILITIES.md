@@ -39,7 +39,7 @@ or a public page makes a claim this inventory can't back.
 | Creative | Suggested ads after connecting Meta | Unavailable | — | Creative-first flow | — |
 | Creative | Editing an uploaded video | Unavailable | — | A video rendering worker | — |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
-| Tracking | Meta pixel: choose existing or create | Partially working | `/dashboard/tracking` | Connected Meta ad account | `check:tracking` |
+| Tracking | Meta pixel: choose, install, verify | Partially working | `/dashboard/tracking` | Connected Meta ad account; A live run against a real ad account | `check:tracking`, `check:tracking-setup` |
 | Tracking | Meta pixel through Google Tag Manager | Partially working | `/dashboard/tracking` | Google verification of the Tag Manager scope | `check:gtm`, `check:tracking` |
 | Tracking | Shopify orders | Working | `/dashboard/tracking` | — | `check:tracking` |
 | Tracking | Lead outcomes | Working | `/dashboard/leads` | — | `check:lead-outcomes`, `check:lead-report` |
@@ -57,7 +57,7 @@ or a public page makes a claim this inventory can't back.
 | Account | Text alerts | Partially working | `/dashboard/notifications` | Twilio settings | `check:notifications` |
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
 | Public site | Landing story and product demos | Demo only | `/`, `/landing/classic` | — | `check:capabilities`, `check:preview` |
-| Public site | Product walkthrough video | Unavailable | — | Walkthrough build and render | — |
+| Public site | 60-second walkthrough and videos | Demo only | `/` | A voice provider, if a narrated version is wanted | `check:preview` |
 | Public site | Customer case studies | Unavailable | — | A customer's written permission and measured results | — |
 | Free tools | Break-even ROAS calculator | Working | `/tools/break-even-roas` | — | `check:calculators` |
 | Free tools | Margin and markup calculator | Working | `/tools/margin-markup` | — | `check:calculators` |
@@ -844,23 +844,23 @@ Shows the ad as Meta renders it in the feed, Stories and Reels before anything i
 
 **Public claim:** none — not advertised
 
-### Meta pixel: choose existing or create
+### Meta pixel: choose, install, verify
 
 *Tracking* · `pixel`
 
-Lists the pixels the connected ad account can use, adopts one or creates one in the business's own account, and reads its status back from Meta (last event seen) rather than assuming.
+Lists the pixels in the connected ad account with who owns each and recommends the one worth reusing; the owner picks one (or types an ID Meta then confirms) or asks MAIRO to create one — once, safely retried, reported only with an ID Meta confirmed. Install steps by website platform; checks the website for the pixel and Meta's event counts for the event the campaign needs, keeping not detected, not seen and missing permission apart from failures; consent setting applied to server-side orders; a readiness summary for the campaign.
 
-**Condition:** Needs a connected Meta account with ads_management; a pixel created by MAIRO still has to be installed on the website by the owner or through Tag Manager.
+**Condition:** Needs a connected Meta account with ads_management. Installing is the owner's step (or Tag Manager's). Meta's pixel stats endpoint and the ownership fields have been exercised against a stubbed Meta only, not yet a live account.
 
 **Routes:** `/dashboard/tracking`
 
-**Still needs:** Connected Meta ad account
+**Still needs:** Connected Meta ad account; A live run against a real ad account
 
-**Verification:** Status from Meta's last-fired time, never from MAIRO's own record.
+**Verification:** Stubbed-Meta suite: choice and ownership, explicit selection, idempotent creation (double click, lost reply, no id), stage transitions, check results, consent on orders, isolation.
 
-**Evidence:** `src/lib/tracking/pixels.ts`, `src/lib/tracking/meta-pixel.ts`, `src/app/dashboard/tracking/pixel-card.tsx`
+**Evidence:** `src/lib/tracking/setup.ts`, `src/lib/tracking/state.ts`, `src/lib/tracking/meta-pixel.ts`, `src/app/dashboard/tracking/tracking-setup.tsx`, `src/lib/tracking/orders.ts`
 
-**Checks:** `check:tracking`
+**Checks:** `check:tracking`, `check:tracking-setup`
 
 **Public claim:** “Choose your existing Meta pixel or create one in your own account.”
 
@@ -984,7 +984,7 @@ Compare Shopify plans on subscription and card fees for your sales, with the rat
 
 **Public claim:** “Compare Shopify plans on subscription and card fees for your sales, with the rates' source and date shown and editable.”
 
-## Demo only (1)
+## Demo only (2)
 
 ### Landing story and product demos
 
@@ -1002,7 +1002,25 @@ The landing page's 20-second animated story — a website becoming a profile, th
 
 **Public claim:** none — not advertised
 
-## Unavailable (10)
+### 60-second walkthrough and videos
+
+*Public site* · `walkthrough`
+
+A 60-second interactive walkthrough of the owner journey on a sample business — website and goal, facts and gaps, plan, ads, approval, results — with chapters, captions on by default, a position slider, keyboard control and a still version for reduced motion; plus muted MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. No voice-over yet.
+
+**Routes:** `/`
+
+**Still needs:** A voice provider, if a narrated version is wanted
+
+**Verification:** Storyboard timing, captions and layout bounds pinned by check:preview, which also checks every listed video file, poster and captions file exists as rendered; player controls, keyboard and reduced motion browser-checked.
+
+**Evidence:** `src/components/walkthrough/walkthrough-player.tsx`, `src/components/walkthrough/walkthrough-stage.tsx`, `src/lib/demo/walkthrough.ts`, `src/lib/demo/media.ts`, `video/render.mjs`
+
+**Checks:** `check:preview`
+
+**Public claim:** none — not advertised
+
+## Unavailable (9)
 
 ### TikTok ads
 
@@ -1115,20 +1133,6 @@ Built in the product, but no Stripe prices exist, so they show as not available 
 **Evidence:** `src/lib/plans.ts#FREELANCER_PLANS`
 
 **Checks:** `check:entitlements`
-
-**Public claim:** none — not advertised
-
-### Product walkthrough video
-
-*Public site* · `walkthrough`
-
-An interactive walkthrough and a 60-second captioned video of the owner journey on a fictional business, labelled "Product demo — sample data". Not built yet.
-
-**Still needs:** Walkthrough build and render
-
-**Verification:** Captions, chapters, keyboard and reduced motion checked; labelled as sample data.
-
-**Evidence:** `src/app/page.tsx`
 
 **Public claim:** none — not advertised
 

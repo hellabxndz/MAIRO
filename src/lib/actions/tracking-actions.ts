@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { entitlementsFor } from "@/lib/entitlements";
 import { encryptSecret } from "@/lib/crypto/secret-box";
-import { adoptPixel, ensurePixel, refreshPixelStatus } from "@/lib/tracking/pixels";
+import { checkEvents, checkInstallation, createPixel, listPixelChoices, markInstalled, requiredEventFor, selectPixel, setConsentPolicy, setInstallRoute } from "@/lib/tracking/setup";
+import { routeFrom } from "@/lib/tracking/state";
 import { recordOrder, rotateIngestToken } from "@/lib/tracking/orders";
 import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import type { AdPlatform } from "@/generated/prisma/enums";
@@ -26,91 +26,118 @@ async function context() {
   const session = await auth();
   if (!session?.user?.organizationId) return null;
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  return { organizationId };
-}
-
-/** Whether this business may track on this network at all. */
-async function platformAllowed(organizationId: string, platform: AdPlatform): Promise<boolean> {
-  const ent = await entitlementsFor(organizationId);
-  if (platform === "META") return ent.meta_ads;
-  return false;
-}
-
-export async function setUpPixelAction(platform: AdPlatform): Promise<TrackingResult> {
-  const ctx = await context();
-  if (!ctx) return { ok: false, error: "Not authenticated" };
-
-  if (!(await platformAllowed(ctx.organizationId, platform))) {
-    return {
-      ok: false,
-      error: "MAIRO sets up tracking for Meta only.",
-    };
-  }
-
-  const org = await db.organization.findUnique({
-    where: { id: ctx.organizationId },
-    select: { name: true },
-  });
-
-  const result = await ensurePixel(ctx.organizationId, platform, org?.name ?? "MAIRO");
-  revalidatePath("/dashboard/tracking");
-
-  if (!result.ok) return { ok: false, error: result.error.message };
-  return {
-    ok: true,
-    message:
-      result.data.status === "ACTIVE"
-        ? "Found a pixel already receiving events on your account — MAIRO will use that one."
-        : "Pixel ready. Put the code below on your website and it starts measuring.",
-  };
-}
-
-export async function adoptPixelAction(
-  platform: AdPlatform,
-  pixelId: string
-): Promise<TrackingResult> {
-  const ctx = await context();
-  if (!ctx) return { ok: false, error: "Not authenticated" };
-  if (!(await platformAllowed(ctx.organizationId, platform))) {
-    return { ok: false, error: "That network isn't on your plan." };
-  }
-
-  const result = await adoptPixel(ctx.organizationId, platform, pixelId);
-  revalidatePath("/dashboard/tracking");
-
-  if (!result.ok) return { ok: false, error: result.error.message };
-  return { ok: true, message: `Using pixel ${result.data.pixelId}.` };
+  return { organizationId, userId: session.user.id ?? "unknown" };
 }
 
 /**
- * Asks the network whether the pixel has seen anything yet.
- *
- * Its own action rather than something the page does on load, because it is a
- * network round trip per platform and the answer changes on the scale of
- * minutes — someone who has just pasted the code wants to press a button and
- * find out, and everyone else should not pay for that call on every visit.
+ * Whether this business may set up tracking on this network. Meta only — and
+ * on every plan, the free one included: tracking costs nothing and has to be
+ * right before the first campaign spends, so it belongs to setup.
  */
-export async function checkPixelAction(platform: AdPlatform): Promise<TrackingResult> {
+async function platformAllowed(_organizationId: string, platform: AdPlatform): Promise<boolean> {
+  return platform === "META";
+}
+
+export type PixelChoiceView = { id: string; name: string; owner: string | null; lastFiredAt: string | null; unavailable: boolean; recommended: boolean; why: string };
+
+/** The pixels already in the business's ad account, best to reuse first. Nothing is chosen here. */
+export async function listPixelChoicesAction(): Promise<{ ok: true; choices: PixelChoiceView[] } | { ok: false; reason: string; error: string }> {
   const ctx = await context();
-  if (!ctx) return { ok: false, error: "Not authenticated" };
-
-  await refreshPixelStatus(ctx.organizationId, platform);
-
-  const row = await db.trackingPixel.findUnique({
-    where: { organizationId_platform: { organizationId: ctx.organizationId, platform } },
-  });
-  revalidatePath("/dashboard/tracking");
-
-  if (!row) return { ok: false, error: "No pixel set up on that network yet." };
-  if (row.lastError) return { ok: false, error: row.lastError };
-
+  if (!ctx) return { ok: false, reason: "auth", error: "Not authenticated" };
+  if (!(await platformAllowed(ctx.organizationId, "META"))) return { ok: false, reason: "plan", error: "MAIRO sets up tracking for Meta only." };
+  const r = await listPixelChoices(ctx.organizationId);
+  if (!r.ok) return { ok: false, reason: r.reason, error: r.message };
   return {
     ok: true,
-    message:
-      row.status === "ACTIVE"
-        ? `Working — last event ${row.lastFiredAt?.toLocaleString() ?? "just now"}.`
-        : "Nothing has reached it yet. If you've only just added the code, visit your own site and check again in a minute.",
+    choices: r.data.choices.map((c) => ({ id: c.id, name: c.name, owner: c.ownerBusiness?.name ?? null, lastFiredAt: c.lastFiredAt?.toISOString() ?? null, unavailable: c.unavailable, recommended: c.recommended, why: c.why })),
   };
+}
+
+/** The owner picked this pixel (from the list, or by typing its ID). */
+export async function selectPixelAction(pixelId: string): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  if (!(await platformAllowed(ctx.organizationId, "META"))) return { ok: false, error: "MAIRO sets up tracking for Meta only." };
+  const r = await selectPixel(ctx.organizationId, ctx.userId, pixelId);
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  return { ok: true, message: `Using “${r.data.name}” (${r.data.id}). Meta confirmed it.` };
+}
+
+/** The owner asked MAIRO to create a pixel in their ad account. */
+export async function createPixelAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  if (!(await platformAllowed(ctx.organizationId, "META"))) return { ok: false, error: "MAIRO sets up tracking for Meta only." };
+  const org = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { name: true } });
+  const r = await createPixel(ctx.organizationId, ctx.userId, org?.name ?? "My business");
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  return { ok: true, message: r.data.reused ? `Found the pixel an earlier attempt created (${r.data.id}) and used it — no duplicate.` : `Created “${r.data.name}” in your ad account. Meta confirmed it: ${r.data.id}.` };
+}
+
+export async function setInstallRouteAction(route: string): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  const r = routeFrom(route);
+  if (!r) return { ok: false, error: "Unknown installation route." };
+  await setInstallRoute(ctx.organizationId, r);
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: "Saved. The steps for that route are below." };
+}
+
+export async function markInstalledAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  await markInstalled(ctx.organizationId);
+  const r = await checkInstallation(ctx.organizationId);
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  return { ok: true, message: installMessage(r.data.status) };
+}
+
+function installMessage(status: string): string {
+  switch (status) {
+    case "VERIFIED":
+      return "Installation detected.";
+    case "NOT_DETECTED":
+      return "Not detected yet — see the detail below. Nothing is broken; it just isn't on the pages MAIRO can read.";
+    case "MISSING_PERMISSION":
+      return "Your Meta connection can't read this pixel. Reconnect Meta and grant access.";
+    default:
+      return "The check didn't finish. Try again in a minute.";
+  }
+}
+
+export async function checkInstallationAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  const r = await checkInstallation(ctx.organizationId);
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  return { ok: true, message: installMessage(r.data.status) };
+}
+
+export async function checkEventsAction(): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  const profile = await ensureTrackingProfile(ctx.organizationId);
+  const required = requiredEventFor(profile.nicheId);
+  const events = [...new Set([required ?? "Lead", "PageView"])];
+  const r = await checkEvents(ctx.organizationId, events);
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  const main = r.data[required ?? "Lead"];
+  return { ok: true, message: main?.detail ?? "Checked." };
+}
+
+export async function setConsentPolicyAction(policy: string): Promise<TrackingResult> {
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  if (policy !== "respect_denied" && policy !== "require_granted") return { ok: false, error: "Unknown setting." };
+  await setConsentPolicy(ctx.organizationId, policy);
+  revalidatePath("/dashboard/tracking");
+  return { ok: true, message: "Saved. It applies to the next order MAIRO receives." };
 }
 
 export async function rotateIngestTokenAction(): Promise<TrackingResult> {

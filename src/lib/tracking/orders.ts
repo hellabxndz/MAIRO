@@ -9,6 +9,7 @@ import {
   normalizeCountry,
 } from "@/lib/tracking/hash";
 import { sendMetaConversions } from "@/lib/tracking/meta-pixel";
+import { consentAllows, consentPolicyFrom, type OrderConsent } from "@/lib/tracking/state";
 
 // Orders in, conversions out.
 //
@@ -50,6 +51,8 @@ export type IncomingOrder = {
   ttclid?: string | null;
   sourceUrl?: string | null;
   eventName?: string;
+  /** The shopper's tracking consent, when the store sends it. Null is "not said". */
+  consent?: OrderConsent;
 };
 
 export type RecordResult = {
@@ -74,6 +77,15 @@ export async function recordOrder(
 ): Promise<RecordResult> {
   const eventId = deriveEventId(order.externalOrderId);
   const country = normalizeCountry(order.country);
+
+  // The owner's consent setting decides whether this order may go to Meta at
+  // all. When it may not, the order is still counted for the owner's own
+  // results, but nothing that could identify the shopper is kept.
+  const profile = await db.trackingProfile.findUnique({ where: { organizationId }, select: { serverEventsConsent: true } });
+  const allowed = consentAllows(consentPolicyFrom(profile?.serverEventsConsent), order.consent ?? null);
+  if (!allowed) {
+    order = { ...order, email: null, phone: null, clientIp: null, userAgent: null, fbclid: null, ttclid: null };
+  }
 
   // Hashed here, at the boundary, so nothing downstream ever sees the raw
   // values — including the database, the logs and the error paths.
@@ -100,6 +112,7 @@ export async function recordOrder(
     }
     const retried = await forwardAll(organizationId, existing.id, {
       ...order,
+      consentBlocked: !allowed,
       eventId: existing.eventId,
       hashedEmail: existing.hashedEmail,
       hashedPhone: existing.hashedPhone,
@@ -130,6 +143,7 @@ export async function recordOrder(
 
   const forwarded = await forwardAll(organizationId, event.id, {
     ...order,
+    consentBlocked: !allowed,
     eventId,
     hashedEmail,
     hashedPhone,
@@ -159,6 +173,8 @@ function phoneCountryHint(country: string | null): string | null {
 }
 
 type ForwardInput = IncomingOrder & {
+  /** The consent setting says this order mustn't be sent to an ad network. */
+  consentBlocked?: boolean;
   eventId: string;
   hashedEmail: string | null;
   hashedPhone: string | null;
@@ -183,6 +199,11 @@ async function forwardAll(
   const out: { platform: AdPlatform; status: string; message: string | null }[] = [];
 
   for (const platform of platforms) {
+    if (order.consentBlocked) {
+      await upsertForward(conversionEventId, platform, "SKIPPED", "Not sent: your consent setting doesn't allow sending this order.");
+      out.push({ platform, status: "SKIPPED", message: null });
+      continue;
+    }
     const pixel = pixels.find((p) => p.platform === platform);
     if (!pixel) {
       await upsertForward(conversionEventId, platform, "SKIPPED", "No pixel on this network yet.");

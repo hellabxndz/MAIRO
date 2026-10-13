@@ -23,7 +23,13 @@ export async function ensureTrackingProfile(organizationId: string) {
 
   const guess = classifyNiche(org?.industry, org?.intake?.primaryGoal ?? null);
 
-  return db.trackingProfile.create({
-    data: { organizationId, nicheId: guess.id, nicheConfirmed: false },
-  });
+  // Two requests arriving together (a double click, or the page reading the
+  // profile twice in parallel) must both end up with the one profile: if the
+  // other one created it first, read theirs.
+  try {
+    return await db.trackingProfile.create({ data: { organizationId, nicheId: guess.id, nicheConfirmed: false } });
+  } catch (error) {
+    if ((error as { code?: string }).code !== "P2002") throw error;
+    return db.trackingProfile.findUniqueOrThrow({ where: { organizationId } });
+  }
 }
