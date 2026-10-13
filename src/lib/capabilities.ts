@@ -48,6 +48,12 @@ export type Capability = {
   verifiedLive?: string;
   /** The sentence a public page may use, or null when it must not be advertised. */
   claim: string | null;
+  /**
+   * For partial: the limit in words a business owner can act on, shown beside
+   * the claim on public pages. A partial capability without one isn't listed
+   * publicly — its limit is a deployment setting, not something to explain.
+   */
+  publicNote?: string;
 };
 
 const CORE: Capability[] = [
@@ -91,6 +97,22 @@ const CORE: Capability[] = [
     checks: ["business", "safe-fetch"],
     verify: "Private, local and malformed addresses refused before any request; an unreachable site carries on with the owner's answers (browser-checked).",
     claim: "MAIRO reads your website and shows what it found — and what it couldn't.",
+    publicNote: "Sites built entirely with JavaScript, or that block automated visits, can't be read — you describe the business instead.",
+  },
+  {
+    id: "campaign-preview",
+    area: "Plan",
+    name: "Campaign preview before sign-up",
+    status: "partial",
+    summary: "A visitor gives their website (or describes the business); MAIRO reads the public pages, shows each fact with where it was found, asks about anything missing, and drafts a first campaign — channel, objective, destination, audience, an example budget, three ad directions with one recommended, the tracking it needs and the steps before launch. Saving it is a free account; the facts are offered again in setup.",
+    condition: "Sites that build their text with JavaScript only, or block automated visits, can't be read — the visitor describes the business instead. Not yet run against live public websites from the build environment (fixture sites only).",
+    routes: ["/preview"],
+    evidence: ["src/app/preview/page.tsx", "src/components/preview/preview-flow.tsx", "src/lib/preview/build.ts", "src/app/api/tools/scan/route.ts", "src/lib/website/scan.ts"],
+    needs: [],
+    checks: ["preview", "website", "safe-fetch"],
+    verify: "Facts only from the site or the visitor, gaps asked, three directions with one recommended, no forecasts (check:preview); the journey from the hero to sign-up with type and website carried, the failure and manual paths, and the example browser-checked.",
+    claim: "Preview a first campaign built from your own website — free, before you sign up.",
+    publicNote: "Sites built entirely with JavaScript, or that block automated visits, can't be read — you describe the business instead.",
   },
   {
     id: "business-brain",
@@ -187,6 +209,7 @@ const CORE: Capability[] = [
     checks: ["page-token"],
     verify: "A real post run as an ad on a live account, then paused.",
     claim: "Use a Facebook post that already did well as your ad.",
+    publicNote: "Choosing a post works today; running one as an ad is new and hasn't been used by a customer yet.",
   },
   {
     id: "scheduled-launch",
@@ -367,6 +390,7 @@ const CORE: Capability[] = [
     checks: ["tracking"],
     verify: "Status from Meta's last-fired time, never from MAIRO's own record.",
     claim: "Choose your existing Meta pixel or create one in your own account.",
+    publicNote: "Putting the pixel on your website is still a step for you or whoever manages your site — MAIRO walks you through it.",
   },
   {
     id: "pixel-gtm",
@@ -381,6 +405,7 @@ const CORE: Capability[] = [
     checks: ["gtm", "tracking"],
     verify: "Container imports cleanly; direct publish only with the owner's Google consent.",
     claim: "Set up your Meta pixel with a ready-made Google Tag Manager container.",
+    publicNote: "Importing the ready-made container works today; the one-click connection waits on Google's approval.",
   },
   {
     id: "shopify-orders",
@@ -490,6 +515,7 @@ const CORE: Capability[] = [
     checks: ["automation", "decisions"],
     verify: "No level can raise total budget or launch.",
     claim: "Choose how much MAIRO may change on its own — or nothing at all.",
+    publicNote: "New: MAIRO suggests watching the first week of its decisions before you switch automation on.",
   },
   {
     id: "spend-protection",
@@ -597,14 +623,14 @@ const CORE: Capability[] = [
   {
     id: "product-preview",
     area: "Public site",
-    name: "Product preview and Coach demo",
+    name: "Landing story and product demos",
     status: "demo",
-    summary: "Interactive views of the dashboard, recommendations, Coach and Daily Brief on an invented example business, each labelled as an illustrative example.",
-    routes: ["/"],
-    evidence: ["src/components/landing/product-preview.tsx", "src/components/landing/coach-demo.tsx", "src/lib/coach/example.ts"],
+    summary: "The landing page's 20-second animated story — a website becoming a profile, three ad directions, placement previews, an owner approval and a results view — on three invented businesses, with chapters, pause, replay and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as an example with sample data.",
+    routes: ["/", "/landing/classic"],
+    evidence: ["src/components/hero-story/hero-story.tsx", "src/components/hero-story/stage.tsx", "src/lib/demo/timeline.ts", "src/lib/demo/examples.ts", "src/components/landing/product-preview.tsx", "src/components/landing/coach-demo.tsx", "src/lib/coach/example.ts"],
     needs: [],
-    checks: ["capabilities"],
-    verify: "Every view carries the example label; no figure presented as a customer's result.",
+    checks: ["capabilities", "preview"],
+    verify: "Every view carries the example label; no figure presented as a customer's result; timeline bounds, scenes and captions pinned by check:preview; 390/768/1440, keyboard and reduced motion browser-checked.",
     claim: null,
   },
   {

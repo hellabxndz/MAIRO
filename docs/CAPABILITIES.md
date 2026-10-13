@@ -19,6 +19,7 @@ or a public page makes a claim this inventory can't back.
 | Plan | Free advertising plan | Working | `/onboarding`, `/plan` | — | `check:strategy-plan`, `check:plan-guide`, `check:onboarding`, `check:onboarding-db` |
 | Plan | Change and approve the plan | Working | `/plan` | — | `check:strategy-plan`, `check:onboarding-db` |
 | Plan | Reading the business's website | Partially working | `/onboarding`, `/dashboard/settings/business-brain` | ANTHROPIC_API_KEY | `check:business`, `check:safe-fetch` |
+| Plan | Campaign preview before sign-up | Partially working | `/preview` | — | `check:preview`, `check:website`, `check:safe-fetch` |
 | Plan | Business Brain | Working | `/dashboard/settings/business-brain` | — | `check:brain` |
 | Plan | Setup saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
@@ -55,7 +56,7 @@ or a public page makes a claim this inventory can't back.
 | Account | Sign in with Google | Partially working | `/sign-in`, `/sign-up` | GOOGLE_CLIENT_ID; GOOGLE_CLIENT_SECRET | `check:google` |
 | Account | Text alerts | Partially working | `/dashboard/notifications` | Twilio settings | `check:notifications` |
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
-| Public site | Product preview and Coach demo | Demo only | `/` | — | `check:capabilities` |
+| Public site | Landing story and product demos | Demo only | `/`, `/landing/classic` | — | `check:capabilities`, `check:preview` |
 | Public site | Product walkthrough video | Unavailable | — | Walkthrough build and render | — |
 | Public site | Customer case studies | Unavailable | — | A customer's written permission and measured results | — |
 | Free tools | Break-even ROAS calculator | Working | `/tools/break-even-roas` | — | `check:calculators` |
@@ -663,7 +664,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (15)
+## Partially working (16)
 
 ### Reading the business's website
 
@@ -684,6 +685,24 @@ Reads a few public pages of the business's own site, server-side, through a fetc
 **Checks:** `check:business`, `check:safe-fetch`
 
 **Public claim:** “MAIRO reads your website and shows what it found — and what it couldn't.”
+
+### Campaign preview before sign-up
+
+*Plan* · `campaign-preview`
+
+A visitor gives their website (or describes the business); MAIRO reads the public pages, shows each fact with where it was found, asks about anything missing, and drafts a first campaign — channel, objective, destination, audience, an example budget, three ad directions with one recommended, the tracking it needs and the steps before launch. Saving it is a free account; the facts are offered again in setup.
+
+**Condition:** Sites that build their text with JavaScript only, or block automated visits, can't be read — the visitor describes the business instead. Not yet run against live public websites from the build environment (fixture sites only).
+
+**Routes:** `/preview`
+
+**Verification:** Facts only from the site or the visitor, gaps asked, three directions with one recommended, no forecasts (check:preview); the journey from the hero to sign-up with type and website carried, the failure and manual paths, and the example browser-checked.
+
+**Evidence:** `src/app/preview/page.tsx`, `src/components/preview/preview-flow.tsx`, `src/lib/preview/build.ts`, `src/app/api/tools/scan/route.ts`, `src/lib/website/scan.ts`
+
+**Checks:** `check:preview`, `check:website`, `check:safe-fetch`
+
+**Public claim:** “Preview a first campaign built from your own website — free, before you sign up.”
 
 ### Advertise an existing Facebook post
 
@@ -967,19 +986,19 @@ Compare Shopify plans on subscription and card fees for your sales, with the rat
 
 ## Demo only (1)
 
-### Product preview and Coach demo
+### Landing story and product demos
 
 *Public site* · `product-preview`
 
-Interactive views of the dashboard, recommendations, Coach and Daily Brief on an invented example business, each labelled as an illustrative example.
+The landing page's 20-second animated story — a website becoming a profile, three ad directions, placement previews, an owner approval and a results view — on three invented businesses, with chapters, pause, replay and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as an example with sample data.
 
-**Routes:** `/`
+**Routes:** `/`, `/landing/classic`
 
-**Verification:** Every view carries the example label; no figure presented as a customer's result.
+**Verification:** Every view carries the example label; no figure presented as a customer's result; timeline bounds, scenes and captions pinned by check:preview; 390/768/1440, keyboard and reduced motion browser-checked.
 
-**Evidence:** `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
+**Evidence:** `src/components/hero-story/hero-story.tsx`, `src/components/hero-story/stage.tsx`, `src/lib/demo/timeline.ts`, `src/lib/demo/examples.ts`, `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
 
-**Checks:** `check:capabilities`
+**Checks:** `check:capabilities`, `check:preview`
 
 **Public claim:** none — not advertised
 

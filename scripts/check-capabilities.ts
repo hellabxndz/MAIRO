@@ -95,9 +95,17 @@ check("demo and unavailable capabilities carry no public claim", () => {
 check("partially working capabilities state their condition", () => {
   for (const c of CAPABILITIES.filter((x) => x.status === "partial")) assert.ok(c.condition && c.condition.length > 20, c.id);
 });
+check("public notes are for owners: only on partial capabilities with a claim, no settings names, no banned claims", () => {
+  for (const c of CAPABILITIES.filter((x) => x.publicNote)) {
+    assert.equal(c.status, "partial", c.id);
+    assert.ok(c.claim, `${c.id}: a public note without a public claim`);
+    assert.doesNotMatch(c.publicNote!, /\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b|\/aios|NEXT\.md/, c.id);
+    for (const b of BANNED_CLAIMS) assert.doesNotMatch(c.publicNote!, b.pattern, `${c.id}: ${b.why}`);
+  }
+});
 
 console.log("\n— public pages —");
-const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/tools", "src/app/tools", "src/lib/tools", "src/lib/creative", "src/lib/calc"];
+const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/hero-story", "src/components/preview", "src/components/tools", "src/app/tools", "src/app/preview", "src/lib/tools", "src/lib/creative", "src/lib/calc", "src/lib/preview", "src/lib/demo"];
 const PUBLIC_FILES = ["src/app/page.tsx", "src/app/founding/page.tsx", "src/lib/pricing/compare.ts", "src/lib/walkthrough/script.ts"];
 function filesIn(dir: string): string[] {
   const abs = join(root, dir);

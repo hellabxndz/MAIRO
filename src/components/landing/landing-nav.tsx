@@ -12,17 +12,28 @@ import { Wordmark } from "@/components/wordmark";
 // "Free Tools" appears only once at least one tool works (toolsLive), so the
 // bar never leads to an empty hub.
 
-const linksFor = (toolsLive: boolean) => [
-  { href: "/#product-preview", label: "Product" },
+const linksFor = (toolsLive: boolean, productHref: string) => [
+  { href: productHref, label: "Product" },
   ...(toolsLive ? [{ href: "/tools", label: "Free Tools" }] : []),
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/#pricing", label: "Pricing" },
 ];
 
-export function LandingNav({ toolsLive = false }: { toolsLive?: boolean }) {
+export function LandingNav({
+  toolsLive = false,
+  cta = { href: "/sign-up", label: "Build my free ad plan" },
+  productHref = "/#product-preview",
+  dark = false,
+}: {
+  toolsLive?: boolean;
+  cta?: { href: string; label: string };
+  productHref?: string;
+  /** Over a dark first screen (the story hero): the bar uses the dark palette. */
+  dark?: boolean;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const LINKS = linksFor(toolsLive);
+  const LINKS = linksFor(toolsLive, productHref);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -33,6 +44,7 @@ export function LandingNav({ toolsLive = false }: { toolsLive?: boolean }) {
 
   return (
     <header
+      data-palette={dark ? "classic" : undefined}
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
         scrolled || open ? "border-b border-white/[0.06] bg-field-3/80 backdrop-blur-md" : "bg-transparent"
       }`}
@@ -55,10 +67,10 @@ export function LandingNav({ toolsLive = false }: { toolsLive?: boolean }) {
             Sign In
           </Link>
           <Link
-            href="/sign-up"
+            href={cta.href}
             className="whitespace-nowrap rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-6px_rgba(79,125,255,0.9)] transition hover:brightness-110"
           >
-            Build my free ad plan <span aria-hidden>→</span>
+            {cta.label} <span aria-hidden>→</span>
           </Link>
           <button
             type="button"

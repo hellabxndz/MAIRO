@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { heroVariantCookie, recordOnce } from "@/lib/analytics/funnel";
 import { activeOrg } from "@/lib/active-org";
 import { reviseStrategy, strategyFacts, aiAvailable } from "@/lib/ai/strategy";
 import {
@@ -95,6 +96,8 @@ export async function generatePlanAction(): Promise<{ ok: true } | { ok: false; 
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await createStrategy(ctx.organizationId);
   if (!r.ok) return r;
+  // The primary conversion measure, with the hero version this visitor saw.
+  await recordOnce("plan_created", ctx.organizationId, { variant: await heroVariantCookie() });
   refresh();
   return { ok: true };
 }

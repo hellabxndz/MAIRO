@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { metaIntelligenceSummary } from "@/lib/meta-intelligence";
+import { heroFunnel } from "@/lib/analytics/funnel";
 
 export default async function AiosOverviewPage() {
   const [orgCount, campaignCount, activeCampaigns, pendingCreatives, connectedMeta] =
@@ -14,6 +15,7 @@ export default async function AiosOverviewPage() {
     ]);
 
   const metaIntel = await metaIntelligenceSummary().catch(() => null);
+  const heroes = await heroFunnel(30).catch(() => []);
 
   const recentOrgs = await db.organization.findMany({
     orderBy: { createdAt: "desc" },
@@ -45,6 +47,42 @@ export default async function AiosOverviewPage() {
           <p className="mt-2 text-2xl font-semibold">{pendingCreatives}</p>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm text-neutral-400">Landing page versions · last 30 days</p>
+          <p className="text-xs text-neutral-500">Plans created per landing view is the measure that decides. Views count once per visitor per day.</p>
+        </div>
+        {heroes.length ? (
+          <table className="mt-3 w-full text-left text-[13.5px]">
+            <thead className="text-neutral-400">
+              <tr>
+                <th className="py-1 font-normal">Version</th>
+                <th className="py-1 font-normal">Views</th>
+                <th className="py-1 font-normal">Previews started</th>
+                <th className="py-1 font-normal">Previews finished</th>
+                <th className="py-1 font-normal">Plans created</th>
+                <th className="py-1 font-normal">Plans per view</th>
+              </tr>
+            </thead>
+            <tbody>
+              {heroes.map((h) => (
+                <tr key={h.variant} className="border-t border-white/10">
+                  <td className="py-1.5">{h.variant === "story" ? "Story hero (new)" : "Previous page"}</td>
+                  <td className="py-1.5 tabular-nums">{h.views}</td>
+                  <td className="py-1.5 tabular-nums">{h.previewStarts}</td>
+                  <td className="py-1.5 tabular-nums">{h.previewCompletes}</td>
+                  <td className="py-1.5 tabular-nums">{h.plansCreated}</td>
+                  <td className="py-1.5 tabular-nums">{h.planRate === null ? "—" : `${(h.planRate * 100).toFixed(1)}%`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="mt-2 text-[13.5px] text-neutral-400">No landing visits recorded yet.</p>
+        )}
+        <p className="mt-2 text-xs text-neutral-500">Too few plans to call a winner until each version has a few dozen. The previous page has no preview, so its preview columns stay at zero.</p>
+      </Card>
 
       {metaIntel && (
         <Link href="/aios/meta-intelligence" className="mt-6 block">

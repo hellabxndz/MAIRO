@@ -302,6 +302,12 @@
   border-radius: 4px;
 }
 
+/* A heading focused by script after a step changes, so screen readers start
+   there — not something the visitor can operate, so no ring. */
+:where(h1, h2)[tabindex="-1"]:focus {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

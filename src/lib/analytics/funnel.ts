@@ -1,0 +1,52 @@
+import { cookies } from "next/headers";
+import { db } from "@/lib/db";
+
+// The funnel, recorded on the server for steps that happen there (a plan
+// created, a launch approved) and counted for the AIOS comparison of hero
+// versions. Plan completion is the measure that matters; views and clicks
+// are supporting evidence only.
+
+export const PUBLIC_EVENT_NAMES = ["hero_view", "hero_example", "hero_chapter", "hero_play", "preview_start", "preview_result", "preview_complete", "preview_save", "tool_result"] as const;
+export const SERVER_EVENT_NAMES = ["plan_created", "plan_approved", "checkout_success", "first_launch"] as const;
+
+export async function heroVariantCookie(): Promise<string> {
+  try {
+    const v = (await cookies()).get("mairo_hero")?.value;
+    return v === "classic" ? "classic" : "story";
+  } catch {
+    return "story";
+  }
+}
+
+/** Records a once-per-business server step. Never throws into the caller. */
+export async function recordOnce(name: (typeof SERVER_EVENT_NAMES)[number], organizationId: string, props: Record<string, string> = {}): Promise<void> {
+  try {
+    await db.funnelEvent.create({ data: { name, organizationId, propsJson: JSON.stringify(props), dedupeKey: `${name}:${organizationId}` } });
+  } catch {
+    // Already recorded (the dedupe key), or the table is unavailable: measurement never blocks the product.
+  }
+}
+
+export type VariantFunnel = { variant: string; views: number; previewStarts: number; previewCompletes: number; plansCreated: number; planRate: number | null };
+
+/** Counts by hero version over the last `days` days. Plans created is the primary measure. */
+export async function heroFunnel(days: number): Promise<VariantFunnel[]> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const rows = await db.funnelEvent.findMany({ where: { createdAt: { gte: since }, name: { in: ["hero_view", "preview_start", "preview_complete", "plan_created"] } }, select: { name: true, propsJson: true } });
+  const by = new Map<string, VariantFunnel>();
+  for (const r of rows) {
+    let variant = "story";
+    try {
+      variant = (JSON.parse(r.propsJson ?? "{}") as { variant?: string }).variant === "classic" ? "classic" : "story";
+    } catch {
+      // Old rows without a variant count as the current hero.
+    }
+    const f = by.get(variant) ?? { variant, views: 0, previewStarts: 0, previewCompletes: 0, plansCreated: 0, planRate: null };
+    if (r.name === "hero_view") f.views++;
+    if (r.name === "preview_start") f.previewStarts++;
+    if (r.name === "preview_complete") f.previewCompletes++;
+    if (r.name === "plan_created") f.plansCreated++;
+    by.set(variant, f);
+  }
+  return [...by.values()].map((f) => ({ ...f, planRate: f.views ? f.plansCreated / f.views : null })).sort((a, b) => a.variant.localeCompare(b.variant));
+}
