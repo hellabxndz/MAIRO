@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 import { canonicalHostRedirects } from "./src/lib/canonical-host";
 
 const nextConfig: NextConfig = {
+  // Rendering video edits runs ffmpeg on the server (lib/suggested-ads/render-run.ts):
+  // the binary that ffmpeg-static downloads at install, and the caption font,
+  // go with the one page whose server action renders. Kept out of the bundle.
+  serverExternalPackages: ["ffmpeg-static"],
+  outputFileTracingIncludes: {
+    "/dashboard/creatives/suggested": ["./node_modules/ffmpeg-static/ffmpeg", "./assets/fonts/**/*"],
+  },
   experimental: {
     serverActions: {
       // Creative requests can carry a reference picture as a data URL. The

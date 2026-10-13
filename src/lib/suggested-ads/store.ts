@@ -228,7 +228,8 @@ export async function listSuggestions(organizationId: string) {
       .map((v) => {
         const meta: VideoMeta = { durationMs: v.durationMs, width: v.width, height: v.height };
         const rev = v.revisions[0];
-        return { videoId: v.id, url: v.url, posterUrl: v.posterUrl, name: v.fileName, bytes: v.bytes, meta, revisionId: rev?.id ?? null, version: rev?.version ?? 1, edits: rev ? parseEdits(rev.editsJson, meta) : { ...NO_EDITS }, history: v.revisions.map((r) => ({ version: r.version, note: r.note, createdAt: r.createdAt })) };
+        const render = rev ? { status: rev.renderStatus as "RENDERING" | "READY" | "FAILED" | null, url: rev.renderedUrl, posterUrl: rev.renderedPosterUrl, error: rev.renderError, durationMs: rev.renderedDurationMs, width: rev.renderedWidth, height: rev.renderedHeight } : null;
+        return { videoId: v.id, url: v.url, posterUrl: v.posterUrl, name: v.fileName, bytes: v.bytes, meta, revisionId: rev?.id ?? null, version: rev?.version ?? 1, edits: rev ? parseEdits(rev.editsJson, meta) : { ...NO_EDITS }, render, history: v.revisions.map((r) => ({ version: r.version, note: r.note, createdAt: r.createdAt })) };
       });
     const approval = approvals.find((p) => p.angleId === a.id) ?? null;
     let approvalState: "none" | "current" | "changed" = "none";
@@ -241,7 +242,7 @@ export async function listSuggestions(organizationId: string) {
         : approval.videoRevisionId
           ? (() => {
               const vid = vids.find((v) => v.revisionId === approval.videoRevisionId);
-              return vid ? ({ kind: "video", revisionId: vid.revisionId!, url: vid.url, edits: vid.edits } as const) : ({ kind: "none" } as const);
+              return vid ? ({ kind: "video", revisionId: vid.revisionId!, url: vid.render?.status === "READY" && vid.render.url ? vid.render.url : vid.url, edits: vid.edits } as const) : ({ kind: "none" } as const);
             })()
           : ({ kind: "none" } as const);
       const sameWords = approval.angleRevisionId === latest.id;
@@ -293,7 +294,8 @@ export async function approveCreative(
     const r = await db.ownerVideoRevision.findFirst({ where: { id: input.videoRevisionId, organizationId, video: { angleId: angle.id } }, include: { video: { include: { revisions: { orderBy: { version: "desc" }, take: 1 } } } } });
     if (!r) return { ok: false, error: "That video isn't in your account." };
     if (r.video.revisions[0]?.id !== r.id) return { ok: false, error: "The video's edits changed since this page loaded. Review them and approve again." };
-    media = { kind: "video", revisionId: r.id, url: r.video.url, edits: parseEdits(r.editsJson, { durationMs: r.video.durationMs, width: r.video.width, height: r.video.height }) };
+    // The file the ad will play: the rendered edit when there is one, otherwise the original.
+    media = { kind: "video", revisionId: r.id, url: r.renderStatus === "READY" && r.renderedUrl ? r.renderedUrl : r.video.url, edits: parseEdits(r.editsJson, { durationMs: r.video.durationMs, width: r.video.width, height: r.video.height }) };
   } else {
     return { ok: false, error: "Choose the picture or video that goes with these words." };
   }
@@ -364,7 +366,11 @@ export async function draftFromApproval(organizationId: string, userId: string, 
   } else {
     const video = view.videos.find((v) => v.revisionId === approval.videoRevisionId);
     if (!video?.posterUrl) return { ok: false, error: "That video isn't in your account any more." };
-    visual = { adChoice: "video", video: { url: video.url, posterUrl: video.posterUrl, name: video.name ?? "Your video", width: video.meta.width, height: video.meta.height, durationSec: Math.round(video.meta.durationMs / 100) / 10, bytes: video.bytes } };
+    // The rendered edit when it's ready; the original otherwise, as the owner acknowledged when approving.
+    const r = video.render?.status === "READY" && video.render.url ? video.render : null;
+    visual = r
+      ? { adChoice: "video", video: { url: r.url!, posterUrl: r.posterUrl ?? video.posterUrl, name: `${video.name ?? "Your video"} (edited, v${video.version})`, width: r.width ?? video.meta.width, height: r.height ?? video.meta.height, durationSec: Math.round((r.durationMs ?? video.meta.durationMs) / 100) / 10, bytes: video.bytes } }
+      : { adChoice: "video", video: { url: video.url, posterUrl: video.posterUrl, name: video.name ?? "Your video", width: video.meta.width, height: video.meta.height, durationSec: Math.round(video.meta.durationMs / 100) / 10, bytes: video.bytes } };
   }
 
   const w = view.words;

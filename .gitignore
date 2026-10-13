@@ -48,3 +48,4 @@ next-env.d.ts
 
 # the video renderer's own dependencies
 /video/node_modules
+/public/_local-media

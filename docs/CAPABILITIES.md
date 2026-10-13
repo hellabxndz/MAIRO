@@ -37,7 +37,7 @@ or a public page makes a claim this inventory can't back.
 | Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
 | Creative | Creative tests | Unavailable | — | Experiment workflow and evidence thresholds | `check:suggested-ads` |
 | Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads` |
-| Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | A video rendering worker | `check:suggested-ads` |
+| Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN | `check:suggested-ads`, `check:video-render` |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
 | Tracking | Meta pixel: choose, install, verify | Partially working | `/dashboard/tracking` | Connected Meta ad account; A live run against a real ad account | `check:tracking`, `check:tracking-setup` |
 | Tracking | Meta pixel through Google Tag Manager | Partially working | `/dashboard/tracking` | Google verification of the Tag Manager scope | `check:gtm`, `check:tracking` |
@@ -884,19 +884,19 @@ Once Meta is connected and the business profile is confirmed, MAIRO suggests thr
 
 *Creative* · `video-editing`
 
-On an owner's own video: start and end, captions at times and a crop, with timestamped suggestions from the video's length and shape. Each save is a new version and the uploaded file is never changed. The edits are a preview — they aren't rendered into the file, so an ad plays the original, and the owner confirms that before approving.
+On an owner's own video: start and end, captions at times and a crop, with timestamped suggestions from the video's length and shape. Each save is a new version; the uploaded file is never changed. A saved version can be written into a new MP4 — trimmed, cropped, captions burned in — shown beside the original, and that file is what's approved and goes into the campaign draft.
 
-**Condition:** Edits are previewed, not written into the video file — that needs a video rendering worker.
+**Condition:** Writing the file needs ffmpeg on the server (the ffmpeg-static package downloads it during install) and video storage. Verified here with a real render; not yet run on the hosting.
 
 **Routes:** `/dashboard/creatives/suggested`
 
-**Still needs:** A video rendering worker
+**Still needs:** ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN
 
-**Verification:** Original never overwritten; edits clamped to the video; suggestions timestamped; every edit not in the file named (check:suggested-ads).
+**Verification:** Real render of a sample: trimmed length, cropped size, caption burned in (compared with the same render without it), poster made, original untouched; one file however often pressed; failure recorded and retried; approval and campaign draft use the rendered file (check:video-render). Render, before/after and approval browser-checked with local storage.
 
-**Evidence:** `src/lib/suggested-ads/video.ts`, `src/app/dashboard/creatives/suggested/video-editor.tsx`
+**Evidence:** `src/lib/suggested-ads/video.ts`, `src/lib/suggested-ads/render.ts`, `src/lib/suggested-ads/render-run.ts`, `src/app/dashboard/creatives/suggested/video-editor.tsx`
 
-**Checks:** `check:suggested-ads`
+**Checks:** `check:suggested-ads`, `check:video-render`
 
 **Public claim:** none — not advertised
 

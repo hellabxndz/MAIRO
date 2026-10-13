@@ -3625,6 +3625,21 @@ model OwnerVideoRevision {
   createdById    String?
   createdAt      DateTime   @default(now())
 
+  /// The edits written into a new video file (lib/suggested-ads/render.ts).
+  /// Null until asked for; RENDERING while it's being made; READY with the
+  /// file; FAILED with the reason. The uploaded original is never changed.
+  renderStatus     String?
+  renderStartedAt  DateTime?
+  renderedAt       DateTime?
+  renderedUrl      String?
+  renderedPosterUrl String?
+  renderedDurationMs Int?
+  renderedWidth    Int?
+  renderedHeight   Int?
+  renderedBytes    Int?
+  renderError      String?   @db.Text
+  renderAttempts   Int       @default(0)
+
   @@unique([videoId, version])
   @@index([organizationId])
 }

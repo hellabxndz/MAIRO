@@ -18,6 +18,7 @@ import { previewCreativeSpec } from "@/lib/meta/previews";
 import { isPreviewFormat } from "@/lib/meta/preview-formats";
 import { ctaTypeFor, imagePromptFor } from "@/lib/suggested-ads/directions";
 import { NO_EDITS } from "@/lib/suggested-ads/video";
+import { renderVideoRevision } from "@/lib/suggested-ads/render-run";
 import type { HookAngle } from "@/lib/creative/hooks";
 import {
   approveCreative,
@@ -271,4 +272,25 @@ export async function suggestedPreviewAction(angleId: string, studioVersionId: s
     console.error("Suggested ad preview failed:", error instanceof Error ? error.message : "unknown");
     return { ok: false, error: "Meta couldn't draw that preview just now. The mock-up above shows the layout." };
   }
+}
+
+/**
+ * Writes the latest edit version of a video into a new file — the trim, the
+ * crop and the captions in the picture. The original upload is kept as it
+ * was. Safe to press twice: a render already running is waited for, not
+ * repeated.
+ */
+export async function renderVideoAction(videoId: string): Promise<{ ok: true; status: "READY" | "RENDERING" | "NOT_NEEDED"; url: string | null } | Fail> {
+  const ctx = await gated();
+  if (!ctx.ok) return ctx;
+  const id = ID.safeParse(videoId);
+  if (!id.success) return { ok: false, error: "That video wasn't valid." };
+  const blocked = await executionBlock(ctx.organizationId);
+  if (blocked) return { ok: false, error: blocked };
+  const r = await renderVideoRevision(ctx.organizationId, id.data);
+  if (r.ok && r.status === "READY") {
+    await recordRun({ organizationId: ctx.organizationId, agent: "CREATIVE", task: "Video edit rendered", status: "DONE", summary: "Wrote your video edits into a new file. The original is kept as it was.", href: PAGE }).catch(() => null);
+  }
+  revalidatePath(PAGE);
+  return r;
 }

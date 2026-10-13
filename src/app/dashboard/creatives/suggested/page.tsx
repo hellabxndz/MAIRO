@@ -7,6 +7,7 @@ import { executionBlock } from "@/lib/billing/execution";
 import { openAiImageConfigured } from "@/lib/ai/openai-image";
 import { storageConfigured } from "@/lib/storage/blob";
 import { ensureDirections, listSuggestions, proposedTest, suggestedAdsGate } from "@/lib/suggested-ads/store";
+import { renderingAvailable } from "@/lib/suggested-ads/render-run";
 import { SuggestedAds } from "./suggested-ads";
 
 // "Review your suggested ads" — the first thing to do once Meta is connected
@@ -16,8 +17,8 @@ import { SuggestedAds } from "./suggested-ads";
 // video. Approval is bound to the exact words and media version.
 
 export const metadata: Metadata = { title: "Review your suggested ads" };
-// Making a picture runs inside a server action on this page.
-export const maxDuration = 120;
+// Making a picture, or rendering a video edit, runs inside a server action on this page.
+export const maxDuration = 300;
 
 export default async function SuggestedAdsPage() {
   const session = await auth();
@@ -44,7 +45,7 @@ export default async function SuggestedAdsPage() {
   }
 
   await ensureDirections(organizationId, session.user.id);
-  const [data, test, blocked] = await Promise.all([listSuggestions(organizationId), proposedTest(organizationId), executionBlock(organizationId)]);
+  const [data, test, blocked, rendering] = await Promise.all([listSuggestions(organizationId), proposedTest(organizationId), executionBlock(organizationId), renderingAvailable()]);
 
   return (
     <SuggestedAds
@@ -54,6 +55,7 @@ export default async function SuggestedAdsPage() {
       paid={!blocked}
       imagesAvailable={openAiImageConfigured() && storageConfigured()}
       uploadsAvailable={storageConfigured()}
+      rendering={rendering}
     />
   );
 }

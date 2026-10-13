@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { actionClass, quietClass } from "@/components/mairo/action-styles";
-import { revertVideoAction, saveVideoEditsAction } from "@/lib/actions/suggested-ads-actions";
+import { renderVideoAction, revertVideoAction, saveVideoEditsAction } from "@/lib/actions/suggested-ads-actions";
 import { describeEdits, editsNotInFile, fmtTime, parseEdits, playedRange, sameEdits, videoSuggestions, type Aspect, type VideoEdits, type VideoMeta } from "@/lib/suggested-ads/video";
 
 // Editing the owner's video without touching the file: start and end, captions
@@ -23,6 +23,8 @@ export type EditableVideo = {
   version: number;
   edits: VideoEdits;
   history: { version: number; note: string | null; createdAt: string | Date }[];
+  /** The saved version written into a file, when asked for. */
+  render: { status: "RENDERING" | "READY" | "FAILED" | null; url: string | null; posterUrl: string | null; error: string | null; durationMs: number | null; width: number | null; height: number | null } | null;
 };
 
 const ASPECTS: { value: Aspect; label: string }[] = [
@@ -34,7 +36,7 @@ const ASPECTS: { value: Aspect; label: string }[] = [
 const ratioOf = (a: Aspect, meta: VideoMeta) => (a === "original" ? meta.width / meta.height : a === "4:5" ? 4 / 5 : a === "9:16" ? 9 / 16 : 1);
 const secs = (ms: number) => Math.round(ms / 100) / 10;
 
-export function VideoEditor({ video, words, onBusy }: { video: EditableVideo; words: { hook: string; cta: string }; onBusy?: (busy: boolean) => void }) {
+export function VideoEditor({ video, words, onBusy, rendering = { ok: false, reason: null } }: { video: EditableVideo; words: { hook: string; cta: string }; onBusy?: (busy: boolean) => void; rendering?: { ok: boolean; reason: string | null } }) {
   const router = useRouter();
   const ref = useRef<HTMLVideoElement>(null);
   const saved = useMemo(() => parseEdits(video.edits, video.meta), [video.edits, video.meta]);
@@ -139,11 +141,7 @@ export function VideoEditor({ video, words, onBusy }: { video: EditableVideo; wo
         </div>
         <p className="mt-1.5 flex justify-between text-[11.5px] tabular-nums text-faint"><span>0:00</span><span>Plays {fmtTime(range.startMs)}–{fmtTime(range.endMs)} · {fmtTime(range.lengthMs)}</span><span>{fmtTime(video.meta.durationMs)}</span></p>
 
-        {notInFile.length > 0 && (
-          <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-white/85">
-            You&apos;re seeing {list(notInFile)} as a preview over your video. MAIRO can&apos;t write edits into the video file yet, so an ad made from this video plays your original. If you need {list(notInFile)} in the ad, make the same change in your phone&apos;s video editor and upload that version.
-          </p>
-        )}
+        {notInFile.length > 0 && <RenderPanel video={video} dirty={dirty} rendering={rendering} what={list(notInFile)} />}
       </div>
 
       <div className="space-y-6">
@@ -233,6 +231,54 @@ export function VideoEditor({ video, words, onBusy }: { video: EditableVideo; wo
           </ol>
         </details>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Before and after: the original with the edits previewed over it (above),
+ * and — once rendered — the new file the ad will play. The original is kept.
+ */
+function RenderPanel({ video, dirty, rendering, what }: { video: EditableVideo; dirty: boolean; rendering: { ok: boolean; reason: string | null }; what: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const r = video.render;
+  // While a render is running elsewhere (another tab, or a press that's still going), look again every few seconds.
+  useEffect(() => {
+    if (r?.status !== "RENDERING") return;
+    const t = window.setInterval(() => router.refresh(), 4000);
+    return () => window.clearInterval(t);
+  }, [r?.status, router]);
+  const go = () =>
+    start(async () => {
+      setError(null);
+      const res = await renderVideoAction(video.videoId);
+      if (!res.ok) setError(res.error);
+      router.refresh();
+    });
+  const box = "mt-4 rounded-xl border px-3.5 py-3 text-[12.5px] leading-relaxed";
+  if (dirty) return <p className={`${box} border-[color:var(--mairo-line)] text-muted`}>Save these edits as a version first; then MAIRO can write them into a new video file.</p>;
+  if (r?.status === "READY" && r.url) {
+    return (
+      <div className={`${box} border-live/30 bg-live/[0.05]`}>
+        <p className="font-medium text-white">After — the new file for version {video.version}</p>
+        <video src={r.url} poster={r.posterUrl ?? undefined} controls playsInline preload="metadata" className="mt-2 max-h-[40vh] w-full rounded-lg bg-black" aria-label={`Your video with ${what} written in`} />
+        <p className="mt-2 text-white/80">{what.charAt(0).toUpperCase() + what.slice(1)} {what.includes(" and ") ? "are" : "is"} in this file{r.durationMs ? ` · ${fmtTime(r.durationMs)}` : ""}{r.width && r.height ? ` · ${r.width}×${r.height}` : ""}. An ad made from this version plays it. Your original, above, is kept as it was.</p>
+      </div>
+    );
+  }
+  if (r?.status === "RENDERING" || pending) return <p role="status" className={`${box} border-[color:var(--mairo-line)] text-white/85`}>Writing {what} into a new file… usually under a minute for a short clip. You can keep editing the words meanwhile.</p>;
+  return (
+    <div className={`${box} border-amber-300/30 bg-amber-300/[0.06] text-white/85`}>
+      <p>Above, {what} {what.includes(" and ") ? "are" : "is"} shown as a preview over your original. To have {what.includes(" and ") ? "them" : "it"} in the ad, MAIRO writes a new video file for this version — the original is kept.</p>
+      {r?.status === "FAILED" && r.error && <p className="mt-1 text-warn">{r.error}</p>}
+      {error && <p role="alert" className="mt-1 text-warn">{error}</p>}
+      {rendering.ok ? (
+        <button type="button" onClick={go} className={`${actionClass} mt-2`}>{r?.status === "FAILED" ? "Try again" : "Write the edits into a new video file"}</button>
+      ) : (
+        <p className="mt-1 text-muted">{rendering.reason ?? "Rendering isn't available here."}</p>
+      )}
     </div>
   );
 }

@@ -6,10 +6,10 @@
 // length and shape, and the ad's own words. They say so; nothing here claims
 // to have seen what's in the video.
 //
-// The edits are previewed in the browser. Turning them into a new video file
-// needs video processing on the server, which isn't built — so until it is,
-// the ad uses the original file, and `editsNotInFile` names exactly which
-// edits won't be in it. Pure; pinned by scripts/check-suggested-ads.ts.
+// The edits are previewed in the browser, then written into a new file on
+// request (render.ts, render-run.ts). Until a version is rendered the ad
+// uses the original file, and `editsNotInFile` names exactly which edits
+// wouldn't be in it. Pure; pinned by scripts/check-suggested-ads.ts.
 
 export type Aspect = "original" | "9:16" | "4:5" | "1:1";
 export type Caption = { startMs: number; endMs: number; text: string };
@@ -163,11 +163,7 @@ export function describeEdits(e: VideoEdits, meta: VideoMeta): string[] {
   return out.length ? out : ["The original, unedited"];
 }
 
-/**
- * The edits that won't be in the ad's video file yet. Producing an edited
- * file needs server-side video processing, which isn't switched on — so every
- * edit is listed, and the ad runs the original until it is.
- */
+/** The edits that would only be in the ad once this version is rendered into a file. */
 export function editsNotInFile(e: VideoEdits): string[] {
   const out: string[] = [];
   if (e.trimStartMs > 0 || e.trimEndMs !== null) out.push("the trim");

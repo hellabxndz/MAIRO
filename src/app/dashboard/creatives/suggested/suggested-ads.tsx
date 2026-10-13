@@ -37,7 +37,7 @@ type Panel = { kind: "create" | "edit" | "video" | "review"; id: string } | null
 const CTA_CHOICES = ["Shop now", "Get a quote", "Book now", "Learn more", "Contact us", "Order now", "Sign up"];
 const SOURCE: Record<string, string> = { template: "MAIRO's suggestion", owner: "Your edit", ai: "MAIRO's rewrite" };
 
-export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean }) {
+export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable, rendering }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean; rendering: { ok: boolean; reason: string | null } }) {
   const router = useRouter();
   const [panel, setPanel] = useState<Panel>(null);
   const [refreshing, startRefresh] = useTransition();
@@ -111,7 +111,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       )}
       {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} onClose={close} />}
       {current && panel?.kind === "video" && (
-        <VideoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />
+        <VideoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} rendering={paid ? rendering : { ok: false, reason: "Writing edits into a video file is part of a MAIRO plan." }} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />
       )}
       {current && panel?.kind === "review" && <ReviewDialog d={current} businessName={businessName} paid={paid} onClose={close} />}
     </div>
@@ -345,7 +345,7 @@ function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; bra
 
 // --- Use my video ---------------------------------------------------------------
 
-function VideoDialog({ d, organizationId, paid, available, onClose, onReview }: { d: Dir; organizationId: string; paid: boolean; available: boolean; onClose: () => void; onReview: () => void }) {
+function VideoDialog({ d, organizationId, paid, available, rendering, onClose, onReview }: { d: Dir; organizationId: string; paid: boolean; available: boolean; rendering: { ok: boolean; reason: string | null }; onClose: () => void; onReview: () => void }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [check, setCheck] = useState<MediaCheck | null>(null);
@@ -414,7 +414,7 @@ function VideoDialog({ d, organizationId, paid, available, onClose, onReview }: 
     <Modal open onClose={onClose} title={video ? `Your video for “${d.title}”` : `Use my video: ${d.title}`} wide>
       {video && !replacing ? (
         <>
-          <VideoEditor key={`${video.videoId}-${video.version}`} video={video} words={{ hook: d.words?.hook ?? "", cta: d.words?.cta ?? "" }} onBusy={setEditing} />
+          <VideoEditor key={`${video.videoId}-${video.version}`} video={video} words={{ hook: d.words?.hook ?? "", cta: d.words?.cta ?? "" }} onBusy={setEditing} rendering={rendering} />
           <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
             <button type="button" onClick={onReview} disabled={editing} className={`${actionClass} disabled:opacity-50`}>Review and approve</button>
             <button type="button" onClick={() => setReplacing(true)} className={quietClass}>Upload a different video</button>
@@ -450,8 +450,9 @@ function ReviewDialog({ d, businessName, paid, onClose }: { d: Dir; businessName
   const [meta, setMeta] = useState<{ format: string; src: string | null; error: string | null; loading: boolean } | null>(null);
   const choice = choices.find((c) => keyOf(c) === pick) ?? null;
   const words = d.words!;
-  const unrendered = choice?.kind === "video" && vid ? editsNotInFile(vid.edits) : [];
-  const media: MockMedia = !choice ? { kind: "none" } : choice.kind === "image" ? { kind: "image", url: choice.url } : { kind: "video", posterUrl: vid?.posterUrl ?? null, aspect: vid?.edits.aspect ?? "original", firstCaption: vid?.edits.captions[0] ?? null };
+  // Edits not yet written into a file mean the ad would play the original — the owner acknowledges that.
+  const unrendered = choice?.kind === "video" && vid && vid.render?.status !== "READY" ? editsNotInFile(vid.edits) : [];
+  const media: MockMedia = !choice ? { kind: "none" } : choice.kind === "image" ? { kind: "image", url: choice.url } : vid?.render?.status === "READY" ? { kind: "video", posterUrl: vid.render.posterUrl ?? vid.posterUrl, aspect: "original", firstCaption: null } : { kind: "video", posterUrl: vid?.posterUrl ?? null, aspect: vid?.edits.aspect ?? "original", firstCaption: vid?.edits.captions[0] ?? null };
   const alreadyCurrent = d.approval?.state === "current" && approvedKey === pick;
 
   const approve = () =>
@@ -531,7 +532,7 @@ function ReviewDialog({ d, businessName, paid, onClose }: { d: Dir; businessName
 
             <dl className="mt-4 space-y-2 rounded-xl bg-white/[0.04] px-4 py-3 text-[12.5px]">
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">Words</dt><dd className="text-white/90">Version {words.version} · “{words.hook}”</dd></div>
-              <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">{choice?.kind === "video" ? "Video" : "Picture"}</dt><dd className="text-white/90">{choice?.kind === "video" ? `Your video, edit version ${vid?.version}` : `Picture version ${ready.find((r) => r.versionId === pick)?.version ?? 1}`}</dd></div>
+              <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">{choice?.kind === "video" ? "Video" : "Picture"}</dt><dd className="text-white/90">{choice?.kind === "video" ? `Your video, edit version ${vid?.version}${vid?.render?.status === "READY" ? " — rendered into a new file" : ""}` : `Picture version ${ready.find((r) => r.versionId === pick)?.version ?? 1}`}</dd></div>
               <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">Button</dt><dd className="text-white/90">{words.cta}</dd></div>
             </dl>
             <p className="mt-3 text-[12px] leading-relaxed text-muted">Approval is for exactly these versions. If the words, picture or video change, MAIRO asks you to approve again before they&apos;re used.</p>
