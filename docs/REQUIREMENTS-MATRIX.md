@@ -83,7 +83,7 @@ generated from `src/lib/capabilities.ts` and checked by
 | Light design, purple accents, phone composition, a persistent "Product demo — sample data" label | `story-stage.tsx` STAGE_BACKGROUND; narrow layout | Working and verified | Not deployed | Browser 390 / 768 / 1440: no sideways scroll; tall stage on phones | — |
 | The website box doesn't imply the visitor's site is being analysed | Stage shows only `.example` addresses | Working and verified | Not deployed | check:preview: every example URL ends in `.example` | — |
 | Pause, replay, reduced motion, pause when off screen, hold while typing; no sound, no popup | `hero-story.tsx` | Working and verified | Not deployed | Browser: pause, replay, off screen, "Paused while you type", reduced-motion stills | — |
-| The old diagram page shown to nobody by default (it was 20% of visitors) | `src/proxy.ts`, HERO_CLASSIC_PERCENT default 0 | Working (code) | Not deployed | Browser runs on fresh contexts all got the story | — |
+| The old diagram page shown to nobody by default (it was 20% of visitors) | `src/proxy.ts`, HERO_CLASSIC_PERCENT default 0 | Working and verified | Not deployed | Browser: six fresh visitors all got the story; `?hero=classic` still opens the old page for comparison | — |
 | Rendered MP4s, posters and captions for each example and layout | `video/render.mjs` → `public/walkthrough/story-{shop,service,brands}-{wide,narrow}.mp4` and `-poster.webp`, `story.vtt`; `lib/demo/media.ts` | Working and verified (in-browser playback unverified here) | Not deployed | check:preview: files exist at the recorded sizes; the VTT equals the page's captions. ffmpeg: 24.00 s each. Browser: "Watch as a video" loads the chosen example's MP4 with captions, muted | The test browser has no H.264 decoder |
 | 60-second walkthrough and video | `components/walkthrough/*` | Demo only | Not deployed | check:preview (walkthrough section) | Deploy |
 
@@ -92,7 +92,7 @@ generated from `src/lib/capabilities.ts` and checked by
 | Requirement | Code / route | Implementation | Deployed | Evidence | Blocker |
 |---|---|---|---|---|---|
 | The main call to action is a free preview of the visitor's own website, not account creation | `/preview` · `components/preview/preview-flow.tsx`, `lib/preview/build.ts` | Working and verified | Not deployed (b430c36 has no `/preview`) | Browser: hero → `/preview` read `shop.fixture.test` ("Read from https://shop.fixture.test/") | Deploy |
-| Every public page's main button leads to the preview | `landing-nav.tsx` default CTA; `free-plan-demo.tsx` | Working (code) | Not deployed | Nav default was "Build my free ad plan" → `/sign-up`; now "Preview my campaign" → `/preview` | Deploy |
+| Every public page's main button leads to the preview | `landing-nav.tsx` default CTA; `free-plan-demo.tsx` | Working and verified | Not deployed | The nav default was "Build my free ad plan" → `/sign-up`. Browser: `/tools`, a tool page, `/preview` and the example plan now lead to `/preview` | Deploy |
 | Facts from the site, confirmed or corrected; gaps asked, never guessed | `lib/preview/build.ts`, `lib/website/scan.ts` | Working and verified | Not deployed | check:preview: no invented facts, numbers or forecasts | — |
 | Reading the website with AI as well as literally | `lib/business/*` | Blocked by external dependency | In deploy branch | The literal reading runs without a key | ANTHROPIC_API_KEY in the deployment |
 | Save the preview with a free account, then the plan | `/sign-up` → `/onboarding` → `/plan` | Working and verified | In deploy branch (the save step isn't) | onboarding and onboarding-db suites | — |
@@ -122,7 +122,7 @@ browser and send nothing; website tools fetch the site server-side through
 | Pixel through Google Tag Manager | `lib/gtm/*` | Blocked by external dependency | In deploy branch | Importing the ready-made container works | Google verification of the Tag Manager scope |
 | Shopify orders (webhook, deduplicated, hashed to Conversions API) | `api/orders`, `lib/tracking/orders.ts` | Working and verified | In deploy branch | check:tracking | — |
 | Website audit with fixes | `/tools/landing-page-audit`, `/tools/tracking-readiness`, `/dashboard/website` | Working and verified | Not deployed (tools) | check:website | — |
-| MAIRO never edits the customer's website | Guidance only | Working (by design) | — | No code writes to customer sites | — |
+| MAIRO never edits the customer's website | Guidance only | Working and verified | — | Code review: nothing writes to a customer's site; tracking gives install steps only | — |
 
 ## 5. Creative-first flow
 
@@ -185,7 +185,7 @@ browser and send nothing; website tools fetch the site server-side through
 | Assistant ("Ask your AI team") answering from the account's own records | `/dashboard/agents` · `lib/ai/assistant-tools.ts` | Blocked by external dependency | In deploy branch | check:assistant | ANTHROPIC_API_KEY; not run against the model here |
 | Subscriptions: Starter $149.99 (7-day trial), Growth $239.99, Scale $499.99; billing enforced | `/plan/activate`, `/dashboard/billing` · Stripe | Working and verified | In deploy branch | check:payment-gate, check:entitlements, check:pricing; NEXT.md records a live check on 10 Oct (not repeated here) | — |
 | Studio and Agency plans | `/clients/billing` | Blocked by external dependency | In deploy branch | — | Stripe prices |
-| Support contact | Footer and legal pages: `LEGAL.contactEmail` (NEXT_PUBLIC_SUPPORT_EMAIL, or the configured default) | Working (code) | In deploy branch | — | — |
+| Support contact | Footer and legal pages: `LEGAL.contactEmail` (NEXT_PUBLIC_SUPPORT_EMAIL, or the configured default) | Implemented but unverified | In deploy branch | Shown in the footer; whether anyone answers it isn't something code can show | — |
 | In-app feedback and customer-success notes | `CustomerFeedback`, `SupportNote`; AIOS customers | Working and verified | In deploy branch | check:success | — |
 | Help centre with search | `/dashboard/guide` ("How MAIRO works") only | Missing (no searchable help centre) | — | — | — |
 | Case studies | — | Missing | — | Needs a customer's written permission and measured results; none invented | A real customer |
