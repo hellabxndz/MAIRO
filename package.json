@@ -73,6 +73,7 @@
     "check:page-token": "tsx scripts/check-page-token.ts",
     "check:safe-fetch": "tsx scripts/check-safe-fetch.ts",
     "check:plan-guide": "tsx scripts/check-plan-guide.ts",
+    "check:calculators": "tsx scripts/check-calculators.ts",
     "check:capabilities": "tsx scripts/check-capabilities.ts",
     "capabilities:doc": "tsx scripts/capabilities-doc.ts"
   },

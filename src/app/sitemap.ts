@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl, PUBLIC_ROUTES } from "@/lib/site";
+import { TOOLS, usable } from "@/lib/tools/registry";
 
 // The list of pages worth indexing.
 //
@@ -11,7 +12,14 @@ import { absoluteUrl, PUBLIC_ROUTES } from "@/lib/site";
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return PUBLIC_ROUTES.map((route) => ({
+  // Free tools: the hub and each tool that works. A tool that isn't built has
+  // no page, so it can't appear here.
+  const tools = [
+    { path: "/tools", priority: 0.8, changeFrequency: "monthly" as const },
+    ...TOOLS.filter(usable).map((t) => ({ path: `/tools/${t.slug}`, priority: 0.6, changeFrequency: "monthly" as const })),
+  ];
+
+  return [...PUBLIC_ROUTES, ...tools].map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,

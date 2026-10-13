@@ -15,6 +15,7 @@ import type { Screen } from "@/lib/onboarding/draft";
 import type { LearnResult } from "@/lib/onboarding/setup";
 import { BUSINESS_TYPES, UNSURE, businessTypeFrom, reachQuestion } from "@/lib/onboarding/business-types";
 import type { AdDestination, MessageChannel } from "@/generated/prisma/enums";
+import { ToolHandoff } from "@/components/onboarding/tool-handoff";
 
 // Setting up, in three screens — steps 1 to 3 of ten:
 //
@@ -142,6 +143,13 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
         <section className={card} aria-labelledby="s-business">
           <h1 id="s-business" className="text-[24px] font-semibold tracking-[-0.02em] text-white">Tell MAIRO about your business</h1>
           <p className="mt-1.5 text-[14px] text-muted">A few quick questions. Only the first is needed — &ldquo;not sure&rdquo; is always a fine answer, and the more MAIRO knows, the more your free plan is about you.</p>
+          <ToolHandoff
+            kinds={["website"]}
+            onUse={(h) => {
+              if (h.kind === "website") setBusiness((b) => ({ ...b, website: h.url }));
+              return "added as your website below";
+            }}
+          />
           <div className="mt-6 space-y-5">
             <fieldset>
               <legend className="text-[13.5px] font-medium text-white">What kind of business is it? <span className="font-normal text-faint">· optional</span></legend>
@@ -289,11 +297,38 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
   }, [goal, chosen]);
 
   const set = (patch: Partial<GoalDraft>) => setGoal((g) => ({ ...g, ...patch }));
+  // "More about your business" opens itself when a tool result lands in it, so nothing is filled in out of sight.
+  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <form action={formAction} className={card} aria-labelledby="s-goal">
       <h1 id="s-goal" className="text-[24px] font-semibold tracking-[-0.02em] text-white">Choose your goal</h1>
       <p className="mt-1.5 text-[14px] text-muted">MAIRO has filled in suggestions — each says why. Change anything; nothing is built or spent until you approve your campaign.</p>
+      <ToolHandoff
+        kinds={["budget", "offer", "hooks", "note"]}
+        onUse={(h) => {
+          const append = (text: string) => setGoal((g) => ({ ...g, notes: [g.notes?.trim(), text].filter(Boolean).join("\n\n").slice(0, 2000) }));
+          if (h.kind === "budget") {
+            set({ monthlyBudget: Math.round(h.monthlyBudget), budgetSuggested: false });
+            return "set as your monthly budget";
+          }
+          if (h.kind === "offer") {
+            set({ currentOffer: h.offer.slice(0, 200) });
+            return "set as your current offer";
+          }
+          if (h.kind === "hooks") {
+            append(`Hooks I'd like to test:\n${h.hooks.map((x) => `- ${x}`).join("\n")}`);
+            setMoreOpen(true);
+            return "added to “Anything else MAIRO should know?”";
+          }
+          if (h.kind === "note") {
+            append(`${h.label}:\n${h.text}`);
+            setMoreOpen(true);
+            return "added to “Anything else MAIRO should know?”";
+          }
+          return "";
+        }}
+      />
 
       <fieldset className="mt-6">
         <legend className="text-[13.5px] font-medium text-white">What do you want more of? <span className="font-normal text-faint">· needed</span></legend>
@@ -386,7 +421,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
         </Field>
       </div>
 
-      <details className="mt-6 rounded-xl border border-white/[0.07] p-4">
+      <details open={moreOpen} onToggle={(e) => setMoreOpen((e.currentTarget as HTMLDetailsElement).open)} className="mt-6 rounded-xl border border-white/[0.07] p-4">
         <summary className="cursor-pointer text-[13.5px] text-white">Tell MAIRO more <span className="text-faint">· optional</span></summary>
         <div className="mt-4 space-y-4">
           <Field label="Who are you trying to reach?" why="MAIRO uses it to choose the audience. Leave it empty and it works it out from your goal.">

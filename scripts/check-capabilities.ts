@@ -15,6 +15,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { BANNED_CLAIMS, CAPABILITIES, claim } from "../src/lib/capabilities";
 import { renderCapabilitiesDoc } from "./capabilities-doc";
+import { TOOLS, usable } from "../src/lib/tools/registry";
 
 const root = new URL("..", import.meta.url).pathname;
 const read = (p: string) => readFileSync(join(root, p), "utf8");
@@ -56,7 +57,21 @@ check("every route a capability names is a real page", () => {
     }
   };
   walk("src/app");
-  const missing = CAPABILITIES.flatMap((c) => c.routes.filter((r) => !pages.includes(r.replace(/\/$/, "") || "/")).map((r) => `${c.id}: ${r}`));
+  // A [segment] in a page path matches any value in that position.
+  const matches = (route: string) => {
+    const want = (route.replace(/\/$/, "") || "/").split("/");
+    return pages.some((page) => {
+      const have = page.split("/");
+      return have.length === want.length && have.every((seg, i) => seg === want[i] || (/^\[.+\]$/.test(seg) && !/^\[.+\]$/.test(want[i])) || seg === want[i]);
+    });
+  };
+  const missing = CAPABILITIES.flatMap((c) => c.routes.filter((r) => !matches(r)).map((r) => `${c.id}: ${r}`));
+  assert.deepEqual(missing, []);
+});
+check("every usable free tool has its page content and its component on the tool page", () => {
+  const page = read("src/components/tools/tool-loader.tsx");
+  const content = read("src/lib/tools/content.ts");
+  const missing = TOOLS.filter(usable).filter((t) => !page.includes(`"${t.slug}": dynamic(`) || !content.includes(`"${t.slug}": {`)).map((t) => t.slug);
   assert.deepEqual(missing, []);
 });
 check("working and partial capabilities are backed by a check suite or a live run", () => {
@@ -82,7 +97,7 @@ check("partially working capabilities state their condition", () => {
 });
 
 console.log("\n— public pages —");
-const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/tools", "src/app/tools", "src/lib/tools"];
+const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/tools", "src/app/tools", "src/lib/tools", "src/lib/creative", "src/lib/calc"];
 const PUBLIC_FILES = ["src/app/page.tsx", "src/app/founding/page.tsx", "src/lib/pricing/compare.ts", "src/lib/walkthrough/script.ts"];
 function filesIn(dir: string): string[] {
   const abs = join(root, dir);

@@ -58,28 +58,28 @@ or a public page makes a claim this inventory can't back.
 | Public site | Product preview and Coach demo | Demo only | `/` | — | `check:capabilities` |
 | Public site | Product walkthrough video | Unavailable | — | Walkthrough build and render | — |
 | Public site | Customer case studies | Unavailable | — | A customer's written permission and measured results | — |
-| Free tools | Break-even ROAS calculator | Unavailable | — | — | — |
-| Free tools | Margin and markup calculator | Unavailable | — | — | — |
-| Free tools | Ad return scenario calculator | Unavailable | — | — | — |
-| Free tools | Customer lifetime contribution calculator | Unavailable | — | — | — |
-| Free tools | Monthly operating profit calculator | Unavailable | — | — | — |
-| Free tools | Cost-per-lead and booking calculator | Unavailable | — | — | — |
-| Free tools | Ad budget scenario planner | Unavailable | — | — | — |
-| Free tools | Shopify plan and fee comparison | Unavailable | — | — | — |
-| Free tools | Ad hook generator | Unavailable | — | — | — |
-| Free tools | Creative brief and first-test planner | Unavailable | — | — | — |
-| Free tools | Offer clarity checker | Unavailable | — | — | — |
-| Free tools | Ad examples by goal | Unavailable | — | — | — |
-| Free tools | Product and offer readiness checklist | Unavailable | — | — | — |
-| Free tools | Competitor ad research (guided) | Unavailable | — | — | — |
+| Free tools | Break-even ROAS calculator | Working | `/tools/break-even-roas` | — | `check:calculators` |
+| Free tools | Margin and markup calculator | Working | `/tools/margin-markup` | — | `check:calculators` |
+| Free tools | Ad return scenario calculator | Working | `/tools/ad-roi` | — | `check:calculators` |
+| Free tools | Customer lifetime contribution calculator | Working | `/tools/customer-lifetime-value` | — | `check:calculators` |
+| Free tools | Monthly operating profit calculator | Working | `/tools/monthly-profit` | — | `check:calculators` |
+| Free tools | Cost-per-lead and booking calculator | Working | `/tools/service-lead-economics` | — | `check:calculators` |
+| Free tools | Ad budget scenario planner | Working | `/tools/budget-planner` | — | `check:calculators` |
+| Free tools | Shopify plan and fee comparison | Partially working | `/tools/shopify-fees` | Confirm the default rates against shopify.com/pricing | `check:calculators` |
+| Free tools | Ad hook generator | Working | `/tools/hook-generator` | — | `check:calculators` |
+| Free tools | Creative brief and first-test planner | Working | `/tools/creative-brief` | — | `check:calculators` |
+| Free tools | Offer clarity checker | Working | `/tools/offer-clarity` | — | `check:calculators` |
+| Free tools | Ad examples by goal | Working | `/tools/ad-examples` | — | `check:calculators` |
+| Free tools | Product and offer readiness checklist | Working | `/tools/offer-readiness` | — | `check:calculators` |
+| Free tools | Competitor ad research (guided) | Working | `/tools/competitor-ads` | — | `check:calculators` |
 | Free tools | Competitor website comparison | Unavailable | — | — | — |
 | Free tools | Landing page audit | Unavailable | — | — | — |
 | Free tools | Shopify app detector | Unavailable | — | — | — |
 | Free tools | Shopify theme detector | Unavailable | — | — | — |
 | Free tools | Tracking readiness checker | Unavailable | — | — | — |
-| Free tools | UTM link builder | Unavailable | — | — | — |
+| Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (17)
+## Working (31)
 
 ### Free advertising plan
 
@@ -359,7 +359,231 @@ Deletes the account and its data; cancels the subscription first and names campa
 
 **Public claim:** “Delete your account and data yourself, any time.”
 
-## Partially working (14)
+### Break-even ROAS calculator
+
+*Free tools* · `tool:break-even-roas`
+
+The return on ad spend you need before ads stop losing money on each sale — before fixed costs.
+
+**Routes:** `/tools/break-even-roas`
+
+**Verification:** $100 sale with $60 variable costs gives $40 contribution and 2.5x break-even ROAS.
+
+**Evidence:** `src/components/tools/break-even-roas.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “The return on ad spend you need before ads stop losing money on each sale — before fixed costs.”
+
+### Margin and markup calculator
+
+*Free tools* · `tool:margin-markup`
+
+Turn a cost and a price into margin and markup — and see why they're different numbers.
+
+**Routes:** `/tools/margin-markup`
+
+**Verification:** Margin divides by price, markup by cost; zero and negative inputs explained.
+
+**Evidence:** `src/components/tools/margin-markup.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Turn a cost and a price into margin and markup — and see why they're different numbers.”
+
+### Ad return scenario calculator
+
+*Free tools* · `tool:ad-roi`
+
+Model clicks, orders or jobs, and what's left after ad spend, from your own cost-per-click and conversion assumptions.
+
+**Routes:** `/tools/ad-roi`
+
+**Verification:** Modeled clicks = budget / CPC; orders = clicks × rate; contribution after ad spend = orders × contribution − spend.
+
+**Evidence:** `src/components/tools/ad-roi.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Model clicks, orders or jobs, and what's left after ad spend, from your own cost-per-click and conversion assumptions.”
+
+### Customer lifetime contribution calculator
+
+*Free tools* · `tool:customer-lifetime-value`
+
+What a customer contributes over a time horizon you choose, from their purchases and your margin — and the most you could pay to win one.
+
+**Routes:** `/tools/customer-lifetime-value`
+
+**Verification:** Contribution-based, explicit horizon; affordable acquisition cost keeps the reserve you set.
+
+**Evidence:** `src/components/tools/customer-lifetime-value.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “What a customer contributes over a time horizon you choose, from their purchases and your margin — and the most you could pay to win one.”
+
+### Monthly operating profit calculator
+
+*Free tools* · `tool:monthly-profit`
+
+Sales, variable costs, ad spend, fixed costs and software fees in one month — what's left, and what wasn't counted.
+
+**Routes:** `/tools/monthly-profit`
+
+**Verification:** Every cost line shown; never called net profit when taxes and other costs are excluded.
+
+**Evidence:** `src/components/tools/monthly-profit.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Sales, variable costs, ad spend, fixed costs and software fees in one month — what's left, and what wasn't counted.”
+
+### Cost-per-lead and booking calculator
+
+*Free tools* · `tool:service-lead-economics`
+
+For service businesses: the most you can pay per lead, from your job value, costs and how many leads book and buy.
+
+**Routes:** `/tools/service-lead-economics`
+
+**Verification:** $400 contribution and 20% lead-to-sale gives $80 break-even CPL; a $100 reserve gives $60.
+
+**Evidence:** `src/components/tools/service-lead-economics.tsx`, `src/lib/calc/economics.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “For service businesses: the most you can pay per lead, from your job value, costs and how many leads book and buy.”
+
+### Ad budget scenario planner
+
+*Free tools* · `tool:budget-planner`
+
+See what a daily budget can realistically test, how long learning takes at that level, and three scenarios from your own assumptions.
+
+**Routes:** `/tools/budget-planner`
+
+**Verification:** Uses the plan's own budget thresholds; scenarios labelled as scenarios.
+
+**Evidence:** `src/components/tools/budget-planner.tsx`, `src/lib/calc/budget.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “See what a daily budget can realistically test, how long learning takes at that level, and three scenarios from your own assumptions.”
+
+### Ad hook generator
+
+*Free tools* · `tool:hook-generator`
+
+Opening lines for your ads from different angles — the problem, the result, an objection, the offer — built only from what you enter.
+
+**Routes:** `/tools/hook-generator`
+
+**Verification:** Each hook from a different angle; nothing claimed that wasn't entered.
+
+**Evidence:** `src/components/tools/hook-generator.tsx`, `src/lib/creative/hooks.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Opening lines for your ads from different angles — the problem, the result, an objection, the offer — built only from what you enter.”
+
+### Creative brief and first-test planner
+
+*Free tools* · `tool:creative-brief`
+
+A one-page brief for your first ad and a simple first test: one thing changed, what to measure, and when to decide.
+
+**Routes:** `/tools/creative-brief`
+
+**Verification:** One variable per test; decision rule stated before the test.
+
+**Evidence:** `src/components/tools/creative-brief.tsx`, `src/lib/creative/brief.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “A one-page brief for your first ad and a simple first test: one thing changed, what to measure, and when to decide.”
+
+### Offer clarity checker
+
+*Free tools* · `tool:offer-clarity`
+
+Paste your headline or offer and see which questions a stranger would still have — who it's for, what they get, what it costs, what to do next.
+
+**Routes:** `/tools/offer-clarity`
+
+**Verification:** Each finding quotes the text it's about; a rubric, not a conversion forecast.
+
+**Evidence:** `src/components/tools/offer-clarity.tsx`, `src/lib/creative/offer-clarity.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Paste your headline or offer and see which questions a stranger would still have — who it's for, what they get, what it costs, what to do next.”
+
+### Ad examples by goal
+
+*Free tools* · `tool:ad-examples`
+
+Original example ads written by MAIRO, organised by goal, format and business type — what each is trying to do and why.
+
+**Routes:** `/tools/ad-examples`
+
+**Verification:** Every example is MAIRO's own and labelled as an example, not a real business's ad.
+
+**Evidence:** `src/components/tools/ad-examples.tsx`, `src/lib/tools/ad-examples.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Original example ads written by MAIRO, organised by goal, format and business type — what each is trying to do and why.”
+
+### Product and offer readiness checklist
+
+*Free tools* · `tool:offer-readiness`
+
+Is this product or service ready to advertise? A checklist of margin, proof, delivery and page basics — not a prediction that it will sell.
+
+**Routes:** `/tools/offer-readiness`
+
+**Verification:** Checklist score explained as a checklist, never as a likelihood of success.
+
+**Evidence:** `src/components/tools/offer-readiness.tsx`, `src/lib/tools/readiness.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Is this product or service ready to advertise? A checklist of margin, proof, delivery and page basics — not a prediction that it will sell.”
+
+### Competitor ad research (guided)
+
+*Free tools* · `tool:competitor-ads`
+
+A guided search of Meta's public Ad Library for a competitor, with a template for noting what you see — and what it can't tell you.
+
+**Routes:** `/tools/competitor-ads`
+
+**Verification:** Clearly a guided search, not automated research; no spend or performance inferred.
+
+**Evidence:** `src/components/tools/competitor-ads.tsx`, `src/lib/tools/ad-library.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “A guided search of Meta's public Ad Library for a competitor, with a template for noting what you see — and what it can't tell you.”
+
+### UTM link builder
+
+*Free tools* · `tool:utm-builder`
+
+Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.
+
+**Routes:** `/tools/utm-builder`
+
+**Verification:** Valid URL out; existing query kept; values encoded.
+
+**Evidence:** `src/components/tools/utm-builder.tsx`, `src/lib/calc/utm.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
+
+## Partially working (15)
 
 ### Reading the business's website
 
@@ -641,6 +865,26 @@ Texts the owner about things that need them, if they turn it on.
 
 **Public claim:** none — not advertised
 
+### Shopify plan and fee comparison
+
+*Free tools* · `tool:shopify-fees`
+
+Compare Shopify plans on subscription and card fees for your sales, with the rates' source and date shown and editable.
+
+**Condition:** Starting rates are United States figures from public summaries dated 12 October 2026, not yet confirmed against shopify.com/pricing; the page says so and every rate is editable.
+
+**Routes:** `/tools/shopify-fees`
+
+**Still needs:** Confirm the default rates against shopify.com/pricing
+
+**Verification:** Rates carry a source URL and checked date; editable for country and plan.
+
+**Evidence:** `src/components/tools/shopify-fees.tsx`, `src/lib/calc/shopify-fees.ts`
+
+**Checks:** `check:calculators`
+
+**Public claim:** “Compare Shopify plans on subscription and card fees for your sales, with the rates' source and date shown and editable.”
+
 ## Demo only (1)
 
 ### Product preview and Coach demo
@@ -659,7 +903,7 @@ Interactive views of the dashboard, recommendations, Coach and Daily Brief on an
 
 **Public claim:** none — not advertised
 
-## Unavailable (30)
+## Unavailable (15)
 
 ### TikTok ads
 
@@ -803,174 +1047,6 @@ The table for permission-based case studies exists, but there's no real customer
 
 **Public claim:** none — not advertised
 
-### Break-even ROAS calculator
-
-*Free tools* · `tool:break-even-roas`
-
-The return on ad spend you need before ads stop losing money on each sale — before fixed costs.
-
-**Verification:** $100 sale with $60 variable costs gives $40 contribution and 2.5x break-even ROAS.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Margin and markup calculator
-
-*Free tools* · `tool:margin-markup`
-
-Turn a cost and a price into margin and markup — and see why they're different numbers.
-
-**Verification:** Margin divides by price, markup by cost; zero and negative inputs explained.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Ad return scenario calculator
-
-*Free tools* · `tool:ad-roi`
-
-Model clicks, orders or jobs, and what's left after ad spend, from your own cost-per-click and conversion assumptions.
-
-**Verification:** Modeled clicks = budget / CPC; orders = clicks × rate; contribution after ad spend = orders × contribution − spend.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Customer lifetime contribution calculator
-
-*Free tools* · `tool:customer-lifetime-value`
-
-What a customer contributes over a time horizon you choose, from their purchases and your margin — and the most you could pay to win one.
-
-**Verification:** Contribution-based, explicit horizon; affordable acquisition cost keeps the reserve you set.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Monthly operating profit calculator
-
-*Free tools* · `tool:monthly-profit`
-
-Sales, variable costs, ad spend, fixed costs and software fees in one month — what's left, and what wasn't counted.
-
-**Verification:** Every cost line shown; never called net profit when taxes and other costs are excluded.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Cost-per-lead and booking calculator
-
-*Free tools* · `tool:service-lead-economics`
-
-For service businesses: the most you can pay per lead, from your job value, costs and how many leads book and buy.
-
-**Verification:** $400 contribution and 20% lead-to-sale gives $80 break-even CPL; a $100 reserve gives $60.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Ad budget scenario planner
-
-*Free tools* · `tool:budget-planner`
-
-See what a daily budget can realistically test, how long learning takes at that level, and three scenarios from your own assumptions.
-
-**Verification:** Uses the plan's own budget thresholds; scenarios labelled as scenarios.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Shopify plan and fee comparison
-
-*Free tools* · `tool:shopify-fees`
-
-Compare Shopify plans on subscription and card fees for your sales, with the rates' source and date shown and editable.
-
-**Verification:** Rates carry a source URL and checked date; editable for country and plan.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Ad hook generator
-
-*Free tools* · `tool:hook-generator`
-
-Opening lines for your ads from different angles — the problem, the result, an objection, the offer — built only from what you enter.
-
-**Verification:** Each hook from a different angle; nothing claimed that wasn't entered.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Creative brief and first-test planner
-
-*Free tools* · `tool:creative-brief`
-
-A one-page brief for your first ad and a simple first test: one thing changed, what to measure, and when to decide.
-
-**Verification:** One variable per test; decision rule stated before the test.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Offer clarity checker
-
-*Free tools* · `tool:offer-clarity`
-
-Paste your headline or offer and see which questions a stranger would still have — who it's for, what they get, what it costs, what to do next.
-
-**Verification:** Each finding quotes the text it's about; a rubric, not a conversion forecast.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Ad examples by goal
-
-*Free tools* · `tool:ad-examples`
-
-Original example ads written by MAIRO, organised by goal, format and business type — what each is trying to do and why.
-
-**Verification:** Every example is MAIRO's own and labelled as an example, not a real business's ad.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Product and offer readiness checklist
-
-*Free tools* · `tool:offer-readiness`
-
-Is this product or service ready to advertise? A checklist of margin, proof, delivery and page basics — not a prediction that it will sell.
-
-**Verification:** Checklist score explained as a checklist, never as a likelihood of success.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### Competitor ad research (guided)
-
-*Free tools* · `tool:competitor-ads`
-
-A guided search of Meta's public Ad Library for a competitor, with a template for noting what you see — and what it can't tell you.
-
-**Verification:** Clearly a guided search, not automated research; no spend or performance inferred.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
 ### Competitor website comparison
 
 *Free tools* · `tool:competitor-website`
@@ -1026,18 +1102,6 @@ The theme a Shopify store uses, when it's publicly visible, with the evidence.
 Checks a page for the Meta pixel, Tag Manager and a consent banner, and says what that does and doesn't prove.
 
 **Verification:** A detected script is never reported as working events.
-
-**Evidence:** `src/lib/tools/registry.ts`
-
-**Public claim:** none — not advertised
-
-### UTM link builder
-
-*Free tools* · `tool:utm-builder`
-
-Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.
-
-**Verification:** Valid URL out; existing query kept; values encoded.
 
 **Evidence:** `src/lib/tools/registry.ts`
 

@@ -232,6 +232,7 @@ function money(n: number): string {
 
 export default function Home() {
   const toolsLive = USABLE_TOOLS().length > 0;
+  const featuredTools = USABLE_TOOLS().filter((t) => t.featured && t.status === "working").slice(0, 3);
   return (
     <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
       <LandingNav toolsLive={toolsLive} />
@@ -454,6 +455,33 @@ export default function Home() {
           </ul>
         </div>
       </section>
+
+      {/* ── Free tools: a few that work today ─────────────────────────── */}
+      {featuredTools.length > 0 && (
+        <section id="free-tools" aria-labelledby="tools-title" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-16 sm:px-8 lg:px-12">
+          <div className="mx-auto max-w-[1180px]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Free tools</p>
+                <h2 id="tools-title" className="mt-3 text-[clamp(26px,3.4vw,38px)] font-bold leading-[1.1] tracking-[-0.03em]">Start with your numbers — no account needed.</h2>
+              </div>
+              <Link href="/tools" className="text-[14px] text-white/80 underline underline-offset-4 hover:text-white">See all free tools →</Link>
+            </div>
+            <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {featuredTools.map((t) => (
+                <li key={t.slug}>
+                  <Link href={`/tools/${t.slug}`} className={`flex h-full flex-col rounded-3xl ${GLASS} p-6 transition hover:border-violet-400/40`}>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-300">{t.category}</span>
+                    <span className="mt-2 text-[18px] font-semibold tracking-[-0.02em] text-white">{t.name}</span>
+                    <span className="mt-2 flex-1 text-[14px] leading-relaxed text-white/70">{t.summary}</span>
+                    <span className="mt-4 text-[13px] text-violet-300">Try it free →</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* ── Pricing ──────────────────────────────────────────────────── */}
       <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
