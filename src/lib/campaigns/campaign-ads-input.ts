@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import type { AdDestination } from "@/generated/prisma/enums";
 import { reviewAdImage, reviewCreative } from "@/lib/ai/review";
 import { checkCopy, ctaLabel, fitCta, maxTestAds } from "@/lib/campaigns/ad-copy";
+import { brandCheck } from "@/lib/brain/brand-check";
+import { brandRulesFor } from "@/lib/brain/store";
 import { isOwnUpload } from "@/lib/campaigns/media-rules";
 import type { CampaignAdInput } from "@/lib/campaigns/launch";
 
@@ -59,6 +61,8 @@ export async function resolveCampaignAds(input: {
 
   const ads: CampaignAdInput[] = [];
   const reviewed = new Set<string>();
+  // The business's own rules, enforced here whatever the browser sent.
+  const brand = await brandRulesFor(input.organizationId).catch(() => null);
   for (const ad of parsed) {
     if (ad.kind === "EXISTING_AD" && !input.usesMeta) {
       return { ok: false, error: "Existing ads run on Meta only." };
@@ -77,6 +81,8 @@ export async function resolveCampaignAds(input: {
     };
     const problem = checkCopy(words, input.destination).find((f) => f.level === "problem");
     if (problem) return { ok: false, error: problem.text };
+    const avoided = brand ? brandCheck(`${words.headline} ${words.primaryText}`, brand).find((f) => f.level === "problem") : null;
+    if (avoided) return { ok: false, error: `${avoided.text} Change the ad's words in Your Advertisement.` };
 
     if (ad.kind === "IMAGE" && ad.imageUrl) {
       // Their own picture: it must be this business's upload, and it gets the

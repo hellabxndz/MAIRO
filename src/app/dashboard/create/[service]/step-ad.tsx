@@ -15,6 +15,7 @@ import { PostPicker } from "./post-picker";
 import { ImageUpload } from "./image-upload";
 import { VideoUpload } from "./video-upload";
 import { Choice, Note, Question } from "./wizard-parts";
+import type { BrandRules } from "@/lib/brain/brand-check";
 
 export type StudioProps = {
   assistantName: string;
@@ -25,6 +26,8 @@ export type StudioProps = {
   creditBalance: CreditBalance;
   costs: CreditCosts;
   mode: "simple" | "advanced";
+  /** The business's brand rules, so the words are checked as they're typed. */
+  brand: BrandRules;
 };
 
 /** A fresh ad choice starts its words over too. */
@@ -236,7 +239,7 @@ export function StepAd({
       )}
 
       {hasOwnWords(plan) && (plan.adChoice !== "video" || plan.video) && (plan.adChoice !== "images" || (plan.images ?? []).length > 0) && (
-        <CopyEditor plan={plan} update={update} assistantName={studio.assistantName} />
+        <CopyEditor plan={plan} update={update} assistantName={studio.assistantName} brand={studio.brand} />
       )}
 
       {!studio.configured && plan.adChoice === "none" && menu === "main" && (

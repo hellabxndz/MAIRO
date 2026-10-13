@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { BrandRules } from "./brand-check";
 import { loadAccountHistory } from "@/lib/meta/account-history";
 import { historyBrief, historyPoints, type HistoryPoints } from "@/lib/meta/account-history-rules";
 import { brainBrief, loadBrain, saveBrain, type BrainProfile, type BrainRecord, type HistoricalFact } from "@/lib/business/brain";
@@ -242,6 +243,24 @@ export function brainPrompt(s: BrainState): string {
 
 export async function brainPromptFor(organizationId: string): Promise<string> {
   return brainPrompt(await loadBrainState(organizationId, new Date(), { accountHistory: true }));
+}
+
+/**
+ * The rules an ad's words are checked against (lib/brain/brand-check.ts):
+ * the owner's avoid list, and only confirmed offers, proof and the promotions
+ * running now — a guess from the website can't back a claim.
+ */
+export async function brandRulesFor(organizationId: string, now = new Date()): Promise<BrandRules> {
+  const s = await loadBrainState(organizationId, now);
+  const p = s.profile as unknown as Record<string, unknown>;
+  const list = (k: string) => (Array.isArray(p[k]) ? (p[k] as unknown[]).map(String) : typeof p[k] === "string" && p[k] ? [String(p[k])] : []);
+  const confirmed = (k: string) => (s.meta(k).status === "confirmed" ? list(k) : []);
+  return {
+    avoid: list("avoidClaims"),
+    offers: [...confirmed("offers"), ...confirmed("successfulOffers")],
+    promotions: s.temporary.filter((t) => t.kind === "promotion" && t.state === "active").map((t) => t.text),
+    proof: [...confirmed("usps"), ...confirmed("customerResults"), ...confirmed("yearsInBusiness")],
+  };
 }
 
 /** The Business Brain's visual brief for an image (Creative Studio), or null when MAIRO knows nothing visual yet. */

@@ -9,6 +9,8 @@ import { assistantNameOf } from "@/lib/ai/agents";
 import { openAiImageConfigured } from "@/lib/ai/openai-image";
 import { storageConfigured } from "@/lib/storage/blob";
 import { creditBalance } from "@/lib/creative-studio/credits";
+import { brandRulesFor } from "@/lib/brain/store";
+import { NO_RULES } from "@/lib/brain/brand-check";
 import { creditCosts } from "@/lib/creative-studio/pricing";
 import { viewMode } from "@/lib/view-mode";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
@@ -81,6 +83,7 @@ export default async function CreateServicePage({
     viewMode(),
     connectionSummaries(organizationId),
   ]);
+  const brand = await brandRulesFor(organizationId).catch(() => NO_RULES);
   // The Business Brain fills anything the signup answers left empty, so a
   // business that analyzed its website doesn't type its own description again.
   const brain = brainFacts((await loadBrain(organizationId)).profile);
@@ -160,6 +163,7 @@ export default async function CreateServicePage({
           creditBalance: balance,
           costs,
           mode,
+          brand,
         }}
       />
     </div>

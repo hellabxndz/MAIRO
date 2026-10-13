@@ -11,6 +11,7 @@ import { checkVideo, VIDEO_TYPES, type MediaCheck } from "@/lib/campaigns/media-
 import { measureVideo } from "@/lib/media/measure-video";
 import { PREVIEW_FORMATS } from "@/lib/meta/preview-formats";
 import { usesAvoided } from "@/lib/suggested-ads/directions";
+import { brandCheck, type BrandRules } from "@/lib/brain/brand-check";
 import { editsNotInFile } from "@/lib/suggested-ads/video";
 import {
   approveCreativeAction,
@@ -108,7 +109,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       {current && panel?.kind === "create" && (
         <CreateDialog d={current} paid={paid} available={imagesAvailable} onClose={close} onMade={() => setPanel({ kind: "review", id: current.id })} onVideo={() => setPanel({ kind: "video", id: current.id })} />
       )}
-      {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} onClose={close} />}
+      {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} onClose={close} />}
       {current && panel?.kind === "video" && (
         <VideoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />
       )}
@@ -271,7 +272,7 @@ function CreateDialog({ d, paid, available, onClose, onMade, onVideo }: { d: Dir
 
 // --- Change the direction: a new version of the words ----------------------------
 
-function EditDialog({ d, avoid, onClose }: { d: Dir; avoid: string[]; onClose: () => void }) {
+function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; brand: BrandRules | null; onClose: () => void }) {
   const router = useRouter();
   const [hook, setHook] = useState(d.words?.hook ?? "");
   const [body, setBody] = useState(d.words?.body ?? "");
@@ -279,6 +280,8 @@ function EditDialog({ d, avoid, onClose }: { d: Dir; avoid: string[]; onClose: (
   const [error, setError] = useState<string | null>(null);
   const [saving, start] = useTransition();
   const avoided = usesAvoided(`${hook} ${body}`, avoid);
+  // The same brand check as the campaign builder: offers and claims you haven't confirmed are flagged, not blocked.
+  const brandNotes = brand ? brandCheck(`${hook} ${body}`, brand).filter((f) => f.level === "warning") : [];
   const unchanged = hook === d.words?.hook && body === d.words?.body && cta === d.words?.cta;
 
   const save = () =>
@@ -315,6 +318,7 @@ function EditDialog({ d, avoid, onClose }: { d: Dir; avoid: string[]; onClose: (
           </select>
         </label>
         {avoided && <p role="alert" className="text-[12.5px] text-warn">“{avoided}” is on your list of words to avoid.</p>}
+        {brandNotes.map((f) => <p key={f.text} className="text-[12.5px] text-muted">{f.text}</p>)}
         {error && <p role="alert" className="text-[12.5px] text-warn">{error}</p>}
         <p className="text-[12px] text-muted">Saving makes version {(d.words?.version ?? 0) + 1}. Earlier versions are kept{d.approval ? ", and you'll approve the new words before they're used" : ""}.</p>
         <div className="flex flex-wrap gap-2">

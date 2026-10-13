@@ -15,6 +15,7 @@ import { inputClass } from "@/components/ui";
 import { destinationsFor, goalOption, PROMOTES_OPTIONS, recommendedGoal } from "@/lib/campaigns/objectives";
 import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
 import { contextOf, dollars, hasOwnWords, plannedSpend, runningCopy, WIZARD_STEPS, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
+import { brandAllows, type BrandRules } from "@/lib/brain/brand-check";
 import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { campaignName, planFormEntries } from "@/lib/campaigns/plan-form";
 import type { CampaignReview } from "@/lib/campaigns/review";
@@ -248,7 +249,7 @@ export function CampaignWizard(props: Props) {
   const blocked =
     current === "launch" && missing.length > 0
       ? "Connect your account above to make the campaign."
-      : blockedBecause(current, plan, { review, reviewStale, checking, confirmed });
+      : blockedBecause(current, plan, { review, reviewStale, checking, confirmed, brand: studio.brand });
   const spend = plannedSpend(plan);
 
   return (
@@ -527,7 +528,7 @@ function reviewKey(plan: CampaignPlan): string {
 function blockedBecause(
   step: StepId,
   plan: CampaignPlan,
-  ctx: { review: CampaignReview | null; reviewStale: boolean; checking: boolean; confirmed: boolean },
+  ctx: { review: CampaignReview | null; reviewStale: boolean; checking: boolean; confirmed: boolean; brand: BrandRules },
 ): string | null {
   switch (step) {
     case "business":
@@ -568,6 +569,7 @@ function blockedBecause(
         if (words.some((w) => checkCopy(w, plan.destinationType).some((f) => f.level === "problem"))) {
           return "Fix the ad's words first.";
         }
+        if (words.some((w) => !brandAllows(`${w.headline} ${w.primaryText}`, ctx.brand))) return "The words use something on your list of words to avoid — change it first.";
       }
       return null;
     }

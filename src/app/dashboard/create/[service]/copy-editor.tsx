@@ -15,6 +15,7 @@ import {
 } from "@/lib/campaigns/ad-copy";
 import { dollars, plannedSpend, type CampaignPlan } from "@/lib/campaigns/plan";
 import { Choice, Note, SubQuestion } from "./wizard-parts";
+import { brandCheck, NO_RULES, type BrandRules } from "@/lib/brain/brand-check";
 
 // The ad's words: three versions MAIRO writes from what the business told it,
 // one chosen and edited, and — if the budget allows — several run side by side
@@ -24,10 +25,12 @@ export function CopyEditor({
   plan,
   update,
   assistantName,
+  brand = NO_RULES,
 }: {
   plan: CampaignPlan;
   update: (patch: Partial<CampaignPlan>) => void;
   assistantName: string;
+  brand?: BrandRules;
 }) {
   const [writing, setWriting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +82,8 @@ export function CopyEditor({
     update({ testPicks: picks });
   }
 
-  const findings = chosen ? checkCopy(chosen, plan.destinationType) : [];
+  // Meta's rules, then the business's own: words to avoid, offers and claims it hasn't confirmed.
+  const findings = chosen ? [...checkCopy(chosen, plan.destinationType), ...brandCheck(`${chosen.headline} ${chosen.primaryText}`, brand)] : [];
   const running = plan.testing ? new Set([plan.chosenCopy, ...plan.testPicks]) : new Set([plan.chosenCopy]);
 
   return (

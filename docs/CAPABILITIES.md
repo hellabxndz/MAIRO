@@ -33,7 +33,7 @@ or a public page makes a claim this inventory can't back.
 | Creative | Ad text | Partially working | `/dashboard/create` | ANTHROPIC_API_KEY | `check:campaign-wizard`, `check:ads` |
 | Creative | AI pictures | Partially working | `/dashboard/creative-studio` | OPENAI_API_KEY; BLOB_READ_WRITE_TOKEN | `check:creative-studio` |
 | Creative | Your own pictures and videos | Partially working | `/dashboard/create` | BLOB_READ_WRITE_TOKEN | `check:ads`, `check:creative-studio` |
-| Creative | Brand details | Partially working | `/dashboard/settings/business-brain` | Brand profile screen and pre-save brand check | `check:brain` |
+| Creative | Brand details and brand check | Partially working | `/dashboard/settings/business-brain`, `/dashboard/create`, `/dashboard/creatives/suggested` | Approved asset library | `check:brand`, `check:brain`, `check:suggested-ads` |
 | Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
 | Creative | Creative tests | Unavailable | — | Experiment workflow and evidence thresholds | `check:suggested-ads` |
 | Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads` |
@@ -820,23 +820,23 @@ Upload pictures and videos into the business's own folder and use them as they a
 
 **Public claim:** “Use your own photos and videos.”
 
-### Brand details
+### Brand details and brand check
 
 *Creative* · `brand-profile`
 
-Logo, colours, tone and claims to avoid are kept in the Business Brain and used by the writers.
+Logo, colours, tone, words you like and claims to avoid are kept in the Business Brain's Brand section, each confirmable. Every ad's words are checked against them while they're written and again at launch: words to avoid stop the ad; offers, prices and claims the owner hasn't confirmed are flagged.
 
-**Condition:** Kept as Business Brain facts; a dedicated brand profile with approved pictures and a pre-save check is not built yet.
+**Condition:** Brand facts live in the Business Brain; a library of approved pictures and logo files isn't built yet.
 
-**Routes:** `/dashboard/settings/business-brain`
+**Routes:** `/dashboard/settings/business-brain`, `/dashboard/create`, `/dashboard/creatives/suggested`
 
-**Still needs:** Brand profile screen and pre-save brand check
+**Still needs:** Approved asset library
 
-**Verification:** Writers receive the owner's avoid-claims list.
+**Verification:** Avoided words block in the builder and at launch; unconfirmed offers and claims flagged; confirmed offers, current promotions and confirmed proof never flagged (check:brand).
 
-**Evidence:** `src/lib/business/brain.ts`, `src/lib/brain/store.ts`
+**Evidence:** `src/lib/brain/brand-check.ts`, `src/lib/brain/store.ts`, `src/lib/campaigns/campaign-ads-input.ts`, `src/app/dashboard/create/[service]/copy-editor.tsx`
 
-**Checks:** `check:brain`
+**Checks:** `check:brand`, `check:brain`, `check:suggested-ads`
 
 **Public claim:** none — not advertised
 

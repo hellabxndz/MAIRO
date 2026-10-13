@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { db } from "@/lib/db";
-import { loadBrainState } from "@/lib/brain/store";
+import { brandRulesFor, loadBrainState } from "@/lib/brain/store";
+import { brandCheck, type BrandRules } from "@/lib/brain/brand-check";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { newPlan, type CampaignPlan } from "@/lib/campaigns/plan";
@@ -120,8 +121,8 @@ export async function refreshDirections(organizationId: string, userId: string |
 
 export type WordsCheck = { problems: string[]; warnings: string[] };
 
-/** The same copy check the campaign builder uses, plus the owner's own words to avoid. */
-export function checkWords(w: { hook: string; body: string; cta: string }, avoid: string[]): WordsCheck {
+/** The same copy check the campaign builder uses, plus the business's brand rules. */
+export function checkWords(w: { hook: string; body: string; cta: string }, avoid: string[], brand: BrandRules | null = null): WordsCheck {
   const problems: string[] = [];
   if (w.hook.trim().length < 4) problems.push("Write an opening line.");
   if (w.hook.length > 160) problems.push("Keep the opening line under 160 characters.");
@@ -130,16 +131,17 @@ export function checkWords(w: { hook: string; body: string; cta: string }, avoid
   const avoided = usesAvoided(`${w.hook} ${w.body}`, avoid);
   if (avoided) problems.push(`“${avoided}” is on your list of words to avoid.`);
   const warnings = checkCopy({ primaryText: `${w.hook} ${w.body}`.trim(), headline: w.hook.slice(0, 40), cta: "LEARN_MORE" }, "WEBSITE").map((f) => f.text);
-  return { problems, warnings };
+  if (brand) for (const f of brandCheck(`${w.hook} ${w.body}`, brand)) (f.level === "problem" ? problems : warnings).push(f.text);
+  return { problems: [...new Set(problems)], warnings };
 }
 
 /** A new version of a direction's words. The previous versions stay. */
 export async function reviseDirection(organizationId: string, userId: string, angleId: string, w: { hook: string; body: string; cta: string }): Promise<{ ok: true; version: number } | { ok: false; error: string }> {
   const angle = await db.adAngle.findFirst({ where: { id: angleId, organizationId }, include: { revisions: { orderBy: { version: "desc" }, take: 1 } } });
   if (!angle) return { ok: false, error: "That direction isn't in your account." };
-  const { facts } = await confirmedFactsFor(organizationId);
+  const [{ facts }, brand] = await Promise.all([confirmedFactsFor(organizationId), brandRulesFor(organizationId).catch(() => null)]);
   const words = { hook: w.hook.replace(/\s+/g, " ").trim(), body: w.body.replace(/\s+/g, " ").trim(), cta: w.cta.trim().slice(0, 30) };
-  const check = checkWords(words, facts.avoid);
+  const check = checkWords(words, facts.avoid, brand);
   if (check.problems.length) return { ok: false, error: check.problems[0] };
   const latest = angle.revisions[0];
   if (latest && latest.hook === words.hook && latest.body === words.body && latest.cta === words.cta) return { ok: true, version: latest.version };
@@ -200,10 +202,11 @@ export type SuggestionView = Awaited<ReturnType<typeof listSuggestions>>["direct
 
 /** Everything the page shows, for one business. */
 export async function listSuggestions(organizationId: string) {
-  const [factsView, angles, approvals] = await Promise.all([
+  const [factsView, angles, approvals, brand] = await Promise.all([
     confirmedFactsFor(organizationId),
     db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { not: "ARCHIVED" } }, orderBy: [{ rank: "asc" }, { createdAt: "asc" }], include: { revisions: { orderBy: { version: "desc" } } } }),
     db.creativeApproval.findMany({ where: { organizationId, revokedAt: null }, orderBy: { approvedAt: "desc" } }),
+    brandRulesFor(organizationId).catch(() => null),
   ]);
   const ids = angles.map((a) => a.id);
   const [assets, videos] = await Promise.all([
@@ -261,7 +264,7 @@ export async function listSuggestions(organizationId: string) {
     };
   });
   const { facts } = factsView;
-  return { facts, unconfirmed: factsView.unconfirmed, intro: introFor(facts, directions.length), directions, missing: buildDirections(facts).missing };
+  return { facts, brand, unconfirmed: factsView.unconfirmed, intro: introFor(facts, directions.length), directions, missing: buildDirections(facts).missing };
 }
 
 /**
