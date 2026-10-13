@@ -144,7 +144,7 @@ check("…and it still isn't called proof", /can't prove why/.test(reasonsEx.fin
 const exampleSrc = readFileSync("src/lib/coach/example.ts", "utf8");
 check("the example never touches the database", !/@\/lib\/db|from "\.\/gather"|prisma/i.test(exampleSrc.replace(/@\/generated\/prisma\/enums/g, "")));
 const walk = (d: string): string[] => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
-const users = walk("src").filter((f) => /\.(ts|tsx)$/.test(f) && f !== join("src", "lib", "coach", "example.ts") && readFileSync(f, "utf8").includes("coach/example"));
+const users = walk("src").filter((f) => /\.(ts|tsx)$/.test(f) && f !== join("src", "lib", "coach", "example.ts") && /from\s+["'][^"']*coach\/example["']/.test(readFileSync(f, "utf8")));
 check("and only the public landing page uses it", users.length > 0 && users.every((f) => f === join("src", "app", "page.tsx") || f.startsWith(join("src", "components", "landing"))), users.join(", "));
 
 console.log(failures === 0 ? "\nAll checks passed.\n" : `\n${failures} FAILED\n`);

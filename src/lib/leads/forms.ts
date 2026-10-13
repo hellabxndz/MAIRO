@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
+import { recordLeadEvent } from "./history";
 import { hashEmail, hashPhone } from "@/lib/tracking/hash";
 import { classifyNiche } from "@/lib/tracking/niches";
 import { contactFrom, validateAnswer, type LeadField } from "@/lib/leads/fields";
@@ -235,10 +236,12 @@ export async function submitLead(input: {
       answersJson: JSON.stringify(answers),
       hashedEmail: hashEmail(contact.email),
       hashedPhone: hashPhone(phone),
+      contactKey: hashEmail(contact.email) ?? hashPhone(phone),
       clickId: input.clickId?.slice(0, 512) ?? null,
       mairoCampaignId: campaign?.id ?? null,
     },
   });
+  await recordLeadEvent({ organizationId: form.organizationId, leadId: lead.id, kind: "created", actorLabel: "Your form", toStatus: "NEW", note: "Filled in your form" }).catch(() => null);
 
   return { ok: true, thankYou: form.thankYou, leadId: lead.id };
 }

@@ -56,7 +56,7 @@ export async function nextBestSteps(organizationId: string, now = new Date()): P
     db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, orderBy: [{ urgent: "desc" }, { createdAt: "desc" }], take: 3, select: { id: true, title: true, noticed: true, urgent: true } }),
     db.coachFinding.findFirst({ where: { organizationId, status: "OPEN", severity: "ATTENTION" }, orderBy: { priority: "desc" }, select: { id: true, title: true, plain: true } }),
     loadTeam(organizationId, { now }).catch(() => null),
-    db.lead.count({ where: { organizationId, status: "NEW", createdAt: { gte: new Date(now.getTime() - 14 * DAY), lte: new Date(now.getTime() - DAY) } } }),
+    db.lead.count({ where: { organizationId, source: { not: "CSV_IMPORT" }, status: "NEW", createdAt: { gte: new Date(now.getTime() - 14 * DAY), lte: new Date(now.getTime() - DAY) } } }),
   ]);
   const out: NextStep[] = [];
   if (readiness && !readiness.ready && readiness.next?.owner === "you") out.push({ title: readiness.next.label, why: readiness.next.detail, href: readiness.next.href, from: "Your setup checklist" });

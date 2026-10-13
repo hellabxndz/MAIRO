@@ -1,3 +1,4 @@
+import { fromAds } from "@/lib/leads/outcomes";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
@@ -36,7 +37,7 @@ export async function gatherCoachInput(organizationId: string, opts: { now?: Dat
       include: { platformCampaigns: { where: { externalCampaignId: { not: null } } } },
     }),
     db.lead.findMany({
-      where: { organizationId, OR: [{ createdAt: { gte: previous.since } }, { status: "ESTIMATE_SENT" }] },
+      where: { organizationId, ...fromAds, OR: [{ createdAt: { gte: previous.since } }, { status: "ESTIMATE_SENT" }] },
       select: { id: true, createdAt: true, status: true, source: true, mairoCampaignId: true, firstContactedAt: true, appointmentAt: true, nextFollowUpAt: true, statusChangedAt: true, estimatedValueCents: true, valueCents: true, lostReason: true },
       orderBy: { createdAt: "desc" },
       take: 5_000,

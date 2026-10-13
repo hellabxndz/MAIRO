@@ -1,3 +1,4 @@
+import { fromAds } from "@/lib/leads/outcomes";
 import { db } from "@/lib/db";
 import { otherApprovals } from "@/lib/approvals/queue";
 import { AGENT } from "./agents";
@@ -21,7 +22,7 @@ export async function loadBrief(organizationId: string, team: TeamView, now = ne
     db.platformCampaign.count({ where: { mairoCampaign: { organizationId }, externalCampaignId: { not: null } } }),
     db.mairoCampaign.count({ where: { organizationId, launchApprovedAt: { not: null } } }),
     db.agentRun.findFirst({ where: { organizationId, task: "team-review", status: { in: ["DONE", "NOTHING"] } }, orderBy: { startedAt: "desc" }, select: { id: true } }),
-    db.lead.count({ where: { organizationId, createdAt: { gte: since }, status: { not: "SPAM" } } }),
+    db.lead.count({ where: { organizationId, ...fromAds, createdAt: { gte: since }, status: { not: "SPAM" } } }),
     db.mairoInsight.findMany({ where: { organizationId, createdAt: { gte: since }, severity: { in: ["ATTENTION", "URGENT", "OPPORTUNITY"] } }, orderBy: { createdAt: "desc" }, take: 4, select: { title: true, happened: true, createdAt: true, mairoCampaignId: true } }),
     db.mairoDecision.findMany({ where: { organizationId, status: "APPLIED", decidedAt: { gte: since } }, orderBy: { decidedAt: "desc" }, take: 3, select: { title: true, decidedAt: true, automatic: true } }),
     db.coachFinding.findMany({ where: { organizationId, firstSeenAt: { gte: since }, status: { in: ["OPEN", "APPROVED"] } }, orderBy: { priority: "desc" }, take: 2, select: { id: true, title: true, firstSeenAt: true } }),

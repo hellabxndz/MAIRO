@@ -1,3 +1,4 @@
+import { fromAds } from "@/lib/leads/outcomes";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import type { DateRange, PlatformMetrics } from "@/lib/ad-platforms/types";
@@ -183,7 +184,7 @@ export async function gatherDecisionInput(organizationId: string, now = new Date
   // marking those leads as junk.
   const marked = await db.lead.groupBy({
     by: ["status"],
-    where: { organizationId, createdAt: { gte: new Date(now.getTime() - 30 * 86_400_000) }, status: { not: "NEW" } },
+    where: { organizationId, ...fromAds, createdAt: { gte: new Date(now.getTime() - 30 * 86_400_000) }, status: { not: "NEW" } },
     _count: { _all: true },
   });
   const count = (statuses: string[]) => marked.filter((m) => statuses.includes(m.status)).reduce((n, m) => n + m._count._all, 0);

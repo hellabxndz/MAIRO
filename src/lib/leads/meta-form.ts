@@ -3,6 +3,7 @@ import { metaGraphRequest } from "@/lib/meta/client";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { pageAccessToken } from "@/lib/meta/page-token";
 import { hashEmail, hashPhone } from "@/lib/tracking/hash";
+import { recordLeadEvent } from "./history";
 import { normalizePhone } from "@/lib/campaigns/destination";
 import { contactFrom, toMetaQuestion, type LeadField } from "@/lib/leads/fields";
 import { parseFields } from "@/lib/leads/forms";
@@ -208,7 +209,7 @@ export async function syncMetaLeads(
       // is what actually guarantees this and a per-row create makes a partial
       // failure partial rather than total.
       try {
-        await db.lead.create({
+        const created = await db.lead.create({
           data: {
             organizationId: form.organizationId,
             leadFormId: form.id,
@@ -217,10 +218,12 @@ export async function syncMetaLeads(
             answersJson: JSON.stringify(answers),
             hashedEmail: hashEmail(contact.email),
             hashedPhone: hashPhone(phone),
+            contactKey: hashEmail(contact.email) ?? hashPhone(phone),
             createdAt: row.created_time ? new Date(row.created_time) : undefined,
             mairoCampaignId: (row.campaign_id && campaignFor.get(row.campaign_id)) || null,
           },
         });
+        await recordLeadEvent({ organizationId: form.organizationId, leadId: created.id, kind: "created", actorLabel: "Meta", toStatus: "NEW", note: "Filled in your instant form on Facebook or Instagram" }).catch(() => null);
         added++;
       } catch {
         // Already stored. The unique index on externalLeadId is doing its job,

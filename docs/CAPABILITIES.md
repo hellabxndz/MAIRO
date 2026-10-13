@@ -43,7 +43,7 @@ or a public page makes a claim this inventory can't back.
 | Tracking | Meta pixel through Google Tag Manager | Partially working | `/dashboard/tracking` | Google verification of the Tag Manager scope | `check:gtm`, `check:tracking` |
 | Tracking | Shopify orders | Working | `/dashboard/tracking` | — | `check:tracking` |
 | Tracking | Lead outcomes | Working | `/dashboard/leads` | — | `check:lead-outcomes`, `check:lead-report` |
-| Tracking | Lead import and change history | Unavailable | — | Import and history workflow | — |
+| Tracking | Lead import and change history | Working | `/dashboard/leads` | — | `check:lead-import`, `check:lead-outcomes` |
 | Results | Results that separate reported from confirmed | Working | `/dashboard`, `/dashboard/analytics` | — | `check:results`, `check:results-db` |
 | Results | Performance Coach | Working | `/dashboard/coach` | — | `check:coach`, `check:coach-db` |
 | Results | Daily Brief, weekly report, monthly results | Working | `/dashboard/reports`, `/dashboard/reports/monthly` | — | `check:weekly-report`, `check:reports`, `check:team` |
@@ -80,7 +80,7 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (36)
+## Working (37)
 
 ### Free advertising plan
 
@@ -245,6 +245,22 @@ Mark each lead New, Contacted, Qualified, Booked, Estimate sent, Won, Lost or Sp
 **Checks:** `check:lead-outcomes`, `check:lead-report`
 
 **Public claim:** “Follow every lead from enquiry to booking to paying customer.”
+
+### Lead import and change history
+
+*Tracking* · `lead-import`
+
+Add a lead by hand, or import a spreadsheet of the ones the business already has: every row checked with the reason it's refused, the same person merged rather than duplicated (a stage set in MAIRO is never moved backwards), and every change kept in the lead's history — without contact details or note text in it. Added and imported leads are followed up like any other, and never counted as results of ads.
+
+**Routes:** `/dashboard/leads`
+
+**Verification:** CSV edge cases, refusals with reasons, in-file and existing duplicates, re-import adds no one, history without personal details, isolation, imports excluded from ad results (check:lead-import); the preview, import, manual add, duplicate refusal and history browser-checked at desktop and phone width.
+
+**Evidence:** `src/lib/leads/import.ts`, `src/lib/leads/history.ts`, `src/app/dashboard/leads/lead-intake.tsx`, `src/lib/leads/outcomes.ts`
+
+**Checks:** `check:lead-import`, `check:lead-outcomes`
+
+**Public claim:** “Bring in the leads you already have, and see every change to each one.”
 
 ### Results that separate reported from confirmed
 
@@ -1060,7 +1076,7 @@ A 60-second interactive walkthrough of the owner journey on a sample business �
 
 **Public claim:** none — not advertised
 
-## Unavailable (7)
+## Unavailable (6)
 
 ### TikTok ads
 
@@ -1115,20 +1131,6 @@ No video generation provider is configured. Uploaded videos work.
 **Verification:** Never advertised until a provider produces a real file.
 
 **Evidence:** `src/lib/creative-studio/format-info.ts`
-
-**Public claim:** none — not advertised
-
-### Lead import and change history
-
-*Tracking* · `lead-import`
-
-CSV import, manual entry, duplicate detection and a history of every change. The tables exist; the workflow isn't built.
-
-**Still needs:** Import and history workflow
-
-**Verification:** Validated rows, duplicates merged by contact, every change recorded.
-
-**Evidence:** `prisma/schema.prisma#LeadEvent`
 
 **Public claim:** none — not advertised
 

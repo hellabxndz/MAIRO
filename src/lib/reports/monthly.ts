@@ -1,3 +1,4 @@
+import { fromAds } from "@/lib/leads/outcomes";
 import { leadFunnel, type LeadFunnel } from "@/lib/leads/outcomes";
 import { stageLabels } from "@/lib/leads/details";
 import { db } from "@/lib/db";
@@ -278,7 +279,7 @@ export async function monthlyReport(
       take: 50,
     }),
     db.mairoDecision.count({ where: { organizationId, status: "REJECTED", decidedAt: inMonth } }),
-    db.lead.findMany({ where: { organizationId, createdAt: inMonth }, select: { status: true, valueCents: true, source: true, mairoCampaignId: true } }),
+    db.lead.findMany({ where: { organizationId, ...fromAds, createdAt: inMonth }, select: { status: true, valueCents: true, source: true, mairoCampaignId: true } }),
     db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { status: true } }),
     db.organization.findUnique({ where: { id: organizationId }, select: { industry: true, leadStagesJson: true, intake: { select: { primaryGoal: true } } } }),
     db.trackingProfile.findUnique({ where: { organizationId }, select: { nicheId: true, nicheConfirmed: true } }),

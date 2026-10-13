@@ -1,3 +1,4 @@
+import { fromAds } from "@/lib/leads/outcomes";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
@@ -86,7 +87,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
     billingRead.then((b) => readinessFor(organizationId, { billing: b })),
     db.mairoDecision.findMany({ where: { organizationId, status: "PENDING" }, orderBy: [{ urgent: "desc" }, { createdAt: "desc" }], take: 10 }),
     firstCampaignState(organizationId),
-    db.lead.findMany({ where: { organizationId, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
+    db.lead.findMany({ where: { organizationId, ...fromAds, createdAt: { gte: monthStart } }, select: { status: true, valueCents: true } }),
     loadTeam(organizationId, { now }),
     otherApprovals(organizationId, now).catch(() => []),
   ]);

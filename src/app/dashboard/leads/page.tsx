@@ -14,6 +14,8 @@ import { LEAD_OUTCOMES, leadFunnel } from "@/lib/leads/outcomes";
 import { followUpOf, lostReasonLabel, parseStageLabels, presetFor, RENAMEABLE, stageLabels } from "@/lib/leads/details";
 import { siteUrl } from "@/lib/site";
 import { StageNames } from "./stage-names";
+import { LeadIntake } from "./lead-intake";
+import { describeLeadEvent, leadHistory } from "@/lib/leads/history";
 
 // What came back from the ads, and the form that collected it.
 //
@@ -54,10 +56,12 @@ export default async function LeadsPage({
     }),
     db.lead.count({ where: { organizationId } }),
     form ? Promise.resolve<string[]>([]) : previewLeadForm(organizationId),
-    db.lead.findMany({ where: { organizationId }, select: { status: true, valueCents: true }, take: 10_000 }),
+    db.lead.findMany({ where: { organizationId }, select: { status: true, valueCents: true, source: true }, take: 10_000 }),
     db.organization.findUnique({ where: { id: organizationId }, select: { industry: true, leadStagesJson: true } }),
   ]);
   const funnel = leadFunnel(outcomes);
+  const notFromAds = outcomes.filter((o) => o.source === "MANUAL" || o.source === "CSV_IMPORT").length;
+  const history = await leadHistory(organizationId, leads.map((l) => l.id));
   const labels = stageLabels(org?.industry, org?.leadStagesJson);
   const now = new Date();
 
@@ -71,7 +75,7 @@ export default async function LeadsPage({
         description={
           inSetup && !form
             ? "You said people will get in touch by filling in a form. These are the questions it would ask."
-            : "People who filled in your form after tapping an ad."
+            : "People who got in touch — through your ads, or added and imported by you."
         }
       />
 
@@ -178,6 +182,7 @@ export default async function LeadsPage({
             A form filled in is a reported lead — Meta and MAIRO can&rsquo;t know more than that. Only you know
             which became good leads, bookings or paying customers, so mark each one below.
             {funnel.wonValueCents ? ` Jobs you've recorded: ${(funnel.wonValueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}.` : ""}
+            {notFromAds > 0 ? ` These include ${notFromAds} you added or imported, which aren't counted as results of your ads anywhere else in MAIRO.` : ""}
             {funnel.unmarked > 0 ? ` ${funnel.unmarked} not marked yet.` : ""}
           </p>
         </Card>
@@ -191,6 +196,8 @@ export default async function LeadsPage({
         />
       )}
 
+      <LeadIntake />
+
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-neutral-300">
           {total} {total === 1 ? "enquiry" : "enquiries"}
@@ -203,7 +210,7 @@ export default async function LeadsPage({
       {leads.length === 0 ? (
         <EmptyState
           title="Nothing yet"
-          description="Run a campaign that sends people to your form and answers land here."
+          description="Run a campaign that sends people to your form and answers land here — or add the leads you already have above."
         />
       ) : (
         <div className="space-y-3">
@@ -230,6 +237,11 @@ export default async function LeadsPage({
                     {lead.mairoCampaign && (
                       <span className="text-[11px] text-muted">From &ldquo;{lead.mairoCampaign.name}&rdquo;</span>
                     )}
+                    {(lead.source === "MANUAL" || lead.source === "CSV_IMPORT") && (
+                      <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                        {lead.source === "MANUAL" ? "added by you" : "imported"}
+                      </span>
+                    )}
                     {lead.source === "META_INSTANT" && (
                       <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
                         instant form
@@ -244,7 +256,14 @@ export default async function LeadsPage({
                 </div>
 
                 <dl className="mt-3 space-y-2">
-                  {fields.map((f) => {
+                  {/* A lead added by hand or imported has no form; its details are these. */}
+                  {!lead.leadFormId && (["name", "email", "phone", "message"] as const).map((k) => answers[k] ? (
+                    <div key={k} className="flex flex-wrap gap-x-3 text-sm">
+                      <dt className="min-w-40 text-neutral-500">{k === "message" ? "Notes from the import" : k.charAt(0).toUpperCase() + k.slice(1)}</dt>
+                      <dd className="text-white">{answers[k]}</dd>
+                    </div>
+                  ) : null)}
+                  {lead.leadFormId && fields.map((f) => {
                     const value = answers[f.key];
                     if (!value) return null;
                     return (
@@ -269,6 +288,18 @@ export default async function LeadsPage({
                   appointmentAt={lead.appointmentAt?.toISOString() ?? null}
                   nextFollowUpAt={lead.nextFollowUpAt?.toISOString() ?? null}
                 />
+                {(history.get(lead.id)?.length ?? 0) > 0 && (
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-[12.5px] text-muted hover:text-white">History ({history.get(lead.id)!.length})</summary>
+                    <ol className="mt-2 space-y-1">
+                      {history.get(lead.id)!.map((e, i) => (
+                        <li key={i} className="text-[12.5px] text-white/80">
+                          <span className="text-faint">{e.at.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {e.who}</span> — {describeLeadEvent(e, labels)}
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
               </Card>
             );
           })}

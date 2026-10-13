@@ -15,7 +15,9 @@ import { validateFields, type LeadField } from "@/lib/leads/fields";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { reportLeadToMeta } from "@/lib/leads/report";
 import { LEAD_OUTCOMES } from "@/lib/leads/outcomes";
-import { cleanStageLabels, isLostReason } from "@/lib/leads/details";
+import { cleanStageLabels, isLostReason, lostReasonLabel } from "@/lib/leads/details";
+import { addLeadManually, dollars, importLeads, recordLeadEvent, type ImportSummary, type ManualResult } from "@/lib/leads/history";
+import { previewImport, type ImportPreview } from "@/lib/leads/import";
 import type { LeadStatus } from "@/generated/prisma/enums";
 
 /**
@@ -245,8 +247,10 @@ export async function setLeadOutcomeAction(
   }
 
   const now = new Date();
-  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true } });
+  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, valueCents: true } });
   if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
+  if (lead.status !== status) await recordLeadEvent({ organizationId, leadId, kind: "status", actorUserId: session.user.id ?? null, actorLabel: "You", fromStatus: lead.status, toStatus: status });
+  if (lead.valueCents !== valueCents && (valueCents !== null || lead.valueCents !== null)) await recordLeadEvent({ organizationId, leadId, kind: "value", actorUserId: session.user.id ?? null, actorLabel: "You", field: "valueCents", before: dollars(lead.valueCents), after: dollars(valueCents) });
   await db.lead.update({
     where: { id: leadId },
     data: {
@@ -293,7 +297,7 @@ export async function saveLeadDetailsAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, createdAt: true } });
+  const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, createdAt: true, appointmentAt: true, nextFollowUpAt: true, estimatedValueCents: true, valueCents: true, lostReason: true, notes: true } });
   if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
 
   const data: Record<string, unknown> = {};
@@ -334,6 +338,16 @@ export async function saveLeadDetailsAction(
   }
   if ("notes" in patch) data.notes = patch.notes?.trim().slice(0, 4000) || null;
 
+  // The history: what changed, before and after — dates and amounts only; never the notes' text.
+  const who = { organizationId, leadId, actorUserId: session.user.id ?? null, actorLabel: "You" } as const;
+  const day = (d: Date | null | undefined) => (d ? d.toISOString().slice(0, 16).replace("T", " ") : null);
+  if (data.status && data.status !== lead.status) await recordLeadEvent({ ...who, kind: "status", fromStatus: lead.status, toStatus: data.status as LeadStatus });
+  if ("lastContactedAt" in data) await recordLeadEvent({ ...who, kind: "corrected", field: "lastContactedAt", after: day(data.lastContactedAt as Date) });
+  for (const k of ["appointmentAt", "nextFollowUpAt"] as const) if (k in data && day(data[k] as Date | null) !== day(lead[k])) await recordLeadEvent({ ...who, kind: "corrected", field: k, before: day(lead[k]), after: day(data[k] as Date | null) });
+  for (const k of ["estimatedValueCents", "valueCents"] as const) if (k in data && data[k] !== lead[k]) await recordLeadEvent({ ...who, kind: "value", field: k, before: dollars(lead[k]), after: dollars(data[k] as number | null) });
+  if ("lostReason" in data && data.lostReason !== lead.lostReason) await recordLeadEvent({ ...who, kind: "corrected", field: "lostReason", after: data.lostReason ? lostReasonLabel(String(data.lostReason)) : null });
+  if ("notes" in data && data.notes !== lead.notes) await recordLeadEvent({ ...who, kind: "note" });
+
   await db.lead.update({ where: { id: leadId }, data });
   revalidatePath("/dashboard/leads");
   return { ok: true };
@@ -349,4 +363,44 @@ export async function saveLeadStagesAction(labels: Record<string, string>): Prom
   revalidatePath("/dashboard/leads");
   revalidatePath("/dashboard/coach");
   return { ok: true };
+}
+
+async function leadScope() {
+  const session = await auth();
+  if (!session?.user?.organizationId) return null;
+  return { organizationId: (await activeOrganizationId()) ?? session.user.organizationId, userId: session.user.id ?? null };
+}
+
+/** A lead typed in by the owner. Refused, with which one, if that person is already a lead. */
+export async function addLeadAction(input: { name: string; email: string; phone: string; status: string; valueDollars: string; notes: string; receivedOn: string }): Promise<ManualResult> {
+  const scope = await leadScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  const clip = (v: unknown, n: number) => String(v ?? "").slice(0, n);
+  const r = await addLeadManually(scope.organizationId, scope.userId, { name: clip(input.name, 120), email: clip(input.email, 200), phone: clip(input.phone, 40), status: clip(input.status, 40), valueDollars: clip(input.valueDollars, 20), notes: clip(input.notes, 2000), receivedOn: clip(input.receivedOn, 30) });
+  if (r.ok) {
+    revalidatePath("/dashboard/leads");
+    revalidatePath("/dashboard");
+  }
+  return r;
+}
+
+/** Re-checks a spreadsheet on the server — what the import would do, before anything is saved. */
+export async function previewLeadImportAction(text: string): Promise<ImportPreview | { error: string }> {
+  const scope = await leadScope();
+  if (!scope) return { error: "Not signed in." };
+  if (typeof text !== "string") return { error: "That file couldn't be read." };
+  return previewImport(text);
+}
+
+/** Imports the spreadsheet the owner previewed, checking every row again here. */
+export async function importLeadsAction(text: string, fileName: string): Promise<ImportSummary> {
+  const scope = await leadScope();
+  if (!scope) return { ok: false, error: "Not signed in." };
+  if (typeof text !== "string") return { ok: false, error: "That file couldn't be read." };
+  const r = await importLeads(scope.organizationId, scope.userId, text, String(fileName ?? "").replace(/[^\w .()-]/g, "").slice(0, 80));
+  if (r.ok) {
+    revalidatePath("/dashboard/leads");
+    revalidatePath("/dashboard");
+  }
+  return r;
 }

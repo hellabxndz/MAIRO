@@ -1,4 +1,4 @@
-import type { LeadStatus } from "@/generated/prisma/enums";
+import type { LeadSource, LeadStatus } from "@/generated/prisma/enums";
 
 // What became of the people who got in touch.
 //
@@ -22,6 +22,14 @@ export const LEAD_OUTCOMES: { status: LeadStatus; label: string; hint: string }[
   { status: "LOST", label: "Not a fit", hint: "A real person, but it didn't go anywhere" },
   { status: "SPAM", label: "Spam", hint: "Junk, a test or a duplicate" },
 ];
+
+/**
+ * Where a lead came from an ad: MAIRO's form or Meta's instant form. Leads
+ * the owner typed in or imported are theirs to follow up, but never counted
+ * as results of advertising — an imported list isn't a good week of ads.
+ */
+export const AD_LEAD_SOURCES: LeadSource[] = ["MAIRO_FORM", "META_INSTANT"];
+export const fromAds = { source: { in: AD_LEAD_SOURCES } } as const;
 
 export const OUTCOME_LABEL = Object.fromEntries(LEAD_OUTCOMES.map((o) => [o.status, o.label])) as Record<LeadStatus, string>;
 
