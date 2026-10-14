@@ -1,6 +1,7 @@
 "use client";
 
 import { PlanGenerator } from "@/components/plan-generator/plan-generator";
+import { IconSparkle } from "@/components/plan-generator/icons";
 import { DemoFrame, DemoScreen, ScaledFrame } from "@/components/console/demo";
 import { BusinessArt } from "@/components/hero-story/art";
 import { EXAMPLES } from "@/lib/demo/examples";
@@ -52,20 +53,20 @@ export function ConsoleHero() {
 
       <div className="mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[980px] text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-100/90 sm:text-[12px]">
-            <span aria-hidden>✨</span>
+          <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-violet-100/90 sm:px-3.5 sm:text-[12px] sm:tracking-[0.16em]">
+            <IconSparkle className="h-3.5 w-3.5 text-violet-300" />
             Free AI Meta ad strategy generator
           </p>
           <h1 id="hero-title" className="mt-6 text-[clamp(34px,6.4vw,84px)] font-semibold leading-[0.98] tracking-[-0.05em] text-white [text-wrap:balance]">
             Your Next Advertising Strategy{" "}
-            <span className="bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text pb-[0.06em] text-transparent">Starts Here.</span>
+            <span className="bg-gradient-to-r from-[#8fc8ff] via-[#9d8bff] to-[#c77dff] bg-clip-text pb-[0.06em] text-transparent">Starts Here.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-[680px] text-[clamp(15.5px,1.5vw,19.5px)] leading-relaxed text-white/72 sm:mt-6">
             Tell MAIRO what your business sells, choose your goal and monthly ad budget, and see how your AI advertising team would grow your business.
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-[760px] sm:mt-10">
+        <div className="mx-auto mt-8 max-w-[1060px] sm:mt-10">
           <PlanGenerator mode="hero" />
           <p className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]">
             <a href="#walkthrough" onClick={() => track({ name: "hero_cta", props: { cta: "watch", variant: heroVariant() } })} className="inline-flex min-h-[44px] items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] pl-1.5 pr-4 font-semibold text-white transition hover:border-violet-400/60">
