@@ -38,21 +38,21 @@ export const OWNER_TOUR: Step[] = [
   },
   {
     target: "nav:/dashboard/creatives",
-    title: "Creatives",
+    title: "Creative Studio",
     body:
       "Every ad image and video in one place: what's running, what's new and waiting for you, what ran before, and what's working best for your goal.",
   },
   {
     target: "nav:/dashboard/analytics",
-    title: "Analytics",
+    title: "Performance",
     body:
       "Your results in plain numbers — and an Advanced view with every advertising metric, for when you want to dig in.",
   },
   {
-    target: "nav:/dashboard/team",
-    title: "Your AI Team",
+    target: "nav:/dashboard/coach",
+    title: "AI Recommendations",
     body:
-      "Eight AI specialties — strategy, audience, creative, campaigns, optimization, budget, analytics and growth — and what each has really done. Ask them anything in plain English.",
+      "What your AI team found in your results and what it proposes, with the evidence for each — and the team itself: eight AI specialties and what each has really done. Ask them anything in plain English.",
   },
   {
     target: "nav:/dashboard/decisions",

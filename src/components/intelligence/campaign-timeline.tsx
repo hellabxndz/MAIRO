@@ -45,7 +45,10 @@ export function TimelineEvent({ event, advanced, last = false }: { event: Event;
       <div className="min-w-0 flex-1 pt-0.5">
         <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-faint">
           Day {event.day}
-          {event.ai && <span className="ml-2 rounded bg-violet/15 px-1.5 py-0.5 text-[10px] normal-case tracking-normal text-violet-bright">MAIRO</span>}
+          <span className="ml-2 font-normal normal-case tracking-normal">
+            <time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</time>
+          </span>
+          <span className={`ml-2 rounded px-1.5 py-0.5 text-[10px] normal-case tracking-normal ${event.ai ? "bg-violet/15 text-violet-bright" : "bg-white/[0.06] text-white/75"}`}>{event.actor}</span>
         </p>
         <p className="mt-0.5 text-[14.5px] font-semibold text-white">{event.title}</p>
         <p className="mt-0.5 text-[13.5px] leading-relaxed text-muted">{event.body}</p>

@@ -32,6 +32,8 @@ export type TimelineEvent = {
   details: { label: string; value: string }[];
   /** MAIRO did or proposed this. */
   ai: boolean;
+  /** Who did it, in words: "You", "MAIRO", "Spend Protection", "Meta"… */
+  actor: string;
 };
 
 export type CampaignJourney = {
@@ -96,6 +98,8 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
   const dayOf = (at: Date) => Math.max(1, Math.floor((at.getTime() - liveSince.getTime()) / DAY) + 1);
   const events: TimelineEvent[] = [];
   const push = (e: Omit<TimelineEvent, "day" | "at"> & { at: Date }) => events.push({ ...e, at: e.at.toISOString(), day: dayOf(e.at) });
+  // A campaign built from the approved plan was made by MAIRO; any other, by the owner in the builder.
+  const fromPlan = await db.strategyPlan.findFirst({ where: { organizationId, campaignId: c.id }, select: { id: true } }).catch(() => null);
 
   const [decisions, activity, insights, protection, optimizer, metrics] = await Promise.all([
     db.mairoDecision.findMany({ where: { organizationId, mairoCampaignId }, orderBy: { createdAt: "asc" } }),
@@ -113,6 +117,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
     kind: "launch",
     filters: [],
     title: launched ? "Campaign launched" : "Campaign created",
+    actor: launched ? "Meta, after your approval" : fromPlan ? "MAIRO, from the plan you approved" : "You",
     body: `${usd(c.totalDailyBudgetCents)}/day on Facebook & Instagram, aiming for ${GOAL[c.objective]?.toLowerCase() ?? c.objective}.`,
     details: [
       { label: "Budget", value: `${usd(c.totalDailyBudgetCents)}/day` },
@@ -124,6 +129,10 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
     ai: false,
   });
 
+  if (c.launchApprovedAt) {
+    push({ id: `approved:${c.id}`, at: c.launchApprovedAt, kind: "launch", filters: [], title: "Launch approved", body: "You approved this campaign, its ads and its budget to go live.", details: [], ai: false, actor: "You" });
+  }
+
   if (launched && now.getTime() - liveSince.getTime() >= DAY) {
     push({
       id: `data:${c.id}`,
@@ -134,6 +143,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       body: `MAIRO gathers early performance signals for the first ${LEARNING_DAYS} days and recommends no changes — Meta is still learning who responds.`,
       details: [{ label: "Learning period", value: `${LEARNING_DAYS} days and $20 spent` }],
       ai: true,
+      actor: "MAIRO",
     });
   }
 
@@ -148,6 +158,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       body: `Creative #${a.position + 1} was added to the campaign${a.headline ? `: “${a.headline}”` : ""}.`,
       details: [{ label: "Kind", value: a.kind.toLowerCase() }],
       ai: false,
+      actor: "Added to the campaign",
     });
   }
 
@@ -157,9 +168,13 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
     const byCategory: Partial<Record<string, TimelineKind>> = { CREATIVE: "creative", TESTING: "creative", AUDIENCE: "audience", RETARGETING: "retargeting", BUDGET: "budget", WEBSITE: "website", NEEDS_ATTENTION: "warning" };
     const kind = d.kind === "scale-winner" ? "winner" : (byCategory[d.category] ?? k.kind);
     const filters = [...new Set([...k.filters, ...(d.category === "WEBSITE" ? (["website"] as const) : []), "ai" as const])];
-    push({ id: `dec:${d.id}`, at: d.createdAt, kind, filters, title: d.title, body: `${d.noticed} MAIRO recommended: ${d.recommendation}`, details: [{ label: "What MAIRO saw", value: d.noticedAdvanced }], ai: true });
+    push({ id: `dec:${d.id}`, at: d.createdAt, kind, filters, title: d.title, body: `${d.noticed} MAIRO recommended: ${d.recommendation}`, details: [{ label: "What MAIRO saw", value: d.noticedAdvanced }], ai: true, actor: "MAIRO recommended" });
     if (d.decidedAt && (d.status === "REJECTED" || d.status === "IGNORED")) {
-      push({ id: `dec-no:${d.id}`, at: d.decidedAt, kind: "optimization", filters: ["ai"], title: "Recommendation declined", body: `You chose not to: ${d.title.toLowerCase()}.`, details: [], ai: false });
+      push({ id: `dec-no:${d.id}`, at: d.decidedAt, kind: "optimization", filters: ["ai"], title: "Recommendation declined", body: `You chose not to: ${d.title.toLowerCase()}.`, details: [], ai: false, actor: "You" });
+    }
+    if (d.status === "APPLIED" && (d.approvedAt ?? d.decidedAt)) {
+      const byYou = Boolean(d.approvedById ?? d.decidedById);
+      push({ id: `dec-yes:${d.id}`, at: (d.approvedAt ?? d.decidedAt)!, kind: "optimization", filters: ["ai"], title: byYou ? "Recommendation approved" : "Applied within your limits", body: byYou ? `You approved: ${d.title.toLowerCase()}.` : `MAIRO applied it within the limits you set: ${d.title.toLowerCase()}.`, details: [], ai: !byYou, actor: byYou ? "You" : "MAIRO" });
     }
   }
 
@@ -174,6 +189,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       body: a.summary,
       details: [...(a.before ? [{ label: "Before", value: a.before }] : []), ...(a.after ? [{ label: "After", value: a.after }] : []), { label: "Why", value: a.reason }],
       ai: a.automatic,
+      actor: a.automatic ? "MAIRO, within your limits" : "MAIRO, with your approval",
     });
   }
 
@@ -188,6 +204,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       body: `${i.happened} MAIRO recommendation: ${i.recommendation}`,
       details: [{ label: "What MAIRO saw", value: i.happenedAdvanced }, ...(i.metric && i.currentValue ? [{ label: i.metric, value: `${i.previousValue ? `${i.previousValue} → ` : ""}${i.currentValue}` }] : [])],
       ai: true,
+      actor: "MAIRO",
     });
   }
 
@@ -201,11 +218,12 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
       body: p.message,
       details: p.amountCents ? [{ label: "Amount", value: usd(p.amountCents) }] : [],
       ai: p.kind !== "PAUSED_BY_YOU",
+      actor: p.kind === "PAUSED_BY_YOU" ? "You" : "Spend Protection",
     });
   }
 
   for (const o of optimizer) {
-    push({ id: `opt:${o.id}`, at: o.at, kind: "budget", filters: ["budget", ...(o.automatic ? (["ai"] as const) : [])], title: o.kind, body: o.rationale, details: [], ai: o.automatic });
+    push({ id: `opt:${o.id}`, at: o.at, kind: "budget", filters: ["budget", ...(o.automatic ? (["ai"] as const) : [])], title: o.kind, body: o.rationale, details: [], ai: o.automatic, actor: o.automatic ? "MAIRO, within your limits" : "You" });
   }
 
   if (metrics && (metrics.spendCents ?? 0) > 0) {
@@ -225,6 +243,7 @@ export async function campaignJourney(organizationId: string, mairoCampaignId: s
         ...(metrics.ctr !== null ? [{ label: "CTR", value: `${(metrics.ctr * 100).toFixed(2)}%` }] : []),
       ],
       ai: false,
+      actor: "Meta's figures",
     });
   }
 
