@@ -3,7 +3,7 @@
 // page can offer a video only when there is one. Edit by re-rendering, not by
 // hand.
 
-export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number };
+export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number; /** The file carries the recorded narration. */ audio?: boolean };
 export type RenderedMedia = {
   renderedAt: string | null;
   story: Partial<Record<"shop" | "service" | "appointments" | "brands", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
@@ -12,7 +12,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-13T19:34:26.598Z",
+  "renderedAt": "2026-10-14T01:11:57.579Z",
   "story": {
     "shop": {
       "wide": {
@@ -75,16 +75,16 @@ export const RENDERED_MEDIA: RenderedMedia = {
       "poster": "/walkthrough/walkthrough-wide-poster.webp",
       "width": 1140,
       "height": 840,
-      "ms": 60000,
-      "bytes": 1799615
+      "ms": 73000,
+      "bytes": 3147101
     },
     "narrow": {
       "mp4": "/walkthrough/walkthrough-narrow.mp4",
       "poster": "/walkthrough/walkthrough-narrow-poster.webp",
       "width": 540,
       "height": 900,
-      "ms": 60000,
-      "bytes": 1377894
+      "ms": 73000,
+      "bytes": 2268832
     }
   },
   "captions": {

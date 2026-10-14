@@ -1,52 +1,86 @@
 import { track, type Box, type Layout } from "./timeline";
 
-// The 60-second walkthrough: one sample business (Brightwater Plumbing, from
-// lib/demo/examples.ts) going from its website to a first result. Same rules
-// as the 20-second story — a pure function of time, two compositions, every
-// figure sample data — but slower, with a caption for each step, because
-// there is no voice-over yet and the captions carry the meaning.
+// The MAIRO demo: a 73-second product walkthrough in seven scenes, one sample
+// business (Brightwater Plumbing, from lib/demo/examples.ts) going from its
+// website to its first results. A pure function of time, in two compositions,
+// every figure sample data.
+//
+// The script (docs/WALKTHROUGH-SCRIPT.md) is written for a narrator. Until a
+// licensed voice records it, the narration is the captions — the same lines,
+// the same timings — and the player says there's no voice-over.
+//
+// Scenes 2–6 are the product's own screens, played on an inner clock: the
+// original 60-second walkthrough's timings, mapped onto the new scenes
+// (innerTime). The intro and the ending are drawn over them.
 
-export const WALK_DURATION = 60000;
+export const WALK_DURATION = 73000;
 
-export type WalkChapterId = "website" | "facts" | "plan" | "creative" | "approval" | "results";
+export type WalkChapterId = "intro" | "business" | "strategy" | "creative" | "approval" | "performance" | "ending";
 
 export type WalkScene = { id: WalkChapterId; label: string; start: number; end: number };
 
 export const WALK_SCENES: WalkScene[] = [
-  { id: "website", label: "Your website and your goal", start: 0, end: 8000 },
-  { id: "facts", label: "What MAIRO found", start: 8000, end: 17000 },
-  { id: "plan", label: "Your plan", start: 17000, end: 27000 },
-  { id: "creative", label: "Your ads", start: 27000, end: 38000 },
-  { id: "approval", label: "Your approval", start: 38000, end: 49000 },
-  { id: "results", label: "Your results", start: 49000, end: 60000 },
+  { id: "intro", label: "Meet MAIRO", start: 0, end: 8000 },
+  { id: "business", label: "Your business", start: 8000, end: 19000 },
+  { id: "strategy", label: "Your ad strategy", start: 19000, end: 30000 },
+  { id: "creative", label: "Creative Studio", start: 30000, end: 43000 },
+  { id: "approval", label: "Your approval", start: 43000, end: 53000 },
+  { id: "performance", label: "Your results", start: 53000, end: 65000 },
+  { id: "ending", label: "Your free ad plan", start: 65000, end: 73000 },
 ];
 
 export const WALK_CHAPTERS: { id: WalkChapterId; label: string }[] = [
-  { id: "website", label: "Website & goal" },
-  { id: "facts", label: "Facts" },
-  { id: "plan", label: "Plan" },
+  { id: "intro", label: "Intro" },
+  { id: "business", label: "Business" },
+  { id: "strategy", label: "Strategy" },
   { id: "creative", label: "Creative" },
   { id: "approval", label: "Approval" },
-  { id: "results", label: "Results" },
+  { id: "performance", label: "Results" },
+  { id: "ending", label: "Free plan" },
 ];
 
-/** One caption per step. They are the transcript, the WebVTT file and the text burned into the video. */
+/**
+ * The narration, line by line, timed to the scenes. They are the script, the
+ * captions, the WebVTT file and the text burned into the video.
+ */
 export const WALK_CAPTIONS: { start: number; end: number; text: string }[] = [
-  { start: 0, end: 3500, text: "Brightwater Plumbing, a sample business, enters its website." },
-  { start: 3500, end: 8000, text: "The owner picks a goal: get more qualified leads." },
-  { start: 8000, end: 12000, text: "MAIRO reads the website and shows what it found, and where." },
-  { start: 12000, end: 17000, text: "What the website didn't say is asked, not guessed. The owner confirms the offer and how far they travel." },
-  { start: 17000, end: 22000, text: "A plan: one Meta campaign, with a form inside the ad, for homeowners within 15 miles." },
-  { start: 22000, end: 27000, text: "Why that audience, and an example budget. The owner sets the real one." },
-  { start: 27000, end: 31000, text: "Three ad directions. One is recommended as the first test." },
-  { start: 31000, end: 34500, text: "The owner picks it and rewrites the opening line. The original is kept." },
-  { start: 34500, end: 38000, text: "Previews show the ad in the feed and in Stories, on a phone." },
-  { start: 38000, end: 43500, text: "Before launch: every check, and the Meta connection, in one place." },
-  { start: 43500, end: 49000, text: "Nothing runs until the owner approves this exact ad and budget." },
-  { start: 49000, end: 54000, text: "Results, with sample figures: money spent, leads, and which leads were qualified and booked." },
-  { start: 54000, end: 57000, text: "The owner marks a lead as booked." },
-  { start: 57000, end: 60000, text: "MAIRO proposes a next step and says why. The owner decides." },
+  { start: 0, end: 8000, text: "Your business deserves more than another complicated advertising dashboard." },
+  { start: 8000, end: 11800, text: "Meet MAIRO. Your AI advertising team." },
+  { start: 11800, end: 19000, text: "Start with your website, and MAIRO builds an understanding of your business." },
+  { start: 19000, end: 24200, text: "MAIRO recommends an advertising strategy" },
+  { start: 24200, end: 30000, text: "and shows you which creative ideas are worth testing first." },
+  { start: 30000, end: 35800, text: "Review your ad concepts, customize the message," },
+  { start: 35800, end: 43000, text: "and turn your brand into creative that fits your goals." },
+  { start: 43000, end: 46800, text: "When you're ready, connect your Meta account." },
+  { start: 46800, end: 49800, text: "Review the campaign, approve your budget," },
+  { start: 49800, end: 53000, text: "and stay in control before anything launches." },
+  { start: 53000, end: 57000, text: "Follow your results in one place." },
+  { start: 57000, end: 60800, text: "Understand what's working, what needs attention," },
+  { start: 60800, end: 65000, text: "and what MAIRO recommends next." },
+  { start: 65000, end: 73000, text: "You run the business. MAIRO runs the ads." },
 ];
+
+/** The words on screen in the intro and the ending — motion typography, not captions. */
+export const WALK_ONSCREEN = { intro: "MEET MAIRO.", endLines: ["You run the business.", "MAIRO runs the ads."], cta: "BUILD YOUR FREE AD PLAN" } as const;
+
+/**
+ * The product scenes' own clock. Each segment maps a stretch of the demo onto
+ * the original walkthrough's timings: [demo from, demo to, inner from, inner to].
+ * The last scene holds before the ending covers it.
+ */
+const INNER: [number, number, number, number][] = [
+  [8000, 19000, 0, 17000],
+  [19000, 30000, 17000, 27000],
+  [30000, 43000, 27000, 38000],
+  [43000, 53000, 38000, 49000],
+  [53000, 64200, 49000, 58500],
+];
+
+export function innerTime(t: number): number {
+  if (t < INNER[0][0]) return 0;
+  for (const [a, b, x, y] of INNER) if (t < b) return x + ((t - a) / (b - a)) * (y - x);
+  return INNER[INNER.length - 1][3];
+}
 
 export function walkSceneAt(t: number) {
   return WALK_SCENES.find((s) => t >= s.start && t < s.end) ?? WALK_SCENES[WALK_SCENES.length - 1];
@@ -273,7 +307,9 @@ function narrow(): Record<WalkElement, (t: number) => Box> {
 
 const TRACKS: Record<Layout, Record<WalkElement, (t: number) => Box>> = { wide: wide(), narrow: narrow() };
 
+/** Where each product screen sits at demo time t (on the inner clock). */
 export function walkBoxes(t: number, layout: Layout): Record<WalkElement, Box> {
   const tr = TRACKS[layout];
-  return Object.fromEntries((Object.keys(tr) as WalkElement[]).map((k) => [k, tr[k](t)])) as Record<WalkElement, Box>;
+  const it = innerTime(t);
+  return Object.fromEntries((Object.keys(tr) as WalkElement[]).map((k) => [k, tr[k](it)])) as Record<WalkElement, Box>;
 }

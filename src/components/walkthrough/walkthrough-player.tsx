@@ -8,15 +8,18 @@ import type { RenderedMedia } from "@/lib/demo/media";
 import { track } from "@/lib/analytics/track";
 import { WalkthroughStage } from "./walkthrough-stage";
 
-// The 60-second walkthrough, as an interactive player: play and pause, a
-// position slider, six chapters, captions on by default (there's no voice-over
-// yet, so the captions carry the meaning), and keyboard control — Space or K
-// to play and pause, the arrow keys to move five seconds, C for captions,
-// Home and End. It starts on its own once, when it first comes into view, and
-// never with reduced motion; it pauses when it leaves the screen or the tab.
+// The MAIRO demo, as an interactive player: play and pause, replay, a
+// position slider, seven chapters, captions on by default (there's no
+// voice-over yet, so the captions carry the script), and keyboard control —
+// Space or K to play and pause, the arrow keys to move five seconds, C for
+// captions, Home and End. It starts on its own once, silently, when it first
+// comes into view, and never with reduced motion; it pauses when it leaves the
+// screen or the tab. It never plays sound by itself.
 //
-// When a rendered video exists (lib/demo/media.ts), the same walkthrough can
-// be watched as a file, with the same captions as a WebVTT track.
+// When a rendered video exists (lib/demo/media.ts), the same demo can be
+// watched as a file, with the same captions as a WebVTT track. When a
+// rendered file carries the recorded narration, the file's own controls offer
+// sound, starting muted.
 
 const NARROW_QUERY = "(max-width: 591px)";
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
@@ -149,19 +152,20 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
     }
   };
 
-  const shown = reducedMotion && !touched ? walkRestingTime("website") : t;
+  const shown = reducedMotion && !touched ? walkRestingTime("intro") : t;
   const scene = walkSceneAt(shown);
   const caption = walkCaptionAt(shown);
   const stage = STAGE[layout];
   const clip = media.walkthrough[layout] ?? media.walkthrough.wide;
   const hasVideo = Boolean(clip && media.captions.walkthrough);
+  const narrated = Boolean(clip?.audio);
 
   return (
-    <div role="region" aria-label="Product walkthrough, 60 seconds, sample data" onKeyDown={onKey} className="w-full" data-palette="classic">
+    <div role="region" aria-label={`MAIRO product demo, ${Math.round(WALK_DURATION / 1000)} seconds, sample data`} onKeyDown={onKey} className="w-full" data-palette="classic">
       <div className="relative">
-        {!asVideo && <p className="absolute left-3 top-3 z-20 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">Product demo — sample data</p>}
+        {!asVideo && <p className="absolute left-3 top-3 z-50 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">Product demo — sample data</p>}
         {asVideo && clip ? (
-          <video controls playsInline preload="none" poster={clip.poster} className="aspect-[760/560] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[360/600]" aria-label="The walkthrough as a video, without sound, with captions">
+          <video controls playsInline muted preload="none" poster={clip.poster} className="aspect-[760/560] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[360/600]" aria-label={narrated ? "The demo as a video, with narration (starts muted) and captions" : "The demo as a video, without sound, with captions"}>
             <source src={clip.mp4} type="video/mp4" />
             <track kind="captions" src={media.captions.walkthrough} srcLang="en" label="English" default />
           </video>
@@ -169,9 +173,9 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
           <div
             ref={box}
             role="img"
-            aria-label={`Walkthrough on a sample business, chapter: ${scene.label}. ${caption.text}`}
+            aria-label={`Demo on a sample business, chapter: ${scene.label}. ${caption.text}`}
             className="relative aspect-[760/560] w-full overflow-hidden rounded-[22px] border border-white/10 max-[591px]:aspect-[360/600]"
-            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(124,92,255,0.2), transparent 70%), #05060d" }}
+            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(121,82,255,0.2), transparent 70%), #07080D" }}
           >
             {scale > 0 && (
               <div aria-hidden className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})`, width: stage.w, height: stage.h }}>
@@ -188,10 +192,14 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             <button type="button" onClick={toggle} aria-pressed={playing} className="flex h-9 min-w-[88px] items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 text-[12.5px] font-medium text-white hover:border-white/35">
               <span aria-hidden>{playing ? "❚❚" : "▶"}</span> {playing ? "Pause" : t >= WALK_DURATION - 2 ? "Play again" : "Play"}
             </button>
+            <button type="button" onClick={() => { setTouched(true); setT(0); setPlaying(true); track({ name: "walkthrough", props: { action: "play" } }); }} className="h-9 rounded-full border border-white/15 bg-white/[0.04] px-3 text-[12.5px] font-medium text-white hover:border-white/35">
+              <span aria-hidden>↺</span> Replay
+            </button>
             <button type="button" onClick={() => setCaptions((c) => !c)} aria-pressed={captions} className="h-9 rounded-full border border-white/15 bg-white/[0.04] px-3 text-[12.5px] font-medium text-white hover:border-white/35">
               <span aria-hidden>CC</span> <span className="sr-only">Captions</span>{captions ? " on" : " off"}
             </button>
             <span className="text-[12px] tabular-nums text-white/60" aria-hidden>{fmt(shown)} / {fmt(WALK_DURATION)}</span>
+            <span className="text-[12px] text-white/50">{narrated ? "Narrated in the video file" : "No voice-over yet — captions carry the script"}</span>
             {hasVideo && (
               <button type="button" onClick={() => {
                   setPlaying(false);
@@ -209,11 +217,11 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             step={500}
             value={Math.round(shown)}
             onChange={(e) => seek(Number(e.target.value))}
-            aria-label="Position in the walkthrough"
+            aria-label="Position in the demo"
             aria-valuetext={`${fmt(shown)} of ${fmt(WALK_DURATION)}, ${scene.label}`}
             className="mt-3 w-full accent-[#8b5cf6]"
           />
-          <nav aria-label="Walkthrough chapters" className="mt-2 flex flex-wrap gap-1.5">
+          <nav aria-label="Demo chapters" className="mt-2 flex flex-wrap gap-1.5">
             {WALK_CHAPTERS.map((c) => {
               const here = scene.id === c.id;
               return (
@@ -228,7 +236,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
       )}
       {asVideo && (
         <button type="button" onClick={() => setAsVideo(false)} className="mt-3 h-9 rounded-full border border-white/15 px-3 text-[12.5px] text-white/85 hover:border-white/35">
-          Back to the interactive walkthrough
+          Back to the interactive demo
         </button>
       )}
       <p className="sr-only" aria-live="polite">{announce}</p>

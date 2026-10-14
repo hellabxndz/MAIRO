@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { HeroStory } from "@/components/hero-story/hero-story";
 import { ONBOARDING_TYPE, PREVIEW_EXAMPLE, type ExampleType } from "@/lib/demo/examples";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { WALK_DURATION } from "@/lib/demo/walkthrough";
 
 // The landing page's first screen: what MAIRO does in one line, the website
 // box that starts a real preview, and the 24-second story beside it. One
@@ -18,6 +19,7 @@ import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 // here suggests a campaign runs before the visitor approves and subscribes.
 
 const starter = PLANS[0];
+const demoLength = `${Math.floor(WALK_DURATION / 60000)}:${String(Math.round((WALK_DURATION % 60000) / 1000)).padStart(2, "0")}`;
 
 export function StoryHero() {
   const [type, setType] = useState<ExampleType>("service");
@@ -75,7 +77,13 @@ export function StoryHero() {
               </button>
             </div>
           </form>
-          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[14px]">
+          <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px]">
+            <a href="#walkthrough" className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-4 font-semibold text-white transition hover:border-[#a78bfa]/60">
+              <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-[#7952FF] to-[#356CFF]">
+                <svg viewBox="0 0 12 12" className="ml-0.5 h-2.5 w-2.5 fill-white"><path d="M2 1.2v9.6L10.5 6z" /></svg>
+              </span>
+              Watch MAIRO in action <span className="font-normal text-white/55">{demoLength}</span>
+            </a>
             <Link href={`/preview?example=${PREVIEW_EXAMPLE[type]}`} className="font-medium text-[#c4b5fd] underline-offset-4 hover:text-white hover:underline">Try an example</Link>
             <Link href="/preview?manual=1" className="text-white/70 underline-offset-4 hover:text-white hover:underline">No website? Describe your business</Link>
           </p>

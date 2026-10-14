@@ -1,7 +1,8 @@
 // Renders the landing story (24 s, three examples, wide and phone) and the
-// 60-second walkthrough (wide and phone) to muted MP4 files, WebP posters and
+// 73-second MAIRO demo (wide and phone) to silent MP4 files, WebP posters and
 // WebVTT captions in public/walkthrough/, then writes src/lib/demo/media.ts
-// listing exactly what was rendered.
+// listing exactly what was rendered. The demo's narration, once a licensed
+// voice records it, is muxed in afterwards (docs/WALKTHROUGH-SCRIPT.md).
 //
 // Each frame is the real component at a fixed time (/demo/render), captured
 // by a headless browser and encoded by ffmpeg — so the video can't drift from
@@ -46,7 +47,7 @@ if (ONLY === "all" || ONLY === "story") {
   for (const type of ["shop", "service", "brands"]) for (const layout of ["wide", "narrow"]) jobs.push({ clip: "story", type, layout, ms: 24000, posterAt: 1200, name: `story-${type}-${layout}` });
 }
 if (ONLY === "all" || ONLY === "walkthrough") {
-  for (const layout of ["wide", "narrow"]) jobs.push({ clip: "walkthrough", type: "service", layout, ms: 60000, posterAt: 36800, name: `walkthrough-${layout}` });
+  for (const layout of ["wide", "narrow"]) jobs.push({ clip: "walkthrough", type: "service", layout, ms: 73000, posterAt: 6800, name: `walkthrough-${layout}` });
 }
 
 function run(cmd, argv, input) {
@@ -142,7 +143,7 @@ const header = `// Video files rendered from the landing story and the walkthrou
 // page can offer a video only when there is one. Edit by re-rendering, not by
 // hand.
 
-export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number };
+export type RenderedClip = { mp4: string; poster: string; width: number; height: number; ms: number; bytes: number; /** The file carries the recorded narration. */ audio?: boolean };
 export type RenderedMedia = {
   renderedAt: string | null;
   story: Partial<Record<"shop" | "service" | "appointments" | "brands", Partial<Record<"wide" | "narrow", RenderedClip>>>>;
