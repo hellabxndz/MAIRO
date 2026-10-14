@@ -18,6 +18,7 @@ import { libraryFor, variationGroup } from "@/lib/creative-studio/library";
 import { StudioWorkspace } from "@/components/creative-studio/studio-workspace";
 import { loadBrain } from "@/lib/business/brain";
 import { LibraryGrid } from "@/components/creative-studio/library-grid";
+import { HelpLinks } from "@/components/help/help-link";
 
 // AI Creative Studio — where a business turns a sentence, or a product
 // photo, into an advertising image, and where every one of those images
@@ -82,6 +83,7 @@ export default async function CreativeStudioPage({
         title="AI Creative Studio"
         description="Create scroll-stopping ads with the power of AI."
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "credits-and-usage", label: "How credits work" }, { slug: "failed-generation", label: "When a picture can't be made" }]} />
       <BrandLine organizationId={organizationId} />
 
       {!configured ? (

@@ -15,8 +15,8 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { PLANS, FREELANCER_PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
-import { DEFAULT_ENTITLEMENTS } from "../src/lib/entitlements";
+import { PLANS, FREELANCER_PLANS, STARTER_TRIAL_DAYS, campaignLimitText, creativeRequestText } from "../src/lib/plans";
+import { DEFAULT_ENTITLEMENTS, planComparison } from "../src/lib/entitlements";
 import { ACTIONS, ALWAYS_NEEDS_APPROVAL, automaticActions, mayDoAutomatically } from "../src/lib/automation/levels";
 import { actionFor } from "../src/lib/decisions/guardrails";
 import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, automationModes, comparison, pictures, planStories, pricingFacts } from "../src/lib/pricing/compare";
@@ -154,6 +154,38 @@ check("the trial, credits, limits and Social facts are the enforced numbers", ()
   assert.match(facts.limits, new RegExp(`Starter ${e.STARTER.creative_limit} a month, Growth ${e.GROWTH.creative_limit} a month, Scale ${e.SCALE.creative_limit} a month`));
   assert.match(facts.social, /^Scale only/);
   if (process.env.META_POSTING_APPROVED !== "1") assert.match(facts.social, /waiting for Meta/);
+});
+
+console.log("\n— one set of numbers —");
+check("the plan cards' limits are the entitlement limits the server enforces", () => {
+  for (const p of PLANS) {
+    const e = DEFAULT_ENTITLEMENTS[p.tier];
+    assert.equal(p.limits.campaigns, e.campaign_limit, `${p.name} campaigns`);
+    assert.equal(p.limits.creativesPerMonth, e.creative_limit, `${p.name} creative requests`);
+    assert.ok(p.features.some((f) => f.includes(`${e.studio_credits_monthly} AI image credits a month (about ${pictures(e.studio_credits_monthly)} pictures)`)), `${p.name} credits line`);
+    const campaignsLine = Number.isFinite(e.campaign_limit) ? `Up to ${e.campaign_limit} campaigns at a time` : "Unlimited campaigns";
+    assert.ok(p.features.includes(campaignsLine), `${p.name} campaigns line`);
+  }
+});
+check("an unlimited limit is never shown as the word Infinity", () => {
+  assert.equal(campaignLimitText(Infinity), "unlimited campaigns");
+  assert.equal(campaignLimitText(1), "1 campaign");
+  assert.equal(campaignLimitText(15), "15 campaigns");
+  assert.equal(creativeRequestText(10), "10 creative requests a month");
+  for (const t of BUSINESS_TIERS) for (const row of planComparison(t)) assert.doesNotMatch(row.value, /Infinity/, `${t} ${row.label}`);
+  // Every screen that prints a campaign limit goes through the helper.
+  for (const f of ["src/app/dashboard/settings/billing-section.tsx", "src/app/dashboard/campaigns/page.tsx", "src/app/dashboard/campaigns/delete-campaign.tsx", "src/app/aios/organizations/[id]/page.tsx"]) {
+    const src = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
+    assert.doesNotMatch(src, /\{\s*(?:current|upgradeTarget|plan)\.limits\.campaigns\s*\}|\{upgrade\.campaigns\}/, f);
+  }
+});
+check("the limits the server enforces are read from the entitlements", () => {
+  const creative = readFileSync(new URL("../src/lib/actions/creative-actions.ts", import.meta.url), "utf8");
+  assert.match(creative, /entitlementsFor\(organizationId\)\)\.creative_limit/);
+  assert.doesNotMatch(creative, /limits\.creativesPerMonth/);
+  const launch = readFileSync(new URL("../src/lib/campaigns/auto-launch.ts", import.meta.url), "utf8");
+  assert.match(launch, /entitlementsFor\(organizationId\)\)\.campaign_limit/);
+  assert.doesNotMatch(launch, /limits\.campaigns/);
 });
 
 console.log("\n— money and control —");

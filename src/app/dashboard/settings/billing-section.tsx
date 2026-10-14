@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui";
-import { PLANS, planFor, billingEnforced } from "@/lib/plans";
+import { PLANS, planFor, billingEnforced, campaignLimitText, creativeRequestText } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
 import { PlanButton } from "./plan-button";
@@ -62,9 +62,7 @@ export function BillingSection({
           )}
         </div>
         <p className="mt-1 text-sm text-neutral-500">
-          {current.limits.campaigns} campaign{current.limits.campaigns === 1 ? "" : "s"} ·{" "}
-          {current.limits.creativesPerMonth} creative
-          {current.limits.creativesPerMonth === 1 ? "" : "s"} a month
+          {campaignLimitText(current.limits.campaigns)} at a time · {creativeRequestText(current.limits.creativesPerMonth)}
         </p>
         {note && <p className="mt-3 text-sm text-neutral-400">{note}</p>}
 

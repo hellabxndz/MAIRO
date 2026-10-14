@@ -65,7 +65,7 @@ export default async function AccountPage() {
       entries: [
         { href: "/dashboard/billing", label: "Billing", hint: "Your MAIRO subscription and invoices" },
         { href: "/dashboard/settings", label: "Settings", hint: "Business details and brand" },
-        { href: "/dashboard/guide", label: "How it works", hint: "What MAIRO does, and when" },
+        { href: "/dashboard/guide", label: "Help", hint: "How MAIRO works, credits, approvals, billing — with search" },
       ],
     },
   ];

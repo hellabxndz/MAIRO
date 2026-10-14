@@ -3,12 +3,13 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader, secondaryButtonClass } from "@/components/ui";
-import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, planFor, trialDaysFor } from "@/lib/plans";
+import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, creativeRequestText, planFor, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
 import Link from "next/link";
 import { runningMetaCampaigns } from "@/lib/billing/running-campaigns";
 import { PlanButton } from "../settings/plan-button";
+import { HelpLinks } from "@/components/help/help-link";
 
 // Where "Upgrade" goes: every plan side by side, and one button from each
 // straight to Stripe's checkout.
@@ -26,8 +27,9 @@ function money(n: number): string {
 }
 
 function creativesLine(n: number): string {
-  // Written ad concepts, not pictures — those are the image credits above.
-  return Number.isFinite(n) ? `${n} AI-written ad concepts a month` : "Unlimited AI-written ad concepts";
+  // Ads written from a photo on the Creatives page, not pictures — those are
+  // the image credits above. Called what the pricing page calls them.
+  return `${creativeRequestText(n).replace(/^./, (c) => c.toUpperCase())} (ads written from your photos)`;
 }
 
 export default async function BillingPage({ searchParams }: PageProps<"/dashboard/billing">) {
@@ -65,6 +67,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
             : "Change or cancel any time. Your ad spend is paid to Meta directly — never through this."
         }
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "credits-and-usage", label: "Credits, limits and what you pay for" }, { slug: "billing", label: "Plans, billing and cancelling" }]} />
 
       {justSubscribed === "1" && (
         <p className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">

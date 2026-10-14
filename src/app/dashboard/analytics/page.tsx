@@ -27,6 +27,7 @@ import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
 import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
 import { PANEL } from "@/components/dashboard/overview/format";
 import { AdCard } from "@/app/dashboard/creatives/hub-client";
+import { HelpLinks } from "@/components/help/help-link";
 
 // Everything, in one place, with the ability to look at one network at a time.
 //
@@ -136,6 +137,7 @@ export default async function AnalyticsPage({
           </div>
         }
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "results", label: "Where each number comes from" }]} />
 
       {report.problems.length > 0 && (
         <div className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-4">

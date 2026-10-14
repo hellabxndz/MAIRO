@@ -179,6 +179,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       footer={
         <>
         <WorkspaceSwitcher workspaces={workspaces} current={organizationId} />
+        <Link
+          href="/dashboard/guide"
+          className="block w-full rounded-xl px-3 py-[7px] text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
+        >
+          Help
+        </Link>
         <FeedbackButton />
         <form action={signOutAction}>
           <button

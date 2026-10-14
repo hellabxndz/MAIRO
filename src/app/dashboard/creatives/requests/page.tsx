@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { planFor } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
 import { currentMonthKey } from "@/lib/utils/month";
 import { CreativeRequestForm } from "../creative-request-form";
 import { RegenerateConceptButton } from "../regenerate-concept-button";
@@ -52,7 +53,9 @@ export default async function CreativesPage() {
   ]);
 
   const plan = planFor(organization?.subscriptionTier ?? "NONE");
-  const remaining = Math.max(0, plan.limits.creativesPerMonth - usedThisMonth);
+  // The same allowance requestCreativeAction enforces.
+  const allowance = (await entitlementsFor(organizationId)).creative_limit;
+  const remaining = Math.max(0, allowance - usedThisMonth);
 
   // A request sitting at IN_REVIEW is one whose safety check couldn't run. It
   // is not waiting on anybody's opinion, so it should not need anybody to come
@@ -80,7 +83,7 @@ export default async function CreativesPage() {
         description="Show MAIRO a picture of what you're selling, or just describe it, and it writes the ad."
         action={
           <Badge tone={remaining === 0 ? "yellow" : "neutral"}>
-            {usedThisMonth} / {plan.limits.creativesPerMonth} used this month
+            {usedThisMonth} / {allowance} used this month
           </Badge>
         }
       />
@@ -90,7 +93,7 @@ export default async function CreativesPage() {
           <div className="space-y-2">
             <p className="font-medium">You&apos;re out of creative requests this month</p>
             <p className="text-sm text-neutral-400">
-              The {plan.name} plan includes {plan.limits.creativesPerMonth} a month. They reset
+              The {plan.name} plan includes {allowance} a month. They reset
               on the 1st — or upgrade your plan for more.
             </p>
           </div>

@@ -52,8 +52,8 @@ const STEPS = [
 ];
 
 const SOLUTIONS = [
-  { title: "Local & service businesses", body: "Plumbers, clinics, salons, studios: leads and bookings from people near you, with enquiries followed through to the jobs they became.", available: "Available" },
-  { title: "Online stores", body: "Sales campaigns built from your products and offers, judged on purchases — with Shopify connected to measure what sold.", available: "Available" },
+  { title: "Local & service businesses", body: "Plumbers, clinics, salons, studios: leads and bookings from people near you, with enquiries followed through to the jobs they became.", available: "Available", links: [{ href: "/solutions/local-services", label: "Local services" }, { href: "/solutions/appointments", label: "Appointments" }] },
+  { title: "Online stores", body: "Sales campaigns built from your products and offers, judged on purchases — with Shopify connected to measure what sold.", available: "Available", links: [{ href: "/solutions/online-stores", label: "Online stores" }] },
   { title: "Growing companies & teams", body: "Invite your team with six roles — from Owner to Viewer — checked on every change. Approvals and the audit log show who did what.", available: "Available" },
   { title: "Freelancers & agencies", body: "A workspace that keeps each client's business separate, with one login to switch between them. Studio and Agency plans aren't on sale yet.", available: "Workspace available · plans coming" },
 ];
@@ -287,6 +287,15 @@ export function ConsoleHome() {
                 </Pill>
                 <p className="mt-4 text-[18px] font-semibold tracking-[-0.02em] text-white">{s.title}</p>
                 <p className="mt-2 text-[14px] leading-relaxed text-white/65">{s.body}</p>
+                {"links" in s && s.links && (
+                  <p className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-4 text-[13.5px]">
+                    {s.links.map((l) => (
+                      <Link key={l.href} href={l.href} className="text-violet-200 hover:text-white">
+                        {l.label} <span aria-hidden>→</span>
+                      </Link>
+                    ))}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

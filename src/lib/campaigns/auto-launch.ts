@@ -2,7 +2,9 @@ import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import { readinessFor } from "@/lib/readiness";
-import { planFor } from "@/lib/plans";
+import { campaignLimitText } from "@/lib/plans";
+import { entitlementsFor } from "@/lib/entitlements";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { describeStart, isDue } from "@/lib/campaigns/schedule";
 import { finishHalfBuilt } from "@/lib/campaigns/launch";
 import { sendSms } from "@/lib/sms/send";
@@ -170,8 +172,9 @@ export async function maybeGoLive(
     };
   }
 
-  // How many live campaigns the plan allows, minus what is already running.
-  const limit = planFor(org.subscriptionTier).limits.campaigns;
+  // How many live campaigns the plan allows, minus what is already running —
+  // read from the entitlements, the same number that refuses a new campaign.
+  const limit = (await entitlementsFor(organizationId)).campaign_limit;
   const liveCount = await db.platformCampaign.count({
     where: { mairoCampaign: { organizationId }, status: "ACTIVE" },
   });
@@ -179,7 +182,7 @@ export async function maybeGoLive(
   if (budget === 0) {
     return {
       ...NOTHING,
-      heldBecause: `Your plan runs ${limit} campaign${limit === 1 ? "" : "s"} at a time, and that many are already live.`,
+      heldBecause: limit === 0 ? "Your plan doesn't include running campaigns yet — choose a plan to launch." : `Your plan runs ${campaignLimitText(limit)} at a time, and that many are already live.`,
     };
   }
 
@@ -245,6 +248,8 @@ export async function maybeGoLive(
   });
 
   const launched = [...new Set(names)];
+  // The funnel's last recorded step: Meta has switched a campaign on.
+  await recordOnce("first_launch", organizationId);
 
   // The Campaign Agent's record of it — only now, after Meta switched it on.
   for (const name of launched) {

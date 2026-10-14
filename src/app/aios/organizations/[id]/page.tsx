@@ -11,7 +11,7 @@ import {
   updateSubscriptionTierAction,
 } from "@/lib/actions/aios-actions";
 import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
-import { planFor } from "@/lib/plans";
+import { campaignLimitText, planFor } from "@/lib/plans";
 import { SuccessPanel } from "./success-panel";
 
 const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
@@ -73,7 +73,7 @@ export default async function OrganizationDetailPage({
             <h2 className="font-medium">Plan &amp; usage</h2>
             <p className="mt-1 text-sm text-neutral-400">
               On {plan.name} (${plan.priceMonthly}/mo) · {activeCampaigns}/
-              {plan.limits.campaigns} campaigns · {creativesThisMonth}/
+              {campaignLimitText(plan.limits.campaigns)} · {creativesThisMonth}/
               {plan.limits.creativesPerMonth} creatives this month
             </p>
             {org.subscriptionTier === "NONE" && (

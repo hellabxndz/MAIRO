@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteCampaignAction } from "@/lib/actions/campaign-actions";
 import { primaryButtonClass } from "@/components/ui";
+import { campaignLimitText } from "@/lib/plans";
 
 // Deleting a campaign, with the one sentence that matters said before it
 // happens rather than after.
@@ -107,7 +108,7 @@ export function DeleteCampaign({
             href="/dashboard/billing"
             className={`mt-2 ${primaryButtonClass}`}
           >
-            Keep this one and run {upgrade.campaigns} — {upgrade.name}, ${upgrade.price}/mo
+            Keep this one and run {campaignLimitText(upgrade.campaigns)} — {upgrade.name}, ${upgrade.price}/mo
           </Link>
         </div>
       )}

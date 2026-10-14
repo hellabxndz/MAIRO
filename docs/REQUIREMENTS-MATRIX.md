@@ -193,8 +193,11 @@ browser and send nothing; website tools fetch the site server-side through
 | Studio and Agency plans | `/clients/billing` | Blocked by external dependency | In deploy branch | — | Stripe prices |
 | Support contact | Footer and legal pages: `LEGAL.contactEmail` (NEXT_PUBLIC_SUPPORT_EMAIL, or the configured default) | Implemented but unverified | In deploy branch | Shown in the footer; whether anyone answers it isn't something code can show | — |
 | In-app feedback and customer-success notes | `CustomerFeedback`, `SupportNote`; AIOS customers | Working and verified | In deploy branch | check:success | — |
-| Help centre with search | `/dashboard/guide` ("How MAIRO works") only | Missing (no searchable help centre) | — | — | — |
-| Case studies | — | Missing | — | Needs a customer's written permission and measured results; none invented | A real customer |
-| Use-case pages · public founding-customer page | — | Missing | — | The founding program exists inside AIOS only | — |
+| Help centre with search | `/help`, `/help/[slug]`, in the app at `/dashboard/guide` · `lib/help/articles.ts` | Working and verified | Not deployed yet | check:help (numbers, wording, limits, links, search); browser-checked public, signed in and without JavaScript; linked from billing, Creative Studio, tracking, approvals, performance and Meta screens | — |
+| One set of plan numbers: cards, checkout, enforcement, meters | `lib/entitlements.ts` + `lib/plans.ts`; creative requests and auto-launch now read the entitlements | Working and verified | Not deployed yet | check:pricing ("one set of numbers": parity, no "Infinity", enforcement source) | — |
+| Funnel through to retention | `lib/analytics/funnel.ts`; AIOS overview | Working and verified | Not deployed yet | check:funnel (each step recorded where it happens, once per business, nothing personal; 30-day retention from the subscription) | Earlier steps weren't recorded, so early counts undercount |
+| Case studies | Consent in Account; `CaseStudy` table | Missing (on purpose) | — | Needs a customer's written permission and measured results; none invented | A real customer |
+| Use-case pages | `/solutions/online-stores`, `/solutions/local-services`, `/solutions/appointments` | Working and verified (example plan labelled as a fictional business) | Not deployed yet | check:solutions; browser-checked at 390 and 1440 | — |
+| Public founding-customer page | — | Missing | — | The founding program exists inside AIOS only | Its terms (who qualifies, what it offers, any price) are the owner's decision — NEXT.md item 13 |
 | Sign in with Google | `/sign-in` | Blocked by external dependency | In deploy branch | check:google | GOOGLE_CLIENT_ID / SECRET |
 | Text alerts | `/dashboard/notifications` | Blocked by external dependency | In deploy branch | check:notifications | Twilio settings |

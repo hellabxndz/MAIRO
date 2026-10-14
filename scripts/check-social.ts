@@ -186,10 +186,10 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
     ![starter, growth, pro].some((c) => /Infinity/.test(c["Campaigns at once"])),
   );
   // Creative generation still costs real money per item, so that ladder climbs.
-  ok("creative counts climb", Number(starter["New ads a month"]) < Number(growth["New ads a month"]) && Number(growth["New ads a month"]) < Number(pro["New ads a month"]));
+  ok("creative counts climb", Number(starter["Creative requests a month"]) < Number(growth["Creative requests a month"]) && Number(growth["Creative requests a month"]) < Number(pro["Creative requests a month"]));
   ok(
     "and they match the limits",
-    Number(growth["New ads a month"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.creativesPerMonth,
+    Number(growth["Creative requests a month"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.creativesPerMonth,
   );
 
   // Every adjacent pair must differ in at least one row, or a card gives a

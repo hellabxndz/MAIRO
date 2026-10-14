@@ -235,6 +235,7 @@ export default async function SettingsPage() {
           { href: "/dashboard/settings/team", label: "Team", hint: "Who's on the team and what each role can do" },
           { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
           { href: "/dashboard/account", label: "Account", hint: "Your login and more" },
+          { href: "/dashboard/guide", label: "Help", hint: "How MAIRO works, with search" },
         ].map((e) => (
           <Link key={e.href} href={e.href} className="group rounded-2xl px-4 py-3 transition hover:bg-white/[0.05]" style={{ background: "rgba(var(--mairo-fg-rgb),0.025)" }}>
             <span className="block text-[14.5px] text-white">{e.label} <span aria-hidden className="text-faint transition group-hover:text-white">›</span></span>

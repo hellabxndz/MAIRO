@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { metaIntelligenceSummary } from "@/lib/meta-intelligence";
-import { heroFunnel } from "@/lib/analytics/funnel";
+import { heroFunnel, retention, stepFunnel } from "@/lib/analytics/funnel";
 
 export default async function AiosOverviewPage() {
   const [orgCount, campaignCount, activeCampaigns, pendingCreatives, connectedMeta] =
@@ -16,6 +16,7 @@ export default async function AiosOverviewPage() {
 
   const metaIntel = await metaIntelligenceSummary().catch(() => null);
   const heroes = await heroFunnel(30).catch(() => []);
+  const [steps, kept] = await Promise.all([stepFunnel(30).catch(() => []), retention(30).catch(() => null)]);
 
   const recentOrgs = await db.organization.findMany({
     orderBy: { createdAt: "desc" },
@@ -82,6 +83,32 @@ export default async function AiosOverviewPage() {
           <p className="mt-2 text-[13.5px] text-neutral-400">No landing visits recorded yet.</p>
         )}
         <p className="mt-2 text-xs text-neutral-500">Too few plans to call a winner until each version has a few dozen. The previous page has no preview, so its preview columns stay at zero.</p>
+      </Card>
+
+      <Card className="mt-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm text-neutral-400">The funnel · last 30 days</p>
+          <p className="text-xs text-neutral-500">Counts only — no names or details. Landing and free-plan steps are per visitor; the rest once per business.</p>
+        </div>
+        {steps.length ? (
+          <ol className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((s) => (
+              <li key={s.name} className="rounded-xl border border-white/10 px-3 py-2">
+                <p className="text-[12px] text-neutral-400">{s.label}</p>
+                <p className="mt-0.5 text-[18px] tabular-nums text-white">{s.count}</p>
+                <p className="text-[11.5px] text-neutral-500">{s.fromPrevious === null ? "—" : `${(s.fromPrevious * 100).toFixed(0)}% of the step before`}</p>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="mt-2 text-[13.5px] text-neutral-400">Nothing recorded yet.</p>
+        )}
+        <p className="mt-3 text-[13px] text-neutral-300">
+          {kept && kept.eligible > 0
+            ? `Still subscribed: ${kept.retained} of the ${kept.eligible} businesses that subscribed at least ${kept.afterDays} days ago (${((kept.rate ?? 0) * 100).toFixed(0)}%).`
+            : `Still subscribed after ${kept?.afterDays ?? 30} days: no business subscribed that long ago yet.`}
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">Steps a business took before these events were recorded aren&apos;t counted, so early numbers undercount.</p>
       </Card>
 
       {metaIntel && (

@@ -21,6 +21,7 @@ import { AgentIcon } from "@/components/team/agent-ui";
 import { AGENT } from "@/lib/team/agents";
 import { LaunchApprove } from "@/components/decisions/launch-approve";
 import type { ReactNode } from "react";
+import { HelpLinks } from "@/components/help/help-link";
 
 // The Approval Center: everything waiting for the business's say-so, in one
 // place. Campaigns built and waiting to launch, plans, Performance Coach
@@ -129,6 +130,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
         description="Everything your AI team needs your say-so on, in one place. Launches and anything that raises what you spend always wait for you, and nothing is reported as done until Meta confirms it."
         action={<RefreshDecisionsButton />}
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "approvals", label: "What waits for you, and what MAIRO may do on its own" }]} />
 
       <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px]">
         <span className="text-white">

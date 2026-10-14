@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl, PUBLIC_ROUTES } from "@/lib/site";
 import { TOOLS, usable } from "@/lib/tools/registry";
+import { helpArticles } from "@/lib/help/articles";
+import { USE_CASES } from "@/lib/solutions/use-cases";
 
 // The list of pages worth indexing.
 //
@@ -19,7 +21,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...TOOLS.filter(usable).map((t) => ({ path: `/tools/${t.slug}`, priority: 0.6, changeFrequency: "monthly" as const })),
   ];
 
-  return [...PUBLIC_ROUTES, ...tools].map((route) => ({
+  // The help center: the index and every article.
+  const help = [
+    { path: "/help", priority: 0.6, changeFrequency: "monthly" as const },
+    ...helpArticles().map((a) => ({ path: `/help/${a.slug}`, priority: 0.5, changeFrequency: "monthly" as const })),
+  ];
+
+  // A page per kind of business.
+  const solutions = USE_CASES.map((u) => ({ path: `/solutions/${u.slug}`, priority: 0.7, changeFrequency: "monthly" as const }));
+
+  return [...PUBLIC_ROUTES, ...tools, ...help, ...solutions].map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,

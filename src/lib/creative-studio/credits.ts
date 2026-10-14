@@ -15,7 +15,7 @@ import type { CreativeStudioActionKind } from "@/generated/prisma/enums";
 // comment nobody enforces.
 
 /** A RESERVED row older than this is treated as abandoned, not spent. */
-const RESERVATION_TIMEOUT_MS = 2 * 60 * 1000;
+export const RESERVATION_TIMEOUT_MS = 2 * 60 * 1000;
 
 export type ReserveResult =
   | { ok: true; ledgerId: string }

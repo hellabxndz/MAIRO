@@ -350,6 +350,7 @@ export async function approvePlanNowAction(expectedVersion: number): Promise<{ o
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await approve(ctx.organizationId, expectedVersion);
   if (!r.ok) return r;
+  await recordOnce("plan_approved", ctx.organizationId, { variant: await heroVariantCookie() });
   refresh();
   revalidatePath("/dashboard/plan");
   return { ok: true };

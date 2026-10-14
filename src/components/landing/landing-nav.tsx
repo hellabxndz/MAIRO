@@ -22,6 +22,7 @@ const resourcesFor = (toolsLive: boolean) => [
   { href: "/#walkthrough", label: "Watch MAIRO in action", hint: "The product, start to finish" },
   { href: "/#control", label: "Security & control", hint: "Your account, your approval, your money" },
   { href: "/#faq", label: "FAQ", hint: "Plain answers before you sign up" },
+  { href: "/help", label: "Help center", hint: "How MAIRO works, credits, approvals, billing" },
   { href: "/for-freelancers", label: "For freelancers & agencies", hint: "Run ads for several businesses" },
 ];
 

@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { currentMonthKey } from "@/lib/utils/month";
+import { entitlementsFor } from "@/lib/entitlements";
 import { planFor } from "@/lib/plans";
 import { generateCreativeConcept } from "@/lib/ai/creative";
 import { suggestCreativeIdea } from "@/lib/ai/suggest";
@@ -160,9 +161,12 @@ export async function requestCreativeAction(
     where: { organizationId, month, status: { not: "BLOCKED" } },
   });
 
-  if (usedThisMonth >= plan.limits.creativesPerMonth) {
+  // The allowance comes from the entitlements — the same number the pricing
+  // page and the Creatives page show — not from the compiled plan list.
+  const allowance = (await entitlementsFor(organizationId)).creative_limit;
+  if (usedThisMonth >= allowance) {
     return {
-      error: `You've used all ${plan.limits.creativesPerMonth} creative requests on the ${plan.name} plan this month. They reset on the 1st — or upgrade for more.`,
+      error: `You've used all ${allowance} creative requests on the ${plan.name} plan this month. They reset on the 1st — or upgrade for more.`,
     };
   }
 

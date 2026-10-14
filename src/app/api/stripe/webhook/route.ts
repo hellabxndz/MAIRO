@@ -7,6 +7,7 @@ import { pauseSocialIfLocked } from "@/lib/social/pause";
 import { supersededSubscription } from "@/lib/billing/checkout-guard";
 import { scheduledEnd } from "@/lib/billing/cancellation-notice";
 import { announceCancellation } from "@/lib/billing/announce-cancellation";
+import { recordOnce } from "@/lib/analytics/funnel";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -192,6 +193,9 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
       subscriptionCancelAt: cancelAt,
     },
   });
+
+  // The funnel's "subscribed" step, once per business (a trial counts).
+  if (live) await recordOnce("checkout_success", organizationId);
 
   // The cancellation, and what it doesn't change: Meta campaigns keep running.
   await announceCancellation({

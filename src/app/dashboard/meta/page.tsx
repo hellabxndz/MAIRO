@@ -11,6 +11,7 @@ import { MetaPagePicker } from "@/components/meta-page-picker";
 import { MetaAdAccountPicker } from "@/components/meta-ad-account-picker";
 import { expiryWarning } from "@/lib/meta/token-expiry";
 import { connectHref } from "@/lib/onboarding/problems";
+import { HelpLinks } from "@/components/help/help-link";
 
 // The billing figures are live Graph calls. Same budget as the other pages that
 // read from Meta, for the same reason.
@@ -70,6 +71,7 @@ export default async function MetaConnectionPage({
         title="Meta connection"
         description="Connect your Facebook/Instagram ad account so MAIRO can launch and manage campaigns for you."
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "connect-meta", label: "What MAIRO asks Meta for, and how to disconnect" }]} />
 
       {required && !metaAccount && (
         <Card className="mb-6 border-amber-500/30 bg-amber-500/[0.06]">

@@ -27,6 +27,7 @@ import { dataLayerSnippet, gtmSnippet } from "@/lib/tracking/gtm";
 import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
 import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
+import { HelpLinks } from "@/components/help/help-link";
 
 // "Is the advertising actually making me money?"
 //
@@ -132,6 +133,7 @@ export default async function TrackingPage() {
         title="Measuring sales"
         description="What it takes for MAIRO to tell you whether the ads made you money — and for the ads to get better at it."
       />
+      <HelpLinks className="-mt-5 mb-6" links={[{ slug: "website-tracking", label: "What each tracking stage and check means" }]} />
 
       {/* The headline comparison. Deliberately first: somebody who opens this
           page wants the number, and the setup below is the price of it. */}

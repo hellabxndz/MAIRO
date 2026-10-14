@@ -279,3 +279,22 @@ export function planFor(tier: SubscriptionTier): Plan {
 export function limitsFor(tier: SubscriptionTier): PlanLimits {
   return planFor(tier).limits;
 }
+
+/**
+ * A campaign limit in words, for every screen that shows one. Infinity is how
+ * an unlimited plan says so, and it must never reach the screen as the word
+ * "Infinity".
+ */
+export function campaignLimitText(n: number): string {
+  if (!Number.isFinite(n)) return "unlimited campaigns";
+  return n === 1 ? "1 campaign" : `${n} campaigns`;
+}
+
+/**
+ * The creative-request allowance in words: the "Write an ad from a photo"
+ * requests on the Creatives page, counted separately from image credits.
+ */
+export function creativeRequestText(n: number): string {
+  if (!Number.isFinite(n)) return "unlimited creative requests a month";
+  return `${n} creative request${n === 1 ? "" : "s"} a month`;
+}

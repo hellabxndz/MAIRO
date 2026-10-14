@@ -214,6 +214,20 @@ Building the domain's reputation (security filters rate new domains low):
 Later: a support mailbox on the domain (needs email hosting and MX records) to
 replace the Gmail address — set `NEXT_PUBLIC_SUPPORT_EMAIL`.
 
+**13. A public Founding Customer page — needs your terms first.** The
+program exists inside MAIRO (AIOS → Customers marks a business as a founding
+customer; their first-30-days card says so and points them to Feedback), but
+nothing public describes it, because what it offers is a business decision:
+who qualifies, how to ask to join, and whether it carries any price, discount
+or commitment. Once those are decided, the page is short to build —
+`scripts/check-capabilities.ts` already scans `src/app/founding/page.tsx` for
+banned claims.
+
+**14. Case studies stay off until there's a real one.** Businesses can give
+permission in Account → "Share my results anonymously", and the `CaseStudy`
+table is there, but no page shows any until a consenting customer has measured
+results with dates and limits (capability `case-studies`, unavailable).
+
 ## Standing caveat
 
 Nothing in this repo has run against live Meta, Google or Anthropic

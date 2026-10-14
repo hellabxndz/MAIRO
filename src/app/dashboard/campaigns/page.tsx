@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card, PageHeader, EmptyState, primaryButtonClass } from "@/components/ui";
-import { planFor, PLANS } from "@/lib/plans";
+import { campaignLimitText, planFor, PLANS } from "@/lib/plans";
 import { entitlementsFor } from "@/lib/entitlements";
 import { NewCampaignForm, type PlanContext } from "./new-campaign-form";
 import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
@@ -203,7 +203,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       {atLimit && tab === "active" && (
         <p className="mb-5 text-[13px] text-muted">
           {plan.name} runs {entitlements.campaign_limit === 1 ? "one campaign" : `${entitlements.campaign_limit} campaigns`} at a time.{" "}
-          <Link href="/dashboard/billing" className="text-violet-bright underline underline-offset-4">{upgradeTarget.name} runs {upgradeTarget.limits.campaigns}</Link>
+          <Link href="/dashboard/billing" className="text-violet-bright underline underline-offset-4">{upgradeTarget.name} runs {campaignLimitText(upgradeTarget.limits.campaigns)}</Link>
         </p>
       )}
 

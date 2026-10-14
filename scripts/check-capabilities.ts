@@ -105,7 +105,7 @@ check("public notes are for owners: only on partial capabilities with a claim, n
 });
 
 console.log("\n— public pages —");
-const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/hero-story", "src/components/preview", "src/components/tools", "src/app/tools", "src/app/preview", "src/lib/tools", "src/lib/creative", "src/lib/calc", "src/lib/preview", "src/lib/demo"];
+const PUBLIC_DIRS = ["src/components/landing", "src/components/walkthrough", "src/components/hero-story", "src/components/preview", "src/components/tools", "src/app/tools", "src/app/preview", "src/lib/tools", "src/lib/creative", "src/lib/calc", "src/lib/preview", "src/lib/demo", "src/components/help", "src/app/help", "src/lib/help", "src/app/solutions", "src/lib/solutions"];
 const PUBLIC_FILES = ["src/app/page.tsx", "src/app/founding/page.tsx", "src/lib/pricing/compare.ts", "src/lib/walkthrough/script.ts"];
 function filesIn(dir: string): string[] {
   const abs = join(root, dir);

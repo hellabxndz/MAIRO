@@ -338,7 +338,7 @@ export function planComparison(
       // card as the word "Infinity".
       value: Number.isFinite(limits.campaigns) ? String(limits.campaigns) : "Unlimited",
     },
-    { label: "New ads a month", value: String(limits.creativesPerMonth) },
+    { label: "Creative requests a month", value: String(e.creative_limit) },
     { label: "AI Creative Studio credits", value: `${e.studio_credits_monthly}/mo` },
     {
       label: "MAIRO Social Manager",

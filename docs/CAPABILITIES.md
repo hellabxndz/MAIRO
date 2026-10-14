@@ -66,6 +66,8 @@ or a public page makes a claim this inventory can't back.
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
 | Public site | Landing story and product demos | Demo only | `/`, `/landing/classic` | — | `check:capabilities`, `check:preview` |
 | Public site | The MAIRO demo (73-second walkthrough) and videos | Demo only | `/` | A licensed British female voice recording of the script; Licensed background music | `check:preview` |
+| Public site | Help center with search | Working | `/help`, `/help/[slug]`, `/dashboard/guide`, `/dashboard/guide/[slug]` | — | `check:help` |
+| Public site | Pages for online stores, local services and appointment businesses | Demo only | `/solutions/[slug]` | — | `check:solutions` |
 | Public site | Customer case studies | Unavailable | — | A customer's written permission and measured results | — |
 | Free tools | Break-even ROAS calculator | Working | `/tools/break-even-roas` | — | `check:calculators` |
 | Free tools | Margin and markup calculator | Working | `/tools/margin-markup` | — | `check:calculators` |
@@ -88,7 +90,7 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (41)
+## Working (42)
 
 ### Free advertising plan
 
@@ -447,6 +449,22 @@ Deletes the account and its data; cancels the subscription first and names campa
 **Checks:** `check:trust-db`
 
 **Public claim:** “Delete your account and data yourself, any time.”
+
+### Help center with search
+
+*Public site* · `help-center`
+
+Eight articles — getting started, connecting Meta, website tracking, when a picture can't be made, credits and usage, approvals, results, billing — written from the same modules the product runs on (plan numbers, money facts, capability limits, tracking stages, the credit ledger's hold), with search as you type. Public at /help and inside the dashboard at /dashboard/guide, linked from the billing, Creative Studio, tracking, approvals, performance and Meta screens. Contact is the configured support address and in-app Feedback.
+
+**Routes:** `/help`, `/help/[slug]`, `/dashboard/guide`, `/dashboard/guide/[slug]`
+
+**Verification:** check:help pins every article's numbers to the plans, entitlements and credit ledger, the money and approval wording to the pricing page's, the partial capabilities' limits, the links and related articles, the search results for the usual questions and every in-app help link; the pages browser-checked public and signed in.
+
+**Evidence:** `src/lib/help/articles.ts`, `src/lib/help/search.ts`, `src/components/help/help-search.tsx`, `src/components/help/help-article.tsx`, `src/app/help/page.tsx`, `src/app/dashboard/guide/page.tsx`
+
+**Checks:** `check:help`
+
+**Public claim:** “Plain answers about how MAIRO works, in a help center you can search.”
 
 ### Break-even ROAS calculator
 
@@ -1172,7 +1190,7 @@ Compare Shopify plans on subscription and card fees for your sales, with the rat
 
 **Public claim:** “Compare Shopify plans on subscription and card fees for your sales, with the rates' source and date shown and editable.”
 
-## Demo only (2)
+## Demo only (3)
 
 ### Landing story and product demos
 
@@ -1205,6 +1223,22 @@ A 73-second interactive demo of the owner journey on a sample business, in seven
 **Evidence:** `src/components/walkthrough/walkthrough-player.tsx`, `src/components/walkthrough/walkthrough-stage.tsx`, `src/lib/demo/walkthrough.ts`, `src/lib/demo/media.ts`, `video/render.mjs`, `docs/WALKTHROUGH-SCRIPT.md`
 
 **Checks:** `check:preview`
+
+**Public claim:** none — not advertised
+
+### Pages for online stores, local services and appointment businesses
+
+*Public site* · `use-case-pages`
+
+One page per kind of business the free plan is built around, at /solutions/online-stores, /solutions/local-services and /solutions/appointments: what MAIRO sets up (read from the plan the preview builder really makes for that kind, on a fictional example business, with the plan itself drawn by its own component and labelled as an example), how results are counted (the dashboard's own result names), what's needed, and what MAIRO doesn't do — no catalogue ads, no booking-system connection, Meta only.
+
+**Routes:** `/solutions/[slug]`
+
+**Verification:** check:solutions pins each page's example to the preview builder's plan for that kind, the result names to the dashboard's, the limits to the code (no catalogue in the campaign builders, the booking tools to the website reader, Meta only), the help links, the example label and the links from the homepage, footer and sitemap; the pages browser-checked at phone and desktop widths.
+
+**Evidence:** `src/lib/solutions/use-cases.ts`, `src/app/solutions/[slug]/page.tsx`, `src/components/solutions/example-plan.tsx`
+
+**Checks:** `check:solutions`
 
 **Public claim:** none — not advertised
 
