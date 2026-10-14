@@ -6,7 +6,9 @@ import { loadMetaConnection } from "@/lib/meta/connection";
 import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { newPlan, type CampaignPlan } from "@/lib/campaigns/plan";
 import { attachAssetToCampaign } from "@/lib/creative-studio/campaign-link";
-import { buildDirections, ctaTypeFor, introFor, usesAvoided, type ConfirmedFacts } from "./directions";
+import { trackingOverview } from "@/lib/tracking/setup";
+import { audienceFor, buildDirections, ctaTypeFor, destinationFor, introFor, recommendedWhyFor, TEST_REASON, usesAvoided, type ConfirmedFacts } from "./directions";
+import type { HookAngle } from "@/lib/creative/hooks";
 import { NO_EDITS, describeEdits, parseEdits, sameEdits, type VideoEdits, type VideoMeta } from "./video";
 
 // The records behind "Review your suggested ads", one business at a time:
@@ -39,7 +41,11 @@ export async function confirmedFactsFor(organizationId: string): Promise<FactsVi
   };
   const offering = pick("focusItem", "What you want to sell more of") || pick("overview", "What you do");
   // The name the owner gave at sign-up, unless they confirmed another in the Brain.
-  const orgName = (await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } }))?.name ?? "";
+  const [org, tracking] = await Promise.all([
+    db.organization.findUnique({ where: { id: organizationId }, select: { name: true, website: true } }),
+    db.trackingProfile.findUnique({ where: { organizationId }, select: { nicheId: true } }),
+  ]);
+  const orgName = org?.name ?? "";
   const businessName = (s.meta("businessName").status === "confirmed" ? first(p.businessName) : "") || orgName;
   const presence = (["local", "online", "both"].includes(String(p.presence)) ? p.presence : "") as ConfirmedFacts["presence"];
   const family = s.family;
@@ -57,6 +63,8 @@ export async function confirmedFactsFor(organizationId: string): Promise<FactsVi
     objection: pick("objections", "Why customers hesitate"),
     goal,
     avoid: (Array.isArray(p.avoidClaims) ? p.avoidClaims : []).map(String),
+    niche: tracking?.nicheId ?? "general",
+    website: org?.website ?? "",
   };
   return { facts, profileConfirmed: Boolean(offering), unconfirmed: [...new Set(unconfirmed)] };
 }
@@ -84,12 +92,16 @@ export async function suggestedAdsGate(organizationId: string): Promise<Gate> {
  * transaction-scoped lock per business means only one set is ever made.
  */
 export async function ensureDirections(organizationId: string, userId: string | null): Promise<{ created: number }> {
-  const { facts } = await confirmedFactsFor(organizationId);
-  const { directions } = buildDirections(facts);
+  const [{ facts }, rejected] = await Promise.all([
+    confirmedFactsFor(organizationId),
+    db.adAngle.findMany({ where: { organizationId, status: "REJECTED", angleKind: { not: null } }, select: { angleKind: true } }),
+  ]);
+  // Kinds the owner turned down aren't suggested again.
+  const { directions } = buildDirections(facts, { exclude: rejected.map((r) => r.angleKind!) });
   if (!directions.length) return { created: 0 };
   return db.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`suggested-ads:${organizationId}`}))`;
-    const existing = await tx.adAngle.count({ where: { organizationId, angleKind: { not: null }, status: { not: "ARCHIVED" } } });
+    const existing = await tx.adAngle.count({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } } });
     if (existing > 0) return { created: 0 };
     for (const [i, d] of directions.entries()) {
       await tx.adAngle.create({
@@ -114,9 +126,81 @@ export async function ensureDirections(organizationId: string, userId: string | 
 export async function refreshDirections(organizationId: string, userId: string | null): Promise<{ created: number }> {
   const approvedIds = (await db.creativeApproval.findMany({ where: { organizationId, revokedAt: null }, select: { angleId: true } })).map((a) => a.angleId);
   await db.adAngle.updateMany({ where: { organizationId, angleKind: { not: null }, status: "DRAFT", id: { notIn: approvedIds } }, data: { status: "ARCHIVED" } });
-  const live = await db.adAngle.count({ where: { organizationId, angleKind: { not: null }, status: { not: "ARCHIVED" } } });
+  const live = await db.adAngle.count({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } } });
   if (live > 0) return { created: 0 };
   return ensureDirections(organizationId, userId);
+}
+
+const revisionIdsIn = (variantsJson: string): string[] => {
+  try {
+    return (JSON.parse(variantsJson) as { angleRevisionId?: unknown }[]).map((v) => String(v.angleRevisionId ?? ""));
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * The owner turns a direction down, with their reason. Its approval is
+ * withdrawn, a proposed test that used it is stopped, and — when there's a
+ * kind of ad it hasn't shown yet — MAIRO suggests one in its place. A
+ * direction in a test that's approved or running can't be turned down until
+ * the test is stopped: the test's ads were approved as they are.
+ */
+export async function rejectDirection(organizationId: string, userId: string, angleId: string, reason: string): Promise<{ ok: true; replacement: string | null } | { ok: false; error: string }> {
+  const angle = await db.adAngle.findFirst({ where: { id: angleId, organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } }, include: { revisions: { select: { id: true } } } });
+  if (!angle) return { ok: false, error: "That direction isn't in your account." };
+  const mine = new Set(angle.revisions.map((r) => r.id));
+  const tests = await db.creativeExperiment.findMany({ where: { organizationId, status: { in: ["PROPOSED", "APPROVED", "RUNNING"] } }, select: { id: true, status: true, variantsJson: true } });
+  const inTest = tests.filter((t) => revisionIdsIn(t.variantsJson).some((id) => mine.has(id)));
+  if (inTest.some((t) => t.status !== "PROPOSED")) return { ok: false, error: "This direction is in your test. Stop the test first, then turn it down." };
+  const why = reason.replace(/\s+/g, " ").trim().slice(0, 300) || null;
+  const now = new Date();
+  await db.$transaction(async (tx) => {
+    await tx.adAngle.update({ where: { id: angle.id }, data: { status: "REJECTED", rejectedReason: why, rejectedAt: now, recommended: false } });
+    await tx.creativeApproval.updateMany({ where: { organizationId, angleId: angle.id, revokedAt: null }, data: { revokedAt: now } });
+    if (inTest.length) {
+      await tx.creativeExperiment.updateMany({ where: { organizationId, id: { in: inTest.map((t) => t.id) }, status: "PROPOSED" }, data: { status: "CANCELED", endsAt: now, conclusion: "Set aside before it ran: you turned down one of its directions." } });
+    }
+  });
+  const replacement = await suggestReplacement(organizationId, userId, angle.recommended);
+  await proposeTest(organizationId);
+  return { ok: true, replacement };
+}
+
+/** One new direction of a kind not yet shown or turned down; the recommendation moves on if it was the one turned down. */
+async function suggestReplacement(organizationId: string, userId: string, wasRecommended: boolean): Promise<string | null> {
+  const { facts } = await confirmedFactsFor(organizationId);
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`suggested-ads:${organizationId}`}))`;
+    const shown = await tx.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { not: "ARCHIVED" } }, orderBy: { rank: "asc" }, select: { id: true, angleKind: true, status: true, rank: true } });
+    const live = shown.filter((a) => a.status !== "REJECTED");
+    const next = buildDirections(facts, { exclude: shown.map((a) => a.angleKind!) }).directions[0] ?? null;
+    if (next) {
+      await tx.adAngle.create({
+        data: {
+          organizationId,
+          title: next.title,
+          angleKind: next.kind,
+          rank: Math.max(0, ...shown.map((a) => a.rank)) + 1,
+          recommended: false,
+          format: next.format,
+          createdById: userId,
+          revisions: { create: { organizationId, version: 1, hook: next.hook, body: next.body, cta: next.cta, why: next.why, source: "template", createdById: userId } },
+        },
+      });
+    }
+    if (wasRecommended) {
+      const first = live[0] ?? null;
+      if (first) await tx.adAngle.update({ where: { id: first.id }, data: { recommended: true, recommendedWhy: recommendedWhyFor(first.angleKind!) } });
+    }
+    return next?.title ?? null;
+  });
+}
+
+/** Puts a turned-down direction back among the suggestions, to approve or change as before. */
+export async function bringBackDirection(organizationId: string, angleId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const r = await db.adAngle.updateMany({ where: { id: angleId, organizationId, status: "REJECTED" }, data: { status: "DRAFT", rejectedReason: null, rejectedAt: null } });
+  return r.count ? { ok: true } : { ok: false, error: "That direction isn't one you turned down." };
 }
 
 export type WordsCheck = { problems: string[]; warnings: string[] };
@@ -136,7 +220,9 @@ export function checkWords(w: { hook: string; body: string; cta: string }, avoid
 }
 
 /** A new version of a direction's words. The previous versions stay. */
-export async function reviseDirection(organizationId: string, userId: string, angleId: string, w: { hook: string; body: string; cta: string }): Promise<{ ok: true; version: number } | { ok: false; error: string }> {
+export type RevisionSource = "owner" | "ai" | "fix";
+
+export async function reviseDirection(organizationId: string, userId: string, angleId: string, w: { hook: string; body: string; cta: string }, source: RevisionSource = "owner"): Promise<{ ok: true; version: number } | { ok: false; error: string }> {
   const angle = await db.adAngle.findFirst({ where: { id: angleId, organizationId }, include: { revisions: { orderBy: { version: "desc" }, take: 1 } } });
   if (!angle) return { ok: false, error: "That direction isn't in your account." };
   const [{ facts }, brand] = await Promise.all([confirmedFactsFor(organizationId), brandRulesFor(organizationId).catch(() => null)]);
@@ -147,7 +233,7 @@ export async function reviseDirection(organizationId: string, userId: string, an
   if (latest && latest.hook === words.hook && latest.body === words.body && latest.cta === words.cta) return { ok: true, version: latest.version };
   const version = (latest?.version ?? 0) + 1;
   await db.adAngleRevision.create({
-    data: { angleId, organizationId, version, hook: words.hook, body: words.body, cta: words.cta, why: latest?.why ?? "", source: "owner", brandIssuesJson: check.warnings.length ? JSON.stringify(check.warnings) : null, createdById: userId },
+    data: { angleId, organizationId, version, hook: words.hook, body: words.body, cta: words.cta, why: latest?.why ?? "", source, brandIssuesJson: check.warnings.length ? JSON.stringify(check.warnings) : null, createdById: userId },
   });
   await db.adAngle.update({ where: { id: angleId }, data: { updatedAt: new Date() } });
   return { ok: true, version };
@@ -202,11 +288,13 @@ export type SuggestionView = Awaited<ReturnType<typeof listSuggestions>>["direct
 
 /** Everything the page shows, for one business. */
 export async function listSuggestions(organizationId: string) {
-  const [factsView, angles, approvals, brand] = await Promise.all([
+  const [factsView, angles, approvals, brand, rejected, tracking] = await Promise.all([
     confirmedFactsFor(organizationId),
-    db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { not: "ARCHIVED" } }, orderBy: [{ rank: "asc" }, { createdAt: "asc" }], include: { revisions: { orderBy: { version: "desc" } } } }),
+    db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } }, orderBy: [{ rank: "asc" }, { createdAt: "asc" }], include: { revisions: { orderBy: { version: "desc" } } } }),
     db.creativeApproval.findMany({ where: { organizationId, revokedAt: null }, orderBy: { approvedAt: "desc" } }),
     brandRulesFor(organizationId).catch(() => null),
+    db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: "REJECTED" }, orderBy: { rejectedAt: "desc" }, take: 10, select: { id: true, title: true, rejectedReason: true, rejectedAt: true } }),
+    trackingOverview(organizationId).catch(() => null),
   ]);
   const ids = angles.map((a) => a.id);
   const [assets, videos] = await Promise.all([
@@ -221,7 +309,20 @@ export async function listSuggestions(organizationId: string) {
         const done = x.versions.find((v) => v.status === "COMPLETE" && v.imageUrl);
         const pending = x.versions.find((v) => v.status === "PENDING");
         const failed = x.versions.find((v) => v.status === "FAILED");
-        return { assetId: x.id, versionId: done?.id ?? null, version: done?.version ?? null, url: done?.imageUrl ?? null, state: done ? "ready" : pending ? "making" : failed ? "failed" : "making", error: failed?.errorMessage ?? null };
+        const newer = (v: { version: number } | undefined) => Boolean(v && done && v.version > done.version);
+        return {
+          assetId: x.id,
+          versionId: done?.id ?? null,
+          version: done?.version ?? null,
+          url: done?.imageUrl ?? null,
+          state: done ? "ready" : pending ? "making" : failed ? "failed" : "making",
+          error: failed?.errorMessage ?? null,
+          /** A change to a finished picture: still being made, or the last one failed (no credits used). */
+          changing: newer(pending),
+          changeError: newer(failed) ? failed!.errorMessage : null,
+          /** Every finished version, newest first — to compare and to go back to. */
+          history: x.versions.filter((v) => v.status === "COMPLETE" && v.imageUrl).map((v) => ({ versionId: v.id, version: v.version, url: v.imageUrl!, instruction: v.instruction, createdAt: v.createdAt })),
+        };
       });
     const vids = videos
       .filter((v) => v.angleId === a.id)
@@ -252,6 +353,9 @@ export async function listSuggestions(organizationId: string) {
       id: a.id,
       title: a.title,
       kind: a.angleKind,
+      audience: audienceFor(factsView.facts),
+      destination: destinationFor(factsView.facts),
+      testReason: TEST_REASON[a.angleKind as HookAngle] ?? null,
       rank: a.rank,
       recommended: a.recommended,
       recommendedWhy: a.recommendedWhy,
@@ -265,7 +369,30 @@ export async function listSuggestions(organizationId: string) {
     };
   });
   const { facts } = factsView;
-  return { facts, brand, unconfirmed: factsView.unconfirmed, intro: introFor(facts, directions.length), directions, missing: buildDirections(facts).missing };
+  return {
+    facts,
+    brand,
+    unconfirmed: factsView.unconfirmed,
+    intro: introFor(facts, directions.length),
+    directions,
+    missing: buildDirections(facts).missing,
+    rejected: rejected.map((r) => ({ id: r.id, title: r.title, reason: r.rejectedReason, at: r.rejectedAt })),
+    tracking: trackingReadiness(tracking),
+  };
+}
+
+/**
+ * What the readiness check needs from tracking: can Meta see the result this
+ * goal counts? Only a verified check says yes; a pixel not chosen or not
+ * installed, or an event checked and not seen, says no; anything in between
+ * is unknown, and the check says so rather than guess.
+ */
+export function trackingReadiness(t: { stage: { stage: string }; requiredEvent: string | null } | null): { pixelSeesResult: boolean | null; leadFormReady: boolean; stage: string | null } {
+  if (!t) return { pixelSeesResult: null, leadFormReady: false, stage: null };
+  const s = t.stage.stage;
+  const pixelSeesResult = s === "verified" ? true : ["no_asset", "asset_selected", "installation_pending", "event_verification_pending"].includes(s) ? false : null;
+  // No event needed: the first campaign collects leads in a form inside the ad.
+  return { pixelSeesResult, leadFormReady: t.requiredEvent === null, stage: s };
 }
 
 /**

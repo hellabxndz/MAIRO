@@ -3547,9 +3547,12 @@ model AdAngle {
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   title          String
-  /// DRAFT | APPROVED | ARCHIVED
+  /// DRAFT | APPROVED | REJECTED | ARCHIVED
   status         String            @default("DRAFT")
   createdById    String?
+  /// The owner turned this direction down, and why — kept so MAIRO doesn't suggest the same kind again.
+  rejectedReason String?           @db.Text
+  rejectedAt     DateTime?
   /// The hook angle it was built from (problem, offer, local, …) — see lib/creative/hooks.ts.
   angleKind      String?
   /// Order shown in "Review your suggested ads"; the first is the recommended first test.

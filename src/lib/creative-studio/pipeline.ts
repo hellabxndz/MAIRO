@@ -173,6 +173,8 @@ export async function runEdit(input: {
   assetId: string;
   instruction: string;
   quality: Quality;
+  /** Extra direction for the model only (the brand brief); the version records just the instruction. */
+  brief?: string | null;
 }): Promise<PipelineOutcome> {
   const asset = await db.creativeStudioAsset.findFirst({
     where: { id: input.assetId, organizationId: input.organizationId },
@@ -195,7 +197,7 @@ export async function runEdit(input: {
     const result = await editImage({
       imageBytes: previousBytes,
       imageContentType: "image/png",
-      instruction: input.instruction,
+      instruction: withBrandDirection(input.instruction, input.brief ?? null),
       size: nativeSizeFor(asset.format),
       quality: input.quality,
       isProductTransform: false,

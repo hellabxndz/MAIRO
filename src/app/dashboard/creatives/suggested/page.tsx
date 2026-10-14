@@ -9,6 +9,7 @@ import { storageConfigured } from "@/lib/storage/blob";
 import { ensureDirections, listSuggestions, suggestedAdsGate } from "@/lib/suggested-ads/store";
 import { currentExperiment } from "@/lib/experiments/store";
 import { renderingAvailable } from "@/lib/suggested-ads/render-run";
+import { rewriteAvailable } from "@/lib/ai/rewrite-words";
 import { SuggestedAds } from "./suggested-ads";
 
 // "Review your suggested ads" — the first thing to do once Meta is connected
@@ -56,6 +57,7 @@ export default async function SuggestedAdsPage() {
       paid={!blocked}
       imagesAvailable={openAiImageConfigured() && storageConfigured()}
       uploadsAvailable={storageConfigured()}
+      rewriteAvailable={rewriteAvailable()}
       rendering={rendering}
     />
   );

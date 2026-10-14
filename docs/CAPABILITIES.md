@@ -36,7 +36,12 @@ or a public page makes a claim this inventory can't back.
 | Creative | Brand details and brand check | Partially working | `/dashboard/settings/business-brain`, `/dashboard/create`, `/dashboard/creatives/suggested` | Approved asset library | `check:brand`, `check:brain`, `check:suggested-ads` |
 | Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
 | Creative | Creative tests | Partially working | `/dashboard/creatives/suggested`, `/dashboard/decisions` | A live test on a real ad account | `check:experiments`, `check:suggested-ads`, `check:decisions` |
-| Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads` |
+| Creative | Suggested ads after connecting Meta | Partially working | `/dashboard/creatives/suggested` | Connected Meta ad account; Confirmed business profile | `check:suggested-ads`, `check:creative-readiness` |
+| Creative | Creative readiness check | Working | `/dashboard/creatives/suggested` | — | `check:creative-readiness` |
+| Creative | Previews in six formats | Working | `/dashboard/creatives/suggested` | — | `check:creative-readiness` |
+| Creative | Ask MAIRO to rewrite an ad | Partially working | `/dashboard/creatives/suggested` | ANTHROPIC_API_KEY | `check:creative-readiness` |
+| Creative | Change a suggested ad's picture | Partially working | `/dashboard/creatives/suggested` | OPENAI_API_KEY; Blob storage | `check:creative-readiness`, `check:creative-studio` |
+| Creative | Creative Library | Working | `/dashboard/creatives` | — | `check:creative-readiness` |
 | Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN | `check:suggested-ads`, `check:video-render` |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
 | Tracking | Meta pixel: choose, install, verify | Partially working | `/dashboard/tracking` | Connected Meta ad account; A live run against a real ad account | `check:tracking`, `check:tracking-setup` |
@@ -80,7 +85,7 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (37)
+## Working (40)
 
 ### Free advertising plan
 
@@ -213,6 +218,54 @@ A form MAIRO hosts for the business, and Meta instant forms created on the busin
 **Checks:** `check:leads`, `check:page-token`
 
 **Public claim:** “Collect enquiries with a form MAIRO writes for you.”
+
+### Creative readiness check
+
+*Creative* · `creative-readiness`
+
+Every suggested ad gets a readiness score out of 100 from seven areas — message, offer, brand, button, format, landing page and tracking — each saying what MAIRO looked at and what would make it better. Something to fix before running caps the score. "Improve this ad" makes the fixes MAIRO can make from confirmed facts (a shorter opening line, the button for the goal, the confirmed offer) as a new version that can be undone. It's labelled as a heuristic for avoidable weaknesses, never a prediction of results.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Verification:** Each area's rules, areas that don't apply left out of the score, the cap when something must be fixed, and fixes that use only confirmed facts (check:creative-readiness); shown, applied and recorded as MAIRO's fix in a local browser run.
+
+**Evidence:** `src/lib/creative/readiness.ts`, `src/app/dashboard/creatives/suggested/readiness-panel.tsx`, `src/lib/actions/suggested-ads-actions.ts`
+
+**Checks:** `check:creative-readiness`
+
+**Public claim:** “Each suggested ad gets a readiness check before it runs — a check for avoidable weaknesses, not a prediction of results.”
+
+### Previews in six formats
+
+*Creative* · `format-previews`
+
+A suggested ad can be seen as MAIRO's mock-up in the Instagram feed, Facebook feed, Stories, Reels, as a square and as 9:16. Each says what it shows: the owner's picture or video and its version, or an illustration of the layout when nothing is made yet. Meta's own preview sits beside it for pictures.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Verification:** Every format labelled illustrative when there's no picture, and with the picture's version when there is (check:creative-readiness, local browser run at 1280 and 390 wide).
+
+**Evidence:** `src/app/dashboard/creatives/suggested/placements.tsx`, `src/app/dashboard/creatives/suggested/review-dialog.tsx`
+
+**Checks:** `check:creative-readiness`
+
+**Public claim:** none — not advertised
+
+### Creative Library
+
+*Creative* · `creative-library`
+
+Every creative in one searchable list — suggested by MAIRO, made in Creative Studio, uploaded, and ads that ran — filtered by drafts, approved and launched, with how many versions each has kept. Results appear only for ads Meta reported figures for.
+
+**Routes:** `/dashboard/creatives`
+
+**Verification:** One business's creatives only, by source and stage, no results without Meta figures (check:creative-readiness); filters and search in a local browser run.
+
+**Evidence:** `src/lib/creatives/library.ts`, `src/lib/creatives/library-view.ts`, `src/app/dashboard/creatives/library-client.tsx`
+
+**Checks:** `check:creative-readiness`
+
+**Public claim:** none — not advertised
 
 ### Shopify orders
 
@@ -680,7 +733,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (19)
+## Partially working (21)
 
 ### Reading the business's website
 
@@ -884,7 +937,7 @@ Once two suggested ads are approved, MAIRO proposes a fair test: the same pictur
 
 *Creative* · `suggested-ads`
 
-Once Meta is connected and the business profile is confirmed, MAIRO suggests three ad directions written only from confirmed facts, with one recommended as the first test and why. Each can become a real picture after its cost is shown, be rewritten (every version kept), or use the owner's own video; approval is bound to the exact words and picture or video version, and continuing opens the campaign builder with that ad. Nothing is published or spent.
+Once Meta is connected and the business profile is confirmed, MAIRO suggests three ad directions written only from confirmed facts, each saying who it's for, where the button sends people and why it's worth a test, with one recommended as the first test and why. Each can become a real picture after its cost is shown, be rewritten (every version kept), use the owner's own video, or be turned down with a reason — MAIRO then suggests a different kind and never the same kind again. Approval is bound to the exact words and picture or video version, and continuing opens the campaign builder with that ad. Nothing is published or spent.
 
 **Condition:** Making the picture needs a paid plan, AI credits and the image provider switched on; using an uploaded video needs a paid plan and storage. Not yet run against a live Meta account and the live image provider together.
 
@@ -892,13 +945,53 @@ Once Meta is connected and the business profile is confirmed, MAIRO suggests thr
 
 **Still needs:** Connected Meta ad account; Confirmed business profile
 
-**Verification:** Directions from confirmed facts only, one recommended, avoided words never used, no invented figures; revisions kept; approval withdrawn by any change; every record scoped to its business (check:suggested-ads). Live picture generation from this page not yet run.
+**Verification:** Directions from confirmed facts only, one recommended, avoided words never used, no invented figures; revisions kept; approval withdrawn by any change; every record scoped to its business (check:suggested-ads); turning down, the replacement and bringing back (check:creative-readiness). Live picture generation from this page not yet run.
 
 **Evidence:** `src/lib/suggested-ads/directions.ts`, `src/lib/suggested-ads/store.ts`, `src/lib/actions/suggested-ads-actions.ts`, `src/app/dashboard/creatives/suggested/suggested-ads.tsx`
 
-**Checks:** `check:suggested-ads`
+**Checks:** `check:suggested-ads`, `check:creative-readiness`
 
 **Public claim:** “After you connect Meta, MAIRO suggests three ads from what you've confirmed, with one marked as the best first test.”
+
+### Ask MAIRO to rewrite an ad
+
+*Creative* · `creative-rewrite`
+
+"Make the hook stronger", "Make this more luxurious" or any plain-language change: MAIRO proposes new words from confirmed facts only, shown beside the current ones. Numbers the business never gave are dropped and words to avoid stop it before the owner sees it; nothing is saved until the owner keeps it, as a new version marked as MAIRO's rewrite.
+
+**Condition:** Needs ANTHROPIC_API_KEY. Without it the page says rewriting isn't switched on and the words can still be changed by hand. Not yet run against the live model from this page.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Still needs:** ANTHROPIC_API_KEY
+
+**Verification:** The checks a proposal must pass (check:creative-readiness); the compare, keep and undo flow in a local browser run with a labelled fixture in place of the model. A live model run is still to do.
+
+**Evidence:** `src/lib/ai/rewrite-words.ts`, `src/lib/creative/rewrite-rules.ts`, `src/lib/actions/suggested-ads-actions.ts`, `src/app/dashboard/creatives/suggested/suggested-ads.tsx`
+
+**Checks:** `check:creative-readiness`
+
+**Public claim:** none — not advertised
+
+### Change a suggested ad's picture
+
+*Creative* · `picture-edits`
+
+A plain-language change to a suggested ad's picture — "Use our brand colours", "A brighter, cleaner background" — with the cost shown first. Credits are spent only if the new version is made; the version before is shown beside it and can be made current again without AI or credits. "Brand colours" stops before charging when the Business Brain has none.
+
+**Condition:** Needs a paid plan, AI credits and the image provider and storage switched on. Going back to an earlier version works without them. Not yet run against the live image provider.
+
+**Routes:** `/dashboard/creatives/suggested`
+
+**Still needs:** OPENAI_API_KEY; Blob storage
+
+**Verification:** Before/after and going back to an earlier version without credits, in a local browser run; the paid edit uses the same reserve-then-confirm credit flow as Creative Studio (check:creative-studio). A live image edit is still to do.
+
+**Evidence:** `src/app/dashboard/creatives/suggested/picture-editor.tsx`, `src/lib/actions/suggested-ads-actions.ts`, `src/lib/creative-studio/pipeline.ts`
+
+**Checks:** `check:creative-readiness`, `check:creative-studio`
+
+**Public claim:** none — not advertised
 
 ### Editing an uploaded video
 

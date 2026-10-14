@@ -9,37 +9,37 @@ import { Modal } from "@/components/mairo/overlay";
 import { actionClass, quietClass } from "@/components/mairo/action-styles";
 import { checkVideo, VIDEO_TYPES, type MediaCheck } from "@/lib/campaigns/media-rules";
 import { measureVideo } from "@/lib/media/measure-video";
-import { PREVIEW_FORMATS } from "@/lib/meta/preview-formats";
 import { usesAvoided } from "@/lib/suggested-ads/directions";
 import { brandCheck, type BrandRules } from "@/lib/brain/brand-check";
-import { editsNotInFile } from "@/lib/suggested-ads/video";
+import { REWRITE_CHIPS } from "@/lib/creative/rewrite-rules";
 import {
-  approveCreativeAction,
-  continueToCampaignAction,
+  bringBackDirectionAction,
   createAdImageAction,
   creditQuoteAction,
   refreshDirectionsAction,
+  rejectDirectionAction,
   restoreDirectionAction,
   reviseDirectionAction,
+  rewriteWordsAction,
   saveVideoAction,
-  suggestedPreviewAction,
   type CreditQuote,
 } from "@/lib/actions/suggested-ads-actions";
 import type { listSuggestions } from "@/lib/suggested-ads/store";
 import type { ExperimentView } from "@/lib/experiments/store";
 import { ExperimentPanel } from "./experiment-panel";
 import { VideoEditor } from "./video-editor";
-import { PLACEMENTS, PlacementMock, type MockMedia, type Placement } from "./placements";
+import { ReviewDialog } from "./review-dialog";
+import { ReadinessChip, adReadiness, type TrackingFacts } from "./readiness-panel";
 
 type Data = Awaited<ReturnType<typeof listSuggestions>>;
 type Dir = Data["directions"][number];
 type Test = ExperimentView | null;
-type Panel = { kind: "create" | "edit" | "video" | "review"; id: string } | null;
+type Panel = { kind: "create" | "edit" | "video" | "review" | "reject"; id: string } | null;
 
 const CTA_CHOICES = ["Shop now", "Get a quote", "Book now", "Learn more", "Contact us", "Order now", "Sign up"];
-const SOURCE: Record<string, string> = { template: "MAIRO's suggestion", owner: "Your edit", ai: "MAIRO's rewrite" };
+const SOURCE: Record<string, string> = { template: "MAIRO's suggestion", owner: "Your edit", ai: "MAIRO's rewrite", fix: "MAIRO's fix" };
 
-export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable, rendering }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean; rendering: { ok: boolean; reason: string | null } }) {
+export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable, rewriteAvailable, rendering }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean; rewriteAvailable: boolean; rendering: { ok: boolean; reason: string | null } }) {
   const router = useRouter();
   const [panel, setPanel] = useState<Panel>(null);
   const [refreshing, startRefresh] = useTransition();
@@ -55,7 +55,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
         <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-white sm:text-[28px]">Review your suggested ads</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-white/85">{data.intro}</p>
         <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
-          Built only from what you&apos;ve confirmed — no invented discounts, reviews or numbers.
+          Each is a hypothesis to test, not a promise of results. Built only from what you&apos;ve confirmed — no invented discounts, reviews or numbers.
           {data.unconfirmed.length > 0 && <> Not used until you confirm {data.unconfirmed.length === 1 ? "it" : "them"}: {data.unconfirmed.join(", ").toLowerCase()}.</>}{" "}
           <Link href="/dashboard/settings/business-brain" className="underline underline-offset-4 hover:text-white">Check what MAIRO knows</Link>
         </p>
@@ -70,7 +70,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       ) : (
         <ol className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Suggested ads">
           {data.directions.map((d) => (
-            <DirectionCard key={d.id} d={d} onOpen={(kind) => setPanel({ kind, id: d.id })} />
+            <DirectionCard key={d.id} d={d} readiness={adReadiness({ words: d.words ?? { hook: "", body: "", cta: "" }, facts: data.facts, brand: data.brand, media: latestImage(d) ? "image" : d.videos[0] ? "video" : "none", video: latestImage(d) ? null : d.videos[0] ?? null, tracking: data.tracking })} onOpen={(kind) => setPanel({ kind, id: d.id })} />
           ))}
         </ol>
       )}
@@ -106,16 +106,33 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
         {notice && <p role="status" className="text-[12.5px] text-muted">{notice}</p>}
       </div>
 
+      {data.rejected.length > 0 && <Rejected items={data.rejected} onNotice={setNotice} />}
+
       <ExperimentPanel test={test} approved={data.directions.filter((d) => d.approval?.state === "current").length} paid={paid} />
 
       {current && panel?.kind === "create" && (
         <CreateDialog d={current} paid={paid} available={imagesAvailable} onClose={close} onMade={() => setPanel({ kind: "review", id: current.id })} onVideo={() => setPanel({ kind: "video", id: current.id })} />
       )}
-      {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} onClose={close} />}
+      {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} aiAvailable={rewriteAvailable} onClose={close} />}
+      {current && panel?.kind === "reject" && <RejectDialog d={current} onClose={close} onDone={(m) => { setNotice(m); close(); }} />}
       {current && panel?.kind === "video" && (
         <VideoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} rendering={paid ? rendering : { ok: false, reason: "Writing edits into a video file is part of a MAIRO plan." }} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />
       )}
-      {current && panel?.kind === "review" && <ReviewDialog d={current} businessName={businessName} paid={paid} onClose={close} />}
+      {current && panel?.kind === "review" && (
+        <ReviewDialog
+          d={current}
+          businessName={businessName}
+          paid={paid}
+          facts={data.facts}
+          brand={data.brand}
+          tracking={data.tracking as TrackingFacts}
+          imagesAvailable={imagesAvailable}
+          onClose={close}
+          onCreate={() => setPanel({ kind: "create", id: current.id })}
+          onVideo={() => setPanel({ kind: "video", id: current.id })}
+          onEditWords={() => setPanel({ kind: "edit", id: current.id })}
+        />
+      )}
     </div>
   );
 }
@@ -126,7 +143,7 @@ function latestImage(d: Dir) {
   return d.images.find((i) => i.state === "ready" && i.url) ?? null;
 }
 
-function DirectionCard({ d, onOpen }: { d: Dir; onOpen: (kind: "create" | "edit" | "video" | "review") => void }) {
+function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType<typeof adReadiness>; onOpen: (kind: "create" | "edit" | "video" | "review" | "reject") => void }) {
   const img = latestImage(d);
   const vid = d.videos[0] ?? null;
   const failed = !img && d.images.find((i) => i.state === "failed");
@@ -158,6 +175,12 @@ function DirectionCard({ d, onOpen }: { d: Dir; onOpen: (kind: "create" | "edit"
         {d.words?.body && <p className="mt-2 text-[13.5px] leading-relaxed text-white/80">{d.words.body}</p>}
         <p className="mt-3"><span className="rounded-md bg-white/[0.08] px-2.5 py-1 text-[12px] font-medium text-white/90">{d.words?.cta}</span></p>
         {d.recommended && d.recommendedWhy && <p className="mt-3 rounded-xl bg-violet/[0.08] px-3 py-2 text-[12.5px] leading-relaxed text-white/85"><span className="text-violet-bright">Why test this first: </span>{d.recommendedWhy}</p>}
+        <dl className="mt-3 space-y-1.5 text-[12.5px]">
+          <div><dt className="inline text-muted">For: </dt><dd className="inline text-white/85">{d.audience}</dd></div>
+          <div><dt className="inline text-muted">Sends people to: </dt><dd className="inline text-white/85">{d.destination}</dd></div>
+          {d.testReason && <div><dt className="inline text-muted">Worth testing because: </dt><dd className="inline text-white/85">{d.testReason}</dd></div>}
+        </dl>
+        <p className="mt-3"><button type="button" onClick={() => onOpen("review")} className="rounded-full focus-visible:outline focus-visible:outline-2" aria-label={`Readiness ${readiness.score} out of 100 — see the check`}><ReadinessChip r={readiness} /></button></p>
         {d.words?.why && (
           <details className="mt-3">
             <summary className="cursor-pointer text-[12.5px] text-muted hover:text-white">Why this direction</summary>
@@ -173,11 +196,15 @@ function DirectionCard({ d, onOpen }: { d: Dir; onOpen: (kind: "create" | "edit"
           {hasMedia ? (
             <button type="button" onClick={() => onOpen("review")} className={actionClass}>{d.approval?.state === "current" ? "Review" : "Review and approve"}</button>
           ) : (
-            <button type="button" onClick={() => onOpen("create")} className={actionClass}>Create this ad</button>
+            <>
+              <button type="button" onClick={() => onOpen("create")} className={actionClass}>Create this ad</button>
+              <button type="button" onClick={() => onOpen("review")} className={quietClass}>Preview</button>
+            </>
           )}
           <button type="button" onClick={() => onOpen("edit")} className={quietClass}>Change the direction</button>
           <button type="button" onClick={() => onOpen("video")} className={quietClass}>{vid ? "Edit my video" : "Use my video"}</button>
           {img && <button type="button" onClick={() => onOpen("create")} className="text-[12.5px] text-muted underline-offset-4 hover:text-white hover:underline">Make another picture</button>}
+          <button type="button" onClick={() => onOpen("reject")} className="text-[12.5px] text-muted underline-offset-4 hover:text-white hover:underline">Not for us</button>
         </div>
       </div>
     </li>
@@ -274,22 +301,30 @@ function CreateDialog({ d, paid, available, onClose, onMade, onVideo }: { d: Dir
 
 // --- Change the direction: a new version of the words ----------------------------
 
-function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; brand: BrandRules | null; onClose: () => void }) {
+type Proposal = { hook: string; body: string; cta: string; note: string; dropped: string[] };
+
+function EditDialog({ d, avoid, brand, aiAvailable, onClose }: { d: Dir; avoid: string[]; brand: BrandRules | null; aiAvailable: boolean; onClose: () => void }) {
   const router = useRouter();
   const [hook, setHook] = useState(d.words?.hook ?? "");
   const [body, setBody] = useState(d.words?.body ?? "");
   const [cta, setCta] = useState(d.words?.cta ?? "Learn more");
   const [error, setError] = useState<string | null>(null);
   const [saving, start] = useTransition();
+  const [asking, startAsk] = useTransition();
+  const [instruction, setInstruction] = useState("");
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  // The words MAIRO proposed and the owner took, untouched since: saved as "MAIRO's rewrite".
+  const [taken, setTaken] = useState<{ hook: string; body: string; cta: string } | null>(null);
   const avoided = usesAvoided(`${hook} ${body}`, avoid);
   // The same brand check as the campaign builder: offers and claims you haven't confirmed are flagged, not blocked.
   const brandNotes = brand ? brandCheck(`${hook} ${body}`, brand).filter((f) => f.level === "warning") : [];
   const unchanged = hook === d.words?.hook && body === d.words?.body && cta === d.words?.cta;
+  const fromAi = Boolean(taken && taken.hook === hook && taken.body === body && taken.cta === cta);
 
   const save = () =>
     start(async () => {
       setError(null);
-      const r = await reviseDirectionAction(d.id, { hook, body, cta });
+      const r = await reviseDirectionAction(d.id, { hook, body, cta }, fromAi ? "ai" : "owner");
       if (!r.ok) return setError(r.error);
       router.refresh();
       onClose();
@@ -301,10 +336,69 @@ function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; bra
       router.refresh();
       onClose();
     });
+  const ask = (text: string) =>
+    startAsk(async () => {
+      setError(null);
+      setProposal(null);
+      const r = await rewriteWordsAction(d.id, text);
+      if (!r.ok) return setError(r.error);
+      setProposal({ ...r.words, note: r.note, dropped: r.dropped });
+    });
+  const take = () => {
+    if (!proposal) return;
+    setHook(proposal.hook);
+    setBody(proposal.body);
+    setCta(proposal.cta);
+    setTaken({ hook: proposal.hook, body: proposal.body, cta: proposal.cta });
+    setProposal(null);
+  };
 
   return (
     <Modal open onClose={onClose} title={`Change the direction: ${d.title}`}>
       <div className="space-y-4">
+        <section aria-labelledby={`ask-${d.id}`} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+          <h3 id={`ask-${d.id}`} className="text-[13px] font-medium text-white">Ask MAIRO to rewrite it</h3>
+          {!aiAvailable ? (
+            <p className="mt-1 text-[12.5px] text-muted">Rewriting with AI isn&apos;t switched on for this deployment yet. You can still change the words yourself below.</p>
+          ) : (
+            <>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {REWRITE_CHIPS.map((c) => (
+                  <button key={c} type="button" disabled={asking} onClick={() => { setInstruction(c); ask(c); }} className="rounded-full border border-[color:var(--mairo-line)] px-3 py-1 text-[12px] text-muted hover:text-white disabled:opacity-50">{c}</button>
+                ))}
+              </div>
+              <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (instruction.trim().length >= 3) ask(instruction); }}>
+                <label className="sr-only" htmlFor={`ins-${d.id}`}>What to change</label>
+                <input id={`ins-${d.id}`} value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. Focus more on our new product" className="min-w-0 flex-1 rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+                <button type="submit" disabled={asking || instruction.trim().length < 3} className={`${quietClass} disabled:opacity-50`}>{asking ? "Writing…" : "Ask"}</button>
+              </form>
+              <p className="mt-1.5 text-[11.5px] text-faint">MAIRO uses only what you&apos;ve confirmed. Nothing is saved until you choose to keep it.</p>
+            </>
+          )}
+          {proposal && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2" aria-live="polite">
+              <div className="rounded-xl bg-white/[0.03] px-3 py-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Now</p>
+                <p className="mt-1 text-[13px] font-medium text-white">{hook}</p>
+                {body && <p className="mt-1 text-[12.5px] text-white/75">{body}</p>}
+                <p className="mt-1.5 text-[12px] text-muted">Button: {cta}</p>
+              </div>
+              <div className="rounded-xl border border-violet/40 bg-violet/[0.06] px-3 py-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-bright">MAIRO&apos;s proposal</p>
+                <p className="mt-1 text-[13px] font-medium text-white">{proposal.hook}</p>
+                {proposal.body && <p className="mt-1 text-[12.5px] text-white/75">{proposal.body}</p>}
+                <p className="mt-1.5 text-[12px] text-muted">Button: {proposal.cta}</p>
+              </div>
+              {proposal.note && <p className="text-[12.5px] text-white/80 sm:col-span-2">{proposal.note}</p>}
+              {proposal.dropped.length > 0 && <p className="text-[12px] text-muted sm:col-span-2">MAIRO left out {proposal.dropped.join(", ")} — not something you&apos;ve confirmed.</p>}
+              <div className="flex flex-wrap gap-2 sm:col-span-2">
+                <button type="button" onClick={take} className={actionClass}>Use these words</button>
+                <button type="button" onClick={() => setProposal(null)} className={quietClass}>Keep mine</button>
+              </div>
+            </div>
+          )}
+        </section>
+
         <label className="block text-[13px] text-white">
           Opening line <span className="text-faint">({hook.length}/160)</span>
           <textarea value={hook} onChange={(e) => setHook(e.target.value)} rows={2} maxLength={160} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
@@ -322,7 +416,7 @@ function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; bra
         {avoided && <p role="alert" className="text-[12.5px] text-warn">“{avoided}” is on your list of words to avoid.</p>}
         {brandNotes.map((f) => <p key={f.text} className="text-[12.5px] text-muted">{f.text}</p>)}
         {error && <p role="alert" className="text-[12.5px] text-warn">{error}</p>}
-        <p className="text-[12px] text-muted">Saving makes version {(d.words?.version ?? 0) + 1}. Earlier versions are kept{d.approval ? ", and you'll approve the new words before they're used" : ""}.</p>
+        <p className="text-[12px] text-muted">Saving makes version {(d.words?.version ?? 0) + 1}{fromAi ? ", marked as MAIRO's rewrite" : ""}. Earlier versions are kept{d.approval ? ", and you'll approve the new words before they're used" : ""}.</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={saving || unchanged || Boolean(avoided)} onClick={save} className={`${actionClass} disabled:opacity-50`}>{saving ? "Saving…" : "Save the new version"}</button>
           <button type="button" onClick={onClose} className={quietClass}>Cancel</button>
@@ -342,6 +436,70 @@ function EditDialog({ d, avoid, brand, onClose }: { d: Dir; avoid: string[]; bra
         )}
       </div>
     </Modal>
+  );
+}
+
+// --- Not for us: turned down, with a reason ------------------------------------
+
+const REASONS = ["Not right for our brand", "We don't offer this", "Wrong kind of customer", "Something else"];
+
+function RejectDialog({ d, onClose, onDone }: { d: Dir; onClose: () => void; onDone: (notice: string) => void }) {
+  const router = useRouter();
+  const [reason, setReason] = useState<string | null>(null);
+  const [more, setMore] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, start] = useTransition();
+  const submit = () =>
+    start(async () => {
+      setError(null);
+      const why = [reason, more.trim()].filter(Boolean).join(" — ");
+      const r = await rejectDirectionAction(d.id, why);
+      if (!r.ok) return setError(r.error);
+      router.refresh();
+      onDone(r.replacement ? `Set aside. MAIRO suggested “${r.replacement}” in its place.` : "Set aside. MAIRO has no other kind of ad to suggest from what you've confirmed — tell it more in your Business Brain.");
+    });
+  return (
+    <Modal open onClose={busy ? () => {} : onClose} title={`Not for us: ${d.title}`}>
+      <p className="text-[13.5px] leading-relaxed text-white/85">MAIRO sets this direction aside and won&apos;t suggest this kind of ad again. {d.approval ? "Its approval is withdrawn. " : ""}You can bring it back later.</p>
+      <fieldset className="mt-4">
+        <legend className="text-[13px] font-medium text-white">Why? <span className="font-normal text-muted">(helps MAIRO suggest better)</span></legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {REASONS.map((x) => (
+            <label key={x} className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] ${reason === x ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+              <input type="radio" name={`why-${d.id}`} value={x} checked={reason === x} onChange={() => setReason(x)} className="sr-only" />
+              {x}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label className="mt-3 block text-[13px] text-white">
+        Anything else <span className="text-faint">(optional)</span>
+        <input value={more} onChange={(e) => setMore(e.target.value)} maxLength={200} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+      </label>
+      {error && <p role="alert" className="mt-3 text-[12.5px] text-warn">{error}</p>}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={submit} className={`${actionClass} disabled:opacity-50`}>{busy ? "Setting aside…" : "Set it aside"}</button>
+        <button type="button" disabled={busy} onClick={onClose} className={quietClass}>Cancel</button>
+      </div>
+    </Modal>
+  );
+}
+
+function Rejected({ items, onNotice }: { items: Data["rejected"]; onNotice: (m: string) => void }) {
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  return (
+    <details className="mt-4 rounded-2xl border px-5 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+      <summary className="cursor-pointer text-[13px] text-white/85">Turned down ({items.length})</summary>
+      <ul className="mt-2 space-y-2">
+        {items.map((x) => (
+          <li key={x.id} className="flex flex-wrap items-baseline justify-between gap-2 text-[12.5px]">
+            <span className="text-white/85">{x.title}{x.reason ? <span className="text-muted"> — {x.reason}</span> : null}</span>
+            <button type="button" disabled={busy} onClick={() => start(async () => { const r = await bringBackDirectionAction(x.id); onNotice(r.ok ? `“${x.title}” is back among your suggestions.` : r.error); router.refresh(); })} className="text-violet-bright underline-offset-4 hover:underline disabled:opacity-50">Bring it back</button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -429,139 +587,3 @@ function VideoDialog({ d, organizationId, paid, available, rendering, onClose, o
     </Modal>
   );
 }
-
-// --- Final review: placements, then approval of exactly this version -------------
-
-type Choice = { kind: "image"; versionId: string; url: string } | { kind: "video"; revisionId: string };
-
-function ReviewDialog({ d, businessName, paid, onClose }: { d: Dir; businessName: string; paid: boolean; onClose: () => void }) {
-  const router = useRouter();
-  const ready = d.images.filter((i) => i.state === "ready" && i.url && i.versionId);
-  const vid = d.videos[0] ?? null;
-  const choices: Choice[] = [
-    ...ready.map((i) => ({ kind: "image" as const, versionId: i.versionId!, url: i.url! })),
-    ...(vid?.revisionId ? [{ kind: "video" as const, revisionId: vid.revisionId }] : []),
-  ];
-  const approvedKey = d.approval?.studioVersionId ?? d.approval?.videoRevisionId ?? null;
-  const [pick, setPick] = useState<string | null>(approvedKey && choices.some((c) => keyOf(c) === approvedKey) ? approvedKey : choices[0] ? keyOf(choices[0]) : null);
-  const [placement, setPlacement] = useState<Placement>("feed");
-  const [ack, setAck] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
-  const [busy, start] = useTransition();
-  const [meta, setMeta] = useState<{ format: string; src: string | null; error: string | null; loading: boolean } | null>(null);
-  const choice = choices.find((c) => keyOf(c) === pick) ?? null;
-  const words = d.words!;
-  // Edits not yet written into a file mean the ad would play the original — the owner acknowledges that.
-  const unrendered = choice?.kind === "video" && vid && vid.render?.status !== "READY" ? editsNotInFile(vid.edits) : [];
-  const media: MockMedia = !choice ? { kind: "none" } : choice.kind === "image" ? { kind: "image", url: choice.url } : vid?.render?.status === "READY" ? { kind: "video", posterUrl: vid.render.posterUrl ?? vid.posterUrl, aspect: "original", firstCaption: null } : { kind: "video", posterUrl: vid?.posterUrl ?? null, aspect: vid?.edits.aspect ?? "original", firstCaption: vid?.edits.captions[0] ?? null };
-  const alreadyCurrent = d.approval?.state === "current" && approvedKey === pick;
-
-  const approve = () =>
-    start(async () => {
-      if (!choice) return;
-      setError(null);
-      if (!alreadyCurrent) {
-        const r = await approveCreativeAction({ angleId: d.id, revisionId: words.revisionId, studioVersionId: choice.kind === "image" ? choice.versionId : null, videoRevisionId: choice.kind === "video" ? choice.revisionId : null });
-        if (!r.ok) return setError(r.error);
-      }
-      if (!paid) {
-        setDone("Approved. Choose a plan to build a campaign with it — nothing has been published.");
-        router.refresh();
-        return;
-      }
-      const c = await continueToCampaignAction(d.id);
-      if (!c.ok) {
-        setDone(null);
-        setError(`Approved, but the campaign couldn't be started: ${c.error}`);
-        router.refresh();
-        return;
-      }
-      router.push(c.href);
-    });
-
-  const metaPreview = (format: string) => {
-    if (!choice || choice.kind !== "image") return;
-    setMeta({ format, src: null, error: null, loading: true });
-    suggestedPreviewAction(d.id, choice.versionId, format).then((r) => setMeta({ format, src: r.ok ? r.src : null, error: r.ok ? null : r.error, loading: false }));
-  };
-
-  return (
-    <Modal open onClose={busy ? () => {} : onClose} title={`Review: ${d.title}`} wide>
-      {choices.length === 0 ? (
-        <p className="text-[13.5px] text-muted">Make the picture or add your video first.</p>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div>
-            <div role="tablist" aria-label="Where the ad shows" className="flex gap-1">
-              {PLACEMENTS.map((p) => (
-                <button key={p.id} role="tab" type="button" aria-selected={placement === p.id} onClick={() => setPlacement(p.id)} className={`rounded-full px-3.5 py-1.5 text-[13px] ${placement === p.id ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>{p.label}</button>
-              ))}
-            </div>
-            <div role="tabpanel" className="mt-4">
-              <PlacementMock placement={placement} media={media} words={words} businessName={businessName} />
-              <p className="mt-2 text-center text-[11.5px] text-faint">MAIRO&apos;s mock-up of the layout{placement === "reels" ? " — the dashed area is covered by Reels' text and buttons" : ""}.</p>
-            </div>
-            {choice?.kind === "image" && (
-              <div className="mt-5">
-                <p className="text-[12.5px] text-muted">Meta&apos;s own preview — drawn by Meta, nothing is created in your ad account:</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {PREVIEW_FORMATS.map((f) => (
-                    <button key={f.value} type="button" onClick={() => metaPreview(f.value)} aria-pressed={meta?.format === f.value} className={`rounded-full border px-3 py-1 text-[12px] ${meta?.format === f.value ? "border-white/70 text-white" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>{f.label}</button>
-                  ))}
-                </div>
-                {meta?.loading && <p className="mt-2 text-[12.5px] text-muted">Asking Meta…</p>}
-                {meta?.error && <p className="mt-2 text-[12.5px] text-warn">{meta.error}</p>}
-                {meta?.src && <iframe src={meta.src} title="Meta's preview of this ad" className="mt-3 h-[560px] w-full max-w-[380px] rounded-xl border-0 bg-white" />}
-              </div>
-            )}
-          </div>
-
-          <div>
-            {choices.length > 1 && (
-              <fieldset>
-                <legend className="text-[13px] font-medium text-white">Which goes with these words</legend>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {choices.map((c, i) => (
-                    <label key={keyOf(c)} className={`cursor-pointer overflow-hidden rounded-xl border-2 ${pick === keyOf(c) ? "border-white/80" : "border-transparent"}`}>
-                      <input type="radio" name={`media-${d.id}`} checked={pick === keyOf(c)} onChange={() => setPick(keyOf(c))} className="sr-only" />
-                      {c.kind === "image" ? <img src={c.url} alt={`Picture ${ready.length - i}`} className="h-20 w-16 object-cover" /> : <span className="flex h-20 w-16 items-center justify-center bg-black text-[11px] text-[#fff]">▶ Video v{vid?.version}</span>}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            )}
-
-            <dl className="mt-4 space-y-2 rounded-xl bg-white/[0.04] px-4 py-3 text-[12.5px]">
-              <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">Words</dt><dd className="text-white/90">Version {words.version} · “{words.hook}”</dd></div>
-              <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">{choice?.kind === "video" ? "Video" : "Picture"}</dt><dd className="text-white/90">{choice?.kind === "video" ? `Your video, edit version ${vid?.version}${vid?.render?.status === "READY" ? " — rendered into a new file" : ""}` : `Picture version ${ready.find((r) => r.versionId === pick)?.version ?? 1}`}</dd></div>
-              <div className="flex gap-2"><dt className="w-24 shrink-0 text-muted">Button</dt><dd className="text-white/90">{words.cta}</dd></div>
-            </dl>
-            <p className="mt-3 text-[12px] leading-relaxed text-muted">Approval is for exactly these versions. If the words, picture or video change, MAIRO asks you to approve again before they&apos;re used.</p>
-
-            {unrendered.length > 0 && (
-              <label className="mt-4 flex items-start gap-2 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-3.5 py-3 text-[12.5px] leading-relaxed text-white/85">
-                <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5" />
-                <span>I understand the ad plays my original video, without {listOf(unrendered)} — MAIRO can only preview edits here for now.</span>
-              </label>
-            )}
-
-            {error && <p role="alert" className="mt-3 text-[13px] text-warn">{error}</p>}
-            {done && <p role="status" className="mt-3 text-[13px] text-live">{done}</p>}
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button type="button" disabled={busy || !choice || (unrendered.length > 0 && !ack) || Boolean(done)} onClick={approve} className={`${actionClass} disabled:opacity-50`}>
-                {busy ? "Saving…" : paid ? (alreadyCurrent ? "Continue to the campaign" : "Approve creative and continue") : "Approve creative"}
-              </button>
-              {done && !paid && <Link href="/plan/activate" className={quietClass}>Choose a plan</Link>}
-              <button type="button" disabled={busy} onClick={onClose} className={quietClass}>Not yet</button>
-            </div>
-            {paid && <p className="mt-2 text-[11.5px] text-faint">Continue opens the campaign builder with this ad. Nothing is published or spent until you launch it there.</p>}
-          </div>
-        </div>
-      )}
-    </Modal>
-  );
-}
-
-const listOf = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
-const keyOf = (c: Choice) => (c.kind === "image" ? c.versionId : c.revisionId);
