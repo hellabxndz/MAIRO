@@ -3,14 +3,24 @@
 Honest running list of what stands between MAIRO and paying customers.
 Ordered by what blocks what. Updated as things land.
 
-## Not deployed yet (14 October 2026)
+## Deployed 14 October 2026 — check it live
 
-The 17 commits after 238bd1a are local only: the new homepage and free plan
-(three ways in, including Instagram), the rebuilt walkthrough, teams, the help
-centre, use-case pages and Pause everything. Deploying needs the owner's
-"push"; `vercel-build` then applies three migrations (20261116120000,
-20261117120000, 20261118120000). `docs/VERIFICATION-REPORT.md` has each
-requirement's status and what's left.
+Pushed 69b169e (the 17 commits after 238bd1a). Vercel's Production
+deployment of `mairo` succeeded at 17:51 UTC (GitHub deployment 7072972030,
+https://mairo-tdu6aq08c-mairo1.vercel.app), so `vercel-build` applied the
+three migrations (20261116120000, 20261117120000, 20261118120000). It hasn't
+been looked at live yet — this environment can't reach the site. Check:
+
+- `/` shows "Your Business Has More Potential. Let MAIRO Show You." and the
+  three ways in, with "Build My Free Ad Plan";
+- a described business, an Instagram username and a website each reach the
+  plan (on real Instagram, a login wall is the likely answer — it should say
+  so and offer to describe the business);
+- `/help`, `/solutions/online-stores` and the walkthrough video load;
+- signed in: Settings → Team, and Campaigns → Pause everything (on a test
+  account with nothing running).
+
+`docs/VERIFICATION-REPORT.md` has each requirement's status and what's left.
 
 ## Deployed 13 October 2026 — check it live
 

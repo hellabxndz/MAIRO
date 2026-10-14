@@ -19,6 +19,15 @@ on the live site. There are two reasons:
    apply three pending database migrations: `20261116120000`,
    `20261117120000` and `20261118120000`.
 
+> **Update, 14 October 2026, 17:51 UTC.** The owner said "push". The 17
+> commits went to GitHub (238bd1a → 69b169e). Vercel's Production
+> deployment of `mairo` succeeded: GitHub deployment 7072972030,
+> https://mairo-tdu6aq08c-mairo1.vercel.app. `vercel-build` applies the
+> pending migrations as part of that build. The "Production (238bd1a)"
+> columns below describe the site before this push. The live site still
+> can't be opened from here (the proxy refused it again after the deploy),
+> so nothing below is "verified in production".
+
 ## How to read the status
 
 | Status | Meaning here |
