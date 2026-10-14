@@ -7,7 +7,7 @@ import { checkCopy } from "@/lib/campaigns/ad-copy";
 import { newPlan, type CampaignPlan } from "@/lib/campaigns/plan";
 import { attachAssetToCampaign } from "@/lib/creative-studio/campaign-link";
 import { trackingOverview } from "@/lib/tracking/setup";
-import { audienceFor, buildDirections, ctaTypeFor, destinationFor, introFor, recommendedWhyFor, TEST_REASON, usesAvoided, type ConfirmedFacts } from "./directions";
+import { STYLE_LABEL, audienceFor, buildDirections, ctaTypeFor, destinationFor, headlineFor, introFor, recommendedWhyFor, styleFor, TEST_REASON, usesAvoided, visualFor, type ConfirmedFacts } from "./directions";
 import type { HookAngle } from "@/lib/creative/hooks";
 import { NO_EDITS, describeEdits, parseEdits, sameEdits, type VideoEdits, type VideoMeta } from "./video";
 import { isOwnUpload } from "@/lib/campaigns/media-rules";
@@ -265,6 +265,32 @@ export async function saveOwnerVideo(organizationId: string, userId: string, v: 
   return { ok: true as const, videoId: video.id };
 }
 
+/**
+ * The owner's own photo for a direction, kept exactly as uploaded — no model
+ * call, no crop. It becomes the direction's picture (a Creative Studio version
+ * of kind UPLOAD), so reviewing, approving and building the campaign use it
+ * the same way they use a picture MAIRO made.
+ */
+export async function saveOwnerImage(organizationId: string, userId: string, v: { angleId: string; url: string; width: number; height: number }) {
+  const angle = await db.adAngle.findFirst({ where: { id: v.angleId, organizationId, status: { not: "REJECTED" } }, select: { id: true } });
+  if (!angle) return { ok: false as const, error: "That direction isn't in your account." };
+  const ratio = v.width / v.height;
+  const format = ratio < 0.7 ? "STORY" : ratio < 0.9 ? "PORTRAIT" : ratio > 1.3 ? "LANDSCAPE" : "SQUARE";
+  const asset = await db.creativeStudioAsset.create({
+    data: {
+      organizationId,
+      createdByUserId: userId,
+      source: "OWN_UPLOAD",
+      format,
+      angleId: angle.id,
+      sourceImageUrl: v.url,
+      versions: { create: { version: 1, kind: "UPLOAD", status: "COMPLETE", provider: "upload", rawImageUrl: v.url, imageUrl: v.url, width: v.width, height: v.height } },
+    },
+    include: { versions: true },
+  });
+  return { ok: true as const, assetId: asset.id, versionId: asset.versions[0].id };
+}
+
 /** Saves an edit list as a new revision — unless it's the same as the latest. */
 export async function saveVideoEdits(organizationId: string, userId: string, videoId: string, raw: unknown): Promise<{ ok: true; version: number; changed: boolean } | { ok: false; error: string }> {
   const video = await db.ownerVideo.findFirst({ where: { id: videoId, organizationId }, include: { revisions: { orderBy: { version: "desc" }, take: 1 } } });
@@ -319,6 +345,8 @@ export async function listSuggestions(organizationId: string) {
         const newer = (v: { version: number } | undefined) => Boolean(v && done && v.version > done.version);
         return {
           assetId: x.id,
+          /** The owner's own photo, or a picture MAIRO made. */
+          source: x.source === "OWN_UPLOAD" ? ("upload" as const) : ("made" as const),
           versionId: done?.id ?? null,
           version: done?.version ?? null,
           url: done?.imageUrl ?? null,
@@ -363,6 +391,9 @@ export async function listSuggestions(organizationId: string) {
       audience: audienceFor(factsView.facts),
       destination: destinationFor(factsView.facts),
       testReason: TEST_REASON[a.angleKind as HookAngle] ?? null,
+      style: STYLE_LABEL[styleFor(a.angleKind ?? "")],
+      visual: visualFor(a.angleKind ?? ""),
+      headline: latest ? headlineFor(latest.hook, factsView.facts.offering) : null,
       rank: a.rank,
       recommended: a.recommended,
       recommendedWhy: a.recommendedWhy,
@@ -533,7 +564,7 @@ export async function planFromApproval(
 
   const w = view.words;
   const base = newPlan({ service: "meta", businessName: org.name, website: org.website, offering: facts.offering || null, targetAudience: facts.customer || null, differentiator: facts.proof || null, messageChannel: org.defaultMessageChannel, timeZone: "", metaPercent: 100 });
-  const headline = w.hook.length <= 40 ? w.hook : facts.offering.replace(/[.!]+$/, "").slice(0, 40);
+  const headline = headlineFor(w.hook, facts.offering);
   const plan: CampaignPlan & { suggestedApprovalId: string } = {
     ...base,
     ...visual,

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 import { Modal } from "@/components/mairo/overlay";
 import { actionClass, quietClass } from "@/components/mairo/action-styles";
-import { checkVideo, VIDEO_TYPES, type MediaCheck } from "@/lib/campaigns/media-rules";
+import { checkImage, checkVideo, IMAGE_TYPES, VIDEO_TYPES, type MediaCheck } from "@/lib/campaigns/media-rules";
 import { measureVideo } from "@/lib/media/measure-video";
 import { usesAvoided } from "@/lib/suggested-ads/directions";
 import { brandCheck, type BrandRules } from "@/lib/brain/brand-check";
@@ -21,6 +21,7 @@ import {
   restoreDirectionAction,
   reviseDirectionAction,
   rewriteWordsAction,
+  saveOwnImageAction,
   saveVideoAction,
   type CreditQuote,
 } from "@/lib/actions/suggested-ads-actions";
@@ -34,7 +35,8 @@ import { ReadinessChip, adReadiness, type TrackingFacts } from "./readiness-pane
 type Data = Awaited<ReturnType<typeof listSuggestions>>;
 type Dir = Data["directions"][number];
 type Test = ExperimentView | null;
-type Panel = { kind: "create" | "edit" | "video" | "review" | "reject"; id: string } | null;
+type PanelKind = "create" | "edit" | "refine" | "video" | "photo" | "review" | "reject";
+type Panel = { kind: PanelKind; id: string } | null;
 
 const CTA_CHOICES = ["Shop now", "Get a quote", "Book now", "Learn more", "Contact us", "Order now", "Sign up"];
 const SOURCE: Record<string, string> = { template: "MAIRO's suggestion", owner: "Your edit", ai: "MAIRO's rewrite", fix: "MAIRO's fix" };
@@ -114,7 +116,8 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       {current && panel?.kind === "create" && (
         <CreateDialog d={current} paid={paid} available={imagesAvailable} onClose={close} onMade={() => setPanel({ kind: "review", id: current.id })} onVideo={() => setPanel({ kind: "video", id: current.id })} />
       )}
-      {current && panel?.kind === "edit" && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} aiAvailable={rewriteAvailable} onClose={close} />}
+      {current && (panel?.kind === "edit" || panel?.kind === "refine") && <EditDialog d={current} avoid={data.facts.avoid} brand={data.brand} aiAvailable={rewriteAvailable} mode={panel.kind} onClose={close} />}
+      {current && panel?.kind === "photo" && <PhotoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />}
       {current && panel?.kind === "reject" && <RejectDialog d={current} onClose={close} onDone={(m) => { setNotice(m); close(); }} />}
       {current && panel?.kind === "video" && (
         <VideoDialog d={current} organizationId={organizationId} paid={paid} available={uploadsAvailable} rendering={paid ? rendering : { ok: false, reason: "Writing edits into a video file is part of a MAIRO plan." }} onClose={close} onReview={() => setPanel({ kind: "review", id: current.id })} />
@@ -145,68 +148,108 @@ function latestImage(d: Dir) {
   return d.images.find((i) => i.state === "ready" && i.url) ?? null;
 }
 
-function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType<typeof adReadiness>; onOpen: (kind: "create" | "edit" | "video" | "review" | "reject") => void }) {
+function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType<typeof adReadiness>; onOpen: (kind: PanelKind) => void }) {
   const img = latestImage(d);
   const vid = d.videos[0] ?? null;
   const failed = !img && d.images.find((i) => i.state === "failed");
   const hasMedia = Boolean(img || vid);
   const titleId = `dir-${d.id}`;
+  const own = img?.source === "upload";
   return (
     <li className={`flex flex-col overflow-hidden rounded-[22px] border ${d.recommended ? "border-violet/50" : ""}`} style={{ borderColor: d.recommended ? undefined : "var(--mairo-line)", background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }} aria-labelledby={titleId}>
       {/* Shorter on a phone while there's nothing to show yet. */}
       <div className={`relative w-full ${hasMedia ? "aspect-[4/5]" : "aspect-[4/3] sm:aspect-[4/5]"}`}>
         {img?.url ? (
-          <img src={img.url} alt={`The picture for “${d.title}”`} className="h-full w-full object-cover" />
+          <>
+            <img src={img.url} alt={`The picture for “${d.title}”`} className="h-full w-full object-cover" />
+            <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#fff]">{own ? "Your photo" : "Made by MAIRO"}</span>
+          </>
         ) : vid?.posterUrl ? (
           <>
             <img src={vid.posterUrl} alt={`A still from your video for “${d.title}”`} className="h-full w-full object-cover" />
-            <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#fff]">▶ Your video</span>
+            <span className="absolute bottom-3 left-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#fff]">▶ Your video</span>
           </>
         ) : (
+          // A concept: its words and a direction for the picture — clearly not a photograph.
           <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(124,92,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
             <p className="text-[15px] font-semibold leading-snug text-white">“{d.words?.hook}”</p>
-            <p className="text-[12px] text-muted">{failed ? "The last picture couldn't be made — no credits were used." : "No picture yet"}</p>
+            <p className="text-[12px] text-muted">{failed ? "The last picture couldn't be made — no credits were used." : "Concept — no picture yet"}</p>
           </div>
         )}
-        {d.recommended && <span className="absolute right-3 top-3 rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-1 text-[11.5px] font-medium text-[#fff]">Recommended first test</span>}
+        <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium text-[#fff]">{d.style}</span>
+        {d.recommended && <span className="absolute right-3 top-3 rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-1 text-[11.5px] font-medium text-[#fff]">Test this first</span>}
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-[12px] text-muted">{d.title}{d.format ? ` · best as ${d.format.toLowerCase()}` : ""}</p>
-        <h2 id={titleId} className="mt-1 text-[17px] font-semibold leading-snug text-white">{d.words?.hook}</h2>
-        {d.words?.body && <p className="mt-2 text-[13.5px] leading-relaxed text-white/80">{d.words.body}</p>}
-        <p className="mt-3"><span className="rounded-md bg-white/[0.08] px-2.5 py-1 text-[12px] font-medium text-white/90">{d.words?.cta}</span></p>
-        {d.recommended && d.recommendedWhy && <p className="mt-3 rounded-xl bg-violet/[0.08] px-3 py-2 text-[12.5px] leading-relaxed text-white/85"><span className="text-violet-bright">Why test this first: </span>{d.recommendedWhy}</p>}
+        <p className="text-[12px] text-muted">
+          <span className="font-medium text-white/85">{d.title}</span>
+          {d.format ? ` · works as ${d.format.toLowerCase()}` : ""}
+        </p>
+        <dl className="mt-2 space-y-2.5 text-[13px] leading-relaxed">
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Headline</dt>
+            <dd id={titleId} className="mt-0.5 text-[16px] font-semibold leading-snug text-white">{d.headline ?? d.words?.hook}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Primary text</dt>
+            <dd className="mt-0.5 text-white/85">
+              {d.words?.hook}
+              {d.words?.body ? ` ${d.words.body}` : ""}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Visual direction</dt>
+            <dd className="mt-0.5 text-white/70">{d.visual}</dd>
+          </div>
+          <div>
+            <dt className="inline text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Button </dt>
+            <dd className="inline">
+              <span className="rounded-md bg-white/[0.08] px-2 py-0.5 text-[12px] font-medium text-white/90">{d.words?.cta}</span>
+            </dd>
+          </div>
+          {d.words?.why && (
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Why MAIRO recommends it</dt>
+              <dd className="mt-0.5 text-white/75">{d.words.why}</dd>
+            </div>
+          )}
+        </dl>
+        {d.recommended && d.recommendedWhy && (
+          <p className="mt-3 rounded-xl bg-violet/[0.08] px-3 py-2 text-[12.5px] leading-relaxed text-white/85">
+            <span className="text-violet-bright">Why test this first: </span>
+            {d.recommendedWhy}
+          </p>
+        )}
         <dl className="mt-3 space-y-1.5 text-[12.5px]">
           <div><dt className="inline text-muted">For: </dt><dd className="inline text-white/85">{d.audience}</dd></div>
           <div><dt className="inline text-muted">Sends people to: </dt><dd className="inline text-white/85">{d.destination}</dd></div>
           {d.testReason && <div><dt className="inline text-muted">Worth testing because: </dt><dd className="inline text-white/85">{d.testReason}</dd></div>}
         </dl>
         <p className="mt-3"><button type="button" onClick={() => onOpen("review")} className="rounded-full focus-visible:outline focus-visible:outline-2" aria-label={`Readiness ${readiness.score} out of 100 — see the check`}><ReadinessChip r={readiness} /></button></p>
-        {d.words?.why && (
-          <details className="mt-3">
-            <summary className="cursor-pointer text-[12.5px] text-muted hover:text-white">Why this direction</summary>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-white/80">{d.words.why}</p>
-          </details>
-        )}
-        {d.words && d.words.version > 1 && <p className="mt-2 text-[11.5px] text-faint">Version {d.words.version} · {SOURCE[d.words.source] ?? d.words.source}</p>}
+        <p className="mt-2 text-[11.5px] text-faint">
+          Saved automatically{d.words && d.words.version > 1 ? ` · version ${d.words.version}, ${(SOURCE[d.words.source] ?? d.words.source).toLowerCase()}` : ""}
+        </p>
 
         {d.approval?.state === "current" && <p className="mt-3 text-[12.5px] text-live">✓ Approved {new Date(d.approval.at).toLocaleDateString()} — ready for a campaign. Nothing is published.</p>}
         {d.approval?.state === "changed" && <p className="mt-3 text-[12.5px] text-warn">Changed since you approved it — review and approve again.</p>}
 
-        <div className="mt-auto flex flex-wrap gap-2 pt-4">
-          {hasMedia ? (
-            <button type="button" onClick={() => onOpen("review")} className={actionClass}>{d.approval?.state === "current" ? "Review" : "Review and approve"}</button>
-          ) : (
-            <>
+        <div className="mt-auto pt-4">
+          <div className="flex flex-wrap gap-2">
+            {hasMedia ? (
+              <button type="button" onClick={() => onOpen("review")} className={actionClass}>{d.approval?.state === "current" ? "Review" : "Review and approve"}</button>
+            ) : (
               <button type="button" onClick={() => onOpen("create")} className={actionClass}>Create this ad</button>
-              <button type="button" onClick={() => onOpen("review")} className={quietClass}>Preview</button>
-            </>
-          )}
-          <button type="button" onClick={() => onOpen("edit")} className={quietClass}>Change the direction</button>
-          <button type="button" onClick={() => onOpen("video")} className={quietClass}>{vid ? "Edit my video" : "Use my video"}</button>
-          {img && <button type="button" onClick={() => onOpen("create")} className="text-[12.5px] text-muted underline-offset-4 hover:text-white hover:underline">Make another picture</button>}
-          <button type="button" onClick={() => onOpen("reject")} className="text-[12.5px] text-muted underline-offset-4 hover:text-white hover:underline">Not for us</button>
+            )}
+            <button type="button" onClick={() => onOpen("review")} className={quietClass}>Preview placements</button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1.5 text-[12.5px]">
+            <button type="button" onClick={() => onOpen("refine")} className="text-violet-bright underline-offset-4 hover:text-white hover:underline">Refine with MAIRO</button>
+            <button type="button" onClick={() => onOpen("edit")} className="text-muted underline-offset-4 hover:text-white hover:underline">Edit headline</button>
+            <button type="button" onClick={() => onOpen("photo")} className="text-muted underline-offset-4 hover:text-white hover:underline">{own ? "Use a different photo" : "Upload my own photo"}</button>
+            <button type="button" onClick={() => onOpen("video")} className="text-muted underline-offset-4 hover:text-white hover:underline">{vid ? "Edit my video" : "Upload my own video"}</button>
+            {img && !own && <button type="button" onClick={() => onOpen("create")} className="text-muted underline-offset-4 hover:text-white hover:underline">Make another picture</button>}
+            <button type="button" onClick={() => onOpen("reject")} className="text-muted underline-offset-4 hover:text-white hover:underline">Change creative direction</button>
+          </div>
         </div>
       </div>
     </li>
@@ -305,7 +348,7 @@ function CreateDialog({ d, paid, available, onClose, onMade, onVideo }: { d: Dir
 
 type Proposal = { hook: string; body: string; cta: string; note: string; dropped: string[] };
 
-function EditDialog({ d, avoid, brand, aiAvailable, onClose }: { d: Dir; avoid: string[]; brand: BrandRules | null; aiAvailable: boolean; onClose: () => void }) {
+function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { d: Dir; avoid: string[]; brand: BrandRules | null; aiAvailable: boolean; mode?: "edit" | "refine"; onClose: () => void }) {
   const router = useRouter();
   const [hook, setHook] = useState(d.words?.hook ?? "");
   const [body, setBody] = useState(d.words?.body ?? "");
@@ -356,7 +399,7 @@ function EditDialog({ d, avoid, brand, aiAvailable, onClose }: { d: Dir; avoid: 
   };
 
   return (
-    <Modal open onClose={onClose} title={`Change the direction: ${d.title}`}>
+    <Modal open onClose={onClose} title={mode === "refine" ? `Refine with MAIRO: ${d.title}` : `Edit the words: ${d.title}`}>
       <div className="space-y-4">
         <section aria-labelledby={`ask-${d.id}`} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
           <h3 id={`ask-${d.id}`} className="text-[13px] font-medium text-white">Ask MAIRO to rewrite it</h3>
@@ -371,7 +414,7 @@ function EditDialog({ d, avoid, brand, aiAvailable, onClose }: { d: Dir; avoid: 
               </div>
               <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (instruction.trim().length >= 3) ask(instruction); }}>
                 <label className="sr-only" htmlFor={`ins-${d.id}`}>What to change</label>
-                <input id={`ins-${d.id}`} value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. Focus more on our new product" className="min-w-0 flex-1 rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+                <input id={`ins-${d.id}`} data-autofocus={mode === "refine" ? "" : undefined} value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. Focus more on our new product" className="min-w-0 flex-1 rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
                 <button type="submit" disabled={asking || instruction.trim().length < 3} className={`${quietClass} disabled:opacity-50`}>{asking ? "Writing…" : "Ask"}</button>
               </form>
               <p className="mt-1.5 text-[11.5px] text-faint">MAIRO uses only what you&apos;ve confirmed. Nothing is saved until you choose to keep it.</p>
@@ -403,7 +446,8 @@ function EditDialog({ d, avoid, brand, aiAvailable, onClose }: { d: Dir; avoid: 
 
         <label className="block text-[13px] text-white">
           Opening line <span className="text-faint">({hook.length}/160)</span>
-          <textarea value={hook} onChange={(e) => setHook(e.target.value)} rows={2} maxLength={160} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
+          <span className="mt-0.5 block text-[11.5px] text-faint">{hook.length <= 40 ? "Short enough to be the headline too." : "Over 40 characters, so the headline becomes what you offer — the opening line stays first in the text."}</span>
+          <textarea data-autofocus={mode === "edit" ? "" : undefined} value={hook} onChange={(e) => setHook(e.target.value)} rows={2} maxLength={160} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
         </label>
         <label className="block text-[13px] text-white">
           The rest of the text <span className="text-faint">({body.length}/600)</span>
@@ -506,6 +550,99 @@ function Rejected({ items, onNotice }: { items: Data["rejected"]; onNotice: (m: 
 }
 
 // --- Use my video ---------------------------------------------------------------
+
+/** The size of a picture the owner chose, read in the browser before it's uploaded. */
+function measureImage(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((ok, fail) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      ok({ width: img.naturalWidth, height: img.naturalHeight });
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      fail(new Error("Couldn't read that picture."));
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  });
+}
+
+// --- Your own photo: stored as uploaded, used as the ad's picture --------------
+
+function PhotoDialog({ d, organizationId, paid, available, onClose, onReview }: { d: Dir; organizationId: string; paid: boolean; available: boolean; onClose: () => void; onReview: () => void }) {
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [check, setCheck] = useState<MediaCheck | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  async function choose(file: File) {
+    setError(null);
+    setCheck(null);
+    let m;
+    try {
+      m = await measureImage(file);
+    } catch (e) {
+      return setError(e instanceof Error ? e.message : "Couldn't read that picture.");
+    }
+    const result = checkImage({ type: file.type, bytes: file.size, ...m });
+    setCheck(result);
+    if (result.problems.length) return;
+    try {
+      setProgress(0);
+      const uploaded = await upload(`ad-media/${organizationId}/photo.${file.type === "image/png" ? "png" : "jpg"}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/uploads/ad-media",
+        contentType: file.type,
+        onUploadProgress: (p) => setProgress(Math.round(p.percentage)),
+      });
+      const r = await saveOwnImageAction({ angleId: d.id, url: uploaded.url, type: file.type, width: m.width, height: m.height, bytes: file.size });
+      setProgress(null);
+      if (!r.ok) return setError(r.error);
+      setSaved(true);
+      router.refresh();
+    } catch (e) {
+      setProgress(null);
+      setError(e instanceof Error && e.message ? `The upload didn't finish: ${e.message}` : "The upload didn't finish. Try again.");
+    }
+  }
+
+  return (
+    <Modal open onClose={progress !== null ? () => {} : onClose} title={`Upload my own photo: ${d.title}`}>
+      <p className="text-[13.5px] leading-relaxed text-white/85">Your photo becomes this ad&apos;s picture, exactly as you upload it — MAIRO doesn&apos;t change it. The words stay separate. Direction for the picture: {d.visual.charAt(0).toLowerCase()}{d.visual.slice(1)}</p>
+      {!available ? (
+        <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-4 py-3 text-[13px] text-white/85">Photo uploads aren&apos;t switched on for this deployment yet.</p>
+      ) : !paid ? (
+        <p className="mt-4 rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>Using your own photo is part of a MAIRO plan. <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link></p>
+      ) : saved ? (
+        <div className="mt-4 space-y-3">
+          <p role="status" className="text-[13.5px] text-live">✓ Your photo is saved as this ad&apos;s picture.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={onReview} className={actionClass}>Preview and approve</button>
+            <button type="button" onClick={onClose} className={quietClass}>Done</button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <input ref={input} type="file" accept={IMAGE_TYPES.join(",")} className="hidden" onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) void choose(f);
+            }} />
+          <button type="button" disabled={progress !== null} onClick={() => input.current?.click()} className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60" style={{ borderColor: "var(--mairo-line)" }}>
+            {progress !== null ? `Uploading… ${progress}%` : "Choose a photo — JPG or PNG"}
+          </button>
+          <p className="text-[11.5px] text-faint">Use a photo you have the right to use. If people appear, MAIRO doesn&apos;t present them as customers.</p>
+          {error && <p role="alert" className="text-[12.5px] text-warn">{error}</p>}
+          {check?.problems.map((p) => <p key={p} role="alert" className="text-[12.5px] text-warn">{p}</p>)}
+          {check && !check.problems.length && check.warnings.map((w) => <p key={w} className="text-[12.5px] text-muted">{w}</p>)}
+        </div>
+      )}
+    </Modal>
+  );
+}
 
 function VideoDialog({ d, organizationId, paid, available, rendering, onClose, onReview }: { d: Dir; organizationId: string; paid: boolean; available: boolean; rendering: { ok: boolean; reason: string | null }; onClose: () => void; onReview: () => void }) {
   const router = useRouter();

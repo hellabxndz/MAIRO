@@ -27,9 +27,9 @@ function useOverlay(open: boolean, onClose: () => void) {
     document.addEventListener("keydown", key);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // Focus the first thing worth focusing, after paint.
+    // Focus the field the dialog marks (data-autofocus), or the first thing worth focusing, after paint.
     const t = window.setTimeout(() => {
-      const el = ref.current?.querySelector<HTMLElement>("textarea, input, select, button, a[href]");
+      const el = ref.current?.querySelector<HTMLElement>("[data-autofocus]") ?? ref.current?.querySelector<HTMLElement>("textarea, input, select, button, a[href]");
       (el ?? ref.current)?.focus();
     }, 20);
     return () => {

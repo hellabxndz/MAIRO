@@ -98,6 +98,43 @@ export function destinationFor(f: Pick<ConfirmedFacts, "goal" | "website">): str
   return f.goal === "bookings" ? `Your booking page on ${site}` : `Your website, ${site} — or a form inside the ad`;
 }
 
+/**
+ * The three kinds of creative a first test should cover: the product or
+ * service itself, the customer and their moment, and the offer. Each
+ * direction's reason to stop scrolling falls into one of them, so the three
+ * suggestions show different pictures, not three of the same.
+ */
+export type CreativeStyle = "showcase" | "lifestyle" | "offer";
+export const STYLE_LABEL: Record<CreativeStyle, string> = { showcase: "Product showcase", lifestyle: "Customer & lifestyle", offer: "Offer-led" };
+
+export function styleFor(kind: string): CreativeStyle {
+  if (kind === "offer") return "offer";
+  if (kind === "proof" || kind === "explain" || kind === "objection") return "showcase";
+  return "lifestyle";
+}
+
+/** What the picture or video should show, in the owner's terms — a direction for their own photo, or for MAIRO's image tools. */
+const VISUAL: Partial<Record<HookAngle, string>> = {
+  problem: "The everyday moment someone needs you — shown honestly, before it's fixed.",
+  outcome: "The result your customer gets, shown simply and believably.",
+  offer: "Your product or service itself, clean and well lit, with room for the offer beside it.",
+  local: "Your work in a recognisable local setting.",
+  proof: "The work itself, close up — the care and quality that set you apart.",
+  callout: "Your product or service where the customer it's for would use it.",
+  objection: "What happens, step by step, so the doubt answers itself.",
+  explain: "What you do, shown plainly — the product, or the work in progress.",
+  moment: "The moment of need, as your customer would recognise it.",
+};
+
+export function visualFor(kind: string): string {
+  return VISUAL[kind as HookAngle] ?? "Your product or service, clearly, in good light.";
+}
+
+/** Meta's headline for the ad: the opening line when it's short enough, otherwise what you offer. Shown on the card and sent with the campaign. */
+export function headlineFor(hook: string, offering: string): string {
+  return hook.length <= 40 ? hook : offering.replace(/[.!]+$/, "").slice(0, 40);
+}
+
 /** Why each kind of direction is worth a test, in one line. */
 export const TEST_REASON: Partial<Record<HookAngle, string>> = {
   problem: "If your customers recognise the problem at a glance, this one stops the right people.",
@@ -184,10 +221,14 @@ export function buildDirections(f: ConfirmedFacts, opts: { exclude?: string[] } 
   };
   const set = generateHooks(input);
   const order = preferredOrder(f);
-  const usable = set.hooks
+  const ranked = set.hooks
     .filter((h) => !h.warnings.length && !usesAvoided(h.text, f.avoid) && order.includes(h.angle) && !(opts.exclude ?? []).includes(h.angle))
-    .sort((a, b) => order.indexOf(a.angle) - order.indexOf(b.angle))
-    .slice(0, 3);
+    .sort((a, b) => order.indexOf(a.angle) - order.indexOf(b.angle));
+  // The best first, then one of each other kind of creative where the facts allow, then the next best.
+  const usable: typeof ranked = [];
+  for (const h of ranked) if (usable.length < 3 && !usable.some((u) => styleFor(u.angle) === styleFor(h.angle))) usable.push(h);
+  for (const h of ranked) if (usable.length < 3 && !usable.includes(h)) usable.push(h);
+  usable.sort((a, b) => order.indexOf(a.angle) - order.indexOf(b.angle));
   const factFor: Partial<Record<keyof HookInput, keyof typeof FACT_LABELS>> = { offering: "offering", customer: "customer", location: "location", problem: "problem", outcome: "outcome", offer: "offer", proof: "proof", objection: "objection" };
   const directions: Direction[] = usable.map((h, i) => {
     const body = bodyFor(h.angle, f);

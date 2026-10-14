@@ -15,7 +15,7 @@ import { runEdit, runGenerate } from "@/lib/creative-studio/pipeline";
 import { brainImageDirectionFor, brainPromptFor } from "@/lib/brain/store";
 import { rewriteWords } from "@/lib/ai/rewrite-words";
 import { applyFixes, type Fix } from "@/lib/creative/readiness";
-import { checkVideo, isOwnUpload } from "@/lib/campaigns/media-rules";
+import { checkImage, checkVideo, isOwnUpload } from "@/lib/campaigns/media-rules";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { previewCreativeSpec } from "@/lib/meta/previews";
 import { isPreviewFormat } from "@/lib/meta/preview-formats";
@@ -31,6 +31,7 @@ import {
   refreshDirections,
   rejectDirection,
   reviseDirection,
+  saveOwnerImage,
   saveOwnerVideo,
   saveVideoEdits,
   suggestedAdsGate,
@@ -370,11 +371,40 @@ export async function saveVideoAction(input: z.input<typeof VIDEO>): Promise<{ o
   if (!isOwnUpload(v.data.url, ctx.organizationId) || (v.data.posterUrl && !isOwnUpload(v.data.posterUrl, ctx.organizationId))) {
     return { ok: false, error: "That video isn't in your business's uploads." };
   }
+  // Using your own media is part of a plan — checked here, not only by hiding the button.
+  const blocked = await executionBlock(ctx.organizationId);
+  if (blocked) return { ok: false, error: blocked };
   const check = checkVideo({ type: v.data.type, bytes: v.data.bytes, width: v.data.width, height: v.data.height, durationSec: v.data.durationSec });
   if (check.problems.length) return { ok: false, error: check.problems[0] };
   const r = await saveOwnerVideo(ctx.organizationId, ctx.userId, { ...v.data, durationMs: v.data.durationSec * 1000 });
   if (r.ok) revalidatePath(PAGE);
   return r;
+}
+
+const PHOTO = z.object({
+  angleId: ID,
+  url: z.string().url().max(600),
+  type: z.string().max(60),
+  width: z.number().int().positive().max(20_000),
+  height: z.number().int().positive().max(20_000),
+  bytes: z.number().int().positive(),
+});
+
+/** The owner's own photo for a suggested ad — stored as uploaded, used as the ad's picture. */
+export async function saveOwnImageAction(input: z.input<typeof PHOTO>): Promise<{ ok: true; versionId: string } | Fail> {
+  const ctx = await gated();
+  if (!ctx.ok) return ctx;
+  const v = PHOTO.safeParse(input);
+  if (!v.success) return { ok: false, error: "That photo's details weren't valid." };
+  if (!isOwnUpload(v.data.url, ctx.organizationId)) return { ok: false, error: "That photo isn't in your business's uploads." };
+  const blocked = await executionBlock(ctx.organizationId);
+  if (blocked) return { ok: false, error: blocked };
+  const check = checkImage({ type: v.data.type, bytes: v.data.bytes, width: v.data.width, height: v.data.height });
+  if (check.problems.length) return { ok: false, error: check.problems[0] };
+  const r = await saveOwnerImage(ctx.organizationId, ctx.userId, { angleId: v.data.angleId, url: v.data.url, width: v.data.width, height: v.data.height });
+  if (!r.ok) return r;
+  revalidatePath(PAGE);
+  return { ok: true, versionId: r.versionId };
 }
 
 /** Saves the video's edit list as a new revision. The uploaded file is never changed. */

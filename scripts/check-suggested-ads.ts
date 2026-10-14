@@ -19,7 +19,7 @@ import assert from "node:assert/strict";
 import { db } from "../src/lib/db";
 import { encryptSecret } from "../src/lib/crypto/secret-box";
 import { changeBrain } from "../src/lib/brain/store";
-import { buildDirections, ctaTypeFor, imagePromptFor, introFor, preferredOrder, usesAvoided, type ConfirmedFacts } from "../src/lib/suggested-ads/directions";
+import { STYLE_LABEL, buildDirections, ctaTypeFor, headlineFor, imagePromptFor, introFor, preferredOrder, styleFor, usesAvoided, visualFor, type ConfirmedFacts } from "../src/lib/suggested-ads/directions";
 import { NO_EDITS, describeEdits, editsNotInFile, parseEdits, videoSuggestions, type VideoMeta } from "../src/lib/suggested-ads/video";
 import {
   approveCreative,
@@ -30,6 +30,7 @@ import {
   proposedTest,
   refreshDirections,
   reviseDirection,
+  saveOwnerImage,
   saveOwnerVideo,
   saveVideoEdits,
   suggestedAdsGate,
@@ -138,6 +139,21 @@ async function main() {
     assert.equal(directions.length, 0);
     assert.match(missing[0].gives, /what you're advertising/);
     assert.match(introFor({ ...FULL, offering: "" }, 0), /needs a little more/);
+  });
+  await check("three kinds of creative where the facts allow: product showcase, customer and lifestyle, offer-led", () => {
+    const { directions } = buildDirections(FULL);
+    assert.deepEqual(new Set(directions.map((d) => styleFor(d.kind))), new Set(["showcase", "lifestyle", "offer"]));
+    // Without a confirmed offer there's no offer-led ad — nothing is invented to fill the slot.
+    const noOffer = buildDirections({ ...FULL, offer: "" }).directions;
+    assert.ok(!noOffer.some((d) => styleFor(d.kind) === "offer"));
+    for (const d of directions) {
+      assert.ok(visualFor(d.kind).length > 20, `${d.kind} has a visual direction`);
+      assert.ok(STYLE_LABEL[styleFor(d.kind)]);
+    }
+  });
+  await check("the headline is the opening line when it fits, otherwise what you offer — the same one the campaign gets", () => {
+    assert.equal(headlineFor("Leak under the sink?", "Plumbing"), "Leak under the sink?");
+    assert.equal(headlineFor("A".repeat(41), "Emergency plumbing repairs."), "Emergency plumbing repairs");
   });
   await check("the first test suits how the business sells", () => {
     assert.equal(preferredOrder({ presence: "online", goal: "sales" })[0], "offer");
@@ -385,6 +401,22 @@ async function main() {
     assert.equal(cross.ok, false, "A's picture can't be approved on B's ad");
     assert.equal((await saveOwnerVideo(B, "user-b", { angleId: d1.id, url: URL0, posterUrl: null, name: "x", durationMs: 1000, width: 100, height: 100, bytes: 1 })).ok, false);
     assert.equal((await draftFromApproval(B, "user-b", d1.id)).ok, false);
+  });
+  await check("your own photo becomes the ad's picture, as uploaded, and can be approved like one MAIRO made", async () => {
+    const PHOTO = `https://store.public.blob.vercel-storage.com/ad-media/${A}/photo-x.jpg`;
+    const r = await saveOwnerImage(A, "user-a", { angleId: d2.id, url: PHOTO, width: 1080, height: 1350 });
+    assert.equal(r.ok, true);
+    const cur = (await listSuggestions(A)).directions.find((d) => d.id === d2.id)!;
+    const own = cur.images.find((i) => i.source === "upload")!;
+    assert.equal(own.url, PHOTO, "stored exactly as uploaded");
+    const asset = await db.creativeStudioAsset.findFirstOrThrow({ where: { organizationId: A, angleId: d2.id, source: "OWN_UPLOAD" }, include: { versions: true } });
+    assert.equal(asset.format, "PORTRAIT");
+    assert.equal(asset.versions[0].kind, "UPLOAD");
+    assert.equal(asset.versions[0].provider, "upload", "no model call");
+    const ok = await approveCreative(A, "user-a", { angleId: d2.id, revisionId: cur.words!.revisionId, studioVersionId: own.versionId! });
+    assert.equal(ok.ok, true);
+    // Another business can't attach a photo to these ads.
+    assert.equal((await saveOwnerImage(B, "user-b", { angleId: d1.id, url: PHOTO, width: 1080, height: 1080 })).ok, false);
   });
   await check("a video is accepted only from the business's own upload folder", () => {
     assert.equal(isOwnUpload(URL0, A), true);
