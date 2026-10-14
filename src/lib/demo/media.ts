@@ -12,7 +12,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-14T01:11:57.579Z",
+  "renderedAt": "2026-10-14T07:45:59.963Z",
   "story": {
     "shop": {
       "wide": {
@@ -73,18 +73,18 @@ export const RENDERED_MEDIA: RenderedMedia = {
     "wide": {
       "mp4": "/walkthrough/walkthrough-wide.mp4",
       "poster": "/walkthrough/walkthrough-wide-poster.webp",
-      "width": 1140,
-      "height": 840,
+      "width": 1440,
+      "height": 810,
       "ms": 73000,
-      "bytes": 3147101
+      "bytes": 7520424
     },
     "narrow": {
       "mp4": "/walkthrough/walkthrough-narrow.mp4",
       "poster": "/walkthrough/walkthrough-narrow-poster.webp",
       "width": 540,
-      "height": 900,
+      "height": 960,
       "ms": 73000,
-      "bytes": 2268832
+      "bytes": 4620865
     }
   },
   "captions": {

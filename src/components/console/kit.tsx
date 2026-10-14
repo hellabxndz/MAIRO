@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { CSSProperties, ReactNode } from "react";
+import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
 
 // The MAIRO console kit: the panels, labels and pills every signed-in screen
 // is built from — and the same pieces the website's product demonstrations
@@ -27,6 +27,13 @@ export function Go({ href, className, children, external = false, label }: { hre
   );
 }
 
+/**
+ * True inside a product demonstration. A demonstration can sit on a page more
+ * than once (and beside the real thing), so its panels drop their ids and keep
+ * them only as data-panel — what the walkthrough's camera aims at.
+ */
+export const DemoContext = createContext(false);
+
 export const eyebrowClass = "text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright";
 
 /** The console's one surface: deep navy, a hairline, light falling from the top edge. */
@@ -49,6 +56,7 @@ export function Panel({
   pad?: boolean;
   style?: CSSProperties;
 }) {
+  const demo = useContext(DemoContext);
   const bg =
     tone === "lit"
       ? "linear-gradient(165deg, rgba(121,82,255,0.16) 0%, rgba(21,27,54,0.9) 42%, rgba(17,20,38,0.9) 100%)"
@@ -57,8 +65,9 @@ export function Panel({
         : "var(--mairo-glass)";
   return (
     <section
-      id={id}
-      aria-labelledby={title && id ? `${id}-title` : undefined}
+      id={demo ? undefined : id}
+      data-panel={id}
+      aria-labelledby={title && id && !demo ? `${id}-title` : undefined}
       className={`relative overflow-hidden rounded-[22px] border ${pad ? "p-5 sm:p-6" : ""} ${className}`}
       style={{ borderColor: tone === "warn" ? "rgba(251,191,36,0.28)" : tone === "lit" ? "rgba(121,82,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
     >
@@ -67,7 +76,7 @@ export function Panel({
       {(title || action) && (
         <div className={`flex flex-wrap items-baseline justify-between gap-3 ${pad ? "" : "px-5 pt-5 sm:px-6 sm:pt-6"}`}>
           {title && (
-            <h2 id={id ? `${id}-title` : undefined} className={eyebrowClass}>
+            <h2 id={id && !demo ? `${id}-title` : undefined} className={eyebrowClass}>
               {title}
             </h2>
           )}

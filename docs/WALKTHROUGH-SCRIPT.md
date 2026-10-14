@@ -14,52 +14,76 @@ captions carry the script", and the video files are silent. Nothing presents
 the demo as narrated until a recording exists.
 
 Every figure is sample data, and the frame carries "Product demo — sample data"
-throughout. The ad concepts are illustrations, not AI-generated photographs.
+throughout. The ad concepts are words and a direction for the picture — the
+placement previews say "Illustration — your picture or video goes here" — not
+AI-generated photographs or video.
 
-## Look
+## How it's made
 
-- Obsidian background `#07080D`, midnight panels, electric violet `#7952FF`
-  and blue `#356CFF` light.
-- Real MAIRO screens for scenes 2–6, moving on their own timeline, with a slow
-  3% push-in across each scene and the scene's title in the top corner as it
-  starts.
-- Motion typography for the intro ("MEET MAIRO.") and the ending.
-- Two compositions: wide (760 × 560, rendered at 1140 × 840) and phone
-  (360 × 600, rendered at 540 × 900).
+- **MAIRO's own screens, not drawings of them.** Each scene renders the real
+  component, inert, driven by the demo's clock: the free plan form
+  (`FreePlanForm` with `demo`), the website read (`ScanProgressView`), what
+  MAIRO discovered and the objective (`Discovered`, `GoalFieldset`), the plan
+  (`PlanView`), the concept cards with their Facebook feed, Instagram feed and
+  Story mock-ups (`ConceptCard` with `demo`), and the approvals and overview
+  screens (`DemoFrame` + `DemoScreen`, the dashboard's console panels). When
+  the product changes, the demo changes with it.
+- **A cursor that finds its targets.** `WALK_CURSOR` names targets ("the
+  button reading Save concept", a selector) rather than coordinates; the stage
+  finds them in the rendered screen and moves between them, with a press and a
+  ripple on each click. On a phone, targets that aren't drawn (the plan's
+  section list) are skipped.
+- **A camera that frames each moment.** `WALK_CAMERA` says what to look at and
+  how close; the stage eases between framings and never shows past the screen's
+  edges.
+- **Look:** night background `#07080D`, panels `#111426`/`#151B36`, violet
+  `#7952FF` and blue `#356CFF` light. Motion typography for the intro ("Meet
+  MAIRO.") and the end screen.
+- **Two compositions:** wide 16:9 (960 × 540, rendered at 1440 × 810) and phone
+  9:16 (360 × 640, rendered at 540 × 960). On a phone the same screens reflow
+  through their container queries, as the app does.
 
 ## Storyboard and narration
 
 | # | Time | Scene | What's on screen | Narration (= captions) | On-screen text |
 |---|------|-------|------------------|------------------------|----------------|
-| 1 | 0:00–0:08 | Intro | Dark backdrop; the MAIRO wordmark fades in; three sample ad concepts rise and fan out; "MEET MAIRO." resolves from wide letter-spacing. | "Your business deserves more than another complicated advertising dashboard." | MEET MAIRO. |
-| 2 | 0:08–0:19 | Business | The sample website is typed into MAIRO and opened; the goal is picked; "What MAIRO found" lists what came from the website, asks what it didn't say, and the owner confirms. | "Meet MAIRO. Your AI advertising team." / "Start with your website, and MAIRO builds an understanding of your business." | 01 · Your business |
-| 3 | 0:19–0:30 | Strategy | The draft plan: where the ads run, what they're for, who sees them and why, an example budget (marked "Example"); then three ad concepts, one marked "Recommended first test". | "MAIRO recommends an advertising strategy" / "and shows you which creative ideas are worth testing first." | 02 · Your ad strategy |
-| 4 | 0:30–0:43 | Creative Studio | The recommended concept is selected; the owner rewrites the opening line (the original is kept as a version); the ad is previewed in the feed and in Stories. | "Review your ad concepts, customize the message," / "and turn your brand into creative that fits your goals." | 03 · Creative Studio |
-| 5 | 0:43–0:53 | Approval | "Ready to launch?" checklist with the Meta ad account connected; the review before launch with budget, placements and objective; the owner approves. | "When you're ready, connect your Meta account." / "Review the campaign, approve your budget," / "and stay in control before anything launches." | 04 · Your approval |
-| 6 | 0:53–1:05 | Performance | The dashboard with figures marked "Sample figures": money spent, new, qualified and booked leads; a lead marked booked; a proposed next action with its reason. | "Follow your results in one place." / "Understand what's working, what needs attention," / "and what MAIRO recommends next." | 05 · Your results |
-| 7 | 1:05–1:13 | Ending | Backdrop returns; wordmark; the two end lines; the three concepts; the call to action with a soft glow. | "You run the business. MAIRO runs the ads." | You run the business. MAIRO runs the ads. · BUILD YOUR FREE AD PLAN · Free to start. Nothing runs without your approval. |
+| 1 | 0:00–0:08 | Intro and request | The MAIRO wordmark; "Meet MAIRO." resolves from wide letter-spacing; "Your AI advertising team." Then the free plan form: the cursor clicks the website field, the sample site is typed, "More enquiries & leads" is chosen, and "See Your Free Plan" is pressed. | "Advertising your business shouldn't mean learning another complicated dashboard." / "Meet MAIRO, your AI advertising team. Start with your website, or a few words about your business." | Meet MAIRO. · Your AI advertising team. |
+| 2 | 0:08–0:18 | Analysis | "MAIRO is reading brightwater-plumbing.example": home page, other pages (1–3 of 3), links, report. Then "Here's what MAIRO found": business, products and services, audience, likely goal — each saying it came from the website — and the missing Meta pixel as an opportunity. The owner confirms the objective (Leads) and presses "Build my free plan". | "MAIRO reads your website and shows what it found, and where it found it." / "You confirm what matters: your offer, your area, and what you want from your ads." | 02 · MAIRO reads your business |
+| 3 | 0:18–0:28 | Free plan | The plan, in the console: the header ("Not launched · nothing spent"), the four glance tiles, then — following the cursor down the section list — the recommended objective, the Meta campaign strategy, the budget allocation (an example amount, labelled), and why MAIRO recommends each part. | "Then MAIRO builds your free advertising plan: the objective, the audience and the budget." / "Every recommendation comes with the reason behind it, and nothing is spent to see it." | 03 · Your free plan |
+| 4 | 0:28–0:42 | Creative concepts | Three concepts, one marked "Test this first". The camera moves in on it: Instagram feed preview; "Edit headline", a new headline typed, "Done"; Instagram Story preview; "Save concept". Then back out to all three. | "Three creative concepts, written for your business, with the one to test first." / "Preview them where they'd run, and make the words your own." / "Save the concept you want to test first." | 04 · Creative concepts |
+| 5 | 0:42–0:52 | Review and approval | The Approvals screen: the launch review with the ad, $20 a day, Facebook + Instagram, who sees it and where people go. The cursor presses "Approve launch · $20/day"; it becomes "Approved by you" and "Waiting for Meta's review" — it runs only once Meta approves. | "With a subscription, MAIRO builds the campaign in your own Meta ad account." / "Nothing launches, and nothing is spent, until you approve it." | 05 · Review and approve |
+| 6 | 0:52–1:05 | Results and a recommendation | The Overview: money spent, value (empty until leads are marked), leads and cost per lead — each saying where it comes from — the 14-day chart, then the AI Action Center: "Ask which area the job is in", from the Audience Agent, with what it does to spending, waiting for approval. | "Follow your results in one place: what Meta reports, kept apart from what you confirm." / "And see what MAIRO recommends next, with the figures behind it, waiting for your yes." | 06 · Results and next steps |
+| 7 | 1:05–1:13 | End screen | The wordmark; "Your AI Advertising Team Is Ready."; the eight specialists of the AI team; the call to action. | "Your AI advertising team is ready. See your free plan." | Your AI Advertising Team Is Ready. · See Your Free Plan → · Free · no credit card · nothing runs until you approve it |
+
+Chapters in the player: Intro, Analysis, Free plan, Creative, Approval,
+Results, Get started. Play, pause, replay, a position slider, captions on or
+off, and keyboard control (Space or K, ← →, Home, End, C).
 
 ## What is real, and what is not shown
 
-- Shown as MAIRO does it: reading a website and marking what came from it,
-  asking what it didn't say, a draft plan with reasons, three directions with
-  one recommended, editing a line with versions kept, feed and Stories
-  previews, the checklist and approval before launch, lead outcomes, a
-  proposed next step that waits for the owner.
+- Shown as MAIRO does it: the free plan form; reading a website and marking
+  what came from it; asking the owner to confirm the objective; the plan's
+  sections and reasons; three concepts with one to test first; previews in
+  Facebook feed, Instagram feed and Stories; editing a headline; saving a
+  concept; approval before launch, with the campaign waiting for Meta's
+  review; results with their sources; a recommendation that waits for the
+  owner.
 - Sample, and labelled: the business, its website, every figure, the budget
-  ("Example"), the dashboard ("Sample figures").
+  (an example amount), the campaign and its results.
 - Not shown, because it isn't available: AI-generated video, TikTok, Google
-  Ads, results promised in advance.
+  Ads, results promised in advance. Pictures for concepts appear as
+  placeholders, because the free plan doesn't make pictures.
 
 ## Recording the narration (when a licensed voice is available)
 
-1. **Voice:** a confident, polished British female voice at a natural pace —
-   either a voice actor under a written licence for web and advertising use,
-   or a text-to-speech voice whose terms allow commercial use. Keep the
-   licence with the project files.
+1. **Voice:** a confident, polished voice at a natural pace — either a voice
+   actor under a written licence for web and advertising use, or a
+   text-to-speech voice whose terms allow commercial use. Keep the licence
+   with the project files.
 2. **Read** the narration column exactly; each line must land inside its time
    window (the captions are the timing sheet). Aim for about 2.4 words per
-   second; the longest window (scene 2, second line) allows 7.2 seconds.
+   second; the tightest window (scene 1, second line) allows 4 seconds for 17
+   words, so read it briskly or trim it in `WALK_CAPTIONS` first.
 3. **Music:** a licensed bed (keep the licence), mixed about 18–22 dB under the
    voice, ducked further under speech, fading out by 1:12.
 4. **Master** to −16 LUFS integrated, −1 dBTP, 48 kHz stereo AAC at 160 kbps.
@@ -80,6 +104,6 @@ npm run build && MAIRO_RENDER_ROUTE=1 npx next start -p 3100
 node video/render.mjs --base http://localhost:3100 --only walkthrough --fps 30 --scale 1.5
 ```
 
-This writes the MP4s, the posters (the "MEET MAIRO." frame) and the captions
+This writes the MP4s, the posters (the "Meet MAIRO." frame) and the captions
 file, and updates `src/lib/demo/media.ts`. `npm run check:preview` then checks
 the files exist as rendered and the captions match the script.

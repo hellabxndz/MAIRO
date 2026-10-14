@@ -29,7 +29,7 @@ import { editsNotInFile, parseEdits, playedRange } from "../src/lib/suggested-ad
 import { renderPlan } from "../src/lib/suggested-ads/render";
 import { PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
 import { RENDERED_MEDIA } from "../src/lib/demo/media";
-import { WALK_CAPTIONS, WALK_CHAPTERS, WALK_DURATION, WALK_ONSCREEN, WALK_SCENES, innerTime, walkBoxes, walkCaptionsVtt, walkRestingTime, walkSceneAt, type WalkElement } from "../src/lib/demo/walkthrough";
+import { WALK_CAMERA, WALK_CAPTIONS, WALK_CHAPTERS, WALK_CURSOR, WALK_DURATION, WALK_ONSCREEN, WALK_SCENES, WALK_STAGE, WALK_T, walkCaptionsVtt, walkRestingTime, walkSceneAt } from "../src/lib/demo/walkthrough";
 
 let passed = 0;
 async function check(name: string, fn: () => void | Promise<void>) {
@@ -241,64 +241,58 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
   });
 
   console.log("— the MAIRO demo —");
-  await check("seven chapters in the storyboard's order and timing, 73 seconds", () => {
-    assert.deepEqual(WALK_SCENES.map((s) => [s.id, s.start, s.end]), [["intro", 0, 8000], ["business", 8000, 19000], ["strategy", 19000, 30000], ["creative", 30000, 43000], ["approval", 43000, 53000], ["performance", 53000, 65000], ["ending", 65000, 73000]]);
+  await check("seven chapters in the brief's order and timing, 73 seconds", () => {
+    assert.deepEqual(WALK_SCENES.map((s) => [s.id, s.start, s.end]), [["intro", 0, 8000], ["analysis", 8000, 18000], ["plan", 18000, 28000], ["creative", 28000, 42000], ["approval", 42000, 52000], ["results", 52000, 65000], ["ready", 65000, 73000]]);
     assert.equal(WALK_DURATION, 73000);
-    assert.ok(WALK_DURATION >= 65000 && WALK_DURATION <= 75000);
+    assert.ok(WALK_DURATION >= 60000 && WALK_DURATION <= 75000);
     assert.equal(WALK_CHAPTERS.length, 7);
     for (const c of WALK_CHAPTERS) assert.equal(walkSceneAt(walkRestingTime(c.id)).id, c.id);
+    assert.deepEqual(WALK_STAGE, { wide: { w: 960, h: 540 }, narrow: { w: 360, h: 640 } }, "16:9 and 9:16");
   });
-  await check("the captions are the script, back to back, and the transcript matches the captions file", () => {
+  await check("the captions are the script, back to back, honest, and the transcript matches the captions file", () => {
     assert.equal(WALK_CAPTIONS[0].start, 0);
     assert.equal(WALK_CAPTIONS[WALK_CAPTIONS.length - 1].end, WALK_DURATION);
     for (let i = 1; i < WALK_CAPTIONS.length; i++) assert.equal(WALK_CAPTIONS[i].start, WALK_CAPTIONS[i - 1].end);
+    for (const c of WALK_CAPTIONS) assert.ok(c.end - c.start >= 3500, `${c.text}: on screen long enough to read`);
     const script = WALK_CAPTIONS.map((c) => c.text).join(" ");
     for (const line of [
-      "Your business deserves more than another complicated advertising dashboard.",
-      "Meet MAIRO. Your AI advertising team.",
-      "Start with your website, and MAIRO builds an understanding of your business.",
-      "MAIRO recommends an advertising strategy and shows you which creative ideas are worth testing first.",
-      "Review your ad concepts, customize the message, and turn your brand into creative that fits your goals.",
-      "When you're ready, connect your Meta account. Review the campaign, approve your budget, and stay in control before anything launches.",
-      "Follow your results in one place. Understand what's working, what needs attention, and what MAIRO recommends next.",
-      "You run the business. MAIRO runs the ads.",
+      "Meet MAIRO, your AI advertising team.",
+      "MAIRO reads your website and shows what it found, and where it found it.",
+      "Then MAIRO builds your free advertising plan",
+      "Three creative concepts, written for your business",
+      "With a subscription, MAIRO builds the campaign in your own Meta ad account.",
+      "Nothing launches, and nothing is spent, until you approve it.",
+      "Your AI advertising team is ready. See your free plan.",
     ]) assert.ok(script.includes(line), line);
     const vtt = walkCaptionsVtt();
     for (const c of WALK_CAPTIONS) assert.ok(vtt.includes(c.text), c.text);
     assert.ok(vtt.includes("00:01:05.000 --> 00:01:13.000"));
     assert.doesNotMatch(script, FORECAST);
-    assert.equal(WALK_ONSCREEN.intro, "MEET MAIRO.");
-    assert.equal(WALK_ONSCREEN.cta, "BUILD YOUR FREE AD PLAN");
+    assert.doesNotMatch(script, /tiktok|google ads|ai[- ]generated video|guaranteed/i);
+    assert.equal(WALK_ONSCREEN.end, "Your AI Advertising Team Is Ready.");
+    assert.equal(WALK_ONSCREEN.cta, "See Your Free Plan");
   });
-  await check("the product scenes run on a continuous clock that never reaches the old end card", () => {
-    let prev = innerTime(0);
-    for (let t = 0; t <= WALK_DURATION; t += 25) {
-      const it = innerTime(t);
-      assert.ok(it >= prev - 1e-6, `goes back at ${t}`);
-      assert.ok(it - prev < 80, `jumps at ${t}`);
-      prev = it;
-    }
-    assert.equal(innerTime(8000), 0);
-    assert.ok(innerTime(WALK_DURATION) < 58800, "the old end card stays hidden — the ending replaces it");
-    for (const layout of ["wide", "narrow"] as Layout[]) assert.ok(walkBoxes(WALK_DURATION - 1, layout).end.o < 0.01);
-  });
-  await check("every fully visible walkthrough element sits inside the stage, below the label and above the captions", () => {
-    const PEEK = new Set<WalkElement>(["c0", "c2"]);
-    const captionZone = { wide: 56, narrow: 84 };
-    for (const layout of ["wide", "narrow"] as Layout[]) {
-      const { w, h } = STAGE[layout];
-      for (let t = 0; t < WALK_DURATION; t += 50) {
-        const b = walkBoxes(t, layout);
-        for (const [id, x] of Object.entries(b) as [WalkElement, (typeof b)[WalkElement]][]) {
-          if (x.o < 0.95) continue;
-          const where = `${layout} ${id} at ${t}ms`;
-          assert.ok(x.y >= 44, `${where}: top ${x.y} under the label`);
-          assert.ok(x.y + x.h <= h - captionZone[layout], `${where}: bottom ${x.y + x.h} over the captions`);
-          if (layout === "narrow" && PEEK.has(id)) continue;
-          assert.ok(x.x >= 0 && x.x + x.w <= w, `${where}: outside the stage`);
-        }
+  await check("the cursor and camera act inside their own scene, in order, with time to see each click", () => {
+    for (const s of WALK_SCENES) {
+      const cur = WALK_CURSOR[s.id];
+      for (let i = 0; i < cur.length; i++) {
+        assert.ok(cur[i].cue.length > 0);
+        assert.ok(cur[i].at >= s.start && cur[i].at < s.end - 300, `${s.id}: cursor at ${cur[i].at} is inside the scene`);
+        if (i) assert.ok(cur[i].at - cur[i - 1].at >= 600, `${s.id}: ${cur[i].at} leaves time after ${cur[i - 1].at}`);
+      }
+      const cam = WALK_CAMERA[s.id];
+      for (let i = 0; i < cam.length; i++) {
+        assert.ok(cam[i].at >= s.start - 400 && cam[i].at < s.end, `${s.id}: camera at ${cam[i].at} is inside the scene`);
+        assert.ok(cam[i].zoom >= 1 && cam[i].zoom <= 1.6 && (cam[i].narrowZoom ?? 1) <= 1.2, `${s.id}: zoom stays readable`);
+        if (i) assert.ok(cam[i].at > cam[i - 1].at, `${s.id}: camera keys in order`);
       }
     }
+    // Each click lands where the story says it happens.
+    assert.ok(WALK_CURSOR.intro.some((k) => k.click && k.at === WALK_T.submit));
+    assert.ok(WALK_CURSOR.analysis.some((k) => k.click && k.at === WALK_T.build));
+    assert.ok(WALK_CURSOR.approval.some((k) => k.click && k.at === WALK_T.approve));
+    assert.ok(WALK_T.typeSite[0] > 3700 && WALK_T.typeSite[1] < WALK_T.goal, "the website is typed after the field is clicked");
+    assert.ok(WALK_T.endIn < 65000 && WALK_T.endIn > WALK_CURSOR.results[WALK_CURSOR.results.length - 1].at, "the end screen comes after the last action");
   });
 
   console.log("— rendered video —");

@@ -14,10 +14,10 @@ export function WalkthroughSection() {
       <div className="mx-auto max-w-[1100px] px-4 sm:px-8">
         <div className="mx-auto max-w-[720px] text-center">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">The MAIRO demo · {fmt(WALK_DURATION)}</p>
-          <h2 id="walkthrough-title" className="mt-3 text-[clamp(28px,3.8vw,44px)] font-black uppercase leading-[1.05] tracking-[-0.02em] [text-wrap:balance]">Watch MAIRO in action</h2>
-          <p className="mx-auto mt-3 max-w-[600px] text-[15.5px] leading-relaxed text-white/70">One sample business, from its website to its first results, in seven chapters. No voice-over yet — the captions carry the script, and you can jump to any chapter.</p>
+          <h2 id="walkthrough-title" className="mt-3 text-[clamp(30px,4.2vw,52px)] font-semibold leading-[1.02] tracking-[-0.04em] [text-wrap:balance]">Watch MAIRO in Action</h2>
+          <p className="mx-auto mt-3 max-w-[620px] text-[15.5px] leading-relaxed text-white/70">One sample business, from its free plan to its first results, in seven chapters — played on MAIRO&rsquo;s own screens. No voice-over yet: the captions carry the script, and you can jump to any chapter.</p>
         </div>
-        <div className="mx-auto mt-10 max-w-[900px]">
+        <div className="mx-auto mt-10 max-w-[1000px]">
           <LazyWalkthrough media={{ walkthrough: RENDERED_MEDIA.walkthrough, captions: RENDERED_MEDIA.captions }} />
           <details className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 [&_summary::-webkit-details-marker]:hidden">
             <summary className="cursor-pointer list-none py-1 text-[14px] font-medium text-white">Read the script instead</summary>

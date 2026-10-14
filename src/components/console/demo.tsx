@@ -11,7 +11,7 @@ import { CampaignsPanel } from "./campaigns";
 import { CreativesPanel, type CreativeTileData } from "./creatives";
 import { ResultsPanel } from "./results";
 import { TeamPanel } from "./team";
-import { Panel, Pill, SampleLabel, primaryAction, quietAction } from "./kit";
+import { DemoContext, Panel, Pill, SampleLabel, primaryAction, quietAction } from "./kit";
 
 // The website's product demonstrations: the real MAIRO shell — the same
 // sidebar rows, the same top bar, the same console panels the dashboard
@@ -67,7 +67,7 @@ export function ScaledFrame({ width, minScale, minWidth = 400, maxHeight, childr
 }
 
 /** The app's frame: sidebar and top bar exactly as the signed-in app draws them. */
-export function DemoFrame({ view, children, sidebar = true, label }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string }) {
+export function DemoFrame({ view, children, sidebar = true, label, sampleLabel = true }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string; /** Off where the surrounding demo already carries the label (the walkthrough). */ sampleLabel?: boolean }) {
   const active = ACTIVE[view];
   return (
     // A picture of the product to assistive technology — one label, nothing inside to tab to.
@@ -103,12 +103,16 @@ export function DemoFrame({ view, children, sidebar = true, label }: { view: Dem
               Dana
             </span>
           </div>
-          <div className="@container px-4 pb-5 @2xl/frame:px-7 @2xl/frame:pb-7">{children}</div>
+          <div className="@container px-4 pb-5 @2xl/frame:px-7 @2xl/frame:pb-7">
+            <DemoContext.Provider value>{children}</DemoContext.Provider>
+          </div>
         </div>
       </div>
-      <span className="pointer-events-none absolute left-4 top-4 z-10">
-        <SampleLabel />
-      </span>
+      {sampleLabel && (
+        <span className="pointer-events-none absolute left-4 top-4 z-10">
+          <SampleLabel />
+        </span>
+      )}
     </div>
   );
 }
@@ -121,8 +125,13 @@ export const SAMPLE_CREATIVES: CreativeTileData[] = [
   { key: "a3", headline: "Free estimate on every job.", caption: "Suggested direction", kind: "concept", imageUrl: null, label: "The offer" },
 ];
 
-/** One screen of the sample account, as the dashboard shows it. */
-export function DemoScreen({ view }: { view: DemoView }) {
+/**
+ * One screen of the sample account, as the dashboard shows it. `approved` is
+ * the walkthrough's moment the owner approves the launch: the button gives way
+ * to the approval, and the campaign waits for Meta's review — it isn't shown
+ * running until Meta would report it.
+ */
+export function DemoScreen({ view, approved = false }: { view: DemoView; approved?: boolean }) {
   const points = sampleDaily();
   if (view === "creatives") {
     return (
@@ -142,7 +151,7 @@ export function DemoScreen({ view }: { view: DemoView }) {
     return (
       <div className="space-y-4">
         <ConsoleTitle title="Approvals" sub="Nothing changes in your ad account until you approve it." />
-        <Panel title="Launch review" tone="lit">
+        <Panel id="demo-launch" title="Launch review" tone="lit">
           <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 @xl:grid-cols-[150px_minmax(0,1fr)] @xl:gap-5">
             <div className="aspect-[4/5] overflow-hidden rounded-2xl border" style={{ borderColor: "var(--mairo-line)" }}>
               {ART("demo")}
@@ -167,11 +176,22 @@ export function DemoScreen({ view }: { view: DemoView }) {
                   <dd className="font-medium text-white">A Meta lead form</dd>
                 </div>
               </dl>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className={primaryAction}>Approve launch · $20/day</span>
-                <span className={quietAction}>Change something</span>
-              </div>
-              <p className="mt-2 text-[12px] text-faint">Meta reviews the ad and checks your ad account can be charged before anything runs.</p>
+              {approved ? (
+                <div data-cue="approved" className="mt-4 flex flex-wrap items-center gap-2">
+                  <Pill tone="live" dot>
+                    Approved by you
+                  </Pill>
+                  <Pill tone="warn">Waiting for Meta&rsquo;s review</Pill>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span data-cue="approve" className={primaryAction}>
+                    Approve launch · $20/day
+                  </span>
+                  <span className={quietAction}>Change something</span>
+                </div>
+              )}
+              <p className="mt-2 text-[12px] text-faint">{approved ? "It runs only once Meta approves the ad. You can pause it at any time." : "Meta reviews the ad and checks your ad account can be charged before anything runs."}</p>
             </div>
           </div>
         </Panel>
@@ -203,7 +223,7 @@ export function DemoScreen({ view }: { view: DemoView }) {
         <CampaignsPanel counts={SAMPLE.counts} rows={SAMPLE.campaigns} emptyText="" />
         <CreativesPanel items={SAMPLE_CREATIVES} emptyText="" />
       </div>
-      <div className="grid gap-4 @3xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div data-cue="results" className="grid gap-4 @3xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <ResultsPanel points={points} empty={null} insights={SAMPLE.insights.slice(0, 2)} period="last 14 days" count={{ key: "leads", label: "Leads" }} />
         <TeamPanel members={SAMPLE.team.slice(0, 4)} intro={SAMPLE.teamIntro} />
       </div>

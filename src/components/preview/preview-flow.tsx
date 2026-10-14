@@ -317,20 +317,7 @@ export function PreviewFlow({
             </div>
           </div>
 
-          <fieldset className="mt-6">
-            <legend className="text-[13.5px] font-medium text-white">Your advertising objective</legend>
-            <div className="mt-2 grid gap-2 sm:grid-cols-3">
-              {GOALS.map((g) => (
-                <label key={g.value} className={`flex cursor-pointer flex-col rounded-xl border px-3.5 py-3 transition ${current.goal === g.value ? "border-violet/70 bg-violet/[0.10]" : "border-white/12 bg-white/[0.02] hover:border-white/30"}`}>
-                  <span className="flex items-center gap-2 text-[14px] font-medium text-white">
-                    <input type="radio" name="pv-goal" value={g.value} checked={current.goal === g.value} onChange={() => update({ goal: g.value })} className="accent-[#7952ff]" />
-                    {g.label}
-                  </span>
-                  <span className="mt-0.5 pl-6 text-[12.5px] text-white/60">{g.detail}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <GoalFieldset value={current.goal} onChange={(g) => update({ goal: g })} />
 
           {problems.length > 0 && (
             <div role="alert" className="mt-5 rounded-xl border border-amber-300/30 bg-amber-300/[0.07] px-4 py-3 text-[13.5px] text-amber-100">
@@ -374,16 +361,17 @@ export function PreviewFlow({
 
 const STEPS = ["Your business", "MAIRO analyzes", "Confirm", "Your free plan"];
 
-function Steps({ step }: { step: number }) {
+/** The four steps of the free plan, with where the visitor is. */
+export function Steps({ step }: { step: number }) {
   return (
-    <ol aria-label="Progress" className="mx-auto mb-8 flex max-w-[760px] items-center gap-2 text-[12px]">
+    <ol aria-label="Progress" className="@container mx-auto mb-8 flex max-w-[760px] items-center gap-2 text-[12px]">
       {STEPS.map((label, i) => {
         const n = i + 1;
         const state = n < step ? "done" : n === step ? "now" : "later";
         return (
           <li key={label} className="flex min-w-0 flex-1 items-center gap-2" aria-current={state === "now" ? "step" : undefined}>
             <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${state === "done" ? "bg-emerald-400/15 text-emerald-300" : state === "now" ? "bg-[image:var(--mairo-ramp)] text-white" : "bg-white/[0.06] text-white/45"}`}>{state === "done" ? "✓" : n}</span>
-            <span className={`hidden truncate sm:inline ${state === "later" ? "text-white/45" : "text-white/85"}`}>{label}</span>
+            <span className={`hidden truncate @md:inline ${state === "later" ? "text-white/45" : "text-white/85"}`}>{label}</span>
             {n < STEPS.length && <span aria-hidden className="h-px min-w-3 flex-1 bg-white/10" />}
           </li>
         );
@@ -392,8 +380,8 @@ function Steps({ step }: { step: number }) {
   );
 }
 
-/** Step 2: what the website said about the business, its products, its customers and its goal — each with where it came from. */
-function Discovered({ facts }: { facts: PreviewFacts }) {
+/** What MAIRO discovered, card by card, each saying where it came from. `shown` reveals the first few (the walkthrough's clock). */
+export function Discovered({ facts, shown }: { facts: PreviewFacts; shown?: number }) {
   const goalWord = facts.goal === "sales" ? "Online sales" : facts.goal === "bookings" ? "Bookings" : facts.goal === "leads" ? "Enquiries and leads" : null;
   const cards: { title: string; value: string | null; from: string }[] = [
     { title: "Business", value: facts.name || null, from: facts.sources.name?.from === "website" ? "From your website" : "Not found" },
@@ -401,23 +389,46 @@ function Discovered({ facts }: { facts: PreviewFacts }) {
     { title: "Audience", value: facts.customer || null, from: facts.sources.customer?.from === "website" ? "From your website" : "Not on your website — add it below" },
     { title: "Likely goal", value: goalWord, from: facts.destinations?.checkout ? "Your site has a checkout" : facts.destinations?.booking ? `Your site books through ${facts.destinations.booking}` : facts.destinations?.form ? "Your site has a contact form" : "Choose it below" },
   ];
+  const on = (i: number) => shown === undefined || i < shown;
   return (
-    <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((c) => (
-        <li key={c.title} className="rounded-[20px] border p-4" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{c.title}</p>
-          <p className={`mt-1.5 text-[14.5px] leading-snug ${c.value ? "text-white" : "text-white/40"}`}>{c.value ?? "—"}</p>
-          <p className="mt-1.5 text-[11.5px] text-faint">{c.from}</p>
-        </li>
-      ))}
-      {facts.pixelSeen !== null && (
-        <li className="rounded-[20px] border p-4 sm:col-span-2 lg:col-span-4" style={{ borderColor: "var(--mairo-line)" }}>
-          <p className="text-[13px] text-white/75">
-            <span className="font-medium text-white">Opportunity:</span> {facts.pixelSeen ? "a Meta pixel is on your website — setup checks it reports the right events." : "no Meta pixel was found on the pages read — the plan includes adding one, so Meta can see what your ads lead to."}
-          </p>
-        </li>
-      )}
-    </ul>
+    <div className="@container mt-6">
+      <ul className="grid gap-3 @lg:grid-cols-2 @4xl:grid-cols-4">
+        {cards.map((c, i) => (
+          <li key={c.title} className="rounded-[20px] border p-4 transition duration-500" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)", opacity: on(i) ? 1 : 0, transform: on(i) ? undefined : "translateY(8px)" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{c.title}</p>
+            <p className={`mt-1.5 text-[14.5px] leading-snug ${c.value ? "text-white" : "text-white/40"}`}>{c.value ?? "—"}</p>
+            <p className="mt-1.5 text-[11.5px] text-faint">{c.from}</p>
+          </li>
+        ))}
+        {facts.pixelSeen !== null && (
+          <li className="rounded-[20px] border p-4 @lg:col-span-2 @4xl:col-span-4" style={{ borderColor: "var(--mairo-line)", opacity: on(cards.length) ? 1 : 0 }}>
+            <p className="text-[13px] text-white/75">
+              <span className="font-medium text-white">Opportunity:</span> {facts.pixelSeen ? "a Meta pixel is on your website — setup checks it reports the right events." : "no Meta pixel was found on the pages read — the plan includes adding one, so Meta can see what your ads lead to."}
+            </p>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+/** The advertising objective, as the confirm step asks it. */
+export function GoalFieldset({ value, onChange }: { value: PreviewGoal | ""; onChange: (g: PreviewGoal) => void }) {
+  return (
+    <fieldset className="@container mt-6">
+      <legend className="text-[13.5px] font-medium text-white">Your advertising objective</legend>
+      <div className="mt-2 grid gap-2 @md:grid-cols-3">
+        {GOALS.map((g) => (
+          <label key={g.value} className={`flex cursor-pointer flex-col rounded-xl border px-3.5 py-3 transition ${value === g.value ? "border-violet/70 bg-violet/[0.10]" : "border-white/12 bg-white/[0.02] hover:border-white/30"}`}>
+            <span className="flex items-center gap-2 text-[14px] font-medium text-white">
+              <input type="radio" name="pv-goal" value={g.value} checked={value === g.value} onChange={() => onChange(g.value)} className="accent-[#7952ff]" />
+              {g.label}
+            </span>
+            <span className="mt-0.5 pl-6 text-[12.5px] text-white/60">{g.detail}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
 }
 

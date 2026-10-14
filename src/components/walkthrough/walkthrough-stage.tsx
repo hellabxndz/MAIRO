@@ -1,342 +1,522 @@
-import type { Example } from "@/lib/demo/examples";
-import { reveal, STAGE, type Layout } from "@/lib/demo/timeline";
-import { WALK_CHAPTERS, WALK_ONSCREEN, WALK_SCENES, innerTime, walkBoxes, walkCaptionAt, walkSceneAt } from "@/lib/demo/walkthrough";
-import { Browser, ConceptCard, Dashboard, FeedPreview, InputPill, Layer, Review, StoryPreview, surface } from "@/components/hero-story/stage";
+"use client";
 
-// One frame of the MAIRO demo, a pure function of time. The product scenes
-// reuse the landing story's pieces (the same browser, concepts, previews,
-// review and dashboard) and add the steps the short story skips: choosing a
-// goal, facts checked and gaps asked, the plan's reasoning, editing a line,
-// and the checks before launch — on their own inner clock (innerTime). The
-// intro and the ending are drawn over them, with a slow camera push on each
-// scene and its title as it starts. Everything shown is a sample business
-// with sample figures.
+import { createRef, memo, useCallback, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { buildPreview, type FactKey, type PreviewFacts } from "@/lib/preview/build";
+import { exampleFacts } from "@/lib/preview/example";
+import type { ScanProgress } from "@/lib/website/scan";
+import { AGENTS } from "@/lib/team/agents";
+import {
+  WALK_CAMERA,
+  WALK_CHAPTERS,
+  WALK_CURSOR,
+  WALK_NEW_HEADLINE,
+  WALK_ONSCREEN,
+  WALK_SAFE,
+  WALK_SCENES,
+  WALK_SITE,
+  WALK_STAGE,
+  WALK_T,
+  WALK_WORLD,
+  walkCaptionAt,
+  walkEase,
+  walkSceneAt,
+  walkTyped,
+  type WalkCameraKey,
+  type WalkChapterId,
+  type WalkCue,
+  type WalkLayout,
+} from "@/lib/demo/walkthrough";
+import { FreePlanForm } from "@/components/preview/free-plan-form";
+import { Discovered, GoalFieldset, Steps } from "@/components/preview/preview-flow";
+import { ConceptCard, PlanView, type ConceptDemo } from "@/components/preview/plan-view";
+import { ScanProgressView } from "@/components/tools/website-report";
+import { primaryBtn } from "@/components/tools/ui";
+import { DemoContext, Panel } from "@/components/console/kit";
+import { DemoFrame, DemoScreen } from "@/components/console/demo";
+import { AgentIcon } from "@/components/team/agent-ui";
 
-const GOALS = ["Sell more online", "Get more qualified leads", "Get more bookings", "Not sure yet"];
-const PICKED = 1;
+// One frame of the MAIRO demo, a pure function of time. Each scene is one of
+// MAIRO's own screens — the free plan form, the website read, what MAIRO
+// discovered, the plan, the concept cards, approvals, the overview — laid out
+// at a fixed width and driven by the clock (lib/demo/walkthrough.ts). A
+// camera frames each part as it matters and a cursor moves between named
+// targets found in the rendered screen, so the motion follows the real
+// layout. The intro and end screen are drawn over the scenes. Everything
+// shown is a sample business with sample figures; nothing here reaches a
+// server.
 
-function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`flex h-full flex-col rounded-2xl p-4 ${className}`} style={surface}>
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">{title}</p>
-      {children}
-    </div>
-  );
-}
+const noop = () => {};
 
-function GoalPicker({ t }: { t: number }) {
-  const hover = t >= 5200;
-  const chosen = t >= 5900;
-  return (
-    <Panel title="Your goal">
-      <p className="mt-1 text-[15px] font-semibold leading-snug text-white">What should your first campaign get you?</p>
-      <ul className="mt-3 space-y-2">
-        {GOALS.map((g, i) => {
-          const on = i === PICKED && hover;
-          return (
-            <li key={g} className="flex items-center justify-between rounded-xl px-3 py-2.5 text-[13px]" style={{ background: on ? "rgba(124,92,255,0.22)" : "rgba(255,255,255,0.05)", border: `1px solid ${on ? "rgba(167,139,250,0.7)" : "transparent"}`, color: on ? "#fff" : "rgba(255,255,255,0.8)" }}>
-              {g}
-              {i === PICKED && chosen && <span className="text-[12px] font-semibold text-[#6fe0b4]">✓</span>}
-            </li>
-          );
-        })}
-      </ul>
-      <span className="mt-auto rounded-xl py-2 text-center text-[12.5px] font-semibold text-white" style={{ background: "linear-gradient(90deg,#5b6cff,#8b4dfb)", opacity: chosen ? 1 : 0.4, transform: t >= 7000 && t < 7300 ? "scale(0.96)" : "none" }}>
-        Continue
-      </span>
-    </Panel>
-  );
-}
+/** The sample business as MAIRO would have read it from its website. */
+const FACTS: PreviewFacts = (() => {
+  const f = exampleFacts("service");
+  f.website = WALK_SITE;
+  f.typeFrom = "website";
+  f.destinations = { booking: null, form: true, phone: true, checkout: false };
+  f.pixelSeen = false;
+  for (const k of ["name", "offering", "customer", "location", "offer", "proof"] as FactKey[]) f.sources[k] = { from: "website", url: `https://${WALK_SITE}/`, quote: null };
+  return f;
+})();
+// The sample facts are complete, so the builder always returns a plan.
+const PREVIEW = buildPreview(FACTS)!;
+const HEADING = createRef<HTMLHeadingElement>();
 
-type Chip = { text: string; tone: "site" | "ask" | "you" };
-const CHIP: Record<Chip["tone"], string> = {
-  site: "bg-emerald-400/15 text-[#6fe0b4]",
-  ask: "bg-amber-300/15 text-amber-200",
-  you: "bg-[#7c5cff]/25 text-[#d6ccff]",
+const SCAN_LABEL: Record<ScanProgress["step"], string> = {
+  address: "Checking the address",
+  home: "Reading the home page",
+  pages: "Reading other pages",
+  links: "Checking links",
+  speed: "Checking speed",
+  audit: "Writing up what MAIRO found",
+  done: "Done",
 };
 
-function FactsPanel({ ex, t }: { ex: Example; t: number }) {
-  const area = ex.profile.location.split(" and ")[0];
-  const asked = t >= 12000;
-  const answered = t >= 14200;
-  const offerOk = t >= 15600;
-  const rows: { k: string; v: string; chip: Chip; at: number; options?: string[] }[] = [
-    { k: "What you offer", v: ex.site.headline, chip: { text: "From your website", tone: "site" }, at: 8800 },
-    { k: "Where you work", v: area, chip: { text: "From your website", tone: "site" }, at: 9400 },
-    { k: "Trust", v: ex.site.sub, chip: { text: "From your website", tone: "site" }, at: 10000 },
-    {
-      k: ex.unknown.question,
-      v: answered ? ex.unknown.answer : "",
-      chip: answered ? { text: "Confirmed by you", tone: "you" } : { text: "Not on your website — MAIRO asks", tone: "ask" },
-      at: 12000,
-      options: answered ? undefined : ["Within 5 miles", ex.unknown.answer, "Within 30 miles"],
+// ── What each scene shows at time t ─────────────────────────────────────────
+
+type IntroState = { site: string; goal: "" | "leads"; focus: "website" | "goal" | null; pressed: boolean };
+type AnalysisState = { phase: "reading" | "found"; step: ScanProgress["step"]; done: number; shown: number; goal: "" | "leads"; pressed: boolean };
+type CreativeState = { demo: ConceptDemo; edited: boolean; saved: boolean };
+
+const within = (t: number, at: number, ms = 260) => t >= at && t < at + ms;
+
+function introState(t: number): IntroState {
+  return {
+    site: walkTyped(WALK_SITE, t, WALK_T.typeSite[0], WALK_T.typeSite[1]),
+    goal: t >= WALK_T.goal + 150 ? "leads" : "",
+    focus: t >= 3700 && t < 6000 ? "website" : t >= WALK_T.goal && t < WALK_T.submit - 200 ? "goal" : null,
+    pressed: within(t, WALK_T.submit),
+  };
+}
+
+function analysisState(t: number): AnalysisState {
+  let step: ScanProgress["step"] = "address";
+  for (const [at, s] of WALK_T.scan) if (t >= at) step = s;
+  const done = t < 9000 ? 0 : Math.min(3, 1 + Math.floor((t - 9000) / 300));
+  return {
+    phase: t < WALK_T.found ? "reading" : "found",
+    step,
+    done,
+    shown: WALK_T.cards.filter((at) => t >= at).length,
+    goal: t >= WALK_T.confirmGoal + 120 ? "leads" : "",
+    pressed: within(t, WALK_T.build),
+  };
+}
+
+function creativeState(t: number): CreativeState {
+  const d = PREVIEW.directions[0];
+  const pressed = within(t, WALK_T.igFeed) ? "ig-feed" : within(t, WALK_T.edit) ? "Edit headline" : within(t, WALK_T.done) ? "Done" : within(t, WALK_T.story) ? "stories" : within(t, WALK_T.save) ? "Save concept" : null;
+  return {
+    demo: {
+      placement: t < WALK_T.igFeed + 120 ? "fb-feed" : t < WALK_T.story + 120 ? "ig-feed" : "stories",
+      editing: t >= WALK_T.edit + 150 && t < WALK_T.done + 150,
+      draft: t < WALK_T.typeHeadline[0] ? d.headline : walkTyped(WALK_NEW_HEADLINE, t, WALK_T.typeHeadline[0], WALK_T.typeHeadline[1]),
+      pressed,
     },
-    { k: "Current offer", v: ex.concepts[2].hook.replace(/\.$/, ""), chip: offerOk ? { text: "Confirmed by you", tone: "you" } : { text: "Found — still current?", tone: "ask" }, at: 13000 },
-  ];
-  return (
-    <Panel title="What MAIRO found">
-      <ul className="mt-2 space-y-2">
-        {rows.map((r) => {
-          const o = reveal(t, r.at, r.at + 400);
-          if (o <= 0.01) return null;
-          const highlight = r.at === 12000 && asked && !answered;
-          return (
-            <li key={r.k} className="rounded-xl px-3 py-2" style={{ opacity: o, background: highlight ? "rgba(252,211,77,0.08)" : "rgba(255,255,255,0.05)", border: `1px solid ${highlight ? "rgba(252,211,77,0.35)" : "transparent"}` }}>
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-[10.5px] text-white/55">{r.k}</p>
-                <span className={`shrink-0 rounded-full px-1.5 py-[1px] text-[9.5px] font-semibold ${CHIP[r.chip.tone]}`}>{r.chip.text}</span>
-              </div>
-              {r.v && <p className="mt-0.5 text-[12.5px] leading-snug text-white">{r.v}</p>}
-              {r.options && (
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {r.options.map((x) => (
-                    <span key={x} className="rounded-full px-2 py-0.5 text-[10.5px]" style={{ background: x === ex.unknown.answer && t >= 13600 ? "rgba(124,92,255,0.45)" : "rgba(255,255,255,0.08)", color: "#fff" }}>{x}</span>
-                  ))}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
-  );
+    edited: t >= WALK_T.done + 150,
+    saved: t >= WALK_T.save + 150,
+  };
 }
 
-function PlanCard({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean }) {
-  const rows: { k: string; v: string; why?: string; at: number; tag?: string }[] = [
-    { k: "Where the ads run", v: ex.plan.channel, at: 17800 },
-    { k: "What it's for", v: ex.plan.objective, at: 18700 },
-    { k: "Who sees it", v: ex.plan.audience, why: ex.plan.why, at: 19800 },
-    { k: "Budget", v: ex.plan.budget, why: "You set the real amount. Nothing is spent until you approve a campaign.", at: 22600, tag: "Example" },
-  ];
-  return (
-    <Panel title="Your free plan — draft">
-      <p className="mt-0.5 text-[16px] font-semibold text-white">{ex.name}</p>
-      <ul className={`mt-3 grid gap-2.5 ${narrow ? "" : "grid-cols-2"}`}>
-        {rows.map((r) => {
-          const o = reveal(t, r.at, r.at + 450);
-          const whyO = r.why ? reveal(t, r.at + 1800, r.at + 2300) : 0;
-          return (
-            <li key={r.k} className="rounded-xl bg-white/[0.05] px-3 py-2.5" style={{ opacity: 0.2 + 0.8 * o }}>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[10.5px] uppercase tracking-[0.12em] text-white/50">{r.k}</p>
-                {r.tag && o > 0.5 && <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-1.5 text-[9.5px] text-amber-200">{r.tag}</span>}
-              </div>
-              <p className="mt-0.5 text-[13px] leading-snug text-white">{o > 0.05 ? r.v : "…"}</p>
-              {r.why && whyO > 0.01 && <p className="mt-1 text-[11px] leading-snug text-[#d6ccff]" style={{ opacity: whyO }}>Why: {r.why}</p>}
-            </li>
-          );
-        })}
-      </ul>
-      <p className="mt-auto pt-2 text-[10.5px] text-white/50">A plan, not a forecast — MAIRO doesn&rsquo;t promise a number of leads.</p>
-    </Panel>
-  );
-}
+// ── The scenes' screens: MAIRO's components, inert ─────────────────────────
 
-/** The opening line, rewritten by the owner: the old one is kept as a version. */
-export function editedHookAt(ex: Example, t: number): string {
-  const from = ex.concepts[ex.selected].hook;
-  const to = ex.editedHook;
-  if (t < 32600) return from;
-  // Keep the shared start, retype the rest.
-  let k = 0;
-  while (k < from.length && k < to.length && from[k] === to[k]) k++;
-  const typed = Math.floor((to.length - k) * reveal(t, 32600, 33900));
-  return to.slice(0, k + typed);
-}
+const press = (on: boolean): CSSProperties | undefined => (on ? { transform: "scale(0.96)", filter: "brightness(1.15)" } : undefined);
 
-function HookEditor({ ex, t }: { ex: Example; t: number }) {
-  const text = editedHookAt(ex, t);
-  const editing = t >= 32000 && t < 34000;
-  const done = t >= 34000;
+const IntroWorld = memo(function IntroWorld({ site, goal, focus, pressed }: IntroState) {
   return (
-    <Panel title="Opening line">
-      <div className="mt-2 rounded-xl border px-3 py-2 text-[13.5px] font-semibold leading-snug text-white" style={{ borderColor: editing ? "rgba(167,139,250,0.8)" : "rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)" }}>
-        {text}
-        {editing && Math.floor(t / 450) % 2 === 0 && <span className="ml-[1px] inline-block h-[14px] w-[1.5px] translate-y-[2px] bg-white" />}
-      </div>
-      {done && (
-        <>
-          <span className="mt-2 self-start rounded-full bg-[#7c5cff]/25 px-2 py-0.5 text-[10.5px] font-semibold text-[#d6ccff]">Edited by you</span>
-          <p className="mt-1.5 text-[10.5px] leading-snug text-white/50">Version 2. The original line is kept, and you can go back to it.</p>
-        </>
-      )}
-    </Panel>
-  );
-}
-
-function ReadinessPanel({ ex, t, compact }: { ex: Example; t: number; compact: boolean }) {
-  const approvedAt = 46300;
-  const items: { label: string; state: "done" | "needed" | "optional"; detail?: string }[] = ex.readiness.map((r) => ({ label: r.label, state: r.label === "Creative approved" ? (t >= approvedAt ? "done" : "needed") : r.state }));
-  return (
-    <Panel title="Ready to launch?">
-      <ul className="mt-2 space-y-1.5">
-        {items.map((r, i) => {
-          const o = reveal(t, 38800 + i * 600, 39200 + i * 600);
-          const mark = r.state === "done" ? "✓" : r.state === "optional" ? "–" : "•";
-          const color = r.state === "done" ? "#6fe0b4" : r.state === "optional" ? "rgba(255,255,255,0.45)" : "#fcd34d";
-          return (
-            <li key={r.label} className="flex items-center gap-2.5 rounded-xl bg-white/[0.04] px-3 py-2 text-[12.5px] text-white" style={{ opacity: 0.15 + 0.85 * o }}>
-              <span className="w-3 text-center font-bold" style={{ color }}>{mark}</span>
-              <span className="flex-1">{r.label}</span>
-              <span className="text-[10px] text-white/50">{r.state === "optional" ? "Optional" : r.state === "needed" ? "Waiting for you" : ""}</span>
-            </li>
-          );
-        })}
-      </ul>
-      {!compact && (
-        <div className="mt-2.5 rounded-xl border border-white/10 px-3 py-2 text-[11.5px]" style={{ opacity: reveal(t, 42000, 42500) }}>
-          <p className="flex items-center gap-1.5 text-white"><span className="h-2 w-2 rounded-full bg-[#34d399]" /> Meta ad account connected</p>
-          <p className="mt-0.5 text-white/55">{ex.name}&rsquo;s own account. You can disconnect it at any time.</p>
+    <div className="px-6 pb-16 pt-8">
+      <Steps step={1} />
+      <section className="mx-auto max-w-[760px]">
+        <h1 className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">See your free plan</h1>
+        <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Discover how MAIRO would advertise your business before spending a dollar.</p>
+        <div id="walk-form" className="mt-7">
+          <FreePlanForm idPrefix="walk" demo={{ website: site, goal, focus, pressed }} />
         </div>
-      )}
-    </Panel>
+      </section>
+    </div>
   );
-}
+});
 
-const OBSIDIAN = "#07080D";
-
-/** MAIRO's wordmark, spaced out. */
-function Wordmark({ size }: { size: number }) {
-  return <span className="font-semibold text-white" style={{ fontSize: size, letterSpacing: "0.42em", paddingLeft: "0.42em" }}>MAIRO</span>;
-}
-
-/** The three sample ads, fanned: the business's own concepts, labelled as samples. */
-function Fan({ ex, t, from, narrow, small = false }: { ex: Example; t: number; from: number; narrow: boolean; small?: boolean }) {
-  // On a phone the cards overlap, so the middle one stays readable at full size.
-  const w = narrow ? (small ? 132 : 150) : small ? 132 : 170;
-  const h = Math.round(w * 1.52);
-  const gap = narrow ? (small ? 98 : 96) : small ? 150 : 196;
-  return (
-    <div className="relative" style={{ width: gap * 2 + w, height: h + 30 }}>
-      {[0, 1, 2].map((i) => {
-        const o = reveal(t, from + i * 350, from + i * 350 + 700);
-        const rot = (i - 1) * (small ? 4 : 7);
-        const lift = (1 - o) * 60 + (i === 1 ? 0 : 14) - Math.sin((t - from) / 900 + i) * 3 * o;
-        return (
-          <div key={i} className="absolute" style={{ left: i * gap, top: lift, width: w, height: h, opacity: o, transform: `rotate(${rot}deg) scale(${0.94 + 0.06 * o})`, zIndex: i === 1 ? 2 : 1 }}>
-            <ConceptCard ex={ex} i={i} t={40000} selected={false} />
+const AnalysisWorld = memo(function AnalysisWorld({ phase, step, done, shown, goal, pressed }: AnalysisState) {
+  if (phase === "reading") {
+    return (
+      <div className="px-6 pb-16 pt-8">
+        <Steps step={2} />
+        <section className="mx-auto max-w-[760px]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 1 · Reading your website</p>
+          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">MAIRO is reading {WALK_SITE}</h1>
+          <div id="walk-scan" className="mt-5">
+            <ScanProgressView progress={{ step, label: SCAN_LABEL[step], ...(step === "pages" ? { done, total: 3 } : {}) }} />
           </div>
-        );
-      })}
+        </section>
+      </div>
+    );
+  }
+  return (
+    <div className="px-6 pb-16 pt-8">
+      <Steps step={3} />
+      <section className="mx-auto max-w-[980px]">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 2 · What MAIRO discovered</p>
+        <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">Here&rsquo;s what MAIRO found</h1>
+        <p className="mt-2 text-[12.5px] text-white/50">
+          Read from <span className="text-white/70">{WALK_SITE}</span>
+        </p>
+        <div data-cue="discovered">
+          <Discovered facts={FACTS} shown={shown} />
+        </div>
+        <div id="walk-confirm" className="mt-8">
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 3 · Confirm the important details</h2>
+          <GoalFieldset value={goal} onChange={noop} />
+          <div className="mt-6">
+            <button type="button" className={primaryBtn} style={press(pressed)}>
+              Build my free plan
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+});
+
+const PlanWorld = memo(function PlanWorld() {
+  return (
+    <div className="px-6 pb-16 pt-8">
+      <PlanView preview={PREVIEW} facts={FACTS} findings={[]} isExample={false} exampleType={null} headingRef={HEADING} onEdit={noop} onRefine={noop} onSave={noop} onStartOver={noop} signUpHref="/sign-up" />
+    </div>
+  );
+});
+
+const CreativeWorld = memo(function CreativeWorld({ demo, edited, saved }: CreativeState) {
+  return (
+    <div className="px-6 pb-16 pt-8">
+      <Panel id="pl-creative" title="Creative strategy & concepts">
+        <p className="max-w-[820px] text-[14px] leading-relaxed text-white/80">{PREVIEW.creativeStrategy}</p>
+        <p className="mt-2 text-[12.5px] text-faint">These are concepts — the words and a direction for the picture — not finished ads. You approve every ad before it runs.</p>
+        <ol id="walk-grid" className="mt-5 grid gap-4 @4xl:grid-cols-3">
+          {PREVIEW.directions.map((c, i) => {
+            const first = i === 0;
+            const words = { hook: c.hook, headline: first && edited ? WALK_NEW_HEADLINE : c.headline, body: c.primaryText };
+            return (
+              <ConceptCard key={c.angle} index={i} concept={c} words={words} facts={FACTS} businessName={PREVIEW.name} saved={first && saved} canSwap isExample={false} signUpHref="/sign-up" onEdit={noop} onSwap={noop} onSave={noop} demo={first ? demo : { placement: null, editing: false, draft: c.headline, pressed: null }} />
+            );
+          })}
+        </ol>
+      </Panel>
+    </div>
+  );
+});
+
+const ApprovalWorld = memo(function ApprovalWorld({ approved }: { approved: boolean }) {
+  return (
+    <div className="p-6">
+      <DemoFrame view="approvals" sampleLabel={false}>
+        <DemoScreen view="approvals" approved={approved} />
+      </DemoFrame>
+    </div>
+  );
+});
+
+const ResultsWorld = memo(function ResultsWorld() {
+  return (
+    <div className="p-6">
+      <DemoFrame view="overview" sampleLabel={false}>
+        <DemoScreen view="overview" />
+      </DemoFrame>
+    </div>
+  );
+});
+
+function World({ id, t }: { id: WalkChapterId; t: number }) {
+  if (id === "intro") return <IntroWorld {...introState(t)} />;
+  if (id === "analysis") return <AnalysisWorld {...analysisState(t)} />;
+  if (id === "plan") return <PlanWorld />;
+  if (id === "creative") return <CreativeWorld {...creativeState(t)} />;
+  if (id === "approval") return <ApprovalWorld approved={t >= WALK_T.approve + 150} />;
+  if (id === "results") return <ResultsWorld />;
+  return null;
+}
+
+/** What changes the layout of a scene's screen — targets are measured again when it changes. */
+function layoutKey(id: WalkChapterId, t: number): string {
+  if (id === "analysis") return analysisState(t).phase;
+  if (id === "creative") {
+    const s = creativeState(t);
+    return `${s.demo.placement}|${s.demo.editing}|${s.edited}|${s.saved}`;
+  }
+  if (id === "approval") return String(t >= WALK_T.approve + 150);
+  return id;
+}
+
+// ── Finding the targets, the camera and the cursor ─────────────────────────
+
+type Rect = { x: number; y: number; w: number; h: number };
+type Measured = { rects: Record<WalkCue, Rect>; height: number };
+
+function locate(root: HTMLElement, cue: WalkCue): HTMLElement | null {
+  if (!cue.startsWith("text:")) return root.querySelector<HTMLElement>(cue);
+  const want = cue.slice(5);
+  let starts: HTMLElement | null = null;
+  for (const el of root.querySelectorAll<HTMLElement>("button, a, label, span, h1, h2, h3, p, dt, legend")) {
+    const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (text === want) return el;
+    if (!starts && text.startsWith(want)) starts = el;
+  }
+  return starts;
+}
+
+function cuesOf(id: WalkChapterId): WalkCue[] {
+  return [...new Set([...WALK_CURSOR[id].map((k) => k.cue), ...WALK_CAMERA[id].flatMap((k) => (k.cue ? [k.cue] : []))])];
+}
+
+const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
+
+type Cam = { tx: number; ty: number; s: number };
+
+function cameraAt(id: WalkChapterId, t: number, layout: WalkLayout, m: Measured | null): Cam {
+  const { w: SW, h: SH } = WALK_STAGE[layout];
+  const WW = WALK_WORLD[layout];
+  const base = SW / WW;
+  const safe = WALK_SAFE[layout];
+  const H = m?.height ?? SH / base;
+  const target = (k: WalkCameraKey | null): Cam => {
+    const s = base * (k ? (layout === "narrow" ? k.narrowZoom ?? 1 : k.zoom) : 1);
+    const r = k?.cue ? m?.rects[k.cue] : undefined;
+    let tx = (SW - WW * s) / 2;
+    let ty = safe.top;
+    if (r) {
+      tx = SW / 2 - (r.x + r.w / 2) * s;
+      if (k!.align === "top") ty = safe.top + 10 - r.y * s;
+      else ty = safe.top + (SH - safe.top - safe.bottom) / 2 - (r.y + r.h / 2) * s;
+    }
+    const ww = WW * s;
+    const hh = H * s;
+    tx = ww <= SW ? (SW - ww) / 2 : Math.min(0, Math.max(SW - ww, tx));
+    const bottom = SH - safe.bottom;
+    ty = hh <= bottom - safe.top ? safe.top : Math.min(safe.top, Math.max(bottom - hh, ty));
+    return { tx, ty, s };
+  };
+  const keys = WALK_CAMERA[id];
+  if (!keys.length) return target(null);
+  let i = -1;
+  for (let j = 0; j < keys.length; j++) if (t >= keys[j].at) i = j;
+  if (i <= 0) return target(keys[0]);
+  const from = target(keys[i - 1]);
+  const to = target(keys[i]);
+  const p = walkEase(t, keys[i].at, keys[i].at + (keys[i].dur ?? 1100));
+  return { tx: lerp(from.tx, to.tx, p), ty: lerp(from.ty, to.ty, p), s: lerp(from.s, to.s, p) };
+}
+
+type Pointer = { x: number; y: number; o: number; down: boolean; ripple: number | null };
+
+function cursorAt(id: WalkChapterId, t: number, m: Measured | null): Pointer | null {
+  if (!m) return null;
+  const keys = WALK_CURSOR[id].filter((k) => m.rects[k.cue]);
+  if (!keys.length) return null;
+  const pt = (cue: WalkCue) => {
+    const r = m.rects[cue];
+    return { x: r.x + Math.min(r.w / 2, 70), y: r.y + Math.min(r.h / 2, 36) };
+  };
+  const first = keys[0];
+  const last = keys[keys.length - 1];
+  const appear = first.at - 1000;
+  const vanish = last.at + 1200;
+  if (t < appear - 300 || t > vanish + 300) return null;
+  const o = walkEase(t, appear - 300, appear) * (1 - walkEase(t, vanish, vanish + 300));
+  let x: number;
+  let y: number;
+  if (t <= first.at) {
+    const p0 = pt(first.cue);
+    const p = walkEase(t, first.at - 900, first.at);
+    x = lerp(p0.x + 150, p0.x, p);
+    y = lerp(p0.y + 110, p0.y, p);
+  } else {
+    let i = 0;
+    for (let j = 0; j < keys.length; j++) if (t >= keys[j].at) i = j;
+    const a = pt(keys[i].cue);
+    const next = keys[i + 1];
+    if (!next) {
+      x = a.x;
+      y = a.y;
+    } else {
+      const b = pt(next.cue);
+      const p = walkEase(t, Math.max(keys[i].at + 300, next.at - 850), next.at);
+      x = lerp(a.x, b.x, p);
+      y = lerp(a.y, b.y, p) - Math.sin(p * Math.PI) * 18;
+    }
+  }
+  const click = keys.find((k) => k.click && t >= k.at && t < k.at + 560);
+  return { x, y, o, down: Boolean(click && t < click.at + 150), ripple: click ? (t - click.at) / 560 : null };
+}
+
+function SceneLayer({ id, t, layout, onMeasured }: { id: WalkChapterId; t: number; layout: WalkLayout; onMeasured?: (id: WalkChapterId, missing: string[], found: string[]) => void }) {
+  const world = useRef<HTMLDivElement>(null);
+  const [m, setM] = useState<Measured | null>(null);
+  const key = layoutKey(id, t);
+  const measure = useCallback(() => {
+    const root = world.current;
+    if (!root || !root.offsetWidth) return;
+    const rr = root.getBoundingClientRect();
+    const k = rr.width / root.offsetWidth || 1;
+    const found: Record<WalkCue, Rect> = {};
+    const missing: string[] = [];
+    for (const cue of cuesOf(id)) {
+      const el = locate(root, cue);
+      const er = el?.getBoundingClientRect();
+      // Not there, or there but not drawn in this layout (the plan's section list on a phone).
+      if (!er || (er.width === 0 && er.height === 0)) {
+        missing.push(cue);
+        continue;
+      }
+      found[cue] = { x: (er.left - rr.left) / k, y: (er.top - rr.top) / k, w: er.width / k, h: er.height / k };
+    }
+    // A target that isn't on screen in this state keeps where it last was, so the cursor can still leave it.
+    setM((prev) => ({ rects: { ...(prev?.rects ?? {}), ...found }, height: root.offsetHeight }));
+    onMeasured?.(id, missing, Object.keys(found));
+  }, [id, onMeasured]);
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, key, layout]);
+  useLayoutEffect(() => {
+    const root = world.current;
+    if (!root) return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(root);
+    void document.fonts?.ready.then(() => measure());
+    return () => ro.disconnect();
+  }, [measure]);
+
+  const scene = WALK_SCENES.find((s) => s.id === id)!;
+  const fadeIn = id === "intro" ? walkEase(t, WALK_T.formIn, WALK_T.formIn + 600) : walkEase(t, scene.start - 400, scene.start + 150);
+  const fadeOut = id === "results" ? 1 - walkEase(t, WALK_T.endIn, WALK_T.endIn + 700) : 1 - walkEase(t, scene.end - 300, scene.end + 200);
+  const cam = cameraAt(id, t, layout, m);
+  const pointer = cursorAt(id, t, m);
+  return (
+    <div className="absolute inset-0" style={{ opacity: Math.min(fadeIn, fadeOut) }}>
+      <div ref={world} inert className="absolute left-0 top-0 origin-top-left" style={{ width: WALK_WORLD[layout], transform: `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.s})` }}>
+        <World id={id} t={t} />
+      </div>
+      {pointer && pointer.o > 0.01 && <Cursor x={cam.tx + pointer.x * cam.s} y={cam.ty + pointer.y * cam.s} o={pointer.o} down={pointer.down} ripple={pointer.ripple} />}
     </div>
   );
 }
+
+function Cursor({ x, y, o, down, ripple }: { x: number; y: number; o: number; down: boolean; ripple: number | null }) {
+  return (
+    <div className="pointer-events-none absolute left-0 top-0 z-20" style={{ transform: `translate(${x}px, ${y}px)`, opacity: o }}>
+      {ripple !== null && <span className="absolute rounded-full border-2 border-white/70" style={{ width: 44, height: 44, left: -22, top: -22, transform: `scale(${0.3 + ripple * 0.9})`, opacity: 1 - ripple }} />}
+      <svg width="22" height="26" viewBox="0 0 22 26" className="absolute -left-[3px] -top-[2px] drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]" style={{ transform: down ? "scale(0.86)" : undefined, transformOrigin: "3px 2px" }}>
+        <path d="M3 2 L3 21 L8.2 16.4 L11.6 24 L15 22.5 L11.7 15 L18.6 14.6 Z" fill="#fff" stroke="#0b0d18" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+// ── Drawn over the scenes ──────────────────────────────────────────────────
 
 function Backdrop({ t }: { t: number }) {
   const drift = Math.sin(t / 2400) * 6;
+  return <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 34%, rgba(121,82,255,0.34), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(53,108,255,0.22), transparent 70%), #07080d` }} />;
+}
+
+function Wordmark({ size }: { size: number }) {
   return (
-    <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 38%, rgba(121,82,255,0.34), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(53,108,255,0.22), transparent 70%), ${OBSIDIAN}` }} />
+    <span className="font-light text-white" style={{ fontSize: size, letterSpacing: "0.42em", paddingLeft: "0.42em" }}>
+      MAIRO
+    </span>
   );
 }
 
-function Intro({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean }) {
-  const o = 1 - reveal(t, 7300, 8000);
+function TitleCard({ t, narrow }: { t: number; narrow: boolean }) {
+  const o = 1 - walkEase(t, WALK_T.titleOut - 200, WALK_T.titleOut + 400);
   if (o <= 0.001) return null;
-  const mark = reveal(t, 500, 1400);
-  const meet = reveal(t, 4000, 4900);
+  const mark = walkEase(t, 200, 900);
+  const meet = walkEase(t, 800, 1700);
+  const sub = walkEase(t, 1500, 2200);
   return (
-    <div className="absolute inset-0 z-30" style={{ opacity: o }}>
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center px-6 text-center" style={{ opacity: o }}>
       <Backdrop t={t} />
-      <div className="absolute inset-x-0 flex justify-center" style={{ top: narrow ? 58 : 44, opacity: mark, transform: `translateY(${(1 - mark) * 10}px)` }}>
+      <div className="relative" style={{ opacity: mark, transform: `translateY(${(1 - mark) * 10}px)` }}>
         <Wordmark size={narrow ? 15 : 17} />
       </div>
-      <p className="absolute inset-x-0 text-center font-black text-white" style={{ top: narrow ? 92 : 84, fontSize: narrow ? 40 : 64, lineHeight: 1, letterSpacing: `${0.02 + 0.28 * (1 - meet)}em`, opacity: meet, transform: `scale(${1.06 - 0.06 * meet})`, textShadow: "0 0 40px rgba(121,82,255,0.55)" }}>
+      <p className="relative mt-5 font-semibold text-white" style={{ fontSize: narrow ? 44 : 76, lineHeight: 1, letterSpacing: `${-0.04 + 0.14 * (1 - meet)}em`, opacity: meet, transform: `scale(${1.05 - 0.05 * meet})`, textShadow: "0 0 50px rgba(121,82,255,0.5)" }}>
         {WALK_ONSCREEN.intro}
       </p>
-      <div className="absolute inset-x-0 flex justify-center" style={{ top: narrow ? 200 : 182 }}>
-        <Fan ex={ex} t={t} from={1300} narrow={narrow} />
-      </div>
+      <p className="relative mt-4 bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text font-semibold text-transparent" style={{ fontSize: narrow ? 20 : 28, opacity: sub, transform: `translateY(${(1 - sub) * 10}px)` }}>
+        {WALK_ONSCREEN.introSub}
+      </p>
     </div>
   );
 }
 
-function Ending({ ex, t, narrow }: { ex: Example; t: number; narrow: boolean }) {
-  const o = reveal(t, 64400, 65200);
+function EndScreen({ t, narrow }: { t: number; narrow: boolean }) {
+  const o = walkEase(t, WALK_T.endIn, WALK_T.endIn + 800);
   if (o <= 0.001) return null;
-  const l1 = reveal(t, 65800, 66600);
-  const l2 = reveal(t, 66800, 67600);
-  const cta = reveal(t, 68600, 69400);
-  const glow = 0.45 + 0.25 * Math.sin((t - 68600) / 420);
+  const title = walkEase(t, 65400, 66300);
+  const cta = walkEase(t, 67900, 68700);
+  const glow = 0.4 + 0.15 * walkEase(t, 68700, 70500);
   return (
-    <div className="absolute inset-0 z-30" style={{ opacity: o }}>
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center px-6 text-center" style={{ opacity: o }}>
       <Backdrop t={t} />
-      <div className="absolute inset-x-0 flex justify-center" style={{ top: narrow ? 52 : 34 }}>
-        <Wordmark size={narrow ? 14 : 15} />
+      <div className="relative">
+        <Wordmark size={narrow ? 13 : 15} />
       </div>
-      <div className="absolute inset-x-0 text-center font-black leading-[1.05] tracking-[-0.02em] text-white" style={{ top: narrow ? 86 : 70, fontSize: narrow ? 26 : 38 }}>
-        <p style={{ opacity: l1, transform: `translateY(${(1 - l1) * 12}px)` }}>{WALK_ONSCREEN.endLines[0]}</p>
-        <p style={{ opacity: l2, transform: `translateY(${(1 - l2) * 12}px)`, backgroundImage: "linear-gradient(90deg,#9b7bff,#356CFF)", WebkitBackgroundClip: "text", color: "transparent" }}>{WALK_ONSCREEN.endLines[1]}</p>
-      </div>
-      <div className="absolute inset-x-0 flex justify-center" style={{ top: narrow ? 168 : 172 }}>
-        <Fan ex={ex} t={t} from={65400} narrow={narrow} small />
-      </div>
-      <div className="absolute inset-x-0 flex flex-col items-center" style={{ top: narrow ? 412 : 400, opacity: cta, transform: `scale(${0.96 + 0.04 * cta})` }}>
-        <span className="rounded-full px-6 py-3 text-[14px] font-black tracking-[0.08em] text-white" style={{ background: "linear-gradient(90deg,#7952FF,#356CFF)", boxShadow: `0 0 ${36 + 20 * glow}px rgba(121,82,255,${glow})` }}>{WALK_ONSCREEN.cta}</span>
-        <span className="mt-2 text-[11.5px] text-white/60">Free to start. Nothing runs without your approval.</span>
+      <p className="relative mt-5 max-w-[760px] font-semibold leading-[1.02] tracking-[-0.04em] text-white [text-wrap:balance]" style={{ fontSize: narrow ? 34 : 54, opacity: title, transform: `translateY(${(1 - title) * 14}px)` }}>
+        {WALK_ONSCREEN.end}
+      </p>
+      <ul className={`relative mt-7 grid gap-x-4 gap-y-3 ${narrow ? "grid-cols-4" : "grid-cols-8"}`}>
+        {AGENTS.map((a, i) => {
+          const r = walkEase(t, 66300 + i * 140, 66800 + i * 140);
+          return (
+            <li key={a.role} className="flex w-[72px] flex-col items-center gap-1.5" style={{ opacity: r, transform: `translateY(${(1 - r) * 10}px)` }}>
+              <AgentIcon role={a.role} size={narrow ? 30 : 36} />
+              <span className="text-[10px] leading-tight text-white/65">{a.name.replace(/ Agent$/, "")}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="relative mt-8 flex flex-col items-center" style={{ opacity: cta, transform: `scale(${0.96 + 0.04 * cta})` }}>
+        <span className="inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[17px] font-semibold text-white" style={{ boxShadow: `0 0 48px rgba(121,82,255,${glow}), 0 18px 40px -16px rgba(53,108,255,0.6)` }}>
+          {WALK_ONSCREEN.cta} <span aria-hidden>→</span>
+        </span>
+        <span className="mt-3 text-[12px] text-white/60">{WALK_ONSCREEN.ctaNote}</span>
       </div>
     </div>
   );
 }
 
-/** The scene's title as it starts: "02 · Your business". */
+/** The scene's name as it starts: "02 · MAIRO reads your business". */
 function SceneTitle({ t, narrow }: { t: number; narrow: boolean }) {
   const scene = walkSceneAt(t);
   const n = WALK_SCENES.indexOf(scene);
-  if (scene.id === "intro" || scene.id === "ending") return null;
-  const o = reveal(t, scene.start + 200, scene.start + 600) * (1 - reveal(t, scene.start + 2600, scene.start + 3000));
+  if (scene.id === "intro" || scene.id === "ready") return null;
+  const o = walkEase(t, scene.start + 200, scene.start + 600) * (1 - walkEase(t, scene.start + 2800, scene.start + 3200));
   if (o <= 0.01) return null;
   return (
-    <p className="absolute right-3 top-3 z-20 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white" style={{ opacity: o }}>
-      <span className="text-[#a78bfa]">{String(n).padStart(2, "0")}</span> · {narrow ? WALK_CHAPTERS[n].label : scene.label}
+    <p className="absolute right-3 top-3 z-40 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white" style={{ opacity: o }}>
+      <span className="text-[#a78bfa]">{String(n + 1).padStart(2, "0")}</span> · {narrow ? WALK_CHAPTERS[n].label : scene.label}
     </p>
   );
 }
 
-export function WalkthroughStage({ ex, t: demoT, layout, showCaption = true }: { ex: Example; t: number; layout: Layout; showCaption?: boolean }) {
-  const b = walkBoxes(demoT, layout);
-  // The product screens run on their own clock; the intro, ending, titles and captions on the demo's.
-  const t = innerTime(demoT);
+export function WalkthroughStage({ t, layout, showCaption = true, onMeasured }: { t: number; layout: WalkLayout; showCaption?: boolean; onMeasured?: (id: WalkChapterId, missing: string[], found: string[]) => void }) {
+  const { w, h } = WALK_STAGE[layout];
   const narrow = layout === "narrow";
-  const { w, h } = STAGE[layout];
-  const others = [0, 1, 2].filter((i) => i !== ex.selected);
-  const hook = editedHookAt(ex, t);
-  const feedMix = reveal(t, 34000, 34800);
-  const cap = walkCaptionAt(demoT);
-  const capO = reveal(demoT, cap.start, cap.start + 300) * (1 - reveal(demoT, cap.end - 200, cap.end));
-  // A slow push-in across each product scene.
-  const scene = walkSceneAt(demoT);
-  const push = 1 + 0.03 * reveal(demoT, scene.start, scene.end);
+  const cap = walkCaptionAt(t);
+  const capO = walkEase(t, cap.start, cap.start + 300) * (1 - walkEase(t, cap.end - 200, cap.end));
+  // Only the scenes near t are drawn.
+  const live = WALK_SCENES.filter((s) => s.id !== "ready" && t >= s.start - 600 && t < s.end + 600);
   return (
-    <div className="relative overflow-hidden" style={{ width: w, height: h }}>
-      <div className="absolute inset-0" style={{ transform: `scale(${push})`, transformOrigin: "50% 45%" }}>
-      {/* Map the walkthrough's clock onto the shared pieces' own timings. */}
-      <Layer b={b.browser}><Browser ex={ex} t={t} narrow={narrow} marks={{ start: 8600, end: 16000 }} /></Layer>
-      <Layer b={b.input}><InputPill ex={ex} t={t} /></Layer>
-      <Layer b={b.goal}><GoalPicker t={t} /></Layer>
-      <Layer b={b.facts}><FactsPanel ex={ex} t={t} /></Layer>
-      <Layer b={b.plan}><PlanCard ex={ex} t={t} narrow={narrow} /></Layer>
-      <Layer b={b.c0}><ConceptCard ex={ex} i={others[0]} t={t} selected={false} /></Layer>
-      <Layer b={b.c2}><ConceptCard ex={ex} i={others[1]} t={t} selected={false} /></Layer>
-      <Layer b={b.c1} style={{ borderRadius: 18 }}>
-        <div className="absolute inset-0" style={{ opacity: 1 - feedMix }}>
-          <ConceptCard ex={ex} i={ex.selected} t={t} selected ringAt={30000} hook={hook} />
-          {t >= 28400 && t < 31000 && <span className="absolute bottom-12 left-3 rounded-full bg-[#7c5cff] px-2 py-0.5 text-[10px] font-semibold text-white">Recommended first test</span>}
-        </div>
-        {feedMix > 0.01 && <div className="absolute inset-0" style={{ opacity: feedMix }}><FeedPreview ex={ex} hook={hook} /></div>}
-      </Layer>
-      <Layer b={b.editor}><HookEditor ex={ex} t={t} /></Layer>
-      <Layer b={b.story}><StoryPreview ex={ex} hook={hook} /></Layer>
-      <Layer b={b.readiness}><ReadinessPanel ex={ex} t={t} compact={narrow} /></Layer>
-      <Layer b={b.review}><Review ex={ex} t={t} compact={narrow} pressAt={46000} /></Layer>
-      <Layer b={b.dashboard}><Dashboard ex={ex} t={t} narrow={narrow} times={{ metrics: 50000, lead: 52200, move: 55200, next: 57200 }} /></Layer>
-      </div>
-      <Intro ex={ex} t={demoT} narrow={narrow} />
-      <Ending ex={ex} t={demoT} narrow={narrow} />
-      <SceneTitle t={demoT} narrow={narrow} />
+    <div className="relative overflow-hidden text-left" style={{ width: w, height: h, background: "#07080d", backgroundImage: "var(--mairo-atmosphere)" }}>
+      <DemoContext.Provider value>
+        {live.map((s) => (
+          <SceneLayer key={`${s.id}-${layout}`} id={s.id} t={t} layout={layout} onMeasured={onMeasured} />
+        ))}
+      </DemoContext.Provider>
+      <TitleCard t={t} narrow={narrow} />
+      <EndScreen t={t} narrow={narrow} />
+      <SceneTitle t={t} narrow={narrow} />
       {showCaption && (
-        <p aria-hidden className={`pointer-events-none absolute bottom-3 left-4 right-4 z-40 text-center font-medium leading-snug text-white ${narrow ? "text-[12px]" : "text-[13px]"}`} style={{ opacity: capO }}>
-          <span className="box-decoration-clone rounded-md bg-black/65 px-2.5 py-1">{cap.text}</span>
+        <p aria-hidden className={`pointer-events-none absolute bottom-3 left-4 right-4 z-40 text-center font-medium leading-snug text-white ${narrow ? "text-[12.5px]" : "text-[14px]"}`} style={{ opacity: capO }}>
+          <span className="box-decoration-clone rounded-md bg-black/70 px-2.5 py-1">{cap.text}</span>
         </p>
       )}
     </div>

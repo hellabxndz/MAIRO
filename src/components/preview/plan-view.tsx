@@ -69,7 +69,7 @@ export function PlanView({
   const daily = p.allocation.daily;
 
   return (
-    <article aria-labelledby="pv-title" className="mx-auto max-w-[1240px]">
+    <article aria-labelledby="pv-title" className="@container/plan mx-auto max-w-[1240px]">
       {/* The console's header, for this business. */}
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-2">
@@ -98,8 +98,8 @@ export function PlanView({
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
-        <nav aria-label="Plan sections" className="hidden lg:block">
+      <div className="grid gap-6 @4xl/plan:grid-cols-[200px_minmax(0,1fr)]">
+        <nav aria-label="Plan sections" className="hidden @4xl/plan:block">
           <ol className="sticky top-24 space-y-0.5 border-l pl-3" style={{ borderColor: "var(--mairo-line)" }}>
             {NAV.map(([id, label]) => (
               <li key={id}>
@@ -111,9 +111,9 @@ export function PlanView({
           </ol>
         </nav>
 
-        <div className="min-w-0 space-y-4 sm:space-y-5">
+        <div className="min-w-0 space-y-4 @xl/plan:space-y-5">
           {/* At a glance — the plan as four numbers-free headline facts. */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 @4xl/plan:grid-cols-4">
             <Glance label="Objective" value={p.plan.optimiseFor} />
             <Glance label="Where" value="Facebook & Instagram" />
             <Glance label="Daily budget" value={`$${daily}`} note={p.allocation.fromOwner ? "From your monthly figure" : "Example — you choose"} />
@@ -123,7 +123,7 @@ export function PlanView({
           <Panel id="pl-objective" title="Recommended objective" style={{ scrollMarginTop: 96 }}>
             <p className="text-[19px] font-semibold text-white">{p.plan.objective}</p>
             <p className="mt-2 max-w-[760px] text-[13.5px] leading-relaxed text-white/70">{p.reasons[0]?.text}</p>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+            <dl className="mt-4 grid gap-3 @md:grid-cols-2">
               <Row label="People go to" value={p.plan.destination} />
               <Row label="Judged on" value={p.firstCampaign.judgedOn} />
             </dl>
@@ -139,7 +139,7 @@ export function PlanView({
                 </li>
               ))}
             </ul>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 @md:grid-cols-2">
               <Note title="Audience">{p.plan.audience}. {p.reasons[1]?.text}</Note>
               <Note title="Placements">{p.strategy.placements}</Note>
             </div>
@@ -157,7 +157,7 @@ export function PlanView({
             <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-white/[0.06]" role="img" aria-label="All of the budget goes to the first test for two weeks">
               <span className="h-full w-full bg-[image:var(--mairo-ramp)]" />
             </div>
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-4 grid gap-3 @md:grid-cols-2">
               {p.allocation.parts.map((part) => (
                 <li key={part.label} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--mairo-line)" }}>
                   <p className="flex items-baseline justify-between gap-2 text-[13.5px] font-medium text-white">
@@ -175,7 +175,7 @@ export function PlanView({
             <p className="mt-2 text-[12.5px] text-faint">
               These are concepts — the words and a direction for the picture — not finished ads. Pictures and video are made after you sign up, from your own photos or with MAIRO&rsquo;s image tools on a paid plan, and you approve every ad before it runs.
             </p>
-            <ol className="mt-5 grid gap-4 xl:grid-cols-3">
+            <ol className="mt-5 grid gap-4 @6xl/plan:grid-cols-3">
               {concepts.map((c, i) => (
                 <ConceptCard
                   key={c.angle}
@@ -245,7 +245,7 @@ export function PlanView({
 
           <Panel id="pl-first" title="Recommended first campaign" tone="lit" style={{ scrollMarginTop: 96 }}>
             <p className="text-[19px] font-semibold text-white">{p.firstCampaign.name}</p>
-            <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            <dl className="mt-3 grid gap-3 @md:grid-cols-2">
               <Row label="Objective" value={p.firstCampaign.objective} />
               <Row label="Budget" value={p.firstCampaign.budget} />
               <Row label="Length of the test" value={p.firstCampaign.length} />
@@ -265,7 +265,7 @@ export function PlanView({
           </Panel>
 
           <Panel id="pl-why" title="Why MAIRO recommends this" style={{ scrollMarginTop: 96 }}>
-            <dl className="grid gap-3 sm:grid-cols-2">
+            <dl className="grid gap-3 @md:grid-cols-2">
               {p.reasons.map((r) => (
                 <div key={r.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
                   <dt className="text-[13.5px] font-semibold text-white">{r.title}</dt>
@@ -295,7 +295,7 @@ export function PlanView({
               </>
             ) : (
               <>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 @xl:grid-cols-2">
                   <div className="rounded-2xl border border-violet-400/35 bg-violet-500/[0.07] p-4">
                     <Link href={signUpHref} onClick={() => onSave(keptHooks())} className={`${primaryAction} w-full`}>
                       Approve My Plan
@@ -321,7 +321,7 @@ export function PlanView({
                 </div>
               </>
             )}
-            <dl className="mt-5 grid gap-3 border-t pt-4 text-[12.5px] leading-relaxed sm:grid-cols-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <dl className="mt-5 grid gap-3 border-t pt-4 text-[12.5px] leading-relaxed @lg:grid-cols-3" style={{ borderColor: "var(--mairo-line)" }}>
               <div>
                 <dt className="font-medium text-white">Free</dt>
                 <dd className="text-white/60">This plan, its concepts and the website check.</dd>
@@ -372,7 +372,10 @@ function Note({ title, children }: { title: string; children: ReactNode }) {
 
 const SHOW: Placement[] = ["fb-feed", "ig-feed", "stories"];
 
-function ConceptCard({
+/** The walkthrough's control over one concept card: which placement shows, whether the headline is being edited and what's typed. */
+export type ConceptDemo = { placement: Placement | null; editing: boolean; draft: string; pressed: string | null };
+
+export function ConceptCard({
   index,
   concept: c,
   words,
@@ -385,6 +388,7 @@ function ConceptCard({
   onEdit,
   onSwap,
   onSave,
+  demo,
 }: {
   index: number;
   concept: Direction;
@@ -398,10 +402,16 @@ function ConceptCard({
   onEdit: (e: Edit) => void;
   onSwap: () => void;
   onSave: () => void;
+  demo?: ConceptDemo;
 }) {
-  const [placement, setPlacement] = useState<Placement | null>(index === 0 ? "fb-feed" : null);
-  const [editing, setEditing] = useState(false);
-  const [headline, setHeadline] = useState(words.headline);
+  const [placementState, setPlacement] = useState<Placement | null>(index === 0 ? "fb-feed" : null);
+  const [editingState, setEditing] = useState(false);
+  const [headlineState, setHeadline] = useState(words.headline);
+  const placement = demo ? demo.placement : placementState;
+  const editing = demo ? demo.editing : editingState;
+  const headline = demo ? demo.draft : headlineState;
+  // A button the walkthrough's cursor is pressing.
+  const press = (label: string) => (demo?.pressed === label ? { transform: "scale(0.95)", filter: "brightness(1.2)" } : undefined);
   const [refining, setRefining] = useState(false);
   const [ask, setAsk] = useState("");
   const [busy, setBusy] = useState(false);
@@ -450,6 +460,7 @@ function ConceptCard({
               <button
                 type="button"
                 className="shrink-0 rounded-lg bg-white/[0.08] px-3 text-[12.5px] text-white hover:bg-white/[0.12]"
+                style={press("Done")}
                 onClick={() => {
                   onEdit({ headline: headline.trim() || words.headline });
                   setEditing(false);
@@ -490,7 +501,7 @@ function ConceptCard({
       <div className="mt-4">
         <div role="group" aria-label="Preview placements" className="flex flex-wrap gap-1.5">
           {SHOW.map((pl) => (
-            <button key={pl} type="button" aria-pressed={placement === pl} onClick={() => setPlacement(placement === pl ? null : pl)} className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${placement === pl ? "border-violet-400/60 bg-violet-500/15 text-white" : "border-white/10 text-white/65 hover:text-white"}`}>
+            <button key={pl} type="button" aria-pressed={placement === pl} onClick={() => setPlacement(placement === pl ? null : pl)} style={press(pl)} className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${placement === pl ? "border-violet-400/60 bg-violet-500/15 text-white" : "border-white/10 text-white/65 hover:text-white"}`}>
               {pl === "fb-feed" ? "Facebook feed" : pl === "ig-feed" ? "Instagram feed" : "Instagram Story"}
             </button>
           ))}
@@ -508,10 +519,10 @@ function ConceptCard({
       {!isExample && (
         <>
           <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3.5" style={{ borderColor: "var(--mairo-line)" }}>
-            <button type="button" onClick={() => setRefining((v) => !v)} className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1.5 text-[12px] font-semibold text-white">
+            <button type="button" onClick={() => setRefining((v) => !v)} style={press("Refine")} className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1.5 text-[12px] font-semibold text-white">
               Refine with MAIRO
             </button>
-            <button type="button" onClick={() => setEditing(true)} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
+            <button type="button" onClick={() => setEditing(true)} style={press("Edit headline")} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
               Edit headline
             </button>
             {canSwap && (
@@ -519,7 +530,7 @@ function ConceptCard({
                 Change direction
               </button>
             )}
-            <button type="button" onClick={onSave} aria-pressed={saved} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
+            <button type="button" onClick={onSave} aria-pressed={saved} style={press("Save concept")} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
               {saved ? "Saved ✓" : "Save concept"}
             </button>
           </div>
@@ -610,7 +621,7 @@ function RefinePanel({ facts, onRefine, onEdit }: { facts: PreviewFacts; onRefin
   return (
     <Panel id="pl-refine" title="Refine your plan with MAIRO" style={{ scrollMarginTop: 96 }}>
       <p className="-mt-1 max-w-[760px] text-[13.5px] leading-relaxed text-white/70">Change the objective, the budget, who it&rsquo;s for or a real offer, and MAIRO rebuilds the plan from your new answers. To change a concept&rsquo;s words, use Refine with MAIRO on the concept.</p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 @md:grid-cols-2">
         <div>
           <label htmlFor="rf-goal" className="mb-1 block text-[12px] text-muted">
             Objective

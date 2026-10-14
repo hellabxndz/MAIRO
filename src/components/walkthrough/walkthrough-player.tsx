@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
-import { EXAMPLES } from "@/lib/demo/examples";
-import { STAGE, type Layout } from "@/lib/demo/timeline";
-import { WALK_CHAPTERS, WALK_DURATION, walkCaptionAt, walkChapterStart, walkRestingTime, walkSceneAt, type WalkChapterId } from "@/lib/demo/walkthrough";
+import { WALK_CHAPTERS, WALK_DURATION, WALK_STAGE, walkCaptionAt, walkChapterStart, walkRestingTime, walkSceneAt, type WalkChapterId, type WalkLayout } from "@/lib/demo/walkthrough";
 import type { RenderedMedia } from "@/lib/demo/media";
 import { track } from "@/lib/analytics/track";
 import { WalkthroughStage } from "./walkthrough-stage";
@@ -31,11 +29,10 @@ function subscribeReduced(cb: () => void) {
 const fmt = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, "0")}`;
 
 export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkthrough" | "captions"> }) {
-  const ex = EXAMPLES.service;
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [captions, setCaptions] = useState(true);
-  const [layout, setLayout] = useState<Layout>("wide");
+  const [layout, setLayout] = useState<WalkLayout>("wide");
   const [scale, setScale] = useState(0);
   const [visible, setVisible] = useState(false);
   const [asVideo, setAsVideo] = useState(false);
@@ -51,9 +48,9 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
     if (!el) return;
     const mq = window.matchMedia(NARROW_QUERY);
     const fit = () => {
-      const l: Layout = mq.matches ? "narrow" : "wide";
+      const l: WalkLayout = mq.matches ? "narrow" : "wide";
       setLayout(l);
-      setScale(Math.min(1.4, el.clientWidth / STAGE[l].w));
+      setScale(Math.min(1.4, el.clientWidth / WALK_STAGE[l].w));
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -155,7 +152,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
   const shown = reducedMotion && !touched ? walkRestingTime("intro") : t;
   const scene = walkSceneAt(shown);
   const caption = walkCaptionAt(shown);
-  const stage = STAGE[layout];
+  const stage = WALK_STAGE[layout];
   const clip = media.walkthrough[layout] ?? media.walkthrough.wide;
   const hasVideo = Boolean(clip && media.captions.walkthrough);
   const narrated = Boolean(clip?.audio);
@@ -165,7 +162,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
       <div className="relative">
         {!asVideo && <p className="absolute left-3 top-3 z-50 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">Product demo — sample data</p>}
         {asVideo && clip ? (
-          <video controls playsInline muted preload="none" poster={clip.poster} className="aspect-[760/560] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[360/600]" aria-label={narrated ? "The demo as a video, with narration (starts muted) and captions" : "The demo as a video, without sound, with captions"}>
+          <video controls playsInline muted preload="none" poster={clip.poster} className="aspect-[16/9] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[9/16]" aria-label={narrated ? "The demo as a video, with narration (starts muted) and captions" : "The demo as a video, without sound, with captions"}>
             <source src={clip.mp4} type="video/mp4" />
             <track kind="captions" src={media.captions.walkthrough} srcLang="en" label="English" default />
           </video>
@@ -174,12 +171,12 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             ref={box}
             role="img"
             aria-label={`Demo on a sample business, chapter: ${scene.label}. ${caption.text}`}
-            className="relative aspect-[760/560] w-full overflow-hidden rounded-[22px] border border-white/10 max-[591px]:aspect-[360/600]"
+            className="relative aspect-[16/9] w-full overflow-hidden rounded-[22px] border border-white/10 max-[591px]:aspect-[9/16]"
             style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(121,82,255,0.2), transparent 70%), #07080D" }}
           >
             {scale > 0 && (
               <div aria-hidden className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})`, width: stage.w, height: stage.h }}>
-                <WalkthroughStage ex={ex} t={shown} layout={layout} showCaption={captions} />
+                <WalkthroughStage t={shown} layout={layout} showCaption={captions} />
               </div>
             )}
           </div>

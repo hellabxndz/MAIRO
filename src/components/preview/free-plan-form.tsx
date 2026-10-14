@@ -10,7 +10,8 @@ import { BUSINESS_TYPES } from "@/lib/onboarding/business-types";
 //
 // One component for the homepage hero and the /preview page. Without an
 // onStart handler it's a plain GET form to /preview, so it works before
-// JavaScript loads.
+// JavaScript loads. The product walkthrough draws this same form, driven by
+// its clock through `demo` (and inert there).
 
 export type FreePlanStart = {
   website: string | null;
@@ -27,6 +28,9 @@ const GOALS = [
   { value: "bookings", label: "More bookings" },
 ] as const;
 
+/** The walkthrough's control: what's typed and chosen at this moment of the demo. */
+export type FreePlanDemo = { website: string; goal: FreePlanStart["goal"]; focus: "website" | "goal" | null; pressed: boolean };
+
 const field =
   "block min-h-[46px] w-full rounded-xl border border-white/12 bg-[#0e1122]/80 px-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
 
@@ -35,11 +39,13 @@ export function FreePlanForm({
   initial,
   compact = false,
   idPrefix = "fp",
+  demo,
 }: {
   onStart?: (s: FreePlanStart) => void;
   initial?: Partial<FreePlanStart>;
   compact?: boolean;
   idPrefix?: string;
+  demo?: FreePlanDemo;
 }) {
   const [mode, setMode] = useState<"website" | "describe">(initial?.describe && !initial.website ? "describe" : "website");
   const [website, setWebsite] = useState(initial?.website ?? "");
@@ -50,11 +56,17 @@ export function FreePlanForm({
   const [more, setMore] = useState(!compact || Boolean(initial?.goal || initial?.type || initial?.budget));
   const [problem, setProblem] = useState<string | null>(null);
   const id = (k: string) => `${idPrefix}-${k}`;
+  const shownMode = demo ? "website" : mode;
+  const shownWebsite = demo ? demo.website : website;
+  const shownGoal = demo ? demo.goal : goal;
+  const shownMore = demo ? true : more;
+  const lit = (k: "website" | "goal") => (demo?.focus === k ? " border-violet-400/70 ring-2 ring-violet-400/25" : "");
 
   return (
     <form
       action="/preview"
       method="get"
+      inert={demo ? true : undefined}
       onSubmit={(e) => {
         const w = mode === "website" ? website.trim() : "";
         const d = mode === "describe" ? describe.trim() : "";
@@ -77,12 +89,12 @@ export function FreePlanForm({
             key={m}
             type="button"
             role="tab"
-            aria-selected={mode === m}
+            aria-selected={shownMode === m}
             onClick={() => {
               setMode(m);
               setProblem(null);
             }}
-            className={`flex-1 rounded-full px-3 py-2 text-[13px] font-medium transition ${mode === m ? "bg-white/[0.09] text-white" : "text-white/55 hover:text-white"}`}
+            className={`flex-1 rounded-full px-3 py-2 text-[13px] font-medium transition ${shownMode === m ? "bg-white/[0.09] text-white" : "text-white/55 hover:text-white"}`}
           >
             {m === "website" ? "I have a website" : "Describe my business"}
           </button>
@@ -90,12 +102,12 @@ export function FreePlanForm({
       </div>
 
       <div className="px-1.5 pb-1.5 pt-3">
-        {mode === "website" ? (
+        {shownMode === "website" ? (
           <>
             <label htmlFor={id("website")} className="sr-only">
               Your business website
             </label>
-            <input id={id("website")} name="website" value={website} onChange={(e) => setWebsite(e.target.value)} inputMode="url" autoComplete="url" maxLength={300} placeholder="yourbusiness.com" className={field} />
+            <input id={id("website")} name="website" value={shownWebsite} onChange={(e) => setWebsite(e.target.value)} inputMode="url" autoComplete="url" maxLength={300} placeholder="yourbusiness.com" className={field + lit("website")} />
           </>
         ) : (
           <>
@@ -115,13 +127,13 @@ export function FreePlanForm({
           </>
         )}
 
-        {more ? (
+        {shownMore ? (
           <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
             <div>
               <label htmlFor={id("goal")} className="mb-1 block text-[11.5px] font-medium text-white/60">
                 Your objective
               </label>
-              <select id={id("goal")} name="goal" value={goal} onChange={(e) => setGoal(e.target.value as FreePlanStart["goal"])} className={`${field} text-[14px]`}>
+              <select id={id("goal")} name="goal" value={shownGoal} onChange={(e) => setGoal(e.target.value as FreePlanStart["goal"])} className={`${field} text-[14px]${lit("goal")}`}>
                 {GOALS.map((g) => (
                   <option key={g.value} value={g.value} className="bg-[#111426]">
                     {g.label}
@@ -171,6 +183,7 @@ export function FreePlanForm({
         <button
           type="submit"
           className="mt-3 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 focus-visible:outline-offset-4"
+          style={demo?.pressed ? { transform: "scale(0.97)", filter: "brightness(1.15)" } : undefined}
         >
           See Your Free Plan <span aria-hidden>→</span>
         </button>

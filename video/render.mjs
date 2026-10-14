@@ -42,12 +42,14 @@ function loadChromium() {
 }
 
 const STAGE = { wide: { w: 760, h: 560 }, narrow: { w: 360, h: 600 } };
+// The walkthrough is 16:9 and 9:16 (WALK_STAGE in src/lib/demo/walkthrough.ts).
+const WALK_STAGE = { wide: { w: 960, h: 540 }, narrow: { w: 360, h: 640 } };
 const jobs = [];
 if (ONLY === "all" || ONLY === "story") {
   for (const type of ["shop", "service", "brands"]) for (const layout of ["wide", "narrow"]) jobs.push({ clip: "story", type, layout, ms: 24000, posterAt: 1200, name: `story-${type}-${layout}` });
 }
 if (ONLY === "all" || ONLY === "walkthrough") {
-  for (const layout of ["wide", "narrow"]) jobs.push({ clip: "walkthrough", type: "service", layout, ms: 73000, posterAt: 6800, name: `walkthrough-${layout}` });
+  for (const layout of ["wide", "narrow"]) jobs.push({ clip: "walkthrough", type: "service", layout, ms: 73000, posterAt: 1900, name: `walkthrough-${layout}` });
 }
 
 function run(cmd, argv, input) {
@@ -62,7 +64,7 @@ function run(cmd, argv, input) {
 }
 
 async function render(browser, job) {
-  const { w, h } = STAGE[job.layout];
+  const { w, h } = (job.clip === "walkthrough" ? WALK_STAGE : STAGE)[job.layout];
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: SCALE });
   await page.goto(`${BASE}/demo/render?clip=${job.clip}&type=${job.type}&layout=${job.layout}`, { waitUntil: "networkidle", timeout: 120000 });
   await page.waitForFunction(() => document.documentElement.dataset.renderReady === "1", null, { timeout: 60000 });
