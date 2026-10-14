@@ -69,6 +69,7 @@
     "check:help": "tsx scripts/check-help.ts",
     "check:solutions": "tsx scripts/check-solutions.ts",
     "check:funnel": "tsx scripts/check-funnel.ts",
+    "check:pause-everything-db": "tsx scripts/check-pause-everything-db.ts",
     "check:hardening-db": "tsx scripts/check-hardening-db.ts",
     "check:domain": "tsx scripts/check-domain.ts",
     "check:trust-db": "tsx scripts/check-trust-db.ts",

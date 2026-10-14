@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
-import { monthlyCapReached, pauseMairoCampaign, resumeMairoCampaign } from "@/lib/protection/run";
+import { monthlyCapReached, pauseEverything, pauseMairoCampaign, resumeMairoCampaign, type PauseEverythingResult } from "@/lib/protection/run";
 import { deniedFor } from "@/lib/members/authorize";
 
 // The customer's own controls: their spending limits, and pausing or resuming
@@ -77,6 +77,24 @@ export async function pauseCampaignAction(mairoCampaignId: string): Promise<{ er
   revalidatePath(`/dashboard/campaigns/${mairoCampaignId}`);
   revalidatePath("/dashboard/campaigns");
   return result.ok ? undefined : { error: result.error };
+}
+
+/**
+ * The emergency stop: pause every campaign that's running or waiting to run.
+ * Pausing is never gated by billing — only by the role allowed to change
+ * campaigns.
+ */
+export async function pauseEverythingAction(): Promise<{ error?: string; results?: PauseEverythingResult[] }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
+  const organizationId = await scope();
+  if (!organizationId) return { error: "Not signed in." };
+  const results = await pauseEverything(organizationId);
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard");
+  for (const r of results) revalidatePath(`/dashboard/campaigns/${r.id}`);
+  return { results };
 }
 
 export async function resumeCampaignAction(mairoCampaignId: string): Promise<{ error?: string } | undefined> {

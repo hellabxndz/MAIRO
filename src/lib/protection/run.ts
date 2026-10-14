@@ -53,6 +53,44 @@ export async function pauseMairoCampaign(
   return { ok: false, error: errors.join(" ") };
 }
 
+export type PauseEverythingResult = { id: string; name: string; ok: boolean; error?: string };
+
+/** MAIRO campaigns that are running, or waiting on Meta to run, in an ad account. */
+export async function runningOrWaiting(organizationId: string): Promise<{ id: string; name: string }[]> {
+  return db.mairoCampaign.findMany({
+    where: { organizationId, status: { not: "ARCHIVED" }, platformCampaigns: { some: { externalCampaignId: { not: null }, status: { in: ["ACTIVE", "PENDING_REVIEW"] } } } },
+    select: { id: true, name: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/**
+ * "Pause everything": every campaign that's running or waiting to run, paused
+ * on Meta, one by one through the same path as a single pause — so each is
+ * reported paused only once Meta accepted it, and one refusal doesn't stop
+ * the rest. Automatic launches are held first, so a campaign Meta approves
+ * while this runs (or afterwards) doesn't switch itself on; launching again
+ * takes a person's approval. Never raises, starts or changes anything else.
+ */
+export async function pauseEverything(organizationId: string): Promise<PauseEverythingResult[]> {
+  await db.organization.update({ where: { id: organizationId }, data: { autoLaunchHeld: true } });
+  const results: PauseEverythingResult[] = [];
+  for (const c of await runningOrWaiting(organizationId)) {
+    const r = await pauseMairoCampaign(organizationId, c.id);
+    results.push(r.ok ? { id: c.id, name: c.name, ok: true } : { id: c.id, name: c.name, ok: false, error: r.error });
+    await db.protectionEvent.create({
+      data: {
+        organizationId,
+        mairoCampaignId: c.id,
+        kind: "PAUSED_BY_YOU",
+        action: r.ok ? "PAUSED" : "NOTIFIED",
+        message: r.ok ? `You paused everything; “${c.name}” is paused.` : `You asked to pause everything, and a network refused “${c.name}”: ${r.error}`,
+      },
+    });
+  }
+  return results;
+}
+
 /** Switches a paused campaign back on, everywhere it was paused. */
 export async function resumeMairoCampaign(
   organizationId: string,

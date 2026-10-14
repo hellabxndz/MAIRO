@@ -313,7 +313,7 @@ export const MONEY_AND_CONTROL: { key: string; title: string; body: string }[] =
   {
     key: "pause",
     title: "How to pause",
-    body: "Pause any campaign from Campaigns in MAIRO — that always works, even without a subscription — or in Meta Ads Manager. Spend Protection can pause for you if you set it to.",
+    body: "Pause any campaign from Campaigns in MAIRO, or every one at once with Pause everything — that always works, even without a subscription — or in Meta Ads Manager. Spend Protection can pause for you if you set it to.",
   },
   {
     key: "ending",

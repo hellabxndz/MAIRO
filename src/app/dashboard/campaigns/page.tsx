@@ -25,6 +25,7 @@ import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { viewMode } from "@/lib/view-mode";
 import { showsEnquiries } from "@/lib/leads/fields";
 import { CAMPAIGN_TABS, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
+import { PauseEverything } from "./pause-everything";
 
 // Each row's figures are live calls to Meta. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget.
@@ -147,6 +148,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   const now = new Date();
   const buckets = new Map<CampaignTab, typeof campaigns>(CAMPAIGN_TABS.map((t) => [t.key, []]));
   for (const c of campaigns) buckets.get(campaignTab(c, now))!.push(c);
+  // Running, or waiting on Meta to run: what "Pause everything" would pause
+  // (the same test as protection/run.ts runningOrWaiting).
+  const runningCount = campaigns.filter((c) => c.status !== "ARCHIVED" && c.platformCampaigns.some((p) => p.externalCampaignId && (p.status === "ACTIVE" || p.status === "PENDING_REVIEW"))).length;
   const requested = (await searchParams).tab;
   // "On Meta" — the campaigns already on the connected ad account that MAIRO
   // didn't make — once there is an account to read. The list itself is read
@@ -168,6 +172,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         description="Your ads, at a glance. Open one for its results, creatives, audience, budget and history."
         action={
           <div className="flex flex-wrap items-center gap-2">
+            {runningCount > 0 && <PauseEverything count={runningCount} />}
             {showsEnquiries({ hasForm: Boolean(leadFormRow) }) && (
               <Link href="/dashboard/leads" className="inline-flex min-h-[38px] items-center rounded-full border border-[color:var(--mairo-line)] px-4 text-[13px] text-white/85 hover:text-white">Enquiries</Link>
             )}

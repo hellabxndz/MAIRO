@@ -24,7 +24,7 @@ or a public page makes a claim this inventory can't back.
 | Plan | Setup in nine phases, saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
 | Campaigns | Launch only after the owner approves | Working | `/dashboard/launch`, `/plan/activate` | — | `check:payment-gate`, `check:decision-claim`, `check:readiness` |
-| Campaigns | Pause from MAIRO | Working | `/dashboard/campaigns` | — | `check:trust-db`, `check:payment-gate` |
+| Campaigns | Pause from MAIRO | Working | `/dashboard/campaigns` | — | `check:trust-db`, `check:payment-gate`, `check:pause-everything-db` |
 | Campaigns | Lead forms | Working | `/dashboard/leads`, `/f/[slug]` | — | `check:leads`, `check:page-token` |
 | Campaigns | Advertise an existing Facebook post | Partially working | `/dashboard/create` | A live run of a post as an ad | `check:page-token` |
 | Campaigns | Scheduled starts | Partially working | `/dashboard/create` | A more frequent cron (Vercel Pro) for on-time starts | `check:schedule` |
@@ -194,17 +194,17 @@ A campaign can't spend until a person approves the launch with the budget shown;
 
 *Campaigns* · `pause`
 
-Pauses a campaign on Meta and shows it as paused only once Meta confirms. Never blocked by billing.
+Pauses a campaign on Meta and shows it as paused only once Meta confirms. Pause everything, on Campaigns, does the same for every campaign running or waiting on Meta at once, reports each one (paused, or Meta's refusal), and holds automatic launches so nothing switches itself back on. Never blocked by billing.
 
 **Routes:** `/dashboard/campaigns`
 
-**Verification:** Paused state shown only after Meta's confirmation.
+**Verification:** Paused state shown only after Meta's confirmation; Pause everything checked against a pretend Meta that refuses one campaign (the rest are paused, the refused one is reported and left as it was, launches held, each outcome logged, role-gated not billing-gated). The single pause verified live; Pause everything not yet run against live Meta.
 
 **Verified live:** 10 October 2026: paused from MAIRO, confirmed Off in Ads Manager.
 
-**Evidence:** `src/lib/ad-platforms/registry.ts`, `src/lib/billing/running-campaigns.ts`
+**Evidence:** `src/lib/ad-platforms/registry.ts`, `src/lib/billing/running-campaigns.ts`, `src/lib/protection/run.ts#pauseEverything`, `src/app/dashboard/campaigns/pause-everything.tsx`
 
-**Checks:** `check:trust-db`, `check:payment-gate`
+**Checks:** `check:trust-db`, `check:payment-gate`, `check:pause-everything-db`
 
 **Public claim:** “Pause any campaign from MAIRO, with or without a subscription.”
 
