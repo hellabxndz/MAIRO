@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { monthlyCapReached, pauseMairoCampaign, resumeMairoCampaign } from "@/lib/protection/run";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The customer's own controls: their spending limits, and pausing or resuming
 // a campaign by hand. Every query is scoped to the signed-in organization.
@@ -29,6 +30,9 @@ const schema = z.object({
 });
 
 export async function saveSpendProtectionAction(_prev: ProtectionFormState, formData: FormData): Promise<ProtectionFormState> {
+  // Role check: budget.change (lib/members/roles.ts).
+  const denied = await deniedFor("budget.change");
+  if (denied) return { error: denied };
   const organizationId = await scope();
   if (!organizationId) return { error: "Not signed in." };
   const parsed = schema.safeParse({
@@ -53,6 +57,9 @@ export async function saveSpendProtectionAction(_prev: ProtectionFormState, form
 }
 
 export async function pauseCampaignAction(mairoCampaignId: string): Promise<{ error?: string } | undefined> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const organizationId = await scope();
   if (!organizationId) return { error: "Not signed in." };
   const owned = await db.mairoCampaign.findFirst({ where: { id: mairoCampaignId, organizationId }, select: { name: true } });
@@ -73,6 +80,9 @@ export async function pauseCampaignAction(mairoCampaignId: string): Promise<{ er
 }
 
 export async function resumeCampaignAction(mairoCampaignId: string): Promise<{ error?: string } | undefined> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { error: denied };
   const organizationId = await scope();
   if (!organizationId) return { error: "Not signed in." };
   // Switching delivery back on is paid execution; pausing never is.

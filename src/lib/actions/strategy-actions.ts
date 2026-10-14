@@ -45,6 +45,7 @@ import { executionBlock } from "@/lib/billing/execution";
 import { parseEconomics } from "@/lib/calc/assumptions";
 import { recordRun } from "@/lib/team/runs";
 import { cancelPlanLaunch, launchPlanCampaign, type CancelResult, type LaunchResult } from "@/lib/onboarding/launch";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What the free plan's review screen and the launch journey call.
 
@@ -81,6 +82,9 @@ async function purchaseTracking(organizationId: string): Promise<boolean> {
 // --- Building the plan -------------------------------------------------------------
 
 export async function readWebsiteForPlanAction(): Promise<{ ok: boolean; note: string | null }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, note: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, note: "Not signed in." };
   try {
@@ -93,6 +97,9 @@ export async function readWebsiteForPlanAction(): Promise<{ ok: boolean; note: s
 }
 
 export async function generatePlanAction(): Promise<{ ok: true } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await createStrategy(ctx.organizationId);
@@ -108,6 +115,9 @@ export async function generatePlanAction(): Promise<{ ok: true } | { ok: false; 
 const CREATIVE: SectionKey[] = ["creativeStrategy", "concepts", "hooks"];
 
 export async function askMairoAction(request: string, expectedVersion: number): Promise<PlanActionResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const text = request.trim().slice(0, 1000);
@@ -203,6 +213,9 @@ const editSchema = z.discriminatedUnion("section", [
 ]);
 
 export async function editPlanAction(raw: ManualEdit, expectedVersion: number): Promise<PlanActionResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const parsed = editSchema.safeParse(raw);
@@ -260,6 +273,9 @@ const patchSchema = z.object({
 });
 
 export async function acceptSuggestionAction(rawPatch: unknown, expectedVersion: number): Promise<PlanActionResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const patch = patchSchema.safeParse(rawPatch);
@@ -276,6 +292,9 @@ export async function acceptSuggestionAction(rawPatch: unknown, expectedVersion:
 
 /** Undoes the change that made `version`, as long as nothing came after it. */
 export async function undoChangeAction(version: number): Promise<PlanActionResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const loaded = await loadStrategy(ctx.organizationId);
@@ -298,6 +317,9 @@ export async function undoChangeAction(version: number): Promise<PlanActionResul
 
 /** Goes back to an earlier version from the history (as a new revision). */
 export async function restoreVersionAction(target: number, expectedVersion: number): Promise<PlanActionResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const loaded = await loadStrategy(ctx.organizationId);
@@ -321,6 +343,9 @@ export async function restoreVersionAction(target: number, expectedVersion: numb
 // --- Approving and moving on -------------------------------------------------------------
 
 export async function approvePlanNowAction(expectedVersion: number): Promise<{ ok: true } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await approve(ctx.organizationId, expectedVersion);
@@ -332,6 +357,8 @@ export async function approvePlanNowAction(expectedVersion: number): Promise<{ o
 
 /** "Get Started With MAIRO": subscription first, or straight on when there's nothing to pay. */
 export async function getStartedAction(): Promise<void> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  if (await deniedFor("campaign.edit")) return;
   const ctx = await context();
   if (!ctx) redirect("/sign-in");
   const row = await activateIfPaid(ctx.organizationId);
@@ -341,6 +368,8 @@ export async function getStartedAction(): Promise<void> {
 
 /** "Turn My Plan Into a Campaign": the approved plan as a Create draft. */
 export async function buildFromPlanAction(): Promise<void> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  if (await deniedFor("campaign.edit")) return;
   const ctx = await context();
   if (!ctx) redirect("/sign-in");
   const row = await activateIfPaid(ctx.organizationId);
@@ -352,6 +381,9 @@ export async function buildFromPlanAction(): Promise<void> {
 
 /** "Approve and launch" — see launchPlanCampaign. */
 export async function launchPlanCampaignAction(): Promise<LaunchResult> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await launchPlanCampaign(ctx.organizationId);
@@ -363,6 +395,9 @@ export async function launchPlanCampaignAction(): Promise<LaunchResult> {
 
 /** "Cancel the launch" — see cancelPlanLaunch. */
 export async function cancelPlanLaunchAction(): Promise<CancelResult> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await cancelPlanLaunch(ctx.organizationId);
@@ -384,6 +419,9 @@ export async function dismissWelcomeAction(): Promise<void> {
  * numbers the plan is measured against — never the plan itself.
  */
 export async function setPlanEconomicsAction(raw: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const economics = raw === null ? null : parseEconomics(raw);

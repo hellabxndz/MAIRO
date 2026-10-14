@@ -13,6 +13,7 @@ import { recommendGoal } from "@/lib/onboarding/goal";
 import { parseEconomics } from "@/lib/calc/assumptions";
 import { CORRECTABLE, businessSchema, goalDraftSchema, learnBusiness, saveBusinessStep, saveGoalDraft, type LearnResult } from "@/lib/onboarding/setup";
 import { changeBrain } from "@/lib/brain/store";
+import { deniedFor } from "@/lib/members/authorize";
 
 const intakeSchema = z.object({
   primaryGoal: z.enum(["LEADS", "SALES", "AWARENESS", "TRAFFIC", "APP_PROMOTION"]),
@@ -52,6 +53,9 @@ export async function completeOnboardingAction(
   _prevState: OnboardingState,
   formData: FormData
 ): Promise<OnboardingState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) {
     return { error: "You need to be signed in to finish onboarding." };
@@ -268,18 +272,27 @@ async function orgId(): Promise<string | null> {
 export type { Learned } from "@/lib/onboarding/setup";
 
 export async function saveBusinessStepAction(input: z.input<typeof businessSchema>): Promise<{ ok: true; website: string | null } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const organizationId = await orgId();
   if (!organizationId) return { ok: false, error: "You need to be signed in." };
   return saveBusinessStep(organizationId, input);
 }
 
 export async function learnBusinessAction(): Promise<LearnResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) throw new Error(denied);
   const organizationId = await orgId();
   if (!organizationId) return { ok: true, read: false, learned: [], unknown: [], pagesRead: [], note: "You need to be signed in.", suggestion: recommendGoal({}) };
   return learnBusiness(organizationId);
 }
 
 export async function saveGoalDraftAction(input: z.input<typeof goalDraftSchema>): Promise<{ ok: boolean }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const organizationId = await orgId();
   if (!organizationId) return { ok: false };
   return saveGoalDraft(organizationId, input);
@@ -291,6 +304,9 @@ export async function saveGoalDraftAction(input: z.input<typeof goalDraftSchema>
  * so a later re-read of the website never overwrites it.
  */
 export async function correctLearnedAction(input: { field: string; op: "set" | "remove" | "confirm"; value?: string }): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const organizationId = await orgId();
   if (!organizationId) return { ok: false, error: "You need to be signed in." };
   if (!(CORRECTABLE as readonly string[]).includes(input.field)) return { ok: false, error: "That one is corrected in Business Brain." };

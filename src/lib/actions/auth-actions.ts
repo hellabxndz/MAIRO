@@ -104,9 +104,10 @@ export async function freelancerSignUpAction(
     const workspace = await tx.organization.create({
       data: { name: studioName, kind: "WORKSPACE" },
     });
-    await tx.user.create({
+    const user = await tx.user.create({
       data: { email, name, passwordHash, role: "FREELANCER", organizationId: workspace.id },
     });
+    await tx.organizationMember.create({ data: { organizationId: workspace.id, userId: user.id, role: "OWNER" } });
   });
 
   try {
@@ -145,7 +146,7 @@ export async function signUpAction(
       data: { name: businessName },
     });
 
-    await tx.user.create({
+    const user = await tx.user.create({
       data: {
         email,
         name,
@@ -154,6 +155,8 @@ export async function signUpAction(
         organizationId: organization.id,
       },
     });
+    // Whoever signs a business up owns it.
+    await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
   });
 
   try {
@@ -298,7 +301,7 @@ export async function signInAction(
   const isSafeForRole =
     targetUser?.role === "OWNER"
       ? requestedCallback.startsWith("/aios")
-      : requestedCallback.startsWith("/dashboard") || requestedCallback.startsWith("/onboarding");
+      : requestedCallback.startsWith("/dashboard") || requestedCallback.startsWith("/onboarding") || /^\/invite\/[\w-]+$/.test(requestedCallback);
   const redirectTo = isSafeForRole ? requestedCallback : defaultPath;
 
   try {
@@ -321,6 +324,7 @@ export async function signInAction(
 function safeCallback(value: FormDataEntryValue | null): string {
   const url = typeof value === "string" ? value : "";
   const allowed = ["/dashboard", "/onboarding", "/aios", "/clients"];
+  if (/^\/invite\/[\w-]+$/.test(url)) return url;
   return allowed.some((p) => url === p || url.startsWith(`${p}/`) || url.startsWith(`${p}?`)) ? url : "/dashboard";
 }
 

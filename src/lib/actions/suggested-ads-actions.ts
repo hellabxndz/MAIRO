@@ -35,6 +35,7 @@ import {
   saveVideoEdits,
   suggestedAdsGate,
 } from "@/lib/suggested-ads/store";
+import { deniedFor } from "@/lib/members/authorize";
 
 // "Review your suggested ads": the server side of every button on the page.
 //
@@ -56,6 +57,9 @@ async function scope(): Promise<{ organizationId: string; userId: string } | nul
 }
 
 async function gated(): Promise<{ ok: true; organizationId: string; userId: string } | Fail> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { ok: false, error: denied };
   const s = await scope();
   if (!s) return { ok: false, error: "Not signed in." };
   const gate = await suggestedAdsGate(s.organizationId);
@@ -392,6 +396,9 @@ export async function revertVideoAction(videoId: string): Promise<{ ok: true; ve
 
 /** Approves exactly these words with exactly this picture or video version. */
 export async function approveCreativeAction(input: { angleId: string; revisionId: string; studioVersionId?: string | null; videoRevisionId?: string | null }): Promise<{ ok: true } | Fail> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await gated();
   if (!ctx.ok) return ctx;
   const ids = z.object({ angleId: ID, revisionId: ID, studioVersionId: ID.nullish(), videoRevisionId: ID.nullish() }).safeParse(input);
@@ -406,6 +413,9 @@ export async function approveCreativeAction(input: { angleId: string; revisionId
 
 /** Opens the campaign builder with exactly the approved ad in a new draft. Nothing is built or spent. */
 export async function continueToCampaignAction(angleId: string): Promise<{ ok: true; href: string } | Fail> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await gated();
   if (!ctx.ok) return ctx;
   const id = ID.safeParse(angleId);

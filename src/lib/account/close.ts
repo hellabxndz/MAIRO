@@ -17,6 +17,11 @@ import { runningMetaCampaigns } from "@/lib/billing/running-campaigns";
 //   4. The records go, in one transaction: the business (everything belonging
 //      to it cascades, including the Meta token), its client businesses for a
 //      freelancer, and every login.
+//
+// With teams, deleting your account closes the business only when you're its
+// only owner (closePlan). Anyone else — a teammate, or one of several owners
+// — deletes their own login and leaves; the business carries on. And nobody
+// can leave a business they solely own with no owner at all.
 
 /** Stripe statuses under which a subscription can still charge. */
 const CHARGEABLE = ["active", "trialing", "past_due", "unpaid", "incomplete"];
@@ -38,24 +43,59 @@ const defaults: CloseDeps = {
 export type CloseResult =
   | { ok: true; cancelledSubscriptions: number; filesRemoved: number }
   | { ok: false; reason: "running-campaigns"; running: { name: string; dailyBudgetCents: number }[]; error: string }
-  | { ok: false; reason: "billing"; error: string };
+  | { ok: false; reason: "billing"; error: string }
+  | { ok: false; reason: "blocked"; error: string };
 
 function isAlreadyGone(error: unknown): boolean {
   const e = error as { code?: string; statusCode?: number } | null;
   return e?.code === "resource_missing" || e?.statusCode === 404;
 }
 
+export type ClosePlan =
+  /** Closes this business (and a freelancer's client businesses); `others` more people lose it. */
+  | { kind: "business"; organizationId: string; name: string; others: number }
+  /** Only this login goes; every business it belongs to carries on. */
+  | { kind: "leave"; businesses: string[] }
+  | { kind: "blocked"; error: string };
+
+const soleOwner = async (organizationId: string) => (await db.organizationMember.count({ where: { organizationId, role: "OWNER" } })) === 1;
+
+/** What deleting this person's account would do, from their memberships — never from the session. */
+export async function closePlan(userId: string): Promise<ClosePlan> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true, memberships: { select: { organizationId: true, role: true, organization: { select: { name: true } } } } },
+  });
+  if (!user) return { kind: "blocked", error: "That account doesn't exist any more." };
+  for (const m of user.memberships) {
+    if (m.role !== "OWNER" || m.organizationId === user.organizationId) continue;
+    if (await soleOwner(m.organizationId)) {
+      return { kind: "blocked", error: `You're the only owner of ${m.organization.name}. Make someone else an owner in Settings → Team first, so it isn't left without one.` };
+    }
+  }
+  const home = user.memberships.find((m) => m.organizationId === user.organizationId);
+  if (home && home.role === "OWNER" && (await soleOwner(home.organizationId))) {
+    const others = await db.organizationMember.count({ where: { organizationId: home.organizationId, userId: { not: userId } } });
+    return { kind: "business", organizationId: home.organizationId, name: home.organization.name, others };
+  }
+  return { kind: "leave", businesses: user.memberships.map((m) => m.organization.name) };
+}
+
 export async function closeAccount(
-  input: { userId: string; organizationId: string | null; acknowledgedRunning: boolean },
+  input: { userId: string; acknowledgedRunning: boolean },
   deps: CloseDeps = defaults,
 ): Promise<CloseResult> {
-  if (!input.organizationId) {
+  const plan = await closePlan(input.userId);
+  if (plan.kind === "blocked") return { ok: false, reason: "blocked", error: plan.error };
+  if (plan.kind === "leave") {
+    // Their memberships go with the login; the businesses don't.
     await db.user.delete({ where: { id: input.userId } });
     return { ok: true, cancelledSubscriptions: 0, filesRemoved: 0 };
   }
+  const organizationId = plan.organizationId;
 
   const orgs = await db.organization.findMany({
-    where: { OR: [{ id: input.organizationId }, { parentId: input.organizationId }] },
+    where: { OR: [{ id: organizationId }, { parentId: organizationId }] },
     select: { id: true, stripeSubscriptionId: true, subscriptionStatus: true },
   });
   const ids = orgs.map((o) => o.id);
@@ -98,10 +138,16 @@ export async function closeAccount(
   }
 
   await db.$transaction(async (tx) => {
-    await tx.user.deleteMany({ where: { organizationId: { in: ids } } });
+    // Logins whose own business this was: deleted, unless they're on another
+    // team too — then that becomes their business and they keep their login.
+    const homed = await tx.user.findMany({ where: { organizationId: { in: ids }, id: { not: input.userId } }, select: { id: true, memberships: { where: { organizationId: { notIn: ids } }, orderBy: { createdAt: "asc" }, take: 1, select: { organizationId: true } } } });
+    for (const u of homed) {
+      if (u.memberships[0]) await tx.user.update({ where: { id: u.id }, data: { organizationId: u.memberships[0].organizationId } });
+      else await tx.user.delete({ where: { id: u.id } });
+    }
     await tx.user.deleteMany({ where: { id: input.userId } });
-    await tx.organization.deleteMany({ where: { parentId: input.organizationId! } });
-    await tx.organization.delete({ where: { id: input.organizationId! } });
+    await tx.organization.deleteMany({ where: { parentId: organizationId } });
+    await tx.organization.delete({ where: { id: organizationId } });
   });
 
   return { ok: true, cancelledSubscriptions: cancelled, filesRemoved };

@@ -49,6 +49,7 @@ import { supportsDestination } from "@/lib/campaigns/objectives";
 import { appStoreUrl, META_APP_ID } from "@/lib/campaigns/destination";
 import { siteUrl } from "@/lib/site";
 import { linkBuiltCampaign } from "@/lib/strategy/campaign";
+import { deniedFor } from "@/lib/members/authorize";
 
 // MAIRO runs Meta only. Anything else arriving from a form is refused here.
 const PLATFORM_VALUES = ["META"] as const;
@@ -151,6 +152,9 @@ export async function createCampaignAction(
   _prevState: CampaignActionState,
   formData: FormData
 ): Promise<CampaignActionState> {
+  // Role check: budget.change (lib/members/roles.ts).
+  const denied = await deniedFor("budget.change");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -600,6 +604,9 @@ export async function rescheduleCampaignAction(
   startLocal: string | null,
   startTimeZone: string | null
 ): Promise<{ error?: string; saved?: boolean; warning?: string }> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -694,6 +701,9 @@ export async function rescheduleCampaignAction(
 export async function deleteCampaignAction(
   mairoCampaignId: string
 ): Promise<{ error?: string; deleted?: boolean; name?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -793,6 +803,9 @@ export async function setCampaignDestinationAction(
   mairoCampaignId: string,
   input: { type: AdDestination; value: string; channel?: MessageChannel }
 ): Promise<{ error?: string; saved?: boolean }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -875,6 +888,9 @@ export async function setCampaignDestinationAction(
 export async function approveCampaignAction(
   mairoCampaignId: string,
 ): Promise<{ error?: string } | undefined> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

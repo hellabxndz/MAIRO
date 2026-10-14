@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { setFindingStatus } from "@/lib/website/store";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The owner's decisions on the "Before you spend on ads" report. Scoped to the
 // business the person is signed in to; a key from another business changes
@@ -13,6 +14,9 @@ import { setFindingStatus } from "@/lib/website/store";
 const input = z.object({ key: z.string().min(3).max(300), status: z.enum(["OPEN", "RESOLVED", "DISMISSED"]) });
 
 export async function setWebsiteFindingAction(raw: { key: string; status: "OPEN" | "RESOLVED" | "DISMISSED" }): Promise<{ ok: boolean }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false };
   const parsed = input.safeParse(raw);

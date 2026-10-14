@@ -6,8 +6,11 @@ import { db } from "@/lib/db";
 import { generateMonthlyPlan } from "@/lib/ai/plan";
 import { currentMonthKey } from "@/lib/utils/month";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 
 export async function regeneratePlanAction() {
+  // Role check: business.edit (lib/members/roles.ts).
+  if (await deniedFor("business.edit")) return;
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 
@@ -57,6 +60,8 @@ export async function regeneratePlanAction() {
 }
 
 export async function approvePlanAction() {
+  // Role check: business.edit (lib/members/roles.ts).
+  if (await deniedFor("business.edit")) return;
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 

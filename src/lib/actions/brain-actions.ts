@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { changeBrain, type ChangeOutcome } from "@/lib/brain/store";
 import type { FactChange } from "@/lib/brain/edit";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The Business Brain page's View · Correct · Update · Remove. Everything the
 // owner does here is their own word: confirmed, and never overwritten by
@@ -13,6 +14,9 @@ import type { FactChange } from "@/lib/brain/edit";
 const OPS = new Set(["set", "add", "remove", "confirm", "product", "remove-product"]);
 
 export async function brainChangeAction(change: FactChange): Promise<ChangeOutcome> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

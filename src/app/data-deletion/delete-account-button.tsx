@@ -9,7 +9,7 @@ import { deleteAccountAction, type DeleteAccountState } from "@/lib/actions/acco
 
 const usd = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
-export function DeleteAccountButton({ running }: { running: { name: string; dailyBudgetCents: number }[] }) {
+export function DeleteAccountButton({ running, closesBusiness = true }: { running: { name: string; dailyBudgetCents: number }[]; closesBusiness?: boolean }) {
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useActionState<DeleteAccountState, FormData>(deleteAccountAction, undefined);
   const stillRunning = state?.running ?? running;
@@ -55,7 +55,7 @@ export function DeleteAccountButton({ running }: { running: { name: string; dail
         </div>
       )}
       <p className="text-sm text-neutral-300">
-        This also cancels your MAIRO subscription with Stripe. It can&apos;t be undone. Are you sure?
+        {closesBusiness ? "This also cancels your MAIRO subscription with Stripe. " : ""}It can&apos;t be undone. Are you sure?
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <button

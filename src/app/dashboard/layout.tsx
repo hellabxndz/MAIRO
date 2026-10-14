@@ -21,6 +21,8 @@ import { hasSeenTour } from "@/lib/actions/tour-actions";
 import { OWNER_TOUR } from "./tour-steps";
 import { isExploring } from "@/lib/explore-mode";
 import { activeOrg } from "@/lib/active-org";
+import { workspacesOf } from "@/lib/members/workspace";
+import { WorkspaceSwitcher } from "@/components/mairo/workspace-switcher";
 import { FREE_NAV, SOCIAL_LOCKED_NAV, SOCIAL_NAV } from "./free-nav";
 import { socialAccess } from "@/lib/social/access";
 import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
@@ -60,6 +62,8 @@ const ALWAYS_REACHABLE = [
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  // Signed in but on no team (removed, or the business closed): say so.
+  if (session?.user && !session.user.organizationId && session.user.role !== "OWNER") redirect("/no-team");
   if (!session?.user?.organizationId) redirect("/sign-in");
   const active = await activeOrg();
   const organizationId = active?.id ?? session.user.organizationId;
@@ -75,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Everything the shell needs, read in one round rather than one after
   // another — each await in a row is another wait on the database before the
   // screen can show anything.
-  const [organization, intake, metaAccount, seenTour, socialPosting, exploring, journeyRow, mode, bellRows, unread] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour, socialPosting, exploring, journeyRow, mode, bellRows, unread, workspaces] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -99,6 +103,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // cost a request a minute to say the same thing.
     recentNotifications(organizationId, 6),
     unreadCount(organizationId),
+    // The businesses this person is on the team of, for the switcher.
+    active?.actingAsClient || !session.user.id ? [] : workspacesOf(session.user.id),
   ]);
 
 
@@ -169,8 +175,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       notifications={
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />
       }
+      switcher={workspaces.length > 1 ? <WorkspaceSwitcher workspaces={workspaces} current={organizationId} compact /> : undefined}
       footer={
         <>
+        <WorkspaceSwitcher workspaces={workspaces} current={organizationId} />
         <FeedbackButton />
         <form action={signOutAction}>
           <button

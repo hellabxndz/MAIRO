@@ -58,6 +58,9 @@ or a public page makes a claim this inventory can't back.
 | Social | Social Manager (Scale) | Partially working | `/dashboard/social` | Meta App Review: posting permissions | `check:social-manager`, `check:social-scheduler` |
 | Billing | Subscriptions through Stripe | Working | `/plan/activate`, `/dashboard/billing` | — | `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db` |
 | Billing | Studio and Agency plans | Unavailable | `/clients/billing` | Stripe prices | `check:entitlements` |
+| Account | Team members and roles | Working | `/dashboard/settings/team`, `/invite/[token]` | — | `check:members`, `check:trust-db` |
+| Account | Multi-step approvals | Unavailable | — | An approval chain model and its review screens | — |
+| Account | Several brands under one account, with their own budgets and reporting across them | Unavailable | — | A parent organization for brands, cross-brand budgets and combined reports with per-brand labels | — |
 | Account | Sign in with Google | Partially working | `/sign-in`, `/sign-up` | GOOGLE_CLIENT_ID; GOOGLE_CLIENT_SECRET | `check:google` |
 | Account | Text alerts | Partially working | `/dashboard/notifications` | Twilio settings | `check:notifications` |
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
@@ -85,7 +88,7 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (40)
+## Working (41)
 
 ### Free advertising plan
 
@@ -412,6 +415,22 @@ Starter $149.99 (7-day free trial, card at checkout), Growth $239.99, Scale $499
 **Checks:** `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db`
 
 **Public claim:** “Plans from $149.99 a month; Starter starts with a 7-day free trial.”
+
+### Team members and roles
+
+*Account* · `team-roles`
+
+Invite people to a business with one of six roles — Owner, Administrator, Marketing Manager, Creative Editor, Analyst or Viewer — and change or remove them. The role is checked on the server for every change: only owners, administrators and marketing managers change budgets or approve launches; only owners and administrators manage the team or connect and disconnect advertising accounts; only owners handle billing. The assistant only offers the changes the person's role allows. Every team change is in the team's audit log. Someone on several teams switches between their businesses, and a removed person loses access on their next request. MAIRO makes the invitation link; the owner sends it — MAIRO doesn't email anyone.
+
+**Routes:** `/dashboard/settings/team`, `/invite/[token]`
+
+**Verification:** Role matrix pinned; every server action that changes something checks the role (static check); invitations hashed, single-use, address-bound, expiring; last owner kept; cross-business isolation; removal ends access; assistant tools by role (check:members). Browser: invite, join, roles, refusals, switching.
+
+**Evidence:** `src/lib/members/roles.ts`, `src/lib/members/authorize.ts`, `src/lib/members/store.ts`, `src/lib/members/workspace.ts`, `src/lib/actions/team-actions.ts`, `src/app/dashboard/settings/team/page.tsx`, `src/app/(auth)/invite/[token]/page.tsx`, `src/components/mairo/workspace-switcher.tsx`
+
+**Checks:** `check:members`, `check:trust-db`
+
+**Public claim:** “Invite your team, each with a role that decides what they can change.”
 
 ### Self-serve account deletion
 
@@ -1189,7 +1208,7 @@ A 73-second interactive demo of the owner journey on a sample business, in seven
 
 **Public claim:** none — not advertised
 
-## Unavailable (5)
+## Unavailable (7)
 
 ### TikTok ads
 
@@ -1246,6 +1265,34 @@ Built in the product, but no Stripe prices exist, so they show as not available 
 **Evidence:** `src/lib/plans.ts#FREELANCER_PLANS`
 
 **Checks:** `check:entitlements`
+
+**Public claim:** none — not advertised
+
+### Multi-step approvals
+
+*Account* · `approval-chains`
+
+Not built. A launch or recommendation is approved by one person whose role allows it; there's no chain of approvers (for example, an editor's ad going to a manager, then an owner).
+
+**Still needs:** An approval chain model and its review screens
+
+**Verification:** Not offered anywhere.
+
+**Evidence:** `src/lib/members/roles.ts`
+
+**Public claim:** none — not advertised
+
+### Several brands under one account, with their own budgets and reporting across them
+
+*Account* · `multi-brand`
+
+Not built. Each business has its own team, brand rules, budget and reports, and someone on several teams switches between them; MAIRO doesn't group businesses into one organization, share a budget across them or report on them together.
+
+**Still needs:** A parent organization for brands, cross-brand budgets and combined reports with per-brand labels
+
+**Verification:** Not offered anywhere.
+
+**Evidence:** `src/lib/members/workspace.ts`
 
 **Public claim:** none — not advertised
 

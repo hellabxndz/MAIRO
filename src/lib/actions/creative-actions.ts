@@ -14,6 +14,7 @@ import { generateCreativeConcept } from "@/lib/ai/creative";
 import { suggestCreativeIdea } from "@/lib/ai/suggest";
 import { reviewCreative } from "@/lib/ai/review";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 
 const requestSchema = z.object({
   type: z.enum(["IMAGE", "VIDEO", "COPY", "CAROUSEL"]),
@@ -46,6 +47,9 @@ export async function suggestIdeaAction(input: {
   referenceImage?: string | null;
   platform?: "META" | null;
 }): Promise<SuggestionResult> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not authenticated" };
   if (!process.env.ANTHROPIC_API_KEY?.trim()) {
@@ -118,6 +122,9 @@ export async function requestCreativeAction(
   _prevState: CreativeActionState,
   formData: FormData
 ): Promise<CreativeActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
@@ -279,6 +286,9 @@ async function tryGenerateConcept(creativeRequestId: string): Promise<string | n
 export async function regenerateConceptAction(
   creativeRequestId: string
 ): Promise<CreativeActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
@@ -313,6 +323,9 @@ export async function refineConceptAction(
   _prevState: CreativeActionState,
   formData: FormData
 ): Promise<CreativeActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 

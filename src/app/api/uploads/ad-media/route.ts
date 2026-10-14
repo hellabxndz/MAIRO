@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 import { storageConfigured } from "@/lib/storage/blob";
 import { IMAGE_TYPES, MAX_VIDEO_BYTES, VIDEO_TYPES } from "@/lib/campaigns/media-rules";
 
@@ -18,6 +19,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   const session = await auth();
   if (!session?.user?.organizationId) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return NextResponse.json({ error: denied }, { status: 403 });
 
   let body: HandleUploadBody;
   try {

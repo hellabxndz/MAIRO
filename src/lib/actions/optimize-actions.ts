@@ -11,6 +11,7 @@ import { planFor } from "@/lib/plans";
 import { splitBudget } from "@/lib/budget/allocation";
 import { applyAllocation } from "@/lib/campaigns/launch";
 import type { AdPlatform } from "@/generated/prisma/enums";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Producing and applying budget recommendations.
 //
@@ -34,6 +35,9 @@ export async function applyRecommendationAction(
   _prev: ApplyState,
   formData: FormData
 ): Promise<ApplyState> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -113,6 +117,9 @@ export async function dismissRecommendationAction(
   _prev: ApplyState,
   formData: FormData
 ): Promise<ApplyState> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -158,6 +165,9 @@ export async function saveAutoOptimizeAction(
   _prev: AutoOptimizeState,
   formData: FormData
 ): Promise<AutoOptimizeState> {
+  // Role check: budget.change (lib/members/roles.ts).
+  const denied = await deniedFor("budget.change");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

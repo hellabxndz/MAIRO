@@ -4,6 +4,7 @@ import { LEGAL } from "@/lib/legal";
 import { auth } from "@/lib/auth";
 import { runningMetaCampaigns } from "@/lib/billing/running-campaigns";
 import { db } from "@/lib/db";
+import { closePlan } from "@/lib/account/close";
 import { DeleteAccountButton } from "./delete-account-button";
 
 export const metadata: Metadata = {
@@ -18,8 +19,11 @@ export const metadata: Metadata = {
 
 export default async function DataDeletionPage() {
   const session = await auth();
-  const canDeleteHere = Boolean(session?.user && session.user.role !== "OWNER");
-  const orgId = canDeleteHere ? session?.user?.organizationId ?? null : null;
+  const canDeleteHere = Boolean(session?.user?.id && session.user.role !== "OWNER");
+  // What deleting this account would do: close the business (its only owner)
+  // or only remove this login from the teams it's on.
+  const plan = canDeleteHere ? await closePlan(session!.user.id!) : null;
+  const orgId = plan?.kind === "business" ? plan.organizationId : null;
   const ids = orgId ? [orgId, ...(await db.organization.findMany({ where: { parentId: orgId }, select: { id: true } })).map((o) => o.id)] : [];
   const running = (await runningMetaCampaigns(ids)).map((c) => ({ name: c.name, dailyBudgetCents: c.dailyBudgetCents }));
   const days = LEGAL.deletionWindowDays;
@@ -88,12 +92,18 @@ export default async function DataDeletionPage() {
             <h3 className="text-sm font-medium text-red-200">Delete this account</h3>
             <p className="mt-2 text-sm leading-relaxed text-neutral-400">
               You&apos;re signed in as{" "}
-              <span className="text-neutral-200">{session?.user?.email}</span>. This deletes that
-              account and its data as described above.
+              <span className="text-neutral-200">{session?.user?.email}</span>.{" "}
+              {plan?.kind === "business"
+                ? `You're the only owner of ${plan.name}, so this deletes the business and its data as described above${plan.others > 0 ? ` — and the ${plan.others === 1 ? "other person" : `${plan.others} other people`} on its team lose access to it` : ""}.`
+                : plan?.kind === "leave"
+                  ? `This deletes your login and takes you off ${plan.businesses.length === 1 ? "the team" : "every team"} you're on${plan.businesses.length > 0 ? ` (${plan.businesses.join(", ")})` : ""}. ${plan.businesses.length === 1 ? "The business stays" : "The businesses stay"} with ${plan.businesses.length === 1 ? "its" : "their"} owners, and nothing is cancelled.`
+                  : plan?.error}
             </p>
-            <div className="mt-5">
-              <DeleteAccountButton running={running} />
-            </div>
+            {plan?.kind !== "blocked" && (
+              <div className="mt-5">
+                <DeleteAccountButton running={running} closesBusiness={plan?.kind === "business"} />
+              </div>
+            )}
           </div>
         ) : (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">

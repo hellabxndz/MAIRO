@@ -26,6 +26,7 @@ import type { CopyOption } from "@/lib/campaigns/ad-copy";
 import { isOwnUpload } from "@/lib/campaigns/media-rules";
 import { goalOption, PROMOTES_OPTIONS } from "@/lib/campaigns/objectives";
 import { listAccountAds, type AccountAd } from "@/lib/meta/existing-ads";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Saving an unfinished campaign, and checking a finished one before it's built.
 // Every query is scoped to the signed-in organization in its WHERE clause.
@@ -49,6 +50,9 @@ export async function saveCampaignDraftAction(input: {
   label: string;
   plan: CampaignPlan;
 }): Promise<{ ok: true; draftId: string } | { ok: false; error: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const scope = await currentScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   if (!SERVICES.has(input.plan?.service) || !isWizardStep(input.step)) {
@@ -91,6 +95,8 @@ export async function saveCampaignDraftAction(input: {
 }
 
 export async function deleteCampaignDraftAction(draftId: string): Promise<void> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  if (await deniedFor("campaign.edit")) return;
   const scope = await currentScope();
   if (!scope) return;
   await db.campaignDraft.deleteMany({
@@ -117,6 +123,9 @@ export async function reviewCampaignAction(
 export async function writeAdCopyAction(
   plan: CampaignPlan
 ): Promise<{ ok: true; options: CopyOption[] } | { ok: false; error: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const scope = await currentScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   const blocked = await executionBlock(scope.organizationId);
@@ -266,6 +275,9 @@ function ownCreativeUrl(plan: CampaignPlan, organizationId: string): string | nu
  * and a before/after; the wizard applies it only when the customer approves.
  */
 export async function fixWithAiAction(plan: CampaignPlan, kind: FixKind): Promise<FixResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, kind, error: denied };
   const scope = await currentScope();
   if (!scope || !SERVICES.has(plan?.service)) return { ok: false, kind, error: "That campaign can't be fixed here." };
   const brain = (await loadBrain(scope.organizationId)).profile;
@@ -292,6 +304,9 @@ function brandFacts(p: BrainProfile): BrandFacts {
  * checks the campaign again on what they chose.
  */
 export async function improveOptionsAction(plan: CampaignPlan, kind: FixKind): Promise<OptionsResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, kind, error: denied };
   const scope = await currentScope();
   if (!scope || !SERVICES.has(plan?.service)) return { ok: false, kind, error: "That campaign can't be improved here." };
   const brain = (await loadBrain(scope.organizationId)).profile;
@@ -311,6 +326,9 @@ export async function answerBusinessQuestionAction(input: {
   /** A confirmation the owner corrected: the new answer replaces what MAIRO had first. */
   replace?: boolean;
 }): Promise<{ ok: true; saved: "saved" | "declined"; label: string } | { ok: false; error: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const scope = await currentScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   const def = questionDef(String(input?.id ?? ""));

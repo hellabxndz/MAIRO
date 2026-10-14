@@ -12,6 +12,7 @@ import { analyzeBusiness } from "@/lib/business/analyze";
 import { loadBrain, sanitizeProfile, saveBrain, profileSchema, type BrainField } from "@/lib/business/brain";
 import { newPlan, type CampaignPlan } from "@/lib/campaigns/plan";
 import { supportsDestination } from "@/lib/campaigns/objectives";
+import { deniedFor } from "@/lib/members/authorize";
 
 async function context() {
   const session = await auth();
@@ -23,6 +24,9 @@ async function context() {
 export type AnalyzeState = { ok?: boolean; error?: string } | undefined;
 
 export async function analyzeBusinessAction(_prev: AnalyzeState, formData: FormData): Promise<AnalyzeState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx) return { error: "Not signed in." };
   const url = String(formData.get("url") ?? "").trim().slice(0, 500);
@@ -41,6 +45,9 @@ export type SaveBrainState = { ok?: boolean; error?: string } | undefined;
  * stored is marked as edited by hand, so a later analysis leaves it alone.
  */
 export async function saveBrainAction(input: Record<string, unknown>): Promise<SaveBrainState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx) return { error: "Not signed in." };
   const current = await loadBrain(ctx.organizationId);
@@ -72,6 +79,8 @@ export async function saveBrainAction(input: Record<string, unknown>): Promise<S
  * anything is built. Nothing is launched from here.
  */
 export async function buildCampaignFromBrainAction(): Promise<void> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  if (await deniedFor("campaign.edit")) return;
   const ctx = await context();
   if (!ctx) redirect("/sign-in");
   // Building a campaign is paid; a free-plan business chooses a plan first.

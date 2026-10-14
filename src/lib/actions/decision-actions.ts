@@ -9,6 +9,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { applyDecision, type AppliedChange } from "@/lib/decisions/apply";
 import { refreshDecisions } from "@/lib/decisions/run";
 import type { DecisionChange } from "@/lib/decisions/types";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What the Decisions page, the dashboard and One-Click Fix call.
 //
@@ -40,6 +41,9 @@ export async function approveDecisionsAction(input: {
   decisionIds: string[];
   edits?: Record<string, unknown[]>;
 }): Promise<ApproveResult> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const blocked = await executionBlock(ctx.organizationId);
@@ -74,6 +78,9 @@ export async function approveDecisionsAction(input: {
 }
 
 async function setStatus(decisionId: string, status: "REJECTED" | "IGNORED"): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const row = await db.mairoDecision.findUnique({ where: { id: decisionId } });
@@ -97,6 +104,9 @@ export async function ignoreDecisionAction(decisionId: string) {
 
 /** For a decision that only points somewhere: the customer says they dealt with it. */
 export async function markDecisionDoneAction(decisionId: string): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const row = await db.mairoDecision.findUnique({ where: { id: decisionId } });

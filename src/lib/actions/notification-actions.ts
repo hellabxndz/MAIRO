@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Reading and dismissing notifications.
 //
@@ -61,6 +62,8 @@ export async function dismissNotificationAction(id: string): Promise<void> {
  * its own are always sent — see optionalGroup in notifications/kinds.ts.
  */
 export async function saveNotificationPrefsAction(formData: FormData): Promise<void> {
+  // Role check: business.edit (lib/members/roles.ts).
+  if (await deniedFor("business.edit")) return;
   const session = await auth();
   if (!session?.user?.organizationId) return;
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

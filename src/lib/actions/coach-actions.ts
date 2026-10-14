@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { mayRunNow, runCoach } from "@/lib/coach/run";
 import type { PlanStep, StepStatus } from "@/lib/coach/types";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What the Performance Coach page calls. Every one is scoped to the business
 // asking — a finding's id is guessable, and this is what makes guessing
@@ -28,6 +29,9 @@ const DAY = 86_400_000;
 const CHECK_AFTER_DAYS = 14;
 
 export async function runCoachNowAction(): Promise<{ ok: boolean; message: string }> {
+  // Role check: reports.run (lib/members/roles.ts).
+  const denied = await deniedFor("reports.run");
+  if (denied) return { ok: false, message: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, message: "Not signed in." };
   if (!(await mayRunNow(ctx.organizationId))) return { ok: false, message: "Your AI team reviewed your results a few minutes ago. Try again in a little while." };
@@ -39,6 +43,9 @@ export async function runCoachNowAction(): Promise<{ ok: boolean; message: strin
 
 /** Accept the improvement plan. Any change on Meta still waits for its own approval. */
 export async function approveFindingAction(findingId: string): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const now = new Date();
@@ -52,6 +59,9 @@ export async function approveFindingAction(findingId: string): Promise<{ ok: boo
 }
 
 export async function dismissFindingAction(findingId: string): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const r = await db.coachFinding.updateMany({
@@ -65,6 +75,9 @@ export async function dismissFindingAction(findingId: string): Promise<{ ok: boo
 
 /** Show the next recommendation MAIRO can stand behind for this finding. */
 export async function anotherRecommendationAction(findingId: string): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const f = await db.coachFinding.findFirst({ where: { id: findingId, organizationId: ctx.organizationId }, select: { alternativesJson: true, alternativeIndex: true } });
@@ -83,6 +96,9 @@ export async function anotherRecommendationAction(findingId: string): Promise<{ 
 
 /** Mark one step of the improvement plan done, skipped or to do. */
 export async function setStepStatusAction(findingId: string, stepId: string, status: StepStatus): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   if (!["todo", "done", "skipped"].includes(status)) return { ok: false, error: "That isn't a step status." };
@@ -102,6 +118,9 @@ export async function setStepStatusAction(findingId: string, stepId: string, sta
 }
 
 export async function findingFeedbackAction(findingId: string, feedback: "HELPFUL" | "NOT_HELPFUL"): Promise<{ ok: boolean; error?: string }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   if (feedback !== "HELPFUL" && feedback !== "NOT_HELPFUL") return { ok: false, error: "Unknown feedback." };

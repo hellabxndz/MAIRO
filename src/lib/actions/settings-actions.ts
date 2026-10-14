@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Everything a client told us about their business, changeable afterwards.
 //
@@ -44,6 +45,9 @@ export async function updateBusinessAction(
   _prevState: SettingsActionState,
   formData: FormData
 ): Promise<SettingsActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
@@ -78,6 +82,9 @@ export async function updateBriefAction(
   _prevState: SettingsActionState,
   formData: FormData
 ): Promise<SettingsActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
@@ -127,6 +134,8 @@ export async function updateBriefAction(
  * Held is a pause, not an undo: anything already running stays running.
  */
 export async function setAutoLaunchHeldAction(held: boolean): Promise<void> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  if (await deniedFor("launch.approve")) return;
   const session = await auth();
   if (!session?.user?.organizationId) return;
 

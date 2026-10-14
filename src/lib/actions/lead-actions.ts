@@ -19,6 +19,7 @@ import { cleanStageLabels, isLostReason, lostReasonLabel } from "@/lib/leads/det
 import { addLeadManually, dollars, importLeads, recordLeadEvent, type ImportSummary, type ManualResult } from "@/lib/leads/history";
 import { previewImport, type ImportPreview } from "@/lib/leads/import";
 import type { LeadStatus } from "@/generated/prisma/enums";
+import { deniedFor } from "@/lib/members/authorize";
 
 /**
  * Takes a submission from the public form.
@@ -50,6 +51,9 @@ export async function saveLeadFormAction(
   leadFormId: string,
   patch: { headline?: string; description?: string; thankYou?: string }
 ): Promise<{ error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -88,6 +92,9 @@ export async function saveLeadFormAction(
  * a public page carrying their business's name.
  */
 export async function writeLeadFormAction(): Promise<{ error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -112,6 +119,9 @@ export async function saveLeadFieldsAction(
   leadFormId: string,
   fields: LeadField[]
 ): Promise<{ error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -142,6 +152,9 @@ export async function saveLeadFieldsAction(
  * rather than a decision made on anybody's behalf.
  */
 export async function startOwnLeadFormAction(): Promise<{ error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -179,6 +192,9 @@ export async function syncLeadsAction(): Promise<{
   added?: number;
   error?: string;
 }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -233,6 +249,9 @@ export async function setLeadOutcomeAction(
   valueDollars?: number | null,
   lostReason?: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -294,6 +313,9 @@ export async function saveLeadDetailsAction(
     notes?: string | null;
   },
 ): Promise<{ ok: boolean; error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -355,6 +377,9 @@ export async function saveLeadDetailsAction(
 
 /** The business's own names for its lead stages. Empty names fall back to MAIRO's. */
 export async function saveLeadStagesAction(labels: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -373,6 +398,9 @@ async function leadScope() {
 
 /** A lead typed in by the owner. Refused, with which one, if that person is already a lead. */
 export async function addLeadAction(input: { name: string; email: string; phone: string; status: string; valueDollars: string; notes: string; receivedOn: string }): Promise<ManualResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const scope = await leadScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   const clip = (v: unknown, n: number) => String(v ?? "").slice(0, n);
@@ -386,6 +414,9 @@ export async function addLeadAction(input: { name: string; email: string; phone:
 
 /** Re-checks a spreadsheet on the server — what the import would do, before anything is saved. */
 export async function previewLeadImportAction(text: string): Promise<ImportPreview | { error: string }> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const scope = await leadScope();
   if (!scope) return { error: "Not signed in." };
   if (typeof text !== "string") return { error: "That file couldn't be read." };
@@ -394,6 +425,9 @@ export async function previewLeadImportAction(text: string): Promise<ImportPrevi
 
 /** Imports the spreadsheet the owner previewed, checking every row again here. */
 export async function importLeadsAction(text: string, fileName: string): Promise<ImportSummary> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const scope = await leadScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   if (typeof text !== "string") return { ok: false, error: "That file couldn't be read." };

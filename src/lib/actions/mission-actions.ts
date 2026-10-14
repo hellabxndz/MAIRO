@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { MISSION_GOAL_KEYS } from "@/lib/mission/goals";
 import { activeMission, approveMission, startMission, tellMairo, type StartResult, type TellResult } from "@/lib/mission/store";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The MAIRO mission, from the owner's side: say what you want, review the
 // plan MAIRO built, approve it, and tell MAIRO when something changes.
@@ -35,6 +36,9 @@ const startSchema = z.object({
 });
 
 export async function startMissionAction(input: z.input<typeof startSchema>): Promise<({ ok: true } & StartResult) | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = startSchema.safeParse(input);
@@ -52,6 +56,9 @@ export async function startMissionAction(input: z.input<typeof startSchema>): Pr
 }
 
 export async function approveMissionAction(missionId: string): Promise<{ ok: true; draftId: string | null; social: boolean } | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   try {
@@ -65,6 +72,9 @@ export async function approveMissionAction(missionId: string): Promise<{ ok: tru
 }
 
 export async function discardProposalAction(missionId: string): Promise<{ ok: true } | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   await db.marketingMission.deleteMany({ where: { id: missionId, organizationId: ctx.organizationId, status: "PROPOSED" } });
@@ -74,6 +84,9 @@ export async function discardProposalAction(missionId: string): Promise<{ ok: tr
 
 /** "Add secondary goal": MAIRO re-plans with both, and the owner approves. */
 export async function secondaryGoalAction(goal: string | null): Promise<({ ok: true } & StartResult) | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const current = await activeMission(ctx.organizationId);
@@ -87,6 +100,9 @@ export async function secondaryGoalAction(goal: string | null): Promise<({ ok: t
 }
 
 export async function tellMairoAction(text: string): Promise<({ ok: true } & TellResult) | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const clean = text.trim().slice(0, 1000);
@@ -104,6 +120,9 @@ export async function tellMairoAction(text: string): Promise<({ ok: true } & Tel
 
 /** "This isn't true any more" — e.g. the item is back in stock, or the sale is over. */
 export async function endNoteAction(noteId: string): Promise<{ ok: true } | Fail> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await org();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   await db.missionNote.updateMany({ where: { id: noteId, organizationId: ctx.organizationId }, data: { active: false } });

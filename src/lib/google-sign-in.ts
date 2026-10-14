@@ -111,7 +111,7 @@ export async function resolveGoogleSignIn(
             const organization = await tx.organization.create({
               data: { name: decision.orgName, kind: decision.orgKind },
             });
-            return tx.user.create({
+            const user = await tx.user.create({
               data: {
                 email: decision.email,
                 name: decision.name,
@@ -121,6 +121,9 @@ export async function resolveGoogleSignIn(
               },
               select: { id: true },
             });
+            // Whoever signs a business up owns it.
+            await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
+            return user;
           });
           return { ok: true, userId: user.id };
         } catch (error) {

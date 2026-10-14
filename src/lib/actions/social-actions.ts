@@ -13,6 +13,7 @@ import { instantFromLocal } from "@/lib/campaigns/schedule";
 import { mediaLibrary, ownsRefs } from "@/lib/instagram/library";
 import { publishPost } from "@/lib/instagram/scheduler";
 import { MEDIA_TYPES, NETWORKS, NETWORK_NAME, asNetwork, validatePost, validateWhen, type MediaType, type Network } from "@/lib/instagram/social-logic";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Scale's Instagram and Facebook Page posting: post now, schedule, or let
 // MAIRO plan the week. The two share one queue; each post says which network
@@ -51,6 +52,9 @@ const createSchema = z.object({
 });
 
 export async function createPostAction(input: z.input<typeof createSchema>): Promise<SocialResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = createSchema.safeParse(input);
@@ -95,6 +99,9 @@ export async function createPostAction(input: z.input<typeof createSchema>): Pro
  * the network's own page; the goal comes first, in Social Manager.
  */
 export async function enableNetworkAction(network: Network): Promise<SocialResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const which = asNetwork(network);
@@ -118,6 +125,9 @@ export async function enableNetworkAction(network: Network): Promise<SocialResul
  * Autopilot, within the rules the business already approved).
  */
 export async function planWeekAction(networkInput: Network = "INSTAGRAM"): Promise<SocialResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const result = await generatePlan(ctx.organizationId, { network: asNetwork(networkInput), timeoutMs: 45_000 });
@@ -135,6 +145,9 @@ export async function planWeekAction(networkInput: Network = "INSTAGRAM"): Promi
  * posts it at its chosen time (or at once if that time has passed).
  */
 export async function approvePostsAction(ids: string[], mode: "now" | "scheduled" = "scheduled"): Promise<SocialResult> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const clean = z.array(z.string().max(64)).max(20).safeParse(ids);
@@ -184,6 +197,9 @@ export async function approvePostsAction(ids: string[], mode: "now" | "scheduled
 const updateSchema = z.object({ id: z.string().max(64), caption: z.string().max(2400), local: z.string().max(20).nullable() });
 
 export async function updatePostAction(input: z.infer<typeof updateSchema>): Promise<SocialResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = updateSchema.safeParse(input);
@@ -206,6 +222,9 @@ export async function updatePostAction(input: z.infer<typeof updateSchema>): Pro
 }
 
 export async function discardPostAction(id: string): Promise<SocialResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

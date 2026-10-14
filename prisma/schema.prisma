@@ -42,8 +42,75 @@ model User {
   organization    Organization? @relation(fields: [organizationId], references: [id])
   organizationId  String?
   agentThreads    AgentThread[]
+  memberships     OrganizationMember[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+/// What one person may do in one business — see lib/members/roles.ts for each
+/// role's permissions. Checked on the server for every change, not just
+/// hidden in the interface.
+enum OrgRole {
+  OWNER
+  ADMIN
+  MARKETING_MANAGER
+  CREATIVE_EDITOR
+  ANALYST
+  VIEWER
+}
+
+/// A person's place in a business. Every signed-in request is checked
+/// against this row, so removing someone takes effect on their next request.
+/// Existing accounts were made owners of their own business when it was added.
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  role           OrgRole
+  invitedById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+/// An invitation to join a business with a role. The link carries a random
+/// token; only its hash is stored. It works once, for the invited address,
+/// until it expires or is withdrawn.
+model TeamInvite {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  email          String
+  role           OrgRole
+  tokenHash      String       @unique
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  acceptedById   String?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
+/// Who did what to a business's team and controls: invitations, role
+/// changes, removals, and the changes only some roles may make. Never holds
+/// secrets, passwords or customer details.
+model AuditLog {
+  id             String       @id @default(cuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  actorUserId    String?
+  action         String
+  target         String?
+  detail         String?      @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
 }
 
 // --- Client business -------------------------------------------------------
@@ -350,6 +417,9 @@ model Organization {
   leadStagesJson      String?                @db.Text
   ownerVideos         OwnerVideo[]
   creativeApprovals   CreativeApproval[]
+  members             OrganizationMember[]
+  teamInvites         TeamInvite[]
+  auditLogs           AuditLog[]
 }
 
 /// Where a business wants MAIRO to text them, and proof they asked for it.

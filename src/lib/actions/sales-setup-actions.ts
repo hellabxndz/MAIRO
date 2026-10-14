@@ -8,6 +8,7 @@ import { normalizeUrl } from "@/lib/campaigns/destination";
 import { listInstagramPosts, listPagePosts } from "@/lib/meta/sales-sources";
 import type { PagePost } from "@/lib/campaigns/sales-source";
 import { readShop, saveProducts } from "@/lib/catalog/read-shop";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What a shop's ads should be made of, asked once the subscription is paid.
 //
@@ -57,6 +58,9 @@ export async function scanShopAction(
   | { ok: true; found: number; how: string; sample: { title: string; priceCents: number | null; currency: string; imageUrl: string | null }[] }
   | { ok: false; error: string }
 > {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const organizationId = await currentOrganization();
   if (!organizationId) return { ok: false, error: "Not signed in." };
 
@@ -99,6 +103,9 @@ export async function saveSalesSourceAction(input: {
   source: "MAIRO_CREATES" | "EXISTING_POST" | "CATALOG";
   postId?: string | null;
 }): Promise<{ error?: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const organizationId = await currentOrganization();
   if (!organizationId) return { error: "Not signed in." };
 

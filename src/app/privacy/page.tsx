@@ -31,6 +31,11 @@ export default function PrivacyPage() {
             <><strong className="text-neutral-200">Your account.</strong> Your name, email address, and a
               cryptographic hash of your password. We never store your password itself and cannot
               read it.</>,
+            <><strong className="text-neutral-200">Your team.</strong> If you invite people to your
+              business, the email address you invite and the role you give them; the invitation link itself
+              is stored only in a form that can&apos;t be read back. We keep a log of changes to the team —
+              who invited, joined, changed a role or removed whom, and when — which owners and administrators
+              can see. MAIRO doesn&apos;t email the people you invite; you send the link.</>,
             <><strong className="text-neutral-200">Your business.</strong> Business name, website,
               industry, and time zone. If you give us your website, we read its public pages to learn what
               you sell and how you describe it, and keep what we learned where you can see and correct it.</>,

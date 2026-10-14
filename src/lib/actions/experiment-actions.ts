@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { executionBlock } from "@/lib/billing/execution";
 import { approveExperiment, cancelExperiment, checkExperiment, draftFromExperiment, type ExperimentView } from "@/lib/experiments/store";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The owner's controls for a creative test. Each acts only on this business's
 // own test; building the test campaign needs a subscription that can run
@@ -27,6 +28,9 @@ function done() {
 }
 
 export async function approveExperimentAction(id: string): Promise<{ ok: true } | Fail> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const s = await scope();
   if (!s) return { ok: false, error: "Not signed in." };
   const p = ID.safeParse(id);
@@ -37,6 +41,9 @@ export async function approveExperimentAction(id: string): Promise<{ ok: true } 
 }
 
 export async function cancelExperimentAction(id: string): Promise<{ ok: true } | Fail> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const s = await scope();
   if (!s) return { ok: false, error: "Not signed in." };
   const p = ID.safeParse(id);
@@ -48,6 +55,9 @@ export async function cancelExperimentAction(id: string): Promise<{ ok: true } |
 
 /** The test's campaign draft, opened in the builder. */
 export async function buildExperimentCampaignAction(id: string): Promise<{ ok: true; href: string } | Fail> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const s = await scope();
   if (!s) return { ok: false, error: "Not signed in." };
   const p = ID.safeParse(id);
@@ -62,6 +72,9 @@ export async function buildExperimentCampaignAction(id: string): Promise<{ ok: t
 
 /** Read Meta's latest figures for a running test now, instead of waiting for the daily check. */
 export async function checkExperimentAction(id: string): Promise<{ ok: true; view: ExperimentView } | Fail> {
+  // Role check: reports.run (lib/members/roles.ts).
+  const denied = await deniedFor("reports.run");
+  if (denied) return { ok: false, error: denied };
   const s = await scope();
   if (!s) return { ok: false, error: "Not signed in." };
   const p = ID.safeParse(id);

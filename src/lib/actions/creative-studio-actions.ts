@@ -22,6 +22,7 @@ import {
 import { attachAssetToCampaign } from "@/lib/creative-studio/campaign-link";
 import { storageConfigured } from "@/lib/storage/blob";
 import type { CreativeFormat, CreativeStylePreset } from "@/generated/prisma/enums";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The Creative Studio server actions.
 //
@@ -122,6 +123,9 @@ export async function generateCreativeAction(
   _prev: StudioActionState,
   formData: FormData,
 ): Promise<StudioActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx.ok) return { error: ctx.error };
 
@@ -171,6 +175,9 @@ export async function transformProductAction(
   _prev: StudioActionState,
   formData: FormData,
 ): Promise<StudioActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx.ok) return { error: ctx.error };
 
@@ -232,6 +239,9 @@ export async function editCreativeAction(
   _prev: StudioActionState,
   formData: FormData,
 ): Promise<StudioActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx.ok) return { error: ctx.error };
 
@@ -280,6 +290,9 @@ export async function generateVariationsAction(
   _prev: VariationsState,
   formData: FormData,
 ): Promise<VariationsState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const ctx = await context();
   if (!ctx.ok) return { error: ctx.error };
 
@@ -349,6 +362,9 @@ export async function uploadOwnCreativeAction(
   _prev: StudioActionState,
   formData: FormData,
 ): Promise<StudioActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId || !session.user.id) return { error: "Not authenticated" };
   if (!storageConfigured()) {
@@ -383,6 +399,9 @@ export async function uploadOwnCreativeAction(
 
 /** Puts a finished Studio image on the road to actually running as an ad. */
 export async function attachCreativeToCampaignAction(assetId: string): Promise<StudioActionState> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -396,6 +415,9 @@ export async function attachCreativeToCampaignAction(assetId: string): Promise<S
 
 /** Removes an asset from the library view. The files stay; nothing is deleted inline. */
 export async function archiveAssetAction(assetId: string): Promise<StudioActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

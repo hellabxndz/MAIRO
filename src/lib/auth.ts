@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
+import { chosenWorkspace, resolveWorkspace } from "@/lib/members/workspace";
 import {
   googleCredentials,
   resolveGoogleSignIn,
@@ -60,6 +61,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
+    // The business a person acts in is checked against their memberships on
+    // every request (lib/members/workspace.ts): someone removed from a
+    // business loses it straight away, and someone in several can switch.
+    // MAIRO staff belong to no business and are left as they are.
+    session: async (params) => {
+      const session = await authConfig.callbacks!.session!(params);
+      if (session.user?.id && session.user.role !== "OWNER") {
+        session.user.organizationId = await resolveWorkspace(session.user.id, session.user.organizationId ?? null, await chosenWorkspace());
+      }
+      return session;
+    },
     // Runs before any session exists. For Google this is where the MAIRO user
     // is found, linked or created; a string sends the person back to a page
     // that explains the refusal, and nothing is signed in.

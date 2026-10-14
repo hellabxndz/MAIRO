@@ -10,6 +10,7 @@ import { gatherDecisionInput } from "@/lib/decisions/gather";
 import { computeBrief, loadIntelligence } from "@/lib/intelligence/run";
 import type { IntelligenceReportData } from "@/lib/intelligence/types";
 import { DASHBOARD_LENS_COOKIE } from "@/lib/view-mode";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What the intelligence screens call. Every one checks the row belongs to the
 // account asking, as the decision actions do.
@@ -23,6 +24,9 @@ async function context() {
 
 /** "Don't show me this again" for one finding. It stays in the timeline. */
 export async function dismissInsightAction(id: string): Promise<{ ok: boolean }> {
+  // Role check: decision.approve (lib/members/roles.ts).
+  const denied = await deniedFor("decision.approve");
+  if (denied) return { ok: false };
   const ctx = await context();
   if (!ctx || !z.string().min(1).max(64).safeParse(id).success) return { ok: false };
   const res = await db.mairoInsight.updateMany({ where: { id, organizationId: ctx.organizationId }, data: { status: "DISMISSED" } });
@@ -35,6 +39,9 @@ export async function dismissInsightAction(id: string): Promise<{ ok: boolean }>
  * account, not the whole daily look — so the choice shows at once.
  */
 export async function setBriefFrequencyAction(frequency: "DAILY" | "WEEKLY"): Promise<{ ok: boolean }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const ctx = await context();
   const parsed = z.enum(["DAILY", "WEEKLY"]).safeParse(frequency);
   if (!ctx || !parsed.success) return { ok: false };
@@ -87,6 +94,9 @@ const settingsSchema = z.object({
 export type ProfitSettingsState = { ok: boolean; error: string | null };
 
 export async function saveProfitSettingsAction(_prev: ProfitSettingsState, form: FormData): Promise<ProfitSettingsState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const read = (k: string) => String(form.get(k) ?? "");

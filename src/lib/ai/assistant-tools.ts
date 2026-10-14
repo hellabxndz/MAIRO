@@ -19,6 +19,7 @@ import { changeBrain, loadBrainState } from "@/lib/brain/store";
 import { confirmationQuestion, requiresConfirmation, type FactChange } from "@/lib/brain/edit";
 import { BRAIN_FIELDS } from "@/lib/brain/catalog";
 import { displayValue, hasValue } from "@/lib/brain/rules";
+import { can, ROLE_LABEL, type Permission, type Role } from "@/lib/members/roles";
 
 // What the assistant can look at and propose — One-Click Fix.
 //
@@ -49,7 +50,42 @@ function figures(objective: Parameters<typeof resultsFor>[0], m: PlatformMetrics
   };
 }
 
-export function assistantTools(organizationId: string) {
+/**
+ * The tools that change something, and what a person's role must allow for
+ * the assistant to offer them. Leaving a tool out is the check: a model can't
+ * call a tool it wasn't given, whatever it's asked. The actions behind the
+ * pages check the same permissions again (lib/members/authorize.ts).
+ */
+export const WRITE_TOOLS = {
+  propose_mission: "business.edit",
+  tell_mairo: "business.edit",
+  update_business_brain: "business.edit",
+  propose_fix: "decision.approve",
+} as const satisfies Record<string, Permission>;
+
+/** The assistant's tools for this person's role here; only the ones the role allows. */
+export function assistantTools(organizationId: string, role: Role) {
+  const all = allTools(organizationId);
+  return Object.fromEntries(
+    Object.entries(all).filter(([name]) => {
+      const needs = (WRITE_TOOLS as Record<string, Permission>)[name];
+      return !needs || can(role, needs);
+    }),
+  ) as Partial<typeof all>;
+}
+
+/** Added to the prompt when the role can't make changes, so the assistant says why instead of trying. */
+export function roleBrief(role: Role): string {
+  const missing = (Object.keys(WRITE_TOOLS) as (keyof typeof WRITE_TOOLS)[]).filter((t) => !can(role, WRITE_TOOLS[t]));
+  if (missing.length === 0) return "";
+  return [
+    "This person's role:",
+    `- They're on this business's team as ${ROLE_LABEL[role]}. Their role can't change the business details, the goal or plan${missing.includes("propose_fix") ? ", or approve recommendations" : ""}, so those tools aren't available to you here.`,
+    "- Answer their questions and show them where things are. If they ask for a change their role doesn't allow, say an owner or administrator can make it — never say it was done.",
+  ].join("\n");
+}
+
+function allTools(organizationId: string) {
   return {
     diagnose_campaigns: tool({
       description:

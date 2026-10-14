@@ -38,6 +38,7 @@ const cleanup = () => db.organization.deleteMany({ where: { id: { startsWith: TA
 async function business(id: string, data: Record<string, unknown> = {}) {
   await db.organization.create({ data: { id: `${TAG}-${id}`, name: `Trust ${id}`, ...data } });
   const user = await db.user.create({ data: { email: `${TAG}-${id}@test.invalid`, passwordHash: "x", organizationId: `${TAG}-${id}` } });
+  await db.organizationMember.create({ data: { organizationId: `${TAG}-${id}`, userId: user.id, role: "OWNER" } });
   return { orgId: `${TAG}-${id}`, userId: user.id };
 }
 async function campaign(organizationId: string, name: string, platformStatus: "ACTIVE" | "PAUSED" | "PENDING_REVIEW", status: "ACTIVE" | "PAUSED" | "ARCHIVED" = "ACTIVE") {
@@ -76,7 +77,7 @@ async function main() {
       const { orgId, userId } = await business("running", { stripeSubscriptionId: `${TAG}-sub-r`, subscriptionStatus: "active" });
       await campaign(orgId, "Spring leads", "ACTIVE");
       const { deps, log } = fakes();
-      const r = await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: false }, deps);
+      const r = await closeAccount({ userId, acknowledgedRunning: false }, deps);
       assert.ok(!r.ok && r.reason === "running-campaigns" && r.running[0].name === "Spring leads" && /keep spending/.test(r.error));
       assert.equal(log.cancelled.length, 0, "nothing cancelled before the owner confirms");
       assert.ok(await db.organization.findUnique({ where: { id: orgId } }));
@@ -85,7 +86,7 @@ async function main() {
     await check("if Stripe doesn't confirm the cancellation, nothing is deleted", async () => {
       const { orgId, userId } = await business("stripe-fails", { stripeSubscriptionId: `${TAG}-sub-f`, subscriptionStatus: "active" });
       const { deps } = fakes({ cancelSubscription: async () => { throw Object.assign(new Error("Stripe down"), { statusCode: 500 }); } });
-      const r = await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: true }, deps);
+      const r = await closeAccount({ userId, acknowledgedRunning: true }, deps);
       assert.ok(!r.ok && r.reason === "billing" && /nothing was deleted/.test(r.error));
       assert.ok(await db.organization.findUnique({ where: { id: orgId } }));
       assert.ok(await db.user.findUnique({ where: { id: userId } }));
@@ -94,7 +95,7 @@ async function main() {
     await check("if Stripe can't be reached at all, nothing is deleted", async () => {
       const { orgId, userId } = await business("no-stripe", { stripeSubscriptionId: `${TAG}-sub-n`, subscriptionStatus: "trialing" });
       const { deps } = fakes({ billingReachable: () => false });
-      const r = await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: true }, deps);
+      const r = await closeAccount({ userId, acknowledgedRunning: true }, deps);
       assert.ok(!r.ok && r.reason === "billing");
       assert.ok(await db.organization.findUnique({ where: { id: orgId } }));
     });
@@ -106,7 +107,7 @@ async function main() {
       await db.notification.create({ data: { organizationId: orgId, kind: "NEEDS_ATTENTION", severity: "WARNING", dedupeKey: "x", title: "t", body: "b" } });
       await db.metaAdAccount.create({ data: { organizationId: orgId, metaAdAccountId: "act_1", accessToken: "secret-token" } });
       const { deps, log } = fakes();
-      const r = await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: true }, deps);
+      const r = await closeAccount({ userId, acknowledgedRunning: true }, deps);
       assert.ok(r.ok && r.cancelledSubscriptions === 1);
       assert.deepEqual(log.cancelled, [`${TAG}-sub-c`]);
       for (const p of [...organizationPrefixes(orgId), ...organizationPrefixes(`${TAG}-close-client`)]) assert.ok(log.prefixes.includes(p), p);
@@ -123,16 +124,70 @@ async function main() {
         cancelSubscription: async () => { throw Object.assign(new Error("No such subscription"), { code: "resource_missing" }); },
         deleteFiles: async () => { throw new Error("storage unreachable"); },
       });
-      const r = await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: true }, deps);
+      const r = await closeAccount({ userId, acknowledgedRunning: true }, deps);
       assert.ok(r.ok);
       assert.equal(await db.organization.count({ where: { id: orgId } }), 0);
     });
 
     await check("an ended subscription isn't cancelled again", async () => {
-      const { orgId, userId } = await business("ended", { stripeSubscriptionId: null, subscriptionStatus: "canceled" });
+      const { userId } = await business("ended", { stripeSubscriptionId: null, subscriptionStatus: "canceled" });
       const { deps, log } = fakes();
-      assert.ok((await closeAccount({ userId, organizationId: orgId, acknowledgedRunning: true }, deps)).ok);
+      assert.ok((await closeAccount({ userId, acknowledgedRunning: true }, deps)).ok);
       assert.equal(log.cancelled.length, 0);
+    });
+
+    await check("a teammate deleting their account leaves; the business, its subscription and its owner stay", async () => {
+      const { orgId, userId: ownerId } = await business("team-leave", { stripeSubscriptionId: `${TAG}-sub-t`, subscriptionStatus: "active" });
+      const mate = await db.user.create({ data: { email: `${TAG}-mate@test.invalid`, passwordHash: "x", organizationId: orgId } });
+      await db.organizationMember.create({ data: { organizationId: orgId, userId: mate.id, role: "VIEWER" } });
+      const { deps, log } = fakes();
+      assert.ok((await closeAccount({ userId: mate.id, acknowledgedRunning: true }, deps)).ok);
+      assert.equal(log.cancelled.length, 0, "nobody's subscription cancelled");
+      assert.ok(await db.organization.findUnique({ where: { id: orgId } }));
+      assert.ok(await db.user.findUnique({ where: { id: ownerId } }));
+      assert.equal(await db.user.count({ where: { id: mate.id } }), 0);
+      assert.equal(await db.organizationMember.count({ where: { userId: mate.id } }), 0);
+    });
+
+    await check("one of two owners deleting their account leaves; the business stays with the other", async () => {
+      const { orgId, userId: first } = await business("two-owners");
+      const second = await db.user.create({ data: { email: `${TAG}-owner2@test.invalid`, passwordHash: "x", organizationId: orgId } });
+      await db.organizationMember.create({ data: { organizationId: orgId, userId: second.id, role: "OWNER" } });
+      const { deps } = fakes();
+      assert.ok((await closeAccount({ userId: first, acknowledgedRunning: true }, deps)).ok);
+      assert.ok(await db.organization.findUnique({ where: { id: orgId } }));
+      assert.equal(await db.organizationMember.count({ where: { organizationId: orgId, role: "OWNER" } }), 1);
+    });
+
+    await check("the only owner of another business can't delete their account until someone else owns it", async () => {
+      const { orgId: own, userId } = await business("sole-elsewhere");
+      const { orgId: other } = await business("sole-elsewhere-b");
+      await db.organizationMember.deleteMany({ where: { organizationId: other } });
+      await db.organizationMember.create({ data: { organizationId: other, userId, role: "OWNER" } });
+      const { deps } = fakes();
+      const r = await closeAccount({ userId, acknowledgedRunning: true }, deps);
+      assert.ok(!r.ok && r.reason === "blocked" && /only owner of Trust sole-elsewhere-b/.test(r.error), JSON.stringify(r));
+      assert.ok(await db.organization.findUnique({ where: { id: own } }));
+      assert.ok(await db.user.findUnique({ where: { id: userId } }));
+    });
+
+    await check("the sole owner closing the business: teammates lose it, and keep their login only if they're on another team", async () => {
+      const { orgId, userId } = await business("closes-team");
+      const { orgId: elsewhere } = await business("closes-team-other");
+      const onlyHere = await db.user.create({ data: { email: `${TAG}-only@test.invalid`, passwordHash: "x", organizationId: orgId } });
+      const alsoThere = await db.user.create({ data: { email: `${TAG}-also@test.invalid`, passwordHash: "x", organizationId: orgId } });
+      await db.organizationMember.createMany({ data: [
+        { organizationId: orgId, userId: onlyHere.id, role: "ANALYST" },
+        { organizationId: orgId, userId: alsoThere.id, role: "ADMIN" },
+        { organizationId: elsewhere, userId: alsoThere.id, role: "VIEWER" },
+      ] });
+      const { deps } = fakes();
+      assert.ok((await closeAccount({ userId, acknowledgedRunning: true }, deps)).ok);
+      assert.equal(await db.organization.count({ where: { id: orgId } }), 0);
+      assert.equal(await db.user.count({ where: { id: onlyHere.id } }), 0);
+      const kept = await db.user.findUnique({ where: { id: alsoThere.id }, select: { organizationId: true } });
+      assert.equal(kept?.organizationId, elsewhere, "re-homed to the team they're still on");
+      assert.ok(await db.organization.findUnique({ where: { id: elsewhere } }));
     });
 
     await check("the daily sweep removes files only for businesses that no longer exist", async () => {

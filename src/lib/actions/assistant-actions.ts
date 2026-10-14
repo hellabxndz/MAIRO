@@ -13,6 +13,7 @@ import {
   sendVerificationCode,
   verificationCode,
 } from "@/lib/sms/send";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Naming the assistant, and getting permission to text somebody.
 //
@@ -49,6 +50,9 @@ export async function renameAssistantAction(
   _prev: AssistantActionState,
   formData: FormData,
 ): Promise<AssistantActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const organizationId = await currentOrgId();
   if (!organizationId) return { error: "Not signed in" };
 
@@ -66,6 +70,8 @@ export async function renameAssistantAction(
 
 /** Back to Alex. */
 export async function resetAssistantNameAction(): Promise<void> {
+  // Role check: business.edit (lib/members/roles.ts).
+  if (await deniedFor("business.edit")) return;
   const organizationId = await currentOrgId();
   if (!organizationId) return;
   await db.organization.update({
@@ -86,6 +92,9 @@ export async function startPhoneVerificationAction(
   _prev: AssistantActionState,
   formData: FormData,
 ): Promise<AssistantActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const organizationId = await currentOrgId();
   if (!organizationId) return { error: "Not signed in" };
 
@@ -145,6 +154,9 @@ export async function confirmPhoneAction(
   _prev: AssistantActionState,
   formData: FormData,
 ): Promise<AssistantActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const organizationId = await currentOrgId();
   if (!organizationId) return { error: "Not signed in" };
 
@@ -182,6 +194,9 @@ export async function updateSmsPreferencesAction(
   _prev: AssistantActionState,
   formData: FormData,
 ): Promise<AssistantActionState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { error: denied };
   const organizationId = await currentOrgId();
   if (!organizationId) return { error: "Not signed in" };
 
@@ -209,6 +224,8 @@ export async function updateSmsPreferencesAction(
  * opt-out record is what matters afterwards, not the digits.
  */
 export async function stopSmsAction(): Promise<void> {
+  // Role check: business.edit (lib/members/roles.ts).
+  if (await deniedFor("business.edit")) return;
   const organizationId = await currentOrgId();
   if (!organizationId) return;
 

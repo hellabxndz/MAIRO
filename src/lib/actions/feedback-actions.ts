@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import type { FeedbackEasier, FeedbackKind } from "@/generated/prisma/enums";
 import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What a business tells MAIRO about MAIRO. Goes to the MAIRO team (AIOS →
 // Customers) and nowhere else. Nothing here changes a campaign.
@@ -68,6 +69,9 @@ export async function pulseLaterAction(): Promise<void> {
  * Off unless they say yes; withdrawing it is one click and takes effect at once.
  */
 export async function setCaseStudyConsentAction(consent: boolean): Promise<{ ok: boolean; error?: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scope();
   if (!ctx) return { ok: false, error: "Not signed in." };
   await db.organization.update({ where: { id: ctx.organizationId }, data: { caseStudyConsentAt: consent ? new Date() : null } });

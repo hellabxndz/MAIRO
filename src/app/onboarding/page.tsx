@@ -13,6 +13,7 @@ import { JourneyFrame } from "@/components/strategy/journey";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import { SetupTeam } from "@/components/onboarding/setup-team";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Steps 1 to 3 of ten: the business, what MAIRO learns from its website, and
 // the goal. Opens on the screen they stopped at — the answers so far are
@@ -31,6 +32,20 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
 
   const existingIntake = await db.onboardingIntake.findUnique({ where: { organizationId } });
   if (existingIntake) redirect("/dashboard");
+
+  // A teammate whose role can't set up the business waits for someone who can,
+  // rather than filling in a form the server would refuse.
+  const denied = await deniedFor("business.edit");
+  if (denied) {
+    return (
+      <JourneyFrame steps={null}>
+        <div className="mx-auto max-w-[560px] py-10 text-center">
+          <h1 className="text-[24px] font-semibold tracking-[-0.02em] text-white">This business is still being set up</h1>
+          <p className="mt-3 text-[14.5px] leading-relaxed text-neutral-400">An owner, administrator or marketing manager finishes setting up MAIRO for it. You&rsquo;ll see everything here as soon as they do.</p>
+        </div>
+      </JourneyFrame>
+    );
+  }
 
   const { step, type, website: carriedWebsite } = await searchParams;
   const [org, steps, work, brain] = await Promise.all([

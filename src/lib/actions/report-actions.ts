@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { activeOrg } from "@/lib/active-org";
 import { generateWeeklyReport, lastWeekFor, newShareToken } from "@/lib/reports/weekly";
 import { refreshDecisions } from "@/lib/decisions/run";
+import { deniedFor } from "@/lib/members/authorize";
 
 // What the Weekly Report screens call. Each checks the report or settings
 // belong to the account asking.
@@ -25,6 +26,9 @@ async function context() {
 
 /** A report for the last seven days, now — without waiting for the delivery day. */
 export async function generateWeeklyReportNowAction(): Promise<{ ok: false; error: string } | never> {
+  // Role check: reports.run (lib/members/roles.ts).
+  const denied = await deniedFor("reports.run");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const org = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { timezone: true } });
@@ -63,6 +67,9 @@ const settingsSchema = z.object({
 export type ReportSettingsState = { ok: boolean; error: string | null };
 
 export async function saveReportSettingsAction(_prev: ReportSettingsState, form: FormData): Promise<ReportSettingsState> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not signed in." };
   const on = (k: string) => form.get(k) === "on";
@@ -94,6 +101,9 @@ export async function saveReportSettingsAction(_prev: ReportSettingsState, form:
 
 /** An agency approving a client's report: now it can be shared by link. Nothing is sent. */
 export async function approveReportAction(reportId: string): Promise<{ ok: boolean; token?: string }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const ctx = await context();
   if (!ctx || !z.string().min(1).max(64).safeParse(reportId).success) return { ok: false };
   const report = await db.weeklyReport.findFirst({ where: { id: reportId, organizationId: ctx.organizationId } });
@@ -105,6 +115,9 @@ export async function approveReportAction(reportId: string): Promise<{ ok: boole
 }
 
 export async function revokeShareAction(reportId: string): Promise<{ ok: boolean }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const ctx = await context();
   if (!ctx) return { ok: false };
   const res = await db.weeklyReport.updateMany({ where: { id: reportId, organizationId: ctx.organizationId }, data: { shareToken: null, approvedAt: null } });
@@ -114,6 +127,9 @@ export async function revokeShareAction(reportId: string): Promise<{ ok: boolean
 
 /** Switch a lesson off so MAIRO stops using it. */
 export async function toggleLearningAction(id: string, active: boolean): Promise<{ ok: boolean }> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false };
   const ctx = await context();
   if (!ctx) return { ok: false };
   const res = await db.mairoLearning.updateMany({ where: { id, organizationId: ctx.organizationId }, data: { active } });

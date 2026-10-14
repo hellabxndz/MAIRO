@@ -9,8 +9,12 @@ import { loadMetaConnection } from "@/lib/meta/connection";
 import { fetchPages } from "@/lib/meta/oauth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { listAdAccounts, switchMetaAdAccount, type AdAccountChoice } from "@/lib/meta/account-switch";
+import { deniedFor } from "@/lib/members/authorize";
 
 export async function disconnectMetaAction() {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) throw new Error(denied);
   const session = await auth();
   if (!session?.user?.organizationId) throw new Error("Not authenticated");
 
@@ -70,6 +74,9 @@ export async function listMetaPagesAction(): Promise<
 export async function selectMetaPageAction(
   pageId: string
 ): Promise<{ error: string } | undefined> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
 
@@ -128,6 +135,9 @@ export async function listMetaAdAccountsAction(): Promise<
 
 /** Chooses which ad account MAIRO works in. See switchMetaAdAccount for the rules. */
 export async function selectMetaAdAccountAction(adAccountId: string): Promise<{ error: string } | undefined> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;

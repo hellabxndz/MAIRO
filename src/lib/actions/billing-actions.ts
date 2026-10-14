@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 import { ALL_PLANS, isFreelancerTier, trialDaysFor } from "@/lib/plans";
+import { deniedFor } from "@/lib/members/authorize";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -142,6 +143,9 @@ export async function startCheckoutAction(
   _prevState: BillingActionState,
   formData: FormData
 ): Promise<BillingActionState> {
+  // Role check: billing.manage (lib/members/roles.ts).
+  const denied = await deniedFor("billing.manage");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId || !session.user.email) {
     redirect("/sign-in");
@@ -262,6 +266,8 @@ async function createCheckoutUrl(input: {
  * reimplementing proration, invoices and dunning for no benefit.
  */
 export async function openBillingPortalAction(): Promise<void> {
+  // Role check: billing.manage (lib/members/roles.ts).
+  if (await deniedFor("billing.manage")) return;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -299,6 +305,8 @@ export async function openBillingPortalAction(): Promise<void> {
  * cancelling is one click.
  */
 export async function openCancelPortalAction(): Promise<void> {
+  // Role check: billing.manage (lib/members/roles.ts).
+  if (await deniedFor("billing.manage")) return;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 

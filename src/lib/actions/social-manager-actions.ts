@@ -20,6 +20,7 @@ import {
   type PromotionKind,
 } from "@/lib/social/goals";
 import { approveWeek, autopilotReady, generatePlan, goalNeedsDetails, savePromotion, setGoal } from "@/lib/social/manager";
+import { deniedFor } from "@/lib/members/authorize";
 
 // MAIRO Social Manager actions. Scale only: every action that creates,
 // plans, schedules or turns on automation checks active Scale on the server
@@ -55,6 +56,9 @@ const goalSchema = z.object({
 
 /** Step one of Social Manager: what the business wants to accomplish. */
 export async function setGoalAction(input: z.input<typeof goalSchema>): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = goalSchema.safeParse(input);
@@ -94,6 +98,9 @@ const planSchema = z.object({ offsetDays: z.number().int().min(0).max(28).defaul
 
 /** Plans one week of the calendar. "Plan the month" calls this four times. */
 export async function planAction(input: z.input<typeof planSchema> = {}): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = planSchema.safeParse(input);
@@ -113,6 +120,9 @@ const promotionSchema = z.object({ kind: z.enum(PROMOTION_KEYS), details: detail
 
 /** "Anything happening at your business?" — MAIRO markets it. */
 export async function addPromotionAction(input: z.input<typeof promotionSchema>): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = promotionSchema.safeParse(input);
@@ -135,6 +145,9 @@ export async function addPromotionAction(input: z.input<typeof promotionSchema>)
 
 /** Stops marketing a promotion. Posts not yet out are skipped. */
 export async function endPromotionAction(id: string): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -149,6 +162,9 @@ export async function endPromotionAction(id: string): Promise<ManagerResult> {
 const modeSchema = z.enum(APPROVAL_MODES.map((m) => m.key) as [string, ...string[]]);
 
 export async function setApprovalModeAction(mode: string): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = modeSchema.safeParse(mode);
@@ -172,6 +188,9 @@ export async function setApprovalModeAction(mode: string): Promise<ManagerResult
 const settingsSchema = z.object({ platforms: z.array(z.enum(NETWORKS)).min(1).max(2), postsPerWeek: z.number().int().min(2).max(7) });
 
 export async function updateSocialSettingsAction(input: z.input<typeof settingsSchema>): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = settingsSchema.safeParse(input);
@@ -184,6 +203,9 @@ export async function updateSocialSettingsAction(input: z.input<typeof settingsS
 
 /** Weekly approval: one click approves the coming week. */
 export async function approveWeekAction(): Promise<ManagerResult> {
+  // Role check: launch.approve (lib/members/roles.ts).
+  const denied = await deniedFor("launch.approve");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const count = await approveWeek(ctx.organizationId);
@@ -197,6 +219,9 @@ const attachSchema = z.object({ id: z.string().max(64), mediaType: z.enum(MEDIA_
 
 /** Gives a draft its picture or video, so it can be approved. */
 export async function attachMediaAction(input: z.input<typeof attachSchema>): Promise<ManagerResult> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const parsed = attachSchema.safeParse(input);
@@ -217,6 +242,9 @@ export async function attachMediaAction(input: z.input<typeof attachSchema>): Pr
 
 /** Back on active Scale: resume what was paused. Nothing past its time goes out late. */
 export async function resumeSocialAction(): Promise<ManagerResult> {
+  // Role check: campaign.edit (lib/members/roles.ts).
+  const denied = await deniedFor("campaign.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await scaleOnly();
   if ("error" in ctx) return { ok: false, error: ctx.error };
   const { rescheduled, needApproval } = await resumeSocial(ctx.organizationId);

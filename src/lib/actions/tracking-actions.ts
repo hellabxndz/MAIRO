@@ -10,6 +10,7 @@ import { routeFrom } from "@/lib/tracking/state";
 import { recordOrder, rotateIngestToken } from "@/lib/tracking/orders";
 import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import type { AdPlatform } from "@/generated/prisma/enums";
+import { deniedFor } from "@/lib/members/authorize";
 
 // The customer-facing actions for measuring sales.
 //
@@ -55,6 +56,9 @@ export async function listPixelChoicesAction(): Promise<{ ok: true; choices: Pix
 
 /** The owner picked this pixel (from the list, or by typing its ID). */
 export async function selectPixelAction(pixelId: string): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
   if (!(await platformAllowed(ctx.organizationId, "META"))) return { ok: false, error: "MAIRO sets up tracking for Meta only." };
@@ -66,6 +70,9 @@ export async function selectPixelAction(pixelId: string): Promise<TrackingResult
 
 /** The owner asked MAIRO to create a pixel in their ad account. */
 export async function createPixelAction(): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
   if (!(await platformAllowed(ctx.organizationId, "META"))) return { ok: false, error: "MAIRO sets up tracking for Meta only." };
@@ -77,6 +84,9 @@ export async function createPixelAction(): Promise<TrackingResult> {
 }
 
 export async function setInstallRouteAction(route: string): Promise<TrackingResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
   const r = routeFrom(route);
@@ -87,6 +97,9 @@ export async function setInstallRouteAction(route: string): Promise<TrackingResu
 }
 
 export async function markInstalledAction(): Promise<TrackingResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
   await markInstalled(ctx.organizationId);
@@ -132,6 +145,9 @@ export async function checkEventsAction(): Promise<TrackingResult> {
 }
 
 export async function setConsentPolicyAction(policy: string): Promise<TrackingResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
   if (policy !== "respect_denied" && policy !== "require_granted") return { ok: false, error: "Unknown setting." };
@@ -141,6 +157,9 @@ export async function setConsentPolicyAction(policy: string): Promise<TrackingRe
 }
 
 export async function rotateIngestTokenAction(): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -153,6 +172,9 @@ export async function rotateIngestTokenAction(): Promise<TrackingResult> {
 }
 
 export async function saveShopifySecretAction(secret: string): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -193,6 +215,9 @@ export async function recordManualOrderAction(input: {
   email?: string | null;
   occurredAt?: string | null;
 }): Promise<TrackingResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -242,6 +267,9 @@ export async function recordManualOrderAction(input: {
 // --- Google Tag Manager -----------------------------------------------------
 
 export async function setNicheAction(nicheId: string): Promise<TrackingResult> {
+  // Role check: business.edit (lib/members/roles.ts).
+  const denied = await deniedFor("business.edit");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -261,6 +289,9 @@ export async function setNicheAction(nicheId: string): Promise<TrackingResult> {
 }
 
 export async function setGtmContainerAction(containerId: string): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -346,6 +377,9 @@ export async function listGtmContainersAction(): Promise<
 export async function chooseGtmContainerAction(
   choice: ContainerChoice
 ): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -390,6 +424,9 @@ export async function chooseGtmContainerAction(
  * button, and it says exactly what it did.
  */
 export async function provisionGtmAction(): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 
@@ -402,6 +439,9 @@ export async function provisionGtmAction(): Promise<TrackingResult> {
 }
 
 export async function disconnectGtmAction(): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
 

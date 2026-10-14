@@ -1,7 +1,8 @@
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
 import { strategyEngineBrief } from "@/lib/engine";
 import { metaKnowledgeBrief } from "@/lib/meta-intelligence/knowledge-base/store";
-import { assistantTools, MISSION_BRIEF, AI_TEAM_BRIEF, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
+import { assistantTools, roleBrief, MISSION_BRIEF, AI_TEAM_BRIEF, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
+import { roleIn } from "@/lib/members/authorize";
 import { strategyBrief } from "@/lib/strategy/store";
 import { brainPrompt, loadBrainState } from "@/lib/brain/store";
 import { auth } from "@/lib/auth";
@@ -71,6 +72,15 @@ export async function POST(req: Request) {
   }
   const threadOrgId = thread.organizationId;
 
+  // The thread names its business, but that's only who it was for when it was
+  // started. Someone removed from the team since keeps the thread row and
+  // loses the business; and what the assistant may change is their role there
+  // now, read from the database on every message.
+  const role = await roleIn(session.user.id, threadOrgId);
+  if (!role) {
+    return new Response("Not found", { status: 404 });
+  }
+
   // The plan gate, enforced here rather than only on the page. A locked card
   // somebody can walk around by opening the URL is decoration, and this
   // endpoint costs real money to serve.
@@ -130,9 +140,9 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainPrompt(brain)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${AI_TEAM_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}`;
+  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainPrompt(brain)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${AI_TEAM_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}${roleBrief(role) ? `\n\n${roleBrief(role)}` : ""}`;
 
-  return stream(threadId, system, messages, assistantTools(threadOrgId));
+  return stream(threadId, system, messages, assistantTools(threadOrgId, role));
 }
 
 /** Store what they just asked, so the thread survives a reload. */

@@ -249,8 +249,11 @@ export function AppShell({
   footer,
   locked = [],
   scale = false,
+  switcher,
 }: {
   children: ReactNode;
+  /** The business switcher for the phone's top bar, when this person is on more than one team. */
+  switcher?: ReactNode;
   /** Active Scale: the Create menu offers social posts. */
   scale?: boolean;
   /** Nav destinations shown with a lock: the account hasn't subscribed yet. */
@@ -392,7 +395,7 @@ export function AppShell({
         <Link href="/dashboard" className="text-[13px] font-light tracking-[0.3em] text-white">
           MAIRO
         </Link>
-        <span className="truncate text-[12px] text-faint">{businessName}</span>
+        {switcher ?? <span className="truncate text-[12px] text-faint">{businessName}</span>}
         <div className="ml-auto flex items-center gap-1.5">
           <AskMairoButton name={askName} compact />
           <ViewToggle mode={mode} />

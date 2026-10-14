@@ -8,6 +8,7 @@ import { createAdImage, editAdImage, imageGenerationConfigured } from "@/lib/ai/
 import { reviewAdImage } from "@/lib/ai/review";
 import { MAX_FINAL_IMAGES, MAX_REVISIONS, OWN_PHOTO_LABEL } from "@/lib/creative-limits";
 import { activeOrganizationId } from "@/lib/active-org";
+import { deniedFor } from "@/lib/members/authorize";
 
 export type ImageActionState = { error?: string } | undefined;
 
@@ -42,6 +43,9 @@ export async function generateAdImageAction(
   _prevState: ImageActionState,
   formData: FormData
 ): Promise<ImageActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   if (!imageGenerationConfigured()) {
     return {
       error:
@@ -143,6 +147,9 @@ export async function generateAdImageAction(
 export async function runOwnPhotoAsAdAction(
   creativeRequestId: string
 ): Promise<ImageActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const request = await loadOwnedRequest(creativeRequestId);
   if (!request) return { error: "Not found" };
 
@@ -192,6 +199,9 @@ export async function runOwnPhotoAsAdAction(
  * happens — drafts are nothing, a chosen picture is an advertisement.
  */
 export async function chooseImageAction(imageId: string): Promise<ImageActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 
@@ -261,6 +271,9 @@ export async function chooseImageAction(imageId: string): Promise<ImageActionSta
 }
 
 export async function unchooseImageAction(imageId: string): Promise<ImageActionState> {
+  // Role check: creative.edit (lib/members/roles.ts).
+  const denied = await deniedFor("creative.edit");
+  if (denied) return { error: denied };
   const session = await auth();
   if (!session?.user?.organizationId) return { error: "Not authenticated" };
 

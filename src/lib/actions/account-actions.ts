@@ -20,9 +20,10 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
   // account that administers everyone else's.
   if (session.user.role === "OWNER") return { error: "Owner accounts can't be deleted from here." };
 
+  // What this deletes — the business, or only this login — comes from their
+  // memberships (closePlan), not from the business they happen to be viewing.
   const result = await closeAccount({
     userId,
-    organizationId: session.user.organizationId ?? null,
     acknowledgedRunning: formData.get("acknowledgeRunning") === "yes",
   });
   if (!result.ok) return { error: result.error, ...(result.reason === "running-campaigns" ? { running: result.running } : {}) };

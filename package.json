@@ -81,6 +81,7 @@
     "check:experiments": "tsx scripts/check-experiments.ts",
     "check:creative-readiness": "tsx scripts/check-creative-readiness.ts",
     "check:timeline": "tsx scripts/check-timeline.ts",
+    "check:members": "tsx scripts/check-members.ts",
     "check:lead-import": "tsx scripts/check-lead-import.ts",
     "check:brand": "tsx scripts/check-brand.ts",
     "check:video-render": "tsx scripts/check-video-render.ts",
