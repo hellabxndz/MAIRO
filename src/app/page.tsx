@@ -1,10 +1,9 @@
-import { Home } from "@/components/landing/home";
+import { ConsoleHome } from "@/components/landing/console-home";
 
-// The landing page everyone sees by default: the animated product story and
-// a real preview of the visitor's own campaign. A share of visitors sees the
-// page as it was (/landing/classic) while the two are compared — see
-// src/proxy.ts.
+// The homepage: MAIRO as a complete AI advertising team, shown with MAIRO's
+// own interface (see components/landing/console-home.tsx). The page as it was
+// before is kept at /landing/classic for comparison — see src/proxy.ts.
 
 export default function Page() {
-  return <Home hero="story" />;
+  return <ConsoleHome />;
 }

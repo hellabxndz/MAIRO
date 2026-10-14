@@ -19,7 +19,7 @@ import { INVITE_BUTTON_HEIGHT, STAGE_BACKGROUND, StoryStage } from "./story-stag
 // It's a picture of the product with sample data. The real preview — the
 // visitor's own website — is the form beside it, and nothing typed there
 // changes this story. The one live control inside the picture is the closing
-// "Preview my campaign" button, which hands over to that form (onInvite).
+// "See Your Free Plan" button, which hands over to that form (onInvite).
 
 const MAX_LOOPS = 2;
 const FIRST_FRAME = 1200;
@@ -217,7 +217,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
                       }}
                       className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-[#6b5cff] to-[#5b3fd9] px-6 text-[15px] font-semibold text-white shadow-[0_14px_36px_-14px_rgba(91,63,217,0.8)] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5b3fd9]"
                     >
-                      Preview my campaign <span aria-hidden>→</span>
+                      See Your Free Plan <span aria-hidden>→</span>
                     </button>
                   </div>
                 </div>

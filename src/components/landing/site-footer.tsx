@@ -12,32 +12,34 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
       h: "Product",
       l: [
         ["How it works", "/#how-it-works"],
-        ["See MAIRO at work", "/#product-preview"],
         ["Your AI team", "/#ai-team"],
-        ["Performance Coach", "/#performance-coach"],
+        ["Creative recommendations", "/#creatives"],
+        ["Campaigns & approvals", "/#approval"],
+        ["Results", "/#results"],
         ["Pricing", "/#pricing"],
       ],
     },
     {
       h: "Resources",
       l: [
-        ...(toolsLive ? ([["Free tools", "/tools"]] as [string, string][]) : []),
-        ["Your free plan", "/#free-plan"],
-        ["Money and control", "/#control"],
+        ["See your free plan", "/preview"],
+        ...(toolsLive ? ([["Free advertising tools", "/tools"]] as [string, string][]) : []),
+        ["Watch MAIRO in action", "/#walkthrough"],
+        ["Security & control", "/#control"],
         ["Integrations", "/#integrations"],
         ["FAQ", "/#faq"],
-        ["Sign up as a freelancer or agency", "/for-freelancers"],
       ],
     },
-    { h: "Company", l: [["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
+    { h: "Company", l: [["Solutions", "/#solutions"], ["Freelancers & agencies", "/for-freelancers"], ["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
   ];
   return (
-    <footer className="border-t border-white/[0.06] px-5 py-14 sm:px-8">
+    <footer className="relative border-t border-white/[0.07] px-5 py-16 sm:px-8">
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(121,82,255,0.5),rgba(53,108,255,0.3),transparent)]" />
       <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
           <Wordmark href={null} className="text-[18px]" />
-          <p className="mt-3 max-w-[240px] text-[13px] leading-relaxed text-white/50">Your AI Advertising Team for Facebook &amp; Instagram. You run the business — your AI team handles the advertising.</p>
-          <p className="mt-3 text-[12.5px] text-white/55">Questions? <a href={`mailto:${LEGAL.contactEmail}`} className="underline underline-offset-4 hover:text-white">{LEGAL.contactEmail}</a></p>
+          <p className="mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/50">Your entire AI advertising team for Facebook &amp; Instagram — strategy, creative, campaigns and results, approved by you.</p>
+          <p className="mt-3 text-[12.5px] text-white/55">Support: <a href={`mailto:${LEGAL.contactEmail}`} className="underline underline-offset-4 hover:text-white">{LEGAL.contactEmail}</a></p>
           <p className="mt-4 text-[12px] leading-relaxed text-white/45">
             {LEGAL.productName} is operated by {LEGAL.companyName}
             {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.

@@ -9,7 +9,7 @@ import { WALK_DURATION } from "@/lib/demo/walkthrough";
 
 // The landing page's first screen: what MAIRO does in one line, the website
 // box that starts a real preview, and the 24-second story beside it. One
-// primary action — "Preview my campaign" — and the form works without
+// primary action — "See Your Free Plan" — and the form works without
 // JavaScript (it's a plain GET to /preview). The story holds still while the
 // visitor types, and its closing button hands over to this form: it sends
 // what was typed, or puts the cursor in the box if nothing was.
@@ -73,7 +73,7 @@ export function StoryHero() {
               />
               {typeHint && <input type="hidden" name="type" value={typeHint} />}
               <button type="submit" className="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_44px_-12px_rgba(124,92,255,0.95)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c4b5fd]">
-                Preview my campaign <span aria-hidden>→</span>
+                See Your Free Plan <span aria-hidden>→</span>
               </button>
             </div>
           </form>

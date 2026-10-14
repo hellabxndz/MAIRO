@@ -28,7 +28,7 @@ import { coachExample, EXAMPLE_STEPS, type ExampleStep, type ExampleView } from 
 // "story" (the default): the animated product story beside the website box
 // that starts a real preview, then three steps, the 60-second walkthrough,
 // example ads, owner controls, what works today, free tools, pricing, FAQ and
-// a final call — with one primary action, "Preview my campaign".
+// a final call — with one primary action, "See Your Free Plan".
 //
 // "classic": the page as it was — hero, how it works, the AI team, the product
 // itself, the Performance Coach, what MAIRO does, free tools, pricing, trust,
@@ -49,9 +49,10 @@ const COACH_EXAMPLE = Object.fromEntries(EXAMPLE_STEPS.map((s) => [s, coachExamp
 
 
 
-const PRIMARY = "bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] text-white shadow-[0_14px_44px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#a86bff] via-[#8a6dff] to-[#4f86ff] bg-clip-text text-transparent";
-const GLASS = "border border-white/10 bg-white/[0.03] backdrop-blur-xl";
+const PRIMARY = "bg-[image:var(--mairo-ramp)] text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110";
+const GRADIENT_TEXT = "bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text text-transparent";
+// The console's surface: no backdrop-filter (it paints an opaque panel on mobile).
+const GLASS = "border border-[color:var(--mairo-line)] bg-[image:var(--mairo-glass)] shadow-[var(--mairo-glow-soft)]";
 
 function Badge({ children }: { children: ReactNode }) {
   return (
@@ -255,7 +256,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
   const toolsLive = USABLE_TOOLS().length > 0;
   const featuredTools = USABLE_TOOLS().filter((t) => t.featured && t.status === "working").slice(0, 3);
   // One primary action per version, used by every main button on the page.
-  const cta = story ? { href: "/preview", label: "Preview my campaign" } : { href: "/sign-up", label: "Build my free ad plan" };
+  const cta = story ? { href: "/preview", label: "See Your Free Plan" } : { href: "/sign-up", label: "Build my free ad plan" };
   const steps = story ? STORY_STEPS : STEPS;
 
   const classicHero = (
@@ -534,7 +535,94 @@ export function Home({ hero }: { hero: HeroVariant }) {
     </>
   );
 
-  const pricing = (
+
+
+
+  const finalCall = (
+    <>
+    {/* ── Final call ───────────────────────────────────────────────── */}
+          <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
+            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
+              <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
+                {story ? (
+                  <>
+                    <span className="inline-block">What could MAIRO create</span> <span className={`inline-block ${GRADIENT_TEXT}`}>for your business?</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="inline-block">You run the business.</span> <span className={`inline-block ${GRADIENT_TEXT}`}>Your AI team handles the advertising.</span>
+                  </>
+                )}
+              </h2>
+              <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
+                {story
+                  ? "Give MAIRO your website and see a first campaign built around your business — free, and nothing runs until you approve it."
+                  : "Start with a free, personalized advertising plan. See exactly how your AI team would approach your advertising before you subscribe."}
+              </p>
+              <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link href={cta.href} className={`${PRIMARY} inline-flex min-h-[58px] items-center gap-2 rounded-full px-9 text-[16px] font-semibold`}>
+                  {cta.label} <span aria-hidden>→</span>
+                </Link>
+                {story ? (
+                  <Link href="/preview?example=service" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
+                    Try an example
+                  </Link>
+                ) : (
+                  <a href="#ai-team" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
+                    Meet My AI Team
+                  </a>
+                )}
+              </div>
+              <ul className="mx-auto mt-7 flex max-w-[760px] flex-wrap justify-center gap-x-6 gap-y-2 text-[13.5px] text-white/70">
+                <Check>No credit card required</Check>
+                <Check>{story ? "Built from your own website" : "Personalized for your business"}</Check>
+                <Check>{story ? "You approve before anything runs" : "Edit the plan with MAIRO"}</Check>
+                <Check>Pay only when you are ready to activate it</Check>
+              </ul>
+            </div>
+          </section>
+    </>
+  );
+
+  return (
+    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
+      <LandingNav toolsLive={toolsLive} cta={cta} productHref={story ? "/#product" : "/#product-preview"} dark={story} />
+      {story ? (
+        <>
+          <StoryHero />
+          {howItWorks}
+          <WalkthroughSection />
+          <CreativeExamples />
+          <TrustBlock />
+          <VerifiedCapabilities />
+          {freeTools}
+          <PricingBlock cta={cta} />
+          <FaqBlock />
+          {finalCall}
+        </>
+      ) : (
+        <>
+          {classicHero}
+          {howItWorks}
+          {aiTeam}
+          {productPreview}
+          {coach}
+          {whyMairo}
+          {freeTools}
+          <PricingBlock cta={cta} />
+          <TrustBlock />
+          <FaqBlock />
+          {finalCall}
+        </>
+      )}
+      <SiteFooter toolsLive={toolsLive} />
+      <LandingBeacon variant={hero} />
+    </div>
+  );
+}
+
+export function PricingBlock({ cta }: { cta: { href: string; label: string } }) {
+  return (
     <>
     {/* ── Pricing ──────────────────────────────────────────────────── */}
           <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
@@ -696,8 +784,10 @@ export function Home({ hero }: { hero: HeroVariant }) {
           </section>
     </>
   );
+}
 
-  const trust = (
+export function TrustBlock() {
+  return (
     <>
     {/* ── You stay in control ──────────────────────────────────────── */}
           <section id="trust" aria-labelledby="trust-title" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
@@ -753,8 +843,10 @@ export function Home({ hero }: { hero: HeroVariant }) {
           </section>
     </>
   );
+}
 
-  const faq = (
+export function FaqBlock() {
+  return (
     <>
     {/* ── FAQ ──────────────────────────────────────────────────────── */}
           <section id="faq" className="relative mx-auto max-w-[1100px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
@@ -764,87 +856,5 @@ export function Home({ hero }: { hero: HeroVariant }) {
             </div>
           </section>
     </>
-  );
-
-  const finalCall = (
-    <>
-    {/* ── Final call ───────────────────────────────────────────────── */}
-          <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
-              <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
-                {story ? (
-                  <>
-                    <span className="inline-block">What could MAIRO create</span> <span className={`inline-block ${GRADIENT_TEXT}`}>for your business?</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="inline-block">You run the business.</span> <span className={`inline-block ${GRADIENT_TEXT}`}>Your AI team handles the advertising.</span>
-                  </>
-                )}
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
-                {story
-                  ? "Give MAIRO your website and see a first campaign built around your business — free, and nothing runs until you approve it."
-                  : "Start with a free, personalized advertising plan. See exactly how your AI team would approach your advertising before you subscribe."}
-              </p>
-              <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link href={cta.href} className={`${PRIMARY} inline-flex min-h-[58px] items-center gap-2 rounded-full px-9 text-[16px] font-semibold`}>
-                  {cta.label} <span aria-hidden>→</span>
-                </Link>
-                {story ? (
-                  <Link href="/preview?example=service" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
-                    Try an example
-                  </Link>
-                ) : (
-                  <a href="#ai-team" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
-                    Meet My AI Team
-                  </a>
-                )}
-              </div>
-              <ul className="mx-auto mt-7 flex max-w-[760px] flex-wrap justify-center gap-x-6 gap-y-2 text-[13.5px] text-white/70">
-                <Check>No credit card required</Check>
-                <Check>{story ? "Built from your own website" : "Personalized for your business"}</Check>
-                <Check>{story ? "You approve before anything runs" : "Edit the plan with MAIRO"}</Check>
-                <Check>Pay only when you are ready to activate it</Check>
-              </ul>
-            </div>
-          </section>
-    </>
-  );
-
-  return (
-    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
-      <LandingNav toolsLive={toolsLive} cta={cta} productHref={story ? "/#product" : "/#product-preview"} dark={story} />
-      {story ? (
-        <>
-          <StoryHero />
-          {howItWorks}
-          <WalkthroughSection />
-          <CreativeExamples />
-          {trust}
-          <VerifiedCapabilities />
-          {freeTools}
-          {pricing}
-          {faq}
-          {finalCall}
-        </>
-      ) : (
-        <>
-          {classicHero}
-          {howItWorks}
-          {aiTeam}
-          {productPreview}
-          {coach}
-          {whyMairo}
-          {freeTools}
-          {pricing}
-          {trust}
-          {faq}
-          {finalCall}
-        </>
-      )}
-      <SiteFooter toolsLive={toolsLive} />
-      <LandingBeacon variant={hero} />
-    </div>
   );
 }
