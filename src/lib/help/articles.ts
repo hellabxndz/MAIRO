@@ -320,6 +320,7 @@ export function helpArticles(): HelpArticle[] {
         { kind: "p", text: "In each case MAIRO shows the figure as missing and says why — it doesn't fill the gap with an estimate." },
         { kind: "h", text: "Reports and the Performance Coach" },
         { kind: "p", text: `${every("Reports in plain English")} ${every("The Performance Coach")}` },
+        { kind: "p", text: "When the first enquiry from your ads arrives — or, without one, Meta reports your first purchase or booking — MAIRO tells you once, and says whether it counted that figure or Meta reported it." },
       ],
       links: [
         { label: "Performance", href: "/dashboard/analytics", app: true },

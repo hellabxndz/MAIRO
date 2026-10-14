@@ -171,6 +171,7 @@ browser and send nothing; website tools fetch the site server-side through
 | Daily brief, weekly and monthly reports | `/dashboard/reports` | Working and verified | In deploy branch | check:weekly-report, check:reports | — |
 | Lead outcomes; adding by hand; spreadsheet import; history | `/dashboard/leads` · `lib/leads/import.ts`, `history.ts` | Working and verified | Outcomes yes; import and history not deployed | check:lead-import, check:lead-outcomes; browser: 14 checks | — |
 | The test is judged against the owner's confirmed break-even | `lib/calc/assumptions.ts`, `plan-numbers.tsx` | Working and verified | Not deployed | check:calculators, check:plan-guide; browser: 22 checks | — |
+| First-result milestone | `lib/notifications/detect.ts` `detectFirstResult` (bell notice) | Working and verified | Not deployed yet | check:first-result-db (once only; ad leads only, spam and own leads excluded; MAIRO's count vs Meta's figure; isolated per business) | Needs a live campaign to fire |
 | Emergency stop: pause every running campaign at once | Campaigns → Pause everything · `lib/protection/run.ts` `pauseEverything` | Working and verified (against a pretend Meta) | Not deployed yet | check:pause-everything-db (paused only where Meta accepted, a refusal reported and left running, launches held, logged, role-gated not billing-gated); browser: 13 checks, no calls to Meta | Not yet run against live Meta (the single pause was, on 10 Oct) |
 
 ## 9. Businesses of different sizes

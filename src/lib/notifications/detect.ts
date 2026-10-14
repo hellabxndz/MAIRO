@@ -3,6 +3,7 @@ import { fetchOrganizationPerformance } from "@/lib/ad-platforms/performance";
 import { platformName } from "@/lib/ad-platforms/registry";
 import { connectionSummaries, markConnectionProblem } from "@/lib/ad-platforms/connections";
 import { notify } from "./notify";
+import { fromAds } from "@/lib/leads/outcomes";
 import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import { runSpendProtection } from "@/lib/protection/run";
 import { EXPIRY_WARNING_DAYS, expiryWarning } from "@/lib/meta/token-expiry";
@@ -105,10 +106,56 @@ export async function detectFor(organizationId: string): Promise<DetectResult> {
     return result;
   }
 
+  await detectFirstResult(organizationId, report, result);
   await detectSpendingWithoutResults(organizationId, report, result);
   await detectPlatformGap(organizationId, report, result);
 
   return result;
+}
+
+/**
+ * The first result, said once: the first enquiry that came from an ad
+ * (MAIRO's form or Meta's instant form, spam left out), or else the first
+ * purchase or booking Meta reports. Each says where the figure comes from —
+ * MAIRO counted it, or Meta reported it — and nothing is inferred: no lead
+ * and no reported result means no notice.
+ */
+export async function detectFirstResult(organizationId: string, report: Report, result: DetectResult) {
+  const lead = await db.lead.findFirst({
+    where: { organizationId, ...fromAds, status: { not: "SPAM" } },
+    orderBy: { createdAt: "asc" },
+    select: { createdAt: true, mairoCampaign: { select: { id: true, name: true } } },
+  });
+  const purchases = report.total.purchases ?? 0;
+  const bookings = report.total.bookings ?? 0;
+  const first = lead
+    ? {
+        title: "Your first enquiry from your ads",
+        body: `Someone got in touch on ${lead.createdAt.toLocaleDateString("en-US", { month: "long", day: "numeric" })}${lead.mairoCampaign ? ` from “${lead.mairoCampaign.name}”` : ""}. MAIRO counted it from your form. Mark what becomes of it on the Leads page — good lead, booked, customer — so the results show what the ads really brought in.`,
+        href: "/dashboard/leads",
+        label: "Open your leads",
+        campaignId: lead.mairoCampaign?.id,
+        evidence: { source: "lead", at: lead.createdAt.toISOString() },
+      }
+    : purchases > 0
+      ? { title: "Meta reports your first purchase", body: `Meta has reported ${purchases === 1 ? "a purchase" : `${purchases} purchases`} from your ads. That's Meta's figure; orders your store confirms are counted separately.`, href: "/dashboard/analytics", label: "See your results", campaignId: undefined, evidence: { source: "meta", purchases } }
+      : bookings > 0
+        ? { title: "Meta reports your first booking", body: `Meta has reported ${bookings === 1 ? "a booking" : `${bookings} bookings`} from your ads. That's Meta's figure; mark the bookings you confirm on the Leads page.`, href: "/dashboard/analytics", label: "See your results", campaignId: undefined, evidence: { source: "meta", bookings } }
+        : null;
+  if (!first) return;
+  result.found++;
+  const r = await notify({
+    organizationId,
+    kind: "CAMPAIGN_LIVE",
+    dedupeKey: "first-result",
+    title: first.title,
+    body: first.body,
+    actionLabel: first.label,
+    actionHref: first.href,
+    mairoCampaignId: first.campaignId,
+    evidence: first.evidence,
+  });
+  if (r.created) result.created++;
 }
 
 type Report = Awaited<ReturnType<typeof fetchOrganizationPerformance>>;
