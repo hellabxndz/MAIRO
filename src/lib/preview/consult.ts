@@ -1,4 +1,4 @@
-import { FACT_LABEL, previewKind, type FactKey, type FactSource, type Preview, type PreviewFacts } from "@/lib/preview/build";
+import { FACT_LABEL, kindOf, type FactKey, type FactSource, type Preview, type PreviewFacts } from "@/lib/preview/build";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import type { Finding } from "@/lib/website/audit";
 
@@ -50,7 +50,7 @@ export type Opportunity = { area: "Audience" | "Offer" | "Trust" | "Website" | "
  * follow from the facts given (or not given).
  */
 export function opportunities(f: PreviewFacts, p: Preview, findings: Finding[], instagram: string | null = null): Opportunity[] {
-  const kind = previewKind(f.businessType, Boolean(f.destinations?.booking));
+  const kind = kindOf(f);
   const out: Opportunity[] = [];
   out.push(
     f.customer.trim()
@@ -74,7 +74,7 @@ export type GrowthAction = { title: string; priority: "High" | "Medium" | "Low";
 
 /** Three to five things worth doing first, most important first — each with what MAIRO does about it. */
 export function growthActions(f: PreviewFacts, p: Preview, findings: Finding[]): GrowthAction[] {
-  const kind = previewKind(f.businessType, Boolean(f.destinations?.booking));
+  const kind = kindOf(f);
   const needed = p.tracking.events.find((e) => e.required)?.name ?? null;
   const leadForm = /lead form/i.test(p.plan.destination);
   const out: GrowthAction[] = [

@@ -123,7 +123,7 @@ export function FreePlanForm({
         const ig = mode === "instagram" ? instagram.trim() : "";
         const d = mode === "describe" ? describe.trim() : "";
         const n = mode === "describe" ? name.trim() : "";
-        const missing = mode === "website" ? !w && "Enter your website — or tell MAIRO about your business instead." : mode === "instagram" ? !ig && "Enter your Instagram username, like @yourbusiness." : !n ? "What's your business called?" : !d && "Tell MAIRO what your business sells or offers.";
+        const missing = mode === "website" ? !w && "Enter your website — or tell MAIRO about your business instead." : mode === "instagram" ? !ig && "Enter your Instagram username, like @yourbusiness." : !n ? "What's your business called?" : !d ? "Tell MAIRO what your business sells or offers." : !goal && "Choose your main goal — it decides what your first campaign is for.";
         if (missing) {
           e.preventDefault();
           setProblem(missing);

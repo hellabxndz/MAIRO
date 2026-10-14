@@ -100,6 +100,17 @@ export function previewKind(businessType: string, hasBooking: boolean): PreviewK
   return "service";
 }
 
+/**
+ * The kind of business a plan is built for: from the industry when one was
+ * chosen, else from the goal (sales → an online shop, bookings → a business
+ * that takes bookings, leads → a local service). The quick plan says when
+ * it had to go by the goal.
+ */
+export function kindOf(f: Pick<PreviewFacts, "businessType" | "destinations" | "goal">): PreviewKind {
+  if (businessTypeFrom(f.businessType)) return previewKind(f.businessType, Boolean(f.destinations?.booking));
+  return f.goal === "sales" ? "shop" : f.goal === "bookings" || f.destinations?.booking ? "appointments" : "service";
+}
+
 export function defaultGoal(kind: PreviewKind): PreviewGoal {
   return kind === "shop" ? "sales" : kind === "appointments" ? "bookings" : "leads";
 }
@@ -163,8 +174,28 @@ export function missingFacts(f: PreviewFacts): { key: FactKey | "businessType" |
   return out;
 }
 
+/**
+ * The least a quick plan is built from: the name, what's offered and the
+ * goal. Where they are and the industry sharpen it, and the plan says what it
+ * did without them — never filling them in.
+ */
+export function quickMissing(f: PreviewFacts): { key: FactKey | "goal"; ask: string }[] {
+  const out: { key: FactKey | "goal"; ask: string }[] = [];
+  if (!f.name.trim()) out.push({ key: "name", ask: "What's the business called?" });
+  if (!f.offering.trim()) out.push({ key: "offering", ask: "What do you offer, in one line?" });
+  if (!f.goal) out.push({ key: "goal", ask: "What should the first campaign get you?" });
+  return out;
+}
+
+/**
+ * The plan's openings: the hook generator's angles, plus two that need
+ * nothing but the name, what's offered and the goal — so even a one-line
+ * description gets three concepts. Neither says anything the owner didn't.
+ */
+export type PlanAngle = HookAngle | "invite" | "meet";
+
 export type Direction = {
-  angle: HookAngle;
+  angle: PlanAngle;
   label: string;
   /** The opening line — the first words people read. */
   hook: string;
@@ -205,6 +236,8 @@ export type Preview = {
   firstCampaign: { name: string; objective: string; budget: string; length: string; judgedOn: string };
   /** Why MAIRO recommends each part of the plan. */
   reasons: { title: string; text: string }[];
+  /** What a quick plan went without, and what it did instead — said, never filled in. */
+  assumed: { key: "location" | "businessType"; text: string }[];
 };
 
 const ORDER: Record<PreviewKind, HookAngle[]> = {
@@ -235,6 +268,42 @@ const VISUAL: Record<HookAngle, string> = {
   moment: "The everyday moment someone realises they need you.",
   explain: "Two or three simple frames: what happens first, next, and what they get.",
 };
+
+const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+const low = (s: string) => (s && !/^[A-Z]{2,}/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+
+/** The two openings that work from the name, the offer and the goal alone — used only to make up three. */
+function starterDirections(f: PreviewFacts, goal: PreviewGoal, offering: string): Omit<Direction, "recommended">[] {
+  const what = offering.replace(/[.!]+$/, "").trim();
+  const name = f.name.trim();
+  const invite = goal === "sales" ? `${cap(what)} — order online from ${name}.` : goal === "bookings" ? `Book ${low(what)} with ${name}.` : `Need ${low(what)}? Ask ${name} for a quote.`;
+  return [
+    {
+      angle: "invite",
+      label: "Straight to the point",
+      hook: invite,
+      headline: headlineFor(f, "explain"),
+      primaryText: invite,
+      visual: "Your product or your work, clear and well lit, with the button's words easy to see.",
+      why: "Says plainly what you offer and what to do next — often the clearest ad for people already looking.",
+      format: "Picture of your work or product",
+      cta: CTA[goal],
+      uses: ["name", "offering"],
+    },
+    {
+      angle: "meet",
+      label: "Meet the business",
+      hook: `Meet ${name}: ${low(what)}.`,
+      headline: name.length <= 40 ? name : headlineFor(f, "explain"),
+      primaryText: `Meet ${name}: ${low(what)}.`,
+      visual: "You or your team at work — a real, everyday moment. Filmed on a phone is fine.",
+      why: "Puts a face to the name: people often choose a business they feel they already know.",
+      format: "Short video of you or your team",
+      cta: CTA[goal],
+      uses: ["name", "offering"],
+    },
+  ];
+}
 
 /** A headline short enough for under the picture, from the owner's words. */
 function headlineFor(f: PreviewFacts, angle: HookAngle): string {
@@ -268,10 +337,10 @@ function primaryTextFor(f: PreviewFacts, hook: string, angle: HookAngle): string
 /** Daily amount used in the example; the owner sets the real one, and nothing runs without their approval. */
 export const EXAMPLE_DAILY = 15;
 
-export function buildPreview(f: PreviewFacts): Preview | null {
-  if (missingFacts(f).length) return null;
+export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): Preview | null {
+  if (opts.quick ? quickMissing(f).length : missingFacts(f).length) return null;
   const goal = f.goal as PreviewGoal;
-  const kind = previewKind(f.businessType, Boolean(f.destinations?.booking));
+  const kind = kindOf(f);
   const d = f.destinations;
 
   const objective =
@@ -284,7 +353,8 @@ export function buildPreview(f: PreviewFacts): Preview | null {
         ? d?.booking ? `Your ${d.booking} booking page` : `Your booking page${f.website ? ` (${f.website})` : ""}`
         : d?.form ? `Your website's contact form${f.website ? ` (${f.website})` : ""}` : "A Meta lead form — people ask for a quote without leaving Facebook or Instagram";
   const who = f.customer.trim() || (kind === "shop" ? "People likely to buy what you sell" : "People who need what you offer");
-  const audience = kind === "shop" ? `${who}, where you sell: ${f.location}` : `${who}, within a short drive of ${f.location}`;
+  const place = f.location.trim();
+  const audience = kind === "shop" ? (place ? `${who}, where you sell: ${place}` : `${who}, wherever you sell`) : place ? `${who}, within a short drive of ${place}` : `${who}, near you`;
 
   // "Drain repair in Eastfield" plus a location of "Eastfield, OH" would say the town twice; the hooks add the place themselves.
   const town = f.location.split(",")[0].trim();
@@ -309,7 +379,12 @@ export function buildPreview(f: PreviewFacts): Preview | null {
     recommended: i === 0,
     uses: h.uses.filter((u) => u in FACT_LABEL) as FactKey[],
   });
-  const directions: Direction[] = picked.map(toDirection);
+  // Fewer than three from the facts given: the openings that need only the name, the offer and the goal make up the rest.
+  // "How it works" is the weakest opening to test first, so "Straight to the point" goes ahead of it.
+  const real = picked.map(toDirection);
+  const [invite, meet] = starterDirections(f, goal, offering).map((d) => ({ ...d, recommended: false }));
+  const need = Math.max(0, 3 - real.length);
+  const directions: Direction[] = [...real.filter((d) => d.angle !== "explain"), ...(need >= 1 ? [invite] : []), ...real.filter((d) => d.angle === "explain"), ...(need >= 2 ? [meet] : [])].map((d, i) => ({ ...d, recommended: i === 0 }));
   const alternatives: Direction[] = usable.slice(3, 6).map((h) => toDirection(h, -1));
   const couldAdd = (Object.keys(GIVES) as FactKey[])
     .filter((k) => !f[k].trim() && !(k === "location" && kind === "shop"))
@@ -332,7 +407,7 @@ export function buildPreview(f: PreviewFacts): Preview | null {
 
   const starter = PLANS[0];
   const readiness: Preview["readiness"] = [
-    { label: "Your business details", state: "done", detail: "Confirmed by you just now. You can change any of them later." },
+    { label: "Your business details", state: "done", detail: "From you just now. You can change any of them later." },
     { label: "Save this plan", state: "next", detail: "A free account keeps it and turns it into your full free plan. No card needed." },
     { label: "Connect your Meta ad account", state: "later", detail: "Your own account — MAIRO never runs ads from an account you don't own." },
     { label: usesLeadForm ? "Set up the lead form" : `Make sure Meta sees each ${optimiseFor.toLowerCase().replace(/s$/, "")}`, state: "later", detail: usesLeadForm ? "MAIRO builds the form with you during setup." : "MAIRO checks the tracking and shows you what it found." },
@@ -408,5 +483,9 @@ export function buildPreview(f: PreviewFacts): Preview | null {
     creativeStrategy,
     firstCampaign,
     reasons,
+    assumed: [
+      ...(!place ? [{ key: "location" as const, text: kind === "shop" ? "You didn't say where you sell, so the plan doesn't name an area yet — add it and MAIRO targets it." : "You didn't say where your customers are, so the plan says \"near you\" — add your area and MAIRO shows the ads only there." }] : []),
+      ...(!businessTypeFrom(f.businessType) ? [{ key: "businessType" as const, text: `You didn't choose an industry, so MAIRO planned for ${kind === "shop" ? "an online shop" : kind === "appointments" ? "a business that takes bookings" : "a local service"}, from your goal — choose yours to change it.` }] : []),
+    ],
   };
 }

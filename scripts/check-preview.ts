@@ -138,11 +138,32 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
     assert.ok(sub.detail.includes(`${STARTER_TRIAL_DAYS}-day trial`), sub.detail);
     assert.match(sub.detail, /paid to Meta separately/);
   });
-  await check("thin facts give fewer directions and say which fact would add one", () => {
+  await check("thin facts still give three concepts — the extra ones from the name and the offer alone — and say which fact would add another", () => {
     const thin: PreviewFacts = { ...emptyFacts(), name: "Rosa's Bakery", offering: "Sourdough bread and birthday cakes", location: "Hackney", businessType: "restaurant", goal: "leads" };
     const t = buildPreview(thin)!;
-    assert.ok(t.directions.length >= 1 && t.directions.length < 3, String(t.directions.length));
+    assert.equal(t.directions.length, 3);
+    for (const d of t.directions.filter((x) => x.angle === "invite" || x.angle === "meet")) {
+      assert.deepEqual(d.uses, ["name", "offering"], d.label);
+      assert.ok(d.hook.includes("Rosa's Bakery") && /sourdough bread and birthday cakes/i.test(d.hook), d.hook);
+    }
     assert.ok(t.couldAdd.length > 0);
+  });
+  await check("a quick plan needs only the name, the offer and the goal, and says what it went without", () => {
+    const quick: PreviewFacts = { ...emptyFacts(), name: "Nova Sports Pitching", offering: "Baseball pitching lessons", goal: "bookings", sources: { name: { from: "you" }, offering: { from: "you" } } };
+    assert.equal(buildPreview(quick), null, "the full plan still asks for the area and the industry");
+    const q = buildPreview(quick, { quick: true })!;
+    assert.equal(q.kind, "appointments", "bookings → a business that takes bookings");
+    assert.equal(q.directions.length, 3);
+    assert.equal(q.directions.filter((d) => d.recommended).length, 1);
+    assert.match(q.plan.audience, /near you$/);
+    assert.deepEqual(q.assumed.map((a) => a.key), ["location", "businessType"]);
+    const text = JSON.stringify(q);
+    assert.doesNotMatch(text, FORECAST);
+    for (const n of numbersIn(q.directions.map((d) => d.hook + d.primaryText).join(" "))) assert.fail(`invented number ${n}`);
+    assert.equal(buildPreview({ ...quick, goal: "" }, { quick: true }), null, "no goal, no plan");
+    assert.equal(buildPreview({ ...quick, offering: "" }, { quick: true }), null, "no offer, no plan");
+    assert.equal(buildPreview({ ...quick, goal: "sales" }, { quick: true })!.kind, "shop");
+    assert.equal(buildPreview({ ...quick, goal: "leads" }, { quick: true })!.kind, "service");
   });
   await check("the three examples build full previews, marked as examples", () => {
     for (const k of EXAMPLE_ORDER) {

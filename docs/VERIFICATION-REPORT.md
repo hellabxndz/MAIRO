@@ -48,7 +48,7 @@ emailed.
 | `npm run audit` (every `check:*` suite) | **78 / 78 suites pass** (simulated Meta only) |
 | `npx tsc --noEmit`, `eslint` | Clean |
 | `npm run build` (production build) | Passes: 98 static pages; `/preview`, `/api/tools/instagram`, `/help/*` and `/solutions/*` built |
-| Browser: homepage hero and free plan, all three ways in (`freeplan2.js`) | **140 / 140** on the dev server, and again **140 / 140** on the production build (`next start`): 1440 describe path; 390 Instagram path with the bio link read; 768 Instagram login wall and an invalid username; 1440 website path by keyboard with reduced motion; `/solutions`, `/tools`, `/help` |
+| Browser: homepage hero and free plan, all three ways in (`freeplan3.js`, replacing `freeplan2.js`) | **171 / 171** on the dev server, and again **171 / 171** on the production build (`next start`): 1440 describe path straight to the quick plan, sharpened in place, full plan and back, Make Changes, Approve My Plan; 390 Instagram path with the bio link read; 768 Instagram login wall and an invalid username; 1440 website path by keyboard with reduced motion; `/solutions`, `/tools`, `/help` |
 | Browser: signed-in app at 390 / 768 / 1440 (`release-app.js`) | **46 / 46**: 12 signed-in pages at 1440, 768 and 390 with no sideways scroll, one h1 and no page errors; keyboard to Pause everything and Help; reduced motion; no calls to Meta from the browser |
 | Browser: help centre (`help.js`) | **72 / 72** |
 | Browser: Pause everything (`pauseall.js`) | **13 / 13**: asks first; Keep running backs out; a refusal is reported, not shown as paused; launches held; no calls to Meta |
@@ -86,15 +86,15 @@ emailed.
 | Headline "Your Business Has More Potential. Let MAIRO Show You." | **Complete** (local) | `/` | Not deployed: production shows "Your business. Your next campaign. See it come together." | `freeplan2.js` reads the h1; the share image uses the same line | Deploy |
 | Supporting text, word for word, "Completely free to explore." | **Complete** (local) | `/` | Not deployed | `freeplan2.js` | Deploy |
 | CTA "Build My Free Ad Plan →" | **Complete** (local) | `/`, nav, footer, `/preview`, `/solutions/*`, `/tools`, walkthrough | Not deployed | `freeplan2.js`; `check:preview` (`WALK_ONSCREEN.cta`) | Deploy |
-| Option 1, the default: business name, what it sells, industry, primary goal | **Complete** (local) | `/` → `/preview?start=describe…` | Not deployed: production asks for a website | `freeplan2.js`: default tab; empty form asks for the name; Nova Clothing carried; "We sell … for young adults" read as the offering plus "Young adults" | — |
+| Option 1, the default: business name, what it sells, industry, primary goal | **Complete** (local) | `/` → `/preview?start=describe…` | Production shows the earlier version (see the update note) | Since 14 Oct, at the owner's request, a description goes **straight to a quick plan**: no questions and no build-step screen first. Only the name, what it sells and the goal are needed; the industry is optional. `freeplan3.js`: default tab; asks for a missing name or goal; "We sell … for young adults" read as the offering and the customer; plan on the next screen | — |
 | Option 2: Instagram username or link | **Partial** | `/` → `/preview?instagram=…`, `POST /api/tools/instagram` | Not deployed | `check:instagram` (7 checks); `freeplan2.js` (fixture profile: name and bio read, follower counts never shown, bio link read too; login wall and invalid username handled) | **Never run against live Instagram.** Instagram often shows signed-out visitors a login page; MAIRO then says so and asks the visitor to describe the business. Reading public profile pages should be **reviewed against Instagram's terms** before it's relied on. |
 | Option 3: website, optional | **Complete** (local), live sites unproven | `/preview?website=…` | Website-only in production | `freeplan2.js` (fixture site, by keyboard) | As 7a |
 | Don't require a website; remove "Drop Your URL" | **Complete** (local) | `/` | Production's hero asks for a website | `freeplan2.js`: no website field until chosen; no "Drop Your URL" | Deploy |
-| Progress steps reflect actual processing | **Complete** (local) | `/preview` | Not deployed | `check:consult`: each of the five steps' result is that step's real output (business and source, audience, opportunities found, concepts written, actions). `freeplan2.js`: all five shown; reduced motion shows them at once; "Skip to my plan" | The plan is built in one go from the confirmed facts, so the steps are revealed as a readable account of that work, not as separate waits. The reading itself (website or Instagram) has its own live progress before this. |
+| Progress steps reflect actual processing | **Changed** (local) | `/preview` | — | The separate build-step screen was removed with the quick plan. The five steps and their real results are now in "How MAIRO built this plan" under the plan, which opens by keyboard (`freeplan3.js` D). The Instagram and website readings keep their own live progress, which is real work. | — |
 | Business Overview | **Complete** (local) | `/preview` plan | Not deployed | Every fact shows where it came from: "You told MAIRO", "From your website", "From your Instagram" or "MAIRO's suggestion" | — |
 | Advertising Opportunities | **Complete** (local) | `/preview` plan | Not deployed | `check:consult` (follow from what's missing; never invent a discount; "didn't read a website" when none was read) | — |
 | Suggested Strategy: objective, targeting, starting budget, platforms from supported integrations | **Complete** (local) | `/preview` plan | Not deployed | `freeplan2.js`: "Facebook and Instagram … Google Ads and TikTok aren't supported" | — |
-| AI Creative Recommendations: 3 concepts with hook, headline, copy, visual or video direction, why | **Complete** (local) | `/preview` plan | Not deployed | `freeplan2.js`: 3 concepts, each with every field, labelled as concepts. With too few facts for three, MAIRO asks for one or two more details (or builds fewer if the visitor chooses) rather than inventing angles. | — |
+| AI Creative Recommendations: 3 concepts with hook, headline, copy, visual or video direction, why | **Complete** (local) | `/preview` plan | Not in production yet | The quick plan always shows three ads, each as it would read in the feed with the picture direction, labelled as a concept. With few facts, the extra concepts are two openings ("Straight to the point", "Meet the business") that use only the name, the offer and the goal. `check:preview` confirms they invent no facts or numbers. The full plan keeps the Facebook, Instagram and Story mock-ups, editing and refining. | — |
 | MAIRO Growth Recommendations: 3–5 actions, priority, how MAIRO helps | **Complete** (local) | `/preview` plan | Not deployed | `check:consult` (3–5, most important first, each with what MAIRO does, no forecasts); `freeplan2.js` | — |
 | "Your Growth Plan Is Ready. Let MAIRO Bring It to Life.", Approve My Plan / Make Changes | **Complete** (local) | `/preview` plan → `/sign-up?from=preview…` | Not deployed | `freeplan2.js`: Make Changes returns to the facts with them kept; Approve My Plan opens sign-up with the facts saved for setup | Then the existing sign-up, plan approval, payment, Meta connection and campaign setup, unchanged |
 | Galaxy accents, gradients, subtle animation, mobile, understood in five seconds | **Partial** | `/` | Not deployed | Screenshots at 390 and 1440; no sideways scroll. On a 390-wide phone the headline is three lines and the form begins just past halfway down the first screen (457 of 844 px). | Owner's judgement on the live site |
@@ -102,6 +102,20 @@ emailed.
 | Never manufacture metrics, guaranteed sales or ROAS predictions | **Complete** (local) | All | — | `check:consult`, `check:preview`, `check:capabilities` (banned-claim patterns); `freeplan2.js` ("no forecasts or guarantees") | — |
 | No launch or charge without explicit confirmation; free plan before payment | **Complete** (local) | `/preview` | — | The plan says "No ad runs and nothing is charged without your explicit confirmation". The free plan needs no account. | — |
 | Preserve existing functionality, authentication, dashboard and payment | **Complete** (local) | All | — | `npm run audit`; signed-in browser runs | — |
+
+## Changed on 14 October: the quick plan
+
+At the owner's request, "Tell us about your business" now goes straight from the form to a short plan. Before, it asked follow-up questions and showed a build-step screen. The plan shows:
+
+1. your first campaign: goal, Facebook and Instagram, who sees it, a starting budget;
+2. three ads;
+3. what MAIRO does for you;
+4. optional details that update the plan in place;
+5. Approve My Plan, Make Changes, and "See the full plan".
+
+What it went without, such as the area or the industry, is said and never filled in. Instagram and website starts still show what was read, with sources, for confirming first; then they reach the same quick plan.
+
+The walkthrough video still shows the full plan, which is now one press past the quick plan. Re-rendering it to show the quick plan first is remaining work.
 
 ## Fixed while verifying
 

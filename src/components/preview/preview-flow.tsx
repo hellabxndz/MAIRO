@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { BUSINESS_TYPES, businessTypeFrom } from "@/lib/onboarding/business-types";
 import { EXAMPLES, EXAMPLE_ORDER, type ExampleType } from "@/lib/demo/examples";
-import { FACT_HINT, FACT_LABEL, buildPreview, defaultGoal, emptyFacts, factsFromInstagram, factsFromScan, missingFacts, previewKind, type FactKey, type Preview, type PreviewFacts, type PreviewGoal } from "@/lib/preview/build";
-import { analysisSteps, growthActions, opportunities } from "@/lib/preview/consult";
+import { FACT_HINT, FACT_LABEL, buildPreview, defaultGoal, emptyFacts, factsFromInstagram, factsFromScan, kindOf, previewKind, quickMissing, type FactKey, type Preview, type PreviewFacts, type PreviewGoal } from "@/lib/preview/build";
 import type { InstagramRead } from "@/lib/website/instagram";
 import { exampleFacts } from "@/lib/preview/example";
 import { saveHandoff } from "@/lib/tools/handoff";
@@ -16,16 +15,18 @@ import { ScanError, ScanProgressView } from "@/components/tools/website-report";
 import { inputCls, primaryBtn, secondaryBtn } from "@/components/tools/ui";
 import { FreePlanForm, type FreePlanStart } from "./free-plan-form";
 import { PlanView } from "./plan-view";
+import { QuickPlan } from "./quick-plan";
 
-// The free ad plan — started with Build My Free Ad Plan: a few facts about
-// the business, its Instagram profile's public preview, or its website read by
-// MAIRO's server (every progress line a real step). Then what MAIRO found,
-// shown with where it found it, gaps asked about rather than guessed; five
-// analysis steps, each showing what it actually produced; and a free plan
-// built only from what the visitor confirmed — business overview,
-// opportunities, strategy, three creative concepts and growth actions —
-// presented in the same console the app uses. Refining it, and approving it
-// in a free account, follow. The facts travel into setup with the visitor's
+// The free ad plan — started with Build My Free Ad Plan. A few words about
+// the business (the name, what it sells, the goal) go straight to a quick
+// plan: no questions first, no waiting. An Instagram profile's public
+// preview or a website read by MAIRO's server (every progress line a real
+// step) is shown first, with where each fact came from, so the visitor can
+// correct it. The quick plan — the first campaign, three ads, what MAIRO does
+// — says what it went without rather than filling it in, takes more details
+// inline, and opens the full plan (overview, opportunities, strategy,
+// concepts, growth actions) on request, all from the same facts. Approving it
+// in a free account follows; the facts travel into setup with the visitor's
 // say-so.
 //
 // The draft is kept in this browser (localStorage) so a visitor who leaves
@@ -33,7 +34,7 @@ import { PlanView } from "./plan-view";
 // website (the address goes to MAIRO's server) or sign up.
 
 const DRAFT_KEY = "mairo:preview:v1";
-type Stage = "start" | "reading" | "instagram" | "confirm" | "analyzing" | "preview";
+type Stage = "start" | "reading" | "instagram" | "confirm" | "preview";
 type Draft = { facts: PreviewFacts; stage: "confirm" | "preview"; top: Finding[]; at: string };
 type Origin = "url" | "manual" | "example" | "instagram";
 
@@ -60,7 +61,7 @@ const GOALS: { value: PreviewGoal; label: string; detail: string }[] = [
   { value: "bookings", label: "Bookings", detail: "People book a time" },
 ];
 const FACT_ORDER: FactKey[] = ["name", "offering", "location", "customer", "problem", "offer", "proof"];
-const REQUIRED = new Set<FactKey>(["name", "offering", "location"]);
+const REQUIRED = new Set<FactKey>(["name", "offering"]);
 
 export function PreviewFlow({
   initialWebsite,
@@ -96,10 +97,10 @@ export function PreviewFlow({
 
   const startedManual = initialManual || Boolean(initialDescribe) || Boolean(initialName);
   const startFacts = startedManual ? withChoices(described(emptyFacts(null), initialDescribe, initialName), { goal: initialGoal, type: initialType ?? "", budget: initialBudget }) : null;
-  // Everything needed came in with the form: straight to the analysis, no questions.
-  const [stage, setStage] = useState<Stage | null>(initialExample ? "preview" : startFacts ? (ready(startFacts) ? "analyzing" : "confirm") : null);
-  // Asked once for the details three concepts need; after that the visitor may build with what they gave.
-  const [askedMore, setAskedMore] = useState(false);
+  // The name, what's offered and the goal came in with the form: straight to the quick plan, no questions first.
+  const [stage, setStage] = useState<Stage | null>(initialExample ? "preview" : startFacts ? (ready(startFacts) ? "preview" : "confirm") : null);
+  // The quick plan first; the full plan, every section, when the visitor asks for it.
+  const [view, setView] = useState<"quick" | "full">("quick");
   const [facts, setFacts] = useState<PreviewFacts | null>(() => (initialExample ? exampleFacts(initialExample) : startFacts));
   const [origin, setOrigin] = useState<Origin>(initialExample ? "example" : startedManual ? "manual" : "url");
   // What the visitor chose before MAIRO read anything — their objective, industry and budget win over what the website suggests.
@@ -197,15 +198,14 @@ export function PreviewFlow({
     heading.current?.focus();
   }, [shown]);
 
-  // Stable, so the analysis' step timers aren't restarted by a re-render.
-  const toPlan = useCallback(() => setStage("preview"), []);
-
   const startManual = (describe: string | null = null, name: string | null = null) => {
     const f = withChoices(described(emptyFacts(null), describe, name), choices.current);
     setFacts(f);
     setTop([]);
     setOrigin("manual");
-    setStage(ready(f) ? "analyzing" : "confirm");
+    setView("quick");
+    setStage(ready(f) ? "preview" : "confirm");
+    if (ready(f)) persist(f, "preview", []);
     track({ name: "preview_start", props: { source: "manual", variant: variant.current } });
     track({ name: "preview_result", props: { outcome: "manual", variant: variant.current } });
   };
@@ -229,34 +229,31 @@ export function PreviewFlow({
     persist(next, "confirm", findings);
   };
 
-  const build = (anyway = false) => {
+  const build = () => {
     if (!current) return;
-    const missing = missingFacts(current);
+    const missing = quickMissing(current);
     if (missing.length) {
       setProblems(missing.map((m) => m.ask));
       return;
     }
-    if (!anyway && !askedMore && conceptCount(current) < 3) {
-      setAskedMore(true);
-      return;
-    }
     setProblems([]);
-    setStage("analyzing");
+    setView("quick");
+    setStage("preview");
     persist(current, "preview", findings);
-    const k = previewKind(current.businessType, Boolean(current.destinations?.booking));
+    const k = kindOf(current);
     track({ name: "preview_complete", props: { kind: k, variant: variant.current } });
   };
 
   const refine = (patch: Partial<PreviewFacts>) => {
     if (!current) return;
     const next: PreviewFacts = { ...current, ...patch, sources: { ...current.sources } };
-    for (const k of ["customer", "offer"] as const) {
+    for (const k of FACT_ORDER) {
       if (k in patch) {
         if (next[k].trim()) next.sources[k] = { from: "you" };
         else delete next.sources[k];
       }
     }
-    if (missingFacts(next).length) return;
+    if (!buildPreview(next, { quick: true })) return;
     setFacts(next);
     persist(next, "preview", findings);
     track({ name: "preview_refine", props: { variant: variant.current } });
@@ -270,13 +267,14 @@ export function PreviewFlow({
     setUrl("");
   };
 
-  const preview: Preview | null = useMemo(() => (current && (shown === "preview" || shown === "analyzing") ? buildPreview(current) : null), [current, shown]);
+  const preview: Preview | null = useMemo(() => (current && shown === "preview" ? buildPreview(current, { quick: true }) : null), [current, shown]);
 
   const step = shown === "start" ? 1 : shown === "reading" || shown === "instagram" ? 2 : shown === "confirm" ? 3 : 4;
 
   return (
     <div className={shown === "preview" ? "" : "mx-auto max-w-[980px]"}>
-      {!isExample && <Steps step={step} />}
+      {/* The progress line is for getting to a plan; on the plan itself it would claim steps a quick plan skipped. */}
+      {shown !== "preview" && <Steps step={step} />}
 
       {shown === "start" && (
         <section aria-labelledby="pv-start" className="mx-auto max-w-[760px]">
@@ -346,19 +344,10 @@ export function PreviewFlow({
         </section>
       )}
 
-      {shown === "analyzing" && current && preview && (
-        <Analysis
-          heading={heading}
-          name={preview.name}
-          steps={analysisSteps(current, preview, opportunities(current, preview, findings, handle), growthActions(current, preview, findings))}
-          onDone={toPlan}
-        />
-      )}
-
       {shown === "confirm" && current && (
         <section aria-labelledby="pv-confirm">
           <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">{current.website || handle ? "Step 2 · What MAIRO discovered" : "Step 2 · Your business"}</p>
-          <h1 id="pv-confirm" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">{current.website || handle ? "Here’s what MAIRO found" : missingFacts(current).length ? "A few more details" : "Tell MAIRO about your business"}</h1>
+          <h1 id="pv-confirm" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">{current.website || handle ? "Here’s what MAIRO found" : "Tell MAIRO about your business"}</h1>
           <p className="mt-2 max-w-[720px] text-[14.5px] leading-relaxed text-white/70">
             {current.website ? (
               <>Each answer says where it came from. Confirm the important ones and change anything that&rsquo;s wrong — the plan uses only what you confirm here. Anything your website didn&rsquo;t say is left for you to fill in, not guessed.</>
@@ -413,20 +402,6 @@ export function PreviewFlow({
 
           <GoalFieldset value={current.goal} onChange={(g) => update({ goal: g })} />
 
-          {!missingFacts(current).length && conceptCount(current) < 3 && (
-            <div role={askedMore ? "alert" : undefined} className="mt-5 rounded-xl border border-violet-400/30 bg-violet-500/[0.08] px-4 py-3 text-[13.5px] text-white/85">
-              <p className="font-medium text-white">For three ad concepts, MAIRO needs one or two more details.</p>
-              <p className="mt-1 text-white/70">
-                From what&rsquo;s here it can write {conceptCount(current) === 1 ? "one concept" : `${conceptCount(current)} concepts`}. Add any of these above — who it&rsquo;s for, a current offer, something true that builds trust, or the problem you solve — and each one gives MAIRO another angle. It never makes them up.
-              </p>
-              {askedMore && (
-                <button type="button" onClick={() => build(true)} className="mt-2 text-[13px] font-medium text-violet-bright underline underline-offset-4 hover:text-white">
-                  Build with what I&rsquo;ve given ({conceptCount(current) === 1 ? "1 concept" : `${conceptCount(current)} concepts`})
-                </button>
-              )}
-            </div>
-          )}
-
           {problems.length > 0 && (
             <div role="alert" className="mt-5 rounded-xl border border-amber-300/30 bg-amber-300/[0.07] px-4 py-3 text-[13.5px] text-amber-100">
               <p className="font-medium">Before MAIRO can build your plan:</p>
@@ -441,7 +416,41 @@ export function PreviewFlow({
         </section>
       )}
 
-      {shown === "preview" && current && preview && (
+      {shown === "preview" && current && preview && !isExample && view === "quick" && (
+        <QuickPlan
+          preview={preview}
+          facts={current}
+          findings={findings}
+          instagram={handle}
+          headingRef={heading}
+          signUpHref={signUpHref(current)}
+          onEdit={() => {
+            setFacts(current);
+            setStage("confirm");
+          }}
+          onRefine={refine}
+          onSave={() => {
+            saveFactsForSetup(current, preview, []);
+            track({ name: "preview_save", props: { variant: variant.current } });
+          }}
+          onFull={() => {
+            setView("full");
+            window.scrollTo({ top: 0 });
+            heading.current?.focus();
+          }}
+          onStartOver={startOver}
+        />
+      )}
+
+      {shown === "preview" && current && preview && (isExample || view === "full") && (
+        <>
+        {!isExample && (
+          <p className="mx-auto mb-4 max-w-[1240px]">
+            <button type="button" onClick={() => setView("quick")} className="text-[13px] text-violet-bright underline-offset-4 hover:text-white hover:underline">
+              ← Back to the quick plan
+            </button>
+          </p>
+        )}
         <PlanView
           preview={preview}
           facts={current}
@@ -463,6 +472,7 @@ export function PreviewFlow({
           }}
           onStartOver={startOver}
         />
+        </>
       )}
     </div>
   );
@@ -545,7 +555,9 @@ export function GoalFieldset({ value, onChange }: { value: PreviewGoal | ""; onC
 /** A description typed instead of a website: its first sentence is what the business offers, in the owner's words; the name as given. */
 function described(f: PreviewFacts, text: string | null, name: string | null = null): PreviewFacts {
   const out: PreviewFacts = { ...f, sources: { ...f.sources } };
-  const n = (name ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  const typed = (name ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  // Typed all in lower case in a hurry ("nova sports pitching"): shown as a name ("Nova Sports Pitching"). Any capital means the owner chose it.
+  const n = typed && typed === typed.toLowerCase() ? typed.replace(/(^|\s)(\p{L})/gu, (_, sp: string, c: string) => sp + c.toUpperCase()) : typed;
   if (n) {
     out.name = n;
     out.sources.name = { from: "you" };
@@ -565,14 +577,9 @@ function described(f: PreviewFacts, text: string | null, name: string | null = n
   return out;
 }
 
-/** How many ad concepts these facts support — each angle needs a fact of its own; none is invented. */
-function conceptCount(f: PreviewFacts): number {
-  return buildPreview(f)?.directions.length ?? 0;
-}
-
-/** Enough to go straight to the analysis: nothing required missing, and three concepts' worth of facts. */
+/** Enough for the quick plan: the name, what's offered and the goal. Everything else sharpens it. */
 function ready(f: PreviewFacts): boolean {
-  return missingFacts(f).length === 0 && conceptCount(f) >= 3;
+  return quickMissing(f).length === 0;
 }
 
 /**
@@ -666,56 +673,3 @@ function signUpHref(f: PreviewFacts): string {
   return `/sign-up?${q.toString()}`;
 }
 
-/**
- * The five analysis steps, each with what it produced. The work is already
- * done when this appears — the plan is built from the facts in one go — so
- * the steps are revealed one after another as a readable account of it, and
- * every result line is the real output, never a placeholder. With reduced
- * motion they appear together.
- */
-function Analysis({ heading, name, steps, onDone }: { heading: React.RefObject<HTMLHeadingElement | null>; name: string; steps: { label: string; result: string }[]; onDone: () => void }) {
-  const [shown, setShown] = useState(0);
-  const done = shown >= steps.length;
-  useEffect(() => {
-    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce && shown < steps.length) {
-      const t = window.setTimeout(() => setShown(steps.length), 0);
-      return () => window.clearTimeout(t);
-    }
-    if (shown < steps.length) {
-      const t = window.setTimeout(() => setShown((n) => n + 1), shown === 0 ? 350 : 650);
-      return () => window.clearTimeout(t);
-    }
-    const t = window.setTimeout(onDone, 1100);
-    return () => window.clearTimeout(t);
-  }, [shown, steps.length, onDone]);
-
-  return (
-    <section aria-labelledby="pv-analyzing" className="mx-auto max-w-[760px]">
-      <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">MAIRO is building your plan</p>
-      <h1 id="pv-analyzing" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">
-        {done ? `${name}: your plan is ready` : `Working on ${name}…`}
-      </h1>
-      <ol className="mt-6 space-y-3" aria-live="polite">
-        {steps.map((s, i) => {
-          const state = i < shown ? "done" : i === shown ? "now" : "later";
-          return (
-            <li key={s.label} className={`flex gap-3.5 rounded-2xl border px-4 py-3.5 transition duration-500 ${state === "later" ? "opacity-40" : "opacity-100"}`} style={{ borderColor: state === "done" ? "rgba(52,211,153,0.25)" : "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}>
-              <span aria-hidden className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${state === "done" ? "bg-emerald-400/15 text-emerald-300" : state === "now" ? "bg-[image:var(--mairo-ramp)] text-white" : "bg-white/[0.06] text-white/45"}`}>
-                {state === "done" ? "✓" : state === "now" ? <span className="h-2 w-2 animate-pulse rounded-full bg-white motion-reduce:animate-none" /> : i + 1}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[15px] font-medium text-white">{s.label}{state === "done" ? "" : "…"}</span>
-                {state === "done" && <span className="mt-0.5 block text-[13.5px] leading-relaxed text-white/70">{s.result}</span>}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button type="button" onClick={onDone} className={primaryBtn}>{done ? "See my plan" : "Skip to my plan"}</button>
-        <p className="text-[12.5px] text-white/50">Built only from what you confirmed. Nothing is spent, and nothing runs, until you approve it.</p>
-      </div>
-    </section>
-  );
-}
