@@ -63,7 +63,7 @@ export function OfferReadinessTool({ toolNames }: { toolNames: Record<string, st
           <div className="mt-4"><CopyButton text={text} label="Copy the checklist" /></div>
         </ResultPanel>
         {r.verdict !== "incomplete" && (
-          <NextStep title="Plan the first campaign" body="Your free MAIRO plan starts from where you are — including what still needs fixing on your page." action="Build my free ad plan" />
+          <NextStep title="Plan the first campaign" body="Your free MAIRO plan starts from where you are — including what still needs fixing on your page." action="Start my free plan" />
         )}
       </div>
     </div>

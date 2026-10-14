@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { SITE_NAME } from "@/lib/site";
+import { PLANS } from "@/lib/plans";
 
 // The picture that shows up when somebody pastes a MAIRO link anywhere.
 //
@@ -12,7 +13,7 @@ import { SITE_NAME } from "@/lib/site";
 // It also keeps the repository free of a large binary that somebody has to
 // remember to re-export whenever the name or the palette changes.
 
-export const alt = "MAIRO — Meet your new AI advertising team";
+export const alt = "MAIRO — Your entire AI advertising team. One platform.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +63,7 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Meet your new AI advertising team.
+            Your Entire AI Advertising Team. One Platform.
           </div>
           <div
             style={{
@@ -73,15 +74,15 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Eight AI specialties that create, manage and improve your Facebook and
-            Instagram ads. You run the business — you stay in control.
+            Strategy, creative, campaigns and results for your Facebook and Instagram
+            ads — built by AI, approved by you. See your free plan first.
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 36, fontSize: 25, color: "#737373" }}>
           <span>Facebook</span>
           <span>Instagram</span>
-          <span>From $149.99/mo</span>
+          <span>From ${PLANS[0].priceMonthly}/mo</span>
         </div>
       </div>
     ),

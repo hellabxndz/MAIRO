@@ -58,7 +58,7 @@ export function MonthlyProfitTool({ plans }: { plans: { id: string; name: string
           <NextStep
             title="See what ads need to earn"
             body="Your free MAIRO plan sizes a budget to what your numbers can carry, and shows every cost — MAIRO's fee and ad spend — separately."
-            action="Build my free ad plan"
+            action="Start my free plan"
             handoff={{ kind: "note", tool: "monthly-profit", label: "Monthly numbers from the profit calculator", text: summary }}
           />
         )}

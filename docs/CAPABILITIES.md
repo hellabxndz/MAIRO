@@ -19,7 +19,7 @@ or a public page makes a claim this inventory can't back.
 | Plan | Free advertising plan | Working | `/onboarding`, `/plan` | — | `check:strategy-plan`, `check:plan-guide`, `check:calculators`, `check:onboarding`, `check:onboarding-db` |
 | Plan | Change and approve the plan | Working | `/plan` | — | `check:strategy-plan`, `check:onboarding-db` |
 | Plan | Reading the business's website | Partially working | `/onboarding`, `/dashboard/settings/business-brain` | ANTHROPIC_API_KEY | `check:business`, `check:safe-fetch` |
-| Plan | Campaign preview before sign-up | Partially working | `/preview` | — | `check:preview`, `check:website`, `check:safe-fetch` |
+| Plan | See Your Free Plan (before sign-up) | Partially working | `/preview`, `/` | — | `check:preview`, `check:website`, `check:safe-fetch` |
 | Plan | Business Brain | Working | `/dashboard/settings/business-brain` | — | `check:brain` |
 | Plan | Setup in nine phases, saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
@@ -32,7 +32,7 @@ or a public page makes a claim this inventory can't back.
 | Campaigns | Google Ads | Unavailable | — | — | `check:pricing` |
 | Creative | Ad text | Partially working | `/dashboard/create` | ANTHROPIC_API_KEY | `check:campaign-wizard`, `check:ads` |
 | Creative | AI pictures | Partially working | `/dashboard/creative-studio` | OPENAI_API_KEY; BLOB_READ_WRITE_TOKEN | `check:creative-studio` |
-| Creative | Your own pictures and videos | Partially working | `/dashboard/create` | BLOB_READ_WRITE_TOKEN | `check:ads`, `check:creative-studio` |
+| Creative | Your own pictures and videos | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | BLOB_READ_WRITE_TOKEN | `check:ads`, `check:creative-studio`, `check:suggested-ads` |
 | Creative | Brand details and brand check | Partially working | `/dashboard/settings/business-brain`, `/dashboard/create`, `/dashboard/creatives/suggested` | Approved asset library | `check:brand`, `check:brain`, `check:suggested-ads` |
 | Creative | Meta's own ad previews | Partially working | `/dashboard/create`, `/dashboard/creatives/suggested` | Connected Meta ad account | `check:ads` |
 | Creative | Creative tests | Partially working | `/dashboard/creatives/suggested`, `/dashboard/decisions` | A live test on a real ad account | `check:experiments`, `check:suggested-ads`, `check:decisions` |
@@ -774,23 +774,23 @@ Reads a few public pages of the business's own site, server-side, through a fetc
 
 **Public claim:** “MAIRO reads your website and shows what it found — and what it couldn't.”
 
-### Campaign preview before sign-up
+### See Your Free Plan (before sign-up)
 
 *Plan* · `campaign-preview`
 
-A visitor gives their website (or describes the business); MAIRO reads the public pages, shows each fact with where it was found, asks about anything missing, and drafts a first campaign — channel, objective, destination, audience, an example budget, three ad directions with one recommended, the tracking it needs and the steps before launch. Saving it is a free account; the facts are offered again in setup.
+A visitor gives their website or describes the business, optionally with an objective, industry and monthly budget. MAIRO reads the public pages, shows what it discovered (business, products and services, audience, likely goal) with where each came from, asks the visitor to confirm the important facts, and builds the plan in the console: recommended objective, Meta campaign strategy, audience, budget allocation from the visitor's own monthly figure (or a labelled example), creative strategy with three concepts (headline, copy, visual direction, button, why, which to test first) previewed in Facebook feed, Instagram feed and Story mock-ups, website improvements, the recommended first campaign and why MAIRO recommends each part. Concepts can be edited, swapped, saved and refined with MAIRO (new words proposed; kept only if the visitor chooses). Approve My Plan saves the facts into a free account; Get Started With MAIRO goes to the plans. Nothing is spent or launched.
 
-**Condition:** Sites that build their text with JavaScript only, or block automated visits, can't be read — the visitor describes the business instead. Not yet run against live public websites from the build environment (fixture sites only).
+**Condition:** Sites that build their text with JavaScript only, or block automated visits, can't be read — the visitor describes the business instead. Refine with MAIRO needs the AI provider switched on (it says so when it isn't) and is limited per visitor. Not yet run against live public websites from the build environment (fixture sites only).
 
-**Routes:** `/preview`
+**Routes:** `/preview`, `/`
 
-**Verification:** Facts only from the site or the visitor, gaps asked, three directions with one recommended, no forecasts (check:preview); the journey from the hero to sign-up with type and website carried, the failure and manual paths, and the example browser-checked.
+**Verification:** Facts only from the site or the visitor, gaps asked, three directions with one recommended, no forecasts (check:preview); both ways in from the homepage hero (website at 1440, description with objective, industry and budget at 390), every plan section, placements, edit, change direction, refine (fixture), save, rebuild with a new budget, Approve My Plan into sign-up with the facts saved, and the example plan — 56 browser checks.
 
-**Evidence:** `src/app/preview/page.tsx`, `src/components/preview/preview-flow.tsx`, `src/lib/preview/build.ts`, `src/app/api/tools/scan/route.ts`, `src/lib/website/scan.ts`
+**Evidence:** `src/app/preview/page.tsx`, `src/components/preview/preview-flow.tsx`, `src/components/preview/free-plan-form.tsx`, `src/components/preview/plan-view.tsx`, `src/app/api/preview/refine/route.ts`, `src/lib/preview/build.ts`, `src/app/api/tools/scan/route.ts`, `src/lib/website/scan.ts`
 
 **Checks:** `check:preview`, `check:website`, `check:safe-fetch`
 
-**Public claim:** “Preview a first campaign built from your own website — free, before you sign up.”
+**Public claim:** “See your free advertising plan — from your website or a few words — before you spend a dollar.”
 
 ### Advertise an existing Facebook post
 
@@ -876,19 +876,19 @@ Makes and edits ad pictures in the Creative Studio, metered by monthly credits, 
 
 *Creative* · `uploads`
 
-Upload pictures and videos into the business's own folder and use them as they are, logo and product untouched.
+Upload pictures and videos into the business's own folder and use them as they are, logo and product untouched — in the campaign builder, and as the picture or video of a suggested ad (stored as uploaded, no model call).
 
-**Condition:** Needs BLOB_READ_WRITE_TOKEN. Files are stored at unguessable, unlisted addresses (Meta has to fetch them to run the ad), not behind a sign-in.
+**Condition:** Needs BLOB_READ_WRITE_TOKEN and, for suggested ads, a paid plan (checked on the server). Files are stored at unguessable, unlisted addresses (Meta has to fetch them to run the ad), not behind a sign-in.
 
-**Routes:** `/dashboard/create`
+**Routes:** `/dashboard/create`, `/dashboard/creatives/suggested`
 
 **Still needs:** BLOB_READ_WRITE_TOKEN
 
-**Verification:** Upload tokens only issued for the signed-in business's own folder, allowed types and size.
+**Verification:** Upload tokens only issued for the signed-in business's own folder, allowed types and size; a suggested ad's own photo is stored exactly as uploaded, approvable, and refused for another business (check:suggested-ads). Upload into live blob storage not run from the build environment.
 
-**Evidence:** `src/app/api/uploads/ad-media/route.ts`, `src/lib/storage/blob.ts`, `src/lib/campaigns/media-rules.ts`
+**Evidence:** `src/app/api/uploads/ad-media/route.ts`, `src/lib/storage/blob.ts`, `src/lib/campaigns/media-rules.ts`, `src/lib/suggested-ads/store.ts`, `src/lib/actions/suggested-ads-actions.ts`
 
-**Checks:** `check:ads`, `check:creative-studio`
+**Checks:** `check:ads`, `check:creative-studio`, `check:suggested-ads`
 
 **Public claim:** “Use your own photos and videos.”
 
@@ -956,9 +956,9 @@ Once two suggested ads are approved, MAIRO proposes a fair test: the same pictur
 
 *Creative* · `suggested-ads`
 
-Once Meta is connected and the business profile is confirmed, MAIRO suggests three ad directions written only from confirmed facts, each saying who it's for, where the button sends people and why it's worth a test, with one recommended as the first test and why. Each can become a real picture after its cost is shown, be rewritten (every version kept), use the owner's own video, or be turned down with a reason — MAIRO then suggests a different kind and never the same kind again. Approval is bound to the exact words and picture or video version, and continuing opens the campaign builder with that ad. Nothing is published or spent.
+Once Meta is connected and the business profile is confirmed, MAIRO suggests three ad directions written only from confirmed facts — one product showcase, one customer and lifestyle, one offer-led where the facts allow (no confirmed offer, no offer-led ad) — each with its concept name, the headline Meta gets, primary text, a visual direction, the button, why MAIRO recommends it, who it's for, where the button sends people and why it's worth a test, with one recommended as the first test and why. Each can be previewed in Instagram feed, Facebook feed and Stories, refined with MAIRO, edited, given the owner's own photo or video, become a real picture after its cost is shown (every version kept), or be turned down with a reason — MAIRO then suggests a different kind and never the same kind again. Approval is bound to the exact words and picture or video version, and continuing opens the campaign builder with that ad. Nothing is published or spent.
 
-**Condition:** Making the picture needs a paid plan, AI credits and the image provider switched on; using an uploaded video needs a paid plan and storage. Not yet run against a live Meta account and the live image provider together.
+**Condition:** Making the picture needs a paid plan, AI credits and the image provider switched on; using your own photo or video needs a paid plan (checked on the server) and storage. Not yet run against a live Meta account and the live image provider together.
 
 **Routes:** `/dashboard/creatives/suggested`
 
@@ -1178,13 +1178,13 @@ Compare Shopify plans on subscription and card fees for your sales, with the rat
 
 *Public site* · `product-preview`
 
-The landing page's 24-second animated story in six chapters — a website going into MAIRO; its offer, imagery and call to action becoming what the business sells, who it serves and its goal, which the owner confirms; three ad concepts with one recommended first test and the reason; the draft in the feed and as a story, and the owner's own video trimmed to the demonstration, captioned and cropped to 9:16; a review the owner approves (nothing is sent anywhere); and results with a recommendation and its evidence — for an online store, a service business and a multi-brand team (one brand shown; brand switching and team sign-off aren't offered), with chapters, pause, replay, a hold while the visitor types and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as a product demo with sample data.
+The homepage's product demonstrations: MAIRO's dashboard drawn with the same console components the signed-in app uses (sidebar, header, results, AI Action Center, campaigns, creatives, results chart, AI team) for a fictional business, in the hero, a four-screen tour (Overview, Creative Studio, Approvals, Performance), the approvals and results sections — scaled down on wide screens and reflowed on phones, each one labelled image with inert content. And, on /landing/classic, the 24-second animated story in six chapters — a website going into MAIRO; its offer, imagery and call to action becoming what the business sells, who it serves and its goal, which the owner confirms; three ad concepts with one recommended first test and the reason; the draft in the feed and as a story, and the owner's own video trimmed to the demonstration, captioned and cropped to 9:16; a review the owner approves (nothing is sent anywhere); and results with a recommendation and its evidence — for an online store, a service business and a multi-brand team (one brand shown; brand switching and team sign-off aren't offered), with chapters, pause, replay, a hold while the visitor types and a still version for reduced motion; plus interactive views of the dashboard and Coach. Every view is labelled as a product demo with sample data.
 
 **Routes:** `/`, `/landing/classic`
 
 **Verification:** Every view carries the sample-data label; no figure presented as a customer's result; scenes, chapters, bounds, captions, the results steps and the video edit (run through the real editor and renderer) pinned by check:preview; autoplay, chapters, examples, hold while typing, the closing button's hand-over to /preview, 390/768/1440 and reduced motion browser-checked.
 
-**Evidence:** `src/components/hero-story/hero-story.tsx`, `src/components/hero-story/story-stage.tsx`, `src/lib/demo/timeline.ts`, `src/lib/demo/examples.ts`, `src/components/landing/story-hero.tsx`, `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
+**Evidence:** `src/components/console/demo.tsx`, `src/lib/demo/console-sample.ts`, `src/components/landing/console-home.tsx`, `src/components/landing/console-hero.tsx`, `src/components/landing/console-sections.tsx`, `src/components/hero-story/hero-story.tsx`, `src/components/hero-story/story-stage.tsx`, `src/lib/demo/timeline.ts`, `src/lib/demo/examples.ts`, `src/components/landing/story-hero.tsx`, `src/components/landing/product-preview.tsx`, `src/components/landing/coach-demo.tsx`, `src/lib/coach/example.ts`
 
 **Checks:** `check:capabilities`, `check:preview`
 
@@ -1194,13 +1194,13 @@ The landing page's 24-second animated story in six chapters — a website going 
 
 *Public site* · `walkthrough`
 
-A 73-second interactive demo of the owner journey on a sample business, in seven chapters — intro, business, strategy, Creative Studio, approval, results, and the free plan — with real MAIRO screens, captions on by default carrying the written script, play, pause, replay, a position slider, keyboard control and a still version for reduced motion; plus silent MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. The script and storyboard are in docs/WALKTHROUGH-SCRIPT.md. No voice-over or music yet.
+A 73-second interactive demo of the owner journey on a sample business, in seven chapters — intro and request, analysis, the free plan, creative concepts (one chosen and edited), review and approval, results with a recommendation, and the end screen "Your AI Advertising Team Is Ready." with See Your Free Plan — drawn with MAIRO's own components driven by the clock, with a cursor that finds its targets in the rendered screens and a camera that follows, in 16:9 and 9:16; captions on by default carrying the written script, play, pause, replay, a position slider, keyboard control and a still version for reduced motion; plus silent MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. The script and storyboard are in docs/WALKTHROUGH-SCRIPT.md. No voice-over or music yet.
 
 **Routes:** `/`
 
 **Still needs:** A licensed British female voice recording of the script; Licensed background music
 
-**Verification:** Seven chapters and 73 seconds, the captions equal to the script, the product scenes' clock continuous, and layout bounds pinned by check:preview, which also checks every listed video file, poster and captions file exists as rendered; player controls, keyboard and reduced motion browser-checked.
+**Verification:** Seven chapters in the brief's timing and 73 seconds, the captions equal to the script with no forecast or unavailable-feature wording, and every cursor and camera key inside its scene pinned by check:preview, which also checks every listed video file, poster and captions file exists as rendered; every cursor and camera target found in the rendered screens in both layouts, the player's chapters, play, the 16:9 and 9:16 stages and the video files browser-checked; both MP4s decoded end to end.
 
 **Evidence:** `src/components/walkthrough/walkthrough-player.tsx`, `src/components/walkthrough/walkthrough-stage.tsx`, `src/lib/demo/walkthrough.ts`, `src/lib/demo/media.ts`, `video/render.mjs`, `docs/WALKTHROUGH-SCRIPT.md`
 

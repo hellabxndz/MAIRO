@@ -84,7 +84,7 @@ export function OfferClarityTool() {
           <NextStep
             title="Make your ads match the page"
             body="Your free MAIRO plan writes ads that say what this page says — so people who click find what the ad promised."
-            action="Build my free ad plan"
+            action="Start my free plan"
             handoff={s.priceOrFirstStep?.trim() ? { kind: "offer", tool: "offer-clarity", offer: s.priceOrFirstStep.trim() } : { kind: "note", tool: "offer-clarity", label: "Offer clarity checklist", text }}
           />
         )}

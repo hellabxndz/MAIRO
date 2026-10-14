@@ -101,7 +101,7 @@ export function PlanView({
       <div className="grid gap-6 @4xl/plan:grid-cols-[200px_minmax(0,1fr)]">
         <nav aria-label="Plan sections" className="hidden @4xl/plan:block">
           <ol className="sticky top-24 space-y-0.5 border-l pl-3" style={{ borderColor: "var(--mairo-line)" }}>
-            {NAV.map(([id, label]) => (
+            {NAV.filter(([id]) => !(isExample && id === "pl-refine")).map(([id, label]) => (
               <li key={id}>
                 <a href={`#${id}`} className="block rounded-lg px-2 py-1.5 text-[13px] text-muted transition hover:bg-white/[0.04] hover:text-white">
                   {label}

@@ -36,6 +36,16 @@ export default function PrivacyPage() {
               is stored only in a form that can&apos;t be read back. We keep a log of changes to the team —
               who invited, joined, changed a role or removed whom, and when — which owners and administrators
               can see. MAIRO doesn&apos;t email the people you invite; you send the link.</>,
+            <><strong className="text-neutral-200">Before you have an account.</strong> If you give MAIRO
+              a website address for a free plan or a free tool, our server reads that site&apos;s public
+              pages and keeps what it found — not a copy of the site, and not linked to your name or email
+              — so the same address isn&apos;t read over and over. What you type about your business, and
+              the plan built from it, stay in your browser until you create an account. If you ask MAIRO
+              to refine an ad concept, those words and the facts you confirmed are sent to Anthropic to
+              write a new version; we don&apos;t keep them. To keep the free plan fair, we count readings
+              and refinements against a one-way code made from your connection, not your IP address
+              itself. We also count which steps of the free plan people reach, with a random ID kept in
+              your browser (none if your browser asks sites not to track you) — never what you typed.</>,
             <><strong className="text-neutral-200">Your business.</strong> Business name, website,
               industry, and time zone. If you give us your website, we read its public pages to learn what
               you sell and how you describe it, and keep what we learned where you can see and correct it.</>,
@@ -48,6 +58,9 @@ export default function PrivacyPage() {
             <><strong className="text-neutral-200">Your campaigns and results.</strong> The campaigns we
               create for you, their budgets and status, and the performance figures we read back
               from Meta.</>,
+            <><strong className="text-neutral-200">Your ads.</strong> The words MAIRO suggests and every
+              version you or MAIRO make of them, the pictures MAIRO makes, the photos and videos you upload
+              for your ads, the edits you make to a video, and what you approved and when.</>,
             <><strong className="text-neutral-200">Your conversations.</strong> Messages you exchange
               with the AI specialists inside the app.</>,
             <><strong className="text-neutral-200">What your AI team did.</strong> A record of the work

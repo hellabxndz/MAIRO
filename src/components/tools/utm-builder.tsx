@@ -61,7 +61,7 @@ export function UtmBuilderTool() {
           </ResultPanel>
         )}
         {r.ok && (
-          <NextStep title="Check the rest of your tracking" body="Your free MAIRO plan lists what your campaign needs counted — and whether it's in place yet." action="Build my free ad plan" handoff={{ kind: "website", tool: "utm-builder", url: (() => { try { return new URL(r.url).origin; } catch { return s.url; } })() }} />
+          <NextStep title="Check the rest of your tracking" body="Your free MAIRO plan lists what your campaign needs counted — and whether it's in place yet." action="Start my free plan" handoff={{ kind: "website", tool: "utm-builder", url: (() => { try { return new URL(r.url).origin; } catch { return s.url; } })() }} />
         )}
       </div>
     </div>

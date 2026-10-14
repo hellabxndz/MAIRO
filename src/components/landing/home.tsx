@@ -217,7 +217,7 @@ const FAQ = [
   },
   {
     q: "Which platforms and tools does MAIRO work with?",
-    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Shopify and Google Tag Manager are used to measure results, and Stripe takes payment for your subscription. Posting to your own Instagram and Facebook (Scale) needs Meta's approval of MAIRO's posting access before it can publish.",
+    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Your Shopify store, if you connect it, reports the sales your ads bring; a ready-made Google Tag Manager container sets up your Meta pixel (connecting Tag Manager directly is waiting on Google's approval); and Stripe takes payment for your subscription. Posting to your own Instagram and Facebook (Scale) needs Meta's approval of MAIRO's posting access before it can publish.",
   },
   {
     q: "What happens if I cancel?",
@@ -256,7 +256,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
   const toolsLive = USABLE_TOOLS().length > 0;
   const featuredTools = USABLE_TOOLS().filter((t) => t.featured && t.status === "working").slice(0, 3);
   // One primary action per version, used by every main button on the page.
-  const cta = story ? { href: "/preview", label: "See Your Free Plan" } : { href: "/sign-up", label: "Build my free ad plan" };
+  const cta = { href: "/preview", label: "See Your Free Plan" };
   const steps = story ? STORY_STEPS : STEPS;
 
   const classicHero = (
@@ -280,8 +280,8 @@ export function Home({ hero }: { hero: HeroVariant }) {
                   <span>You run the business. Your AI team handles the advertising.</span>
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
-                    Build my free ad plan <span aria-hidden>→</span>
+                  <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
+                    See Your Free Plan <span aria-hidden>→</span>
                   </Link>
                   <a href="#ai-team" className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-full border border-white/15 bg-paper px-7 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
                     Meet My AI Team
@@ -310,7 +310,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
                   </ul>
                 </div>
                 <p className="max-w-[620px] text-[13px] leading-relaxed text-white/65">
-                  Also connects to <span className="text-white/85">Shopify</span> and <span className="text-white/85">Google Tag Manager</span> to measure results, and <span className="text-white/85">Stripe</span> for your subscription.{" "}
+                  Also works with <span className="text-white/85">Shopify</span> to count sales, a <span className="text-white/85">Google Tag Manager</span> container to set up your Meta pixel, and <span className="text-white/85">Stripe</span> for your subscription.{" "}
                   <a href="#integrations" className="text-violet-300 hover:text-white">What each connection does →</a>
                 </p>
               </div>
@@ -396,8 +396,8 @@ export function Home({ hero }: { hero: HeroVariant }) {
               particular return.
             </p>
             <div className="mt-8 text-center">
-              <Link href="/sign-up" className={`${PRIMARY} inline-flex min-h-[54px] items-center gap-2 rounded-full px-8 text-[15.5px] font-semibold`}>
-                Build my free ad plan <span aria-hidden>→</span>
+              <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[54px] items-center gap-2 rounded-full px-8 text-[15.5px] font-semibold`}>
+                See Your Free Plan <span aria-hidden>→</span>
               </Link>
             </div>
           </section>

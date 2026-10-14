@@ -95,7 +95,7 @@ export function ConsoleHome() {
               </span>
             </div>
             <p className="max-w-[660px] text-[13.5px] leading-relaxed text-white/60">
-              MAIRO advertises on Facebook and Instagram through your own Meta ad account. It measures results with Shopify and Google Tag Manager, and takes your subscription through Stripe. Other ad networks aren&rsquo;t supported.
+              MAIRO advertises on Facebook and Instagram through your own Meta ad account. Results come from Meta, the leads you mark and, if you connect it, your Shopify store; a ready-made Google Tag Manager container sets up your Meta pixel. Your subscription is taken through Stripe. Other ad networks aren&rsquo;t supported.
             </p>
           </div>
         </section>

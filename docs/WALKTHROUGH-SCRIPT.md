@@ -76,7 +76,7 @@ off, and keyboard control (Space or K, ← →, Home, End, C).
 
 ## Recording the narration (when a licensed voice is available)
 
-1. **Voice:** a confident, polished voice at a natural pace — either a voice
+1. **Voice:** a confident, polished British female voice at a natural pace — either a voice
    actor under a written licence for web and advertising use, or a
    text-to-speech voice whose terms allow commercial use. Keep the licence
    with the project files.
