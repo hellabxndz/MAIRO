@@ -40,6 +40,8 @@ export type DailyPoint = {
   spendCents: number;
   revenueCents: number;
   purchases: number;
+  /** Leads Meta attributed that day (forms and lead events). */
+  leads?: number;
   /** False on a day Meta returned nothing for — drawn as zero, and said so. */
   delivered: boolean;
 };
@@ -160,6 +162,7 @@ async function dailySeries(organizationId: string, campaigns: CampaignWithChildr
       spendCents: m?.spendCents ?? 0,
       revenueCents: m?.revenueCents ?? 0,
       purchases: m?.purchases ?? 0,
+      leads: m?.leads ?? 0,
       delivered: Boolean(m),
     });
   }

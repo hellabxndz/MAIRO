@@ -62,7 +62,7 @@ export const metadata: Metadata = {
 // rather than flashing dark on the way in. Dark panels set their own scheme
 // in CSS (the classic palette in globals.css).
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#07080d",
   colorScheme: "light",
 };
 

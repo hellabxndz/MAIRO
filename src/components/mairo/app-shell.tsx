@@ -6,6 +6,7 @@ import { Fragment, useTransition, type ReactNode } from "react";
 import { setViewMode } from "@/lib/actions/view-mode-actions";
 import type { ViewMode } from "@/lib/view-mode";
 import { AskMairoButton, CreateMenu } from "./create-menu";
+import { AmbientSky } from "@/components/ambient-sky";
 
 // The logged-in MAIRO shell.
 //
@@ -235,6 +236,59 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
   );
 }
 
+/* ---------------------------------------------------------- one nav row */
+
+/**
+ * One sidebar row, as the app draws it. Exported so the website's product
+ * demonstrations draw the same row (without an href it's inert text), and a
+ * change to the sidebar changes both.
+ */
+export function NavRowView({ item, active, locked = false, href }: { item: NavEntry; active: boolean; locked?: boolean; href?: string }) {
+  const className = `group relative flex items-center gap-3 rounded-xl px-3 py-[7px] text-[13px] transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
+    active ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
+  }`;
+  const style = active ? { backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-lift)" } : undefined;
+  const inner = (
+    <>
+      <span className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>{item.icon}</span>
+      <span className="truncate whitespace-nowrap">{item.label}</span>
+      {item.badge && (
+        // A locked feature's plan, with the lock inside the label.
+        <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium ${active ? "border-white/60 text-white" : "border-violet-400/40 text-violet-bright"}`}>
+          {locked && (
+            <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-label="Locked">
+              <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
+              <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+            </svg>
+          )}
+          {item.badge}
+        </span>
+      )}
+      {!item.badge && locked && (
+        <svg viewBox="0 0 16 16" className="ml-auto h-3.5 w-3.5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" aria-label="Locked">
+          <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
+          <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+        </svg>
+      )}
+    </>
+  );
+  if (!href) {
+    return (
+      <span className={className} style={style} aria-current={active ? "page" : undefined}>
+        {inner}
+      </span>
+    );
+  }
+  return (
+    <Link href={href} data-tour={`nav:${item.href}`} aria-current={active ? "page" : undefined} className={className} style={style}>
+      {inner}
+    </Link>
+  );
+}
+
+/** The sidebar's background, shared with the website's demonstrations. */
+export const SIDEBAR_BACKGROUND = "linear-gradient(180deg, rgba(17,20,38,0.92) 0%, rgba(10,11,20,0.94) 60%, rgba(7,8,13,0.96) 100%)";
+
 /* -------------------------------------------------------------- the shell */
 
 export function AppShell({
@@ -288,52 +342,15 @@ export function AppShell({
   const primary = [...PRIMARY_NAV, ...extraNav, ...(ASSISTANT_NAV ? [ASSISTANT_NAV] : [])];
   const askName = assistantName || "MAIRO";
 
-  const row = (item: NavEntry, active: boolean) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      data-tour={`nav:${item.href}`}
-      aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center gap-3 rounded-xl px-3 py-[7px] text-[13px] transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
-        active ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
-      }`}
-      style={
-        active
-          ? { backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-lift)" }
-          : undefined
-      }
-    >
-      <span className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>
-        {item.icon}
-      </span>
-      <span className="truncate whitespace-nowrap">{item.label}</span>
-      {item.badge && (
-        // A locked feature's plan, with the lock inside the label.
-        <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium ${active ? "border-white/60 text-white" : "border-violet-400/40 text-violet-bright"}`}>
-          {locked.includes(item.href) && (
-            <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-label="Locked">
-              <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
-              <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
-            </svg>
-          )}
-          {item.badge}
-        </span>
-      )}
-      {!item.badge && locked.includes(item.href) && (
-        <svg viewBox="0 0 16 16" className="ml-auto h-3.5 w-3.5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" aria-label="Locked">
-          <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
-          <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
-        </svg>
-      )}
-    </Link>
-  );
+  const row = (item: NavEntry, active: boolean) => <NavRowView key={item.href + item.label} item={item} active={active} locked={locked.includes(item.href)} href={item.href} />;
 
   return (
-    <div className="min-h-screen">
+    <div className="relative isolate min-h-screen">
+      <AmbientSky />
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.86)" }}
+        style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}
       >
         <Link href="/dashboard" className="mb-4 shrink-0 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -398,7 +415,8 @@ export function AppShell({
         {switcher ?? <span className="truncate text-[12px] text-faint">{businessName}</span>}
         <div className="ml-auto flex items-center gap-1.5">
           <AskMairoButton name={askName} compact />
-          <ViewToggle mode={mode} />
+          {/* The Overview has its own view switch (with Profit First) in its header. */}
+          {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
           {/* Settings — and from there analytics' neighbours, billing, account
               and signing out — on a phone. */}
@@ -424,7 +442,8 @@ export function AppShell({
             beside the screen. */}
         <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
           <AskMairoButton name={askName} />
-          <ViewToggle mode={mode} />
+          {/* The Overview has its own view switch (with Profit First) in its header. */}
+          {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
           <Link
             href="/dashboard/settings"

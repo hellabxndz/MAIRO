@@ -19,14 +19,15 @@ type Grain = "daily" | "weekly" | "monthly";
 
 type Bucket = { label: string; title: string; spend: number; sales: number; purchases: number; delivered: boolean };
 
-function bucketize(points: DailyPoint[], grain: Grain): Bucket[] {
+function bucketize(points: DailyPoint[], grain: Grain, countKey: "purchases" | "leads" = "purchases"): Bucket[] {
+  const countOf = (p: DailyPoint) => (countKey === "leads" ? p.leads ?? 0 : p.purchases);
   if (grain === "daily") {
     return points.map((p) => ({
       label: shortDate(p.date),
       title: shortDate(p.date),
       spend: p.spendCents,
       sales: p.revenueCents,
-      purchases: p.purchases,
+      purchases: countOf(p),
       delivered: p.delivered,
     }));
   }
@@ -44,22 +45,37 @@ function bucketize(points: DailyPoint[], grain: Grain): Bucket[] {
       title: grain === "weekly" ? `${shortDate(first)} – ${shortDate(last)}` : month,
       spend: g.reduce((n, p) => n + p.spendCents, 0),
       sales: g.reduce((n, p) => n + p.revenueCents, 0),
-      purchases: g.reduce((n, p) => n + p.purchases, 0),
+      purchases: g.reduce((n, p) => n + countOf(p), 0),
       delivered: g.some((p) => p.delivered),
     };
   });
 }
 
-/** A round axis top: 1, 2, 2.5 or 5 times a power of ten, so four ticks read cleanly. */
-function niceMax(value: number): number {
-  if (value <= 0) return 1;
+/**
+ * A round axis top: 1, 2, 2.5 or 5 times a power of ten, so four ticks read
+ * cleanly. A count axis keeps whole steps, so two leads never label as 0, 1,
+ * 1, 2, 2.
+ */
+function niceMax(value: number, whole = false): number {
+  if (value <= 0) return whole ? 4 : 1;
   const raw = value / 4;
   const pow = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((s) => s >= raw) ?? 10 * pow;
-  return step * 4;
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((s) => s >= raw && (!whole || Number.isInteger(s))) ?? 10 * pow;
+  return Math.max(step, whole ? 1 : 0) * 4;
 }
 
-export function PerformanceChart({ points, variant }: { points: DailyPoint[]; variant: "spend-purchases" | "spend-sales" }) {
+export function PerformanceChart({
+  points,
+  variant,
+  countKey = "purchases",
+  countLabel = "Purchases",
+}: {
+  points: DailyPoint[];
+  variant: "spend-purchases" | "spend-sales";
+  /** For the bars-and-line view: what the line counts (purchases, or leads for a leads business). */
+  countKey?: "purchases" | "leads";
+  countLabel?: string;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   const [grain, setGrain] = useState<Grain>("daily");
@@ -73,7 +89,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
     return () => ro.disconnect();
   }, []);
 
-  const buckets = useMemo(() => bucketize(points, variant === "spend-sales" ? grain : "daily"), [points, grain, variant]);
+  const buckets = useMemo(() => bucketize(points, variant === "spend-sales" ? grain : "daily", countKey), [points, grain, variant, countKey]);
   const dual = variant === "spend-purchases";
 
   const H = 230;
@@ -85,7 +101,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
   const xAt = (i: number) => pad.left + slot * i + slot / 2;
 
   const moneyMax = niceMax(Math.max(0, ...buckets.map((b) => (dual ? b.spend : Math.max(b.spend, b.sales)))));
-  const countMax = niceMax(Math.max(0, ...buckets.map((b) => b.purchases)));
+  const countMax = niceMax(Math.max(0, ...buckets.map((b) => b.purchases)), true);
   const yMoney = (v: number) => pad.top + innerH - (v / moneyMax) * innerH;
   const yCount = (v: number) => pad.top + innerH - (v / countMax) * innerH;
 
@@ -107,7 +123,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
             <span className="h-2.5 w-2.5 rounded-full bg-[#7c5cff]" /> {dual ? "Amount spent" : "Money spent"}
           </span>
           <span className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#4b8bff]" : "bg-[#c4b5fd]"}`} /> {dual ? "Purchases" : "Sales / Revenue"}
+            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#4b8bff]" : "bg-[#c4b5fd]"}`} /> {dual ? countLabel : "Sales / Revenue"}
           </span>
         </div>
         {!dual && (
@@ -128,7 +144,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
 
       <div ref={box} className="relative mt-3 h-[230px] w-full" onMouseLeave={() => setHover(null)}>
         {width > 0 && n > 0 && (
-          <svg width={width} height={H} className="block" role="img" aria-label={dual ? "Amount spent and purchases over time" : "Money spent and sales over time"}>
+          <svg width={width} height={H} className="block" role="img" aria-label={dual ? `Amount spent and ${countLabel.toLowerCase()} over time` : "Money spent and sales over time"}>
             <defs>
               <linearGradient id="pc-sales" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.28" />
@@ -208,7 +224,7 @@ export function PerformanceChart({ points, variant }: { points: DailyPoint[]; va
                 </div>
                 {dual ? (
                   <div className="flex justify-between">
-                    <dt>Purchases</dt>
+                    <dt>{countLabel}</dt>
                     <dd className="tabular-nums text-white">{count(h.purchases)}</dd>
                   </div>
                 ) : (

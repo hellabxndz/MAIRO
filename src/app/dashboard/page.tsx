@@ -26,7 +26,8 @@ import { PlatformSplit } from "@/components/dashboard/overview/platform-split";
 import { InsightsList } from "@/components/dashboard/overview/insights";
 import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
 import { count, money as fmtMoney, PANEL, pct, PUBLISHER_NAME, roas } from "@/components/dashboard/overview/format";
-import { SimpleOverview } from "./simple-overview";
+import { ConsoleOverview } from "./console-overview";
+import { loadConsole } from "@/lib/dashboard/console";
 import { DashboardModeToggle } from "@/components/dashboard/overview/mode-toggle";
 import { MairoDecisionCard } from "@/components/decisions/decision-card";
 import { BusinessHealthScore } from "@/components/intelligence/business-health";
@@ -107,13 +108,21 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // Simple mode: the calm Overview — goal, this month, what MAIRO is doing,
   // anything that needs the owner, one insight, what's next. The Advanced and
   // Profit First views below keep every figure for those who want them.
+  // A launch the owner approved that went live on this visit, said first.
+  const launchedNotice = launched.launched ? (
+    <Card className="border-emerald-400/25 bg-emerald-400/[0.05]">
+      <p className="font-medium text-emerald-200">
+        {launched.names.length === 1 ? `MAIRO put ${launched.names[0]} live` : `MAIRO put ${launched.names.length} campaigns live`}
+      </p>
+      <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
+        You approved {launched.names.length === 1 ? "it" : "them"} at the budget you agreed to, and once Meta approved the ads and confirmed your ad account can be charged, MAIRO switched{" "}
+        {launched.names.length === 1 ? "it" : "them"} on. Meta charges your ad account as the ads deliver. You can pause{launched.names.length === 1 ? " it" : " them"} any time from Campaigns.
+      </p>
+    </Card>
+  ) : null;
+
   if (mode === "simple") {
-    return (
-      <>
-        <SuggestedAdsPrompt organizationId={organizationId} className="mx-auto mb-6 max-w-[1100px]" />
-        <SimpleOverview organizationId={organizationId} userName={session.user.name ?? ""} launched={launched} askFeedback={query.feedback === "1"} />
-      </>
-    );
+    return <ConsoleOverview organizationId={organizationId} userName={session.user.name ?? ""} days={days} mode="simple" askFeedback={query.feedback === "1"} above={launchedNotice} />;
   }
 
   // Read side by side rather than one after another.
@@ -149,15 +158,16 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const advanced = mode === "advanced";
   // firstCampaign: a business that came through the free plan — its first
   // campaign's state.
-  const [[readiness, autoLaunch], overview, fresh, intelligence, latestReport, reportSettings, firstCampaign] = await Promise.all([
+  const [[readiness, autoLaunch], consoleData, fresh, intelligence, latestReport, reportSettings, firstCampaign] = await Promise.all([
     Promise.all([readinessFor(organizationId, { billing }), autoLaunchIntent(organizationId)]),
-    loadOverview(organizationId, days, { adBreakdown: advanced }),
+    advanced ? loadConsole(organizationId, session.user.name ?? "", days, { adBreakdown: true }) : null,
     db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
     loadIntelligence(organizationId),
     db.weeklyReport.findFirst({ where: { organizationId }, orderBy: { weekStart: "desc" } }),
     db.reportSettings.findUnique({ where: { organizationId } }),
     firstCampaignState(organizationId),
   ]);
+  const overview = consoleData?.overview ?? (await loadOverview(organizationId, days));
   const latestData = latestReport ? parseReport(latestReport.dataJson) : null;
 
   // When the missing card is the thing holding the account up, the panel says
@@ -376,10 +386,26 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     );
   }
 
-  return (
-    <div className="mx-auto max-w-[1440px]">
-      {header}
-      {alerts}
+  // Advanced: the shared console on top, every figure underneath.
+  const advancedBelow = (
+    <>
+      {askSocial && <SocialManagerPrompt />}
+      {recommendations.length > 0 && (
+        <div className="space-y-4">
+          {recommendations.map((item) => (
+            <OptimizationCard key={item.recommendationId} item={item} />
+          ))}
+        </div>
+      )}
+      {overview.problems.map((problem) => (
+        <p key={problem.platform} className="rounded-xl border border-amber-400/25 bg-amber-400/[0.05] px-4 py-3 text-[13px] text-amber-200">
+          {problem.message}
+        </p>
+      ))}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Every figure</h2>
+        <SourceChip />
+      </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
         <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
@@ -392,9 +418,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
         <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
         <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
       </div>
-      <div className="mt-4">{weeklyCard}</div>
-      <div className="mt-4">{table}</div>
-      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
+      {weeklyCard}
+      {table}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,0.9fr)]">
         {chart}
         <section className={`${PANEL} p-5`}>
           <InsightsList items={overview.insights} total={overview.pendingCount} checkedAt={checkedAt} />
@@ -403,18 +429,15 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
           <PlatformSplit publishers={overview.publishers} selectable />
         </section>
       </div>
-      <div className="mt-4">
-        <BusinessHealthScore health={report?.health ?? null} />
-      </div>
-      <div className="mt-4">
-        <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
-      </div>
-      <div className="mt-4">
-        <EarlyWarnings insights={intelligence.insights} advanced />
-      </div>
-      <div className="mt-4">{timeline}</div>
-      <div className="mt-4">{decisionsSection}</div>
-      <ResultsNote className="mt-6" />
-    </div>
+      <BusinessHealthScore health={report?.health ?? null} />
+      <OpportunityRadar radar={report?.radar ?? null} insights={intelligence.insights} />
+      <EarlyWarnings insights={intelligence.insights} advanced />
+      {timeline}
+      {decisionsSection}
+    </>
+  );
+
+  return (
+    <ConsoleOverview organizationId={organizationId} userName={session.user.name ?? ""} days={days} mode="advanced" data={consoleData ?? undefined} above={launchedNotice} below={advancedBelow} />
   );
 }
