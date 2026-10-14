@@ -21,7 +21,7 @@ export function sourceWord(s: FactSource | undefined): SourceWord {
 
 export type OverviewItem = { label: string; value: string; source: SourceWord };
 
-const GOAL_WORDS = { sales: "More online sales", leads: "More enquiries and leads", bookings: "More bookings" } as const;
+const GOAL_WORDS = { sales: "More online sales", leads: "More enquiries and leads", bookings: "More bookings", traffic: "More website visits", awareness: "More people knowing your brand" } as const;
 
 /** What MAIRO understands about the business — only what it was told or read. */
 export function businessOverview(f: PreviewFacts, p: Preview): OverviewItem[] {

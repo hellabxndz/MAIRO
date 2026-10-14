@@ -4,6 +4,7 @@ import { AuthCard } from "@/components/auth-card";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { normalizeUrl } from "@/lib/campaigns/destination";
+import { pendingPlan } from "@/lib/preview/pending-plan";
 import { SignUpForm } from "./sign-up-form";
 
 // The form is a client component; this server half decides whether Google is
@@ -32,6 +33,8 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
   const carriedWebsite = typeof website === "string" ? normalizeUrl(website.slice(0, 300)) : null;
   // The business type picked in the website's walkthrough, carried into setup.
   const businessType = businessTypeFrom(typeof type === "string" ? type : null);
+  // A free ad plan saved in this browser joins the account (see signUpAction).
+  const plan = await pendingPlan().catch(() => null);
   const starter = PLANS.find((p) => p.tier === "STARTER");
   const noTrial = PLANS.filter((p) => !(p.trialDays ?? 0)).map((p) => p.name);
   return (
@@ -41,7 +44,8 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
           googleEnabled={googleSignInEnabled()}
           initialError={signInErrorMessage(typeof error === "string" ? error : null)}
           businessType={businessType?.id ?? null}
-          website={carriedWebsite}
+          website={carriedWebsite ?? plan?.inputs.website ?? null}
+          planFor={plan ? plan.facts.name || plan.inputs.sells : null}
         />
       </AuthCard>
 

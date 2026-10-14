@@ -11,6 +11,7 @@ export function SignUpForm({
   initialError,
   businessType = null,
   website = null,
+  planFor = null,
 }: {
   googleEnabled: boolean;
   /** Sent back from a Google login that needs this page, e.g. no account yet. */
@@ -19,6 +20,8 @@ export function SignUpForm({
   businessType?: string | null;
   /** A website typed on the landing page, carried into setup. */
   website?: string | null;
+  /** Who the free ad plan saved in this browser is for — it joins the account. */
+  planFor?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(signUpAction, undefined);
   const fieldError = (name: string) => (state?.field === name ? state.error : null);
@@ -34,7 +37,13 @@ export function SignUpForm({
       <form action={formAction} className="mt-6 space-y-4">
         {businessType && <input type="hidden" name="businessType" value={businessType} />}
         {website && <input type="hidden" name="website" value={website} />}
-        {website && <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-[12.5px] text-neutral-300">Your website, <span className="text-white">{website.replace(/^https?:\/\//, "")}</span>, will be carried into setup.</p>}
+        {planFor ? (
+          <p className="rounded-lg border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[12.5px] leading-relaxed text-neutral-300">
+            Your free ad plan for <span className="text-white">{planFor.length > 60 ? `${planFor.slice(0, 57)}…` : planFor}</span> comes with your account, and setup opens with its answers for you to confirm.
+          </p>
+        ) : (
+          website && <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-[12.5px] text-neutral-300">Your website, <span className="text-white">{website.replace(/^https?:\/\//, "")}</span>, will be carried into setup.</p>
+        )}
         <AuthField name="name" label="Your name" autoComplete="name" placeholder="Jane Diaz" defaultValue={state?.values?.name} error={fieldError("name")} />
         <AuthField
           name="businessName"

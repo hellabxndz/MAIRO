@@ -117,6 +117,34 @@ What it went without, such as the area or the industry, is said and never filled
 
 The walkthrough video still shows the full plan, which is now one press past the quick plan. Re-rendering it to show the quick plan first is remaining work.
 
+## E. The Free AI Ad Plan Generator
+
+The homepage hero is now the **Free AI Meta Ad Strategy Generator**. Pressing Generate opens `/preview`, which makes the plan and shows it. Statuses are as above: **Complete** means built, covered by checks and walked through in a browser locally, against fixture websites, on both the development and production builds. It never means "seen live".
+
+Evidence: `check:strategy` (11), `check:plan-writing` (10), `check:report` (20), `check:saved-plan` (10), `npm run audit` 82/82, lint, typecheck, production build. Browser: `generator.js` (149/150 on the production build — the one miss is the expected one: the local AI fixture is refused in production, so the concepts are labelled as MAIRO's templates), `gen-signin.js` (7/7), the link check (61 links, 0 problems) and the accessibility check (9/9).
+
+| Requirement | Status | Evidence | Left |
+|---|---|---|---|
+| Hero: label, headline, subheadline, an interactive tool instead of a long form | **Complete** (local) | `src/components/landing/console-hero.tsx`, `plan-generator.tsx`; screenshots at 390, 768 and 1440 | Owner's judgement on the live look |
+| Four inputs: website (read for real; "What do you sell?" filled from it, labelled), goal (5), monthly Meta budget (5 choices + custom, said to be Meta spend), the Generate button and the free line | **Complete** (local) | `generator.js`: prefill from the website, goal suggested from it, errors and focus when empty. Without a website, the business name is asked. | — |
+| No sign-up or payment to make or read the plan | **Complete** (local) | Plans made in fresh browsers with no account | — |
+| Six stages, each ticked when its real work finishes; no percentages, no artificial waiting | **Complete** (local) | Stage 1 is the server's website reading (live progress lines). Stages 2–4 are computed in the browser and are instant, so they show done at once. Stage 5 is the AI request. Stage 6 builds the plan. | — |
+| A real, personalised plan that changes with the business, goal and budget | **Partial** | `check:report`: five goals give five objectives and five first months; five budgets give five splits; the shop, plumber and lead-gen plans differ. The concepts are written by MAIRO's AI (Anthropic, structured output), then checked: invented numbers, guarantees, ratings, superlatives, fake urgency and copy Meta would reject are removed. | **The live model hasn't been called from here**: there's no API key in this environment. Production needs `ANTHROPIC_API_KEY`. Without it, or over the limits (6 an hour per visitor, 300 a day overall), the concepts come from MAIRO's templates and the plan says so |
+| A — the business understood, facts kept apart from suggestions | **Complete** (local) | Each fact is labelled "From your website" or "You told MAIRO"; appeal, likely customers and opportunities are labelled "MAIRO's suggestion" | — |
+| B — Meta strategy for the goal | **Complete** (local) | Objective, optimisation, audience, placements per goal, messaging, structure from the budget lines, and the reasons | — |
+| C — budget plan from the visitor's figure | **Complete** (local) | $1,000 for a shop with a pixel → $650 prospecting / $200 retargeting / $150 testing. Lines always add up to the budget. Retargeting is left out, with the reason, below $1,000, without a pixel, or for traffic and awareness. Daily amounts are shown. No forecasts. | — |
+| D — three concepts in Facebook and Instagram previews, one to test first | **Complete** (local) | Feed previews with a Facebook/Instagram switch. The picture area is labelled "Visual concept". **No images are generated in the free plan**, and the plan says so. | — |
+| E — website findings only from a real reading | **Complete** (local) | Pages read, platform, pixel, checkout, form, booking and phone, with the audit's findings. With no site read, the plan says "makes no claims about one". | Live sites not read from here (the network is closed) |
+| F — first 30 days, labelled as planned | **Complete** (local) | Weeks 1–4, each marked "Planned" | — |
+| Conversion section: headline, text, free vs subscription, Put MAIRO to Work, Explore MAIRO Plans | **Complete** (local) | Put MAIRO to Work saves the plan and goes to sign-up. After sign-up, the plan belongs to the new business and setup opens with the website, offering, type, goal, budget and offer already filled in (checked in the database). A signed-in owner goes straight to setup. "Sign in and keep this plan" does the same for an existing customer. | — |
+| Edit and regenerate, change budget, try another goal, save, share, download, return visits | **Complete** (local) | A budget change recomputes the plan without a new AI call. Another goal runs the stages again. Save gives a private `/s/<token>` link (read-only, not indexed). Share copies it. Download uses the browser's Save as PDF, with a print layout. Coming back on the same device offers "Open my plan". | — |
+| Saved plans for signed-in users, carried into setup | **Complete** (local) | `FreeAdPlan` table, `check:saved-plan`. A plan is claimed by one business only. The claim uses this browser's own cookie and a POST, so a shared link can't move a plan into someone else's business. Setup answers already given win. Unclaimed plans are deleted after 30 days (daily cron). | — |
+| SSRF protection, validation, rate limits, keys server-side | **Complete** (local) | The existing guarded website reader. Zod on every route. Per-visitor and daily limits on AI plans and saves, counted by a salted hash. The AI key is used only on the server. Visitors' text is never logged. | — |
+| Nothing launched, spent or charged; forecasts kept out | **Complete** (local) | No Meta or Stripe call anywhere in the flow. `check:report` checks for forecasts and banned claims. | — |
+| The rest of MAIRO keeps working | **Complete** (local) | `npm run audit` 82/82. The earlier free-plan links (example plans, Instagram, descriptions) still open the earlier flow. | — |
+
+New database migration: **`20261119120000_free_ad_plans`** (the `FreeAdPlan` table). `vercel-build` applies it on the next push.
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already
@@ -145,6 +173,12 @@ The walkthrough video still shows the full plan, which is now one press past the
   counts against the free limits (5 readings an hour per visitor) and falls
   back to a description. Have it reviewed before relying on it. It can be
   removed from the form without touching the rest.
+- **Privacy page — saved and shared free plans (legal wording).** New
+  sentences say that a free plan is kept on the server only when the visitor
+  presses Save, Share or Put MAIRO to Work; that anyone with its private link
+  can read it; that the browser remembers it with a cookie so it can join the
+  account; that unclaimed plans are deleted after 30 days; and that the
+  visitor's facts go to Anthropic to write the plan. Please have it reviewed.
 - **No price, plan or subscription change.** Starter $149.99 with a 7-day
   trial, Growth $239.99 and Scale $499.99 are as they were.
 

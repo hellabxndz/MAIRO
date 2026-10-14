@@ -138,7 +138,8 @@ export function unsupportedNumbers(text: string, facts: string): string[] {
   const found = text.match(/\$?\d[\d,.]*\s?%?/g) ?? [];
   const known = facts.replace(/,/g, "");
   return [...new Set(found.map((n) => n.trim()))].filter((n) => {
-    const bare = n.replace(/[$,%\s]/g, "");
+    // "$80." at the end of a sentence is the $80 in the facts, not a new number.
+    const bare = n.replace(/[$,%\s]/g, "").replace(/\.+$/, "");
     return bare.length > 0 && !known.includes(bare);
   });
 }

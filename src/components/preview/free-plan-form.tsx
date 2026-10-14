@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BUSINESS_TYPES } from "@/lib/onboarding/business-types";
+import type { PreviewGoal } from "@/lib/preview/build";
 
 // "Build My Free Ad Plan": how a visitor starts. Three ways in, and none of
 // them needs a website:
@@ -26,7 +27,7 @@ export type FreePlanStart = {
   describe: string | null;
   name: string | null;
   instagram: string | null;
-  goal: "sales" | "leads" | "bookings" | "";
+  goal: PreviewGoal | "";
   type: string;
   budget: number | null;
 };

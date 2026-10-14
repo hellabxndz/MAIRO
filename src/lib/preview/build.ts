@@ -17,7 +17,7 @@ import type { ScanResult } from "@/lib/website/scan";
 // didn't confirm.
 
 export type PreviewKind = "shop" | "service" | "appointments";
-export type PreviewGoal = "sales" | "leads" | "bookings";
+export type PreviewGoal = "sales" | "leads" | "bookings" | "traffic" | "awareness";
 export type FactKey = "name" | "offering" | "customer" | "location" | "offer" | "proof" | "problem";
 export type FactSource = { from: "website"; url: string | null; quote: string | null } | { from: "instagram"; handle: string; quote: string | null } | { from: "you" } | { from: "example" };
 
@@ -254,7 +254,18 @@ const GIVES: Partial<Record<FactKey, string>> = {
   location: "an ad for people near you",
 };
 
-const CTA: Record<PreviewGoal, string> = { sales: "Shop now", leads: "Get quote", bookings: "Book now" };
+/** The campaign's name for each goal, as Meta and the plan call it. */
+const GOAL_CAMPAIGN: Record<PreviewGoal, string> = { sales: "Sales", leads: "Leads", bookings: "Bookings", traffic: "Traffic", awareness: "Awareness" };
+
+const WHY_OBJECTIVE: Record<PreviewGoal, string> = {
+  sales: "You sell online, so the campaign is told to find people likely to buy — not just people likely to click.",
+  leads: "You need people to get in touch, so the campaign is judged on enquiries rather than clicks or likes.",
+  bookings: "Booked appointments are what you need, so the campaign is judged on bookings rather than clicks or likes.",
+  traffic: "You want people on your website, so the campaign is told to find people likely to open the page and stay — not just people who tap by accident.",
+  awareness: "You want more people to know you, so the campaign is told to reach as many of the right people as it can, as often as is useful — not to chase clicks.",
+};
+
+const CTA: Record<PreviewGoal, string> = { sales: "Shop now", leads: "Get quote", bookings: "Book now", traffic: "Learn more", awareness: "Learn more" };
 
 /** What the picture should show for each kind of opening — a direction for the owner's own photos or a picture made later, never a promise of one. */
 const VISUAL: Record<HookAngle, string> = {
@@ -344,14 +355,26 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
   const d = f.destinations;
 
   const objective =
-    goal === "sales" ? "Sales — purchases on your website" : goal === "bookings" ? (d?.booking ? `Bookings — appointments booked through ${d.booking}` : "Bookings — appointments booked on your website") : d?.form ? "Leads — enquiries through your website's form" : "Leads — a short form inside the ad";
-  const optimiseFor = goal === "sales" ? "Purchases" : goal === "bookings" ? "Booked appointments" : "Leads";
+    goal === "sales"
+      ? "Sales — purchases on your website"
+      : goal === "bookings"
+        ? d?.booking ? `Bookings — appointments booked through ${d.booking}` : "Bookings — appointments booked on your website"
+        : goal === "traffic"
+          ? "Traffic — people visiting your website"
+          : goal === "awareness"
+            ? "Awareness — reaching the people most likely to remember you"
+            : d?.form ? "Leads — enquiries through your website's form" : "Leads — a short form inside the ad";
+  const optimiseFor = goal === "sales" ? "Purchases" : goal === "bookings" ? "Booked appointments" : goal === "traffic" ? "Landing page views" : goal === "awareness" ? "Reach" : "Leads";
   const destination =
     goal === "sales"
       ? f.website ?? "Your online shop"
       : goal === "bookings"
         ? d?.booking ? `Your ${d.booking} booking page` : `Your booking page${f.website ? ` (${f.website})` : ""}`
-        : d?.form ? `Your website's contact form${f.website ? ` (${f.website})` : ""}` : "A Meta lead form — people ask for a quote without leaving Facebook or Instagram";
+        : goal === "traffic"
+          ? f.website ?? "Your website — add its address and MAIRO sends people to the page that fits the ad"
+          : goal === "awareness"
+            ? `No click needed — the ad is the message${f.website ? `, with your website (${f.website}) for anyone who wants more` : ""}`
+            : d?.form ? `Your website's contact form${f.website ? ` (${f.website})` : ""}` : "A Meta lead form — people ask for a quote without leaving Facebook or Instagram";
   const who = f.customer.trim() || (kind === "shop" ? "People likely to buy what you sell" : "People who need what you offer");
   const place = f.location.trim();
   const audience = kind === "shop" ? (place ? `${who}, where you sell: ${place}` : `${who}, wherever you sell`) : place ? `${who}, within a short drive of ${place}` : `${who}, near you`;
@@ -391,14 +414,18 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
     .map((k) => ({ fact: k, gives: GIVES[k]! }));
 
   // The one event the campaign is judged on is "needed"; the others the business type calls for are "useful".
-  const main = goal === "sales" ? "Purchase" : goal === "bookings" ? "Schedule" : "Lead";
+  const main = goal === "sales" ? "Purchase" : goal === "bookings" ? "Schedule" : goal === "leads" ? "Lead" : null;
   const events = recommendedEvents(kind === "shop" ? "shop" : "service", { booking: Boolean(d?.booking) || goal === "bookings", phone: d?.phone })
-    .filter((e) => e.required || e.name === main)
+    .filter((e) => (main ? e.required || e.name === main : e.name === (kind === "shop" ? "ViewContent" : "Contact")))
     .map((e) => ({ name: e.name, required: e.name === main, when: e.when }))
     .sort((a, b) => Number(b.required) - Number(a.required));
   const usesLeadForm = goal === "leads" && !d?.form;
   const status = usesLeadForm
     ? "A lead form inside the ad reports each lead to Meta by itself, so the first campaign doesn't need a pixel. One on your website still helps later."
+    : goal === "awareness"
+      ? "Meta measures reach itself, so an awareness campaign doesn't need a pixel. One on your website still helps later — it lets MAIRO reach the people who visited."
+      : goal === "traffic" && !f.website
+        ? "A traffic campaign needs a website to send people to. Add its address and MAIRO checks the page and its tracking during setup."
     : f.pixelSeen === true
       ? "A Meta pixel is on your website. During setup MAIRO checks it reports the event below — a pixel being present doesn't mean it does."
       : f.pixelSeen === false
@@ -410,7 +437,7 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
     { label: "Your business details", state: "done", detail: "From you just now. You can change any of them later." },
     { label: "Save this plan", state: "next", detail: "A free account keeps it and turns it into your full free plan. No card needed." },
     { label: "Connect your Meta ad account", state: "later", detail: "Your own account — MAIRO never runs ads from an account you don't own." },
-    { label: usesLeadForm ? "Set up the lead form" : `Make sure Meta sees each ${optimiseFor.toLowerCase().replace(/s$/, "")}`, state: "later", detail: usesLeadForm ? "MAIRO builds the form with you during setup." : "MAIRO checks the tracking and shows you what it found." },
+    { label: usesLeadForm ? "Set up the lead form" : goal === "awareness" ? "Choose who should see it" : `Make sure Meta sees each ${optimiseFor.toLowerCase().replace(/s$/, "")}`, state: "later", detail: usesLeadForm ? "MAIRO builds the form with you during setup." : "MAIRO checks the tracking and shows you what it found." },
     { label: "Approve the ad and the budget", state: "later", detail: "Nothing is published or spent until you approve the exact ad and daily budget." },
     { label: "Subscribe to launch", state: "later", detail: `From $${starter.priceMonthly} a month; ${starter.name} includes a ${STARTER_TRIAL_DAYS}-day trial. Your ad budget is paid to Meta separately.` },
   ];
@@ -419,19 +446,21 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
   const ownMonthly = f.monthlyBudget && f.monthlyBudget >= 30 && f.monthlyBudget <= 1_000_000 ? Math.round(f.monthlyBudget) : null;
   const monthly = ownMonthly ?? Math.round(EXAMPLE_DAILY * 30.4);
   const daily = Math.max(1, Math.round(monthly / 30.4));
-  const result = optimiseFor.toLowerCase().replace(/s$/, "");
+  // What one result is called: "purchase", "lead", "visit", or reach (people) for awareness.
+  const result = goal === "traffic" ? "visit" : goal === "awareness" ? "person reached" : optimiseFor.toLowerCase().replace(/s$/, "");
+  const results = goal === "awareness" ? "people reached" : `${result}s`;
   const allocation: Preview["allocation"] = {
     daily,
     monthly,
     fromOwner: ownMonthly !== null,
     parts: [
-      { label: "First test", share: 100, when: "Weeks 1–2", why: `All of it to one campaign and one audience, so Meta learns quickly which of the three ads brings ${result}s. Meta divides it between the ads by results.` },
+      { label: "First test", share: 100, when: "Weeks 1–2", why: `All of it to one campaign and one audience, so Meta learns quickly which of the three ads brings ${results}. Meta divides it between the ads by results.` },
       { label: "After the test", share: 0, when: "From week 3", why: "MAIRO looks at what the test showed and may recommend moving part of the budget — to the best ad, or to people who already visited. Every change waits for your approval." },
     ],
   };
   const rec = directions[0];
   const strategy: Preview["strategy"] = {
-    campaign: `One ${goal === "sales" ? "Sales" : goal === "bookings" ? "Bookings" : "Leads"} campaign on Facebook and Instagram, optimised for ${optimiseFor.toLowerCase()}.`,
+    campaign: `One ${GOAL_CAMPAIGN[goal]} campaign on Facebook and Instagram, optimised for ${optimiseFor.toLowerCase()}.`,
     structure: [
       `One audience: ${audience}.`,
       `${directions.length === 3 ? "Three" : directions.length === 2 ? "Two" : "One"} ad version${directions.length === 1 ? "" : "s"} — one per direction below — so the results show which opening works.`,
@@ -441,17 +470,17 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
     learning: "Meta needs about a week of delivery to learn who responds. MAIRO doesn't judge the ads before then.",
   };
   const creativeStrategy = rec
-    ? `Lead with “${rec.label.toLowerCase()}” — it's built from ${rec.uses.length ? rec.uses.map((u) => FACT_LABEL[u].toLowerCase()).join(", ") : "what you confirmed"}. Run it alongside the other ${directions.length - 1 === 1 ? "direction" : directions.length - 1 === 2 ? "two directions" : "directions"} for two weeks, keep what brings ${result}s, and replace what doesn't.`
+    ? `Lead with “${rec.label.toLowerCase()}” — it's built from ${rec.uses.length ? rec.uses.map((u) => FACT_LABEL[u].toLowerCase()).join(", ") : "what you confirmed"}. Run it alongside the other ${directions.length - 1 === 1 ? "direction" : directions.length - 1 === 2 ? "two directions" : "directions"} for two weeks, keep what brings ${results}, and replace what doesn't.`
     : "Add a few more details to get ad directions.";
   const firstCampaign: Preview["firstCampaign"] = {
-    name: `${f.name.trim()} — ${goal === "sales" ? "sales" : goal === "bookings" ? "bookings" : "leads"} test`,
+    name: `${f.name.trim() || "Your business"} — ${GOAL_CAMPAIGN[goal].toLowerCase()} test`,
     objective,
     budget: `$${daily} a day${ownMonthly ? ` (about $${monthly.toLocaleString("en-US")} a month, as you said)` : " — an example; you set the real amount"}`,
     length: "Two weeks before judging the ads",
-    judgedOn: `What each ${result} costs${f.pixelSeen === false && goal !== "leads" ? " — once your website tracking reports it" : ""}`,
+    judgedOn: goal === "awareness" ? "What it costs to reach 1,000 people, and how often the same people see it" : `What each ${result} costs${f.pixelSeen === false && (goal === "sales" || goal === "bookings") ? " — once your website tracking reports it" : ""}`,
   };
   const reasons: Preview["reasons"] = [
-    { title: "Why this objective", text: goal === "sales" ? "You sell online, so the campaign is told to find people likely to buy — not just people likely to click." : goal === "bookings" ? "Booked appointments are what you need, so the campaign is judged on bookings rather than clicks or likes." : "You need people to get in touch, so the campaign is judged on enquiries rather than clicks or likes." },
+    { title: "Why this objective", text: WHY_OBJECTIVE[goal] },
     { title: "Why this audience", text: kind === "shop" ? "Starting broad within where you sell lets Meta find buyers from behaviour, which usually beats guessing interests on day one." : "People near you are the ones who can become customers, so the ad is shown only within your area." },
     { title: "Why this budget", text: ownMonthly ? `It's the amount you gave. Spread over one campaign, $${daily} a day is enough for Meta to start learning without splitting it too thin.` : `You didn't give a budget, so this uses $${EXAMPLE_DAILY} a day as an example. Your plan uses the amount you choose, and nothing is spent until you approve it.` },
     { title: "Why these ads", text: rec ? `Each one is written from facts you confirmed, so nothing in it is invented. MAIRO suggests testing “${rec.label}” first. ${rec.why}` : "The ads come from facts you confirm." },

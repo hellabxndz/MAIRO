@@ -44,9 +44,13 @@ export default function PrivacyPage() {
               and reads only what Instagram shows anyone there — the profile&apos;s name, its bio and the
               link in it. It reads no posts, followers, messages or insights, can&apos;t see private
               profiles, and keeps nothing: what it read goes back to your browser. What you type about your business, and
-              the plan built from it, stay in your browser until you create an account. If you ask MAIRO
-              to refine an ad concept, those words and the facts you confirmed are sent to Anthropic to
-              write a new version; we don&apos;t keep them. To keep the free plan fair, we count readings
+              the plan built from it, stay in your browser unless you press Save, Share or Put MAIRO to
+              Work on the free ad plan: then we keep that plan — your answers and what MAIRO wrote — under
+              a private link that anyone you give it to can open, and your browser remembers it so it can
+              join the account you create. A saved plan that never joins an account is deleted after 30
+              days. When MAIRO&apos;s AI writes your free ad plan or refines an ad concept, what you typed
+              and the facts you confirmed are sent to Anthropic to write it; we don&apos;t keep them unless
+              you save the plan. To keep the free plan fair, we count readings
               and refinements against a one-way code made from your connection, not your IP address
               itself. We also count which steps of the free plan people reach, with a random ID kept in
               your browser (none if your browser asks sites not to track you) — never what you typed.</>,
@@ -101,7 +105,8 @@ export default function PrivacyPage() {
         <p>
           We do not collect payment card details. We do not use advertising cookies or third-party
           trackers on this site; the only cookies we set keep you signed in, protect the Meta and
-          Google sign-in steps, and remember your settings.
+          Google sign-in steps, remember your settings, and remember a free plan you saved so it can
+          join the account you create.
         </p>
       </Section>
 
@@ -175,7 +180,8 @@ export default function PrivacyPage() {
       <Section heading="How long we keep it">
         <p>
           Account and campaign data is kept while your account is open, because the service can&apos;t
-          work without it. Meta access tokens are deleted the moment you disconnect. When you delete
+          work without it. A free ad plan saved or shared before signing up is deleted after 30 days
+          unless it joins an account. Meta access tokens are deleted the moment you disconnect. When you delete
           your account, its records are removed from the live service straight away; backup copies
           and server logs expire within {LEGAL.deletionWindowDays} days; information already sent to
           the providers above is kept under their own retention rules; and billing records are kept

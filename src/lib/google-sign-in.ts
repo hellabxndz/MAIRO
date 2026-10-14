@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
+import { claimPendingPlan } from "@/lib/preview/pending-plan";
 import {
   decideGoogleSignIn,
   decodeGoogleIntent,
@@ -123,8 +124,11 @@ export async function resolveGoogleSignIn(
             });
             // Whoever signs a business up owns it.
             await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
-            return user;
+            return { ...user, organizationId: organization.id };
           });
+          // A free ad plan saved in this browser comes with a new business
+          // account, as it does with an email sign-up. Never throws.
+          if (decision.orgKind === "BUSINESS") await claimPendingPlan(user.organizationId);
           return { ok: true, userId: user.id };
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") continue;

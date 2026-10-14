@@ -1,15 +1,16 @@
 "use client";
 
-import { FreePlanForm } from "@/components/preview/free-plan-form";
+import { PlanGenerator } from "@/components/plan-generator/plan-generator";
 import { DemoFrame, DemoScreen, ScaledFrame } from "@/components/console/demo";
 import { BusinessArt } from "@/components/hero-story/art";
 import { EXAMPLES } from "@/lib/demo/examples";
 import { heroVariant, track } from "@/lib/analytics/track";
 
-// The first screen: the outcome in one line — "Your Business Has More
-// Potential. Let MAIRO Show You." — and the free plan, started right here in
-// three ways (a few facts, an Instagram username, or a website; none needs a
-// site). Then MAIRO itself — the real dashboard, drawn with the same
+// The first screen: the Free AI Meta Ad Strategy Generator — "Your Next
+// Advertising Strategy Starts Here." — four answers (website, what the
+// business sells, goal, monthly Meta budget) and a plan written for that
+// business, free and with nothing launched. Then MAIRO itself — the real
+// dashboard, drawn with the same
 // components the signed-in app uses, for a clearly labelled fictional
 // business. Around it, sample ad concepts for six kinds of business, each
 // labelled as one.
@@ -51,21 +52,21 @@ export function ConsoleHero() {
 
       <div className="mx-auto max-w-[1360px] px-5 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[980px] text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3.5 py-1.5 text-[12.5px] font-medium text-white/85">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-bright" />
-            AI advertising for Facebook &amp; Instagram
+          <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-100/90 sm:text-[12px]">
+            <span aria-hidden>✨</span>
+            Free AI Meta ad strategy generator
           </p>
-          <h1 id="hero-title" className="mt-6 text-[clamp(35px,7vw,92px)] font-semibold leading-[0.98] tracking-[-0.05em] text-white [text-wrap:balance]">
-            Your Business Has More Potential.{" "}
-            <span className="block bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text pb-[0.06em] text-transparent">Let MAIRO Show You.</span>
+          <h1 id="hero-title" className="mt-6 text-[clamp(34px,6.4vw,84px)] font-semibold leading-[0.98] tracking-[-0.05em] text-white [text-wrap:balance]">
+            Your Next Advertising Strategy{" "}
+            <span className="bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text pb-[0.06em] text-transparent">Starts Here.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-[700px] text-[clamp(15.5px,1.5vw,20px)] leading-relaxed text-white/72 sm:mt-6">
-            Tell us about your business, share your Instagram, or add your website. MAIRO will analyze the information available, identify advertising opportunities, and build a personalized AI advertising plan designed around your goals. Completely free to explore.
+          <p className="mx-auto mt-5 max-w-[680px] text-[clamp(15.5px,1.5vw,19.5px)] leading-relaxed text-white/72 sm:mt-6">
+            Tell MAIRO what your business sells, choose your goal and monthly ad budget, and see how your AI advertising team would grow your business.
           </p>
         </div>
 
-        <div className="mx-auto mt-7 max-w-[720px] sm:mt-9" onClickCapture={(e) => (e.target as HTMLElement).closest("button[type=submit]") && track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } })}>
-          <FreePlanForm compact idPrefix="hero" />
+        <div className="mx-auto mt-8 max-w-[760px] sm:mt-10">
+          <PlanGenerator mode="hero" />
           <p className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]">
             <a href="#walkthrough" onClick={() => track({ name: "hero_cta", props: { cta: "watch", variant: heroVariant() } })} className="inline-flex min-h-[44px] items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] pl-1.5 pr-4 font-semibold text-white transition hover:border-violet-400/60">
               <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)]">

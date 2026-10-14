@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
 import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
 import { googleSignInEnabled, rememberGoogleIntent } from "@/lib/google-sign-in";
+import { claimPendingPlan } from "@/lib/preview/pending-plan";
 import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
 import { PASSWORD_MAX, normalizeEmail, passwordProblem } from "@/lib/auth-rules/password";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
@@ -141,7 +142,7 @@ export async function signUpAction(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await db.$transaction(async (tx) => {
+  const organizationId = await db.$transaction(async (tx) => {
     const organization = await tx.organization.create({
       data: { name: businessName },
     });
@@ -157,7 +158,12 @@ export async function signUpAction(
     });
     // Whoever signs a business up owns it.
     await tx.organizationMember.create({ data: { organizationId: organization.id, userId: user.id, role: "OWNER" } });
+    return organization.id;
   });
+
+  // A free ad plan saved in this browser before signing up comes with the
+  // account, and setup opens with its answers. Never blocks the sign-up.
+  await claimPendingPlan(organizationId);
 
   try {
     // A business type picked in the website's walkthrough opens setup with it chosen.

@@ -13,6 +13,7 @@ import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 import { pauseSocialSweep } from "@/lib/social/pause";
 import { runAllPlatformIntelligence } from "@/lib/platform-intelligence/registry";
 import { sweepOrphanedFiles } from "@/lib/account/close";
+import { sweepUnclaimedPlans } from "@/lib/preview/saved-plan-store";
 import { ORGANIZATION_FOLDERS, deleteFilesUnder, organizationFolderIds } from "@/lib/storage/blob";
 
 // The backstop for a safety check that couldn't run.
@@ -143,6 +144,13 @@ export async function GET(req: Request) {
       })
     : null;
 
+  // Free ad plans saved or shared by visitors who never made an account are
+  // deleted after 30 days, as the privacy policy says.
+  const unclaimedPlans = await sweepUnclaimedPlans().catch((error) => {
+    console.error("Unclaimed free plan sweep failed:", error instanceof Error ? error.name : "unknown");
+    return null;
+  });
+
   // Creatives whose safety check couldn't run (see above), as many as the
   // time left allows — each is a model call made in sequence. A backlog that
   // takes three nights to clear is better than a run that times out every
@@ -162,5 +170,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, ms: Date.now() - startedAt });
 }

@@ -295,3 +295,28 @@
     transition: none;
   }
 }
+
+/* The free AI ad plan: a stage ticking done, and the report as a printed (PDF) copy. */
+@keyframes mairo-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes mairo-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mp-section { animation: mairo-rise 0.5s ease-out both; }
+}
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  body * { visibility: hidden; }
+  .mp-print-root, .mp-print-root * { visibility: visible; }
+  .mp-print-root { position: absolute; inset: 0 auto auto 0; width: 100%; }
+  .mp-print-root .mp-noprint { display: none !important; }
+  .mp-print-root * { color: #111 !important; box-shadow: none !important; text-shadow: none !important; }
+  .mp-print-root .mp-section, .mp-print-root .mp-section * { background: transparent !important; border-color: #d9dbe3 !important; }
+  .mp-print-root .mp-section { break-inside: avoid-page; animation: none; }
+  .mp-print-root figure, .mp-print-root li { break-inside: avoid; }
+}

@@ -76,6 +76,33 @@ export async function takeRefineQuota(anonKey: string): Promise<Quota> {
   return { ok: true };
 }
 
+/** Free AI ad plans: each one is a model call, so a few an hour per visitor and a daily ceiling across everyone. */
+export const ANON_PLANS_PER_HOUR = 6;
+export const PLANS_PER_DAY_ALL = 300;
+export async function takePlanQuota(anonKey: string): Promise<Quota> {
+  const now = new Date();
+  const hourStart = new Date(`${hourKey(now)}:00:00.000Z`);
+  const dayStart = new Date(`${dayKey(now)}T00:00:00.000Z`);
+  if (!(await take(`plan:all:${dayKey(now)}`, PLANS_PER_DAY_ALL, dayStart))) {
+    return { ok: false, reason: "budget", message: "MAIRO's AI has written today's limit of free plans, so this one uses MAIRO's ad templates. Try again tomorrow, or create your free account." };
+  }
+  if (!(await take(`plan:anon:${anonKey}:${hourKey(now)}`, ANON_PLANS_PER_HOUR, hourStart))) {
+    return { ok: false, reason: "visitor", message: `That's ${ANON_PLANS_PER_HOUR} AI-written plans this hour, so this one uses MAIRO's ad templates. Try again later, or create your free account.` };
+  }
+  return { ok: true };
+}
+
+/** Saving or sharing a free plan: generous, but enough to stop the table being filled by a script. */
+export const ANON_SAVES_PER_HOUR = 20;
+export async function takeSaveQuota(anonKey: string): Promise<Quota> {
+  const now = new Date();
+  const hourStart = new Date(`${hourKey(now)}:00:00.000Z`);
+  if (!(await take(`save:anon:${anonKey}:${hourKey(now)}`, ANON_SAVES_PER_HOUR, hourStart))) {
+    return { ok: false, reason: "visitor", message: `That's ${ANON_SAVES_PER_HOUR} saved plans this hour. Try again later, or create your free account.` };
+  }
+  return { ok: true };
+}
+
 /** A recent public reading of the same address, reused instead of fetching again. */
 export async function cachedPublicScan(url: string): Promise<ScanResult | null> {
   const row = await db.websiteScan.findFirst({

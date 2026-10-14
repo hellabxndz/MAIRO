@@ -265,6 +265,9 @@ model Organization {
   /// so leaving halfway — or a failed save — loses nothing. Cleared once the
   /// intake is saved.
   onboardingDraft        Json?
+  /// Free AI ad plans saved into this business — from the homepage generator,
+  /// claimed at sign-up or saved while signed in.
+  freeAdPlans            FreeAdPlan[]
   /// Whether a payment has ever gone through. A subscription that ends or
   /// fails before this is true never paid — its ads are stopped.
   hasPaid                Boolean   @default(false)
@@ -3876,6 +3879,27 @@ model WebsiteFinding {
 
 /// Anonymous use of the server-backed free tools, counted per window, so free
 /// scans have a disclosed limit and a server-wide budget.
+/// A free AI ad plan from the homepage generator that a visitor chose to save
+/// or share. Made only when they press Save, Share or Put MAIRO to Work —
+/// never just for generating one. Unclaimed plans are deleted after 30 days
+/// by the daily run; a claimed one belongs to its business and goes with it.
+model FreeAdPlan {
+  id             String        @id @default(cuid())
+  /// Unguessable; the read-only share link is /plan/s/<shareToken>.
+  shareToken     String        @unique
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  /// What the visitor gave: website, what they sell, goal, budget, and the facts they confirmed (JSON).
+  inputsJson     String        @db.Text
+  /// The plan as it was shown, so a shared link shows the same plan (JSON).
+  planJson       String        @db.Text
+  createdAt      DateTime      @default(now())
+  claimedAt      DateTime?
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
 model ToolUsage {
   id          String   @id @default(cuid())
   /// e.g. "scan:anon:<hash>:<hour>" or "scan:all:<day>"

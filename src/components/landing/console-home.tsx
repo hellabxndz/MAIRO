@@ -42,13 +42,13 @@ import { brandFont } from "@/lib/fonts";
 // free plan is free, and a subscription is only for building and running
 // real campaigns, each of which waits for the owner's approval.
 
-const CTA = { href: "/preview", label: "Build My Free Ad Plan" };
+const CTA = { href: "/preview", label: "Generate My Free AI Ad Plan" };
 
 const STEPS = [
-  { n: "01", title: "Tell MAIRO about your business", body: "Your website, or a few words about it — plus your objective, industry and budget if you know them.", tag: "Free" },
-  { n: "02", title: "MAIRO analyzes it", body: "It reads your public pages and shows what it found about your products, audience and goal — and where it found each fact.", tag: "Free" },
-  { n: "03", title: "Confirm and get your plan", body: "Objective, Meta campaign strategy, audience, budget, three creative concepts and website fixes — built only from what you confirmed.", tag: "Free" },
-  { n: "04", title: "Approve, then launch", body: "Save it to a free account and approve it. A subscription lets MAIRO build the campaign in your own Meta ad account — and it waits for your approval before it spends.", tag: "Paid to launch" },
+  { n: "01", title: "Tell MAIRO about your business", body: "Your website and what you sell — or just describe it — plus your goal and your monthly Meta ad budget.", tag: "Free" },
+  { n: "02", title: "MAIRO analyzes it", body: "It reads your public pages and says what it found and where — kept apart from what it suggests.", tag: "Free" },
+  { n: "03", title: "Get your free plan", body: "Your Meta strategy, audience, budget split, three AI ad concepts, website suggestions and your first 30 days — for your business, not a template.", tag: "Free" },
+  { n: "04", title: "Put MAIRO to work", body: "Subscribe and your plan comes with you: MAIRO builds the campaign in your own Meta ad account, and waits for your approval before anything runs or spends.", tag: "Paid to launch" },
 ];
 
 const SOLUTIONS = [
