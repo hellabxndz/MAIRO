@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- remote blob URLs */
 "use client";
 
+import type { ReactNode } from "react";
 import type { Aspect, Caption } from "@/lib/suggested-ads/video";
 
 // MAIRO's own mock-ups of where the ad shows: the Instagram and Facebook
@@ -14,7 +15,9 @@ import type { Aspect, Caption } from "@/lib/suggested-ads/video";
 export type MockMedia =
   | { kind: "image"; url: string; version?: number | null }
   | { kind: "video"; posterUrl: string | null; aspect: Aspect; firstCaption: Caption | null; version?: number | null }
-  | { kind: "none" };
+  | { kind: "none" }
+  /** The website's product demonstrations only: a drawn sample illustration, never a real ad. */
+  | { kind: "art"; node: ReactNode };
 export type MockWords = { hook: string; body: string; cta: string };
 export type Placement = "ig-feed" | "fb-feed" | "stories" | "reels" | "square" | "vertical";
 
@@ -31,7 +34,9 @@ export const PLACEMENTS: { id: Placement; label: string; shape: string }[] = [
 export function mockLabel(placement: Placement, media: MockMedia): string {
   const p = PLACEMENTS.find((x) => x.id === placement)!;
   const what =
-    media.kind === "none"
+    media.kind === "art"
+      ? "Product demo — a drawn sample illustration for a fictional business, in MAIRO's mock-up"
+      : media.kind === "none"
       ? "Illustrative mock-up — there's no picture or video yet, so this shows the layout only"
       : media.kind === "image"
         ? `MAIRO's mock-up with your picture${media.version ? ` (version ${media.version})` : ""}`
@@ -51,6 +56,7 @@ const SHOWN_FB = 125;
 const SHOWN_IG = 90;
 
 function Media({ media, className }: { media: MockMedia; className: string }) {
+  if (media.kind === "art") return <div className={`${className} overflow-hidden [&>svg]:h-full [&>svg]:w-full`}>{media.node}</div>;
   if (media.kind === "image") return <img src={media.url} alt="" className={`${className} object-cover`} />;
   if (media.kind === "video") {
     return (

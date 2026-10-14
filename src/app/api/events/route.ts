@@ -16,6 +16,8 @@ const event = z.discriminatedUnion("name", [
   z.object({ name: z.literal("preview_result"), props: z.object({ outcome: z.enum(["facts", "failed", "blocked", "manual"]), variant: v }) }),
   z.object({ name: z.literal("preview_complete"), props: z.object({ kind: z.enum(["shop", "service", "appointments"]), variant: v }) }),
   z.object({ name: z.literal("preview_save"), props: z.object({ variant: v }) }),
+  z.object({ name: z.literal("preview_refine"), props: z.object({ variant: v }) }),
+  z.object({ name: z.literal("hero_cta"), props: z.object({ cta: z.enum(["free_plan", "watch", "sign_up"]), variant: v }) }),
   z.object({ name: z.literal("tool_result"), props: z.object({ tool: z.string().regex(/^[a-z-]{3,40}$/) }) }),
   z.object({ name: z.literal("walkthrough"), props: z.object({ action: z.enum(["play", "chapter", "video"]) }) }),
 ]);

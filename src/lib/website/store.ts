@@ -60,6 +60,22 @@ export async function takeScanQuota(who: { anonKey: string } | { organizationId:
   return { ok: true };
 }
 
+/** Free-plan refinements with MAIRO's AI: a few an hour per visitor, and a daily ceiling across everyone, since each one costs a model call. */
+export const ANON_REFINES_PER_HOUR = 8;
+export const REFINES_PER_DAY_ALL = 400;
+export async function takeRefineQuota(anonKey: string): Promise<Quota> {
+  const now = new Date();
+  const hourStart = new Date(`${hourKey(now)}:00:00.000Z`);
+  const dayStart = new Date(`${dayKey(now)}T00:00:00.000Z`);
+  if (!(await take(`refine:all:${dayKey(now)}`, REFINES_PER_DAY_ALL, dayStart))) {
+    return { ok: false, reason: "budget", message: "Free refinements have reached today's limit. Create your free account to keep refining your plan." };
+  }
+  if (!(await take(`refine:anon:${anonKey}:${hourKey(now)}`, ANON_REFINES_PER_HOUR, hourStart))) {
+    return { ok: false, reason: "visitor", message: `That's ${ANON_REFINES_PER_HOUR} refinements this hour. Create your free account to keep going, or try again later.` };
+  }
+  return { ok: true };
+}
+
 /** A recent public reading of the same address, reused instead of fetching again. */
 export async function cachedPublicScan(url: string): Promise<ScanResult | null> {
   const row = await db.websiteScan.findFirst({

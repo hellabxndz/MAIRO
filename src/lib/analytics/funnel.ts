@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 // versions. Plan completion is the measure that matters; views and clicks
 // are supporting evidence only.
 
-export const PUBLIC_EVENT_NAMES = ["hero_view", "hero_example", "hero_chapter", "hero_play", "preview_start", "preview_result", "preview_complete", "preview_save", "tool_result", "walkthrough"] as const;
+export const PUBLIC_EVENT_NAMES = ["hero_view", "hero_example", "hero_chapter", "hero_play", "preview_start", "preview_result", "preview_complete", "preview_save", "preview_refine", "hero_cta", "tool_result", "walkthrough"] as const;
 export const SERVER_EVENT_NAMES = ["plan_created", "plan_approved", "checkout_success", "first_launch"] as const;
 
 export async function heroVariantCookie(): Promise<string> {
