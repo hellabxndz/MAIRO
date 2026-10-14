@@ -166,11 +166,11 @@ export const WALK_CAMERA: Record<WalkChapterId, WalkCameraKey[]> = {
   ],
   analysis: [
     { at: 7800, cue: "#walk-scan", zoom: 1.4, narrowZoom: 1.05, dur: 1 },
-    { at: WALK_T.found, cue: "h1", zoom: 1.05, align: "top", dur: 1 },
+    { at: WALK_T.found, cue: '[data-cue="title"]', zoom: 1.05, align: "top", dur: 1 },
     { at: 13700, cue: "#walk-confirm", zoom: 1.1, narrowZoom: 1, dur: 1200 },
   ],
   plan: [
-    { at: 17800, cue: "h1", zoom: 1, align: "top", dur: 1 },
+    { at: 17800, cue: '[data-cue="title"]', zoom: 1, align: "top", dur: 1 },
     { at: 20400, cue: '[data-panel="pl-objective"]', zoom: 1.1, narrowZoom: 1, align: "top" },
     { at: 23000, cue: '[data-panel="pl-budget"]', zoom: 1.15, narrowZoom: 1, align: "top" },
     { at: 25600, cue: '[data-panel="pl-why"]', zoom: 1.15, narrowZoom: 1, align: "top" },

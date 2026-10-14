@@ -1,3 +1,6 @@
+"use client";
+
+import { useId } from "react";
 import type { ExampleType } from "@/lib/demo/examples";
 
 // Original illustrations for the three fictional businesses — drawn here, no
@@ -9,9 +12,11 @@ type Variant = "demo" | "problem" | "offer" | "site";
 
 export function BusinessArt({ type, variant, className = "" }: { type: ExampleType; variant: Variant; className?: string }) {
   const Art = type === "shop" ? ShopArt : type === "service" ? ServiceArt : SalonArt;
+  // Each drawing's gradients get their own ids, so the same picture can appear more than once on a page.
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   return (
     <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className={className} role="img" aria-label={LABEL[type][variant]}>
-      <Art variant={variant} />
+      <Art variant={variant} uid={uid} />
     </svg>
   );
 }
@@ -23,7 +28,7 @@ const LABEL: Record<ExampleType, Record<Variant, string>> = {
   brands: { demo: "A salon chair in front of a round mirror", problem: "A phone showing an online booking calendar", offer: "Scissors and a comb with a gift tag", site: "A bright hair salon" },
 };
 
-function ShopArt({ variant }: { variant: Variant }) {
+function ShopArt({ variant, uid }: { variant: Variant; uid: string }) {
   const mug = (x: number, y: number, s = 1, glaze = "#3f6b4f") => (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <ellipse cx="0" cy="96" rx="64" ry="10" fill="#000" opacity="0.18" />
@@ -38,22 +43,22 @@ function ShopArt({ variant }: { variant: Variant }) {
   return (
     <>
       <defs>
-        <linearGradient id="shop-wall" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={`shop-wall-${uid}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#f6efe2" />
           <stop offset="1" stopColor="#e7d8bd" />
         </linearGradient>
-        <linearGradient id="shop-wood" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`shop-wood-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#b9875c" />
           <stop offset="1" stopColor="#8a5a37" />
         </linearGradient>
-        <radialGradient id="shop-sun" cx="0.85" cy="0.1" r="0.8">
+        <radialGradient id={`shop-sun-${uid}`} cx="0.85" cy="0.1" r="0.8">
           <stop offset="0" stopColor="#fff6dd" stopOpacity="0.9" />
           <stop offset="1" stopColor="#fff6dd" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <rect width="400" height="300" fill="url(#shop-wall)" />
-      <rect width="400" height="300" fill="url(#shop-sun)" />
-      <rect y="214" width="400" height="86" fill="url(#shop-wood)" />
+      <rect width="400" height="300" fill={`url(#shop-wall-${uid})`} />
+      <rect width="400" height="300" fill={`url(#shop-sun-${uid})`} />
+      <rect y="214" width="400" height="86" fill={`url(#shop-wood-${uid})`} />
       <path d="M0 226 H400 M0 250 H400 M0 276 H400" stroke="#7a4d2e" strokeWidth="1.5" opacity="0.35" />
       {variant === "demo" || variant === "site" ? (
         <>
@@ -95,7 +100,7 @@ function ShopArt({ variant }: { variant: Variant }) {
   );
 }
 
-function ServiceArt({ variant }: { variant: Variant }) {
+function ServiceArt({ variant, uid }: { variant: Variant; uid: string }) {
   const wrench = (x: number, y: number, rot: number, s = 1) => (
     <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
       <rect x="-8" y="0" width="16" height="120" rx="8" fill="#9aa8bd" />
@@ -106,17 +111,17 @@ function ServiceArt({ variant }: { variant: Variant }) {
   return (
     <>
       <defs>
-        <linearGradient id="svc-bg" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`svc-bg-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#e9f1fb" />
           <stop offset="1" stopColor="#cfdcee" />
         </linearGradient>
-        <linearGradient id="svc-pipe" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`svc-pipe-${uid}`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#9aa7ba" />
           <stop offset="0.5" stopColor="#e6ecf4" />
           <stop offset="1" stopColor="#8c99ad" />
         </linearGradient>
       </defs>
-      <rect width="400" height="300" fill="url(#svc-bg)" />
+      <rect width="400" height="300" fill={`url(#svc-bg-${uid})`} />
       {variant === "offer" ? (
         <>
           <rect y="236" width="400" height="64" fill="#9fb2cc" />
@@ -149,7 +154,7 @@ function ServiceArt({ variant }: { variant: Variant }) {
           <rect x="120" y="40" width="160" height="22" rx="4" fill="#c4d0df" />
           <rect x="30" y="68" width="340" height="232" fill="#f3f6fa" />
           <rect x="42" y="78" width="316" height="222" rx="6" fill="#e3e9f1" />
-          <path d="M200 62 V140 a28 28 0 0 0 28 28 h18 a20 20 0 0 1 20 20 v14 a20 20 0 0 1 -20 20 h-120" fill="none" stroke="url(#svc-pipe)" strokeWidth="22" strokeLinecap="round" />
+          <path d="M200 62 V140 a28 28 0 0 0 28 28 h18 a20 20 0 0 1 20 20 v14 a20 20 0 0 1 -20 20 h-120" fill="none" stroke={`url(#svc-pipe-${uid})`} strokeWidth="22" strokeLinecap="round" />
           <rect x="186" y="98" width="28" height="18" rx="4" fill="#b8c4d6" />
           <rect x="236" y="160" width="18" height="26" rx="4" fill="#b8c4d6" />
           {variant === "problem" ? (
@@ -178,7 +183,7 @@ function ServiceArt({ variant }: { variant: Variant }) {
   );
 }
 
-function SalonArt({ variant }: { variant: Variant }) {
+function SalonArt({ variant, uid }: { variant: Variant; uid: string }) {
   const scissors = (x: number, y: number, rot: number, s = 1) => (
     <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
       <path d="M0 0 L70 -10 L72 -4 L4 6 z" fill="#d6d3de" />
@@ -191,16 +196,16 @@ function SalonArt({ variant }: { variant: Variant }) {
   return (
     <>
       <defs>
-        <linearGradient id="sal-bg" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={`sal-bg-${uid}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#fbf1f0" />
           <stop offset="1" stopColor="#f0d9dc" />
         </linearGradient>
-        <radialGradient id="sal-mirror" cx="0.4" cy="0.35" r="0.7">
+        <radialGradient id={`sal-mirror-${uid}`} cx="0.4" cy="0.35" r="0.7">
           <stop offset="0" stopColor="#ffffff" />
           <stop offset="1" stopColor="#d9c6cf" />
         </radialGradient>
       </defs>
-      <rect width="400" height="300" fill="url(#sal-bg)" />
+      <rect width="400" height="300" fill={`url(#sal-bg-${uid})`} />
       <rect y="232" width="400" height="68" fill="#e3c6c9" />
       {variant === "problem" ? (
         <>
@@ -235,7 +240,7 @@ function SalonArt({ variant }: { variant: Variant }) {
       ) : (
         <>
           <circle cx="200" cy="96" r="70" fill="#c9a227" />
-          <circle cx="200" cy="96" r="62" fill="url(#sal-mirror)" />
+          <circle cx="200" cy="96" r="62" fill={`url(#sal-mirror-${uid})`} />
           <path d="M170 70 q30 -22 60 0" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" opacity="0.8" />
           <g transform="translate(200 172)">
             <rect x="-56" y="0" width="112" height="70" rx="22" fill="#4b2142" />

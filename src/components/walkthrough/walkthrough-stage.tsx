@@ -126,7 +126,7 @@ const IntroWorld = memo(function IntroWorld({ site, goal, focus, pressed }: Intr
     <div className="px-6 pb-16 pt-8">
       <Steps step={1} />
       <section className="mx-auto max-w-[760px]">
-        <h1 className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">See your free plan</h1>
+        <p className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">See your free plan</p>
         <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Discover how MAIRO would advertise your business before spending a dollar.</p>
         <div id="walk-form" className="mt-7">
           <FreePlanForm idPrefix="walk" demo={{ website: site, goal, focus, pressed }} />
@@ -143,7 +143,7 @@ const AnalysisWorld = memo(function AnalysisWorld({ phase, step, done, shown, go
         <Steps step={2} />
         <section className="mx-auto max-w-[760px]">
           <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 1 · Reading your website</p>
-          <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">MAIRO is reading {WALK_SITE}</h1>
+          <p className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">MAIRO is reading {WALK_SITE}</p>
           <div id="walk-scan" className="mt-5">
             <ScanProgressView progress={{ step, label: SCAN_LABEL[step], ...(step === "pages" ? { done, total: 3 } : {}) }} />
           </div>
@@ -156,7 +156,7 @@ const AnalysisWorld = memo(function AnalysisWorld({ phase, step, done, shown, go
       <Steps step={3} />
       <section className="mx-auto max-w-[980px]">
         <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 2 · What MAIRO discovered</p>
-        <h1 className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">Here&rsquo;s what MAIRO found</h1>
+        <p data-cue="title" className="mt-2 text-[30px] font-semibold tracking-[-0.02em] text-white">Here&rsquo;s what MAIRO found</p>
         <p className="mt-2 text-[12.5px] text-white/50">
           Read from <span className="text-white/70">{WALK_SITE}</span>
         </p>
@@ -164,7 +164,7 @@ const AnalysisWorld = memo(function AnalysisWorld({ phase, step, done, shown, go
           <Discovered facts={FACTS} shown={shown} />
         </div>
         <div id="walk-confirm" className="mt-8">
-          <h2 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 3 · Confirm the important details</h2>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 3 · Confirm the important details</p>
           <GoalFieldset value={goal} onChange={noop} />
           <div className="mt-6">
             <button type="button" className={primaryBtn} style={press(pressed)}>

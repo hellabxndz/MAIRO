@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode, type RefObject } from "react";
+import { useContext, useState, type ReactNode, type RefObject } from "react";
 import type { Direction, Preview, PreviewFacts, PreviewGoal } from "@/lib/preview/build";
 import { FACT_LABEL } from "@/lib/preview/build";
 import type { Finding } from "@/lib/website/audit";
 import { EXAMPLES, EXAMPLE_ORDER, type ExampleType } from "@/lib/demo/examples";
 import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
 import { FindingCard } from "@/components/tools/website-report";
-import { Panel, Pill, primaryAction, quietAction } from "@/components/console/kit";
+import { DemoContext, Panel, Pill, primaryAction, quietAction } from "@/components/console/kit";
 import { PlacementMock, mockLabel, type Placement } from "@/app/dashboard/creatives/suggested/placements";
 
 // The free plan, presented the way MAIRO presents everything: in the console.
@@ -67,6 +67,8 @@ export function PlanView({
   const words = (d: Direction) => ({ hook: edits[d.angle]?.hook ?? d.hook, headline: edits[d.angle]?.headline ?? d.headline, body: edits[d.angle]?.body ?? d.primaryText });
   const keptHooks = () => concepts.filter((c) => saved[c.angle] || c.recommended).map((c) => ({ hook: words(c).hook }));
   const daily = p.allocation.daily;
+  // Drawn inside the walkthrough: the page's own title is elsewhere.
+  const demo = useContext(DemoContext);
 
   return (
     <article aria-labelledby="pv-title" className="@container/plan mx-auto max-w-[1240px]">
@@ -88,9 +90,15 @@ export function PlanView({
             </Pill>
           )}
         </div>
-        <h1 id="pv-title" ref={headingRef} tabIndex={-1} className="mt-4 text-[clamp(28px,4vw,46px)] font-semibold leading-[1.05] tracking-[-0.035em] text-white outline-none">
-          {p.name}: your free advertising plan
-        </h1>
+        {demo ? (
+          <p data-cue="title" className="mt-4 text-[clamp(28px,4vw,46px)] font-semibold leading-[1.05] tracking-[-0.035em] text-white">
+            {p.name}: your free advertising plan
+          </p>
+        ) : (
+          <h1 id="pv-title" ref={headingRef} tabIndex={-1} className="mt-4 text-[clamp(28px,4vw,46px)] font-semibold leading-[1.05] tracking-[-0.035em] text-white outline-none">
+            {p.name}: your free advertising plan
+          </h1>
+        )}
         <p className="mt-3 max-w-[780px] text-[15px] leading-relaxed text-white/70">
           {isExample
             ? "What MAIRO plans from a business's facts. Try it with your own business to see yours."

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { DailyPoint } from "@/lib/dashboard/overview";
 import { axisMoney, count, money, shortDate } from "./format";
 
@@ -93,6 +93,8 @@ export function PerformanceChart({
   const dual = variant === "spend-purchases";
 
   const H = 230;
+  // Gradient ids of its own, so two charts on one page don't share them.
+  const gid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const pad = { top: 12, right: dual ? 34 : 10, bottom: 26, left: 44 };
   const innerW = Math.max(0, width - pad.left - pad.right);
   const innerH = H - pad.top - pad.bottom;
@@ -146,11 +148,11 @@ export function PerformanceChart({
         {width > 0 && n > 0 && (
           <svg width={width} height={H} className="block" role="img" aria-label={dual ? `Amount spent and ${countLabel.toLowerCase()} over time` : "Money spent and sales over time"}>
             <defs>
-              <linearGradient id="pc-sales" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`pc-sales-${gid}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.28" />
                 <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
               </linearGradient>
-              <linearGradient id="pc-bar" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={`pc-bar-${gid}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#8b6cff" stopOpacity="0.75" />
                 <stop offset="100%" stopColor="#6d4dff" stopOpacity="0.35" />
               </linearGradient>
@@ -177,11 +179,11 @@ export function PerformanceChart({
               buckets.map((b, i) => {
                 const w = Math.max(2, Math.min(18, slot * 0.62));
                 const y = yMoney(b.spend);
-                return <rect key={i} x={xAt(i) - w / 2} y={y} width={w} height={pad.top + innerH - y} rx={Math.min(3, w / 3)} fill="url(#pc-bar)" opacity={hover === null || hover === i ? 1 : 0.55} />;
+                return <rect key={i} x={xAt(i) - w / 2} y={y} width={w} height={pad.top + innerH - y} rx={Math.min(3, w / 3)} fill={`url(#pc-bar-${gid})`} opacity={hover === null || hover === i ? 1 : 0.55} />;
               })
             ) : (
               <>
-                <path d={salesArea} fill="url(#pc-sales)" />
+                <path d={salesArea} fill={`url(#pc-sales-${gid})`} />
                 <path d={salesLine} fill="none" stroke="#c4b5fd" strokeWidth="2" strokeLinejoin="round" />
                 <path d={spendLine} fill="none" stroke="#7c5cff" strokeWidth="2" strokeLinejoin="round" />
               </>

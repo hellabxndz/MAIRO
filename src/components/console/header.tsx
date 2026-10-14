@@ -1,8 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { MetaMark } from "@/components/mairo/marks";
-import { Go, Pill, type PillTone } from "./kit";
+import { DemoContext, Go, Pill, type PillTone } from "./kit";
 
 // The top of the Overview: who's here, which business and ad account MAIRO
 // is working in, and what the AI team is doing right now — each from a
@@ -20,11 +20,13 @@ const ACCOUNT_TONE = { connected: "live", attention: "warn", none: "muted" } as 
 
 export function ConsoleHeader({ data, right }: { data: ConsoleHeaderData; right?: ReactNode }) {
   const initial = (data.business || "M").trim().charAt(0).toUpperCase();
+  // A demonstration of the Overview isn't the page's own title.
+  const Title = useContext(DemoContext) ? "p" : "h1";
   return (
     <header className="mb-6 sm:mb-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[clamp(26px,3.2vw,38px)] font-semibold leading-[1.08] tracking-[-0.03em] text-white">{data.greeting}</h1>
+          <Title className="text-[clamp(26px,3.2vw,38px)] font-semibold leading-[1.08] tracking-[-0.03em] text-white">{data.greeting}</Title>
           <p className="mt-1.5 text-[14.5px] text-muted">{data.subline}</p>
         </div>
         {right}

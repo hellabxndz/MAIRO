@@ -189,7 +189,10 @@ export async function loadConsole(organizationId: string, userName: string, days
   const tz = org?.timezone || "America/New_York";
   const hour = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone: tz }).format(now));
   const greeting = `${hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"}${userName ? `, ${firstNameFrom(userName, "")}` : ""}.`;
-  const family: MetricFamily = mission ? missionGoal(mission.primaryGoal).metrics : "sales";
+  // The goal chosen on the Overview; until there is one, the goal given at setup; only then sales.
+  const setupGoal = mission ? null : ((await db.onboardingIntake.findUnique({ where: { organizationId }, select: { primaryGoal: true } }))?.primaryGoal ?? null);
+  const FROM_SETUP: Partial<Record<string, MetricFamily>> = { LEADS: "leads", SALES: "sales", TRAFFIC: "traffic", AWARENESS: "awareness" };
+  const family: MetricFamily = mission ? missionGoal(mission.primaryGoal).metrics : (setupGoal && FROM_SETUP[setupGoal]) || "sales";
 
   // ---- Header
   const working = team.statuses.find((s) => s.state === "WORKING");
