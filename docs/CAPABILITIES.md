@@ -21,7 +21,7 @@ or a public page makes a claim this inventory can't back.
 | Plan | Reading the business's website | Partially working | `/onboarding`, `/dashboard/settings/business-brain` | ANTHROPIC_API_KEY | `check:business`, `check:safe-fetch` |
 | Plan | Campaign preview before sign-up | Partially working | `/preview` | — | `check:preview`, `check:website`, `check:safe-fetch` |
 | Plan | Business Brain | Working | `/dashboard/settings/business-brain` | — | `check:brain` |
-| Plan | Setup saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
+| Plan | Setup in nine phases, saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
 | Campaigns | Launch only after the owner approves | Working | `/dashboard/launch`, `/plan/activate` | — | `check:payment-gate`, `check:decision-claim`, `check:readiness` |
 | Campaigns | Pause from MAIRO | Working | `/dashboard/campaigns` | — | `check:trust-db`, `check:payment-gate` |
@@ -62,7 +62,7 @@ or a public page makes a claim this inventory can't back.
 | Account | Text alerts | Partially working | `/dashboard/notifications` | Twilio settings | `check:notifications` |
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
 | Public site | Landing story and product demos | Demo only | `/`, `/landing/classic` | — | `check:capabilities`, `check:preview` |
-| Public site | 60-second walkthrough and videos | Demo only | `/` | A voice provider, if a narrated version is wanted | `check:preview` |
+| Public site | The MAIRO demo (73-second walkthrough) and videos | Demo only | `/` | A licensed British female voice recording of the script; Licensed background music | `check:preview` |
 | Public site | Customer case studies | Unavailable | — | A customer's written permission and measured results | — |
 | Free tools | Break-even ROAS calculator | Working | `/tools/break-even-roas` | — | `check:calculators` |
 | Free tools | Margin and markup calculator | Working | `/tools/margin-markup` | — | `check:calculators` |
@@ -135,15 +135,15 @@ What MAIRO knows about the business, each fact with its source, editable and rem
 
 **Public claim:** “See and correct everything MAIRO knows about your business.”
 
-### Setup saved as you go
+### Setup in nine phases, saved as you go
 
 *Plan* · `onboarding-drafts`
 
-Every setup screen is saved; closing the tab and coming back opens where the owner stopped. A business type picked before sign-up is carried in.
+Setup is shown as nine phases — business, goal, strategy, free plan, creatives, video, account and payment, approval and launch, next steps — read from the records, with the next step and a button to continue it. The three ad directions come before any account setup: after approving the free plan, the owner sees their first ads before being asked to connect Meta or pay. The owner's own onboarding answers are kept in the Business Brain as confirmed. Every setup screen is saved; closing the tab and coming back opens where the owner stopped. A business type picked before sign-up is carried in.
 
 **Routes:** `/onboarding`, `/sign-up`
 
-**Verification:** Reload resumes on the same screen with answers kept, including "not sure" (browser-checked).
+**Verification:** Steps, phases and the creatives-before-account order pinned by check:onboarding and check:onboarding-db; reload resumes on the same screen with answers kept, including "not sure"; a new account reaches its first ads with no Meta account connected (browser-checked).
 
 **Evidence:** `src/lib/onboarding/draft.ts`, `src/app/onboarding/onboarding-form.tsx`, `src/lib/onboarding/business-types.ts`
 
@@ -997,15 +997,15 @@ A plain-language change to a suggested ad's picture — "Use our brand colours",
 
 *Creative* · `video-editing`
 
-On an owner's own video: start and end, captions at times and a crop, with timestamped suggestions from the video's length and shape. Each save is a new version; the uploaded file is never changed. A saved version can be written into a new MP4 — trimmed, cropped, captions burned in — shown beside the original, and that file is what's approved and goes into the campaign draft.
+On an owner's own video: start and end, captions at times, a crop to 9:16, 4:5 or square, one line of text over the whole clip, and the business's logo in a corner, with timestamped suggestions from the video's length and shape. Each save is a new version; the uploaded file is never changed. A saved version can be written into a new MP4 — trimmed, cropped, captions and text burned in, logo laid over — shown beside the original and downloadable once the file exists; that file is what's approved and goes into the campaign draft. Captions from what's said in the video need a transcription service MAIRO doesn't have, and making a video from scratch with AI isn't available — the editor says both.
 
-**Condition:** Writing the file needs ffmpeg on the server (the ffmpeg-static package downloads it during install) and video storage. Verified here with a real render; not yet run on the hosting.
+**Condition:** Writing the file needs ffmpeg on the server (the ffmpeg-static package downloads it during install) and video storage; the logo is read only from the business's own uploads, so it needs storage too. Verified here with a real render; not yet run on the hosting.
 
 **Routes:** `/dashboard/creatives/suggested`
 
 **Still needs:** ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN
 
-**Verification:** Real render of a sample: trimmed length, cropped size, caption burned in (compared with the same render without it), poster made, original untouched; one file however often pressed; failure recorded and retried; approval and campaign draft use the rendered file (check:video-render). Render, before/after and approval browser-checked with local storage.
+**Verification:** Real render of a sample: trimmed length, cropped size, caption burned in (compared with the same render without it), text along the bottom and logo in its corner (compared region by region), poster made, original untouched; a logo from anywhere but the business's own uploads refused; one file however often pressed; failure recorded and retried; approval and campaign draft use the rendered file (check:video-render). Text overlay, render, download and approval browser-checked with local storage.
 
 **Evidence:** `src/lib/suggested-ads/video.ts`, `src/lib/suggested-ads/render.ts`, `src/lib/suggested-ads/render-run.ts`, `src/app/dashboard/creatives/suggested/video-editor.tsx`
 
@@ -1171,19 +1171,19 @@ The landing page's 24-second animated story in six chapters — a website going 
 
 **Public claim:** none — not advertised
 
-### 60-second walkthrough and videos
+### The MAIRO demo (73-second walkthrough) and videos
 
 *Public site* · `walkthrough`
 
-A 60-second interactive walkthrough of the owner journey on a sample business — website and goal, facts and gaps, plan, ads, approval, results — with chapters, captions on by default, a position slider, keyboard control and a still version for reduced motion; plus muted MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. No voice-over yet.
+A 73-second interactive demo of the owner journey on a sample business, in seven chapters — intro, business, strategy, Creative Studio, approval, results, and the free plan — with real MAIRO screens, captions on by default carrying the written script, play, pause, replay, a position slider, keyboard control and a still version for reduced motion; plus silent MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. The script and storyboard are in docs/WALKTHROUGH-SCRIPT.md. No voice-over or music yet.
 
 **Routes:** `/`
 
-**Still needs:** A voice provider, if a narrated version is wanted
+**Still needs:** A licensed British female voice recording of the script; Licensed background music
 
-**Verification:** Storyboard timing, captions and layout bounds pinned by check:preview, which also checks every listed video file, poster and captions file exists as rendered; player controls, keyboard and reduced motion browser-checked.
+**Verification:** Seven chapters and 73 seconds, the captions equal to the script, the product scenes' clock continuous, and layout bounds pinned by check:preview, which also checks every listed video file, poster and captions file exists as rendered; player controls, keyboard and reduced motion browser-checked.
 
-**Evidence:** `src/components/walkthrough/walkthrough-player.tsx`, `src/components/walkthrough/walkthrough-stage.tsx`, `src/lib/demo/walkthrough.ts`, `src/lib/demo/media.ts`, `video/render.mjs`
+**Evidence:** `src/components/walkthrough/walkthrough-player.tsx`, `src/components/walkthrough/walkthrough-stage.tsx`, `src/lib/demo/walkthrough.ts`, `src/lib/demo/media.ts`, `video/render.mjs`, `docs/WALKTHROUGH-SCRIPT.md`
 
 **Checks:** `check:preview`
 

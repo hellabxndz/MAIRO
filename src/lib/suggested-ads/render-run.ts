@@ -24,6 +24,7 @@ import { assFile, renderPlan } from "./render";
 
 export const RENDER_STALE_MS = 10 * 60 * 1000;
 const MAX_SOURCE_BYTES = 500 * 1024 * 1024;
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const FFMPEG_TIMEOUT_MS = 240_000;
 const FONTS_DIR = join(process.cwd(), "assets", "fonts");
 
@@ -90,10 +91,10 @@ function run(bin: string, args: string[]): Promise<void> {
 }
 
 /** Turns one edit version into files on disk. Exported for the render check, which runs it on a sample video. */
-export async function renderToFiles(bin: string, source: string, dir: string, edits: ReturnType<typeof parseEdits>, meta: VideoMeta) {
+export async function renderToFiles(bin: string, source: string, dir: string, edits: ReturnType<typeof parseEdits>, meta: VideoMeta, logoPath: string | null = null) {
   const out = { video: join(dir, "out.mp4"), poster: join(dir, "poster.jpg"), ass: join(dir, "captions.ass") };
-  const plan = renderPlan({ source, output: out.video, poster: out.poster, assPath: out.ass, fontsDir: FONTS_DIR }, edits, meta);
-  if (plan.hasCaptions) await writeFile(/*turbopackIgnore: true*/ out.ass, assFile(edits.captions, edits, plan.lengthMs, plan.size));
+  const plan = renderPlan({ source, output: out.video, poster: out.poster, assPath: out.ass, fontsDir: FONTS_DIR, logoPath }, edits, meta);
+  if (plan.hasText) await writeFile(/*turbopackIgnore: true*/ out.ass, assFile(edits.captions, edits, plan.lengthMs, plan.size, undefined, edits.overlay ?? null));
   await run(bin, plan.args);
   await run(bin, plan.posterArgs);
   const bytes = (await stat(/*turbopackIgnore: true*/ out.video)).size;
@@ -140,6 +141,8 @@ export async function renderVideoRevision(organizationId: string, videoId: strin
   if (!bin) return { ok: false, error: (await renderingAvailable()).reason ?? "Rendering isn't available." };
   if (!deps.store && !storageConfigured()) return { ok: false, error: "Video storage isn't switched on for this deployment yet." };
   if (!deps.fetchSource && !isOwnUpload(video.url, organizationId)) return { ok: false, error: "That video isn't in your business's uploads." };
+  // The logo is read only from this business's own uploads, never from an address on the web.
+  if (edits.logo && !deps.fetchSource && !isOwnUpload(edits.logo.url, organizationId)) return { ok: false, error: "That logo isn't in your business's uploads. Upload it again." };
 
   // Claim this version: only one render at a time, and a stale one is taken over.
   const claimed = await db.ownerVideoRevision.updateMany({
@@ -152,7 +155,15 @@ export async function renderVideoRevision(organizationId: string, videoId: strin
   try {
     const source = join(dir, "source");
     await (deps.fetchSource ?? fetchToFile)(video.url, source);
-    const r = await renderToFiles(bin, source, dir, edits, meta);
+    let logoPath: string | null = null;
+    if (edits.logo) {
+      logoPath = join(dir, "logo");
+      await (deps.fetchSource ?? fetchToFile)(edits.logo.url, logoPath).catch(() => {
+        throw new Error("logo unavailable");
+      });
+      if ((await stat(/*turbopackIgnore: true*/ logoPath)).size > MAX_LOGO_BYTES) throw new Error("logo unavailable");
+    }
+    const r = await renderToFiles(bin, source, dir, edits, meta, logoPath);
     const base = `ad-media/${organizationId}/rendered/${video.id}-v${rev.version}`;
     const save = deps.store ?? storeFile;
     const [url, posterUrl] = await Promise.all([save(`${base}.mp4`, r.video, "video/mp4"), save(`${base}.jpg`, r.poster, "image/jpeg")]);
@@ -163,7 +174,7 @@ export async function renderVideoRevision(organizationId: string, videoId: strin
     return { ok: true, status: "READY", url };
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const reason = /timeout/.test(msg) ? "The render took too long. Try a shorter cut." : /too large/.test(msg) ? "That video is too large to render here." : /unavailable/.test(msg) ? "The original video couldn't be read from storage." : "The video couldn't be rendered. Your edits are saved — try again, or use the original.";
+    const reason = /timeout/.test(msg) ? "The render took too long. Try a shorter cut." : /logo unavailable/.test(msg) ? "Your logo couldn't be read — upload a PNG or JPEG under 2 MB and try again." : /too large/.test(msg) ? "That video is too large to render here." : /unavailable/.test(msg) ? "The original video couldn't be read from storage." : "The video couldn't be rendered. Your edits are saved — try again, or use the original.";
     // The reason is logged without the video's address or contents.
     console.error("Video render failed:", msg.slice(0, 300));
     await db.ownerVideoRevision.update({ where: { id: rev.id }, data: { renderStatus: "FAILED", renderError: reason } });

@@ -14,7 +14,7 @@
 //   npm run check:onboarding   (pure; no database, no network)
 
 import assert from "node:assert/strict";
-import { focusStep, onboardingSteps, progressCount, resumeHref, type OnboardingFacts } from "../src/lib/onboarding/progress";
+import { PHASES, focusStep, onboardingPhases, onboardingSteps, progressCount, resumeHref, type OnboardingFacts } from "../src/lib/onboarding/progress";
 import {
   classifyMetaConnect,
   connectProblemFromParams,
@@ -54,18 +54,18 @@ const connected = { status: "CONNECTED", adAccount: "act_1", pageName: "Peak Roo
 const approvedPlan = { status: "APPROVED", yourChanges: 0, activated: true };
 const paid = { paid: true, status: "active", trial: false, planName: "Growth" };
 
-console.log("— the ten steps —");
+console.log("— the steps, in nine phases —");
 check("a brand-new business starts at step 1, with nothing done", () => {
   const steps = onboardingSteps(blank);
-  assert.equal(steps.length, 10);
+  assert.equal(steps.length, 12);
   assert.equal(focusStep(steps)?.id, "business");
   assert.equal(focusStep(steps)?.state, "current");
-  assert.deepEqual(progressCount(steps), { finished: 0, total: 10 });
+  assert.deepEqual(progressCount(steps), { finished: 0, total: 12 });
   assert.equal(resumeHref(steps), "/onboarding");
 });
 check("the steps are the journey, in order, each with who does it and why", () => {
   const steps = onboardingSteps(blank);
-  assert.deepEqual(steps.map((s) => s.id), ["business", "learn", "goal", "plan", "edit", "approve", "connect", "subscribe", "prepare", "launch"]);
+  assert.deepEqual(steps.map((s) => s.id), ["business", "learn", "goal", "plan", "edit", "approve", "creative", "video", "connect", "subscribe", "prepare", "launch"]);
   assert.ok(steps.every((s) => s.why.length > 10));
   assert.deepEqual(steps.filter((s) => s.who === "mairo").map((s) => s.id), ["learn", "plan", "prepare"]);
 });
@@ -122,13 +122,52 @@ check("approved and waiting on Meta is 'waiting'; live only when Meta confirmed 
   assert.equal(state(facts({ ...base, campaign: { ...blank.campaign, built: true, launchApproved: true } })).launch, "waiting");
   const live = onboardingSteps(facts({ ...base, campaign: { ...blank.campaign, built: true, launchApproved: true, live: true } }));
   assert.equal(focusStep(live), null);
-  assert.match(live[9].detail ?? "", /Meta confirmed/);
+  assert.match(live.find((x) => x.id === "launch")!.detail ?? "", /Meta confirmed/);
 });
 check("Meta refusing to switch it on is explained on the launch step", () => {
   const s = onboardingSteps(facts({ business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid, campaign: { ...blank.campaign, built: true, launchApproved: true, launchError: "(#100) Ad account has no valid funding source" } }));
   const l = s.find((x) => x.id === "launch")!;
   assert.equal(l.state, "attention");
   assert.equal(l.problem?.code, "funding");
+});
+const freePlan = { status: "APPROVED", yourChanges: 0, activated: false };
+check("the three ad directions come after the free plan and before any account setup", () => {
+  const s = onboardingSteps(facts({ business: true, goal: true, plan: freePlan, creative: { directions: 3, approved: false, videos: 0 } }));
+  const ids = s.map((x) => x.id);
+  assert.ok(ids.indexOf("creative") > ids.indexOf("approve") && ids.indexOf("creative") < ids.indexOf("connect"));
+  assert.equal(focusStep(s)?.id, "creative");
+  assert.equal(resumeHref(s), "/dashboard/creatives/suggested");
+  assert.match(s.find((x) => x.id === "creative")!.detail ?? "", /3 directions/);
+  assert.equal(s.find((x) => x.id === "video")!.state, "todo", "the video step is optional and waits behind the creatives");
+});
+check("approving a direction finishes the creatives; no video is skipped, not missing; account setup is next", () => {
+  const s = onboardingSteps(facts({ business: true, goal: true, plan: freePlan, creative: { directions: 3, approved: true, videos: 0 } }));
+  assert.equal(s.find((x) => x.id === "creative")!.state, "done");
+  assert.equal(s.find((x) => x.id === "video")!.state, "skipped");
+  assert.equal(focusStep(s)?.id, "connect");
+  const withVideo = onboardingSteps(facts({ business: true, goal: true, plan: freePlan, creative: { directions: 3, approved: true, videos: 1 } }));
+  assert.equal(withVideo.find((x) => x.id === "video")!.state, "done");
+});
+check("a business that already pays or has a campaign isn't sent back to the suggested ads", () => {
+  const s = onboardingSteps(facts({ business: true, goal: true, plan: freePlan, meta: connected, subscription: paid, creative: { directions: 3, approved: false, videos: 0 } }));
+  assert.equal(s.find((x) => x.id === "creative")!.state, "skipped");
+  assert.equal(s.find((x) => x.id === "video")!.state, "skipped");
+  assert.notEqual(focusStep(s)?.id, "creative");
+});
+check("nine phases: business, goal, strategy, free plan, creatives, video, account & payment, approval & launch, next steps", () => {
+  assert.deepEqual(PHASES.map((p) => p.label), ["Business", "Goal", "Strategy", "Free plan", "Creatives", "Video", "Account & payment", "Approval & launch", "Next steps"]);
+  // Every step belongs to exactly one phase.
+  const all = onboardingSteps(blank).map((x) => x.id).sort();
+  assert.deepEqual(PHASES.flatMap((p) => p.steps).sort(), all);
+  const fresh = onboardingPhases(onboardingSteps(blank));
+  assert.equal(fresh[0].state, "current");
+  assert.ok(fresh.slice(1).every((p) => p.state === "todo"));
+  const atCreatives = onboardingPhases(onboardingSteps(facts({ business: true, goal: true, plan: freePlan, creative: { directions: 3, approved: false, videos: 0 } })));
+  assert.equal(atCreatives.find((p) => p.id === "creatives")!.state, "current");
+  assert.equal(atCreatives.find((p) => p.id === "free-plan")!.state, "done");
+  const live = onboardingPhases(onboardingSteps(facts({ business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid, campaign: { ...blank.campaign, built: true, launchApproved: true, live: true } })));
+  assert.equal(live.find((p) => p.id === "next")!.state, "current", "after launch: next steps on the dashboard");
+  assert.equal(live.find((p) => p.id === "launch")!.state, "done");
 });
 check("a failed build is explained, with Meta's words kept for support", () => {
   const s = onboardingSteps(facts({ business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid, campaign: { ...blank.campaign, buildError: "Invalid parameter: Your ad must be associated with a Facebook Page" } }));

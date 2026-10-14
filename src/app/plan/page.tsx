@@ -7,6 +7,7 @@ import { JourneyFrame } from "@/components/strategy/journey";
 import { PlanBuilder } from "@/components/strategy/plan-builder";
 import { PlanReview } from "@/components/strategy/plan-review";
 import { loadOnboarding } from "@/lib/onboarding/progress-store";
+import { focusStep } from "@/lib/onboarding/progress";
 import { PlanGuide } from "@/components/strategy/plan-guide";
 import { parseEconomics } from "@/lib/calc/assumptions";
 import { loadBrain } from "@/lib/business/brain";
@@ -63,6 +64,7 @@ export default async function PlanPage() {
         businessName={org.name}
         purchaseTracking={input?.purchaseTracking ?? false}
         connected={connected}
+        creativesNext={steps ? focusStep(steps)?.id === "creative" : false}
       />
       <PlanGuide
         plan={loaded.plan}

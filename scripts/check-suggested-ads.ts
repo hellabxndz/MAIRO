@@ -218,11 +218,12 @@ async function main() {
   await confirm(B, "focusItem", "Handmade candles");
   await confirm(C, "focusItem", "Garden design");
 
-  await check("the page opens only after Meta is connected and the profile confirmed", async () => {
+  await check("the page opens once the profile is confirmed — before Meta is connected, which it reports", async () => {
     assert.equal((await suggestedAdsGate(A)).ready, true);
     const c = await suggestedAdsGate(C);
-    assert.equal(c.ready, false);
-    assert.match(c.next!.label, /Meta/);
+    assert.equal(c.ready, true, "the three directions come before any account setup");
+    assert.equal(c.metaConnected, false);
+    assert.equal(c.next, null);
     await db.organization.create({ data: { id: `${TAG}-d`, name: "Nothing confirmed" } });
     const d = await suggestedAdsGate(`${TAG}-d`);
     assert.equal(d.ready, false);

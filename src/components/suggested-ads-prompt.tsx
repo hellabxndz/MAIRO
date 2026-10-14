@@ -2,8 +2,8 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { suggestedAdsGate } from "@/lib/suggested-ads/store";
 
-// The way in to "Review your suggested ads": shown once Meta is connected and
-// the business profile is confirmed, until the owner has approved one. Reads
+// The way in to "Review your suggested ads": shown once the business profile
+// is confirmed, until the owner has approved one. Reads
 // only this business's records.
 
 export async function SuggestedAdsPrompt({ organizationId, className = "" }: { organizationId: string; className?: string }) {

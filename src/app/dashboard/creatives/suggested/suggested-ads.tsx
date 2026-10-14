@@ -39,7 +39,7 @@ type Panel = { kind: "create" | "edit" | "video" | "review" | "reject"; id: stri
 const CTA_CHOICES = ["Shop now", "Get a quote", "Book now", "Learn more", "Contact us", "Order now", "Sign up"];
 const SOURCE: Record<string, string> = { template: "MAIRO's suggestion", owner: "Your edit", ai: "MAIRO's rewrite", fix: "MAIRO's fix" };
 
-export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable, rewriteAvailable, rendering }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean; rewriteAvailable: boolean; rendering: { ok: boolean; reason: string | null } }) {
+export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable, uploadsAvailable, rewriteAvailable, metaConnected, rendering }: { organizationId: string; data: Data; test: Test; paid: boolean; imagesAvailable: boolean; uploadsAvailable: boolean; rewriteAvailable: boolean; metaConnected: boolean; rendering: { ok: boolean; reason: string | null } }) {
   const router = useRouter();
   const [panel, setPanel] = useState<Panel>(null);
   const [refreshing, startRefresh] = useTransition();
@@ -56,6 +56,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
         <p className="mt-2 text-[15px] leading-relaxed text-white/85">{data.intro}</p>
         <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
           Each is a hypothesis to test, not a promise of results. Built only from what you&apos;ve confirmed — no invented discounts, reviews or numbers.
+          {!metaConnected && <> Reviewing, changing and approving them is free and needs no ad account — you connect Meta when you&apos;re ready to run one.</>}
           {data.unconfirmed.length > 0 && <> Not used until you confirm {data.unconfirmed.length === 1 ? "it" : "them"}: {data.unconfirmed.join(", ").toLowerCase()}.</>}{" "}
           <Link href="/dashboard/settings/business-brain" className="underline underline-offset-4 hover:text-white">Check what MAIRO knows</Link>
         </p>
@@ -127,6 +128,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
           brand={data.brand}
           tracking={data.tracking as TrackingFacts}
           imagesAvailable={imagesAvailable}
+          metaConnected={metaConnected}
           onClose={close}
           onCreate={() => setPanel({ kind: "create", id: current.id })}
           onVideo={() => setPanel({ kind: "video", id: current.id })}
@@ -574,7 +576,7 @@ function VideoDialog({ d, organizationId, paid, available, rendering, onClose, o
     <Modal open onClose={onClose} title={video ? `Your video for “${d.title}”` : `Use my video: ${d.title}`} wide>
       {video && !replacing ? (
         <>
-          <VideoEditor key={`${video.videoId}-${video.version}`} video={video} words={{ hook: d.words?.hook ?? "", cta: d.words?.cta ?? "" }} onBusy={setEditing} rendering={rendering} />
+          <VideoEditor key={`${video.videoId}-${video.version}`} video={video} words={{ hook: d.words?.hook ?? "", cta: d.words?.cta ?? "" }} onBusy={setEditing} rendering={rendering} organizationId={organizationId} uploadsAvailable={available} />
           <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
             <button type="button" onClick={onReview} disabled={editing} className={`${actionClass} disabled:opacity-50`}>Review and approve</button>
             <button type="button" onClick={() => setReplacing(true)} className={quietClass}>Upload a different video</button>

@@ -1,8 +1,9 @@
-import { playedRange, type Caption, type VideoEdits, type VideoMeta } from "./video";
+import { playedRange, type Caption, type TextOverlay, type VideoEdits, type VideoMeta } from "./video";
 
 // Writing an edit list into a real video file: the part that plays, cropped
-// to the chosen shape, with the captions burned into the picture, encoded as
-// an MP4 Meta runs (H.264, AAC, yuv420p, fast start). The uploaded original
+// to the chosen shape, with the captions and the text burned into the
+// picture and the logo laid over a corner, encoded as an MP4 Meta runs
+// (H.264, AAC, yuv420p, fast start). The uploaded original
 // is read, never changed; the result is a new file for that edit version.
 //
 // Pure: the crop, the caption file and the ffmpeg arguments, so they can be
@@ -56,9 +57,15 @@ export function assText(t: string): string {
  * clip, for the output size: bold white on a dark box, near the top (Reels
  * and Stories cover the bottom of the frame).
  */
-export function assFile(captions: Caption[], e: Pick<VideoEdits, "trimStartMs">, playMs: number, size: { w: number; h: number }, font = "DejaVu Sans"): string {
+export function assFile(captions: Caption[], e: Pick<VideoEdits, "trimStartMs">, playMs: number, size: { w: number; h: number }, font = "DejaVu Sans", overlay: TextOverlay | null = null): string {
   const fontSize = Math.max(18, Math.round(Math.min(size.w, size.h) * 0.06));
   const margin = Math.round(size.h * 0.1);
+  // The text over the whole clip: larger, and kept clear of the captions at
+  // the top and of the buttons Stories and Reels put along the bottom.
+  const overlaySize = Math.max(20, Math.round(Math.min(size.w, size.h) * 0.075));
+  const overlayAlign = overlay?.position === "top" ? 8 : overlay?.position === "middle" ? 5 : 2;
+  const overlayMargin = overlay?.position === "top" ? Math.round(size.h * 0.22) : overlay?.position === "middle" ? 0 : Math.round(size.h * 0.24);
+  const overlayText = overlay ? assText(overlay.text) : "";
   const lines = captions
     .map((c) => ({ start: c.startMs - e.trimStartMs, end: c.endMs - e.trimStartMs, text: assText(c.text) }))
     .map((c) => ({ ...c, start: Math.max(0, c.start), end: Math.min(playMs, c.end) }))
@@ -74,9 +81,11 @@ export function assFile(captions: Caption[], e: Pick<VideoEdits, "trimStartMs">,
     "[V4+ Styles]",
     "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
     `Style: Caption,${font},${fontSize},&H00FFFFFF,&H00FFFFFF,&H40000000,&H40000000,1,0,0,0,100,100,0,0,3,${Math.round(fontSize * 0.35)},0,8,${Math.round(size.w * 0.06)},${Math.round(size.w * 0.06)},${margin},1`,
+    ...(overlayText ? [`Style: Overlay,${font},${overlaySize},&H00FFFFFF,&H00FFFFFF,&H30000000,&H30000000,1,0,0,0,100,100,0,0,3,${Math.round(overlaySize * 0.4)},0,${overlayAlign},${Math.round(size.w * 0.07)},${Math.round(size.w * 0.07)},${overlayMargin},1`] : []),
     "",
     "[Events]",
     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ...(overlayText ? [`Dialogue: 0,${ts(0)},${ts(playMs)},Overlay,,0,0,0,,${overlayText}`] : []),
     ...lines.map((c) => `Dialogue: 0,${ts(c.start)},${ts(c.end)},Caption,,0,0,0,,${c.text}`),
     "",
   ].join("\n");
@@ -92,33 +101,53 @@ export type RenderPlan = {
   size: { w: number; h: number };
   lengthMs: number;
   hasCaptions: boolean;
+  /** The subtitle file is needed: captions or the text overlay. */
+  hasText: boolean;
+  hasLogo: boolean;
 };
 
+/** Where the logo sits: a corner, inset 4% of the width, at 16% of the width. */
+export function logoPlacement(corner: NonNullable<VideoEdits["logo"]>["corner"], size: { w: number; h: number }): { w: number; x: string; y: string } {
+  const w = even(size.w * 0.16);
+  const m = Math.round(size.w * 0.04);
+  const x = corner.endsWith("left") ? String(m) : `W-w-${m}`;
+  const y = corner.startsWith("top") ? String(m) : `H-h-${m}`;
+  return { w, x, y };
+}
+
 /** Everything ffmpeg is asked to do for one edit version. */
-export function renderPlan(input: { source: string; output: string; poster: string; assPath: string; fontsDir: string }, edits: VideoEdits, meta: VideoMeta): RenderPlan {
+export function renderPlan(input: { source: string; output: string; poster: string; assPath: string; fontsDir: string; logoPath?: string | null }, edits: VideoEdits, meta: VideoMeta): RenderPlan {
   const range = playedRange(edits, meta);
   const crop = cropFor(meta, edits.aspect);
   const size = outputSize(crop);
   const hasCaptions = edits.captions.some((c) => c.endMs > range.startMs && c.startMs < range.endMs && c.text.trim());
+  const hasText = hasCaptions || Boolean(edits.overlay?.text.trim());
+  const hasLogo = Boolean(edits.logo && input.logoPath);
   const filters = [
     edits.aspect !== "original" ? `crop=${crop.w}:${crop.h}:${crop.x}:${crop.y}` : null,
     size.w !== crop.w || size.h !== crop.h ? `scale=${size.w}:${size.h}` : edits.aspect === "original" ? `scale=${size.w}:${size.h}` : null,
     "setsar=1",
-    hasCaptions ? `subtitles=filename=${filterPath(input.assPath)}:fontsdir=${filterPath(input.fontsDir)}` : null,
-    "format=yuv420p",
-  ].filter(Boolean);
+    hasText ? `subtitles=filename=${filterPath(input.assPath)}:fontsdir=${filterPath(input.fontsDir)}` : null,
+  ].filter(Boolean) as string[];
+  // Without a logo, one simple filter chain; with one, the logo is a second input laid over a corner.
+  const video = hasLogo
+    ? (() => {
+        const p = logoPlacement(edits.logo!.corner, size);
+        return ["-filter_complex", `[0:v]${filters.join(",")}[base];[1:v]scale=${p.w}:-2[logo];[base][logo]overlay=${p.x}:${p.y},format=yuv420p[v]`, "-map", "[v]", "-map", "0:a:0?"];
+      })()
+    : ["-map", "0:v:0", "-map", "0:a:0?", "-vf", [...filters, "format=yuv420p"].join(",")];
   const args = [
     "-hide_banner", "-loglevel", "error", "-y",
     "-ss", (range.startMs / 1000).toFixed(3),
     "-i", input.source,
+    ...(hasLogo ? ["-i", input.logoPath!] : []),
     "-t", (range.lengthMs / 1000).toFixed(3),
-    "-map", "0:v:0", "-map", "0:a:0?",
-    "-vf", filters.join(","),
+    ...video,
     "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-profile:v", "high",
     "-c:a", "aac", "-b:a", "128k", "-ac", "2",
     "-movflags", "+faststart",
     input.output,
   ];
   const posterArgs = ["-hide_banner", "-loglevel", "error", "-y", "-ss", Math.min(1, range.lengthMs / 3000).toFixed(3), "-i", input.output, "-frames:v", "1", "-q:v", "3", input.poster];
-  return { args, posterArgs, crop, size, lengthMs: range.lengthMs, hasCaptions };
+  return { args, posterArgs, crop, size, lengthMs: range.lengthMs, hasCaptions, hasText, hasLogo };
 }

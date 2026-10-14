@@ -12,8 +12,8 @@ import { renderingAvailable } from "@/lib/suggested-ads/render-run";
 import { rewriteAvailable } from "@/lib/ai/rewrite-words";
 import { SuggestedAds } from "./suggested-ads";
 
-// "Review your suggested ads" — the first thing to do once Meta is connected
-// and the business profile is confirmed. Three directions written from what
+// "Review your suggested ads" — the first thing to do once the business
+// profile is confirmed, before any account setup. Three directions written from what
 // the owner confirmed, one recommended as the first test; each can become a
 // real picture (after its cost is shown), be rewritten, or use the owner's own
 // video. Approval is bound to the exact words and media version.
@@ -32,10 +32,9 @@ export default async function SuggestedAdsPage() {
     return (
       <div className="mx-auto max-w-[720px]">
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-white sm:text-[26px]">Review your suggested ads</h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-muted">MAIRO suggests your first ads from what you&apos;ve confirmed about your business, once your Meta ad account is connected. Two things first:</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-muted">MAIRO suggests your first ads from what you&apos;ve confirmed about your business — nothing to connect or pay for first. One thing before it can:</p>
         <ol className="mt-6 space-y-3">
           <Step done={gate.profileConfirmed} label="Confirm what you sell in your Business Brain" href="/dashboard/settings/business-brain" />
-          <Step done={gate.metaConnected} label="Connect your Meta ad account" href="/dashboard/meta" />
         </ol>
         {gate.next && (
           <Link href={gate.next.href} className="mt-6 inline-flex min-h-[40px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-medium text-white shadow-[var(--mairo-glow-key)]">
@@ -58,6 +57,7 @@ export default async function SuggestedAdsPage() {
       imagesAvailable={openAiImageConfigured() && storageConfigured()}
       uploadsAvailable={storageConfigured()}
       rewriteAvailable={rewriteAvailable()}
+      metaConnected={gate.metaConnected}
       rendering={rendering}
     />
   );

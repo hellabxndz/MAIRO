@@ -1,7 +1,8 @@
 // The owner's own video, edited without touching the file.
 //
-// An edit is a list — where to start and end, captions at times, a crop — kept
-// as a new revision each time, so the original is always one click away. The
+// An edit is a list — where to start and end, captions at times, a crop, a
+// line of text over the whole clip, the business's logo in a corner — kept as
+// a new revision each time, so the original is always one click away. The
 // suggestions come from what MAIRO can know without watching: the video's
 // length and shape, and the ad's own words. They say so; nothing here claims
 // to have seen what's in the video.
@@ -13,11 +14,18 @@
 
 export type Aspect = "original" | "9:16" | "4:5" | "1:1";
 export type Caption = { startMs: number; endMs: number; text: string };
-export type VideoEdits = { trimStartMs: number; trimEndMs: number | null; captions: Caption[]; aspect: Aspect };
+/** A line of text on screen for the whole clip — an offer, a name. */
+export type TextOverlay = { text: string; position: "top" | "middle" | "bottom" };
+/** The business's logo, uploaded to its own storage, in one corner. */
+export type LogoMark = { url: string; corner: "top-left" | "top-right" | "bottom-left" | "bottom-right" };
+export type VideoEdits = { trimStartMs: number; trimEndMs: number | null; captions: Caption[]; aspect: Aspect; overlay?: TextOverlay | null; logo?: LogoMark | null };
 export type VideoMeta = { durationMs: number; width: number; height: number };
 
 export const NO_EDITS: VideoEdits = { trimStartMs: 0, trimEndMs: null, captions: [], aspect: "original" };
 const ASPECTS: Aspect[] = ["original", "9:16", "4:5", "1:1"];
+const POSITIONS: TextOverlay["position"][] = ["top", "middle", "bottom"];
+const CORNERS: LogoMark["corner"][] = ["top-left", "top-right", "bottom-left", "bottom-right"];
+export const OVERLAY_MAX = 60;
 const MAX_CAPTIONS = 20;
 
 export function fmtTime(ms: number): string {
@@ -39,7 +47,15 @@ export function parseEdits(raw: unknown, meta: VideoMeta): VideoEdits {
     .sort((a, b) => a.startMs - b.startMs)
     .slice(0, MAX_CAPTIONS);
   const aspect = ASPECTS.includes(v.aspect as Aspect) ? (v.aspect as Aspect) : "original";
-  return { trimStartMs: start, trimEndMs: end, captions, aspect };
+  const out: VideoEdits = { trimStartMs: start, trimEndMs: end, captions, aspect };
+  // Text and logo are kept only when set, so a list without them reads the same as before they existed.
+  const o = v.overlay;
+  const text = o && typeof o === "object" ? String(o.text ?? "").replace(/\s+/g, " ").trim().slice(0, OVERLAY_MAX) : "";
+  if (text) out.overlay = { text, position: POSITIONS.includes(o!.position) ? o!.position : "bottom" };
+  const l = v.logo;
+  const url = l && typeof l === "object" && typeof l.url === "string" ? l.url.trim().slice(0, 600) : "";
+  if (url) out.logo = { url, corner: CORNERS.includes(l!.corner) ? l!.corner : "top-right" };
+  return out;
 }
 
 function safeJson(s: string): unknown {
@@ -160,6 +176,8 @@ export function describeEdits(e: VideoEdits, meta: VideoMeta): string[] {
   if (e.trimStartMs > 0 || e.trimEndMs !== null) out.push(`Plays ${fmtTime(r.startMs)}–${fmtTime(r.endMs)} (${fmtTime(r.lengthMs)})`);
   if (e.captions.length) out.push(`${e.captions.length} caption${e.captions.length === 1 ? "" : "s"}`);
   if (e.aspect !== "original") out.push(`Cropped to ${e.aspect}`);
+  if (e.overlay) out.push(`Text: “${e.overlay.text}”`);
+  if (e.logo) out.push(`Logo ${e.logo.corner.replace("-", " ")}`);
   return out.length ? out : ["The original, unedited"];
 }
 
@@ -169,5 +187,7 @@ export function editsNotInFile(e: VideoEdits): string[] {
   if (e.trimStartMs > 0 || e.trimEndMs !== null) out.push("the trim");
   if (e.captions.length) out.push("the captions");
   if (e.aspect !== "original") out.push("the crop");
+  if (e.overlay) out.push("the text");
+  if (e.logo) out.push("the logo");
   return out;
 }

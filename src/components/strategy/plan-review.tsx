@@ -59,6 +59,8 @@ type Outcome =
   | null;
 
 export function PlanReview(props: {
+  /** The first ads are the next step: shown before connecting or paying. */
+  creativesNext?: boolean;
   plan: StrategyContent;
   version: number;
   status: Status;
@@ -512,7 +514,19 @@ export function PlanReview(props: {
           <div>
             <p className="text-[22px] font-semibold text-emerald-300">Plan Approved ✓</p>
             <p className="mt-1 text-[15px] text-white/90">Your advertising strategy is ready.</p>
-            {props.connected ? (
+            {props.creativesNext ? (
+              <>
+                <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
+                <p className="mt-1 text-[14px] text-white/90">See your first ads: three directions written from your business, one marked as the best first test. Free — nothing to connect or pay for first.</p>
+                <Link href="/dashboard/creatives/suggested" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
+                  Review My First Ads
+                </Link>
+                <p className="mt-3 max-w-[560px] text-[13px] text-muted">
+                  Or{" "}
+                  {props.connected ? <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">choose a MAIRO plan</Link> : <a href="/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1" className="text-violet-bright underline-offset-4 hover:underline">connect your ad account</a>} now.
+                </p>
+              </>
+            ) : props.connected ? (
               <>
                 <p className="mt-4 text-[14px] text-white/90">Your ad account is connected. Choose a MAIRO plan to activate your strategy.</p>
                 <Link href="/plan/activate" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>

@@ -35,6 +35,7 @@ export function ReviewDialog({
   brand,
   tracking,
   imagesAvailable,
+  metaConnected,
   onClose,
   onCreate,
   onVideo,
@@ -47,6 +48,7 @@ export function ReviewDialog({
   brand: BrandRules | null;
   tracking: TrackingFacts;
   imagesAvailable: boolean;
+  metaConnected: boolean;
   onClose: () => void;
   onCreate: () => void;
   onVideo: () => void;
@@ -136,7 +138,10 @@ export function ReviewDialog({
             <PlacementMock placement={placement} media={media} words={words} businessName={businessName} />
             <p className={`mx-auto mt-2 max-w-[360px] text-center text-[11.5px] ${media.kind === "none" ? "text-warn" : "text-faint"}`}>{mockLabel(placement, media)}</p>
           </div>
-          {choice?.kind === "image" && (
+          {choice?.kind === "image" && !metaConnected && (
+            <p className="mt-5 text-[12.5px] text-muted">Meta&apos;s own preview appears here once your Meta ad account is connected. <Link href="/dashboard/meta" className="text-violet-bright underline-offset-4 hover:underline">Connect it</Link> when you&apos;re ready to run an ad.</p>
+          )}
+          {choice?.kind === "image" && metaConnected && (
             <div className="mt-5">
               <p className="text-[12.5px] text-muted">Meta&apos;s own preview — drawn by Meta, nothing is created in your ad account:</p>
               <div className="mt-2 flex flex-wrap gap-1.5">

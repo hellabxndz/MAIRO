@@ -1,13 +1,16 @@
+/* eslint-disable @next/next/no-img-element -- the business's own uploaded logo */
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { actionClass, quietClass } from "@/components/mairo/action-styles";
 import { renderVideoAction, revertVideoAction, saveVideoEditsAction } from "@/lib/actions/suggested-ads-actions";
-import { describeEdits, editsNotInFile, fmtTime, parseEdits, playedRange, sameEdits, videoSuggestions, type Aspect, type VideoEdits, type VideoMeta } from "@/lib/suggested-ads/video";
+import { OVERLAY_MAX, describeEdits, editsNotInFile, fmtTime, parseEdits, playedRange, sameEdits, videoSuggestions, type Aspect, type LogoMark, type TextOverlay, type VideoEdits, type VideoMeta } from "@/lib/suggested-ads/video";
 
 // Editing the owner's video without touching the file: start and end, captions
-// at times, a crop. Each save is a new version; "Back to the original" is one
+// at times, a crop, a line of text over the whole clip, the business's logo in
+// a corner. Each save is a new version; "Back to the original" is one
 // too, so nothing is ever lost. The suggestions are timestamped — pressing the
 // time jumps the video there — and say what they're based on.
 //
@@ -33,10 +36,23 @@ const ASPECTS: { value: Aspect; label: string }[] = [
   { value: "9:16", label: "9:16 — Stories and Reels" },
   { value: "1:1", label: "1:1 — square" },
 ];
+const POSITIONS: { value: TextOverlay["position"]; label: string }[] = [
+  { value: "top", label: "Top" },
+  { value: "middle", label: "Middle" },
+  { value: "bottom", label: "Bottom" },
+];
+const CORNERS: { value: LogoMark["corner"]; label: string }[] = [
+  { value: "top-left", label: "Top left" },
+  { value: "top-right", label: "Top right" },
+  { value: "bottom-left", label: "Bottom left" },
+  { value: "bottom-right", label: "Bottom right" },
+];
+const LOGO_TYPES = ["image/png", "image/jpeg"];
+const LOGO_MAX = 2 * 1024 * 1024;
 const ratioOf = (a: Aspect, meta: VideoMeta) => (a === "original" ? meta.width / meta.height : a === "4:5" ? 4 / 5 : a === "9:16" ? 9 / 16 : 1);
 const secs = (ms: number) => Math.round(ms / 100) / 10;
 
-export function VideoEditor({ video, words, onBusy, rendering = { ok: false, reason: null } }: { video: EditableVideo; words: { hook: string; cta: string }; onBusy?: (busy: boolean) => void; rendering?: { ok: boolean; reason: string | null } }) {
+export function VideoEditor({ video, words, onBusy, rendering = { ok: false, reason: null }, organizationId, uploadsAvailable = false }: { video: EditableVideo; words: { hook: string; cta: string }; onBusy?: (busy: boolean) => void; rendering?: { ok: boolean; reason: string | null }; organizationId?: string; uploadsAvailable?: boolean }) {
   const router = useRouter();
   const ref = useRef<HTMLVideoElement>(null);
   const saved = useMemo(() => parseEdits(video.edits, video.meta), [video.edits, video.meta]);
@@ -49,6 +65,22 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
   const suggestions = videoSuggestions(video.meta, words, edits);
   const notInFile = editsNotInFile(edits);
   const caption = edits.captions.find((c) => c.startMs <= now && c.endMs > now) ?? null;
+  const [logoBusy, setLogoBusy] = useState(false);
+  const logoInput = useRef<HTMLInputElement>(null);
+  const chooseLogo = async (file: File) => {
+    if (!organizationId) return;
+    if (!LOGO_TYPES.includes(file.type)) return setMessage({ tone: "warn", text: "Use a PNG or JPEG for your logo — a PNG with a transparent background looks best." });
+    if (file.size > LOGO_MAX) return setMessage({ tone: "warn", text: "That logo is over 2 MB. Use a smaller file." });
+    setLogoBusy(true);
+    try {
+      const up = await upload(`ad-media/${organizationId}/logo.${file.type === "image/png" ? "png" : "jpg"}`, file, { access: "public", handleUploadUrl: "/api/uploads/ad-media", contentType: file.type });
+      change({ ...edits, logo: { url: up.url, corner: edits.logo?.corner ?? "top-right" } });
+    } catch (e) {
+      setMessage({ tone: "warn", text: e instanceof Error && e.message ? `The logo didn't upload: ${e.message}` : "The logo didn't upload. Try again." });
+    } finally {
+      setLogoBusy(false);
+    }
+  };
   // Unsaved or still saving: the review would show the previous version, so it waits.
   useEffect(() => {
     onBusy?.(dirty || pending);
@@ -125,6 +157,14 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
               {caption.text}
             </p>
           )}
+          {edits.overlay && (
+            <p className={`pointer-events-none absolute inset-x-4 mx-auto w-fit max-w-[90%] rounded-lg bg-black/70 px-3 py-1.5 text-center text-[16px] font-bold leading-snug text-[#fff] ${edits.overlay.position === "top" ? "top-[22%]" : edits.overlay.position === "middle" ? "top-1/2 -translate-y-1/2" : "bottom-[24%]"}`}>
+              {edits.overlay.text}
+            </p>
+          )}
+          {edits.logo && (
+            <img src={edits.logo.url} alt="" className={`pointer-events-none absolute w-[16%] ${edits.logo.corner.startsWith("top") ? "top-[4%]" : "bottom-[4%]"} ${edits.logo.corner.endsWith("left") ? "left-[4%]" : "right-[4%]"}`} />
+          )}
         </div>
 
         {/* The whole video, with the part that plays, the captions and the suggestions on it. */}
@@ -200,6 +240,68 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
           </button>
         </section>
 
+        <section aria-labelledby="text-h">
+          <h3 id="text-h" className="text-[14px] font-semibold text-white">Text on the video</h3>
+          <p className="mt-1 text-[12px] text-faint">One line for the whole clip — your offer, or your name. Only what&apos;s true about your business.</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              value={edits.overlay?.text ?? ""}
+              maxLength={OVERLAY_MAX}
+              placeholder="e.g. Free call-out before 6pm"
+              aria-label="Text on the video"
+              onChange={(e) => setEdits({ ...edits, overlay: e.target.value ? { text: e.target.value, position: edits.overlay?.position ?? "bottom" } : null })}
+              onBlur={() => change(edits)}
+              className="min-w-0 flex-1 rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-2.5 py-1.5 text-[13px] text-white"
+            />
+            {edits.overlay && <button type="button" onClick={() => change({ ...edits, overlay: null })} className="text-[12px] text-muted hover:text-white">Remove</button>}
+          </div>
+          {edits.overlay && (
+            <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Where the text goes">
+              {POSITIONS.map((p) => (
+                <label key={p.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.overlay?.position === p.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+                  <input type="radio" name={`pos-${video.videoId}`} checked={edits.overlay?.position === p.value} onChange={() => change({ ...edits, overlay: { text: edits.overlay!.text, position: p.value } })} className="sr-only" />
+                  {p.label}
+                </label>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section aria-labelledby="logo-h">
+          <h3 id="logo-h" className="text-[14px] font-semibold text-white">Your logo</h3>
+          {edits.logo ? (
+            <>
+              <div className="mt-2 flex items-center gap-3">
+                <img src={edits.logo.url} alt="Your logo" className="h-10 w-auto max-w-[120px] rounded bg-white/[0.06] object-contain p-1" />
+                <button type="button" onClick={() => change({ ...edits, logo: null })} className="text-[12px] text-muted hover:text-white">Remove</button>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Which corner">
+                {CORNERS.map((c) => (
+                  <label key={c.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.logo?.corner === c.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+                    <input type="radio" name={`corner-${video.videoId}`} checked={edits.logo?.corner === c.value} onChange={() => change({ ...edits, logo: { url: edits.logo!.url, corner: c.value } })} className="sr-only" />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : uploadsAvailable && organizationId ? (
+            <>
+              <input ref={logoInput} type="file" accept={LOGO_TYPES.join(",")} className="hidden" onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void chooseLogo(f);
+                }} />
+              <button type="button" disabled={logoBusy} onClick={() => logoInput.current?.click()} className="mt-2 text-[12.5px] font-medium text-violet-bright underline-offset-4 hover:underline disabled:opacity-50">
+                {logoBusy ? "Uploading…" : "+ Add your logo (PNG or JPEG, up to 2 MB)"}
+              </button>
+            </>
+          ) : (
+            <p className="mt-1 text-[12.5px] text-muted">Logo uploads need storage, which isn&apos;t switched on for this deployment yet.</p>
+          )}
+        </section>
+
+        <p className="text-[12px] text-faint">Captions from what&apos;s said in the video need a transcription service, which MAIRO doesn&apos;t have yet — add them by hand above. Making a video from scratch with AI isn&apos;t available.</p>
+
         <fieldset>
           <legend className="text-[14px] font-semibold text-white">Crop</legend>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -265,6 +367,7 @@ function RenderPanel({ video, dirty, rendering, what }: { video: EditableVideo; 
         <p className="font-medium text-white">After — the new file for version {video.version}</p>
         <video src={r.url} poster={r.posterUrl ?? undefined} controls playsInline preload="metadata" className="mt-2 max-h-[40vh] w-full rounded-lg bg-black" aria-label={`Your video with ${what} written in`} />
         <p className="mt-2 text-white/80">{what.charAt(0).toUpperCase() + what.slice(1)} {what.includes(" and ") ? "are" : "is"} in this file{r.durationMs ? ` · ${fmtTime(r.durationMs)}` : ""}{r.width && r.height ? ` · ${r.width}×${r.height}` : ""}. An ad made from this version plays it. Your original, above, is kept as it was.</p>
+        <a href={r.url} download={`video-v${video.version}.mp4`} className="mt-2 inline-block font-medium text-violet-bright underline-offset-4 hover:underline">Download this file (MP4)</a>
       </div>
     );
   }

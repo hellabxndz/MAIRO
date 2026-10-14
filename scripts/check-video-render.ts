@@ -7,6 +7,9 @@
 //   - a real ffmpeg render of a sample video has the trimmed length, the
 //     cropped size, a poster, and the caption burned into the picture —
 //     compared against the same render without it;
+//   - text over the whole clip and the business's logo in a corner are in the
+//     picture of a real render too, the logo read only from the business's
+//     own uploads;
 //   - the original is never changed; a render is claimed, so pressing twice
 //     makes one file; a failure is recorded with a reason and can be retried;
 //   - the approved file and the campaign draft are the rendered one;
@@ -20,9 +23,9 @@ import { copyFile, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { db } from "../src/lib/db";
-import { assFile, assText, cropFor, outputSize, renderPlan } from "../src/lib/suggested-ads/render";
+import { assFile, assText, cropFor, logoPlacement, outputSize, renderPlan } from "../src/lib/suggested-ads/render";
 import { ffmpegBinary, renderToFiles, renderVideoRevision } from "../src/lib/suggested-ads/render-run";
-import { NO_EDITS, parseEdits, type VideoEdits, type VideoMeta } from "../src/lib/suggested-ads/video";
+import { NO_EDITS, editsNotInFile, parseEdits, sameEdits, type VideoEdits, type VideoMeta } from "../src/lib/suggested-ads/video";
 import { approveCreative, draftFromApproval, ensureDirections, listSuggestions, saveOwnerVideo, saveVideoEdits } from "../src/lib/suggested-ads/store";
 import { changeBrain } from "../src/lib/brain/store";
 import { encryptSecret } from "../src/lib/crypto/secret-box";
@@ -55,6 +58,14 @@ function probe(bin: string, file: string): { ms: number; w: number; h: number } 
 }
 
 /** A grey frame's top band as raw bytes, to see whether a caption is drawn there. */
+/** One region of a frame, as grey bytes: a share of the width and height from a corner. */
+function region(bin: string, file: string, atSec: number, size: { w: number; h: number }, r: { x0: number; y0: number; x1: number; y1: number }): Buffer {
+  const raw = execFileSync(bin, ["-hide_banner", "-loglevel", "error", "-ss", String(atSec), "-i", file, "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "-"]);
+  const rows: Buffer[] = [];
+  for (let y = Math.floor(size.h * r.y0); y < Math.floor(size.h * r.y1); y++) rows.push(raw.subarray(y * size.w + Math.floor(size.w * r.x0), y * size.w + Math.floor(size.w * r.x1)));
+  return Buffer.concat(rows);
+}
+
 function topBand(bin: string, file: string, atSec: number, size: { w: number; h: number }): Buffer {
   const raw = execFileSync(bin, ["-hide_banner", "-loglevel", "error", "-ss", String(atSec), "-i", file, "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "-"]);
   return raw.subarray(0, size.w * Math.round(size.h * 0.3));
@@ -107,6 +118,33 @@ async function main() {
     assert.ok(!none.args.join(" ").includes("subtitles"), "no captions, no subtitle filter");
   });
 
+  await check("text and logo: kept only when set, cleaned, with safe defaults; named when not yet in a file", () => {
+    const e = parseEdits({ overlay: { text: "  Free   call-out before 6pm — and much more text than fits on one line of video  ", position: "sideways" }, logo: { url: " https://x/ad-media/o/logo.png ", corner: "centre" } }, META);
+    assert.equal(e.overlay!.text.length, 60);
+    assert.equal(e.overlay!.position, "bottom");
+    assert.deepEqual(e.logo, { url: "https://x/ad-media/o/logo.png", corner: "top-right" });
+    assert.ok(sameEdits(parseEdits({ overlay: { text: "   " }, logo: { url: "" } }, META), parseEdits({}, META)), "empty text and logo are no edit at all");
+    assert.ok(!("overlay" in parseEdits({}, META)), "an old edit list reads the same as before");
+    assert.deepEqual(editsNotInFile(e), ["the text", "the logo"]);
+  });
+  await check("the text is one line for the whole clip, in its own style, written literally", () => {
+    const ass = assFile([], { trimStartMs: 2000 }, 6000, { w: 472, h: 840 }, undefined, { text: "Free {\\b1}call-out", position: "bottom" });
+    assert.match(ass, /^Style: Overlay,.*,2,\d+,\d+,202,1$/m);
+    assert.match(ass, /^Dialogue: 0,0:00:00\.00,0:00:06\.00,Overlay,,0,0,0,,Free \(⧵b1\)call-out$/m);
+    assert.match(assFile([], { trimStartMs: 0 }, 6000, { w: 472, h: 840 }, undefined, { text: "Top", position: "top" }), /^Style: Overlay,.*,8,\d+,\d+,185,1$/m);
+  });
+  await check("a logo is a second input laid over its corner; without the file, there's no logo", () => {
+    const e = parseEdits({ trimStartMs: 2000, trimEndMs: 8000, aspect: "9:16", logo: { url: "u", corner: "bottom-left" } }, META);
+    const p = renderPlan({ source: "/t/in", output: "/t/out.mp4", poster: "/t/p.jpg", assPath: "/t/c.ass", fontsDir: "/f", logoPath: "/t/logo" }, e, META);
+    const a = p.args.join(" ");
+    assert.ok(p.hasLogo);
+    assert.match(a, /-i \/t\/in -i \/t\/logo -t 6\.000/);
+    assert.match(a, /\[1:v\]scale=74:-2\[logo\];\[base\]\[logo\]overlay=19:H-h-19,format=yuv420p\[v\] -map \[v\] -map 0:a:0\?/);
+    assert.deepEqual(logoPlacement("top-right", { w: 472, h: 840 }), { w: 74, x: "W-w-19", y: "19" });
+    const noFile = renderPlan({ source: "/t/in", output: "/t/out.mp4", poster: "/t/p.jpg", assPath: "/t/c.ass", fontsDir: "/f" }, e, META);
+    assert.ok(!noFile.hasLogo && !noFile.args.includes("-filter_complex"));
+  });
+
   console.log("— a real render —");
   const bin = await ffmpegBinary();
   assert.ok(bin, "No ffmpeg: set FFMPEG_PATH, or install ffmpeg-static with its install script.");
@@ -141,6 +179,26 @@ async function main() {
     assert.ok(during > 3, `caption should change the top band (diff ${during.toFixed(2)})`);
     assert.ok(after < 1.5, `after the caption ends the frames match again (diff ${after.toFixed(2)})`);
   });
+  const d3 = await mkdtemp(join(tmpdir(), "mairo-vr3-"));
+  const logo = join(d3, "logo.png");
+  execFileSync(bin!, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=0xFF2D55:s=240x120", "-frames:v", "1", logo]);
+  const dressed = { ...plain, overlay: { text: "FREE CALL-OUT BEFORE 6PM", position: "bottom" as const }, logo: { url: "unused", corner: "top-right" as const } };
+  const withMarks = await renderToFiles(bin!, SAMPLE, d3, dressed, META, logo);
+  await check("a real render has the text along the bottom and the logo in the top-right corner", () => {
+    const size = withMarks.plan.size;
+    const logoNow = region(bin!, withMarks.video, 2, size, { x0: 0.78, y0: 0.02, x1: 0.98, y1: 0.1 });
+    const logoPlain = region(bin!, without.video, 2, size, { x0: 0.78, y0: 0.02, x1: 0.98, y1: 0.1 });
+    const textNow = region(bin!, withMarks.video, 2, size, { x0: 0.1, y0: 0.62, x1: 0.9, y1: 0.78 });
+    const textPlain = region(bin!, without.video, 2, size, { x0: 0.1, y0: 0.62, x1: 0.9, y1: 0.78 });
+    const leftTop = region(bin!, withMarks.video, 2, size, { x0: 0.02, y0: 0.02, x1: 0.2, y1: 0.1 });
+    const leftTopPlain = region(bin!, without.video, 2, size, { x0: 0.02, y0: 0.02, x1: 0.2, y1: 0.1 });
+    assert.ok(meanDiff(logoNow, logoPlain) > 20, `logo corner diff ${meanDiff(logoNow, logoPlain).toFixed(1)}`);
+    assert.ok(meanDiff(textNow, textPlain) > 3, `text band diff ${meanDiff(textNow, textPlain).toFixed(1)}`);
+    assert.ok(meanDiff(leftTop, leftTopPlain) < 1.5, "the other corner is untouched");
+    const p = probe(bin!, withMarks.video);
+    assert.ok(Math.abs(p.ms - 6000) <= 150 && p.w === 472 && p.h === 840);
+  });
+  await rm(d3, { recursive: true, force: true });
   await check("the original sample is untouched", async () => {
     assert.ok(before.equals(await readFile(SAMPLE)));
   });
@@ -227,6 +285,14 @@ async function main() {
     const again = await renderVideoRevision(A, videoId, deps);
     assert.ok(again.ok && again.status === "READY");
     assert.equal((await db.ownerVideoRevision.findFirstOrThrow({ where: { id: rev.id } })).renderAttempts, 2);
+  });
+  await check("a logo is accepted only from this business's own uploads", async () => {
+    const foreign = await saveVideoEdits(A, "user-a", videoId, { ...edits, logo: { url: "https://cdn.example.com/logo.png", corner: "top-right" } });
+    assert.ok(!foreign.ok && /uploads/.test(foreign.error));
+    const other = await saveVideoEdits(A, "user-a", videoId, { ...edits, logo: { url: `https://store.public.blob.vercel-storage.com/ad-media/${B}/logo.png`, corner: "top-right" } });
+    assert.ok(!other.ok, "another business's upload isn't this one's");
+    const own = await saveVideoEdits(A, "user-a", videoId, { ...edits, logo: { url: `https://store.public.blob.vercel-storage.com/ad-media/${A}/logo.png`, corner: "top-right" } });
+    assert.ok(own.ok && own.changed);
   });
   await check("another business can't render this video", async () => {
     const r = await renderVideoRevision(B, videoId, deps);

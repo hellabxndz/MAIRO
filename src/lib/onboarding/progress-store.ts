@@ -4,9 +4,9 @@ import { planFor } from "@/lib/plans";
 import { parseDraft } from "./draft";
 import { onboardingSteps, type OnboardingFacts, type OnboardingStep } from "./progress";
 
-// The facts behind the ten setup steps, read from the records — the intake,
-// the plan and its revisions, the Meta connection, the subscription, the
-// campaign on Meta. One business's records only.
+// The facts behind the setup steps, read from the records — the intake, the
+// plan and its revisions, the suggested ads, the Meta connection, the
+// subscription, the campaign on Meta. One business's records only.
 
 export async function loadOnboardingFacts(organizationId: string, now = new Date()): Promise<OnboardingFacts | null> {
   const [org, intake, brain, plan, meta] = await Promise.all([
@@ -24,6 +24,17 @@ export async function loadOnboardingFacts(organizationId: string, now = new Date
   ]);
   if (!org) return null;
   const draft = parseDraft(org.onboardingDraft);
+
+  const [directions, approvals, videos] = await Promise.all([
+    db.adAngle.count({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } } }),
+    db.creativeApproval.findMany({ where: { organizationId, revokedAt: null }, select: { angleId: true, angleRevisionId: true } }),
+    db.ownerVideo.count({ where: { organizationId, archivedAt: null } }),
+  ]);
+  // Approved as it is now: a later edit to the words means it waits to be approved again.
+  const latest = approvals.length
+    ? await db.adAngle.findMany({ where: { organizationId, id: { in: approvals.map((a) => a.angleId) }, status: { not: "REJECTED" } }, select: { id: true, revisions: { orderBy: { version: "desc" }, take: 1, select: { id: true } } } })
+    : [];
+  const approvedNow = approvals.some((a) => latest.find((x) => x.id === a.angleId)?.revisions[0]?.id === a.angleRevisionId);
 
   const [yourChanges, draftRow, campaign, lastBuild] = await Promise.all([
     plan ? db.strategyPlanRevision.count({ where: { planId: plan.id, version: { gt: 0 }, requestedBy: "you" } }) : 0,
@@ -52,6 +63,7 @@ export async function loadOnboardingFacts(organizationId: string, now = new Date
     goal: Boolean(intake),
     plan: plan ? { status: plan.status, yourChanges, activated: Boolean(plan.activatedAt) } : null,
     meta: meta ? { status: meta.status, adAccount: meta.metaAdAccountId || null, pageName: meta.pageName, hasPage: Boolean(meta.pageId), expiresAt: meta.tokenExpiresAt } : null,
+    creative: { directions, approved: approvedNow, videos },
     subscription: {
       paid,
       status: org.subscriptionStatus,

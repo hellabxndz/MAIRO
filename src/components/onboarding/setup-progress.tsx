@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { focusStep, progressCount, type OnboardingStep, type StepId, type StepState } from "@/lib/onboarding/progress";
+import { focusStep, onboardingPhases, progressCount, type OnboardingStep, type StepId, type StepState } from "@/lib/onboarding/progress";
 import { ProblemCard } from "./problem-card";
 
-// Where a business is in the ten setup steps, from its records. One bar, the
-// step to do next, and every step behind "See all ten steps" — with who does
-// it, why it's asked, and a way back to anything unfinished.
+// Where a business is in setup, from its records: nine phases in one bar —
+// business, goal, strategy, free plan, creatives, video, account and payment,
+// approval and launch, next steps — the step to do next with a button to
+// continue it, and every step behind "See every step", with who does it, why
+// it's asked, and a way back to anything unfinished. Saved as they go, so
+// leaving and coming back picks up here.
 
 const SEG: Record<StepState, string> = {
   done: "bg-emerald-400/80",
@@ -27,34 +30,47 @@ const MARK: Record<StepState, { icon: string; cls: string; sr: string }> = {
 export function SetupProgress({ steps, here, showProblem = true }: { steps: OnboardingStep[]; here?: StepId; showProblem?: boolean }) {
   const focus = focusStep(steps);
   const { finished, total } = progressCount(steps);
+  const phases = onboardingPhases(steps);
+  const phase = focus ? phases.find((p) => p.steps.some((s) => s.id === focus.id)) : phases[phases.length - 1];
+  // A way on from any page: the step to do next, unless this page is that step.
+  const go = focus?.href && focus.id !== here && (focus.state === "current" || focus.state === "attention") ? focus.href : null;
   return (
     <nav aria-label="Your setup progress" className="rounded-2xl border border-white/[0.07] bg-field/80 p-4 sm:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-[13.5px] text-muted">
-          {focus ? (
+          {focus && phase ? (
             <>
-              Step {focus.n} of {total}: <span className="font-medium text-white">{focus.label}</span>
+              {phase.n} of {phases.length} · {phase.label}: <span className="font-medium text-white">{focus.label}</span>
             </>
           ) : (
-            <span className="font-medium text-white">Setup complete — your first campaign is live.</span>
+            <span className="font-medium text-white">Setup complete — your first campaign is live. Next steps are on your dashboard.</span>
           )}
         </p>
         <p className="text-[12px] text-faint">
-          {finished} of {total} done · saved as you go
+          {finished} of {total} steps done · saved as you go
         </p>
       </div>
-      <div className="mt-3 grid grid-cols-10 gap-1" aria-hidden>
-        {steps.map((s) => (
-          <span key={s.id} title={`${s.n}. ${s.label}`} className={`h-1.5 rounded-full ${SEG[s.state]} ${here === s.id ? "ring-2 ring-violet/50 ring-offset-1 ring-offset-transparent" : ""}`} />
+      <ol className="mt-3 grid grid-cols-9 gap-1" aria-label="Setup phases">
+        {phases.map((p) => (
+          <li key={p.id} aria-current={phase?.id === p.id ? "step" : undefined} className="min-w-0">
+            <span aria-hidden className={`block h-1.5 rounded-full ${SEG[p.state]} ${p.steps.some((s) => s.id === here) ? "ring-2 ring-violet/50 ring-offset-1 ring-offset-transparent" : ""}`} />
+            <span className={`mt-1.5 hidden truncate text-[10.5px] lg:block ${phase?.id === p.id ? "font-medium text-white" : "text-faint"}`}>{p.label}</span>
+            <span className="sr-only">{p.n}. {p.label} — {MARK[p.state].sr}</span>
+          </li>
         ))}
-      </div>
+      </ol>
       {focus?.why && <p className="mt-2 text-[12.5px] text-muted">{focus.why}</p>}
+      {go && (
+        <Link href={go} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-white shadow-[var(--mairo-glow-key)]">
+          Continue: {focus!.label} →
+        </Link>
+      )}
 
       {showProblem && focus?.problem && <ProblemCard problem={focus.problem} tone={focus.state === "waiting" ? "warn" : "alert"} className="mt-3" />}
 
       <details className="group mt-3">
         <summary className="cursor-pointer list-none text-[12.5px] text-violet-bright hover:text-white">
-          <span className="group-open:hidden">See all ten steps</span>
+          <span className="group-open:hidden">See every step</span>
           <span className="hidden group-open:inline">Hide the steps</span>
         </summary>
         <ol className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">

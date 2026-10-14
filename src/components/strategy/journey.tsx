@@ -3,7 +3,7 @@ import { signOutAction } from "@/lib/actions/auth-actions";
 import { SetupProgress } from "@/components/onboarding/setup-progress";
 import type { OnboardingStep, StepId } from "@/lib/onboarding/progress";
 
-// The one journey from sign-up to a live first campaign, in ten steps read
+// The one journey from sign-up to a live first campaign, in nine phases read
 // from the records (lib/onboarding/progress). FREE shows what MAIRO would do
 // — the plan, and connecting the account. PAID is MAIRO doing it — building
 // and launching.

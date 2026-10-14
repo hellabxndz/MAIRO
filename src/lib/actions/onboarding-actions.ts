@@ -160,6 +160,10 @@ export async function completeOnboardingAction(
     },
   });
 
+  // What the owner typed is their own word: kept in the Business Brain as
+  // confirmed, so their first ads can be written from it straight away.
+  await recordOwnerAnswers(organizationId, { offering: data.offering, audience: data.targetAudience, location: data.customerLocation, offer: data.currentOffer });
+
   // The intake is the record from here on; the half-finished answers are done with.
   await db.organization.update({ where: { id: organizationId }, data: { onboardingDraft: Prisma.DbNull } });
 
@@ -239,6 +243,21 @@ export async function completeOnboardingAction(
 }
 
 // --- The setup screens (lib/onboarding/setup.ts does the work) -----------------------
+
+/** The owner's onboarding answers, saved to the Business Brain as theirs. "Not sure" isn't an answer. */
+async function recordOwnerAnswers(organizationId: string, a: { offering?: string | null; audience?: string | null; location?: string | null; offer?: string | null }) {
+  const answers: [string, string | null | undefined, boolean][] = [
+    ["focusItem", a.offering, false],
+    ["targetCustomer", a.audience, false],
+    ["serviceArea", a.location, false],
+    ["offers", a.offer, true],
+  ];
+  for (const [field, raw, list] of answers) {
+    const value = (raw ?? "").trim();
+    if (!value || /^(not sure|i don.t know|none|n\/a)$/i.test(value)) continue;
+    await changeBrain(organizationId, list ? { op: "add", field, value } : { op: "set", field, value }, "customer").catch(() => null);
+  }
+}
 
 async function orgId(): Promise<string | null> {
   const session = await auth();

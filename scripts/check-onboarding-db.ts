@@ -185,12 +185,14 @@ async function main() {
       assert.equal(resumeHref(steps), "/plan");
     });
 
-    await check("approving the plan moves on to connecting Meta", async () => {
+    await check("approving the plan moves on to the first ads — before connecting Meta", async () => {
       const row = await db.strategyPlan.findUniqueOrThrow({ where: { organizationId: ORG } });
       assert.ok((await approve(ORG, row.version)).ok);
       const steps = (await loadOnboarding(ORG))!;
       assert.equal(steps.find((s) => s.id === "edit")?.state, "skipped");
-      assert.equal(focusStep(steps)?.id, "connect");
+      assert.equal(focusStep(steps)?.id, "creative");
+      assert.equal(resumeHref(steps), "/dashboard/creatives/suggested");
+      assert.equal(steps.find((s) => s.id === "connect")?.state, "todo", "connecting is still there, next");
     });
 
     console.log("\n— connecting Meta —");

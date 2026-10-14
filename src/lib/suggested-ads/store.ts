@@ -10,6 +10,8 @@ import { trackingOverview } from "@/lib/tracking/setup";
 import { audienceFor, buildDirections, ctaTypeFor, destinationFor, introFor, recommendedWhyFor, TEST_REASON, usesAvoided, type ConfirmedFacts } from "./directions";
 import type { HookAngle } from "@/lib/creative/hooks";
 import { NO_EDITS, describeEdits, parseEdits, sameEdits, type VideoEdits, type VideoMeta } from "./video";
+import { isOwnUpload } from "@/lib/campaigns/media-rules";
+import { localMedia } from "./render-run";
 
 // The records behind "Review your suggested ads", one business at a time:
 // directions (AdAngle) with every revision kept, the pictures made for them
@@ -71,17 +73,18 @@ export async function confirmedFactsFor(organizationId: string): Promise<FactsVi
 
 export type Gate = { ready: boolean; metaConnected: boolean; profileConfirmed: boolean; next: { label: string; href: string } | null };
 
-/** Suggested ads open once Meta is connected and the business profile is confirmed. */
+/**
+ * Suggested ads open once the business profile is confirmed — before any
+ * account setup, so the owner sees what their ads could be before connecting
+ * anything or paying. Meta is needed later: for Meta's own previews and to
+ * run a campaign, and those say so where they're offered.
+ */
 export async function suggestedAdsGate(organizationId: string): Promise<Gate> {
   const [meta, facts] = await Promise.all([loadMetaConnection(organizationId).catch(() => null), confirmedFactsFor(organizationId)]);
   const metaConnected = meta?.status === "CONNECTED";
   const profileConfirmed = facts.profileConfirmed;
-  const next = !profileConfirmed
-    ? { label: "Confirm what you sell in your Business Brain", href: "/dashboard/settings/business-brain" }
-    : !metaConnected
-      ? { label: "Connect your Meta ad account", href: "/dashboard/meta" }
-      : null;
-  return { ready: metaConnected && profileConfirmed, metaConnected, profileConfirmed, next };
+  const next = !profileConfirmed ? { label: "Confirm what you sell in your Business Brain", href: "/dashboard/settings/business-brain" } : null;
+  return { ready: profileConfirmed, metaConnected, profileConfirmed, next };
 }
 
 // --- Directions ---------------------------------------------------------------
@@ -268,6 +271,10 @@ export async function saveVideoEdits(organizationId: string, userId: string, vid
   if (!video) return { ok: false, error: "That video isn't in your account." };
   const meta: VideoMeta = { durationMs: video.durationMs, width: video.width, height: video.height };
   const edits = parseEdits(raw, meta);
+  // A logo must be a file in this business's own uploads (or, in local development, a sample file).
+  if (edits.logo && !isOwnUpload(edits.logo.url, organizationId) && !(localMedia() && /^\/[\w./-]+$/.test(edits.logo.url) && !edits.logo.url.includes(".."))) {
+    return { ok: false, error: "That logo isn't in your business's uploads. Upload it again." };
+  }
   const latest = video.revisions[0];
   if (latest && sameEdits(parseEdits(latest.editsJson, meta), edits)) return { ok: true, version: latest.version, changed: false };
   const version = (latest?.version ?? 0) + 1;
