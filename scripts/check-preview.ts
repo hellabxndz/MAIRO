@@ -262,7 +262,7 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
       "Three creative concepts, written for your business",
       "With a subscription, MAIRO builds the campaign in your own Meta ad account.",
       "Nothing launches, and nothing is spent, until you approve it.",
-      "Your AI advertising team is ready. See your free plan.",
+      "Your AI advertising team is ready. Build your free ad plan.",
     ]) assert.ok(script.includes(line), line);
     const vtt = walkCaptionsVtt();
     for (const c of WALK_CAPTIONS) assert.ok(vtt.includes(c.text), c.text);
@@ -270,7 +270,7 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
     assert.doesNotMatch(script, FORECAST);
     assert.doesNotMatch(script, /tiktok|google ads|ai[- ]generated video|guaranteed/i);
     assert.equal(WALK_ONSCREEN.end, "Your AI Advertising Team Is Ready.");
-    assert.equal(WALK_ONSCREEN.cta, "See Your Free Plan");
+    assert.equal(WALK_ONSCREEN.cta, "Build My Free Ad Plan");
   });
   await check("the cursor and camera act inside their own scene, in order, with time to see each click", () => {
     for (const s of WALK_SCENES) {

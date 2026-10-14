@@ -6,10 +6,13 @@ import { BusinessArt } from "@/components/hero-story/art";
 import { EXAMPLES } from "@/lib/demo/examples";
 import { heroVariant, track } from "@/lib/analytics/track";
 
-// The first screen: what MAIRO is, in one line; the free plan, started right
-// here; and MAIRO itself — the real dashboard, drawn with the same components
-// the signed-in app uses, for a clearly labelled fictional business. Around
-// it, sample ad concepts for six kinds of business, each labelled as one.
+// The first screen: the outcome in one line — "Your Business Has More
+// Potential. Let MAIRO Show You." — and the free plan, started right here in
+// three ways (a few facts, an Instagram username, or a website; none needs a
+// site). Then MAIRO itself — the real dashboard, drawn with the same
+// components the signed-in app uses, for a clearly labelled fictional
+// business. Around it, sample ad concepts for six kinds of business, each
+// labelled as one.
 
 type Industry = { key: string; label: string; headline: string; brand: string; art?: "shop" | "service" | "appointments"; tone?: string };
 
@@ -41,7 +44,7 @@ function IndustryCard({ i, className = "" }: { i: Industry; className?: string }
 
 export function ConsoleHero() {
   return (
-    <section id="product" aria-labelledby="hero-title" className="relative isolate scroll-mt-20 overflow-hidden pb-10 pt-[112px] sm:pt-[136px]">
+    <section id="product" aria-labelledby="hero-title" className="relative isolate scroll-mt-20 overflow-hidden pb-10 pt-[96px] sm:pt-[136px]">
       {/* The night, lit from above: a violet bloom behind the headline, a cooler blue falling in from the side. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_45%_at_50%_0%,rgba(121,82,255,0.32),transparent_70%),radial-gradient(ellipse_40%_35%_at_8%_30%,rgba(53,108,255,0.16),transparent_70%),radial-gradient(ellipse_45%_35%_at_92%_40%,rgba(121,82,255,0.14),transparent_70%)]" />
       <div aria-hidden className="mairo-grid pointer-events-none absolute inset-0 -z-10 opacity-60" />
@@ -52,16 +55,16 @@ export function ConsoleHero() {
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet-bright" />
             AI advertising for Facebook &amp; Instagram
           </p>
-          <h1 id="hero-title" className="mt-6 text-[clamp(40px,7.4vw,96px)] font-semibold leading-[0.96] tracking-[-0.05em] text-white [text-wrap:balance]">
-            Your Entire AI Advertising Team.{" "}
-            <span className="bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text text-transparent">One Platform.</span>
+          <h1 id="hero-title" className="mt-6 text-[clamp(35px,7vw,92px)] font-semibold leading-[0.98] tracking-[-0.05em] text-white [text-wrap:balance]">
+            Your Business Has More Potential.{" "}
+            <span className="block bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text pb-[0.06em] text-transparent">Let MAIRO Show You.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-[640px] text-[clamp(16.5px,1.5vw,20px)] leading-relaxed text-white/72">
-            Discover how MAIRO would advertise your business before spending a dollar. Strategy, creative, campaigns and results — built by AI, approved by you.
+          <p className="mx-auto mt-5 max-w-[700px] text-[clamp(15.5px,1.5vw,20px)] leading-relaxed text-white/72 sm:mt-6">
+            Tell us about your business, share your Instagram, or add your website. MAIRO will analyze the information available, identify advertising opportunities, and build a personalized AI advertising plan designed around your goals. Completely free to explore.
           </p>
         </div>
 
-        <div className="mx-auto mt-9 max-w-[720px]" onClickCapture={(e) => (e.target as HTMLElement).closest("button[type=submit]") && track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } })}>
+        <div className="mx-auto mt-7 max-w-[720px] sm:mt-9" onClickCapture={(e) => (e.target as HTMLElement).closest("button[type=submit]") && track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } })}>
           <FreePlanForm compact idPrefix="hero" />
           <p className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]">
             <a href="#walkthrough" onClick={() => track({ name: "hero_cta", props: { cta: "watch", variant: heroVariant() } })} className="inline-flex min-h-[44px] items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.03] pl-1.5 pr-4 font-semibold text-white transition hover:border-violet-400/60">

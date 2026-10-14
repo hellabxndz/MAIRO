@@ -67,7 +67,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
           <p className="mt-3 text-[14px] text-white/55">For {u.forWho.map((w) => w.charAt(0).toLowerCase() + w.slice(1)).join("; ")}.</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link href={cta} className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-              See Your Free Plan <span aria-hidden>→</span>
+              Build My Free Ad Plan <span aria-hidden>→</span>
             </Link>
             <Link href={`/preview?example=${u.example}`} className="inline-flex min-h-[50px] items-center justify-center rounded-full border border-white/15 px-6 text-[15px] font-medium text-white transition hover:border-violet-400/60">
               Open the full example
@@ -160,7 +160,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
           <h2 className="mx-auto max-w-[680px] text-[26px] font-semibold leading-tight tracking-[-0.025em] text-white sm:text-[34px]">See the plan MAIRO would build for your business.</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[15px] leading-relaxed text-white/70">Start with your website or a few words about what you do. Free, and nothing runs until you approve it.</p>
           <Link href={cta} className="mt-7 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[15.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-            See Your Free Plan <span aria-hidden>→</span>
+            Build My Free Ad Plan <span aria-hidden>→</span>
           </Link>
         </section>
       </main>

@@ -127,7 +127,7 @@ export function helpArticles(): HelpArticle[] {
       keywords: ["start", "begin", "setup", "onboarding", "free plan", "sign up", "account", "how it works", "first campaign"],
       blocks: [
         { kind: "p", text: "MAIRO works in two parts. The plan is free: tell MAIRO about your business and it shows you how it would advertise it. Running ads needs a subscription, your own Meta ad account and your approval." },
-        { kind: "h", text: "1. See your free plan" },
+        { kind: "h", text: "1. Build your free ad plan" },
         { kind: "p", text: "Start with your website, or describe your business in a few words. MAIRO reads your public pages and shows what it found, and where it found each fact; you confirm or correct it. Then it builds the plan: the objective, the Meta campaign strategy, the audience, an example budget and three creative concepts. You don't need an account or a card to see it." },
         { kind: "note", text: reading.publicNote! },
         { kind: "h", text: "2. Save it to a free account" },
@@ -138,7 +138,7 @@ export function helpArticles(): HelpArticle[] {
         { kind: "p", text: "MAIRO builds each campaign switched off and shows you the budget, the audience, the ads and where people go before you approve it. Nothing launches and nothing is spent until you do. After you approve, Meta reviews the ads; MAIRO shows a campaign as live only once Meta confirms it." },
       ],
       links: [
-        { label: "See your free plan", href: "/preview" },
+        { label: "Build your free ad plan", href: "/preview" },
         { label: "Create a free account", href: "/sign-up" },
         { label: "Your first-campaign checklist", href: "/dashboard/launch", app: true },
       ],

@@ -42,7 +42,7 @@ import { brandFont } from "@/lib/fonts";
 // free plan is free, and a subscription is only for building and running
 // real campaigns, each of which waits for the owner's approval.
 
-const CTA = { href: "/preview", label: "See Your Free Plan" };
+const CTA = { href: "/preview", label: "Build My Free Ad Plan" };
 
 const STEPS = [
   { n: "01", title: "Tell MAIRO about your business", body: "Your website, or a few words about it — plus your objective, industry and budget if you know them.", tag: "Free" },

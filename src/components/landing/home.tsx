@@ -28,7 +28,7 @@ import { coachExample, EXAMPLE_STEPS, type ExampleStep, type ExampleView } from 
 // "story" (the default): the animated product story beside the website box
 // that starts a real preview, then three steps, the 60-second walkthrough,
 // example ads, owner controls, what works today, free tools, pricing, FAQ and
-// a final call — with one primary action, "See Your Free Plan".
+// a final call — with one primary action, "Build My Free Ad Plan".
 //
 // "classic": the page as it was — hero, how it works, the AI team, the product
 // itself, the Performance Coach, what MAIRO does, free tools, pricing, trust,
@@ -256,7 +256,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
   const toolsLive = USABLE_TOOLS().length > 0;
   const featuredTools = USABLE_TOOLS().filter((t) => t.featured && t.status === "working").slice(0, 3);
   // One primary action per version, used by every main button on the page.
-  const cta = { href: "/preview", label: "See Your Free Plan" };
+  const cta = { href: "/preview", label: "Build My Free Ad Plan" };
   const steps = story ? STORY_STEPS : STEPS;
 
   const classicHero = (
@@ -281,7 +281,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
-                    See Your Free Plan <span aria-hidden>→</span>
+                    Build My Free Ad Plan <span aria-hidden>→</span>
                   </Link>
                   <a href="#ai-team" className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-full border border-white/15 bg-paper px-7 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
                     Meet My AI Team
@@ -397,7 +397,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             </p>
             <div className="mt-8 text-center">
               <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[54px] items-center gap-2 rounded-full px-8 text-[15.5px] font-semibold`}>
-                See Your Free Plan <span aria-hidden>→</span>
+                Build My Free Ad Plan <span aria-hidden>→</span>
               </Link>
             </div>
           </section>

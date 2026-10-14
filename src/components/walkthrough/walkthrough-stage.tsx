@@ -126,8 +126,8 @@ const IntroWorld = memo(function IntroWorld({ site, goal, focus, pressed }: Intr
     <div className="px-6 pb-16 pt-8">
       <Steps step={1} />
       <section className="mx-auto max-w-[760px]">
-        <p className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">See your free plan</p>
-        <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Discover how MAIRO would advertise your business before spending a dollar.</p>
+        <p className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">Build your free ad plan</p>
+        <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Tell us about your business, share your Instagram, or add your website — MAIRO builds a personalized advertising plan around your goals.</p>
         <div id="walk-form" className="mt-7">
           <FreePlanForm idPrefix="walk" demo={{ website: site, goal, focus, pressed }} />
         </div>
@@ -180,7 +180,7 @@ const AnalysisWorld = memo(function AnalysisWorld({ phase, step, done, shown, go
 const PlanWorld = memo(function PlanWorld() {
   return (
     <div className="px-6 pb-16 pt-8">
-      <PlanView preview={PREVIEW} facts={FACTS} findings={[]} isExample={false} exampleType={null} headingRef={HEADING} onEdit={noop} onRefine={noop} onSave={noop} onStartOver={noop} signUpHref="/sign-up" />
+      <PlanView preview={PREVIEW} facts={FACTS} findings={[]} isExample={false} exampleType={null} demoArt="service" headingRef={HEADING} onEdit={noop} onRefine={noop} onSave={noop} onStartOver={noop} signUpHref="/sign-up" />
     </div>
   );
 });
@@ -196,7 +196,7 @@ const CreativeWorld = memo(function CreativeWorld({ demo, edited, saved }: Creat
             const first = i === 0;
             const words = { hook: c.hook, headline: first && edited ? WALK_NEW_HEADLINE : c.headline, body: c.primaryText };
             return (
-              <ConceptCard key={c.angle} index={i} concept={c} words={words} facts={FACTS} businessName={PREVIEW.name} saved={first && saved} canSwap isExample={false} signUpHref="/sign-up" onEdit={noop} onSwap={noop} onSave={noop} demo={first ? demo : { placement: null, editing: false, draft: c.headline, pressed: null }} />
+              <ConceptCard key={c.angle} index={i} concept={c} words={words} facts={FACTS} businessName={PREVIEW.name} saved={first && saved} canSwap isExample={false} art="service" signUpHref="/sign-up" onEdit={noop} onSwap={noop} onSave={noop} demo={first ? demo : { placement: null, editing: false, draft: c.headline, pressed: null }} />
             );
           })}
         </ol>

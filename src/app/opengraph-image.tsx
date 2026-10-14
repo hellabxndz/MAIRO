@@ -13,7 +13,7 @@ import { PLANS } from "@/lib/plans";
 // It also keeps the repository free of a large binary that somebody has to
 // remember to re-export whenever the name or the palette changes.
 
-export const alt = "MAIRO — Your entire AI advertising team. One platform.";
+export const alt = "MAIRO — Your business has more potential. Let MAIRO show you.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -63,7 +63,7 @@ export default async function Image() {
               display: "flex",
             }}
           >
-            Your Entire AI Advertising Team. One Platform.
+            Your Business Has More Potential. Let MAIRO Show You.
           </div>
           <div
             style={{
@@ -75,7 +75,7 @@ export default async function Image() {
             }}
           >
             Strategy, creative, campaigns and results for your Facebook and Instagram
-            ads — built by AI, approved by you. See your free plan first.
+            ads — built by AI, approved by you. Build your free ad plan first.
           </div>
         </div>
 

@@ -39,7 +39,11 @@ export default function PrivacyPage() {
             <><strong className="text-neutral-200">Before you have an account.</strong> If you give MAIRO
               a website address for a free plan or a free tool, our server reads that site&apos;s public
               pages and keeps what it found — not a copy of the site, and not linked to your name or email
-              — so the same address isn&apos;t read over and over. What you type about your business, and
+              — so the same address isn&apos;t read over and over. If you give MAIRO an Instagram
+              username instead, our server opens that profile once, as a visitor who isn&apos;t signed in,
+              and reads only what Instagram shows anyone there — the profile&apos;s name, its bio and the
+              link in it. It reads no posts, followers, messages or insights, can&apos;t see private
+              profiles, and keeps nothing: what it read goes back to your browser. What you type about your business, and
               the plan built from it, stay in your browser until you create an account. If you ask MAIRO
               to refine an ad concept, those words and the facts you confirmed are sent to Anthropic to
               write a new version; we don&apos;t keep them. To keep the free plan fair, we count readings

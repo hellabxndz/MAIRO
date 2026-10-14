@@ -1,5 +1,10 @@
 # MAIRO — requirement matrix
 
+> **Superseded on 14 October 2026 by `docs/VERIFICATION-REPORT.md`**, which
+> marks each requirement Complete / Partial / Missing / Blocked against the
+> deployed commit (238bd1a) and today's code. The rows below are kept as the
+> 13 October record.
+
 13 October 2026. Every row says what the code does and what has been shown,
 and nothing is called "working" without a check or a browser run behind it.
 The capability inventory these rows draw on is `docs/CAPABILITIES.md`,
@@ -84,7 +89,7 @@ generated from `src/lib/capabilities.ts` and checked by
 | Scene 4: the draft in the feed and as a story; "Create this ad" / "Use my video"; a before/after video edit showing only real behaviour | FeedPreview, StoryPreview, Actions, EditCompare | Working and verified | Not deployed | check:preview runs each example's edit through the real `parseEdits` and `renderPlan`: trim to the demonstration, caption, 9:16 | — |
 | Scene 5: review with creative, destination and example budget; "You approve before launch."; approving shows a labelled demo state | ApprovalPanel | Working and verified | Not deployed | Frame at 19.6 s: "✓ Approved — demo … nothing was sent to Meta" | — |
 | Scene 6: services Lead → Qualified → Booked; store Purchase → Confirmed order value; a recommendation with evidence and Approve / Not now; no ROAS or revenue counter | ResultsBoard; `examples.ts` story.journey and recommendation | Working and verified | Not deployed | check:preview pins the steps, a source on every figure, and no revenue / ROAS / customers labels | — |
-| Ends on "What could MAIRO create for your business?" with a real "See Your Free Plan" button (was "Preview my campaign") | InviteCard + overlay button in `hero-story.tsx` | Working and verified | Not deployed | Browser: the button sends the typed site to `/preview?website=…&type=shop`; an empty box gets focus instead | — |
+| Ends on "What could MAIRO create for your business?" with a real "Build My Free Ad Plan" button (was "Preview my campaign", then "See Your Free Plan") | InviteCard + overlay button in `hero-story.tsx` | Working and verified | Not deployed | Browser: the button sends the typed site to `/preview?website=…&type=shop`; an empty box gets focus instead | — |
 | Examples: Online store / Service business / Multi-brand team. Brand selection and team review shown only if they work | `examples.ts` HERO_ORDER, brands | Working and verified | Not deployed | Brand switching and team sign-off don't exist for customers (see area 9), so the team example shows one brand and says so | — |
 | Light design, purple accents, phone composition, a persistent "Product demo — sample data" label | `story-stage.tsx` STAGE_BACKGROUND; narrow layout | Working and verified | Not deployed | Browser 390 / 768 / 1440: no sideways scroll; tall stage on phones | — |
 | The website box doesn't imply the visitor's site is being analysed | Stage shows only `.example` addresses | Working and verified | Not deployed | check:preview: every example URL ends in `.example` | — |

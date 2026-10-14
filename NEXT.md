@@ -3,6 +3,15 @@
 Honest running list of what stands between MAIRO and paying customers.
 Ordered by what blocks what. Updated as things land.
 
+## Not deployed yet (14 October 2026)
+
+The 17 commits after 238bd1a are local only: the new homepage and free plan
+(three ways in, including Instagram), the rebuilt walkthrough, teams, the help
+centre, use-case pages and Pause everything. Deploying needs the owner's
+"push"; `vercel-build` then applies three migrations (20261116120000,
+20261117120000, 20261118120000). `docs/VERIFICATION-REPORT.md` has each
+requirement's status and what's left.
+
 ## Deployed 13 October 2026 — check it live
 
 Pushed 9f17d87 (everything since b430c36). Vercel's Production deployment

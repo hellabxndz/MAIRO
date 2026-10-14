@@ -12,7 +12,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-14T07:45:59.963Z",
+  "renderedAt": "2026-10-14T17:10:30.887Z",
   "story": {
     "shop": {
       "wide": {
@@ -76,7 +76,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
       "width": 1440,
       "height": 810,
       "ms": 73000,
-      "bytes": 7520424
+      "bytes": 7841944
     },
     "narrow": {
       "mp4": "/walkthrough/walkthrough-narrow.mp4",
@@ -84,7 +84,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
       "width": 540,
       "height": 960,
       "ms": 73000,
-      "bytes": 4620865
+      "bytes": 5005131
     }
   },
   "captions": {

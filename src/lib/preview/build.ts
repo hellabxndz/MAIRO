@@ -19,7 +19,7 @@ import type { ScanResult } from "@/lib/website/scan";
 export type PreviewKind = "shop" | "service" | "appointments";
 export type PreviewGoal = "sales" | "leads" | "bookings";
 export type FactKey = "name" | "offering" | "customer" | "location" | "offer" | "proof" | "problem";
-export type FactSource = { from: "website"; url: string | null; quote: string | null } | { from: "you" } | { from: "example" };
+export type FactSource = { from: "website"; url: string | null; quote: string | null } | { from: "instagram"; handle: string; quote: string | null } | { from: "you" } | { from: "example" };
 
 export type PreviewFacts = Record<FactKey, string> & {
   /** An onboarding business type id (lib/onboarding/business-types), or "" when not chosen. */
@@ -133,6 +133,27 @@ export function factsFromScan(r: ScanResult): PreviewFacts {
   return f;
 }
 
+/**
+ * Facts from an Instagram profile's public preview: the name and the bio,
+ * each marked as from Instagram, and the bio's link as the website (not
+ * read yet — that's the visitor's choice). Gaps stay empty.
+ */
+export function factsFromInstagram(p: { handle: string; name: string | null; bio: string | null; website: string | null }): PreviewFacts {
+  const f = emptyFacts(null);
+  const name = asLine(p.name, 80);
+  if (name) {
+    f.name = name;
+    f.sources.name = { from: "instagram", handle: p.handle, quote: null };
+  }
+  const first = p.bio ? (p.bio.match(/^[^.!?\n]+[.!?]?/)?.[0] ?? p.bio) : "";
+  const offering = asLine(first, 110);
+  if (offering) {
+    f.offering = offering;
+    f.sources.offering = { from: "instagram", handle: p.handle, quote: p.bio };
+  }
+  return f;
+}
+
 /** What's still missing before a preview can be built — asked, never guessed. */
 export function missingFacts(f: PreviewFacts): { key: FactKey | "businessType" | "goal"; ask: string }[] {
   const out: { key: FactKey | "businessType" | "goal"; ask: string }[] = [];
@@ -173,7 +194,7 @@ export type Preview = {
   tracking: { events: { name: string; required: boolean; when: string }[]; status: string };
   readiness: { label: string; state: "done" | "next" | "later"; detail: string }[];
   /** Which facts came from where, for the "built from" line. */
-  builtFrom: { website: number; you: number };
+  builtFrom: { website: number; instagram: number; you: number };
   /** How the first Meta campaign is built. */
   strategy: { campaign: string; structure: string[]; placements: string; learning: string };
   /** Where the money goes: the owner's own monthly figure when given, else the example. */
@@ -381,7 +402,7 @@ export function buildPreview(f: PreviewFacts): Preview | null {
     couldAdd: directions.length < 3 ? couldAdd : couldAdd.slice(0, 2),
     tracking: { events, status },
     readiness,
-    builtFrom: { website: sources.filter((s) => s?.from === "website").length, you: sources.filter((s) => s?.from === "you").length },
+    builtFrom: { website: sources.filter((s) => s?.from === "website").length, instagram: sources.filter((s) => s?.from === "instagram").length, you: sources.filter((s) => s?.from === "you").length },
     strategy,
     allocation,
     creativeStrategy,

@@ -69,7 +69,7 @@ export const WALK_CAPTIONS: { start: number; end: number; text: string }[] = [
   { start: 47000, end: 52000, text: "Nothing launches, and nothing is spent, until you approve it." },
   { start: 52000, end: 58000, text: "Follow your results in one place: what Meta reports, kept apart from what you confirm." },
   { start: 58000, end: 65000, text: "And see what MAIRO recommends next, with the figures behind it, waiting for your yes." },
-  { start: 65000, end: 73000, text: "Your AI advertising team is ready. See your free plan." },
+  { start: 65000, end: 73000, text: "Your AI advertising team is ready. Build your free ad plan." },
 ];
 
 /** The words on screen in the intro and the end screen — motion typography, not captions. */
@@ -77,7 +77,7 @@ export const WALK_ONSCREEN = {
   intro: "Meet MAIRO.",
   introSub: "Your AI advertising team.",
   end: "Your AI Advertising Team Is Ready.",
-  cta: "See Your Free Plan",
+  cta: "Build My Free Ad Plan",
   ctaNote: "Free · no credit card · nothing runs until you approve it",
 } as const;
 
@@ -126,7 +126,7 @@ export const WALK_CURSOR: Record<WalkChapterId, WalkCursorKey[]> = {
   intro: [
     { at: 3700, cue: "#walk-website", click: true },
     { at: WALK_T.goal, cue: "#walk-goal", click: true },
-    { at: WALK_T.submit, cue: "text:See Your Free Plan", click: true },
+    { at: WALK_T.submit, cue: "text:Build My Free Ad Plan", click: true },
   ],
   analysis: [
     { at: 13900, cue: '[data-cue="discovered"]' },

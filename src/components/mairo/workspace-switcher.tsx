@@ -32,7 +32,7 @@ export function WorkspaceSwitcher({ workspaces, current, compact = false }: { wo
             router.refresh();
           });
         }}
-        className={`${compact ? "max-w-[150px] text-[12px]" : "mt-1 w-full text-[13px]"} truncate rounded-lg border bg-transparent px-2 py-1 text-white outline-none focus:ring-2 focus:ring-violet-400/30`}
+        className={`${compact ? "w-full text-[12.5px]" : "mt-1 w-full text-[13px]"} truncate rounded-lg border bg-transparent px-2 py-1 text-white outline-none focus:ring-2 focus:ring-violet-400/30`}
         style={{ borderColor: "var(--mairo-line)" }}
       >
         {workspaces.map((w) => (

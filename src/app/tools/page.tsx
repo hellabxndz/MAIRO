@@ -30,7 +30,7 @@ export default function ToolsPage() {
           <p className="text-[20px] font-semibold text-white">Want the whole plan, not just one number?</p>
           <p className="mt-2 max-w-[640px] text-[14.5px] leading-relaxed text-white/75">Your free MAIRO plan puts budget, audience, three creative directions, tracking and a testing schedule together for your business. Nothing is spent until you approve a campaign.</p>
           <Link href="/preview" className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-5 py-2.5 text-[14px] font-semibold text-white hover:brightness-110">
-            See Your Free Plan <span aria-hidden>→</span>
+            Build My Free Ad Plan <span aria-hidden>→</span>
           </Link>
         </div>
       </main>

@@ -90,7 +90,7 @@ export function InputPill({ ex, t, invite = false }: { ex: Example; t: number; i
         {caret && <span className="ml-[1px] inline-block h-[15px] w-[2px] translate-y-[2px] bg-white/80" />}
       </span>
       <span className="shrink-0 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] px-4 py-2 text-[12.5px] font-semibold text-white" style={{ transform: pressed ? "scale(0.94)" : "none" }}>
-        See Your Free Plan
+        Build My Free Ad Plan
       </span>
     </div>
   );

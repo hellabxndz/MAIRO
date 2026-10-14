@@ -122,7 +122,7 @@ export function LandingNav({
             ))}
           </ul>
           <Link href="/preview" onClick={() => setOpen(false)} className="mt-3 flex min-h-[50px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-white">
-            See Your Free Plan
+            Build My Free Ad Plan
           </Link>
         </div>
       )}

@@ -406,13 +406,14 @@ export function AppShell({
 
       {/* ---- Mobile top bar. The name of the business, and the mode. ---- */}
       <header
-        className="sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden"
+        className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 lg:hidden"
         style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
       >
         <Link href="/dashboard" className="text-[13px] font-light tracking-[0.3em] text-white">
           MAIRO
         </Link>
-        {switcher ?? <span className="truncate text-[12px] text-faint">{businessName}</span>}
+        {/* Someone on more than one team gets the switcher on a row of its own, so it never crowds the controls. */}
+        {switcher ? <div className="order-last min-w-0 basis-full">{switcher}</div> : <span className="min-w-0 truncate text-[12px] text-faint">{businessName}</span>}
         <div className="ml-auto flex items-center gap-1.5">
           <AskMairoButton name={askName} compact />
           {/* The Overview has its own view switch (with Profit First) in its header. */}

@@ -22,7 +22,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
     {
       h: "Resources",
       l: [
-        ["See your free plan", "/preview"],
+        ["Build your free ad plan", "/preview"],
         ...(toolsLive ? ([["Free advertising tools", "/tools"]] as [string, string][]) : []),
         ["Watch MAIRO in action", "/#walkthrough"],
         ["Security & control", "/#control"],

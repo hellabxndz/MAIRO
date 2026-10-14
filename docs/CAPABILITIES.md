@@ -19,7 +19,8 @@ or a public page makes a claim this inventory can't back.
 | Plan | Free advertising plan | Working | `/onboarding`, `/plan` | — | `check:strategy-plan`, `check:plan-guide`, `check:calculators`, `check:onboarding`, `check:onboarding-db` |
 | Plan | Change and approve the plan | Working | `/plan` | — | `check:strategy-plan`, `check:onboarding-db` |
 | Plan | Reading the business's website | Partially working | `/onboarding`, `/dashboard/settings/business-brain` | ANTHROPIC_API_KEY | `check:business`, `check:safe-fetch` |
-| Plan | See Your Free Plan (before sign-up) | Partially working | `/preview`, `/` | — | `check:preview`, `check:website`, `check:safe-fetch` |
+| Plan | Build My Free Ad Plan (before sign-up) | Partially working | `/preview`, `/` | — | `check:preview`, `check:consult`, `check:instagram`, `check:website`, `check:safe-fetch` |
+| Plan | Reading a public Instagram profile | Partially working | `/preview`, `/` | — | `check:instagram`, `check:safe-fetch` |
 | Plan | Business Brain | Working | `/dashboard/settings/business-brain` | — | `check:brain` |
 | Plan | Setup in nine phases, saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
@@ -770,7 +771,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (21)
+## Partially working (22)
 
 ### Reading the business's website
 
@@ -792,23 +793,41 @@ Reads a few public pages of the business's own site, server-side, through a fetc
 
 **Public claim:** “MAIRO reads your website and shows what it found — and what it couldn't.”
 
-### See Your Free Plan (before sign-up)
+### Build My Free Ad Plan (before sign-up)
 
 *Plan* · `campaign-preview`
 
-A visitor gives their website or describes the business, optionally with an objective, industry and monthly budget. MAIRO reads the public pages, shows what it discovered (business, products and services, audience, likely goal) with where each came from, asks the visitor to confirm the important facts, and builds the plan in the console: recommended objective, Meta campaign strategy, audience, budget allocation from the visitor's own monthly figure (or a labelled example), creative strategy with three concepts (headline, copy, visual direction, button, why, which to test first) previewed in Facebook feed, Instagram feed and Story mock-ups, website improvements, the recommended first campaign and why MAIRO recommends each part. Concepts can be edited, swapped, saved and refined with MAIRO (new words proposed; kept only if the visitor chooses). Approve My Plan saves the facts into a free account; Get Started With MAIRO goes to the plans. Nothing is spent or launched.
+A visitor starts one of three ways — describing the business (name, what it sells, industry, main goal), an Instagram username, or a website — none of which needs a website. MAIRO reads the public pages or the public profile when there is one, shows what it found with where each fact came from, asks for the details it needs rather than guessing, then works through five steps whose results are each step's real output (the business, the customers, the opportunities, the concepts, the growth plan). The plan: business overview with every fact's source, advertising opportunities, suggested strategy (objective, targeting, starting budget from the visitor's own figure or a labelled example, and the networks MAIRO runs — Facebook and Instagram through Meta), three AI creative concepts (hook, headline, copy, visual or video direction, why) previewed in Facebook, Instagram and Story mock-ups labelled as concepts, three to five growth recommendations with a priority and what MAIRO does about each, and website and tracking. Concepts can be edited, swapped, saved and refined with MAIRO. Approve My Plan saves the facts into a free account; Make Changes goes back to the facts. Nothing is spent, launched or charged.
 
-**Condition:** Sites that build their text with JavaScript only, or block automated visits, can't be read — the visitor describes the business instead. Refine with MAIRO needs the AI provider switched on (it says so when it isn't) and is limited per visitor. Not yet run against live public websites from the build environment (fixture sites only).
+**Condition:** Sites that build their text with JavaScript only, or block automated visits, can't be read; Instagram often shows nothing to a signed-out visitor — either way the visitor describes the business instead. With few facts MAIRO asks for more before writing three concepts (or builds fewer if the visitor chooses). Refine with MAIRO needs the AI provider switched on and is limited per visitor. Not yet run against live public websites or Instagram from the build environment (fixtures only).
 
 **Routes:** `/preview`, `/`
 
-**Verification:** Facts only from the site or the visitor, gaps asked, three directions with one recommended, no forecasts (check:preview); both ways in from the homepage hero (website at 1440, description with objective, industry and budget at 390), every plan section, placements, edit, change direction, refine (fixture), save, rebuild with a new budget, Approve My Plan into sign-up with the facts saved, and the example plan — 56 browser checks.
+**Verification:** Facts only from the site, the profile or the visitor, gaps asked, concepts only from real facts, no forecasts or unsupported networks (check:preview, check:consult); all three ways in from the homepage hero, the five analysis steps, every plan section, placements, edit, refine (fixture), Approve My Plan into sign-up with the facts saved, Make Changes, and the example plan — browser-checked at 390, 768 and 1440 with reduced motion and keyboard.
 
-**Evidence:** `src/app/preview/page.tsx`, `src/components/preview/preview-flow.tsx`, `src/components/preview/free-plan-form.tsx`, `src/components/preview/plan-view.tsx`, `src/app/api/preview/refine/route.ts`, `src/lib/preview/build.ts`, `src/app/api/tools/scan/route.ts`, `src/lib/website/scan.ts`
+**Evidence:** `src/app/preview/page.tsx`, `src/components/preview/preview-flow.tsx`, `src/components/preview/free-plan-form.tsx`, `src/components/preview/plan-view.tsx`, `src/lib/preview/consult.ts`, `src/app/api/preview/refine/route.ts`, `src/lib/preview/build.ts`, `src/app/api/tools/scan/route.ts`, `src/lib/website/scan.ts`, `src/app/api/tools/instagram/route.ts`
 
-**Checks:** `check:preview`, `check:website`, `check:safe-fetch`
+**Checks:** `check:preview`, `check:consult`, `check:instagram`, `check:website`, `check:safe-fetch`
 
-**Public claim:** “See your free advertising plan — from your website or a few words — before you spend a dollar.”
+**Public claim:** “Build your free ad plan — from a few words about your business, your Instagram or your website — before you spend a dollar.”
+
+### Reading a public Instagram profile
+
+*Plan* · `instagram-reading`
+
+For the free plan: with one request through the same guarded fetcher as the website reader, MAIRO reads what Instagram shows anyone who opens the profile without signing in — the profile name, the bio and the link in the bio — and shows each as "From your Instagram" for the visitor to confirm or change. It reads no posts, followers, insights or ad performance, stores nothing, and counts against the same free limits as a website reading.
+
+**Condition:** Instagram often shows a signed-out visitor a login page instead of the profile, and never shows private profiles; MAIRO says so and the visitor describes the business. Not yet run against live Instagram from the build environment (fixture profiles only). Reading public profile pages should be reviewed against Instagram's terms before it's relied on.
+
+**Routes:** `/preview`, `/`
+
+**Verification:** Usernames and profile links normalised, reserved paths refused, the bio and link read from a signed-out profile page, a login wall or missing profile handled honestly, follower counts never read, nothing stored (check:instagram); fixture profile → confirm → read the bio link → plan, and the login-wall profile → describe instead (browser-checked).
+
+**Evidence:** `src/lib/website/instagram.ts`, `src/app/api/tools/instagram/route.ts`, `src/lib/preview/build.ts#factsFromInstagram`
+
+**Checks:** `check:instagram`, `check:safe-fetch`
+
+**Public claim:** none — not advertised
 
 ### Advertise an existing Facebook post
 
@@ -1212,7 +1231,7 @@ The homepage's product demonstrations: MAIRO's dashboard drawn with the same con
 
 *Public site* · `walkthrough`
 
-A 73-second interactive demo of the owner journey on a sample business, in seven chapters — intro and request, analysis, the free plan, creative concepts (one chosen and edited), review and approval, results with a recommendation, and the end screen "Your AI Advertising Team Is Ready." with See Your Free Plan — drawn with MAIRO's own components driven by the clock, with a cursor that finds its targets in the rendered screens and a camera that follows, in 16:9 and 9:16; captions on by default carrying the written script, play, pause, replay, a position slider, keyboard control and a still version for reduced motion; plus silent MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. The script and storyboard are in docs/WALKTHROUGH-SCRIPT.md. No voice-over or music yet.
+A 73-second interactive demo of the owner journey on a sample business, in seven chapters — intro and request, analysis, the free plan, creative concepts (one chosen and edited), review and approval, results with a recommendation, and the end screen "Your AI Advertising Team Is Ready." with Build My Free Ad Plan — drawn with MAIRO's own components driven by the clock, with a cursor that finds its targets in the rendered screens and a camera that follows, in 16:9 and 9:16; captions on by default carrying the written script, play, pause, replay, a position slider, keyboard control and a still version for reduced motion; plus silent MP4 renders of it and of the landing story, with posters and WebVTT captions, made by video/render.mjs from the same components. The script and storyboard are in docs/WALKTHROUGH-SCRIPT.md. No voice-over or music yet.
 
 **Routes:** `/`
 

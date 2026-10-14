@@ -56,7 +56,7 @@ function StageInput({ ex, t, compact }: { ex: Example; t: number; compact: boole
         {caret && <span className="ml-[1px] inline-block h-[15px] w-[2px] translate-y-[2px]" style={{ background: INK }} />}
       </span>
       <span className="shrink-0 rounded-full px-4 py-2 text-[12.5px] font-semibold" style={{ ...primary, transform: pressed ? "scale(0.94)" : "none" }}>
-        {compact ? "Free plan" : "See Your Free Plan"}
+        {compact ? "Free plan" : "Build My Free Ad Plan"}
       </span>
     </div>
   );
@@ -456,7 +456,7 @@ function InviteCard({ drawButton }: { drawButton: boolean }) {
       {drawButton && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ height: INVITE_BUTTON_HEIGHT }}>
           <span className="flex items-center gap-2 rounded-full px-6 text-[15px] font-semibold" style={{ ...primary, boxShadow: "0 14px 36px -14px rgba(91,63,217,0.8)" }}>
-            See Your Free Plan <span aria-hidden>→</span>
+            Build My Free Ad Plan <span aria-hidden>→</span>
           </span>
         </div>
       )}
