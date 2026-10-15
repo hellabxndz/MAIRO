@@ -181,7 +181,7 @@ export async function loadConsole(organizationId: string, userName: string, days
     firstCampaignState(organizationId),
     suggestedAdsGate(organizationId).catch(() => null),
     db.lead.aggregate({ where: { organizationId, ...fromAds, createdAt: { gte: since }, valueCents: { not: null } }, _sum: { valueCents: true } }),
-    db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } }, orderBy: [{ rank: "asc" }, { createdAt: "asc" }], take: 4, select: { id: true, title: true, recommended: true, status: true, revisions: { orderBy: { version: "desc" }, take: 1, select: { hook: true, cta: true } } } }),
+    db.adAngle.findMany({ where: { organizationId, angleKind: { not: null }, status: { notIn: ["ARCHIVED", "REJECTED"] } }, orderBy: [{ rank: "asc" }, { createdAt: "asc" }], take: 4, select: { id: true, title: true, recommended: true, status: true, revisions: { orderBy: { version: "desc" }, take: 1, select: { hook: true, cta: true, source: true } } } }),
   ]);
   const metaConnected = Boolean(meta);
   const billing = metaConnected ? await fetchMetaBillingStatus(organizationId).catch(() => null) : null;
@@ -302,7 +302,8 @@ export async function loadConsole(organizationId: string, userName: string, days
       key: `a:${a.id}`,
       headline: a.revisions[0]?.hook ?? a.title,
       caption: a.recommended ? "Suggested · best first test" : "Suggested direction",
-      kind: (a.status === "APPROVED" ? "approved" : pictureFor.has(a.id) ? "draft" : "concept") as CreativeTileData["kind"],
+      // Approved; a finished picture waiting for the owner's review; the owner's own edit; or MAIRO's suggestion, untouched.
+      kind: (a.status === "APPROVED" ? "approved" : pictureFor.has(a.id) ? "review" : a.revisions[0]?.source === "owner" ? "draft" : "suggested") as CreativeTileData["kind"],
       imageUrl: pictureFor.get(a.id) ?? null,
       label: a.title,
       href: "/dashboard/creatives/suggested",

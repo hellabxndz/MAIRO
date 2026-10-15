@@ -12,8 +12,13 @@ export type CreativeTileData = {
   key: string;
   headline: string;
   caption: string;
-  /** What the tile is. "concept" has no picture yet. */
-  kind: "live" | "approved" | "draft" | "concept";
+  /**
+   * Where it stands: MAIRO's suggestion as it wrote it ("suggested"), the
+   * owner's edit ("draft"), a finished picture waiting for review ("review"),
+   * approved, or running in a live ad. "concept" is a direction with no
+   * picture yet, where the stage isn't known.
+   */
+  kind: "suggested" | "draft" | "review" | "approved" | "live" | "concept";
   imageUrl: string | null;
   /** A demonstration's drawn illustration in place of a picture — only ever sample artwork. */
   art?: ReactNode;
@@ -22,9 +27,11 @@ export type CreativeTileData = {
 };
 
 const KIND: Record<CreativeTileData["kind"], { tone: PillTone; word: string }> = {
-  live: { tone: "live", word: "In a live ad" },
+  suggested: { tone: "violet", word: "AI recommendation" },
+  draft: { tone: "muted", word: "Draft" },
+  review: { tone: "warn", word: "Ready for review" },
   approved: { tone: "blue", word: "Approved" },
-  draft: { tone: "violet", word: "Draft" },
+  live: { tone: "live", word: "Running" },
   concept: { tone: "muted", word: "Concept" },
 };
 

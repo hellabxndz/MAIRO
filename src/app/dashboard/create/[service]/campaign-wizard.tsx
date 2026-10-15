@@ -616,7 +616,8 @@ const SPECIAL_LABEL: Record<string, string> = {
   ISSUES_ELECTIONS_POLITICS: "Politics or social issues",
 };
 
-function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mode: "simple" | "advanced"; detailed?: boolean }) {
+/** Everything the campaign will be, in plain words — beside each step, and in full before launch. Exported for the product clips. */
+export function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPlan; mode: "simple" | "advanced"; detailed?: boolean }) {
   const spend = plannedSpend(plan);
   const goal = plan.goal ? goalOption(plan.goal) : null;
   const destination = plan.goal && plan.destinationType

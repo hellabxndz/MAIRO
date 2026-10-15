@@ -67,8 +67,8 @@ export function ScaledFrame({ width, minScale, minWidth = 400, maxHeight, childr
 }
 
 /** The app's frame: sidebar and top bar exactly as the signed-in app draws them. */
-export function DemoFrame({ view, children, sidebar = true, label, sampleLabel = true }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string; /** Off where the surrounding demo already carries the label (the walkthrough). */ sampleLabel?: boolean }) {
-  const active = ACTIVE[view];
+export function DemoFrame({ view, children, sidebar = true, label, sampleLabel = true, active: activeHref, owner = "Dana", advanced = false }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string; /** Off where the surrounding demo already carries the label (the walkthrough). */ sampleLabel?: boolean; /** The sidebar entry lit, when it isn't the view's own — a clip moving through the app. */ active?: string; /** The signed-in owner's first name in the top bar. */ owner?: string; /** Advanced mode lit in the top bar's switch. */ advanced?: boolean }) {
+  const active = activeHref ?? ACTIVE[view];
   return (
     // A picture of the product to assistive technology — one label, nothing inside to tab to.
     <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(164,172,195,0.16)", background: "#07080d", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(47,107,255,0.12), 0 60px 140px -60px rgba(47,107,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
@@ -79,7 +79,7 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
             <span className="mb-4 flex min-h-[38px] items-center justify-center gap-2 rounded-xl text-[13px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-lift)" }}>
               <span aria-hidden>＋</span> Create
             </span>
-            <nav className="flex flex-col gap-0.5">
+            <nav data-nav className="flex flex-col gap-0.5">
               {PRIMARY_NAV.map((i) => (
                 <NavRowView key={i.href} item={i} active={i.href === active} />
               ))}
@@ -95,12 +95,12 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
           <div aria-hidden className="flex items-center justify-end gap-3 px-4 pb-2 pt-12 @2xl/frame:px-7 @2xl/frame:pt-5">
             <span className="rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3 py-1.5 text-[12px] font-medium text-white">✨ Ask Alex</span>
             <span className="flex rounded-full border p-0.5 text-[11px]" style={{ borderColor: "var(--mairo-line)" }}>
-              <span className="rounded-full px-3 py-1 text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>Simple</span>
-              <span className="px-3 py-1 text-faint">Advanced</span>
+              <span className={`rounded-full px-3 py-1 ${advanced ? "text-faint" : "text-white"}`} style={advanced ? undefined : { backgroundImage: "var(--mairo-ramp)" }}>Simple</span>
+              <span className={`rounded-full px-3 py-1 ${advanced ? "text-white" : "text-faint"}`} style={advanced ? { backgroundImage: "var(--mairo-ramp)" } : undefined}>Advanced</span>
             </span>
             <span className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[12px] text-white" style={{ borderColor: "var(--mairo-line)" }}>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium" style={{ backgroundImage: "var(--mairo-ramp)" }}>D</span>
-              Dana
+              <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium" style={{ backgroundImage: "var(--mairo-ramp)" }}>{owner.charAt(0)}</span>
+              {owner}
             </span>
           </div>
           <div className="@container px-4 pb-5 @2xl/frame:px-7 @2xl/frame:pb-7">

@@ -51,6 +51,8 @@ export type PlanStory = {
   forWho: string;
   outcome: string;
   highlights: string[];
+  /** The same facts as labelled rows, for a plan card that reads like a comparison. */
+  rows: { label: string; value: string }[];
   modes: string[];
   featured: boolean;
 };
@@ -81,6 +83,15 @@ export function planStories(): PlanStory[] {
       forWho: p.spendGuidance,
       outcome: OUTCOME[t],
       highlights,
+      rows: [
+        { label: "Campaigns", value: Number.isFinite(e.campaign_limit) ? `Up to ${e.campaign_limit} at a time` : "Unlimited" },
+        { label: "AI images", value: `${e.studio_credits_monthly} credits a month (about ${pictures(e.studio_credits_monthly)} pictures)` },
+        { label: "AI assistance", value: e.autopilot ? "Plans, builds and checks daily — Full Autopilot if you choose it" : e.auto_optimize ? "Plans, builds and checks daily — routine fixes if you switch on AI Assist" : "Plans, builds and checks daily; every change waits for you" },
+        { label: "Approvals", value: "Launches and total-budget increases always wait for you" },
+        { label: "Results", value: e.advanced_analytics ? "Plain English, plus every ad side by side" : "In plain English" },
+        ...(e.social_posting ? [{ label: "Social", value: metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves" }] : []),
+        ...(prioritySupport(t) ? [{ label: "Support", value: "Priority support" }] : []),
+      ],
       modes: automationModes(t).map((l) => levelInfo(l).label),
       featured: Boolean(p.featured),
     };

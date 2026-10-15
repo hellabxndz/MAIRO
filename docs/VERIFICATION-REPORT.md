@@ -145,6 +145,49 @@ Evidence: `check:strategy` (11), `check:plan-writing` (10), `check:report` (20),
 
 New database migration: **`20261119120000_free_ad_plans`** (the `FreeAdPlan` table). `vercel-build` applies it on the next push.
 
+## F. Website, product demos and dashboard redesign (15 October)
+
+The brief: a complete redesign around short videos of MAIRO in use at every
+stage. Statuses as above — **Complete** means built, covered by checks and
+walked through in a browser locally; it never means "seen live".
+
+**About the videos.** Every video on the homepage is a **render of MAIRO's
+own components**, captured frame by frame — not a screen recording of a
+person using a live account. No recording could be made honestly here: there
+is no AI key, no connected Meta account and no image model in this
+environment, and fixture output can't be shown as live AI. What each clip is
+drawn from, and what is a composition rather than a page, is listed in
+`docs/PRODUCT-CLIPS.md`. Every frame says "Product demo · fictional business ·
+sample data".
+
+| Part of the brief | Status | Evidence | Left |
+|---|---|---|---|
+| 1. Design system: midnight and navy, electric blue, a little cyan, Geist and Inter, no purple | **Complete** (local) | Palette remapped across the site and the app (no purple, violet-as-purple, fuchsia, pink or indigo left); headings in Geist, public reading text in Inter; restrained gradients | Owner's eye on the live look |
+| 2. Hero: "Your next ad strategy, built by AI.", the copy, a compact conversational start, the button and trust line, an animated plan demo, its own phone layout | **Complete** (local) | `hero-starter.tsx`, `hero-plan-demo.tsx`; `hero-e2e.js` **28 / 28** (website, Instagram, Instagram login wall, no website at 390, reduced motion, pause) | — |
+| 3. Product film (60–90 s), with the final scene and button | **Complete** (local), **not a recording** | `film` clip, 74 s, 16:9 and 9:16, captions; `check:clips` | A licensed voice-over and music; real screen recordings to sit beside it |
+| 4. Seven demo sections, each with a headline, a paragraph, a large clip and a CTA, alternating | **Complete** (local), **not recordings** | `creative`, `understand`, `campaign`, `team`, `dashboard`, `optimize`, `results` clips; `DemoSection` | As above |
+| 5. Creative showcase: many kinds of business, controllable, swipeable, labelled | **Complete** (local) | Nine sample ads for fictional brands, drawn here, each "Sample creative"; arrows on a computer, swipe on a phone | Real photography or real MAIRO-made images, if wanted (see `docs/PRODUCT-CLIPS.md`) |
+| 6. Dashboard: the sidebar order, "Your business at a glance.", the date-range chart, the AI Action Center, five creative statuses, Simple and Advanced | **Complete** (local) | New sidebar: Overview, Campaigns, Creative Studio, Performance, AI Team, Recommendations, Approvals, Results, Settings (existing routes); creative tiles read AI recommendation, Draft, Ready for review, Approved or Running from the records; behaviour unchanged | — |
+| 7. Videos play only in view, muted, lazily, with controls, captions, a poster and reduced-motion support; no scroll-jacking | **Complete** (local) | `demo-video.tsx`; `videos.js` **53 / 53** at 1440, 768 and 390 (nothing loads until near, poster first, plays muted in view, 9:16 file on a phone, captions on and off, pause and play, paused when scrolled away, transcript, film captions track), with reduced motion (never starts by itself) and in a browser without H.264 (the clip is drawn live instead) | — |
+| 8. Varied full-width showcases and the before/after | **Complete** (local) | Film full width, sides alternating, `BeforeAfter` with the brief's two lines | — |
+| 9. Conversion: "Your strategy is ready. Let MAIRO put it to work.", Activate Your AI Advertising Team, Explore Plans, fee kept apart from ad spend | **Complete** (local) | Homepage block and the free plan's report | — |
+| 10. Pricing from the source of truth, with a recommended plan | **Complete** (local) | Plan cards as rows (campaigns, AI images, AI assistance, approvals, results, extras) built from the entitlements; Growth recommended; prices unchanged | — |
+| 13. Honesty: Meta only, no AI video, no auto social publishing, concepts vs images vs drafts vs approved vs live, no invented proof | **Complete** (local) | `check:clips` scans every caption; the homepage says what MAIRO doesn't do | — |
+| 14. Video assets: audit, reuse, render, posters, subtitles, phone versions; report what needs recording | **Partial** | 8 clips × 2 compositions (16:9 and 9:16) rendered with WebP posters and WebVTT captions, about 19 MB in all; `check:clips` **7 / 7**; frames reviewed by eye, and the two framing faults found (a cropped recommendation card, the builder touching the frame's edges) fixed and re-rendered; the older walkthrough is kept for `/landing/classic` | Screen recordings in a demo account, real MAIRO images, voice-over and music (`docs/PRODUCT-CLIPS.md`) |
+
+**Evidence for this section (15 October, local).** `npm run audit`
+**83 / 83** suites; `tsc` and `eslint` clean; production build passes (100
+pages). In a browser on the dev server: `videos.js` **53 / 53**;
+`hero-e2e.js` **28 / 28**; `generator.js` **151 / 151** (its conversion check
+updated to the brief's new paragraph); `a11y2.js` **13 / 13** (reduced
+motion, keyboard to the hero form with a focus ring, one h1, no duplicate
+ids, every image and control named, every player with labelled controls and
+a transcript); every internal link and anchor resolves (`links.js`, 65
+links); the homepage at 1440, 768, 412 and 390 has no sideways scroll and no
+page errors. The headless browser here has no H.264, so the player's file
+path was tested with VP9 copies of the same clips; real browsers play the
+MP4s.
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already
@@ -179,13 +222,17 @@ New database migration: **`20261119120000_free_ad_plans`** (the `FreeAdPlan` tab
   can read it; that the browser remembers it with a cookie so it can join the
   account; that unclaimed plans are deleted after 30 days; and that the
   visitor's facts go to Anthropic to write the plan. Please have it reviewed.
+- **Privacy page — button name.** The sentence about when a free plan is
+  kept now names the button by its new label, "Activate Your AI Advertising
+  Team" (it was "Put MAIRO to Work"). The meaning is unchanged; please include
+  it in the legal review.
 - **No price, plan or subscription change.** Starter $149.99 with a 7-day
   trial, Growth $239.99 and Scale $499.99 are as they were.
 
 ## D. What's needed from the owner
 
-1. **"push"**, to deploy the 17 local commits to Vercel Production. This
-   applies the three migrations listed above.
+1. Nothing to push by hand: since 15 October verified work is pushed to
+   `claude/myro-ad-platform-u3ynfe` (and so deployed) as it's finished.
 2. **Allow `mairo-three.vercel.app`** in this environment's network settings
    (Network access → Allowed domains). The live audit can then be done in a
    browser, which this report could not do.

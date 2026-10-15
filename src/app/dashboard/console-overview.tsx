@@ -108,6 +108,7 @@ export async function ConsoleOverview({
           <AskTeam name={assistantNameOf(org?.assistantName)} />
         )}
 
+        <h2 className="pt-1 text-[clamp(20px,2.2vw,26px)] font-semibold tracking-[-0.02em] text-white">Your business at a glance.</h2>
         <MetricStrip metrics={c.metrics} period={c.period} />
 
         <ActionCenter

@@ -36,7 +36,7 @@ export function ConsoleHero() {
           </div>
 
           <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px]">
-            <a href="#walkthrough" onClick={() => track({ name: "hero_cta", props: { cta: "watch", variant: heroVariant() } })} className="inline-flex min-h-[44px] items-center gap-2.5 font-medium text-white/80 transition hover:text-white">
+            <a href="#film" onClick={() => track({ name: "hero_cta", props: { cta: "watch", variant: heroVariant() } })} className="inline-flex min-h-[44px] items-center gap-2.5 font-medium text-white/80 transition hover:text-white">
               <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20">
                 <svg viewBox="0 0 12 12" className="ml-0.5 h-2.5 w-2.5 fill-white">
                   <path d="M2 1.2v9.6L10.5 6z" />

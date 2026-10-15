@@ -87,6 +87,7 @@
     "check:plan-writing": "tsx scripts/check-plan-writing.ts",
     "check:saved-plan": "tsx scripts/check-saved-plan.ts",
     "check:report": "tsx scripts/check-report.ts",
+    "check:clips": "tsx scripts/check-clips.ts",
     "check:tracking-setup": "tsx scripts/check-tracking-setup.ts",
     "check:suggested-ads": "tsx scripts/check-suggested-ads.ts",
     "check:experiments": "tsx scripts/check-experiments.ts",

@@ -48,10 +48,11 @@ const LAST_KEY = "mairo:plan:last:v1";
 const TEMPLATES_OFF: Writing = { source: { by: "templates", why: "off" }, plan: null, dropped: [], filled: 0 };
 
 type Last = { plan: SavedPlan; token: string | null; at: string };
-type StageState = "waiting" | "working" | "done";
-type Stage = { label: string; state: StageState; detail: string | null };
+export type StageState = "waiting" | "working" | "done";
+export type Stage = { label: string; state: StageState; detail: string | null };
 
-const STAGES = [
+/** The six stages, in order — the product clips show them too. */
+export const STAGES = [
   "Understanding your business",
   "Identifying advertising opportunities",
   "Building your Meta advertising strategy",
@@ -804,7 +805,8 @@ function WhatHappensNext() {
   );
 }
 
-function Running({ stages, headingRef, progress }: { stages: Stage[]; headingRef: RefObject<HTMLHeadingElement | null>; progress: string | null }) {
+/** While the plan is made: the six stages, each ticked when its work is done. Exported for the product clips. */
+export function Running({ stages, headingRef, progress }: { stages: Stage[]; headingRef: RefObject<HTMLHeadingElement | null>; progress: string | null }) {
   const now = stages.find((s) => s.state === "working");
   return (
     <section aria-labelledby="plan-running" className="mx-auto max-w-[640px]">

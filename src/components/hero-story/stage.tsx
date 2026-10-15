@@ -11,7 +11,7 @@ import { BusinessArt } from "./art";
 // Everything visible is labelled sample data. Nothing here is clickable: it's
 // a picture of the product, kept apart from the real preview controls.
 
-export const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(167,139,250,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(47,107,255,0.06)" };
+export const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(143,184,255,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(47,107,255,0.06)" };
 
 export function Layer({ b, children, style, className = "" }: { b: Box; children: ReactNode; style?: CSSProperties; className?: string }) {
   if (b.o <= 0.001) return null;
@@ -83,7 +83,7 @@ export function InputPill({ ex, t, invite = false }: { ex: Example; t: number; i
   const caret = !invite && Math.floor(t / 450) % 2 === 0;
   const pressed = !invite && t > 2550 && t < 2800;
   return (
-    <div className="flex h-full items-center gap-2 rounded-full px-2 pl-4" style={{ ...surface, borderColor: "rgba(167,139,250,0.4)" }}>
+    <div className="flex h-full items-center gap-2 rounded-full px-2 pl-4" style={{ ...surface, borderColor: "rgba(143,184,255,0.4)" }}>
       <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#bcd4ff]">MAIRO</span>
       <span className="min-w-0 flex-1 truncate text-[14px] text-white">
         {typed || <span className="text-white/45">Enter your business website</span>}
@@ -100,7 +100,7 @@ export function ConceptCard({ ex, i, t, selected, ringAt = 8000, hook }: { ex: E
   const c = ex.concepts[i];
   const ring = selected ? reveal(t, ringAt, ringAt + 600) : 0;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white text-[#111]" style={{ boxShadow: `0 24px 60px -24px rgba(0,0,0,0.9), 0 0 0 ${3 * ring}px rgba(167,139,250,${0.9 * ring})` }}>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white text-[#111]" style={{ boxShadow: `0 24px 60px -24px rgba(0,0,0,0.9), 0 0 0 ${3 * ring}px rgba(143,184,255,${0.9 * ring})` }}>
       <div className="relative min-h-0 flex-[1.15]">
         <BusinessArt type={ex.type} variant={c.art} className="absolute inset-0 h-full w-full" />
         <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">{c.format}</span>

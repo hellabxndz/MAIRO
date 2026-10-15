@@ -49,16 +49,28 @@ export const OWNER_TOUR: Step[] = [
       "Your results in plain numbers — and an Advanced view with every advertising metric, for when you want to dig in.",
   },
   {
-    target: "nav:/dashboard/coach",
-    title: "AI Recommendations",
+    target: "nav:/dashboard/team",
+    title: "AI Team",
     body:
-      "What your AI team found in your results and what it proposes, with the evidence for each — and the team itself: eight AI specialties and what each has really done. Ask them anything in plain English.",
+      "Eight AI specialties of one system, each with what it has really done and when it checks next. Ask them anything in plain English.",
+  },
+  {
+    target: "nav:/dashboard/coach",
+    title: "Recommendations",
+    body:
+      "What your AI team found in your results and what it proposes, with the evidence for each.",
   },
   {
     target: "nav:/dashboard/decisions",
     title: "Approvals",
     body:
       "Everything waiting for your say-so: launches, plans and the changes your AI team suggests, with the numbers behind them. Nothing changes until you approve.",
+  },
+  {
+    target: "nav:/dashboard/reports",
+    title: "Results",
+    body:
+      "What your ads achieved, from Meta's figures to the sales and leads you confirm — with your weekly and monthly summaries.",
   },
   {
     target: "nav:/dashboard/settings",

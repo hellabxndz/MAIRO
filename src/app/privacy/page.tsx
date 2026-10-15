@@ -44,8 +44,8 @@ export default function PrivacyPage() {
               and reads only what Instagram shows anyone there — the profile&apos;s name, its bio and the
               link in it. It reads no posts, followers, messages or insights, can&apos;t see private
               profiles, and keeps nothing: what it read goes back to your browser. What you type about your business, and
-              the plan built from it, stay in your browser unless you press Save, Share or Put MAIRO to
-              Work on the free ad plan: then we keep that plan — your answers and what MAIRO wrote — under
+              the plan built from it, stay in your browser unless you press Save, Share or Activate Your
+              AI Advertising Team on the free ad plan: then we keep that plan — your answers and what MAIRO wrote — under
               a private link that anyone you give it to can open, and your browser remembers it so it can
               join the account you create. A saved plan that never joins an account is deleted after 30
               days. When MAIRO&apos;s AI writes your free ad plan or refines an ad concept, what you typed

@@ -402,12 +402,12 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
       {/* The step from the free plan to MAIRO doing the work. */}
       <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(47,107,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(53,108,255,0.16), transparent 60%), linear-gradient(170deg,#141833,#0b0d1a)" }}>
         <h2 id="work-title" className="max-w-[760px] text-[clamp(26px,4vw,42px)] font-semibold leading-[1.06] tracking-[-0.035em] text-white [text-wrap:balance]">
-          {actions ? "Your Strategy Is Ready. Now Let MAIRO Bring It to Life." : "Want a plan like this for your business?"}
+          {actions ? "Your strategy is ready. Let MAIRO put it to work." : "Want a plan like this for your business?"}
         </h2>
         <p className="mt-3 max-w-[720px] text-[15.5px] leading-relaxed text-white/72">
           {actions
-            ? "You've seen what MAIRO recommends for your business. Now put your AI advertising team to work creating, launching, analyzing, and improving your campaigns."
-            : "Tell MAIRO what your business sells, choose your goal and monthly ad budget, and see how your AI advertising team would grow your business. Free, with no card."}
+            ? "Go from recommendations to advertising campaigns with your AI team managing the workflow."
+            : "Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free."}
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
@@ -430,7 +430,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           {actions ? (
             <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
-              {actions.working ? "Saving your strategy…" : "Put MAIRO to Work →"}
+              {actions.working ? "Saving your strategy…" : "Activate Your AI Advertising Team →"}
             </button>
           ) : (
             <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
@@ -438,7 +438,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </Link>
           )}
           <Link href="/#pricing" className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/45">
-            Explore MAIRO Plans
+            Explore Plans
           </Link>
         </div>
         <p className="mt-5 max-w-[760px] text-[13px] leading-relaxed text-white/55">

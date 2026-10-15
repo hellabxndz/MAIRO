@@ -1,11 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { PlanConcept } from "@/lib/preview/plan-writing";
 
 // One ad concept as it would sit in a Facebook or Instagram feed: the words
 // MAIRO wrote, the button, and — where the picture goes — the visual
 // direction, labelled as a concept. No picture is made in the free plan, so
-// none is shown; finished creatives come with a subscription.
+// none is shown; finished creatives come with a subscription. A product demo
+// can pass its sample artwork as `image`, which is labelled where it sits.
 
 export type Placement = "facebook" | "instagram";
 
@@ -14,6 +16,16 @@ function Avatar({ name }: { name: string }) {
     <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-white">
       {name.trim().charAt(0).toUpperCase() || "M"}
     </span>
+  );
+}
+
+/** A picture where the concept's visual direction would be — in demos, sample artwork, labelled. */
+function Picture({ image, label, tall }: { image: ReactNode; label: string; tall: boolean }) {
+  return (
+    <div className={`relative overflow-hidden [&>svg]:h-full [&>svg]:w-full ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`}>
+      {image}
+      <span className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white/90">{label}</span>
+    </div>
   );
 }
 
@@ -29,7 +41,7 @@ function VisualConcept({ c, tall }: { c: PlanConcept; tall: boolean }) {
   );
 }
 
-export function AdMock({ c, business, placement, domain }: { c: PlanConcept; business: string; placement: Placement; domain: string | null }) {
+export function AdMock({ c, business, placement, domain, image, imageLabel = "Sample image" }: { c: PlanConcept; business: string; placement: Placement; domain: string | null; image?: ReactNode; imageLabel?: string }) {
   if (placement === "instagram") {
     const handle = business.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 24) || "yourbusiness";
     return (
@@ -42,7 +54,7 @@ export function AdMock({ c, business, placement, domain }: { c: PlanConcept; bus
           </div>
           <span aria-hidden className="text-[18px] leading-none text-[#737373]">···</span>
         </div>
-        <VisualConcept c={c} tall />
+        {image ? <Picture image={image} label={imageLabel} tall /> : <VisualConcept c={c} tall />}
         <div className="flex items-center justify-between border-b border-[#efefef] bg-[#f5f6ff] px-3 py-2.5">
           <span className="text-[13px] font-semibold text-[#3b31c9]">{c.cta}</span>
           <span aria-hidden className="text-[14px] text-[#3b31c9]">›</span>
@@ -64,7 +76,7 @@ export function AdMock({ c, business, placement, domain }: { c: PlanConcept; bus
         <span aria-hidden className="text-[18px] leading-none text-[#65676b]">···</span>
       </div>
       <p className="px-3 pb-3 pt-2 text-[13.5px] leading-snug [text-wrap:pretty]">{c.primaryText}</p>
-      <VisualConcept c={c} tall={false} />
+      {image ? <Picture image={image} label={imageLabel} tall={false} /> : <VisualConcept c={c} tall={false} />}
       <div className="flex items-center gap-3 bg-[#f0f2f5] px-3 py-2.5">
         <div className="min-w-0 flex-1">
           {domain && <p className="truncate text-[11px] uppercase tracking-wide text-[#65676b]">{domain}</p>}

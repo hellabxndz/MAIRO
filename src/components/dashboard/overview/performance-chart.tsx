@@ -153,8 +153,8 @@ export function PerformanceChart({
                 <stop offset="100%" stopColor="#8fb8ff" stopOpacity="0" />
               </linearGradient>
               <linearGradient id={`pc-bar-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8b6cff" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#6d4dff" stopOpacity="0.35" />
+                <stop offset="0%" stopColor="#4b8bff" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#2f6bff" stopOpacity="0.35" />
               </linearGradient>
             </defs>
 
@@ -208,7 +208,7 @@ export function PerformanceChart({
                 <rect x={pad.left + slot * i} y={pad.top} width={slot} height={innerH} fill="transparent" onMouseEnter={() => setHover(i)} />
               </g>
             ))}
-            {hover !== null && <line x1={xAt(hover)} x2={xAt(hover)} y1={pad.top} y2={pad.top + innerH} stroke="rgba(167,139,250,0.35)" strokeDasharray="3 3" pointerEvents="none" />}
+            {hover !== null && <line x1={xAt(hover)} x2={xAt(hover)} y1={pad.top} y2={pad.top + innerH} stroke="rgba(143,184,255,0.35)" strokeDasharray="3 3" pointerEvents="none" />}
           </svg>
         )}
 

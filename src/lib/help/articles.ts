@@ -132,7 +132,7 @@ export function helpArticles(): HelpArticle[] {
         { kind: "note", text: reading.publicNote! },
         { kind: "p", text: "Change the budget or try another goal and the plan follows. Save it to come back to it on this device, share its private link, or download it as a PDF from your browser's print dialog. A saved plan that never joins an account is deleted after 30 days." },
         { kind: "h", text: "2. Put MAIRO to work" },
-        { kind: "p", text: `Press Put MAIRO to Work and create a free account: your plan comes with it, and setup opens with your answers already filled in for you to confirm. Setup is saved as you go, so you can leave and pick up where you were on any device. It runs in stages: ${PHASES.map((p) => p.label).join(", ")}.` },
+        { kind: "p", text: `Press Activate Your AI Advertising Team and create a free account: your plan comes with it, and setup opens with your answers already filled in for you to confirm. Setup is saved as you go, so you can leave and pick up where you were on any device. It runs in stages: ${PHASES.map((p) => p.label).join(", ")}.` },
         { kind: "h", text: "3. Connect Meta and choose a plan" },
         { kind: "p", text: `To build real campaigns, connect the Meta ad account your business advertises from, and subscribe. ${fact("trial")}` },
         { kind: "h", text: "4. Approve, then launch" },

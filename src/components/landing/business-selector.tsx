@@ -74,7 +74,7 @@ export function BusinessSelector() {
             aria-selected={i === active}
             onClick={() => setActive(i)}
             className={`shrink-0 rounded-full border px-4 py-2 text-[13.5px] transition ${
-              i === active ? "border-violet-400/60 bg-violet-500/20 text-white shadow-[0_0_24px_-6px_rgba(139,92,246,0.8)]" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white"
+              i === active ? "border-violet-400/60 bg-violet-500/20 text-white shadow-[0_0_24px_-6px_rgba(47,107,255,0.8)]" : "border-white/10 text-white/65 hover:border-white/25 hover:text-white"
             }`}
           >
             {b.key}
@@ -97,7 +97,7 @@ export function BusinessSelector() {
         <p className="mt-5 text-[12.5px] text-white/50">{t.note}</p>
         <Link
           href={t.key === "Agency" ? "/for-freelancers" : "/sign-up"}
-          className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-6 py-3 text-[14px] font-medium text-white shadow-[0_12px_40px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-6 py-3 text-[14px] font-medium text-white shadow-[0_12px_40px_-12px_rgba(56,189,248,0.9)] transition hover:brightness-110"
         >
           {t.key === "Agency" ? "See agency plans" : "See Example Plan"} <span aria-hidden>→</span>
         </Link>

@@ -65,6 +65,15 @@ const I = {
       <path d="M3.6 13.6l3.8-3.8 3.4 3.4 2.4-2 3.2 3.2" />
     </>
   ),
+  // Three people: the AI team's specialties working together.
+  team: (
+    <>
+      <circle cx="10" cy="7" r="2.4" />
+      <circle cx="4.8" cy="8.6" r="1.8" />
+      <circle cx="15.2" cy="8.6" r="1.8" />
+      <path d="M6.4 15.6c0-2.2 1.6-3.8 3.6-3.8s3.6 1.6 3.6 3.8M2.2 15c0-1.6 1.1-2.8 2.6-2.8M17.8 15c0-1.6-1.1-2.8-2.6-2.8" />
+    </>
+  ),
   // A magnifier over a rising line: following results to their cause.
   coach: <path d="M9 15.5a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM13.4 13.4 17.5 17.5M6 11l2-2 1.4 1.4L12 7.6" />,
   analytics: (
@@ -151,22 +160,25 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 /* ----------------------------------------------------------------- the map */
 
 /**
- * The day-to-day destinations, deliberately few: Overview, Campaigns,
- * Creative Studio, Performance, AI Recommendations, Approvals, (Social
+ * The day-to-day destinations: Overview, Campaigns, Creative Studio,
+ * Performance, AI Team, Recommendations, Approvals, Results, (Social
  * Manager) — and Settings at the bottom. Everything else lives inside one of
  * them: leads inside Campaigns, the creative tools inside Creative Studio,
- * reports and activity inside Performance, the AI Team and the Performance
- * Coach inside AI Recommendations, the business profile, integrations,
+ * activity inside Performance, asking the team inside AI Team, the
+ * Performance Coach's findings inside Recommendations, the weekly and
+ * monthly reports inside Results, the business profile, integrations,
  * billing and account inside Settings. Every route still exists.
  */
 export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission"] },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
   { href: "/dashboard/creatives", label: "Creative Studio", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
-  { href: "/dashboard/analytics", label: "Performance", icon: <Icon d={I.analytics} />, also: ["/dashboard/reports", "/dashboard/activity"] },
-  // What the AI team found and proposes — the Coach's findings — with the team itself behind it.
-  { href: "/dashboard/coach", label: "AI Recommendations", icon: <Icon d={I.coach} />, also: ["/dashboard/team", "/dashboard/agents"] },
+  { href: "/dashboard/analytics", label: "Performance", icon: <Icon d={I.analytics} />, also: ["/dashboard/activity"] },
+  { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.team} />, also: ["/dashboard/agents"] },
+  // What the AI team found in the results and proposes — the Coach's findings.
+  { href: "/dashboard/coach", label: "Recommendations", icon: <Icon d={I.coach} /> },
   { href: "/dashboard/decisions", label: "Approvals", icon: <Icon d={I.decisions} /> },
+  { href: "/dashboard/reports", label: "Results", icon: <Icon d={I.reports} /> },
 ];
 
 /**

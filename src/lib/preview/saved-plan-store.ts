@@ -5,8 +5,8 @@ import { draftFromPlan, savedPlanSchema, UNCLAIMED_DAYS, type SavedPlan } from "
 
 // Where saved and shared free AI ad plans live (the FreeAdPlan table).
 //
-// A plan is stored only when the visitor presses Save, Share or Put MAIRO to
-// Work. Before an account it belongs to no business and is reachable only by
+// A plan is stored only when the visitor presses Save, Share or Activate Your
+// AI Advertising Team. Before an account it belongs to no business and is reachable only by
 // its unguessable link; once claimed — at sign-up, or saved while signed in —
 // it belongs to that business, which also opens setup with its answers for
 // the owner to confirm. Unclaimed plans are deleted after UNCLAIMED_DAYS.
@@ -43,7 +43,7 @@ export async function readSharedPlan(shareToken: string): Promise<{ plan: SavedP
 
 /**
  * Gives an unclaimed plan to a business — at sign-up, or when a signed-in
- * owner presses Put MAIRO to Work — and opens setup with its answers. A plan
+ * owner presses Activate Your AI Advertising Team — and opens setup with its answers. A plan
  * another business already claimed is never moved, and an expired one can't
  * be claimed.
  */

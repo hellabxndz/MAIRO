@@ -8,7 +8,7 @@ import { savedPlanSchema } from "@/lib/preview/saved-plan";
 import { savePlan } from "@/lib/preview/saved-plan-store";
 import { claimPendingPlan, rememberPendingPlan } from "@/lib/preview/pending-plan";
 
-// Save, Share and Put MAIRO to Work on the free AI ad plan. Stores the plan
+// Save, Share and Activate Your AI Advertising Team on the free AI ad plan. Stores the plan
 // only because the visitor pressed one of them, and answers with its private
 // link. Signed in (with a role that may change the business's plan), it's
 // saved into the business at once and setup opens with its answers; signed
@@ -16,7 +16,7 @@ import { claimPendingPlan, rememberPendingPlan } from "@/lib/preview/pending-pla
 // (lib/preview/pending-plan.ts) and the account created or signed in to next
 // takes it.
 //
-// POST { plan }          → { token, next }   save a new plan; `next` is where Put MAIRO to Work goes
+// POST { plan }          → { token, next }   save a new plan; `next` is where Activate Your AI Advertising Team goes
 // POST { claim: true }   → { claimed, next }   signed in now: take the plan this browser saved before (/onboarding/claim)
 
 const MAX_BYTES = 60_000;
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   if (signedIn && !(await deniedFor("business.edit"))) organizationId = await activeOrganizationId();
   const saved = await savePlan(parsed.data, organizationId);
   if (!organizationId) await rememberPendingPlan(saved.shareToken);
-  // Where Put MAIRO to Work goes next: sign-up (the plan follows), or setup — already filled in — for a business that hasn't finished it.
+  // Where Activate Your AI Advertising Team goes next: sign-up (the plan follows), or setup — already filled in — for a business that hasn't finished it.
   const intake = organizationId ? await db.onboardingIntake.findUnique({ where: { organizationId }, select: { id: true } }) : null;
   const next = !signedIn ? "/sign-up?from=plan" : organizationId && !intake ? "/onboarding" : "/dashboard";
   return NextResponse.json({ ok: true, token: saved.shareToken, savedToAccount: Boolean(organizationId), next });

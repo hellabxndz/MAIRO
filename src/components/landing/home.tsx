@@ -264,7 +264,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
     {/* ── Hero ─────────────────────────────────────────────────────── */}
           <section id="product" className="relative isolate scroll-mt-20 overflow-hidden pt-[104px] sm:pt-[120px]">
             {/* One soft glow behind the team — nothing that competes with it. */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_60%_at_74%_44%,rgba(109,77,255,0.14),transparent_70%),radial-gradient(ellipse_40%_40%_at_12%_8%,rgba(59,107,255,0.06),transparent_70%)]" />
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_60%_at_74%_44%,rgba(47,107,255,0.14),transparent_70%),radial-gradient(ellipse_40%_40%_at_12%_8%,rgba(59,107,255,0.06),transparent_70%)]" />
 
             <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10 lg:px-12">
               <div className="min-w-0">
@@ -542,7 +542,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
     <>
     {/* ── Final call ───────────────────────────────────────────────── */}
           <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(99,102,241,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(139,92,246,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
+            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(56,189,248,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(47,107,255,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
               <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
                 {story ? (
                   <>
@@ -659,14 +659,14 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                       ))}
                     </ul>
                   </div>
-                  <ul className="mt-5 flex-1 space-y-2 text-[13.5px] text-white/80">
-                    {plan.highlights.map((f) => (
-                      <li key={f} className="flex gap-2.5">
-                        <span aria-hidden className="mt-[3px] text-[11px] text-violet-300">✓</span>
-                        {f}
-                      </li>
+                  <dl className="mt-5 flex-1 divide-y divide-white/[0.07] border-y border-white/[0.07] text-[13.5px]">
+                    {plan.rows.map((r) => (
+                      <div key={r.label} className="flex gap-3 py-2.5">
+                        <dt className="w-[92px] shrink-0 text-white/50">{r.label}</dt>
+                        <dd className="min-w-0 text-white/85">{r.value}</dd>
+                      </div>
                     ))}
-                  </ul>
+                  </dl>
                   <Link
                     href={cta.href}
                     className={`mt-6 rounded-full py-3 text-center text-[14px] font-medium ${plan.featured ? PRIMARY : "border border-white/15 transition hover:border-white/35"}`}
