@@ -111,7 +111,7 @@ export function RisingLine({ className = "" }: { className?: string }) {
       <defs>
         <linearGradient id="cv-line" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="#6aa6ff" />
-          <stop offset="100%" stopColor="#a78bfa" />
+          <stop offset="100%" stopColor="#8fb8ff" />
         </linearGradient>
         <linearGradient id="cv-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#6aa6ff" stopOpacity="0.28" />

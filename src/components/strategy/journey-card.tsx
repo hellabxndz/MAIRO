@@ -13,7 +13,7 @@ export function FirstCampaignCard({ state }: { state: { launched: boolean; launc
           <p className="text-[15px] font-semibold text-white">Your approved plan is waiting to become your first campaign</p>
           <p className="mt-1 text-[13px] text-muted">Connect your account, make the final creatives, and press Launch when you&rsquo;re happy. Nothing spends before that.</p>
         </div>
-        <Link href="/dashboard/launch" className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110">
+        <Link href="/dashboard/launch" className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
           Continue setup
         </Link>
       </div>

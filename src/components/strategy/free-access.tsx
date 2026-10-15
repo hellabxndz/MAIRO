@@ -65,7 +65,7 @@ function ChooseButton({ approved }: { approved: boolean }) {
   return (
     <Link
       href={approved ? "/plan/activate" : "/plan"}
-      className="inline-flex min-h-[42px] items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110"
+      className="inline-flex min-h-[42px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110"
     >
       {approved ? "Choose a Plan" : "Review my free plan"}
     </Link>
@@ -167,9 +167,9 @@ export function FreeHome({
         <p className="mt-1 text-[18px] font-semibold text-white">{next.title}</p>
         <p className="mt-1 text-[14px] text-muted">{next.text}</p>
         {next.external ? (
-          <a href={next.href} className="mt-4 inline-flex min-h-[44px] items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110">{next.label}</a>
+          <a href={next.href} className="mt-4 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">{next.label}</a>
         ) : (
-          <Link href={next.href} className="mt-4 inline-flex min-h-[44px] items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110">{next.label}</Link>
+          <Link href={next.href} className="mt-4 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">{next.label}</Link>
         )}
       </div>
 

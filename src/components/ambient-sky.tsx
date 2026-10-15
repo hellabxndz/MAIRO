@@ -1,6 +1,6 @@
 // The environment behind the signed-in app, the auth screens and the legal
-// pages: MAIRO's night (#07080D) with violet light falling from above, a
-// cooler blue from the side, a hairline of light along the top edge, and a
+// pages: MAIRO's night (#05070D) with electric-blue light falling from above,
+// a faint cyan from the side, a hairline of light along the top edge, and a
 // faint grain so the dark reads as a material rather than a flat fill.
 //
 // The restraint is the point. A dashboard is somewhere you work, and a
@@ -15,7 +15,7 @@ const GRAIN =
 export function AmbientSky() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] bg-paper" style={{ backgroundImage: "var(--mairo-atmosphere)" }}>
-      <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(121,82,255,0.55),rgba(53,108,255,0.35),transparent)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(47,107,255,0.5),rgba(56,189,248,0.25),transparent)]" />
       <div className="absolute inset-0 opacity-[0.035] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
     </div>
   );

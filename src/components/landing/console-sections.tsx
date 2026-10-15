@@ -61,7 +61,7 @@ export function ConceptShowcase() {
               aria-pressed={pick === i}
               onClick={() => setPick(i)}
               className={`w-full rounded-[20px] border p-4 text-left transition ${pick === i ? "border-violet-400/60" : "hover:border-[color:var(--mairo-line-lit)]"}`}
-              style={{ borderColor: pick === i ? undefined : "var(--mairo-line)", background: pick === i ? "linear-gradient(165deg, rgba(121,82,255,0.14), rgba(14,17,33,0.7) 60%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}
+              style={{ borderColor: pick === i ? undefined : "var(--mairo-line)", background: pick === i ? "linear-gradient(165deg, rgba(47,107,255,0.14), rgba(14,17,33,0.7) 60%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}
             >
               <span className="flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">Concept {i + 1}</span>

@@ -44,7 +44,7 @@ export function GeneratingOverlay({ label = "Generating" }: { label?: string }) 
         <span
           aria-hidden
           className="mairo-spin absolute inset-2 rounded-full border-2 border-transparent"
-          style={{ borderTopColor: "var(--color-sky-400, #3d7dff)", borderRightColor: "var(--color-purple-400, #a78bfa)" }}
+          style={{ borderTopColor: "var(--color-sky-400, #3d7dff)", borderRightColor: "var(--color-purple-400, #8fb8ff)" }}
         />
         <span
           aria-hidden

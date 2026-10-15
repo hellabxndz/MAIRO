@@ -43,7 +43,7 @@ export function FreePlanDemo({ cta = { href: "/sign-up", label: "Get Started Wit
           <div className="mt-5 rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.06] p-4">
             <p className="text-[15px] font-semibold text-emerald-300">Plan Approved ✓</p>
             <p className="mt-1 text-[13px] text-white/70">Next: connect your ad account, then choose a MAIRO plan to activate it.</p>
-            <Link href={cta.href} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
+            <Link href={cta.href} className="mt-3 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
               {cta.label} <span aria-hidden>→</span>
             </Link>
           </div>
@@ -52,7 +52,7 @@ export function FreePlanDemo({ cta = { href: "/sign-up", label: "Get Started Wit
             <button type="button" onClick={() => setStage("edited")} disabled={edited} className="rounded-full border border-white/15 px-5 py-2.5 text-[14px] text-white/85 transition hover:border-white/35 disabled:opacity-50">
               Edit With MAIRO
             </button>
-            <button type="button" onClick={() => setStage("approved")} className="rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
+            <button type="button" onClick={() => setStage("approved")} className="rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110">
               Approve My Plan
             </button>
           </div>
@@ -63,7 +63,7 @@ export function FreePlanDemo({ cta = { href: "/sign-up", label: "Get Started Wit
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Ask MAIRO</p>
         {edited ? (
           <div className="mt-4 space-y-3">
-            <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-r from-[#4f7dff] to-[#7c5cff] px-4 py-2.5 text-[13.5px] text-white">
+            <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-gradient-to-r from-[#4f7dff] to-[#2f6bff] px-4 py-2.5 text-[13.5px] text-white">
               I want to spend $30/day and focus more on Instagram.
             </p>
             <div className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-[13.5px] text-white/90">

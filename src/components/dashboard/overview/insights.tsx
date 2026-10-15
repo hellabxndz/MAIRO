@@ -34,7 +34,7 @@ function Tile({ category, size = "md" }: { category: DecisionCategory; size?: "m
 }
 
 const SPARK = (
-  <svg viewBox="0 0 16 16" className="h-4 w-4 fill-[#a78bfa]" aria-hidden>
+  <svg viewBox="0 0 16 16" className="h-4 w-4 fill-[#8fb8ff]" aria-hidden>
     <path d="M8 0c.4 3.8 2.2 5.6 6 6-3.8.4-5.6 2.2-6 6-.4-3.8-2.2-5.6-6-6 3.8-.4 5.6-2.2 6-6z" transform="translate(0 2)" />
   </svg>
 );
@@ -122,7 +122,7 @@ export function Recommendations({ items, total, checkedAt }: { items: DecisionVi
                   <p className="mt-1 line-clamp-3 text-[12.5px] leading-snug text-muted">{d.noticed}</p>
                   <Link
                     href="/dashboard/decisions"
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#7c5cff] px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#2f6bff] px-3 py-1.5 text-[12px] font-medium text-white transition hover:brightness-110"
                   >
                     {ACTION_WORD[d.changes[0]?.type ?? "guide"] ?? "See details"} <span aria-hidden>→</span>
                   </Link>

@@ -24,7 +24,7 @@ export function AgentIcon({ role, size = 40 }: { role: AgentRole; size?: number 
     <span
       aria-hidden
       className="flex shrink-0 items-center justify-center rounded-2xl"
-      style={{ width: size, height: size, background: "linear-gradient(140deg, #7c5cff, #4f6bff)", boxShadow: "0 6px 16px -8px rgba(124,92,255,0.7)" }}
+      style={{ width: size, height: size, background: "linear-gradient(140deg, #2f6bff, #4f6bff)", boxShadow: "0 6px 16px -8px rgba(47,107,255,0.7)" }}
     >
       <svg viewBox="0 0 20 20" width={size * 0.5} height={size * 0.5} fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d={GLYPH[role]} />
@@ -37,7 +37,7 @@ export function AgentIcon({ role, size = 40 }: { role: AgentRole; size?: number 
 // in progress, and even then nothing spins or pulses — an animation would
 // suggest continuous processing the records can't back up.
 const TONE: Record<AgentState, { dot: string; text: string }> = {
-  WORKING: { dot: "#8b5cf6", text: "text-violet-bright" },
+  WORKING: { dot: "#3b82f6", text: "text-violet-bright" },
   MONITORING: { dot: "#10b981", text: "text-live" },
   WAITING: { dot: "#f59e0b", text: "text-warn" },
   COMPLETED: { dot: "#3b82f6", text: "text-blue-bright" },

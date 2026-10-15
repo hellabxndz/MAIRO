@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export function CoachCard({ top, count }: { top: { id: string; title: string; plain: string; severity: string } | null; count: number }) {
   return (
-    <section aria-labelledby="coach-card" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+    <section aria-labelledby="coach-card" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(47,107,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="coach-card" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Your AI Performance Coach</h2>
         <Link href="/dashboard/coach" className="text-[13px] text-muted hover:text-white">

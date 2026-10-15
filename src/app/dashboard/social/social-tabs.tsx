@@ -25,7 +25,7 @@ export function SocialTabs({ active }: { active: (typeof TABS)[number]["href"] |
           href={t.href}
           aria-current={t.href === active ? "page" : undefined}
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] transition ${
-            t.href === active ? "bg-[#7c5cff] text-white" : "text-white/65 hover:bg-white/[0.05] hover:text-white"
+            t.href === active ? "bg-[#2f6bff] text-white" : "text-white/65 hover:bg-white/[0.05] hover:text-white"
           }`}
         >
           {t.label}

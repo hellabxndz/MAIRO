@@ -143,7 +143,7 @@ export function WeeklyReport({
         <Glance c={data.glance.current} p={data.glance.previous} mode={mode} profitKnown={data.glance.profitKnown} word={word} />
       </ReportSection>
 
-      <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(124,92,255,0.16),transparent_55%),var(--color-field)] p-5">
+      <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(47,107,255,0.16),transparent_55%),var(--color-field)] p-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO summary</p>
         <p className="mt-2 text-[15.5px] leading-relaxed text-white/90">{mode === "advanced" ? data.summary.advanced : data.summary.simple}</p>
       </section>
@@ -195,7 +195,7 @@ export function WeeklyReport({
                   <p className="mt-1 text-[13px] text-white/80"><span className="text-violet-bright">Recommended:</span> {a.recommendation}</p>
                   {!clientFacing && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Link href={fixHref(a.decisionId, a.action)} className="inline-flex min-h-[38px] items-center rounded-lg bg-[#7c5cff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
+                      <Link href={fixHref(a.decisionId, a.action)} className="inline-flex min-h-[38px] items-center rounded-lg bg-[#2f6bff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
                         Fix with MAIRO →
                       </Link>
                       <Link
@@ -327,7 +327,7 @@ export function WeeklyReport({
           </dl>
           {data.budget.utilization !== null && (
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-              <div className="h-full rounded-full bg-gradient-to-r from-[#7c5cff] to-[#a78bfa]" style={{ width: `${Math.min(100, data.budget.utilization * 100)}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-[#2f6bff] to-[#8fb8ff]" style={{ width: `${Math.min(100, data.budget.utilization * 100)}%` }} />
             </div>
           )}
           {(data.budget.byPlacement.length > 0 || data.budget.testingCents) && (

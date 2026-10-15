@@ -105,7 +105,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             <div role="tablist" aria-label="Calendar view" className="inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
               {(["week", "month"] as const).map((v) => (
                 <Link key={v} role="tab" aria-selected={v === view} href={`/dashboard/social/calendar?view=${v}&from=${anchor}`}
-                  className={`rounded-full px-4 py-1.5 text-[13px] ${v === view ? "bg-[#7c5cff] text-white" : "text-white/65 hover:text-white"}`}>
+                  className={`rounded-full px-4 py-1.5 text-[13px] ${v === view ? "bg-[#2f6bff] text-white" : "text-white/65 hover:text-white"}`}>
                   {v === "week" ? "Week" : "Month"}
                 </Link>
               ))}

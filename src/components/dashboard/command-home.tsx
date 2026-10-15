@@ -18,7 +18,7 @@ const surface = { background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),
 
 export function HomeSection({ id, title, action, children, tint = false }: { id: string; title: string; action?: { href: string; label: string }; children: ReactNode; tint?: boolean }) {
   return (
-    <section aria-labelledby={id} className="rounded-[28px] p-6 sm:p-7" style={tint ? { background: "linear-gradient(160deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" } : surface}>
+    <section aria-labelledby={id} className="rounded-[28px] p-6 sm:p-7" style={tint ? { background: "linear-gradient(160deg, rgba(47,107,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" } : surface}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id={id} className={eyebrow}>{title}</h2>
         {action && (

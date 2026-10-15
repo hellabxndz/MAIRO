@@ -88,7 +88,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         )}
       </section>
 
-      <section aria-labelledby="brief" className="mt-8 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+      <section aria-labelledby="brief" className="mt-8 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(47,107,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
         <h2 id="brief" className={eyebrow}>Your Daily Brief</h2>
         <div className="mt-3">
           <DailyBrief brief={brief} now={now} timeZone={team.timeZone} />

@@ -140,7 +140,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
               <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Plan approved ✓</p>
               <p className="mt-2 text-[20px] font-semibold text-white">Connect your ad account</p>
               <p className="mt-1 text-[14px] text-muted">So MAIRO knows where your campaign will eventually run. You&rsquo;ll sign in with Facebook and choose your ad account and Facebook Page — keep every option switched on so MAIRO can build your campaign.</p>
-              <a href={connectHref("/plan/activate?connected=1")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
+              <a href={connectHref("/plan/activate?connected=1")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
                 {connected ? "Reconnect My Ad Account" : "Connect My Ad Account"}
               </a>
               <p className="mt-3 text-[13px] text-muted">Connecting your account does not launch anything or spend money.</p>
@@ -221,7 +221,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                             </div>
                           ))}
                         </dl>
-                        <Link href={`/plan/activate?skip=1&tier=${p.tier}#plans`} className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#7c5cff] px-4 text-[14px] font-medium text-white hover:brightness-110">
+                        <Link href={`/plan/activate?skip=1&tier=${p.tier}#plans`} className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#2f6bff] px-4 text-[14px] font-medium text-white hover:brightness-110">
                           Choose {p.name}
                         </Link>
                       </div>

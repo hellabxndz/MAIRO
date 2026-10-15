@@ -136,7 +136,7 @@ function Block({ block: b }: { block: HelpBlock }) {
 /** Where to go when the answer isn't here: the support address the legal pages use, and, signed in, the in-app routes. */
 export function HelpContact({ signedIn }: { signedIn: boolean }) {
   return (
-    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--mairo-line)] bg-gradient-to-br from-[#4f7dff]/[0.07] to-[#8b4dfb]/[0.09] p-6">
+    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--mairo-line)] bg-gradient-to-br from-[#4f7dff]/[0.07] to-[#2fa4ff]/[0.09] p-6">
       <h2 id="help-contact" className="text-[17px] font-semibold text-white">
         Didn&rsquo;t find the answer?
       </h2>

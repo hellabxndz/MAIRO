@@ -24,25 +24,25 @@ export function TeamConstellation() {
   return (
     <figure className="relative mx-auto w-full max-w-[560px]" aria-labelledby="team-figure-caption">
       <div className="relative aspect-square w-full">
-        <div aria-hidden className="absolute inset-[8%] rounded-full bg-[radial-gradient(closest-side,rgba(124,92,255,0.12),rgba(124,92,255,0.04)_60%,transparent)]" />
+        <div aria-hidden className="absolute inset-[8%] rounded-full bg-[radial-gradient(closest-side,rgba(47,107,255,0.12),rgba(47,107,255,0.04)_60%,transparent)]" />
         <svg aria-hidden viewBox="0 0 100 100" className="absolute inset-0 h-full w-full overflow-visible">
           <defs>
             <linearGradient id="tc-orbit" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0" stopColor="#7c5cff" stopOpacity="0.55" />
+              <stop offset="0" stopColor="#2f6bff" stopOpacity="0.55" />
               <stop offset="1" stopColor="#3b6bff" stopOpacity="0.35" />
             </linearGradient>
           </defs>
           {/* Spokes: every specialty works for the same business. */}
           {ORBIT.map((_, i) => {
             const a = (-90 + (360 / ORBIT.length) * i) * (Math.PI / 180);
-            return <line key={i} x1={50 + 21 * Math.cos(a)} y1={50 + 21 * Math.sin(a)} x2={50 + (R - 5) * Math.cos(a)} y2={50 + (R - 5) * Math.sin(a)} stroke="#7c5cff" strokeOpacity="0.16" strokeWidth="0.25" />;
+            return <line key={i} x1={50 + 21 * Math.cos(a)} y1={50 + 21 * Math.sin(a)} x2={50 + (R - 5) * Math.cos(a)} y2={50 + (R - 5) * Math.sin(a)} stroke="#2f6bff" strokeOpacity="0.16" strokeWidth="0.25" />;
           })}
           <circle cx="50" cy="50" r={R} fill="none" stroke="url(#tc-orbit)" strokeWidth="0.35" strokeDasharray="0.6 1.4" />
           {/* Budget Guardian: the ring around your money. */}
           <circle cx="50" cy="50" r="19.5" fill="rgba(15,157,107,0.05)" stroke="#0f9d6b" strokeOpacity="0.55" strokeWidth="0.45" />
           <circle cx="50" cy="50" r="17.6" fill="none" stroke="#0f9d6b" strokeOpacity="0.18" strokeWidth="0.25" />
           <g className="mairo-orbit" style={{ transformOrigin: "50px 50px" }}>
-            <circle cx="50" cy={50 - R} r="0.9" fill="#7c5cff" />
+            <circle cx="50" cy={50 - R} r="0.9" fill="#2f6bff" />
           </g>
         </svg>
 

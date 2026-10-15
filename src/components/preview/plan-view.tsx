@@ -379,7 +379,7 @@ export function PlanView({
             ) : (
               <>
                 <h3 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-                  Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+                  Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
                 </h3>
                 <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
@@ -525,7 +525,7 @@ export function ConceptCard({
   }
 
   return (
-    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-violet-400/50" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--mairo-line)", background: c.recommended ? "linear-gradient(165deg, rgba(121,82,255,0.12), rgba(14,17,33,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
+    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-violet-400/50" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--mairo-line)", background: c.recommended ? "linear-gradient(165deg, rgba(47,107,255,0.12), rgba(14,17,33,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">Concept {index + 1}</span>
         <Pill tone="muted">{c.label}</Pill>

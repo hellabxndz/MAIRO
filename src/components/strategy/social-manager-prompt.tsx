@@ -11,7 +11,7 @@ export function SocialManagerPrompt() {
         <p className="mt-1 text-[15px] font-semibold text-white">What do you want MAIRO to help your business accomplish?</p>
         <p className="mt-1 text-[13px] text-muted">Tell MAIRO the goal. It builds your social strategy and content plan, and you approve every post.</p>
       </div>
-      <Link href="/dashboard/social" className="inline-flex min-h-[42px] shrink-0 items-center rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">
+      <Link href="/dashboard/social" className="inline-flex min-h-[42px] shrink-0 items-center rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">
         Set my goal
       </Link>
     </div>

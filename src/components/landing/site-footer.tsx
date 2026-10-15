@@ -35,7 +35,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
   ];
   return (
     <footer className="relative border-t border-white/[0.07] px-5 py-16 sm:px-8">
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(121,82,255,0.5),rgba(53,108,255,0.3),transparent)]" />
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(47,107,255,0.5),rgba(53,108,255,0.3),transparent)]" />
       <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
           <Wordmark href={null} className="text-[18px]" />

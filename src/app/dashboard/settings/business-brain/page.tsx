@@ -103,7 +103,7 @@ export default async function BusinessBrainPage() {
         {s.verify && <VerifyFact field={s.verify.key} question={s.verify.question} list={BRAIN_FIELDS.find((d) => d.key === s.verify!.key)?.list ?? false} />}
 
         {askable.length > 0 && (
-          <section className={card} style={{ ...surface, borderColor: "rgba(124,92,255,0.4)" }} aria-labelledby="brain-improve" id="improve">
+          <section className={card} style={{ ...surface, borderColor: "rgba(47,107,255,0.4)" }} aria-labelledby="brain-improve" id="improve">
             <h2 id="brain-improve" className={eyebrow}>Improve MAIRO&rsquo;s understanding</h2>
             <p className="mt-2 text-[14px] text-white/85">
               Answer {askable.length} question{askable.length === 1 ? "" : "s"} to help MAIRO make better recommendations{s.goals.current ? ` for ${s.goals.current.label.toLowerCase()}` : ""}.

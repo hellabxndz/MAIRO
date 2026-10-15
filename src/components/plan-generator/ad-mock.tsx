@@ -19,7 +19,7 @@ function Avatar({ name }: { name: string }) {
 
 function VisualConcept({ c, tall }: { c: PlanConcept; tall: boolean }) {
   return (
-    <div className={`relative flex flex-col justify-between overflow-hidden p-4 text-white ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`} style={{ background: "radial-gradient(120% 90% at 85% 0%, rgba(121,82,255,0.55), transparent 60%), radial-gradient(90% 80% at 0% 100%, rgba(53,108,255,0.35), transparent 60%), linear-gradient(160deg,#151a36,#0b0d1a)" }}>
+    <div className={`relative flex flex-col justify-between overflow-hidden p-4 text-white ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`} style={{ background: "radial-gradient(120% 90% at 85% 0%, rgba(47,107,255,0.55), transparent 60%), radial-gradient(90% 80% at 0% 100%, rgba(53,108,255,0.35), transparent 60%), linear-gradient(160deg,#151a36,#0b0d1a)" }}>
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-full border border-white/25 bg-black/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/85">Visual concept</span>
         <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10.5px] text-white/80">{c.format}</span>

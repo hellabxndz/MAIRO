@@ -269,7 +269,7 @@ export function CampaignTable({
                                 : v.filter((k) => k !== c.key),
                             )
                           }
-                          className="accent-[#7c5cff]"
+                          className="accent-[#2f6bff]"
                         />
                         {c.label}
                       </label>
@@ -315,7 +315,7 @@ export function CampaignTable({
           </p>
           <Link
             href="/dashboard/create"
-            className="mt-4 inline-flex rounded-lg bg-[#7c5cff] px-4 py-2 text-[13px] font-medium text-white hover:brightness-110"
+            className="mt-4 inline-flex rounded-lg bg-[#2f6bff] px-4 py-2 text-[13px] font-medium text-white hover:brightness-110"
           >
             Create a campaign
           </Link>

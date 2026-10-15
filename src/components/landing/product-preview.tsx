@@ -153,8 +153,8 @@ function ResultsView() {
         <svg viewBox="0 0 300 80" className="mt-1 h-[72px] w-full" preserveAspectRatio="none" aria-hidden>
           <defs>
             <linearGradient id="pp-fill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#7c5cff" stopOpacity="0.28" />
-              <stop offset="1" stopColor="#7c5cff" stopOpacity="0" />
+              <stop offset="0" stopColor="#2f6bff" stopOpacity="0.28" />
+              <stop offset="1" stopColor="#2f6bff" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={`${line} L300,80 L0,80 Z`} fill="url(#pp-fill)" />

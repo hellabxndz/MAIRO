@@ -58,7 +58,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
           <p className="mt-3 text-[13px] text-muted">
             Saved: your goal and strategy{saved ? `, ${saved} post${saved === 1 ? "" : "s"}` : ""} and your posting history. Nothing scheduled will be published while Social Manager is paused.
           </p>
-          <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110">
+          <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
             {access.reason === "inactive" ? `Reactivate ${SCALE.name}` : `Upgrade back to ${SCALE.name}`}
           </Link>
         </div>
@@ -111,7 +111,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
           ))}
         </ul>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href={href} className="inline-flex min-h-[46px] items-center rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
+          <Link href={href} className="inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
             Upgrade to {SCALE.name}
           </Link>
           <span className="text-[13px] text-muted">{SCALE.tagline}</span>

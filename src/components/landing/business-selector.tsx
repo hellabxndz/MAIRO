@@ -97,7 +97,7 @@ export function BusinessSelector() {
         <p className="mt-5 text-[12.5px] text-white/50">{t.note}</p>
         <Link
           href={t.key === "Agency" ? "/for-freelancers" : "/sign-up"}
-          className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#8b4dfb] px-6 py-3 text-[14px] font-medium text-white shadow-[0_12px_40px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-6 py-3 text-[14px] font-medium text-white shadow-[0_12px_40px_-12px_rgba(99,102,241,0.9)] transition hover:brightness-110"
         >
           {t.key === "Agency" ? "See agency plans" : "See Example Plan"} <span aria-hidden>→</span>
         </Link>

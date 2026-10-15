@@ -171,7 +171,7 @@ function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType
           </>
         ) : (
           // A concept: its words and a direction for the picture — clearly not a photograph.
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(124,92,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(47,107,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
             <p className="text-[15px] font-semibold leading-snug text-white">“{d.words?.hook}”</p>
             <p className="text-[12px] text-muted">{failed ? "The last picture couldn't be made — no credits were used." : "Concept — no picture yet"}</p>
           </div>

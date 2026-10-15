@@ -24,7 +24,7 @@ export function AskTeam({ name }: { name: string }) {
     if (t) router.push(`/dashboard/agents?ask=${encodeURIComponent(t)}`);
   };
   return (
-    <section aria-labelledby="ask-team" className="rounded-[28px] border border-[color:var(--mairo-line-lit)] p-5 sm:p-6" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.08), rgba(var(--mairo-fg-rgb),0.01) 70%)" }}>
+    <section aria-labelledby="ask-team" className="rounded-[28px] border border-[color:var(--mairo-line-lit)] p-5 sm:p-6" style={{ background: "linear-gradient(160deg, rgba(47,107,255,0.08), rgba(var(--mairo-fg-rgb),0.01) 70%)" }}>
       <h2 id="ask-team" className="text-[15px] font-semibold text-white">Ask your AI team</h2>
       <p className="mt-1 text-[13px] text-muted">Ask in your own words. {name} answers from your real campaigns and business, and brings in the right specialist.</p>
       <form

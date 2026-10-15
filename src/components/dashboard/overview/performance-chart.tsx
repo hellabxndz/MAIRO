@@ -122,10 +122,10 @@ export function PerformanceChart({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-5 text-[12.5px] text-muted">
           <span className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#7c5cff]" /> {dual ? "Amount spent" : "Money spent"}
+            <span className="h-2.5 w-2.5 rounded-full bg-[#2f6bff]" /> {dual ? "Amount spent" : "Money spent"}
           </span>
           <span className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#4b8bff]" : "bg-[#c4b5fd]"}`} /> {dual ? countLabel : "Sales / Revenue"}
+            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#4b8bff]" : "bg-[#bcd4ff]"}`} /> {dual ? countLabel : "Sales / Revenue"}
           </span>
         </div>
         {!dual && (
@@ -149,8 +149,8 @@ export function PerformanceChart({
           <svg width={width} height={H} className="block" role="img" aria-label={dual ? `Amount spent and ${countLabel.toLowerCase()} over time` : "Money spent and sales over time"}>
             <defs>
               <linearGradient id={`pc-sales-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#a78bfa" stopOpacity="0" />
+                <stop offset="0%" stopColor="#8fb8ff" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#8fb8ff" stopOpacity="0" />
               </linearGradient>
               <linearGradient id={`pc-bar-${gid}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#8b6cff" stopOpacity="0.75" />
@@ -184,8 +184,8 @@ export function PerformanceChart({
             ) : (
               <>
                 <path d={salesArea} fill={`url(#pc-sales-${gid})`} />
-                <path d={salesLine} fill="none" stroke="#c4b5fd" strokeWidth="2" strokeLinejoin="round" />
-                <path d={spendLine} fill="none" stroke="#7c5cff" strokeWidth="2" strokeLinejoin="round" />
+                <path d={salesLine} fill="none" stroke="#bcd4ff" strokeWidth="2" strokeLinejoin="round" />
+                <path d={spendLine} fill="none" stroke="#2f6bff" strokeWidth="2" strokeLinejoin="round" />
               </>
             )}
             {dual && <path d={purchaseLine} fill="none" stroke="#4b8bff" strokeWidth="2" strokeLinejoin="round" />}
@@ -196,8 +196,8 @@ export function PerformanceChart({
                   <circle cx={xAt(i)} cy={yCount(b.purchases)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#4b8bff" strokeWidth="1.8" />
                 ) : (
                   <>
-                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#c4b5fd" strokeWidth="1.8" />
-                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#7c5cff" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#bcd4ff" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#2f6bff" strokeWidth="1.8" />
                   </>
                 )}
                 {i % labelEvery === 0 && (

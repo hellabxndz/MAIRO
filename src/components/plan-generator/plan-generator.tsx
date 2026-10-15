@@ -29,6 +29,21 @@ import { GoalIcon, IconCard, IconDoc, IconLink, IconPause, IconRocket, IconSearc
 // MAIRO to Work; the last plan is kept in this browser so they can come back.
 
 const START_KEY = "mairo:plan:start";
+
+/**
+ * Hands a plan started elsewhere (the homepage's compact form) to /preview,
+ * which makes it at once: the answers and any website reading go through this
+ * tab's session storage, never the address bar. False when storage is blocked —
+ * the caller then sends its form as a plain request instead.
+ */
+export function handOffPlan(answers: GeneratorAnswers, scan: ScanResult | null): boolean {
+  try {
+    window.sessionStorage.setItem(START_KEY, JSON.stringify({ answers, scan }));
+    return true;
+  } catch {
+    return false;
+  }
+}
 const LAST_KEY = "mairo:plan:last:v1";
 const TEMPLATES_OFF: Writing = { source: { by: "templates", why: "off" }, plan: null, dropped: [], filled: 0 };
 
@@ -313,17 +328,9 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
     const scan = a.website && read && read.url === a.website ? read.result : null;
     track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } });
     if (mode === "hero") {
-      const ss = storage("session");
-      if (ss) {
-        try {
-          ss.setItem(START_KEY, JSON.stringify({ answers: a, scan }));
-          router.push("/preview?generate=1");
-          return;
-        } catch {
-          // Too large or blocked: the form goes as a plain request instead.
-        }
-      }
-      formRef.current?.submit();
+      if (handOffPlan(a, scan)) router.push("/preview?generate=1");
+      // Too large or blocked: the form goes as a plain request instead.
+      else formRef.current?.submit();
       return;
     }
     void generate(a, scan);
@@ -479,19 +486,19 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
   const fieldBox = (bad: boolean) =>
     `flex items-center gap-3 rounded-2xl border bg-[#0a0d1c]/85 px-4 transition focus-within:border-violet-400/70 focus-within:ring-2 focus-within:ring-violet-400/20 ${bad ? "border-red-400/55" : "border-white/[0.13]"}`;
   const chip = (on: boolean) =>
-    `flex cursor-pointer items-center justify-center rounded-2xl border text-center transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400/50 ${on ? "border-violet-400/80 bg-violet-500/[0.18] text-white shadow-[0_0_26px_-8px_rgba(121,82,255,0.85)]" : "border-white/[0.12] bg-white/[0.025] text-white/80 hover:border-white/30 hover:text-white"}`;
+    `flex cursor-pointer items-center justify-center rounded-2xl border text-center transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-violet-400/50 ${on ? "border-violet-400/80 bg-violet-500/[0.18] text-white shadow-[0_0_26px_-8px_rgba(47,107,255,0.85)]" : "border-white/[0.12] bg-white/[0.025] text-white/80 hover:border-white/30 hover:text-white"}`;
 
   return (
     <div>
       {mode === "page" && (
         <div className="mx-auto max-w-[760px] text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/35 bg-violet-500/[0.10] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-violet-100/90 sm:px-3.5 sm:text-[12px] sm:tracking-[0.16em]">
-            <IconSparkle className="h-3.5 w-3.5 text-violet-300" /> Free AI Meta ad strategy generator
+          <p className="inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/75 sm:text-[11.5px]">
+            <IconSparkle className="h-3.5 w-3.5 text-cyan-300" /> Free AI Meta ad plan
           </p>
           <h1 className="mt-5 text-[clamp(32px,5.5vw,58px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white [text-wrap:balance]">
-            Your Next Advertising Strategy <span className="bg-gradient-to-r from-[#8fc8ff] via-[#9d8bff] to-[#c77dff] bg-clip-text text-transparent">Starts Here.</span>
+            Your next ad strategy, <span className="bg-gradient-to-r from-[#bcd4ff] via-[#7fb0ff] to-[#5cc8ff] bg-clip-text text-transparent">built by AI.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-[640px] text-[16px] leading-relaxed text-white/72">Tell MAIRO what your business sells, choose your goal and monthly ad budget, and see how your AI advertising team would grow your business.</p>
+          <p className="mx-auto mt-4 max-w-[640px] text-[16px] leading-relaxed text-white/72">Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free.</p>
         </div>
       )}
 
@@ -545,7 +552,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                 <li key={st.label} className="relative flex flex-1 flex-col items-center">
                   {i > 0 && <span aria-hidden className={`absolute right-1/2 top-[17px] h-px w-full ${steps[i - 1].done ? "bg-violet-400/60" : "bg-white/12"}`} />}
                   <button type="button" onClick={() => focusField(st.field)} aria-current={state === "now" ? "step" : undefined} className="group relative z-[1] flex flex-col items-center gap-1.5 outline-none">
-                    <span className={`flex h-[34px] w-[34px] items-center justify-center rounded-full border text-[13.5px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-violet-400/60 ${state === "done" ? "border-violet-400/70 bg-violet-500/25 text-white" : state === "now" ? "border-violet-300 bg-[#0a0d1c] text-white shadow-[0_0_18px_-2px_rgba(121,82,255,0.9)]" : "border-white/20 bg-[#0a0d1c] text-white/55"}`}>
+                    <span className={`flex h-[34px] w-[34px] items-center justify-center rounded-full border text-[13.5px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-violet-400/60 ${state === "done" ? "border-violet-400/70 bg-violet-500/25 text-white" : state === "now" ? "border-violet-300 bg-[#0a0d1c] text-white shadow-[0_0_18px_-2px_rgba(47,107,255,0.9)]" : "border-white/20 bg-[#0a0d1c] text-white/55"}`}>
                       {state === "done" ? <span aria-hidden>✓</span> : i + 1}
                     </span>
                     <span className={`text-center text-[11.5px] leading-tight sm:text-[12.5px] ${state === "later" ? "text-white/50" : "text-white"}`}>
@@ -603,7 +610,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                     placeholder="yourbusiness.com"
                     aria-invalid={Boolean(err.website)}
                     aria-describedby={`${mode}-website-status`}
-                    className="min-h-[54px] min-w-0 flex-1 bg-transparent text-[16px] text-white placeholder:text-white/40 outline-none"
+                    className="min-h-[54px] min-w-0 flex-1 mairo-bare bg-transparent text-[16px] text-white placeholder:text-white/40 outline-none"
                   />
                   {reading ? (
                     <span aria-hidden className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-violet-300/30 border-t-violet-200 motion-reduce:animate-none" />
@@ -649,7 +656,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                   maxLength={80}
                   aria-invalid={Boolean(err.name)}
                   aria-describedby={err.name ? `${mode}-name-err` : undefined}
-                  className="min-h-[52px] min-w-0 flex-1 bg-transparent text-[16px] text-white placeholder:text-white/40 outline-none"
+                  className="min-h-[52px] min-w-0 flex-1 mairo-bare bg-transparent text-[16px] text-white placeholder:text-white/40 outline-none"
                 />
               </div>
               {err.name && <p id={`${mode}-name-err`} className="mt-1.5 text-[13px] text-red-300">{err.name}</p>}
@@ -678,7 +685,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                 placeholder="Tell us what your business sells or offers…"
                 aria-invalid={Boolean(err.sells)}
                 aria-describedby={err.sells ? `${mode}-sells-err` : undefined}
-                className="block min-h-[54px] w-full min-w-0 flex-1 resize-none bg-transparent py-3.5 text-[16px] leading-relaxed text-white placeholder:text-white/40 outline-none"
+                className="block min-h-[54px] w-full min-w-0 flex-1 resize-none mairo-bare bg-transparent py-3.5 text-[16px] leading-relaxed text-white placeholder:text-white/40 outline-none"
               />
             </div>
             {err.sells && <p id={`${mode}-sells-err`} className="mt-1.5 text-[13px] text-red-300">{err.sells}</p>}
@@ -729,7 +736,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                   inputMode="numeric"
                   placeholder="1,500"
                   autoFocus
-                  className="min-h-[48px] min-w-0 flex-1 bg-transparent text-[16px] tabular-nums text-white placeholder:text-white/40 outline-none"
+                  className="min-h-[48px] min-w-0 flex-1 mairo-bare bg-transparent text-[16px] tabular-nums text-white placeholder:text-white/40 outline-none"
                 />
                 <span className="text-[13px] text-white/55">a month</span>
               </div>
@@ -741,19 +748,19 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
           <button
             type="submit"
             disabled={reading}
-            className="group mt-6 inline-flex min-h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4f6bff] via-[#6b5bff] to-[#a35bff] px-4 text-[15.5px] font-semibold sm:gap-2.5 sm:px-6 sm:text-[17px] text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+            className="group mt-6 inline-flex min-h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4f6bff] via-[#3a6dff] to-[#38bdf8] px-4 text-[15.5px] font-semibold sm:gap-2.5 sm:px-6 sm:text-[17px] text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
           >
             {reading ? "Reading your website…" : (
               <>
                 <IconSparkle className="h-5 w-5" />
-                Generate My Free AI Ad Plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
+                Build My Free AI Ad Plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
               </>
             )}
           </button>
-          <ul aria-label="100% free · No credit card required · No ads launched" className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] leading-tight text-white/70">
-            <li className="flex items-center gap-2"><IconShield className="h-5 w-5 shrink-0 text-emerald-300" />100% free</li>
-            <li className="flex items-center gap-2"><IconCard className="h-5 w-5 shrink-0 text-sky-300" />No credit card required</li>
-            <li className="flex items-center gap-2"><IconPause className="h-5 w-5 shrink-0 text-violet-300" />No ads launched</li>
+          <ul aria-label="100% free, no credit card, no ads launched" className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] leading-tight text-white/70">
+            <li className="flex items-center gap-2"><IconShield className="h-5 w-5 shrink-0 text-emerald-300" />100% Free</li>
+            <li className="flex items-center gap-2"><IconCard className="h-5 w-5 shrink-0 text-sky-300" />No Credit Card</li>
+            <li className="flex items-center gap-2"><IconPause className="h-5 w-5 shrink-0 text-violet-300" />No Ads Launched</li>
           </ul>
         </form>
 

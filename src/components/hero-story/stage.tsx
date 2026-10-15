@@ -11,7 +11,7 @@ import { BusinessArt } from "./art";
 // Everything visible is labelled sample data. Nothing here is clickable: it's
 // a picture of the product, kept apart from the real preview controls.
 
-export const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(167,139,250,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(124,92,255,0.06)" };
+export const surface: CSSProperties = { background: "linear-gradient(160deg, rgba(24,22,48,0.96), rgba(12,12,28,0.96))", border: "1px solid rgba(167,139,250,0.22)", boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(47,107,255,0.06)" };
 
 export function Layer({ b, children, style, className = "" }: { b: Box; children: ReactNode; style?: CSSProperties; className?: string }) {
   if (b.o <= 0.001) return null;
@@ -69,8 +69,8 @@ function Mark({ label, o, className = "", children }: { label: string; o: number
     <div className={`relative ${className}`}>
       {children}
       {o > 0.01 && (
-        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: "2px solid #a78bfa", background: "rgba(124,92,255,0.10)", boxShadow: "0 0 0 4px rgba(124,92,255,0.16)" }}>
-          <span className="absolute -top-2.5 left-2 rounded bg-[#7c5cff] px-1.5 py-[1px] text-[9.5px] font-semibold text-white">{label}</span>
+        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: "2px solid #8fb8ff", background: "rgba(47,107,255,0.10)", boxShadow: "0 0 0 4px rgba(47,107,255,0.16)" }}>
+          <span className="absolute -top-2.5 left-2 rounded bg-[#2f6bff] px-1.5 py-[1px] text-[9.5px] font-semibold text-white">{label}</span>
         </div>
       )}
     </div>
@@ -84,12 +84,12 @@ export function InputPill({ ex, t, invite = false }: { ex: Example; t: number; i
   const pressed = !invite && t > 2550 && t < 2800;
   return (
     <div className="flex h-full items-center gap-2 rounded-full px-2 pl-4" style={{ ...surface, borderColor: "rgba(167,139,250,0.4)" }}>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">MAIRO</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#bcd4ff]">MAIRO</span>
       <span className="min-w-0 flex-1 truncate text-[14px] text-white">
         {typed || <span className="text-white/45">Enter your business website</span>}
         {caret && <span className="ml-[1px] inline-block h-[15px] w-[2px] translate-y-[2px] bg-white/80" />}
       </span>
-      <span className="shrink-0 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] px-4 py-2 text-[12.5px] font-semibold text-white" style={{ transform: pressed ? "scale(0.94)" : "none" }}>
+      <span className="shrink-0 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#2fa4ff] px-4 py-2 text-[12.5px] font-semibold text-white" style={{ transform: pressed ? "scale(0.94)" : "none" }}>
         Build My Free Ad Plan
       </span>
     </div>
@@ -104,7 +104,7 @@ export function ConceptCard({ ex, i, t, selected, ringAt = 8000, hook }: { ex: E
       <div className="relative min-h-0 flex-[1.15]">
         <BusinessArt type={ex.type} variant={c.art} className="absolute inset-0 h-full w-full" />
         <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">{c.format}</span>
-        {ring > 0.05 && <span className="absolute right-2 top-2 rounded-full bg-[#7c5cff] px-2 py-0.5 text-[10px] font-semibold text-white" style={{ opacity: ring }}>Selected</span>}
+        {ring > 0.05 && <span className="absolute right-2 top-2 rounded-full bg-[#2f6bff] px-2 py-0.5 text-[10px] font-semibold text-white" style={{ opacity: ring }}>Selected</span>}
       </div>
       <div className="flex flex-1 flex-col p-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: ex.colors.a }}>{c.angle}</p>
@@ -171,7 +171,7 @@ export function Review({ ex, t, compact, pressAt = 12500 }: { ex: Example; t: nu
   ];
   return (
     <div className={`flex h-full flex-col rounded-2xl ${compact ? "p-3" : "p-4"}`} style={surface}>
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">Review before launch</p>
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#bcd4ff]">Review before launch</p>
       <dl className={`mt-2 ${compact ? "grid grid-cols-3 gap-2" : "space-y-2.5"}`}>
         {rows.map(([k, v]) => (
           <div key={k}>
@@ -182,7 +182,7 @@ export function Review({ ex, t, compact, pressAt = 12500 }: { ex: Example; t: nu
       </dl>
       <div className="mt-auto pt-3">
         <span
-          className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-[12.5px] font-semibold ${approved ? "bg-emerald-400/15 text-emerald-300" : "bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] text-white"}`}
+          className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-[12.5px] font-semibold ${approved ? "bg-emerald-400/15 text-emerald-300" : "bg-gradient-to-r from-[#5b6cff] to-[#2fa4ff] text-white"}`}
           style={{ transform: pressed ? "scale(0.95)" : "none" }}
         >
           {approved ? "✓ Approved by you" : "Approve campaign"}
@@ -208,7 +208,7 @@ export function Dashboard({ ex, t, narrow, times }: { ex: Example; t: number; na
     <div className={`flex h-full flex-col rounded-2xl ${narrow ? "p-3.5" : "p-5"}`} style={surface}>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c4b5fd]">This week</p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#bcd4ff]">This week</p>
           <p className="text-[15px] font-semibold text-white">{ex.name}</p>
         </div>
         <span className="rounded-full border border-amber-300/40 bg-amber-300/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">Sample figures</span>
@@ -230,8 +230,8 @@ export function Dashboard({ ex, t, narrow, times }: { ex: Example; t: number; na
           {moved ? d.lead.to : d.lead.from}
         </span>
       </div>
-      <div className="mt-3 rounded-xl border border-[#a78bfa]/35 bg-[#7c5cff]/[0.08] p-3" style={{ opacity: reveal(t, times.next, times.next + 500), transform: `translateY(${(1 - reveal(t, times.next, times.next + 500)) * 8}px)` }}>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c4b5fd]">Proposed next action</p>
+      <div className="mt-3 rounded-xl border border-[#8fb8ff]/35 bg-[#2f6bff]/[0.08] p-3" style={{ opacity: reveal(t, times.next, times.next + 500), transform: `translateY(${(1 - reveal(t, times.next, times.next + 500)) * 8}px)` }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#bcd4ff]">Proposed next action</p>
         <p className="mt-0.5 text-[14px] font-semibold text-white">{d.next.title}</p>
         <p className="mt-1 text-[11.5px] leading-snug text-white/70">{d.next.why}</p>
         <p className="mt-1 text-[10.5px] text-white/50">{d.next.when}</p>

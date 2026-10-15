@@ -54,7 +54,7 @@ export function RenderFrame({ clip, type, layout, label }: { clip: "story" | "wa
       style={{
         width: w,
         height: h,
-        background: walk ? "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(124,92,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(59,107,255,0.12), transparent 70%), #05060d" : STAGE_BACKGROUND,
+        background: walk ? "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(47,107,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(59,107,255,0.12), transparent 70%), #05060d" : STAGE_BACKGROUND,
       }}
     >
       {walk ? <WalkthroughStage t={t} layout={layout} onMeasured={noteTargets} /> : <StoryStage ex={EXAMPLES[type]} t={t} layout={layout} />}

@@ -20,7 +20,7 @@ function Preview({ src, kind, label }: { src: string | null; kind?: string; labe
       {kind === "VIDEO" && <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-[#fff]">▶ Video</span>}
     </div>
   ) : (
-    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 px-5 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(124,92,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
+    <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 px-5 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(47,107,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
       <span aria-hidden className="text-[26px] opacity-80">{kind === "EXISTING_AD" ? "📣" : "🖼️"}</span>
       <span className="text-[13px] text-white/60">{kind === "EXISTING_AD" ? "Your existing ad" : "No picture yet"}</span>
     </div>

@@ -50,7 +50,7 @@ const COACH_EXAMPLE = Object.fromEntries(EXAMPLE_STEPS.map((s) => [s, coachExamp
 
 
 const PRIMARY = "bg-[image:var(--mairo-ramp)] text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text text-transparent";
+const GRADIENT_TEXT = "bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent";
 // The console's surface: no backdrop-filter (it paints an opaque panel on mobile).
 const GLASS = "border border-[color:var(--mairo-line)] bg-[image:var(--mairo-glass)] shadow-[var(--mairo-glow-soft)]";
 
@@ -337,7 +337,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
               {steps.map((s, i) => (
                 <li key={s.n} className="relative flex gap-5 lg:flex-col lg:gap-0">
                   <div className="flex items-center gap-4">
-                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#7c4dff] to-[#4f6dff] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(124,77,255,0.85)]">
+                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2f6bff] to-[#4f6dff] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(47,107,255,0.85)]">
                       {s.n}
                     </span>
                     {i < steps.length - 1 && (
@@ -637,11 +637,11 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                   key={plan.tier}
                   aria-labelledby={`plan-${plan.tier}`}
                   className={`relative flex min-w-0 flex-col rounded-3xl p-6 sm:p-7 ${
-                    plan.featured ? "border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.12] to-white/[0.02] shadow-[0_30px_80px_-30px_rgba(124,77,255,0.55)]" : GLASS
+                    plan.featured ? "border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.12] to-white/[0.02] shadow-[0_30px_80px_-30px_rgba(47,107,255,0.55)]" : GLASS
                   }`}
                 >
                   {plan.featured && (
-                    <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#8b4dfb] px-3 py-1 text-[11px] font-medium text-white">Recommended</span>
+                    <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#2fa4ff] px-3 py-1 text-[11px] font-medium text-white">Recommended</span>
                   )}
                   <h3 id={`plan-${plan.tier}`} className="text-[18px] font-semibold">{plan.name}</h3>
                   <p className="mt-0.5 text-[13px] text-white/55 md:min-h-[38px]">{plan.forWho}</p>

@@ -12,7 +12,7 @@ export async function SuggestedAdsPrompt({ organizationId, className = "" }: { o
   const approved = await db.creativeApproval.count({ where: { organizationId, revokedAt: null } });
   if (approved > 0) return null;
   return (
-    <section aria-labelledby="suggested-ads-prompt" className={`rounded-[var(--radius-panel)] border border-violet/40 px-5 py-4 ${className}`} style={{ background: "radial-gradient(80% 120% at 0% 0%, rgba(124,92,255,0.14), transparent 70%)" }}>
+    <section aria-labelledby="suggested-ads-prompt" className={`rounded-[var(--radius-panel)] border border-violet/40 px-5 py-4 ${className}`} style={{ background: "radial-gradient(80% 120% at 0% 0%, rgba(47,107,255,0.14), transparent 70%)" }}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 id="suggested-ads-prompt" className="text-[15px] font-semibold text-white">Review your suggested ads</h2>

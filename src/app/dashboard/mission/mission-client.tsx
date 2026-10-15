@@ -19,7 +19,7 @@ import { MISSION_GOALS, type MissionGoal } from "@/lib/mission/goals";
 // telling MAIRO when something changes.
 
 const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2.5 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
-const primary = "min-h-[44px] rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
+const primary = "min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[44px] rounded-lg border border-white/12 px-4 text-[14px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 
 type Question = { key: string; question: string; placeholder: string };

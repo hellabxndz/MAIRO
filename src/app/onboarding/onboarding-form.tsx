@@ -187,7 +187,7 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
                 </Field>
                 {/* Its own label, not inside the field's — a label inside a label names both inputs. */}
                 <label className="mt-2 flex items-center gap-2 text-[12.5px] text-muted">
-                  <input type="checkbox" className="accent-[#7c5cff]" checked={locationUnsure} onChange={(e) => { setLocationUnsure(e.target.checked); if (e.target.checked) setBusiness({ ...business, customerLocation: "" }); }} />
+                  <input type="checkbox" className="accent-[#2f6bff]" checked={locationUnsure} onChange={(e) => { setLocationUnsure(e.target.checked); if (e.target.checked) setBusiness({ ...business, customerLocation: "" }); }} />
                   Not sure yet — MAIRO will assume people near you and say so on your plan
                 </label>
               </div>
@@ -343,7 +343,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
         <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
           {SETUP_GOALS.map((g) => (
             <label key={g.value} className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 has-[:checked]:border-violet/60 has-[:checked]:bg-violet/[0.08]">
-              <input type="radio" name="primaryGoal" value={g.value} checked={goal.primaryGoal === g.value} onChange={() => set({ primaryGoal: g.value, destinationType: undefined })} className="mt-1 accent-[#7c5cff]" />
+              <input type="radio" name="primaryGoal" value={g.value} checked={goal.primaryGoal === g.value} onChange={() => set({ primaryGoal: g.value, destinationType: undefined })} className="mt-1 accent-[#2f6bff]" />
               <span>
                 <span className="block text-[14px] text-white">
                   {g.label}

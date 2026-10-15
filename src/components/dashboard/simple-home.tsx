@@ -28,7 +28,7 @@ export function HomeHeader({ greeting }: { greeting: string }) {
 export function GoalCard({ goal, sentence, secondary, confidence }: { goal: string; sentence: string; secondary: string | null; confidence: string | null }) {
   return (
     <section aria-labelledby="your-goal" className={card}
-      style={{ background: "radial-gradient(110% 140% at 100% 0%, rgba(124,92,255,0.22), transparent 55%), radial-gradient(80% 120% at 0% 100%, rgba(59,107,255,0.12), transparent 60%), rgba(var(--mairo-bg-rgb),0.85)" }}>
+      style={{ background: "radial-gradient(110% 140% at 100% 0%, rgba(47,107,255,0.22), transparent 55%), radial-gradient(80% 120% at 0% 100%, rgba(59,107,255,0.12), transparent 60%), rgba(var(--mairo-bg-rgb),0.85)" }}>
       <p className={eyebrow}>Your goal</p>
       <h2 id="your-goal" className="mt-2 flex items-center gap-3 text-[clamp(26px,3.4vw,38px)] font-semibold leading-tight tracking-[-0.02em] text-white">
         <span aria-hidden>🎯</span>{goal}
@@ -48,7 +48,7 @@ export function GoalCard({ goal, sentence, secondary, confidence }: { goal: stri
 /** A plan MAIRO made that's waiting for the owner, shown in place of the goal. */
 export function ProposalCard({ title, sentence }: { title: string; sentence: string }) {
   return (
-    <section className={card} style={{ background: "radial-gradient(110% 140% at 100% 0%, rgba(124,92,255,0.25), transparent 55%), rgba(var(--mairo-bg-rgb),0.85)" }}>
+    <section className={card} style={{ background: "radial-gradient(110% 140% at 100% 0%, rgba(47,107,255,0.25), transparent 55%), rgba(var(--mairo-bg-rgb),0.85)" }}>
       <p className={eyebrow}>MAIRO created a plan</p>
       <h2 className="mt-2 text-[clamp(24px,3vw,32px)] font-semibold text-white">🎯 {title}</h2>
       <p className="mt-2 max-w-[720px] text-[15px] text-white/80">{sentence}</p>

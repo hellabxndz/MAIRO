@@ -63,7 +63,7 @@ export function PlanActions({ plan, pending }: { plan: PlanItem[]; pending: stri
           </ul>
           <p className="mt-2 text-[12.5px] text-muted">Your limits still apply. The other items are things to look at — nothing changes for them.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" disabled={busy} onClick={approve} className="min-h-[42px] rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white hover:brightness-110 disabled:opacity-60">
+            <button type="button" disabled={busy} onClick={approve} className="min-h-[42px] rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white hover:brightness-110 disabled:opacity-60">
               {busy ? "Approving…" : "Yes, approve"}
             </button>
             <button type="button" onClick={() => setConfirming(false)} className="min-h-[42px] rounded-lg px-4 text-[13.5px] text-muted hover:text-white">
@@ -74,7 +74,7 @@ export function PlanActions({ plan, pending }: { plan: PlanItem[]; pending: stri
       ) : (
         <div className="flex flex-wrap gap-2">
           {approvable.length > 0 && (
-            <button type="button" onClick={() => setConfirming(true)} className="min-h-[42px] rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">
+            <button type="button" onClick={() => setConfirming(true)} className="min-h-[42px] rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">
               Approve plan
             </button>
           )}
@@ -106,7 +106,7 @@ export function SharePanel({ reportId, token, origin }: { reportId: string; toke
           <p className="mt-1 text-[13px] text-muted">Approved. Anyone with this link can view the client-facing version — nothing has been sent.</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <input readOnly value={link} className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-field-2 px-3 text-[12.5px] text-white/85" onFocus={(e) => e.currentTarget.select()} />
-            <button type="button" onClick={() => void navigator.clipboard.writeText(link).then(() => setCopied(true))} className="h-10 rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white">
+            <button type="button" onClick={() => void navigator.clipboard.writeText(link).then(() => setCopied(true))} className="h-10 rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white">
               {copied ? "Copied" : "Copy link"}
             </button>
             <button type="button" disabled={busy} onClick={() => start(async () => { if ((await revokeShareAction(reportId)).ok) setCurrent(null); })} className="h-10 rounded-lg px-3 text-[13px] text-muted hover:text-white">
@@ -117,7 +117,7 @@ export function SharePanel({ reportId, token, origin }: { reportId: string; toke
       ) : (
         <>
           <p className="mt-1 text-[13px] text-muted">Review it, then approve to get a link you can send your client. MAIRO never sends client reports on its own.</p>
-          <button type="button" disabled={busy} onClick={() => start(async () => { const r = await approveReportAction(reportId); if (r.ok && r.token) setCurrent(r.token); })} className="mt-3 min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white disabled:opacity-60">
+          <button type="button" disabled={busy} onClick={() => start(async () => { const r = await approveReportAction(reportId); if (r.ok && r.token) setCurrent(r.token); })} className="mt-3 min-h-[40px] rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white disabled:opacity-60">
             {busy ? "Approving…" : "Approve for client"}
           </button>
         </>

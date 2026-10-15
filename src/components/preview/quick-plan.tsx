@@ -189,7 +189,7 @@ export function QuickPlan({
 
         <Panel id="qp-next" title="Your next step" tone="lit">
           <h2 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-            Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c7b8ff] via-[#a891ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+            Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
           </h2>
           <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
           <div className="mt-5 flex flex-wrap gap-2.5">

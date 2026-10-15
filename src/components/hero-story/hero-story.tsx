@@ -176,7 +176,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
             role="radio"
             aria-checked={type === k}
             onClick={() => chooseType(k)}
-            className={`min-h-[38px] rounded-full border px-3.5 text-[13px] font-medium transition ${type === k ? "border-[#a78bfa]/70 bg-[#7c5cff]/20 text-white" : "border-white/12 bg-white/[0.03] text-white/70 hover:border-white/30 hover:text-white"}`}
+            className={`min-h-[38px] rounded-full border px-3.5 text-[13px] font-medium transition ${type === k ? "border-[#8fb8ff]/70 bg-[#2f6bff]/20 text-white" : "border-white/12 bg-white/[0.03] text-white/70 hover:border-white/30 hover:text-white"}`}
           >
             {EXAMPLES[k].label}
           </button>
@@ -272,7 +272,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
         </nav>
       </div>
       <div aria-hidden className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.08]">
-        <div data-story-progress className="h-full rounded-full bg-gradient-to-r from-[#5b6cff] to-[#a78bfa]" style={{ width: `${Math.round(progress * 1000) / 10}%` }} />
+        <div data-story-progress className="h-full rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8fb8ff]" style={{ width: `${Math.round(progress * 1000) / 10}%` }} />
       </div>
       <p className="sr-only" aria-live="polite">{announce}</p>
       <p className="sr-only">{CHAPTERS.map((c) => `${c.label}: ${c.describe}`).join(" ")}</p>

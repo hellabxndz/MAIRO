@@ -541,7 +541,7 @@ export function GoalFieldset({ value, onChange }: { value: PreviewGoal | ""; onC
         {GOALS.map((g) => (
           <label key={g.value} className={`flex cursor-pointer flex-col rounded-xl border px-3.5 py-3 transition ${value === g.value ? "border-violet/70 bg-violet/[0.10]" : "border-white/12 bg-white/[0.02] hover:border-white/30"}`}>
             <span className="flex items-center gap-2 text-[14px] font-medium text-white">
-              <input type="radio" name="pv-goal" value={g.value} checked={value === g.value} onChange={() => onChange(g.value)} className="accent-[#7952ff]" />
+              <input type="radio" name="pv-goal" value={g.value} checked={value === g.value} onChange={() => onChange(g.value)} className="accent-[#2f6bff]" />
               {g.label}
             </span>
             <span className="mt-0.5 pl-6 text-[12.5px] text-white/60">{g.detail}</span>

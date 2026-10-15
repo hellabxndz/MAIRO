@@ -16,7 +16,7 @@ const STATUS = {
 
 function toneFor(score: number | null): string {
   if (score === null) return "bg-white/10";
-  if (score >= 80) return "bg-gradient-to-r from-[#7c5cff] to-[#a78bfa]";
+  if (score >= 80) return "bg-gradient-to-r from-[#2f6bff] to-[#8fb8ff]";
   if (score >= 60) return "bg-amber-400/80";
   return "bg-alert/80";
 }
@@ -82,7 +82,7 @@ export function HealthCategory({ area, open, onToggle }: { area: HealthArea; ope
             <div className="mt-3 rounded-lg bg-violet/10 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">Recommended action</p>
               <p className="mt-0.5 text-[13px] text-white/90">{area.recommendation.text}</p>
-              <Link href={area.recommendation.href} className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#7c5cff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
+              <Link href={area.recommendation.href} className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#2f6bff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
                 {area.recommendation.actionLabel} <span aria-hidden>→</span>
               </Link>
             </div>

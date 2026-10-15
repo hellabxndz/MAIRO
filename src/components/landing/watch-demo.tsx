@@ -59,7 +59,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
               >
                 <span aria-hidden>✕</span>
               </button>
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-paper shadow-[0_40px_120px_-20px_rgba(124,92,255,0.5)]">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-paper shadow-[0_40px_120px_-20px_rgba(47,107,255,0.5)]">
                 <LiveDemo />
               </div>
               <p className="mt-3 text-center text-[12px] text-[#fff]/70">

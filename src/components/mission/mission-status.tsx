@@ -52,7 +52,7 @@ export function GoalHero({
     <section
       aria-labelledby="current-goal"
       className="relative overflow-hidden rounded-3xl border border-violet/30 p-6 sm:p-8"
-      style={{ background: "radial-gradient(120% 140% at 100% 0%, rgba(124,92,255,0.22), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(59,107,255,0.14), transparent 60%), var(--color-field)" }}
+      style={{ background: "radial-gradient(120% 140% at 100% 0%, rgba(47,107,255,0.22), transparent 55%), radial-gradient(90% 120% at 0% 100%, rgba(59,107,255,0.14), transparent 60%), var(--color-field)" }}
     >
       <p className="text-[14px] text-white/70">{greeting}</p>
       <p className={`${eyebrow} mt-4`}>Your current goal</p>
@@ -217,7 +217,7 @@ export function SocialCard({ activity, upgradeHref }: { activity: MissionActivit
           </h3>
           <p className="mt-1 text-[13.5px] text-muted">AI social media management is available with Scale.</p>
         </div>
-        <Link href={upgradeHref} className="inline-flex min-h-[42px] shrink-0 items-center rounded-lg bg-[#7c5cff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">Upgrade to Scale</Link>
+        <Link href={upgradeHref} className="inline-flex min-h-[42px] shrink-0 items-center rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white hover:brightness-110">Upgrade to Scale</Link>
       </section>
     );
   }

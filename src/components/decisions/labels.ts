@@ -17,7 +17,7 @@ export const CATEGORY_LABEL: Record<DecisionCategory, string> = {
 export const CATEGORY_TONE: Record<DecisionCategory, string> = {
   NEEDS_ATTENTION: "#f87171",
   GROWTH: "#34d399",
-  CREATIVE: "#a78bfa",
+  CREATIVE: "#8fb8ff",
   BUDGET: "#6c9eff",
   AUDIENCE: "#38bdf8",
   RETARGETING: "#f472b6",

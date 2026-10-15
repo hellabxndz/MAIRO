@@ -32,7 +32,7 @@ const ICON: Record<string, string> = {
 export function MetricTile({ m }: { m: MetricData }) {
   return (
     <div className="relative min-w-0 overflow-hidden rounded-[20px] border p-4 sm:p-5" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}>
-      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(121,82,255,0.16),transparent_70%)]" />
+      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(47,107,255,0.16),transparent_70%)]" />
       <div className="flex items-center gap-2">
         <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/[0.12] text-violet-bright">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">

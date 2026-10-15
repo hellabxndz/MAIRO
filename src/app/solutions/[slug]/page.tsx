@@ -156,7 +156,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
           </section>
         )}
 
-        <section className="mt-16 rounded-[28px] border border-violet/30 bg-gradient-to-br from-[#4f7dff]/[0.08] to-[#8b4dfb]/[0.12] px-6 py-12 text-center sm:px-10">
+        <section className="mt-16 rounded-[28px] border border-violet/30 bg-gradient-to-br from-[#4f7dff]/[0.08] to-[#2fa4ff]/[0.12] px-6 py-12 text-center sm:px-10">
           <h2 className="mx-auto max-w-[680px] text-[26px] font-semibold leading-tight tracking-[-0.025em] text-white sm:text-[34px]">See the plan MAIRO would build for your business.</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[15px] leading-relaxed text-white/70">Start with your website or a few words about what you do. Free, and nothing runs until you approve it.</p>
           <Link href={cta} className="mt-7 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[15.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">

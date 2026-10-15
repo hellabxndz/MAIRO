@@ -116,7 +116,7 @@ export function GoalSetup({
           <span className="text-white">Post on</span>
           {(["INSTAGRAM", "FACEBOOK"] as Network[]).map((n) => (
             <label key={n} className="flex items-center gap-2">
-              <input type="checkbox" checked={platforms.includes(n)} onChange={() => toggle(n)} className="h-4 w-4 accent-[#7c5cff]" />
+              <input type="checkbox" checked={platforms.includes(n)} onChange={() => toggle(n)} className="h-4 w-4 accent-[#2f6bff]" />
               {n === "INSTAGRAM" ? "Instagram" : "Facebook Page"}
             </label>
           ))}
@@ -135,7 +135,7 @@ export function GoalSetup({
           type="button"
           disabled={!goal || pending || platforms.length === 0}
           onClick={submit}
-          className="min-h-[46px] rounded-lg bg-[#7c5cff] px-6 text-[14.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+          className="min-h-[46px] rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50"
         >
           {pending ? "Working…" : initial ? "Rebuild my strategy" : "Build my strategy"}
         </button>

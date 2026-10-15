@@ -130,7 +130,7 @@ export function CampaignReviewPanel({
 
       {/* --- improve your campaign ----------------------------------------------- */}
       {score.blocking === 0 && (count > 0 || review.questions.learn.length > 0) && (
-        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(124,92,255,0.45)", background: "linear-gradient(180deg, rgba(124,92,255,0.12), rgba(var(--mairo-bg-rgb),0.5))" }}>
+        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(47,107,255,0.45)", background: "linear-gradient(180deg, rgba(47,107,255,0.12), rgba(var(--mairo-bg-rgb),0.5))" }}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[16px] font-medium text-white">Improve Your Campaign</p>
@@ -435,7 +435,7 @@ function AreaPanel({ detail: d, review, h, onClose }: { detail: AreaDetail; revi
       )}
 
       {d.recommendation && (
-        <div className="mt-5 rounded-xl px-4 py-3" style={{ background: "rgba(124,92,255,0.1)" }}>
+        <div className="mt-5 rounded-xl px-4 py-3" style={{ background: "rgba(47,107,255,0.1)" }}>
           <p className="text-[12px] text-violet-bright">MAIRO recommendation</p>
           <p className="mt-1 text-[13.5px] leading-relaxed text-white">&ldquo;{d.recommendation}&rdquo;</p>
           {d.estimate !== null && (
@@ -680,7 +680,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
               const on = chosen.includes(c);
               return (
                 <button key={c} type="button" aria-pressed={on} onClick={() => setChosen((x) => (on ? x.filter((y) => y !== c) : [...x, c]))}
-                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(124,92,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
+                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(47,107,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
                   {on ? "✓ " : ""}{c}
                 </button>
               );

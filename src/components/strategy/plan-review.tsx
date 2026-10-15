@@ -50,7 +50,7 @@ const EXAMPLES = [
 
 const card = "rounded-2xl border border-white/[0.07] bg-field/80";
 const input = "h-11 w-full rounded-lg border border-white/10 bg-field-2 px-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
-const primary = "min-h-[44px] rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-60";
+const primary = "min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white transition hover:brightness-110 disabled:opacity-60";
 const secondary = "min-h-[44px] rounded-lg border border-white/12 px-4 text-[13.5px] text-white/85 transition hover:border-white/30 disabled:opacity-60";
 
 type Outcome =
@@ -252,7 +252,7 @@ export function PlanReview(props: {
                 <div className="flex gap-4">
                   {PLATFORMS.map((p) => (
                     <label key={p} className="flex items-center gap-2 text-[14px]">
-                      <input type="checkbox" name="platforms" value={p} defaultChecked={plan.platforms.includes(p)} className="h-4 w-4 accent-[#7c5cff]" />
+                      <input type="checkbox" name="platforms" value={p} defaultChecked={plan.platforms.includes(p)} className="h-4 w-4 accent-[#2f6bff]" />
                       {PLATFORM_LABEL[p]}
                     </label>
                   ))}
@@ -582,7 +582,7 @@ function Section({ k, lit, onEdit, editing, wide = false, children }: { k: Secti
     <section
       id={`plan-${k}`}
       className={`${card} min-w-0 p-5 transition-[box-shadow,background-color] duration-700 ${wide ? "md:col-span-2" : ""} ${
-        lit ? "bg-violet/[0.08] shadow-[0_0_0_2px_rgba(124,92,255,0.55)]" : ""
+        lit ? "bg-violet/[0.08] shadow-[0_0_0_2px_rgba(47,107,255,0.55)]" : ""
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -618,7 +618,7 @@ function EditForm({ children, onSave, onCancel, pending }: { children: React.Rea
     >
       {children}
       <div className="mt-3 flex gap-2">
-        <button type="submit" disabled={pending} className="min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white disabled:opacity-60">
+        <button type="submit" disabled={pending} className="min-h-[40px] rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white disabled:opacity-60">
           {pending ? "Saving…" : "Save"}
         </button>
         <button type="button" onClick={onCancel} className="min-h-[40px] rounded-lg px-3 text-[13px] text-muted hover:text-white">Cancel</button>

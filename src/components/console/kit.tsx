@@ -59,7 +59,7 @@ export function Panel({
   const demo = useContext(DemoContext);
   const bg =
     tone === "lit"
-      ? "linear-gradient(165deg, rgba(121,82,255,0.16) 0%, rgba(21,27,54,0.9) 42%, rgba(17,20,38,0.9) 100%)"
+      ? "linear-gradient(165deg, rgba(47,107,255,0.16) 0%, rgba(21,27,54,0.9) 42%, rgba(17,20,38,0.9) 100%)"
       : tone === "warn"
         ? "linear-gradient(165deg, rgba(251,191,36,0.10) 0%, rgba(17,20,38,0.9) 50%)"
         : "var(--mairo-glass)";
@@ -69,7 +69,7 @@ export function Panel({
       data-panel={id}
       aria-labelledby={title && id && !demo ? `${id}-title` : undefined}
       className={`relative overflow-hidden rounded-[22px] border ${pad ? "p-5 sm:p-6" : ""} ${className}`}
-      style={{ borderColor: tone === "warn" ? "rgba(251,191,36,0.28)" : tone === "lit" ? "rgba(121,82,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
+      style={{ borderColor: tone === "warn" ? "rgba(251,191,36,0.28)" : tone === "lit" ? "rgba(47,107,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
     >
       {/* A hairline of light along the top edge: depth without a drop shadow. */}
       <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(248,249,255,0.14),transparent)]" />

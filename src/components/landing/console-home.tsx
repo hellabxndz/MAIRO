@@ -42,7 +42,7 @@ import { brandFont } from "@/lib/fonts";
 // free plan is free, and a subscription is only for building and running
 // real campaigns, each of which waits for the owner's approval.
 
-const CTA = { href: "/preview", label: "Generate My Free AI Ad Plan" };
+const CTA = { href: "/preview", label: "Build My Free AI Ad Plan" };
 
 const STEPS = [
   { n: "01", title: "Tell MAIRO about your business", body: "Your website and what you sell — or just describe it — plus your goal and your monthly Meta ad budget.", tag: "Free" },
@@ -313,7 +313,7 @@ export function ConsoleHome() {
 
         {/* The final call */}
         <section className="relative mx-auto max-w-[1360px] px-5 pb-28 pt-10 sm:px-8 lg:px-12">
-          <div data-reveal className="relative overflow-hidden rounded-[36px] border px-6 py-20 text-center sm:px-12" style={{ borderColor: "rgba(121,82,255,0.35)", background: "radial-gradient(80% 120% at 50% 0%, rgba(121,82,255,0.30), transparent 60%), radial-gradient(60% 90% at 0% 100%, rgba(53,108,255,0.18), transparent 60%), #0b0d18" }}>
+          <div data-reveal className="relative overflow-hidden rounded-[36px] border px-6 py-20 text-center sm:px-12" style={{ borderColor: "rgba(47,107,255,0.35)", background: "radial-gradient(80% 120% at 50% 0%, rgba(47,107,255,0.30), transparent 60%), radial-gradient(60% 90% at 0% 100%, rgba(53,108,255,0.18), transparent 60%), #0b0d18" }}>
             <h2 className="mx-auto max-w-[900px] text-[clamp(34px,5.6vw,72px)] font-semibold leading-[0.98] tracking-[-0.05em] text-white [text-wrap:balance]">Your AI advertising team is ready.</h2>
             <p className="mx-auto mt-6 max-w-[580px] text-[17px] leading-relaxed text-white/70">See how MAIRO would advertise your business — free, with no credit card. You only subscribe when you want it to build and run your campaigns.</p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

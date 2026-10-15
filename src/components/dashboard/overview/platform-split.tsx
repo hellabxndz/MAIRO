@@ -98,7 +98,7 @@ export function PlatformSplit({
                     <p className="text-[11.5px] text-faint">of total {metric.of}</p>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#7c5cff] to-[#a78bfa]" style={{ width: `${Math.max(2, share * 100)}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#2f6bff] to-[#8fb8ff]" style={{ width: `${Math.max(2, share * 100)}%` }} />
                   </div>
                 </div>
               </li>

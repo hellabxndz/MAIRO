@@ -40,7 +40,7 @@ export function CreativeTile({ c }: { c: CreativeTileData }) {
           <img src={c.imageUrl} alt="" className="h-full w-full object-cover transition duration-500 [transition-timing-function:var(--ease-mairo)] group-hover:scale-[1.03]" loading="lazy" />
         ) : (
           // A concept: its words on the brand's night, clearly not a photograph.
-          <div className="flex h-full flex-col justify-end bg-[radial-gradient(120%_80%_at_80%_0%,rgba(121,82,255,0.45),transparent_60%),radial-gradient(90%_70%_at_0%_100%,rgba(53,108,255,0.35),transparent_60%),#0e1122] p-3.5">
+          <div className="flex h-full flex-col justify-end bg-[radial-gradient(120%_80%_at_80%_0%,rgba(47,107,255,0.45),transparent_60%),radial-gradient(90%_70%_at_0%_100%,rgba(53,108,255,0.35),transparent_60%),#0e1122] p-3.5">
             <span className="mb-1.5 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-white/55">No picture yet</span>
             <p className="text-[14px] font-semibold leading-snug text-white [text-wrap:balance]">{c.headline}</p>
           </div>

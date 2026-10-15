@@ -90,7 +90,7 @@ function Bullets({ items, tone = "violet" }: { items: string[]; tone?: "violet" 
   );
 }
 
-const SEGMENT = ["#7952ff", "#356cff", "#a891ff", "#5fd4c4"];
+const SEGMENT = ["#2f6bff", "#38bdf8", "#a9c8ff", "#5fd4c4"];
 
 function sourceNote(r: PlanReport): { title: string; body: string; tone: "ai" | "templates" | "fixture" } {
   const s = r.concepts.source;
@@ -400,7 +400,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
       </div>
 
       {/* The step from the free plan to MAIRO doing the work. */}
-      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(121,82,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(53,108,255,0.16), transparent 60%), linear-gradient(170deg,#141833,#0b0d1a)" }}>
+      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(47,107,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(53,108,255,0.16), transparent 60%), linear-gradient(170deg,#141833,#0b0d1a)" }}>
         <h2 id="work-title" className="max-w-[760px] text-[clamp(26px,4vw,42px)] font-semibold leading-[1.06] tracking-[-0.035em] text-white [text-wrap:balance]">
           {actions ? "Your Strategy Is Ready. Now Let MAIRO Bring It to Life." : "Want a plan like this for your business?"}
         </h2>
@@ -434,7 +434,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </button>
           ) : (
             <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-              Generate My Free AI Ad Plan →
+              Build My Free AI Ad Plan →
             </Link>
           )}
           <Link href="/#pricing" className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/45">

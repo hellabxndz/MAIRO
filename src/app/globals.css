@@ -9,10 +9,13 @@
    pictures and the real dashboard are the same material. Nothing below this
    file should contain a hand-written blue.
 
-   Night by default: a near-black environment (#07080D), deep navy surfaces
-   (#111426, #151B36), MAIRO's electric violet (#7952FF) and blue (#356CFF)
-   for the actions that matter, near-white type (#F8F9FF) with a cool grey
-   second voice (#A4ACC3).
+   Night by default: a near-black environment (#05070D), deep navy surfaces
+   (#0F1424, #141B33), MAIRO's electric blue (#2F6BFF) for the actions that
+   matter with a whisper of cyan (#38BDF8) on interactive light, near-white
+   type (#F8F9FF) with a metallic silver second voice (#A7B0C6).
+
+   The "violet" utility family is kept as a name only: since October 2026 it
+   carries the electric-blue accent, so every component moved with one edit.
 
    The rule worth keeping: glow is a signal, not a texture. A primary action
    glows. A metric that moved glows. A card sitting there does not. If
@@ -22,17 +25,19 @@
 @theme {
   /* ---- Type ------------------------------------------------------------ */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Headings everywhere; the public site's reading text is Inter (lib/fonts.ts). */
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   /* The machine's voice: parameters, states, HUD labels, anything MAIRO
      decided rather than said. */
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* ---- Environment ----------------------------------------------------- */
-  --color-ink: #07080d;
-  --color-ink-2: #0b0d16;
-  --color-surface: #111426;
-  --color-surface-2: #151b36;
-  --color-line: #1f2645;
-  --color-line-lit: #3a3f78;
+  --color-ink: #05070d;
+  --color-ink-2: #090c16;
+  --color-surface: #0f1424;
+  --color-surface-2: #141b33;
+  --color-line: #1d2742;
+  --color-line-lit: #2f4c8f;
   /* Inputs and inset panels. */
   --color-field: #0e1122;
   --color-field-2: #111426;
@@ -42,9 +47,9 @@
   --color-blue: #356cff;
   --color-blue-bright: #7c9dff;
   --color-blue-deep: #2350d6;
-  --color-cyan: #22d3ee;
-  --color-violet: #7952ff;
-  --color-violet-bright: #a891ff;
+  --color-cyan: #38bdf8;
+  --color-violet: #2f6bff;
+  --color-violet-bright: #8fb8ff;
   --color-magenta: #d946ef;
 
   /* ---- Status ---------------------------------------------------------- */
@@ -57,8 +62,8 @@
      "paper" is the page itself: bg-paper is the environment, and a panel at
      bg-paper/70 is the environment seen through. */
   --color-white: #f8f9ff;
-  --color-paper: #07080d;
-  --color-muted: #a4acc3;
+  --color-paper: #05070d;
+  --color-muted: #a7b0c6;
   /* The quietest type that still reads: 4.7:1 on the page. */
   --color-faint: #7a83a0;
 
@@ -99,10 +104,13 @@
   --color-red-200: #fecaca;
   --color-red-300: #fca5a5;
   --color-red-400: #f87171;
-  --color-violet-200: #ddd3ff;
-  --color-violet-300: #bba8ff;
-  --color-violet-400: #9b82ff;
-  --color-violet-500: #7952ff;
+  --color-violet-200: #d6e4ff;
+  --color-violet-300: #a9c8ff;
+  --color-violet-400: #6fa3ff;
+  --color-violet-500: #2f6bff;
+  --color-cyan-200: #bae9fd;
+  --color-cyan-300: #7dd3fc;
+  --color-cyan-400: #38bdf8;
   --color-blue-200: #c3d3ff;
   --color-orange-200: #fed7aa;
   --color-rose-300: #fda4af;
@@ -122,40 +130,39 @@
   /* Overlays written as rgba(<fg>, a) — a faint wash of the type colour —
      and panels as rgba(<bg>, a). */
   --mairo-fg-rgb: 248, 249, 255;
-  --mairo-bg-rgb: 7, 8, 13;
+  --mairo-bg-rgb: 5, 7, 13;
 
   /* Values Tailwind cannot express as utilities. Referenced by name from the
      MAIRO components, never retyped. */
   --mairo-line: rgba(164, 172, 195, 0.14);
-  --mairo-line-lit: rgba(121, 82, 255, 0.55);
+  --mairo-line-lit: rgba(47, 107, 255, 0.55);
 
   /* A card: deep navy, a hairline, and light falling from the top edge.
      No backdrop-filter anywhere in this product: it can't sample a fixed
      backdrop on mobile and paints a translucent panel as an opaque black
      rectangle — that shipped once and took weeks to find. */
-  --mairo-glass: linear-gradient(170deg, rgba(25, 31, 62, 0.86) 0%, rgba(17, 20, 38, 0.86) 55%, rgba(14, 17, 33, 0.88) 100%);
+  --mairo-glass: linear-gradient(170deg, rgba(22, 30, 54, 0.86) 0%, rgba(14, 19, 35, 0.86) 55%, rgba(11, 15, 28, 0.9) 100%);
   /* A raised panel: one step lighter, for the thing in front. */
-  --mairo-glass-2: linear-gradient(170deg, rgba(31, 38, 76, 0.92) 0%, rgba(21, 27, 54, 0.92) 100%);
+  --mairo-glass-2: linear-gradient(170deg, rgba(28, 38, 70, 0.92) 0%, rgba(18, 25, 48, 0.92) 100%);
 
   /* Three lifts, a scale rather than a palette: rest, interactive, and the
      one thing on the screen that matters most (the violet glow). */
   --mairo-glow-soft: 0 0 0 1px rgba(164, 172, 195, 0.06), inset 0 1px 0 rgba(248, 249, 255, 0.04), 0 18px 48px -26px rgba(0, 0, 0, 0.9);
-  --mairo-glow-lift: 0 0 0 1px rgba(121, 82, 255, 0.3), inset 0 1px 0 rgba(248, 249, 255, 0.06), 0 26px 60px -26px rgba(121, 82, 255, 0.45);
-  --mairo-glow-key: 0 0 0 1px rgba(121, 82, 255, 0.45), 0 0 34px -6px rgba(121, 82, 255, 0.55), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
+  --mairo-glow-lift: 0 0 0 1px rgba(47, 107, 255, 0.3), inset 0 1px 0 rgba(248, 249, 255, 0.06), 0 26px 60px -26px rgba(47, 107, 255, 0.45);
+  --mairo-glow-key: 0 0 0 1px rgba(47, 107, 255, 0.45), 0 0 34px -6px rgba(47, 107, 255, 0.55), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
 
   /* The primary action, and the headline's accent line. The same ramp, so
      the button and the word on the page are recognisably the same light. */
-  --mairo-ramp: linear-gradient(120deg, #356cff 0%, #5b5cff 46%, #7952ff 100%);
-  --mairo-ramp-soft: linear-gradient(120deg, #9db6ff 0%, #b3a6ff 50%, #c7b8ff 100%);
+  --mairo-ramp: linear-gradient(120deg, #1f56f0 0%, #2f6bff 55%, #3d8bff 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #c9d8ff 0%, #a9c8ff 55%, #8fdcff 100%);
 
   /* The environment behind the signed-in app and the site: violet light from
      above, a cooler blue from the side, falling off into the page. Painted
      once, fixed, never animated. */
   --mairo-atmosphere:
-    radial-gradient(ellipse 70% 52% at 78% -8%, rgba(121, 82, 255, 0.22), transparent 70%),
-    radial-gradient(ellipse 52% 44% at -6% 18%, rgba(53, 108, 255, 0.14), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(121, 82, 255, 0.10), transparent 70%),
-    linear-gradient(180deg, #0a0b14 0%, #07080d 38%, #07080d 100%);
+    radial-gradient(ellipse 70% 50% at 80% -10%, rgba(47, 107, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 50% 40% at -8% 16%, rgba(56, 189, 248, 0.06), transparent 70%),
+    linear-gradient(180deg, #070a14 0%, #05070d 40%, #05070d 100%);
 }
 
 /* ===========================================================================
@@ -169,13 +176,13 @@
 [data-palette="classic"],
 [class~="bg-[image:var(--mairo-ramp)]"],
 [style*="--mairo-ramp)"],
-[class~="bg-[#7c5cff]"],
-[class~="bg-[#7c5cff]/70"],
-[class~="from-[#7c4dff]"],
-[class~="from-[#7c5cff]"],
+[class~="bg-[#2f6bff]"],
+[class~="bg-[#2f6bff]/70"],
+[class~="from-[#2f6bff]"],
+[class~="from-[#2f6bff]"],
 [class~="from-[#3b6bff]"],
 [class~="from-[#4f7dff]"],
-[class~="from-[#6d5cff]"],
+[class~="from-[#3567ff]"],
 [class~="from-[#312e81]"],
 [class~="bg-[#1877f2]"],
 [class~="bg-[#18191a]"],
@@ -193,13 +200,13 @@
 [data-palette="classic"],
 [class~="bg-[image:var(--mairo-ramp)]"],
 [style*="--mairo-ramp)"],
-[class~="bg-[#7c5cff]"],
-[class~="bg-[#7c5cff]/70"],
-[class~="from-[#7c4dff]"],
-[class~="from-[#7c5cff]"],
+[class~="bg-[#2f6bff]"],
+[class~="bg-[#2f6bff]/70"],
+[class~="from-[#2f6bff]"],
+[class~="from-[#2f6bff]"],
 [class~="from-[#3b6bff]"],
 [class~="from-[#4f7dff]"],
-[class~="from-[#6d5cff]"],
+[class~="from-[#3567ff]"],
 [class~="from-[#312e81]"],
 [class~="bg-[#1877f2]"],
 [class~="bg-[#18191a]"],
@@ -221,6 +228,11 @@
   mask-image: radial-gradient(ellipse 120% 78% at 50% 42%, #000 10%, rgba(0, 0, 0, 0.45) 58%, transparent 92%);
 }
 
+/* Headings in the display face (Geist) — on the public site, reading text is Inter. */
+:where(h1, h2, h3) {
+  font-family: var(--font-display);
+}
+
 /* Focus, once, for everything. A futuristic interface that cannot be operated
    from a keyboard is a broken interface. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -232,6 +244,12 @@
 /* A heading focused by script after a step changes, so screen readers start
    there — not something the visitor can operate, so no ring. */
 :where(h1, h2)[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* A field drawn inside a box that lights up with focus-within: the box is the
+   focus ring, so the field itself draws none. */
+.mairo-bare:focus-visible {
   outline: none;
 }
 

@@ -25,7 +25,7 @@ const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", 
 function Toggle({ name, label, hint, defaultChecked, disabled = false }: { name: string; label: string; hint?: React.ReactNode; defaultChecked: boolean; disabled?: boolean }) {
   return (
     <label className={`flex items-start gap-3 ${disabled ? "opacity-60" : "cursor-pointer"}`}>
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} disabled={disabled} className="mt-1 h-4 w-4 accent-[#7c5cff]" />
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} disabled={disabled} className="mt-1 h-4 w-4 accent-[#2f6bff]" />
       <span>
         <span className="block text-[14px] text-white">{label}</span>
         {hint && <span className="mt-0.5 block text-[12.5px] text-faint">{hint}</span>}
@@ -137,7 +137,7 @@ export function ReportSettings({
 
       {state.error && <p className="rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{state.error}</p>}
       {state.ok && <p className="rounded-lg bg-emerald-400/10 px-3 py-2 text-[13px] text-emerald-300">Saved.</p>}
-      <button type="submit" disabled={pending} className="min-h-[44px] rounded-lg bg-[#7c5cff] px-5 text-[14px] font-medium text-white hover:brightness-110 disabled:opacity-60">
+      <button type="submit" disabled={pending} className="min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110 disabled:opacity-60">
         {pending ? "Saving…" : "Save report settings"}
       </button>
     </form>

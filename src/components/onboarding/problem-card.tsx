@@ -20,7 +20,7 @@ export function ProblemCard({ problem, tone = "alert", className = "" }: { probl
               {...(f.external ? { target: "_blank", rel: "noreferrer" } : {})}
               className={
                 i === 0
-                  ? "inline-flex min-h-[42px] items-center rounded-lg bg-[#7c5cff] px-5 text-[13.5px] font-medium text-white hover:brightness-110"
+                  ? "inline-flex min-h-[42px] items-center rounded-lg bg-[#2f6bff] px-5 text-[13.5px] font-medium text-white hover:brightness-110"
                   : "inline-flex min-h-[42px] items-center rounded-lg border border-white/15 px-4 text-[13px] text-white/85 hover:border-white/30"
               }
             >

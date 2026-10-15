@@ -42,14 +42,14 @@ export function StoryHero() {
   return (
     <section id="product" aria-labelledby="hero-title" data-palette="classic" className="relative isolate scroll-mt-20 overflow-hidden bg-[#05060d] pb-16 pt-[96px] text-white sm:pb-20 sm:pt-[116px]">
       {/* Near-black with a cosmic violet glow and a faint, static star field — nothing that moves behind the story. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_55%_at_70%_40%,rgba(124,92,255,0.28),transparent_70%),radial-gradient(ellipse_45%_40%_at_10%_10%,rgba(59,107,255,0.16),transparent_70%),radial-gradient(ellipse_50%_35%_at_50%_100%,rgba(167,139,250,0.12),transparent_70%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_55%_at_70%_40%,rgba(47,107,255,0.28),transparent_70%),radial-gradient(ellipse_45%_40%_at_10%_10%,rgba(59,107,255,0.16),transparent_70%),radial-gradient(ellipse_50%_35%_at_50%_100%,rgba(167,139,250,0.12),transparent_70%)]" />
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(1px_1px_at_12%_22%,rgba(255,255,255,0.5),transparent),radial-gradient(1px_1px_at_32%_68%,rgba(255,255,255,0.35),transparent),radial-gradient(1px_1px_at_58%_14%,rgba(255,255,255,0.4),transparent),radial-gradient(1.5px_1.5px_at_82%_58%,rgba(196,181,253,0.55),transparent),radial-gradient(1px_1px_at_92%_18%,rgba(255,255,255,0.3),transparent),radial-gradient(1px_1px_at_6%_84%,rgba(255,255,255,0.3),transparent),radial-gradient(1px_1px_at_46%_90%,rgba(255,255,255,0.25),transparent)]" />
 
       <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-10 px-4 sm:px-8 lg:px-12 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:gap-12">
         <div className="mx-auto w-full min-w-0 max-w-[640px] xl:mx-0">
-          <p className="inline-flex items-center gap-2 rounded-full border border-[#a78bfa]/30 bg-[#7c5cff]/[0.10] px-3.5 py-1.5 text-[12.5px] font-medium text-white/85">For Facebook &amp; Instagram ads</p>
+          <p className="inline-flex items-center gap-2 rounded-full border border-[#8fb8ff]/30 bg-[#2f6bff]/[0.10] px-3.5 py-1.5 text-[12.5px] font-medium text-white/85">For Facebook &amp; Instagram ads</p>
           <h1 id="hero-title" className="mt-5 text-[clamp(36px,5.2vw,64px)] font-extrabold leading-[1.03] tracking-[-0.045em] [text-wrap:balance]">
-            Your business. Your next campaign. <span className="bg-gradient-to-r from-[#c4b5fd] via-[#a78bfa] to-[#7c9bff] bg-clip-text text-transparent">See it come together.</span>
+            Your business. Your next campaign. <span className="bg-gradient-to-r from-[#bcd4ff] via-[#8fb8ff] to-[#7c9bff] bg-clip-text text-transparent">See it come together.</span>
           </h1>
           <p className="mt-5 max-w-[560px] text-[clamp(16px,1.35vw,19px)] leading-relaxed text-white/75">
             Give MAIRO your website. Preview a campaign built around your business, then decide what happens next.
@@ -69,22 +69,22 @@ export function StoryHero() {
                 inputMode="url"
                 autoComplete="url"
                 placeholder="yourbusiness.com"
-                className="min-h-[50px] w-full min-w-0 flex-1 rounded-full bg-transparent px-4 text-[16px] text-white placeholder:text-white/40 outline-none focus-visible:ring-2 focus-visible:ring-[#a78bfa]/60"
+                className="min-h-[50px] w-full min-w-0 flex-1 rounded-full bg-transparent px-4 text-[16px] text-white placeholder:text-white/40 outline-none focus-visible:ring-2 focus-visible:ring-[#8fb8ff]/60"
               />
               {typeHint && <input type="hidden" name="type" value={typeHint} />}
-              <button type="submit" className="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8b4dfb] px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_44px_-12px_rgba(124,92,255,0.95)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c4b5fd]">
+              <button type="submit" className="inline-flex min-h-[50px] shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#5b6cff] to-[#2fa4ff] px-6 text-[15.5px] font-semibold text-white shadow-[0_14px_44px_-12px_rgba(47,107,255,0.95)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#bcd4ff]">
                 Build My Free Ad Plan <span aria-hidden>→</span>
               </button>
             </div>
           </form>
           <p className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px]">
-            <a href="#walkthrough" className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-4 font-semibold text-white transition hover:border-[#a78bfa]/60">
-              <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-[#7952FF] to-[#356CFF]">
+            <a href="#walkthrough" className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] pl-1.5 pr-4 font-semibold text-white transition hover:border-[#8fb8ff]/60">
+              <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-[#2f6bff] to-[#356CFF]">
                 <svg viewBox="0 0 12 12" className="ml-0.5 h-2.5 w-2.5 fill-white"><path d="M2 1.2v9.6L10.5 6z" /></svg>
               </span>
               Watch MAIRO in action <span className="font-normal text-white/55">{demoLength}</span>
             </a>
-            <Link href={`/preview?example=${PREVIEW_EXAMPLE[type]}`} className="font-medium text-[#c4b5fd] underline-offset-4 hover:text-white hover:underline">Try an example</Link>
+            <Link href={`/preview?example=${PREVIEW_EXAMPLE[type]}`} className="font-medium text-[#bcd4ff] underline-offset-4 hover:text-white hover:underline">Try an example</Link>
             <Link href="/preview?manual=1" className="text-white/70 underline-offset-4 hover:text-white hover:underline">No website? Describe your business</Link>
           </p>
 

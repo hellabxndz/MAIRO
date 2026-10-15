@@ -16,7 +16,7 @@ import type { CalendarPost } from "./manager-data";
 
 type Result = { ok: true; message: string; permalink?: string | null } | { ok: false; error: string };
 
-const primary = "min-h-[40px] rounded-lg bg-[#7c5cff] px-4 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
+const primary = "min-h-[40px] rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[40px] rounded-lg border border-white/12 px-4 text-[13px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 
@@ -71,7 +71,7 @@ function Picker({ post, library, onDone }: { post: CalendarPost; library: MediaI
       <div className="flex flex-wrap gap-1.5">
         {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
           <button key={t} type="button" onClick={() => { setType(t); setPicked([]); }}
-            className={`rounded-full px-3 py-1 text-[12px] ${t === type ? "bg-[#7c5cff] text-white" : "border border-white/12 text-white/70"}`}>
+            className={`rounded-full px-3 py-1 text-[12px] ${t === type ? "bg-[#2f6bff] text-white" : "border border-white/12 text-white/70"}`}>
             {mediaLabel(t, post.network)}
           </button>
         ))}

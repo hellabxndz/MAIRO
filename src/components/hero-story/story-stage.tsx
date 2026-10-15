@@ -19,12 +19,12 @@ import { FeedPreview, Layer, StoryPreview } from "./stage";
 const INK = "#1d1838";
 const MUTED = "#6b6688";
 const LINE = "#e6e1f5";
-const ACCENT = "#7c5cff";
+const ACCENT = "#2f6bff";
 const ACCENT_DEEP = "#5b3fd9";
 const ACCENT_SOFT = "#f1edff";
 const GOOD = "#0f8a5f";
 
-export const STAGE_BACKGROUND = "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(124,92,255,0.13), transparent 70%), radial-gradient(ellipse 50% 40% at 90% 95%, rgba(91,108,255,0.10), transparent 70%), linear-gradient(180deg, #fcfbff, #f2eeff)";
+export const STAGE_BACKGROUND = "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(47,107,255,0.13), transparent 70%), radial-gradient(ellipse 50% 40% at 90% 95%, rgba(91,108,255,0.10), transparent 70%), linear-gradient(180deg, #fcfbff, #f2eeff)";
 const card: CSSProperties = { background: "#ffffff", border: `1px solid ${LINE}`, boxShadow: "0 18px 44px -24px rgba(60,40,140,0.38), 0 2px 6px -2px rgba(60,40,140,0.08)", color: INK };
 const primary: CSSProperties = { background: `linear-gradient(90deg, #6b5cff, ${ACCENT_DEEP})`, color: "#fff" };
 
@@ -67,7 +67,7 @@ function Mark({ label, o, className = "", children }: { label: string; o: number
     <div className={`relative ${className}`}>
       {children}
       {o > 0.01 && (
-        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: `2px solid ${ACCENT}`, background: "rgba(124,92,255,0.08)", boxShadow: "0 0 0 4px rgba(124,92,255,0.14)" }}>
+        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: `2px solid ${ACCENT}`, background: "rgba(47,107,255,0.08)", boxShadow: "0 0 0 4px rgba(47,107,255,0.14)" }}>
           <span className="absolute -top-2.5 left-2 whitespace-nowrap rounded px-1.5 py-[1px] text-[9.5px] font-semibold text-white" style={{ background: ACCENT }}>{label}</span>
         </div>
       )}
@@ -192,7 +192,7 @@ function Concept({ ex, i, t, recommended }: { ex: Example; i: number; t: number;
   const c = ex.concepts[i];
   const ring = recommended ? reveal(t, MOMENTS.recommend, MOMENTS.recommend + 500) : 0;
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white" style={{ ...card, boxShadow: `${card.boxShadow}, 0 0 0 ${3 * ring}px rgba(124,92,255,${0.85 * ring})` }}>
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white" style={{ ...card, boxShadow: `${card.boxShadow}, 0 0 0 ${3 * ring}px rgba(47,107,255,${0.85 * ring})` }}>
       <div className="relative min-h-0 flex-[1.15]">
         <BusinessArt type={ex.type} variant={c.art} className="absolute inset-0 h-full w-full" />
         <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white">{c.format}</span>
@@ -425,7 +425,7 @@ function ResultsBoard({ ex, t, narrow }: { ex: Example; t: number; narrow: boole
           );
         })}
       </ol>
-      <div className="mt-3 flex min-h-0 flex-1 flex-col rounded-xl p-3" style={{ border: `1px solid rgba(124,92,255,0.35)`, background: "#f8f6ff", opacity: rec, transform: `translateY(${(1 - rec) * 8}px)` }}>
+      <div className="mt-3 flex min-h-0 flex-1 flex-col rounded-xl p-3" style={{ border: `1px solid rgba(47,107,255,0.35)`, background: "#f8f6ff", opacity: rec, transform: `translateY(${(1 - rec) * 8}px)` }}>
         <Eyebrow>Recommendation</Eyebrow>
         <p className="mt-0.5 text-[14px] font-semibold">{s.recommendation.title}</p>
         <p className="mt-0.5 text-[11.5px] leading-snug" style={{ color: "#3d3760" }}>{s.recommendation.why}</p>

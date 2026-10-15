@@ -136,7 +136,7 @@ export function FreePlanForm({
         onStart({ website: w || null, instagram: ig || null, describe: d || null, name: n || null, goal, type, budget: Number.isFinite(b) && b > 0 ? Math.round(b) : null });
       }}
       className="rounded-[26px] border border-white/10 p-2.5 text-left sm:p-3.5"
-      style={{ background: "linear-gradient(170deg, rgba(25,31,62,0.82), rgba(14,17,33,0.86))", boxShadow: "0 0 0 1px rgba(121,82,255,0.14), 0 40px 100px -45px rgba(121,82,255,0.65)" }}
+      style={{ background: "linear-gradient(170deg, rgba(25,31,62,0.82), rgba(14,17,33,0.86))", boxShadow: "0 0 0 1px rgba(47,107,255,0.14), 0 40px 100px -45px rgba(47,107,255,0.65)" }}
     >
       <div role="tablist" aria-label="How to start" className="grid grid-cols-3 gap-1 rounded-full bg-black/30 p-1">
         {MODES.map((m) => (
@@ -151,7 +151,7 @@ export function FreePlanForm({
               setMode(m.id);
               setProblem(null);
             }}
-            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white shadow-[0_0_0_1px_rgba(168,145,255,0.25)]" : "text-white/55 hover:text-white"}`}
+            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white shadow-[0_0_0_1px_rgba(143,184,255,0.25)]" : "text-white/55 hover:text-white"}`}
           >
             <span className="sm:hidden">{m.short}</span>
             <span className="hidden sm:inline">{m.label}</span>

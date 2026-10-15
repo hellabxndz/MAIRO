@@ -9,7 +9,7 @@ import type { CampaignJourney, TimelineEvent as Event, TimelineFilter, TimelineK
 // adds the figures under each event.
 
 const ICON: Record<TimelineKind, { tone: string; d: React.ReactNode }> = {
-  launch: { tone: "#a78bfa", d: <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2m-2-3 3 3m-3-3c1-4 4-9 11-10-1 7-6 10-10 11" /> },
+  launch: { tone: "#8fb8ff", d: <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2m-2-3 3 3m-3-3c1-4 4-9 11-10-1 7-6 10-10 11" /> },
   data: { tone: "#94a6cc", d: <path d="M4 19h16M7 16v-4M11 16V8M15 16v-6M19 16V5" /> },
   winner: { tone: "#34d399", d: <path d="M8 4h8v5a4 4 0 0 1-8 0zM6 5H4v1.5A3 3 0 0 0 7 9.5M18 5h2v1.5A3 3 0 0 1 17 9.5M12 13v4M8.5 20h7" /> },
   budget: { tone: "#818cf8", d: <path d="M5 19v-6M10 19V9M15 19v-9M20 19V5" /> },

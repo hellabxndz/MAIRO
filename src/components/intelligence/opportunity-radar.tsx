@@ -33,7 +33,7 @@ function Shape({ areas }: { areas: RadarReport["areas"] }) {
         const [x, y] = pt(i, R);
         return <line key={i} x1={c} y1={c} x2={x} y2={y} stroke="rgba(148,166,204,0.1)" />;
       })}
-      <polygon points={shape} fill="rgba(124,92,255,0.28)" stroke="#a78bfa" strokeWidth="1.8" strokeLinejoin="round" />
+      <polygon points={shape} fill="rgba(47,107,255,0.28)" stroke="#8fb8ff" strokeWidth="1.8" strokeLinejoin="round" />
       {areas.map((a, i) => {
         const [x, y] = pt(i, R + 20);
         return (

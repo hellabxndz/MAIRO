@@ -172,7 +172,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             role="img"
             aria-label={`Demo on a sample business, chapter: ${scene.label}. ${caption.text}`}
             className="relative aspect-[16/9] w-full overflow-hidden rounded-[22px] border border-white/10 max-[591px]:aspect-[9/16]"
-            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(121,82,255,0.2), transparent 70%), #07080D" }}
+            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(47,107,255,0.2), transparent 70%), #07080D" }}
           >
             {scale > 0 && (
               <div aria-hidden className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})`, width: stage.w, height: stage.h }}>
@@ -216,7 +216,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             onChange={(e) => seek(Number(e.target.value))}
             aria-label="Position in the demo"
             aria-valuetext={`${fmt(shown)} of ${fmt(WALK_DURATION)}, ${scene.label}`}
-            className="mt-3 w-full accent-[#8b5cf6]"
+            className="mt-3 w-full accent-[#3b82f6]"
           />
           <nav aria-label="Demo chapters" className="mt-2 flex flex-wrap gap-1.5">
             {WALK_CHAPTERS.map((c) => {
