@@ -5,7 +5,8 @@ import { LandingBeacon } from "@/components/landing/landing-beacon";
 import { PricingBlock, TrustBlock, FaqBlock } from "@/components/landing/home";
 import { ConsoleHero } from "@/components/landing/console-hero";
 import { RevealOnScroll } from "@/components/landing/console-sections";
-import { DemoSection } from "@/components/home/demo-section";
+import { Walkthrough } from "@/components/home/walkthrough";
+import { DashboardTour, TeamSection } from "@/components/home/product-tour";
 import { CreativeShowcase } from "@/components/home/showcase";
 import { BeforeAfter } from "@/components/home/before-after";
 import { ConversionBlock } from "@/components/home/conversion";
@@ -19,16 +20,17 @@ import { brandFont } from "@/lib/fonts";
 // The homepage: MAIRO shown working, at every stage, by short videos of the
 // product itself — each clip drawn from the signed-in app's own components
 // for one clearly labelled fictional shop (components/clips/), rendered to
-// video, and played only while it's on screen.
+// video, and played only while it's on screen. Each section has its own
+// composition, so the page never reads as one card layout repeated:
 //
 //   1. Hero: the free plan, started here, and the plan being made
-//   2. The Creative Studio — first, because the ads are what catch the eye
-//   3. The creative showcase: sample ads for many kinds of business
-//   4. The product film: "Meet your AI advertising team."
-//   5–10. Business understood · campaigns · the AI team · the dashboard ·
-//         decisions · results — one clip each, sides alternating
-//   11. Before and after · where MAIRO works · trust
-//   12. Put it to work · pricing · FAQ · the final call
+//   2. The product film, full width — the centerpiece
+//   3. How it works: five steps beside one player that follows the scroll
+//   4. The creative showcase, set as finished ads on a paper band
+//   5. Dashboard & results: one wide player, two views, the Simple view
+//   6. The AI team as one workflow, and what always waits for the owner
+//   7. Before and after · where MAIRO works · who it's for · trust
+//   8. Put it to work · pricing · FAQ · the final call
 //
 // Rules above the design: no invented customers, reviews, counts, results or
 // integrations; every figure in a clip is sample data and says so; the free
@@ -36,6 +38,8 @@ import { brandFont } from "@/lib/fonts";
 // campaigns, each of which waits for the owner's approval.
 
 const CTA = { href: "/preview", label: "Build My Free AI Ad Plan" };
+
+const FILM_CHAPTERS = ["Discovery", "Strategy", "Creative", "Campaign", "Approval", "Dashboard", "Recommendations"];
 
 const SOLUTIONS = [
   { title: "Local & service businesses", body: "Plumbers, clinics, salons, studios: leads and bookings from people near you, followed through to the jobs they became.", links: [{ href: "/solutions/local-services", label: "Local services" }, { href: "/solutions/appointments", label: "Appointments" }] },
@@ -46,106 +50,55 @@ const SOLUTIONS = [
 export function ConsoleHome() {
   const toolsLive = USABLE_TOOLS().length > 0;
   return (
-    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-paper text-white`}>
+    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-paper text-white`}>
       <AmbientSky />
       <RevealOnScroll />
-      <LandingNav toolsLive={toolsLive} cta={{ href: "/preview", label: "Get Started" }} />
+      <LandingNav toolsLive={toolsLive} />
       <main>
         <ConsoleHero />
 
-        {/* 2 — the Creative Studio, first */}
-        <span id="creatives" aria-hidden className="block scroll-mt-20" />
-        <DemoSection
-          id="creative-studio"
-          eyebrow="AI Creative Studio"
-          title="Creative ideas built around your brand."
-          body="MAIRO suggests angles from what your business actually says, writes the words, and — with a subscription — makes the finished picture. Preview it in the Facebook and Instagram feeds, change any word, and approve it. Concepts are free; nothing is published."
-          clip="creative"
-          clipTitle="MAIRO's Creative Studio making ads for a fictional shop"
-          cta={{ href: "/preview", label: "Explore Creative Studio →" }}
-        />
-
-        <CreativeShowcase />
-
-        {/* 4 — the film */}
-        <section id="film" aria-labelledby="film-title" className="relative scroll-mt-20 py-16 sm:py-24">
+        {/* 2 — the film, the centerpiece: right under the hero, full width */}
+        <section id="film" aria-labelledby="film-title" className="relative scroll-mt-16 pb-20 pt-6 sm:pb-28 sm:pt-10">
           <span id="walkthrough" aria-hidden className="block scroll-mt-20" />
-          <div className="mx-auto max-w-[1180px] px-4 sm:px-8 lg:px-12">
-            <div data-reveal className="mx-auto max-w-[760px] text-center">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">The product film · 74 seconds</p>
-              <h2 id="film-title" className="mt-3 text-[clamp(30px,4.4vw,56px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white [text-wrap:balance]">
-                Meet your AI advertising team.
-              </h2>
-              <p className="mt-4 text-[17px] leading-relaxed text-white/68">From your first idea to your next campaign, see how MAIRO makes advertising simpler.</p>
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[18%] -z-10 h-[70%] bg-[radial-gradient(ellipse_50%_55%_at_50%_50%,rgba(47,107,255,0.18),transparent_72%)]" />
+          <div className="mx-auto max-w-[1320px] px-4 sm:px-8 lg:px-12">
+            <div data-reveal className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+              <div className="max-w-[720px]">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">The product film · 74 seconds</p>
+                <h2 id="film-title" className="mt-3 text-[clamp(32px,4.8vw,64px)] font-semibold leading-[1.0] tracking-[-0.045em] text-white [text-wrap:balance]">
+                  Meet your AI advertising team.
+                </h2>
+              </div>
+              <p className="max-w-[420px] text-[16.5px] leading-relaxed text-white/66">From your first idea to your next campaign — one fictional shop, start to finish, inside MAIRO.</p>
             </div>
             <div data-reveal className="mt-10">
               <DemoVideo id="film" title="MAIRO product film: a fictional shop from its website to its first recommendation" />
             </div>
+            <ol className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-4 lg:grid-cols-7">
+              {FILM_CHAPTERS.map((c, i) => (
+                <li key={c} className="flex items-baseline gap-2 text-white/55">
+                  <span className="font-mono text-[11px] text-cyan-300/80">{String(i + 1).padStart(2, "0")}</span>
+                  {c}
+                </li>
+              ))}
+            </ol>
             <FilmSchema />
           </div>
         </section>
 
-        {/* 5–10 — every stage, one clip each */}
-        <DemoSection
-          id="understand"
-          eyebrow="Business discovery"
-          title="Your business. Understood by AI."
-          body="Give MAIRO your website, your Instagram or a sentence. It reads your public pages and tells you what it found and where — your own facts kept apart from its suggestions, so nothing about your business is guessed."
-          clip="understand"
-          clipTitle="MAIRO reading a fictional shop's website and saying what it understood"
-          cta={{ href: "/preview", label: "Analyze My Business →" }}
-          flip
-        />
+        {/* 3 — how it works, step by step, as you scroll */}
         <span id="approval" aria-hidden className="block scroll-mt-20" />
-        <DemoSection
-          id="campaigns"
-          eyebrow="Campaign builder"
-          title="From strategy to campaign. Without the complexity."
-          body="Connect your own Meta ad account and MAIRO builds the campaign from your plan: the objective, the audience, the placements, the budget and your approved creative. You see it all before approving, and it's shown live only when Meta confirms."
-          clip="campaign"
-          clipTitle="Building a Meta campaign for a fictional shop in MAIRO's campaign builder"
-          cta={{ href: "/help/getting-started", label: "See How Campaigns Work →" }}
-        />
-        <DemoSection
-          id="ai-team"
-          eyebrow="Your AI team"
-          title="An entire advertising team, powered by AI."
-          body="Eight AI specialties of one system — strategy, creative, audience, campaigns, optimisation, budget, analytics and growth. Each one's state comes from what it actually did, with the time it did it. When there's nothing to do, it says so."
-          clip="team"
-          clipTitle="One morning's review by MAIRO's AI team for a fictional shop"
-          cta={{ href: "/help/approvals", label: "Meet Your AI Team →" }}
-          flip
-        />
-        <DemoSection
-          id="dashboard"
-          eyebrow="The dashboard"
-          title="Every result. One clear dashboard."
-          body="Overview, campaigns, creatives, performance, your AI team, recommendations, approvals and results — in one place, in plain words. Every figure says where it comes from; the clip shows sample data."
-          clip="dashboard"
-          clipTitle="Moving through the MAIRO dashboard of a fictional shop"
-          cta={{ href: "/help/results", label: "Explore the Dashboard →" }}
-        />
-        <DemoSection
-          id="decisions"
-          eyebrow="Recommendations"
-          title="Smarter decisions, backed by your results."
-          body="When MAIRO finds something worth changing, it says what it noticed, which campaign it's about, the evidence, the effect on your budget and the risk — and waits for your approval. Small, reversible changes run on their own only if you allow it, inside your limits."
-          clip="optimize"
-          clipTitle="A recommendation from MAIRO, with its evidence, for a fictional shop"
-          cta={{ href: "/help/approvals", label: "See MAIRO Decisions →" }}
-          flip
-        />
-        <DemoSection
-          id="results"
-          eyebrow="Results"
-          title="Know what's working. Know what comes next."
-          body="Performance from Meta, the sales your store confirms or the leads you mark as booked, and a weekly summary in plain words — with what MAIRO suggests next. Revenue shows only when your store or your own records provide it."
-          clip="results"
-          clipTitle="The MAIRO Results page for a fictional shop and a fictional service business"
-          cta={{ href: "/help/results", label: "See Your Results →" }}
-        />
+        <Walkthrough />
 
-        <span id="how-it-works" aria-hidden className="block scroll-mt-20" />
+        {/* 4 — the creative showcase, on paper */}
+        <span id="features" aria-hidden className="block scroll-mt-16" />
+        <span id="creatives" aria-hidden className="block scroll-mt-16" />
+        <CreativeShowcase />
+
+        {/* 5 — the dashboard and results; 6 — the AI team and approvals */}
+        <DashboardTour />
+        <TeamSection />
+
         <BeforeAfter />
 
         {/* Where MAIRO works — stated exactly. */}

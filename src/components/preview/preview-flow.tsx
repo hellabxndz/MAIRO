@@ -335,9 +335,10 @@ export function PreviewFlow({
           ) : insta.read && insta.read.status !== "read" ? (
             <div className="mt-5 space-y-3">
               <ScanError message={"message" in insta.read ? insta.read.message : "Instagram didn't show this profile."} />
+              {insta.read.status === "unavailable" && <BioLink onRead={(w) => { setUrl(w); void read(w); }} />}
               <div className="flex flex-wrap gap-2">
                 {insta.read.status !== "invalid" && <button type="button" onClick={() => void readInsta(insta.handle)} className={secondaryBtn}>Try again</button>}
-                <button type="button" onClick={() => startManual(null, null)} className={primaryBtn}>Tell MAIRO about my business</button>
+                <button type="button" onClick={() => startManual(null, null)} className={insta.read.status === "unavailable" ? secondaryBtn : primaryBtn}>Tell MAIRO about my business</button>
               </div>
             </div>
           ) : null}
@@ -673,3 +674,46 @@ function signUpHref(f: PreviewFacts): string {
   return `/sign-up?${q.toString()}`;
 }
 
+
+/**
+ * When Instagram won't show a profile signed out: the link in the bio is
+ * usually the business's website, which MAIRO can read — one field instead
+ * of a description. It's read as a website and said to be one.
+ */
+function BioLink({ onRead }: { onRead: (url: string) => void }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const submit = () => {
+    const t = value.trim().replace(/\s+/g, "");
+    let url: string | null = null;
+    try {
+      const u = new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`);
+      if (/^https?:$/.test(u.protocol) && u.hostname.includes(".") && !/(^|\.)instagram\.com$/i.test(u.hostname)) url = u.href;
+    } catch {
+      url = null;
+    }
+    if (!url) {
+      setError(/instagram\.com/i.test(t) ? "That's the Instagram profile itself — paste the website link from the bio." : "Paste a web address like yourbusiness.com.");
+      return;
+    }
+    onRead(url);
+  };
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+      noValidate
+      className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+    >
+      <label htmlFor="pv-biolink" className="block text-[14px] font-medium text-white">Is there a link in your bio?</label>
+      <p className="mt-0.5 text-[12.5px] text-white/55">Usually it&rsquo;s your website. Paste it and MAIRO reads that instead — your public pages only.</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input id="pv-biolink" value={value} onChange={(e) => { setValue(e.target.value); setError(null); }} inputMode="url" autoComplete="url" autoCapitalize="none" spellCheck={false} maxLength={200} placeholder="yourbusiness.com" aria-invalid={Boolean(error)} aria-describedby={error ? "pv-biolink-err" : undefined} className={`${inputCls} sm:flex-1`} />
+        <button type="submit" className={primaryBtn}>Read my link</button>
+      </div>
+      {error && <p id="pv-biolink-err" role="alert" className="mt-1.5 text-[12.5px] text-red-300">{error}</p>}
+    </form>
+  );
+}

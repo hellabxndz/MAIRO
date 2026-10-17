@@ -8,6 +8,7 @@ import type { Clip } from "./stage";
 const LOADERS: Record<ClipId, () => Promise<Clip>> = {
   creative: () => import("./creative").then((m) => m.CREATIVE_CLIP),
   understand: () => import("./understand").then((m) => m.UNDERSTAND_CLIP),
+  plan: () => import("./plan").then((m) => m.PLAN_CLIP),
   campaign: () => import("./campaign").then((m) => m.CAMPAIGN_CLIP),
   team: () => import("./team").then((m) => m.TEAM_CLIP),
   dashboard: () => import("./dashboard").then((m) => m.DASHBOARD_CLIP),

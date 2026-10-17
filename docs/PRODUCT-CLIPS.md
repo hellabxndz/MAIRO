@@ -40,6 +40,7 @@ default) and listed as a transcript under each video.
 | --- | --- | --- | --- |
 | `creative` | 22.5 s | Angles MAIRO suggests; the owner edits a headline; the finished picture (one credit, used only if made); Facebook and Instagram feed previews; review and approval ("Nothing is published"); then sample ads for other kinds of business | The free plan's ad preview (`AdMock`), the console panels and pills, the shared sample-creative cards. **A composition**: laid out for the clip with the Creative Studio's own wording — not a capture of `/dashboard/creatives` |
 | `understand` | 17 s | The generator's six stages ticking as each finishes, then the report's "Your business, understood": facts with their source, MAIRO's suggestions labelled as suggestions | The generator's progress view (`Running`) and the real report (`PlanReportView`) |
+| `plan` | 16.5 s | The free plan's strategy for the shop: objective, audience and placements, what the ads should say, the campaign structure, then the monthly budget split — "a recommendation, not a forecast" | The real report (`PlanReportView`) built by the generator's own `buildReport` |
 | `campaign` | 26.5 s | Plan active (Growth, from `PLANS`), connect Meta, the builder's goal, audience and budget steps, the approved creative, the launch review with the spend agreement, then "Approved by you · Waiting for Meta's review" | The real `StepGoal`, `StepAudience`, `StepBudget`, the builder's `Question`/`Choice` parts and `PlanSummary`. The step rail around them and the Meta-connect card reproduce the builder's markup; Meta's own sign-in screen is not shown |
 | `team` | 18.5 s | One morning's review: each specialty's state changing only when a recorded step happens, the change checked against limits and sent for approval, and a specialty with nothing to do saying so | `TeamPanel` and the AI Team page's `FeedLine` |
 | `dashboard` | 23.5 s | Overview ("Your business at a glance."), Campaigns, Creative Studio (with the five statuses), Performance, AI Team, Recommendations, Approvals, Results — one sidebar click each | The real sidebar (`PRIMARY_NAV`), `ConsoleHeader`, `MetricStrip`, `ResultsPanel` (the real chart), `CampaignsPanel`, `CreativesPanel`, `ActionCenter`, `TeamPanel`, `Journey` |
@@ -51,6 +52,16 @@ Each clip is rendered at 16:9 (1440 × 810) and 9:16 (540 × 960), with a WebP
 poster. Files are in `public/demo/`; the manifest the pages read is
 `src/lib/demo/media.ts`, written by the renderer and listing only files that
 exist.
+
+## Where they're used on the homepage
+
+- **The film**, full width, right under the hero.
+- **How it works**: five steps — `understand`, `plan`, `creative`, `campaign`,
+  `results`. On a computer one player stays beside the steps and shows the
+  step being read; on a phone each step has its own video under it.
+- **Dashboard & results**: `dashboard` and `optimize`, as two views of one
+  player.
+- **Your AI team**: `team`.
 
 ## How they play
 

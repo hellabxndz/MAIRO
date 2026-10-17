@@ -48,7 +48,7 @@ function normalize(raw: string): string | null {
 
 const readOk = (r: ScanResult | null) => Boolean(r && (r.status === "OK" || r.status === "PARTIAL") && !r.socialInstead);
 
-type InstagramReply = { status: "read"; profile: { handle: string; name: string | null; bio: string | null } } | { status: string; message?: string; handle?: string };
+type InstagramReply = { status: "read"; profile: { handle: string; name: string | null; bio: string | null; website: string | null } } | { status: string; message?: string; handle?: string };
 
 export function HeroStarter() {
   const router = useRouter();
@@ -67,6 +67,9 @@ export function HeroStarter() {
   const [customOn, setCustomOn] = useState(false);
   const [tried, setTried] = useState(false);
   const [firstError, setFirstError] = useState<string | null>(null);
+  // When Instagram won't show the profile: the link in the bio, read as a website instead.
+  const [bioLink, setBioLink] = useState("");
+  const [bioError, setBioError] = useState<string | null>(null);
 
   const monthly = customOn ? Math.round(Number(custom.replace(/[^0-9]/g, ""))) || null : budget;
   const budgetOk = Boolean(monthly && monthly >= BUDGET_MIN && monthly <= BUDGET_MAX);
@@ -127,7 +130,13 @@ export function HeroStarter() {
       const handle = `@${value.replace(/^@+/, "").replace(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\//i, "").replace(/\/.*$/, "")}`;
       if (reply?.status === "read" && "profile" in reply) {
         const p = reply.profile;
-        next({ by: "instagram", label: `@${p.handle}`, ok: true, message: null, name: p.name ?? "", sells: (p.bio ?? "").slice(0, 400), goal: null, scan: null, website: null });
+        // The bio's link is usually the website: read it too, and say so only if it was read.
+        const link = p.website ? normalize(p.website) : null;
+        const result = link && !/(^|\.)instagram\.com$/i.test(new URL(link).hostname) ? (setBusy(true), await runScan({ url: link })) : null;
+        setBusy(false);
+        const site = readOk(result) && result ? result : null;
+        const f = site ? factsFromScan(site) : null;
+        next({ by: "instagram", label: site ? `@${p.handle} and ${domainOf(link!)}` : `@${p.handle}`, ok: true, message: null, name: p.name ?? f?.name ?? "", sells: (p.bio || f?.offering || "").slice(0, 400), goal: f?.goal || null, scan: site, website: site ? link : null });
       } else {
         next({ by: "instagram", label: handle, ok: false, message: (reply && "message" in reply && reply.message) || "MAIRO couldn't reach Instagram just now.", name: "", sells: "", goal: null, scan: null, website: null });
       }
@@ -140,6 +149,29 @@ export function HeroStarter() {
     }
     track({ name: "preview_start", props: { source: "manual", variant: heroVariant() } });
     next({ by: "describe", label: "Your description", ok: true, message: null, name: "", sells: value.slice(0, 400), goal: null, scan: null, website: null });
+  };
+
+  /** Instagram showed nothing: read the link from the bio as a website instead. */
+  const readBioLink = async () => {
+    setBioError(null);
+    const url = normalize(bioLink);
+    if (!url || /(^|\.)instagram\.com$/i.test(new URL(url).hostname)) {
+      setBioError(/instagram\.com/i.test(bioLink) ? "That's the Instagram profile itself — paste the website link from the bio." : "Paste a web address like yourbusiness.com.");
+      focus("biolink");
+      return;
+    }
+    setBusy(true);
+    const result = await runScan({ url });
+    setBusy(false);
+    const ok = readOk(result);
+    if (!ok || !result) {
+      setBioError(result?.error ?? "MAIRO couldn't read that page either. Tell MAIRO what you sell below instead.");
+      focus("biolink");
+      return;
+    }
+    const f = factsFromScan(result);
+    setBioLink("");
+    next({ by: "website", label: domainOf(url), ok: true, message: null, name: f.name ?? "", sells: f.offering ?? "", goal: f.goal || null, scan: result, website: url });
   };
 
   const next = (r: Read) => {
@@ -301,6 +333,48 @@ export function HeroStarter() {
               Change
             </button>
           </div>
+          {read.by === "instagram" && !read.ok && (
+            <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-3">
+              <label htmlFor="hero-biolink" className="text-[13.5px] font-semibold text-white">Is there a link in your bio?</label>
+              <p className="mt-0.5 text-[12.5px] text-white/55">Usually it&rsquo;s your website — paste it and MAIRO reads that instead.</p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <div className={`min-w-0 flex-1 ${box(Boolean(bioError))}`}>
+                  <IconLink className="h-5 w-5 shrink-0 text-white/45" />
+                  <input
+                    id="hero-biolink"
+                    data-field="biolink"
+                    value={bioLink}
+                    onChange={(e) => {
+                      setBioLink(e.target.value);
+                      setBioError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void readBioLink();
+                      }
+                    }}
+                    inputMode="url"
+                    autoComplete="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    maxLength={200}
+                    placeholder="yourbusiness.com"
+                    aria-invalid={Boolean(bioError)}
+                    aria-describedby="hero-biolink-note"
+                    disabled={reading}
+                    className="min-h-[48px] min-w-0 flex-1 mairo-bare bg-transparent text-[16px] text-white outline-none placeholder:text-white/35 disabled:opacity-70"
+                  />
+                </div>
+                <button type="button" onClick={() => void readBioLink()} disabled={reading} className="inline-flex min-h-[50px] shrink-0 items-center justify-center rounded-2xl border border-white/20 px-5 text-[14px] font-semibold text-white transition hover:border-white/45 disabled:cursor-wait disabled:opacity-70">
+                  {reading ? "Reading…" : "Read my link"}
+                </button>
+              </div>
+              <p id="hero-biolink-note" role="status" className="mt-1.5 min-h-[16px] text-[12.5px]">
+                {bioError ? <span className="text-red-300">{bioError}</span> : reading ? <span className="text-white/70">{progress ?? "Opening your website…"}</span> : <span className="text-white/45">Or skip it and tell MAIRO what you sell below.</span>}
+              </p>
+            </div>
+          )}
           {read.website && <input type="hidden" name="website" value={read.website} />}
 
           {needsName && (
@@ -316,7 +390,7 @@ export function HeroStarter() {
           <div className="mt-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label htmlFor="hero-sells" className="text-[14.5px] font-semibold text-white">{read.by === "describe" ? "What you sell" : "Is this what you sell?"}</label>
-              {read.ok && read.by !== "describe" && read.sells && sells === read.sells && <span className="rounded-full bg-emerald-400/12 px-2.5 py-0.5 text-[11.5px] font-medium text-emerald-300">From {read.by === "website" ? "your website" : "your bio"} — check it</span>}
+              {read.ok && read.by !== "describe" && read.sells && sells === read.sells && <span className="rounded-full bg-emerald-400/12 px-2.5 py-0.5 text-[11.5px] font-medium text-emerald-300">From {read.by === "website" ? "your website" : read.scan ? "your profile and website" : "your bio"} — check it</span>}
             </div>
             <div className={`mt-1.5 !items-start ${box(tried && sells.trim().length < 3)}`}>
               <IconTag className="mt-[14px] h-5 w-5 shrink-0 text-white/45" />

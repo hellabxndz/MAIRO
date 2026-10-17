@@ -17,7 +17,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-15T06:21:45.333Z",
+  "renderedAt": "2026-10-15T14:32:03.372Z",
   "clips": {
     "film": {
       "vtt": "/demo/film.vtt",
@@ -181,7 +181,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 17000,
-        "bytes": 721915
+        "bytes": 856701
       },
       "narrow": {
         "mp4": "/demo/understand-narrow.mp4",
@@ -189,7 +189,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 17000,
-        "bytes": 529097
+        "bytes": 652499
       }
     },
     "campaign": {
@@ -440,6 +440,47 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "height": 960,
         "ms": 17500,
         "bytes": 399926
+      }
+    },
+    "plan": {
+      "vtt": "/demo/plan.vtt",
+      "cues": [
+        {
+          "start": 0,
+          "end": 4200,
+          "text": "From what it understood, MAIRO plans your first Meta campaign: the objective, who to reach, and where."
+        },
+        {
+          "start": 4200,
+          "end": 8600,
+          "text": "It says what the ads should say and how the campaign is structured — each with its reason."
+        },
+        {
+          "start": 8600,
+          "end": 12800,
+          "text": "Your monthly budget, divided for your goal — paid to Meta from your own ad account."
+        },
+        {
+          "start": 12800,
+          "end": 16500,
+          "text": "A recommendation, not a forecast. Nothing is spent until you approve a campaign."
+        }
+      ],
+      "wide": {
+        "mp4": "/demo/plan-wide.mp4",
+        "poster": "/demo/plan-wide-poster.webp",
+        "width": 1440,
+        "height": 810,
+        "ms": 16500,
+        "bytes": 822299
+      },
+      "narrow": {
+        "mp4": "/demo/plan-narrow.mp4",
+        "poster": "/demo/plan-narrow-poster.webp",
+        "width": 540,
+        "height": 960,
+        "ms": 16500,
+        "bytes": 549506
       }
     }
   },

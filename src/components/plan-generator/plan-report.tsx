@@ -115,6 +115,73 @@ function sourceNote(r: PlanReport): { title: string; body: string; tone: "ai" | 
   return { title: "Written from MAIRO's ad templates", body: `${why} They use only the facts in section A — nothing is invented.`, tone: "templates" };
 }
 
+/** A ring of the budget split — the plan's one chart, drawn from its own figures. */
+function BudgetRing({ lines }: { lines: PlanReport["budget"]["lines"] }) {
+  const R = 42;
+  const C = 2 * Math.PI * R;
+  const lens = lines.map((l) => (l.share / 100) * C);
+  const starts = lens.map((_, i) => lens.slice(0, i).reduce((a, b) => a + b, 0));
+  return (
+    <svg viewBox="0 0 100 100" className="h-[112px] w-[112px] shrink-0 -rotate-90" aria-hidden>
+      <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="11" />
+      {lines.map((l, i) => (
+        <circle key={l.key} cx="50" cy="50" r={R} fill="none" stroke={SEGMENT[i % SEGMENT.length]} strokeWidth="11" strokeDasharray={`${Math.max(0, lens[i] - 1.5)} ${C}`} strokeDashoffset={-starts[i]} />
+      ))}
+    </svg>
+  );
+}
+
+/**
+ * The plan's cover: the four things to know before reading on — what the
+ * campaign is for, the money, how it divides, and which ad to test first —
+ * all taken from the plan itself.
+ */
+function AtAGlance({ r }: { r: PlanReport }) {
+  const first = r.concepts.list[r.concepts.first];
+  return (
+    <section aria-label="Your plan at a glance" className="mt-7 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(108,158,255,0.28)", background: "radial-gradient(90% 140% at 100% 0%, rgba(47,107,255,0.20), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
+      <div className="grid gap-px bg-white/[0.06] md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="bg-[#0a0e1b]/80 p-5 sm:p-6">
+          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">First campaign</p>
+          <p className="mt-2 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-white">{r.strategy.objective}</p>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">Meta optimises for {r.strategy.optimiseFor.toLowerCase()} · {r.strategy.placements.join(", ")}</p>
+        </div>
+        <div className="flex items-center gap-4 bg-[#0a0e1b]/80 p-5 sm:p-6">
+          <BudgetRing lines={r.budget.lines} />
+          <div className="min-w-0">
+            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Monthly budget</p>
+            <p className="mt-1 text-[28px] font-semibold leading-none tracking-[-0.03em] text-white">{money(r.budget.monthly)}</p>
+            <ul className="mt-2.5 space-y-1 text-[12.5px] text-white/70">
+              {r.budget.lines.map((l, i) => (
+                <li key={l.key} className="flex items-center gap-1.5">
+                  <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: SEGMENT[i % SEGMENT.length] }} />
+                  <span className="truncate">{l.label}</span>
+                  <span className="ml-auto pl-2 tabular-nums text-white/50">{l.share}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="bg-[#0a0e1b]/80 p-5 sm:p-6">
+          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Test first</p>
+          {first ? (
+            <>
+              <p className="mt-2 text-[17px] font-semibold leading-snug text-white">&ldquo;{first.headline}&rdquo;</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">
+                {first.label} · {first.format}
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-[14px] text-white/60">Three concepts below.</p>
+          )}
+          <p className="mt-3 text-[12px] text-white/45">About {money(r.budget.daily)} a day · {r.budget.adsAtOnce === 1 ? "one ad" : `${r.budget.adsAtOnce} ads`} at a time to start</p>
+        </div>
+      </div>
+      <p className="border-t border-white/[0.06] px-5 py-2.5 text-[11.5px] text-white/45 sm:px-6">A recommendation from what you told MAIRO — not a forecast. Nothing is launched or spent from this plan.</p>
+    </section>
+  );
+}
+
 export function PlanReportView({ report: r, actions, headingRef, savedAt }: { report: PlanReport; actions: ReportActions | null; headingRef?: RefObject<HTMLHeadingElement | null>; savedAt?: string }) {
   const [placement, setPlacement] = useState<Placement>("facebook");
   const domain = domainOf(r.website.url);
@@ -144,6 +211,8 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </>
           )}
         </p>
+
+        <AtAGlance r={r} />
 
         {actions && <ActionBar r={r} a={actions} />}
 

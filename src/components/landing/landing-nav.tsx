@@ -4,22 +4,22 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Wordmark } from "@/components/wordmark";
 
-// The public top bar: Product, How It Works, Solutions, Pricing and Resources,
-// then Sign In and Get Started. Sticky, on MAIRO's night with a hairline once
+// The public top bar: How It Works, Features, Pricing and Resources, then
+// Sign In and Get My Free Plan. Sticky, on MAIRO's night with a hairline once
 // the page scrolls. Resources holds the free tools and the reference pages so
 // the main bar stays on the signup journey. On a phone everything folds into
 // one menu. Links are absolute ("/#pricing") so they work from any page.
 
 const MAIN = [
-  { href: "/#product", label: "Product" },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/#solutions", label: "Solutions" },
+  { href: "/#features", label: "Features" },
   { href: "/#pricing", label: "Pricing" },
 ];
 
 const resourcesFor = (toolsLive: boolean) => [
   ...(toolsLive ? [{ href: "/tools", label: "Free advertising tools", hint: "Calculators, checkers and planners — no account" }] : []),
-  { href: "/#walkthrough", label: "Watch MAIRO in action", hint: "The product, start to finish" },
+  { href: "/#film", label: "Watch MAIRO in action", hint: "The product, start to finish" },
+  { href: "/#solutions", label: "Who it's for", hint: "Local services, online stores, teams" },
   { href: "/#control", label: "Security & control", hint: "Your account, your approval, your money" },
   { href: "/#faq", label: "FAQ", hint: "Plain answers before you sign up" },
   { href: "/help", label: "Help center", hint: "How MAIRO works, credits, approvals, billing" },
@@ -28,7 +28,7 @@ const resourcesFor = (toolsLive: boolean) => [
 
 export function LandingNav({
   toolsLive = false,
-  cta = { href: "/preview", label: "Get Started" },
+  cta = { href: "/preview", label: "Get My Free Plan" },
 }: {
   toolsLive?: boolean;
   cta?: { href: string; label: string };
@@ -122,7 +122,7 @@ export function LandingNav({
             ))}
           </ul>
           <Link href="/preview" onClick={() => setOpen(false)} className="mt-3 flex min-h-[50px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-white">
-            Build My Free Ad Plan
+            Get My Free Plan
           </Link>
         </div>
       )}

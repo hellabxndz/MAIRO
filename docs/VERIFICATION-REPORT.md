@@ -188,6 +188,47 @@ page errors. The headless browser here has no H.264, so the player's file
 path was tested with VP9 copies of the same clips; real browsers play the
 MP4s.
 
+## G. Homepage polish, walkthrough and Instagram bio link (16–17 October)
+
+Two briefs arrived together: polish the dark site, and a light redesign. The
+owner left the colours open. The base stays midnight, because the videos and
+the dashboard are drawn in it. The creative showcase sits on warm paper
+(`#f4f1ea`) so the work reads like a printed portfolio. The accent stays
+electric blue, with no purple. The structural asks of both briefs were built.
+
+| Ask | Status | Evidence | Left |
+|---|---|---|---|
+| Nav: How It Works · Features · Pricing · Sign In · Get My Free Plan | **Complete** (local) | `landing-nav.tsx`; "Who it's for" moved under Resources | — |
+| The 74 s film right after the hero | **Complete** (local), **not a recording** | `#film`, chapters listed beside it | Voice-over and music |
+| Sticky five-step walkthrough: Understand, Build plan, Review creatives, Review & approve, Track & improve, labelled as a demo | **Complete** (local), **not recordings** | `walkthrough.tsx`. On a computer, one player stays beside the steps and switches as each step reaches mid-screen; the steps are also keyboard tabs. Below 1024 px each step has its own video. A new `plan` clip (16.5 s) shows the free plan's strategy and budget split | — |
+| Creative showcase: "See the possibilities for your next campaign." | **Complete** (local) | `showcase.tsx`: nine sample ads for fictional brands, set as finished story, feed and square ads, each tagged "Sample"; masonry on a computer, swipe row on a phone | Real photography or real MAIRO images |
+| Dashboard presentation in Simple-view outcomes, never missing data as zero | **Complete** (local) | `product-tour.tsx`: the dashboard and recommendation clips as two views of one player. Money spent, purchases or leads, cost per result, revenue only when provided, needs your approval | — |
+| AI team section | **Complete** (local) | Eight specialties from `lib/team/agents.ts` beside the team clip; "Always waits for you" built from `ALWAYS_NEEDS_APPROVAL` | — |
+| Free plan reads as a premium report | **Complete** (local) | "At a glance" cover on the report: first campaign, a budget ring, what to test first, "not a forecast". `/preview/example` opens the generator's own report for the fictional shop, labelled as an example | — |
+| Instagram blocked by its login wall | **Partial** | Bio-link fallback: when Instagram won't show a profile, the visitor pastes the link from their bio and MAIRO reads that site instead (hero and `/preview`). Instagram links are refused. When a profile is readable and lists a website, MAIRO reads both | Reading the profile itself needs Meta's Business Discovery API, which needs the owner's Meta app setup |
+
+**Evidence for this section (17 October, local).** `npm run audit`
+**83 / 83** suites; `tsc` and `eslint` clean; production build passes;
+`check:clips` **7 / 7** with nine clips; `check:capabilities` passes. These
+browser runs used the production build:
+- `videos.js` **58 / 58**, at 1440, 768 and 390, with reduced motion and the walkthrough player switching;
+- `a11y2.js` **14 / 14**, including every showcase ad saying it's a sample, and the step and view tabs reachable by keyboard;
+- `hero-e2e.js` **33 / 33**, including the bio-link path;
+- `biolink-preview.js` **12 / 12**, at 1440 and 390;
+- `links.js`: 68 links, 0 problems;
+- the homepage at 1440, 768, 412 and 390 has no sideways scroll and no page errors.
+
+`generator.js` scored **151 / 151** on the dev server. That run covers free
+plan → Activate → sign-up → onboarding prefilled. On the production build it
+scores 150 / 151, because the local plan-writer fixture is switched off in
+production by design (`src/lib/ai/ad-plan.ts`).
+
+Every video is a component render, not a screen recording. These are still
+missing and have to be made by hand:
+- screen recordings in a demo account;
+- real images from MAIRO's image model;
+- a licensed voice-over and music (`docs/PRODUCT-CLIPS.md`).
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already

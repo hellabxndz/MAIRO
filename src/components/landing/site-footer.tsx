@@ -12,10 +12,9 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
       h: "Product",
       l: [
         ["How it works", "/#how-it-works"],
-        ["Your AI team", "/#ai-team"],
-        ["Creative recommendations", "/#creatives"],
-        ["Campaigns & approvals", "/#approval"],
-        ["Results", "/#results"],
+        ["Creative showcase", "/#showcase"],
+        ["Dashboard & results", "/#dashboard"],
+        ["Your AI team & approvals", "/#ai-team"],
         ["Pricing", "/#pricing"],
       ],
     },
@@ -24,7 +23,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
       l: [
         ["Build your free ad plan", "/preview"],
         ...(toolsLive ? ([["Free advertising tools", "/tools"]] as [string, string][]) : []),
-        ["Watch MAIRO in action", "/#walkthrough"],
+        ["Watch MAIRO in action", "/#film"],
         ["Security & control", "/#control"],
         ["Integrations", "/#integrations"],
         ["FAQ", "/#faq"],

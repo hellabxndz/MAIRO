@@ -44,7 +44,7 @@ export function ConsoleHero() {
               </span>
               Watch MAIRO in action
             </a>
-            <a href="/preview?example=shop" className="text-white/55 underline-offset-4 hover:text-white hover:underline">
+            <a href="/preview/example" className="text-white/55 underline-offset-4 hover:text-white hover:underline">
               See an example plan
             </a>
           </p>

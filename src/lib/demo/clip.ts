@@ -15,7 +15,7 @@ export const typed = walkTyped;
 
 export type ClipLayout = "wide" | "narrow";
 
-export const CLIP_IDS = ["film", "creative", "understand", "campaign", "team", "dashboard", "optimize", "results"] as const;
+export const CLIP_IDS = ["film", "creative", "understand", "plan", "campaign", "team", "dashboard", "optimize", "results"] as const;
 export type ClipId = (typeof CLIP_IDS)[number];
 
 export function isClipId(v: unknown): v is ClipId {

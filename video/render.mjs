@@ -29,7 +29,7 @@ const SCALE = Number(args.scale ?? 2);
 const ONLY = args.only ?? "all";
 const OUT = join(root, "public/walkthrough");
 const CLIP_OUT = join(root, "public/demo");
-const CLIP_IDS = ["film", "creative", "understand", "campaign", "team", "dashboard", "optimize", "results"];
+const CLIP_IDS = ["film", "creative", "understand", "plan", "campaign", "team", "dashboard", "optimize", "results"];
 const CLIPS = args.clips ? args.clips.split(",").filter((c) => CLIP_IDS.includes(c)) : CLIP_IDS;
 const LAYOUTS = (args.layouts ?? "wide,narrow").split(",").filter((l) => l === "wide" || l === "narrow");
 // The clips are drawn at 1.5× — crisp text without heavy files.
