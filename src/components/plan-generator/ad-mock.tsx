@@ -22,7 +22,7 @@ function Avatar({ name }: { name: string }) {
 /** A picture where the concept's visual direction would be — in demos, sample artwork, labelled. */
 function Picture({ image, label, tall }: { image: ReactNode; label: string; tall: boolean }) {
   return (
-    <div className={`relative overflow-hidden [&>svg]:h-full [&>svg]:w-full ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`}>
+    <div className={`relative overflow-hidden [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`}>
       {image}
       <span className="absolute left-2.5 top-2.5 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white/90">{label}</span>
     </div>

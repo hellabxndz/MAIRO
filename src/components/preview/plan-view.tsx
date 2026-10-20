@@ -65,7 +65,7 @@ export function PlanView({
   instagram?: string | null;
   isExample: boolean;
   exampleType: ExampleType | null;
-  /** The product walkthrough's fictional business: its drawn sample pictures, labelled as such. */
+  /** The product walkthrough's fictional business: its sample product renders, labelled as such. */
   demoArt?: "shop" | "service" | "appointments" | null;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onEdit: () => void;
@@ -88,7 +88,7 @@ export function PlanView({
   const overview = businessOverview(facts, p);
   const opps = opportunities(facts, p, findings, instagram);
   const actions = growthActions(facts, p, findings);
-  // An example business's concepts show its drawn sample picture, labelled as one; a real plan has none yet.
+  // An example business's concepts show its sample product render, labelled as one; a real plan has none yet.
   const art: "shop" | "service" | "appointments" | null = demoArt ?? (isExample && exampleType ? (exampleType === "brands" ? "appointments" : exampleType) : null);
 
   return (
@@ -480,7 +480,7 @@ export function ConceptCard({
   saved: boolean;
   canSwap: boolean;
   isExample: boolean;
-  /** An example business's drawn sample picture, shown labelled in the mock-ups; null for a real plan. */
+  /** An example business's sample product render, shown labelled in the mock-ups; null for a real plan. */
   art?: "shop" | "service" | "appointments" | null;
   signUpHref: string;
   onEdit: (e: Edit) => void;

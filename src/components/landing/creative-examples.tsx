@@ -4,7 +4,7 @@ import { EXAMPLES, EXAMPLE_ORDER } from "@/lib/demo/examples";
 
 // "What could MAIRO create?" — three invented businesses and the three ad
 // directions MAIRO would draft for each, with the first one to test. Drawn
-// illustrations, not generated pictures or photos of real customers, and
+// 3D product renders made for the site, not generated pictures or photos of real customers, and
 // labelled as examples throughout.
 
 export function CreativeExamples() {
@@ -14,7 +14,7 @@ export function CreativeExamples() {
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Example ads</p>
         <h2 id="examples-title" className="mt-3 text-[clamp(28px,3.8vw,44px)] font-bold leading-[1.1] tracking-[-0.035em] [text-wrap:balance]">Three businesses. Three ways to start.</h2>
         <p className="mx-auto mt-3 max-w-[640px] text-[15.5px] leading-relaxed text-white/65">
-          For every business, MAIRO drafts three different reasons to stop scrolling — the work itself, the problem it solves, the offer — and picks one to test first. These businesses are invented; the pictures are illustrations.
+          For every business, MAIRO drafts three different reasons to stop scrolling — the work itself, the problem it solves, the offer — and picks one to test first. These businesses are invented; the pictures are 3D product renders, not photographs.
         </p>
       </div>
       <ul className="mx-auto mt-12 grid max-w-[1180px] grid-cols-1 gap-5 lg:grid-cols-3">

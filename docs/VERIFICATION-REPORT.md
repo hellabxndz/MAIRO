@@ -287,7 +287,7 @@ nine, one per card:
 | Honesty | The brands stay fictional, and every card still says "Sample". The intro now says every picture is "a 3D product render made for this page", not a photograph. No people appear. |
 | Files | `public/showcase/*.jpg` (22–53 KB each), listed with alt text in `src/components/home/showcase-photos.ts`. The scene scripts are in `scripts/showcase-renders/`, with steps to re-render. |
 | Fallback | A card without a picture keeps its drawing. A picture can set dark or light headline type. |
-| Not changed | Sample ads elsewhere (plan mock-ups, the walkthrough clips and Creative Studio) still use the drawings. |
+| Elsewhere | Section J below covers the rest of the site. |
 
 **Evidence (local, production build).**
 - At 1340 px: all nine pictures load, no page errors, and the intro wording is
@@ -297,6 +297,44 @@ nine, one per card:
 - `r5home.js`: no overflow at 412 and 390. `links.js`: 68 links, 0 problems.
 - `npm run audit`: 83 / 83. `check:capabilities` passes, and `tsc` and
   `eslint` are clean.
+
+## J. Realistic pictures for the example businesses (20 October)
+
+The owner asked for the rest of the site to match the showcase. Three
+fictional example businesses appear across the plan mock-ups, the example
+plans, the use-case pages, the hero's plan demo and the product clips. Each
+of their nine drawings is now a 3D product render, made in the same way
+(`scripts/showcase-renders/biz.py`):
+
+| Business | Product (`demo`) | Problem it solves | Offer |
+|---|---|---|---|
+| Fernleaf Ceramics | A sage mug of coffee on walnut | Mugs on an oak shelf | Two mugs in a kraft gift box |
+| Brightwater Plumbing | Pipes and valves under a sink | A wrench on the trap's slip nut | A "free estimate" on a clipboard |
+| Juniper Hair Studio | A salon chair and a round mirror | A phone showing online booking | Scissors, a comb and a gift tag |
+
+- **One source.** `BusinessArt` (`src/components/hero-story/art.tsx`) now
+  shows these files (`public/showcase/examples/`), so every place that used
+  the drawings changes together.
+- **Sample ads.** The Creative Studio's sample ad cards (`sample-creatives.tsx`)
+  now use the showcase renders.
+- **Captions.** "a drawn sample illustration" now reads "a sample product
+  render for a fictional business", and the creative examples say "3D product
+  renders, not photographs".
+- **Fixed.** The mock-ups' sizing rule only applied to drawings, so a picture
+  left white space under itself. It now fills its frame: checked at 275 × 344
+  in a 275 × 344 frame.
+
+**Evidence (local, production build).**
+- `/preview?example=service` and `/solutions/appointments` show the renders
+  with the new caption and no page errors.
+- The homepage hero demo loads six example renders, and a frame of the
+  Creative Studio clip shows the three angle thumbnails as renders.
+- `tsc` and `eslint` are clean, and `check:capabilities` passes.
+- `npm run audit` passes 81 / 83. The two failures, `preview` and `clips`,
+  happen only because the product videos were being re-recorded with the new
+  pictures when this was written. Those suites compare the video files with
+  the media list, and the list is rewritten when the recording ends. The
+  re-recorded videos follow in the next commit, with both suites re-run.
 
 ## Fixed while verifying
 

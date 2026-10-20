@@ -20,7 +20,7 @@ export type CreativeTileData = {
    */
   kind: "suggested" | "draft" | "review" | "approved" | "live" | "concept";
   imageUrl: string | null;
-  /** A demonstration's drawn illustration in place of a picture — only ever sample artwork. */
+  /** A demonstration's sample product render in place of a picture — only ever sample artwork. */
   art?: ReactNode;
   label: string;
   href?: string | null;
@@ -41,7 +41,7 @@ export function CreativeTile({ c }: { c: CreativeTileData }) {
     <Go href={c.href} className="group block min-w-0">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border transition group-hover:border-[color:var(--mairo-line-lit)]" style={{ borderColor: "var(--mairo-line)" }}>
         {c.art ? (
-          <div className="h-full w-full [&>svg]:h-full [&>svg]:w-full">{c.art}</div>
+          <div className="h-full w-full [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full">{c.art}</div>
         ) : c.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={c.imageUrl} alt="" className="h-full w-full object-cover transition duration-500 [transition-timing-function:var(--ease-mairo)] group-hover:scale-[1.03]" loading="lazy" />

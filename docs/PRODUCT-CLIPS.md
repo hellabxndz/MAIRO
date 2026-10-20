@@ -98,7 +98,7 @@ AI video, a guarantee or a forecast; and the sample-data label on every frame.
    can't honestly stand in for: signing in with Facebook through Meta's own
    screen, Meta's ad preview, and a real Meta review status changing.
 2. **Real pictures made by MAIRO's image model** for the Creative Studio clip
-   and the showcase. The clips use drawn illustrations labelled "Sample image"
+   and the showcase. The clips use 3D product renders (scripts/showcase-renders/) labelled "Sample image"
    and "Sample creative" because no image model was available where these were
    made; a real output should replace them only with the business's
    permission, still labelled as a sample.

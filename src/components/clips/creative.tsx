@@ -87,7 +87,7 @@ function Studio({ s, narrow }: { s: State; narrow: boolean }) {
           <ul className={`grid gap-2.5 ${narrow ? "" : "grid-cols-3"}`}>
             {CONCEPTS.map((k, i) => (
               <li key={k.label} data-cue={`angle-${i}`} className="flex items-start gap-3 rounded-2xl border p-3" style={{ borderColor: s.selected === i ? "rgba(108,158,255,0.7)" : "var(--mairo-line)", background: s.selected === i ? "rgba(47,107,255,0.10)" : "transparent", ...press(s.pressed === `angle-${i}`) }}>
-                <span className="h-14 w-11 shrink-0 overflow-hidden rounded-lg [&>svg]:h-full [&>svg]:w-full">
+                <span className="h-14 w-11 shrink-0 overflow-hidden rounded-lg [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full">
                   <BusinessArt type="shop" variant={ART[i]} />
                 </span>
                 <span className="min-w-0">
