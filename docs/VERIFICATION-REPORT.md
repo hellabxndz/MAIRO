@@ -265,6 +265,39 @@ missing and have to be made by hand:
 - `links.js`: 68 links, 0 problems. `a11y2.js`: 14 / 14. Homepage at 768, 412
   and 390: no sideways scroll and no page errors.
 
+## I. Realistic pictures in the creative showcase (20 October)
+
+The owner asked for the showcase's flat drawings to be replaced with pictures
+that look like real products for made-up brands. Stock photo sites and image
+models can't be reached from this environment. So each card's picture is now
+a 3D product render, modelled, lit and rendered with Blender here. There are
+nine, one per card:
+- folded flannel overshirts;
+- serum and pump bottles on a plinth;
+- hex dumbbells;
+- chrome pipes under a sink;
+- a gold ring in a velvet box;
+- keys with a house tag;
+- glazed mugs and a gift box;
+- a sofa in afternoon sun;
+- a statement with a calculator and pen.
+
+| | |
+|---|---|
+| Honesty | The brands stay fictional, and every card still says "Sample". The intro now says every picture is "a 3D product render made for this page", not a photograph. No people appear. |
+| Files | `public/showcase/*.jpg` (22–53 KB each), listed with alt text in `src/components/home/showcase-photos.ts`. The scene scripts are in `scripts/showcase-renders/`, with steps to re-render. |
+| Fallback | A card without a picture keeps its drawing. A picture can set dark or light headline type. |
+| Not changed | Sample ads elsewhere (plan mock-ups, the walkthrough clips and Creative Studio) still use the drawings. |
+
+**Evidence (local, production build).**
+- At 1340 px: all nine pictures load, no page errors, and the intro wording is
+  as above.
+- At 390 px: the swipe row loads 9 / 9 with no sideways scroll.
+- `a11y2.js`: 14 / 14, so every card still says it's a sample.
+- `r5home.js`: no overflow at 412 and 390. `links.js`: 68 links, 0 problems.
+- `npm run audit`: 83 / 83. `check:capabilities` passes, and `tsc` and
+  `eslint` are clean.
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already

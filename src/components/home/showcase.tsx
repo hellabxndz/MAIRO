@@ -12,8 +12,9 @@ import { SHOWCASE_PHOTOS } from "./showcase-photos";
 // the picture the way a brand would, on a warm paper band so the work reads
 // like a printed portfolio between the product's dark screens. Every brand
 // is invented and each card says it's a sample — the shape of what MAIRO
-// helps make, never a real ad or a real result. A card shows a licensed
-// photograph when showcase-photos.ts has one for it, and its drawing when not.
+// helps make, never a real ad or a real result. A card shows the picture
+// showcase-photos.ts lists for it (today a 3D product render made for the
+// page), and its drawing when there is none.
 
 type Format = "story" | "feed" | "square";
 type Direction = { format: Format; ink: "dark" | "light"; face: "serif" | "sans" | "display"; place: "top" | "bottom"; accent?: string };
@@ -32,7 +33,8 @@ const DIRECTION: Record<string, Direction> = {
 
 const ORDER = ["fashion", "fitness", "skincare", "local", "luxury", "realestate", "online", "furniture", "services"];
 const ADS = ORDER.map((k) => SAMPLE_ADS.find((a) => a.key === k)).filter(Boolean) as SampleAd[];
-const ALL_PHOTOS = ADS.every((a) => SHOWCASE_PHOTOS[a.key]);
+const ALL_PICTURED = ADS.every((a) => SHOWCASE_PHOTOS[a.key]);
+const ALL_RENDERS = ADS.every((a) => SHOWCASE_PHOTOS[a.key]?.source === "Render");
 
 const RATIO: Record<Format, string> = { story: "9 / 16", feed: "4 / 5", square: "1 / 1" };
 const FORMAT_LABEL: Record<Format, string> = { story: "Story · 9:16", feed: "Feed · 4:5", square: "Feed · 1:1" };
@@ -47,9 +49,9 @@ function Poster({ ad }: { ad: SampleAd }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const d = DIRECTION[ad.key];
   const photo = SHOWCASE_PHOTOS[ad.key];
-  // Type on a photograph is always white over a scrim: a photo's tones can't
-  // be relied on the way a drawing's can.
-  const dark = d.ink === "dark" && !photo;
+  // Type on a picture is white over a scrim unless the picture says it's light
+  // behind the headline.
+  const dark = photo ? photo.ink === "dark" : d.ink === "dark";
   const ink = dark ? "#1b1a17" : "#ffffff";
   const sub = dark ? "rgba(27,26,23,0.68)" : "rgba(255,255,255,0.78)";
   return (
@@ -95,7 +97,7 @@ function Poster({ ad }: { ad: SampleAd }) {
           <span className="font-medium text-[#2a2925]">{ad.category}</span>
           <span className="text-[#77736a]">{FORMAT_LABEL[d.format]}</span>
         </span>
-        {photo && photo.source !== "Owner" && (
+        {photo && photo.source !== "Owner" && photo.source !== "Render" && (
           <span className="mt-0.5 block text-[11px] text-[#8a867c]">
             Photo:{" "}
             {photo.href ? (
@@ -124,9 +126,11 @@ export function CreativeShowcase() {
             </h2>
           </div>
           <p data-reveal className="max-w-[460px] text-[16.5px] leading-relaxed text-[#55524b] lg:justify-self-end">
-            {ALL_PHOTOS
-              ? "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and the photos are licensed stock photography — the shape of what MAIRO helps you make, not a result."
-              : "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and every picture a drawn sample — the shape of what MAIRO helps you make, not a result."}
+            {ALL_RENDERS
+              ? "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and every picture a 3D product render made for this page — the shape of what MAIRO helps you make, not a result."
+              : ALL_PICTURED
+                ? "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and the photos are licensed stock photography — the shape of what MAIRO helps you make, not a result."
+                : "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and every picture a drawn sample — the shape of what MAIRO helps you make, not a result."}
           </p>
         </div>
 
