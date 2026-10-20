@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useId, type CSSProperties } from "react";
 import { SAMPLE_ADS, type SampleAd } from "./sample-creatives";
+import { SHOWCASE_PHOTOS } from "./showcase-photos";
 
 // "See the possibilities for your next campaign." — the sample creatives,
 // art-directed: each set as a finished ad in the format it would run in
 // (a 9:16 story, a 4:5 feed post, a square), with its headline typeset on
 // the picture the way a brand would, on a warm paper band so the work reads
 // like a printed portfolio between the product's dark screens. Every brand
-// is invented, every picture is drawn here, and each one says it's a sample —
-// the shape of what MAIRO helps make, never a real ad or a real result.
+// is invented and each card says it's a sample — the shape of what MAIRO
+// helps make, never a real ad or a real result. A card shows a licensed
+// photograph when showcase-photos.ts has one for it, and its drawing when not.
 
 type Format = "story" | "feed" | "square";
 type Direction = { format: Format; ink: "dark" | "light"; face: "serif" | "sans" | "display"; place: "top" | "bottom"; accent?: string };
@@ -29,6 +32,7 @@ const DIRECTION: Record<string, Direction> = {
 
 const ORDER = ["fashion", "fitness", "skincare", "local", "luxury", "realestate", "online", "furniture", "services"];
 const ADS = ORDER.map((k) => SAMPLE_ADS.find((a) => a.key === k)).filter(Boolean) as SampleAd[];
+const ALL_PHOTOS = ADS.every((a) => SHOWCASE_PHOTOS[a.key]);
 
 const RATIO: Record<Format, string> = { story: "9 / 16", feed: "4 / 5", square: "1 / 1" };
 const FORMAT_LABEL: Record<Format, string> = { story: "Story · 9:16", feed: "Feed · 4:5", square: "Feed · 1:1" };
@@ -42,13 +46,22 @@ const FACE: Record<Direction["face"], CSSProperties> = {
 function Poster({ ad }: { ad: SampleAd }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const d = DIRECTION[ad.key];
-  const dark = d.ink === "dark";
+  const photo = SHOWCASE_PHOTOS[ad.key];
+  // Type on a photograph is always white over a scrim: a photo's tones can't
+  // be relied on the way a drawing's can.
+  const dark = d.ink === "dark" && !photo;
   const ink = dark ? "#1b1a17" : "#ffffff";
   const sub = dark ? "rgba(27,26,23,0.68)" : "rgba(255,255,255,0.78)";
   return (
     <figure className="group">
       <div className="relative overflow-hidden rounded-[18px] shadow-[0_1px_0_rgba(0,0,0,0.04),0_24px_50px_-28px_rgba(30,25,15,0.45)] ring-1 ring-black/[0.06] transition duration-500 group-hover:-translate-y-0.5 group-hover:shadow-[0_1px_0_rgba(0,0,0,0.04),0_34px_60px_-30px_rgba(30,25,15,0.55)] motion-reduce:transition-none motion-reduce:group-hover:translate-y-0" style={{ aspectRatio: RATIO[d.format] }}>
-        <div className="absolute inset-0">{ad.art(id)}</div>
+        <div className="absolute inset-0">
+          {photo ? (
+            <Image src={photo.src} alt={photo.alt} fill sizes="(min-width: 1024px) 400px, (min-width: 768px) 50vw, 300px" className="object-cover" style={{ objectPosition: photo.focus ?? "center" }} />
+          ) : (
+            ad.art(id)
+          )}
+        </div>
         {/* A scrim only where the type sits. */}
         {!dark && <div aria-hidden className="absolute inset-0" style={{ background: d.place === "top" ? "linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0) 46%)" : "linear-gradient(0deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 52%)" }} />}
         <div className={`absolute inset-x-0 flex flex-col p-[7%] ${d.place === "top" ? "top-0" : "bottom-0"}`}>
@@ -77,9 +90,23 @@ function Poster({ ad }: { ad: SampleAd }) {
           </span>
         )}
       </div>
-      <figcaption className="mt-2.5 flex items-baseline justify-between gap-3 px-0.5 text-[12.5px]">
-        <span className="font-medium text-[#2a2925]">{ad.category}</span>
-        <span className="text-[#77736a]">{FORMAT_LABEL[d.format]}</span>
+      <figcaption className="mt-2.5 px-0.5 text-[12.5px]">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="font-medium text-[#2a2925]">{ad.category}</span>
+          <span className="text-[#77736a]">{FORMAT_LABEL[d.format]}</span>
+        </span>
+        {photo && photo.source !== "Owner" && (
+          <span className="mt-0.5 block text-[11px] text-[#8a867c]">
+            Photo:{" "}
+            {photo.href ? (
+              <a href={photo.href} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-[#2a2925] hover:underline">
+                {photo.credit} / {photo.source}
+              </a>
+            ) : (
+              <>{photo.credit} / {photo.source}</>
+            )}
+          </span>
+        )}
       </figcaption>
     </figure>
   );
@@ -97,7 +124,9 @@ export function CreativeShowcase() {
             </h2>
           </div>
           <p data-reveal className="max-w-[460px] text-[16.5px] leading-relaxed text-[#55524b] lg:justify-self-end">
-            Ads written from what a business says about itself, set in the format they&rsquo;d run in. Every brand here is fictional and every picture a drawn sample — the shape of what MAIRO helps you make, not a result.
+            {ALL_PHOTOS
+              ? "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and the photos are licensed stock photography — the shape of what MAIRO helps you make, not a result."
+              : "Ads written from what a business says about itself, set in the format they\u2019d run in. Every brand here is fictional and every picture a drawn sample — the shape of what MAIRO helps you make, not a result."}
           </p>
         </div>
 
