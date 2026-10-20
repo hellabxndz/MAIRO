@@ -330,11 +330,13 @@ of their nine drawings is now a 3D product render, made in the same way
 - The homepage hero demo loads six example renders, and a frame of the
   Creative Studio clip shows the three angle thumbnails as renders.
 - `tsc` and `eslint` are clean, and `check:capabilities` passes.
-- `npm run audit` passes 81 / 83. The two failures, `preview` and `clips`,
-  happen only because the product videos were being re-recorded with the new
-  pictures when this was written. Those suites compare the video files with
-  the media list, and the list is rewritten when the recording ends. The
-  re-recorded videos follow in the next commit, with both suites re-run.
+- The product videos were then re-recorded with the new pictures
+  (`video/render.mjs`): all nine clips at 16:9 and 9:16, the walkthrough, and
+  the older landing story. Frames show the renders in the Creative Studio
+  clip and in the walkthrough's plan mock-ups.
+- After the re-recording: `npm run audit` **83 / 83**, `check:clips` 7 / 7
+  and `check:preview` 29 / 29. `videos.js` passes 58 / 58 and `links.js`
+  finds 68 links with 0 problems.
 
 ## Fixed while verifying
 
