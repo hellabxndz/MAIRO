@@ -184,7 +184,7 @@ export async function saveAutoOptimizeAction(
   // UI — a disabled card somebody can walk around by posting the form is not
   // a gate, and this one decides whether MAIRO may widen who sees an ad.
   if (wantsLevel === "AUTOPILOT" && !(await can(organizationId, "autopilot"))) {
-    return { error: `Full Autopilot is part of the ${planFor("SCALE").name} plan.` };
+    return { error: `Full Autopilot is part of ${planFor("SCALE_V2").name}.` };
   }
 
   const parsed = autoOptimizeSchema.safeParse({

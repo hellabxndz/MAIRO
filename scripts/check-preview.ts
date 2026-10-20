@@ -27,7 +27,7 @@ import { EXAMPLES, EXAMPLE_ORDER, HERO_ORDER, PREVIEW_EXAMPLE } from "../src/lib
 import { CHAPTERS, HERO_DURATION, HERO_SCENES, STAGE, boxes, captionsVtt, restingTime, sceneAt, type ElementId, type Layout } from "../src/lib/demo/timeline";
 import { editsNotInFile, parseEdits, playedRange } from "../src/lib/suggested-ads/video";
 import { renderPlan } from "../src/lib/suggested-ads/render";
-import { PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "../src/lib/plans";
 import { RENDERED_MEDIA } from "../src/lib/demo/media";
 import { WALK_CAMERA, WALK_CAPTIONS, WALK_CHAPTERS, WALK_CURSOR, WALK_DURATION, WALK_ONSCREEN, WALK_SCENES, WALK_STAGE, WALK_T, walkCaptionsVtt, walkRestingTime, walkSceneAt } from "../src/lib/demo/walkthrough";
 
@@ -135,7 +135,7 @@ const numbersIn = (s: string) => s.match(/\d+(?:[.,]\d+)?/g) ?? [];
     assert.match(labels, /Approve the ad and the budget/);
     const sub = p.readiness.find((r) => r.label === "Subscribe to launch")!;
     assert.ok(sub.detail.includes(`$${PLANS[0].priceMonthly}`), sub.detail);
-    assert.ok(sub.detail.includes(`${STARTER_TRIAL_DAYS}-day trial`), sub.detail);
+    assert.ok(sub.detail.includes(`${PRO_TRIAL_DAYS}-day trial`), sub.detail);
     assert.match(sub.detail, /paid to Meta separately/);
   });
   await check("thin facts still give three concepts — the extra ones from the name and the offer alone — and say which fact would add another", () => {

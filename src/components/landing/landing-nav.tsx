@@ -8,12 +8,12 @@ import { Wordmark } from "@/components/wordmark";
 // Sign In and Get My Free Plan. Sticky, on MAIRO's night with a hairline once
 // the page scrolls. Resources holds the free tools and the reference pages so
 // the main bar stays on the signup journey. On a phone everything folds into
-// one menu. Links are absolute ("/#pricing") so they work from any page.
+// one menu. Links are absolute ("/pricing") so they work from any page.
 
 const MAIN = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/#features", label: "Features" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 const resourcesFor = (toolsLive: boolean) => [
@@ -23,7 +23,7 @@ const resourcesFor = (toolsLive: boolean) => [
   { href: "/#control", label: "Security & control", hint: "Your account, your approval, your money" },
   { href: "/#faq", label: "FAQ", hint: "Plain answers before you sign up" },
   { href: "/help", label: "Help center", hint: "How MAIRO works, credits, approvals, billing" },
-  { href: "/for-freelancers", label: "For freelancers & agencies", hint: "Run ads for several businesses" },
+  { href: "/pricing", label: "More than one business?", hint: "MAIRO Scale covers up to 3 Meta ad accounts" },
 ];
 
 export function LandingNav({

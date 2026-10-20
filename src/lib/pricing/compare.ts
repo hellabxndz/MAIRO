@@ -8,13 +8,16 @@
 // If a plan changes, the page changes with it.
 
 import { metaPostingApproved } from "@/lib/social/publishing-status";
-import { PLANS, STARTER_TRIAL_DAYS, type Plan } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS, type Plan } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from "@/lib/entitlements";
 import { ALWAYS_NEEDS_APPROVAL, actionInfo, automaticActions, levelInfo } from "@/lib/automation/levels";
 import { DEFAULT_COSTS } from "@/lib/creative-studio/costs";
 
-export type BusinessTier = "STARTER" | "GROWTH" | "SCALE";
-export const BUSINESS_TIERS: BusinessTier[] = ["STARTER", "GROWTH", "SCALE"];
+// The two plans sold today. The earlier ones (Starter, Growth, the $499.99
+// Scale, Studio, Agency) keep working for their subscribers but are never
+// compared here, because nobody can buy them.
+export type BusinessTier = "PRO" | "SCALE_V2";
+export const BUSINESS_TIERS: BusinessTier[] = ["PRO", "SCALE_V2"];
 
 export type Cell = { kind: "yes"; note?: string } | { kind: "no" } | { kind: "text"; text: string; note?: string };
 export type Row = { key: string; label: string; help?: string; cells: Record<BusinessTier, Cell> };
@@ -25,7 +28,7 @@ const plan = (t: BusinessTier): Plan => PLANS.find((p) => p.tier === t)!;
 const yes = (note?: string): Cell => ({ kind: "yes", ...(note ? { note } : {}) });
 const no: Cell = { kind: "no" };
 const text = (t: string, note?: string): Cell => ({ kind: "text", text: t, ...(note ? { note } : {}) });
-const each = (f: (t: BusinessTier) => Cell): Record<BusinessTier, Cell> => ({ STARTER: f("STARTER"), GROWTH: f("GROWTH"), SCALE: f("SCALE") });
+const each = (f: (t: BusinessTier) => Cell): Record<BusinessTier, Cell> => ({ PRO: f("PRO"), SCALE_V2: f("SCALE_V2") });
 
 export const pictures = (credits: number) => Math.floor(credits / DEFAULT_COSTS.standard);
 const campaigns = (n: number) => (Number.isFinite(n) ? `Up to ${n} at a time` : "Unlimited");
@@ -58,9 +61,8 @@ export type PlanStory = {
 };
 
 const OUTCOME: Record<BusinessTier, string> = {
-  STARTER: "MAIRO plans, builds and checks your Facebook and Instagram ads every day, and tells you what to change. Nothing changes without your yes.",
-  GROWTH: "Everything in Starter — and if you switch on AI Assist, MAIRO handles routine fixes for you inside your limits, so you only decide the bigger calls.",
-  SCALE: "Everything in Growth, plus Full Autopilot for your ads and MAIRO Social Manager for your own Instagram and Facebook posts.",
+  PRO: "Your AI advertising team plans, builds and checks your Facebook and Instagram ads every day, and tells you what to change. Nothing launches and no spending changes without your yes.",
+  SCALE_V2: "Everything in Pro, for up to three businesses or brands — plus optional AI Assist and Full Autopilot inside your limits, MAIRO Social Manager for your own Instagram, deeper analytics and tracking, and your team.",
 };
 
 export function planStories(): PlanStory[] {
@@ -68,11 +70,13 @@ export function planStories(): PlanStory[] {
     const p = plan(t);
     const e = ent(t);
     const highlights = [
+      e.ad_account_limit > 1 ? `Up to ${e.ad_account_limit} Meta ad accounts` : "1 Meta ad account",
       Number.isFinite(e.campaign_limit) ? `Up to ${e.campaign_limit} campaigns at a time` : "Unlimited campaigns",
       `${e.studio_credits_monthly} AI image credits a month (about ${pictures(e.studio_credits_monthly)} pictures)`,
       ...(e.autopilot ? ["Full Autopilot available"] : e.auto_optimize ? ["AI Assist available"] : ["You approve every change"]),
       ...(e.advanced_analytics ? ["Every ad's results side by side"] : ["Results in plain English"]),
       ...(e.social_posting ? [metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves"] : []),
+      ...(e.member_limit > 1 ? ["Team members with approval permissions"] : []),
       ...(prioritySupport(t) ? ["Priority support"] : []),
     ];
     return {
@@ -84,12 +88,14 @@ export function planStories(): PlanStory[] {
       outcome: OUTCOME[t],
       highlights,
       rows: [
+        { label: "Meta ad accounts", value: e.ad_account_limit > 1 ? `Up to ${e.ad_account_limit}, one per business or brand` : "1" },
         { label: "Campaigns", value: Number.isFinite(e.campaign_limit) ? `Up to ${e.campaign_limit} at a time` : "Unlimited" },
         { label: "AI images", value: `${e.studio_credits_monthly} credits a month (about ${pictures(e.studio_credits_monthly)} pictures)` },
         { label: "AI assistance", value: e.autopilot ? "Plans, builds and checks daily — Full Autopilot if you choose it" : e.auto_optimize ? "Plans, builds and checks daily — routine fixes if you switch on AI Assist" : "Plans, builds and checks daily; every change waits for you" },
         { label: "Approvals", value: "Launches and total-budget increases always wait for you" },
         { label: "Results", value: e.advanced_analytics ? "Plain English, plus every ad side by side" : "In plain English" },
         ...(e.social_posting ? [{ label: "Social", value: metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves" }] : []),
+        ...(e.member_limit > 1 ? [{ label: "Team", value: "Invite team members, each with their own permissions" }] : []),
         ...(prioritySupport(t) ? [{ label: "Support", value: "Priority support" }] : []),
       ],
       modes: automationModes(t).map((l) => levelInfo(l).label),
@@ -107,7 +113,6 @@ export const EVERY_PLAN: { title: string; body: string }[] = [
   { title: "Daily checks and recommendations", body: "Your AI team reads your results every day and explains what it would change, with the numbers behind it." },
   { title: "Spend Protection", body: "Spending limits that warn you — or, if you choose, pause a campaign. It never raises a budget." },
   { title: "Reports in plain English", body: "A Daily Brief, a weekly report and monthly results — what Meta reports kept apart from what you confirmed." },
-  { title: "The Performance Coach", body: "Follows leads past the click to bookings and customers, and says what's missing when it can't tell." },
 ];
 
 export function comparison(): Group[] {
@@ -125,6 +130,8 @@ export function comparison(): Group[] {
       key: "limits",
       title: "How much you can run",
       rows: [
+        { key: "accounts", label: "Meta ad accounts", help: "One per business or brand, each with its own campaigns and results.", cells: each((t) => text(String(ent(t).ad_account_limit))) },
+        { key: "members", label: "Team members", help: "People you invite, each with the permissions you give them — including who may approve.", cells: each((t) => (Number.isFinite(ent(t).member_limit) ? text(ent(t).member_limit === 1 ? "Just you" : `Up to ${ent(t).member_limit}`) : yes("Invite your team"))) },
         { key: "campaigns", label: "Campaigns", help: "Live or waiting at once. Archived campaigns don't count.", cells: each((t) => text(campaigns(ent(t).campaign_limit))) },
         { key: "credits", label: "AI image credits", help: `Each month. A standard picture uses ${DEFAULT_COSTS.standard} credits.`, cells: each((t) => text(`${ent(t).studio_credits_monthly} a month`, `about ${pictures(ent(t).studio_credits_monthly)} pictures`)) },
         { key: "creatives", label: "Creative requests", help: "Each month, on the Creatives page: an ad idea with up to two pictures.", cells: each((t) => text(`${ent(t).creative_limit} a month`)) },
@@ -136,7 +143,9 @@ export function comparison(): Group[] {
       rows: [
         { key: "brief", label: "Daily Brief, weekly report, monthly results", cells: each(() => yes()) },
         { key: "recs", label: "Recommendations with the evidence, in your Approval Center", cells: each(() => yes()) },
-        { key: "per-ad", label: "Every ad's results side by side", help: "Creative-level figures in Analytics.", cells: each((t) => (ent(t).advanced_analytics ? yes() : no)) },
+        { key: "per-ad", label: "Advanced performance analytics", help: "Every ad and placement side by side, in Analytics.", cells: each((t) => (ent(t).advanced_analytics ? yes() : no)) },
+        { key: "tracking", label: "Advanced revenue and lead tracking", help: "Lead stages and values, lead imports, and store orders matched to your campaigns — where your store or forms connect.", cells: each((t) => (ent(t).advanced_tracking ? yes() : no)) },
+        { key: "coach", label: "Performance Coach", help: "Growth recommendations that follow leads past the click to bookings and customers.", cells: each((t) => (ent(t).growth_coach ? yes() : no)) },
       ],
     },
     {
@@ -178,11 +187,12 @@ export function pricingFacts(): { key: string; title: string; body: string }[] {
   const names = (f: (t: BusinessTier) => string) => BUSINESS_TIERS.map((t) => `${plan(t).name} ${f(t)}`).join(", ");
   const trial = PLANS.filter((p) => (p.trialDays ?? 0) > 0).map((p) => p.name);
   const social = BUSINESS_TIERS.filter((t) => ent(t).social_posting).map((t) => plan(t).name);
+  const noTrial = BUSINESS_TIERS.filter((t) => !(plan(t).trialDays ?? 0)).map((t) => plan(t).name);
   return [
     {
       key: "trial",
       title: "The free trial",
-      body: `${trial.join(" and ")} starts with a ${STARTER_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and charges it when the trial ends, unless you cancel first. ${BUSINESS_TIERS.filter((t) => !(plan(t).trialDays ?? 0)).map((t) => plan(t).name).join(" and ")} are billed from the day you subscribe. Your free advertising plan never needs a card.`,
+      body: `${trial.join(" and ")} starts with a ${PRO_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and charges it when the trial ends, unless you cancel first. ${noTrial.join(" and ")} ${noTrial.length === 1 ? "is" : "are"} billed from the day you subscribe. Your free advertising plan never needs a card.`,
     },
     {
       key: "credits",

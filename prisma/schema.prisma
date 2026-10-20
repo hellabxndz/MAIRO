@@ -176,12 +176,18 @@ enum AutomationLevel {
 
 enum SubscriptionTier {
   NONE
+  // The plans sold today (October 2026): MAIRO Pro and MAIRO Scale. SCALE_V2
+  // is the new Scale; its own value, because the earlier SCALE plan was a
+  // different price with different allowances and its subscribers keep both.
+  PRO
+  SCALE_V2
+  // Earlier plans, no longer sold. Kept so existing subscribers keep exactly
+  // what they bought, on their own Stripe prices, until they choose to move.
   STARTER
   GROWTH
   SCALE
-  // Freelancer tiers. Priced by how many client businesses can be run at once
-  // rather than by how much advertising one business does, because that is the
-  // thing that actually scales for someone doing this for a living.
+  // Earlier freelancer tiers, priced by how many client businesses can be run
+  // at once. No longer sold; existing workspaces keep them.
   STUDIO
   AGENCY
 }

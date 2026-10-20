@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { HeroStory } from "@/components/hero-story/hero-story";
 import { ONBOARDING_TYPE, PREVIEW_EXAMPLE, type ExampleType } from "@/lib/demo/examples";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import { WALK_DURATION } from "@/lib/demo/walkthrough";
 
 // The landing page's first screen: what MAIRO does in one line, the website
@@ -100,7 +100,7 @@ export function StoryHero() {
             <div>
               <dt className="font-semibold text-white">Paid, only to launch</dt>
               <dd className="text-white/60">
-                From ${starter.priceMonthly}/month, {STARTER_TRIAL_DAYS}-day trial on {starter.name}. Ad spend is paid to Meta.
+                From ${starter.priceMonthly}/month, {PRO_TRIAL_DAYS}-day trial on {starter.name}. Ad spend is paid to Meta.
               </dd>
             </div>
           </dl>

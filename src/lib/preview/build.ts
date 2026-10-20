@@ -1,7 +1,7 @@
 import { generateHooks, ANGLE_LABEL, type HookAngle, type HookInput } from "@/lib/creative/hooks";
 import { recommendedEvents } from "@/lib/tracking/events";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import type { ScanResult } from "@/lib/website/scan";
 
 // The campaign preview a visitor sees before they have an account: built from
@@ -439,7 +439,7 @@ export function buildPreview(f: PreviewFacts, opts: { quick?: boolean } = {}): P
     { label: "Connect your Meta ad account", state: "later", detail: "Your own account — MAIRO never runs ads from an account you don't own." },
     { label: usesLeadForm ? "Set up the lead form" : goal === "awareness" ? "Choose who should see it" : `Make sure Meta sees each ${optimiseFor.toLowerCase().replace(/s$/, "")}`, state: "later", detail: usesLeadForm ? "MAIRO builds the form with you during setup." : "MAIRO checks the tracking and shows you what it found." },
     { label: "Approve the ad and the budget", state: "later", detail: "Nothing is published or spent until you approve the exact ad and daily budget." },
-    { label: "Subscribe to launch", state: "later", detail: `From $${starter.priceMonthly} a month; ${starter.name} includes a ${STARTER_TRIAL_DAYS}-day trial. Your ad budget is paid to Meta separately.` },
+    { label: "Subscribe to launch", state: "later", detail: `From $${starter.priceMonthly} a month; ${starter.name} includes a ${PRO_TRIAL_DAYS}-day trial. Your ad budget is paid to Meta separately.` },
   ];
 
   // The budget: the owner's own monthly figure when they gave one, else the example amount.

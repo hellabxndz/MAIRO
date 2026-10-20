@@ -105,12 +105,6 @@ export function SignUpForm({
           Sign in
         </Link>
       </p>
-      <p className="mt-2 text-center text-sm text-neutral-500">
-        Run ads for other businesses?{" "}
-        <Link href="/for-freelancers" className="text-neutral-300 underline">
-          Set up a studio
-        </Link>
-      </p>
     </div>
   );
 }

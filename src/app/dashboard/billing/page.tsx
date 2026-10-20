@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader, secondaryButtonClass } from "@/components/ui";
-import { PLANS, STARTER_TRIAL_DAYS, billingEnforced, creativeRequestText, planFor, trialDaysFor } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS, billingEnforced, creativeRequestText, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
+import { payingBusinessOf } from "@/lib/brands";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
 import Link from "next/link";
@@ -43,7 +44,28 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
   });
   if (!organization) redirect("/sign-in");
 
-  const { subscribed: justSubscribed, checkout, cancelled } = await searchParams;
+  // A business added under a MAIRO Scale plan has no bill of its own.
+  const payer = await payingBusinessOf(organizationId);
+  if (payer) {
+    const covered = organization.subscriptionTier !== "NONE";
+    return (
+      <div className="mx-auto max-w-[760px]">
+        <PageHeader title="Billing" description={`${payer.name}'s ${planFor("SCALE_V2").name} plan pays for this business.`} />
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-[14px] leading-relaxed text-neutral-300">
+          {covered ? (
+            <p>This business is one of the Meta ad accounts on {payer.name}&rsquo;s plan, with everything that plan includes. Plan changes, invoices and cancelling are managed from {payer.name}.</p>
+          ) : (
+            <p className="text-amber-200">
+              {payer.name}&rsquo;s plan doesn&rsquo;t cover this business right now, so MAIRO can&rsquo;t build, change or launch anything here. Campaigns already running keep running until you pause them, and pausing still works. Moving {payer.name} to {planFor("SCALE_V2").name} covers it again.
+            </p>
+          )}
+          <p className="mt-3 text-[13px] text-muted">Your ad spend is separate: Meta charges each business&rsquo;s own ad account directly.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { subscribed: justSubscribed, checkout, cancelled, changed } = await searchParams;
   // Campaigns are a separate question from the plan, answered separately:
   // cancelling one never changes the other.
   const running = await runningMetaCampaigns([organizationId]);
@@ -63,7 +85,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         title={subscribed ? "Your plan" : "Choose a plan"}
         description={
           !subscribed
-            ? `Starter starts with a ${STARTER_TRIAL_DAYS}-day free trial — Stripe takes your card, and you can cancel before it ends at no charge. Growth and Scale are billed from the day you subscribe.`
+            ? `MAIRO Pro starts with a ${PRO_TRIAL_DAYS}-day free trial — Stripe takes your card, and you can cancel before it ends at no charge. MAIRO Scale is billed from the day you subscribe. Your ad spend is paid to Meta directly, never through MAIRO.`
             : "Change or cancel any time. Your ad spend is paid to Meta directly — never through this."
         }
       />
@@ -85,6 +107,19 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
             ? `${running.length === 1 ? "One campaign is" : `${running.length} campaigns are`} still running in Meta; cancelling didn't pause ${running.length === 1 ? "it" : "them"}.`
             : "No MAIRO campaigns are running in Meta."}
         </p>
+      )}
+      {changed === "1" && (
+        <p role="status" className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">
+          Your plan change is confirmed. This page shows the new plan as soon as Stripe tells MAIRO — usually within a minute.
+        </p>
+      )}
+      {subscribed && !isSoldTier(tier) && (
+        <div className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-relaxed text-neutral-300">
+          <p className="font-medium text-white">You&rsquo;re on an earlier MAIRO plan</p>
+          <p className="mt-1">
+            {current.name} isn&rsquo;t sold any more, and that changes nothing for you: you keep its price and everything it includes for as long as you stay on it. MAIRO now offers {PLANS.map((p) => p.name).join(" and ")} below — moving to one is your choice, and Stripe shows the exact amount before anything is charged.
+          </p>
+        </div>
       )}
       {checkout === "cancelled" && (
         <p className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-neutral-300">
@@ -136,7 +171,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         </p>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2">
         {PLANS.map((plan) => {
           const isCurrent = subscribed && plan.tier === tier;
           const canBuy = buyable.includes(plan.tier as (typeof buyable)[number]);
@@ -186,19 +221,17 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
                 <p className="mt-4 rounded-full border border-white/10 py-2 text-center text-xs text-neutral-500">
                   Not available yet
                 </p>
-              ) : subscribed ? (
-                // Changing an existing subscription happens in Stripe's
-                // portal, which works out proration and shows what today's
-                // charge will actually be before anything is taken.
-                <form action={openBillingPortalAction} className="mt-4">
-                  <button type="submit" className={`${secondaryButtonClass} w-full`}>
-                    Switch to {plan.name}
-                  </button>
-                </form>
+              ) : subscribed && organization.stripeCustomerId ? (
+                // What changes first, on MAIRO's page; then Stripe's own
+                // confirmation, which shows the prorated amount before
+                // anything is taken (billing/change).
+                <Link href={`/dashboard/billing/change?to=${plan.tier}`} className={`${secondaryButtonClass} mt-4 w-full justify-center text-center`}>
+                  Switch to {plan.name}
+                </Link>
               ) : (
                 <PlanButton
                   tier={plan.tier}
-                  label={trialDaysFor(plan.tier) > 0 ? `Start ${trialDaysFor(plan.tier)}-day free trial` : `Choose ${plan.name}`}
+                  label={plan.cta ? `${plan.cta}${trialDaysFor(plan.tier) > 0 ? ` — ${trialDaysFor(plan.tier)} days free` : ""}` : trialDaysFor(plan.tier) > 0 ? `Start ${trialDaysFor(plan.tier)}-day free trial` : `Choose ${plan.name}`}
                 />
               )}
             </div>

@@ -18,7 +18,8 @@ const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
 // Approve and block belong to the safety check, not to a dropdown — see
 // MANUAL_STATUSES in aios-actions.ts.
 const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "DELIVERED"];
-const TIERS = ["NONE", "STARTER", "GROWTH", "SCALE"];
+// The plans sold today first, then the earlier ones existing subscribers keep.
+const TIERS = ["NONE", "PRO", "SCALE_V2", "STARTER", "GROWTH", "SCALE"];
 
 export default async function OrganizationDetailPage({
   params,

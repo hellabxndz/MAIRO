@@ -34,8 +34,7 @@ const GROUPS: Group[] = [
     label: "Solutions",
     items: [
       { href: "#capabilities", label: "For small business", note: "Run ads without an agency" },
-      { href: "/for-freelancers", label: "For freelancers", note: "Client work, one place" },
-      { href: "#freelancers", label: "For agencies", note: "Every client under one login" },
+      { href: "/pricing", label: "For brands and teams", note: "Up to 3 businesses on MAIRO Scale" },
     ],
   },
   {

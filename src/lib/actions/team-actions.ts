@@ -10,7 +10,7 @@ import { auth, signIn } from "@/lib/auth";
 import { absoluteUrl } from "@/lib/site";
 import { PASSWORD_MAX, passwordProblem } from "@/lib/auth-rules/password";
 import { currentMember, deniedFor } from "@/lib/members/authorize";
-import { acceptInvite, changeRole, createInvite, inviteFor, removeMember, revokeInvite } from "@/lib/members/store";
+import { acceptInvite, changeRole, createInvite, inviteFor, removeMember, revokeInvite, seatProblem } from "@/lib/members/store";
 import { WORKSPACE_COOKIE } from "@/lib/members/workspace";
 import { audit } from "@/lib/members/audit";
 import { ROLE_LABEL } from "@/lib/members/roles";
@@ -125,6 +125,7 @@ export async function joinWithInviteAction(token: string, _prev: JoinState, form
   }
   const invite = await inviteFor(String(token));
   if (!invite || invite.state !== "open") return { error: invite?.state === "expired" ? "This invitation has expired. Ask for a new one." : "This invitation can't be used any more." };
+  if (await seatProblem(invite.organization.id, false)) return { error: `${invite.organization.name}'s plan doesn't include more team members right now. Ask them to check their plan.` };
   const weak = passwordProblem(parsed.data.password, invite.email);
   if (weak) return { error: weak, field: "password", name };
   const taken = await db.user.findFirst({ where: { email: { equals: invite.email, mode: "insensitive" } }, select: { id: true } });

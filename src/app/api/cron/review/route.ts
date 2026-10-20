@@ -11,6 +11,7 @@ import { sweepStuckRuns } from "@/lib/team/runs";
 import { generateDueWeeklyReports } from "@/lib/reports/weekly";
 import { stopUnpaidSweep } from "@/lib/billing/stop-unpaid";
 import { pauseSocialSweep } from "@/lib/social/pause";
+import { syncAllBrands } from "@/lib/brands";
 import { runAllPlatformIntelligence } from "@/lib/platform-intelligence/registry";
 import { sweepOrphanedFiles } from "@/lib/account/close";
 import { sweepUnclaimedPlans } from "@/lib/preview/saved-plan-store";
@@ -69,6 +70,11 @@ export async function GET(req: Request) {
   });
   const socialPaused = await pauseSocialSweep().catch((error) => {
     console.error("Social pause sweep failed:", error);
+    return null;
+  });
+  // Businesses added under a MAIRO Scale plan follow it (lib/brands.ts).
+  const brands = await syncAllBrands().catch((error) => {
+    console.error("Brand sync sweep failed:", error);
     return null;
   });
 
@@ -170,5 +176,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, ms: Date.now() - startedAt });
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
-import { STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PRO_TRIAL_DAYS } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Terms of Service · MAIRO",
@@ -70,10 +70,11 @@ export default function TermsPage() {
           Prices can change, but we will tell you before a change affects you.
         </p>
         <p>
-          The Starter plan begins with a {STARTER_TRIAL_DAYS}-day free trial. You enter a card at
+          The MAIRO Pro plan begins with a {PRO_TRIAL_DAYS}-day free trial. You enter a card at
           checkout; it isn&apos;t charged during the trial, and the first monthly payment is taken when
-          the trial ends unless you cancel before then. Growth and Scale have no trial and are charged
-          when you subscribe. Your Meta ad spend is never part of the trial or the subscription.
+          the trial ends unless you cancel before then. MAIRO Scale has no trial and is charged when
+          you subscribe. Plans bought before October 2026 keep their own price and terms until you
+          change plan. Your Meta ad spend is never part of the trial or the subscription.
         </p>
         <p>
           When a paid subscription ends, we stop building, changing and launching campaigns.
@@ -94,7 +95,7 @@ export default function TermsPage() {
         <p>
           {LEGAL.productName} manages advertising on Meta (Facebook and Instagram) only. Shopify and
           Google Tag Manager connections are used to measure results, and Stripe processes your
-          subscription payment. Posting to your own Instagram and Facebook (on the Scale plan)
+          subscription payment. Posting to your own Instagram and Facebook (on MAIRO Scale)
           depends on Meta approving our posting permissions; until then, posts can be planned and
           written but not published by us.
         </p>

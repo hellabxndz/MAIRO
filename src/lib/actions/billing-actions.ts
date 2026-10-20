@@ -6,9 +6,10 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { stripe, priceIdFor, stripeMode } from "@/lib/stripe/client";
+import { stripe, priceIdFor, stripeMode, statusEntitles } from "@/lib/stripe/client";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
-import { ALL_PLANS, isFreelancerTier, trialDaysFor } from "@/lib/plans";
+import { isFreelancerTier, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
+import { payingBusinessOf } from "@/lib/brands";
 import { deniedFor } from "@/lib/members/authorize";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
@@ -151,19 +152,22 @@ export async function startCheckoutAction(
     redirect("/sign-in");
   }
 
-  // Derived from the plans themselves rather than spelled out here. The
-  // hand-written list did not know the freelancer tiers existed, so Studio and
-  // Agency came back as "not a plan we sell" — a list of literals in one file
-  // that has to be kept in step with another file will eventually not be.
+  // Derived from the plans themselves rather than spelled out here: MAIRO
+  // Pro and MAIRO Scale. The earlier plans keep working for the people on
+  // them, and their prices stay in the environment for the webhook, but a
+  // new checkout can't buy one.
   const tier = formData.get("tier");
-  const sellable = ALL_PLANS.map((p) => p.tier);
-  if (typeof tier !== "string" || !sellable.includes(tier as SubscriptionTier)) {
+  if (typeof tier !== "string" || !isSoldTier(tier as SubscriptionTier)) {
     return { error: "That isn't a plan we sell." };
   }
   const chosen = tier as Exclude<SubscriptionTier, "NONE">;
 
   const organizationId = session.user.organizationId;
   const email = session.user.email;
+
+  // A business added under a MAIRO Scale plan is paid for by that plan.
+  const payer = await payingBusinessOf(organizationId);
+  if (payer) return { error: `${payer.name}'s MAIRO Scale plan pays for this business. Billing is managed there.` };
 
   // Never a second subscription for one business (see checkoutGuard).
   const onFile = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true, subscriptionStatus: true } });
@@ -245,7 +249,7 @@ async function createCheckoutUrl(input: {
       // and a trial that ends by silently locking somebody out of campaigns
       // that are live and spending would be worse for them than a charge.
       //
-      // Starter only: read from the plan, so the checkout and the copy cannot
+      // MAIRO Pro only: read from the plan, so the checkout and the copy cannot
       // disagree about which plans have one or how long it is. Every other
       // plan has none, and the field is omitted entirely rather than sent as
       // 0, which Stripe rejects.
@@ -335,6 +339,81 @@ export async function openCancelPortalAction(): Promise<void> {
     console.error("Stripe wouldn't open the cancellation step; opening the portal instead:", error);
     const portal = await stripe().billingPortal.sessions.create({ customer: organization.stripeCustomerId, return_url: returnUrl });
     url = portal.url;
+  }
+  redirect(url);
+}
+
+/**
+ * Moves an existing subscription between MAIRO Pro and MAIRO Scale — and
+ * moves a subscriber on an earlier plan onto one of them, when they choose
+ * to. Nobody is ever moved without pressing this.
+ *
+ * An active subscription goes to Stripe's own confirmation page for exactly
+ * this change, which shows the prorated amount before anything is charged;
+ * nothing changes until the customer confirms there, and the webhook then
+ * records the new plan. A Pro trial moving to Scale is the one exception:
+ * Scale has no trial, so the trial ends and Scale is charged now — and
+ * payment_behavior "error_if_incomplete" means a declined card changes
+ * nothing at all, rather than leaving a half-paid subscription.
+ */
+export async function changePlanAction(_prev: BillingActionState, formData: FormData): Promise<BillingActionState> {
+  const denied = await deniedFor("billing.manage");
+  if (denied) return { error: denied };
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/sign-in");
+  const organizationId = session.user.organizationId;
+
+  const tier = String(formData.get("tier") ?? "") as SubscriptionTier;
+  if (!isSoldTier(tier)) return { error: "That isn't a plan we sell." };
+  const target = tier as Exclude<SubscriptionTier, "NONE">;
+
+  const payer = await payingBusinessOf(organizationId);
+  if (payer) return { error: `${payer.name}'s MAIRO Scale plan pays for this business. Plan changes are made there.` };
+
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { stripeCustomerId: true, stripeSubscriptionId: true, subscriptionTier: true, subscriptionStatus: true },
+  });
+  if (!org?.stripeCustomerId || !org.stripeSubscriptionId || !statusEntitles(org.subscriptionStatus)) {
+    return { error: "There's no subscription to change yet. Choose a plan instead." };
+  }
+  if (org.subscriptionTier === target) return { error: `You're already on ${planFor(target).name}.` };
+
+  const returnUrl = `${await originUrl()}/dashboard/billing`;
+  let url: string;
+  try {
+    const subscription = await stripe().subscriptions.retrieve(org.stripeSubscriptionId);
+    const item = subscription.items.data[0];
+    if (!item) throw new Error("This subscription has no plan on it to change.");
+    const price = priceIdFor(target);
+
+    if (subscription.status === "trialing" && trialDaysFor(target) === 0) {
+      await stripe().subscriptions.update(subscription.id, {
+        items: [{ id: item.id, price }],
+        trial_end: "now",
+        proration_behavior: "none",
+        payment_behavior: "error_if_incomplete",
+        metadata: { ...subscription.metadata, organizationId },
+      });
+      url = `${returnUrl}?changed=1`;
+    } else {
+      const portal = await stripe().billingPortal.sessions.create({
+        customer: org.stripeCustomerId,
+        return_url: returnUrl,
+        flow_data: {
+          type: "subscription_update_confirm",
+          subscription_update_confirm: { subscription: subscription.id, items: [{ id: item.id, price, quantity: 1 }] },
+          after_completion: { type: "redirect", redirect: { return_url: `${returnUrl}?changed=1` } },
+        },
+      });
+      url = portal.url;
+    }
+  } catch (error) {
+    console.error("Changing plan failed:", error);
+    if (error instanceof Stripe.errors.StripeCardError) {
+      return { error: "Your card was declined, so nothing changed — you're still on your current plan. Update your card in Manage billing and try again." };
+    }
+    return { error: explainStripeError(error).replace("couldn't start the checkout", "couldn't change the plan") };
   }
   redirect(url);
 }

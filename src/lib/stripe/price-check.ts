@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { PLANS, FREELANCER_PLANS, type Plan } from "@/lib/plans";
+import { ALL_PLANS, type Plan } from "@/lib/plans";
 import { billingConfigured, stripe, stripeMode } from "@/lib/stripe/client";
 
 // Does Stripe agree with the pricing page?
@@ -37,6 +37,8 @@ export type PriceCheck = {
 };
 
 const PRICE_ENV: Record<string, string> = {
+  PRO: "STRIPE_PRICE_PRO",
+  SCALE_V2: "STRIPE_PRICE_SCALE_V2",
   STARTER: "STRIPE_PRICE_STARTER",
   GROWTH: "STRIPE_PRICE_GROWTH",
   SCALE: "STRIPE_PRICE_SCALE",
@@ -59,7 +61,7 @@ function money(cents: number, currency = "usd"): string {
  * Anything unreadable comes back as a state rather than an exception.
  */
 export async function checkPrices(): Promise<PriceCheck[]> {
-  const plans: Plan[] = [...PLANS, ...FREELANCER_PLANS];
+  const plans: Plan[] = ALL_PLANS;
 
   return Promise.all(
     plans.map(async (plan): Promise<PriceCheck> => {
@@ -78,7 +80,9 @@ export async function checkPrices(): Promise<PriceCheck[]> {
           currency: null,
           interval: null,
           state: "not_set",
-          detail: `Nobody can buy ${plan.name} until this points at a Stripe price.`,
+          detail: plan.legacy
+            ? `${plan.name} is no longer sold. Leave this unset unless someone still pays on it.`
+            : `Nobody can buy ${plan.name} until this points at a Stripe price.`,
         };
       }
 

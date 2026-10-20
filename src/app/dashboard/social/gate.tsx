@@ -11,7 +11,7 @@ import { pauseSocialIfLocked } from "@/lib/social/pause";
 // "Paused" screen that says their content is saved. The server actions and
 // the publisher check again on their own; this is the screen, not the lock.
 
-const SCALE = planFor("SCALE");
+const SCALE = planFor("SCALE_V2");
 
 const BENEFITS = [
   "AI determines what your business should post",
@@ -101,7 +101,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
         <p className="mt-3 max-w-[640px] text-[15px] leading-relaxed text-white/70">
           MAIRO creates content based on your business goals, builds your posting strategy, lets you approve the content, and publishes approved posts for you.
         </p>
-        <p className="mt-4 text-[14px] font-medium text-white">Available exclusively with MAIRO {SCALE.name}.</p>
+        <p className="mt-4 text-[14px] font-medium text-white">Available exclusively with {SCALE.name}.</p>
         <ul className="mt-6 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
           {BENEFITS.map((b) => (
             <li key={b} className="flex gap-2.5 text-[14px] text-white/85">

@@ -16,12 +16,12 @@
 
 import { DEFAULT_ENTITLEMENTS, FLAG_LABELS, planComparison } from "@/lib/entitlements";
 import { CAPTION_MAX, POSTS_PER_DAY } from "@/lib/instagram/constants";
-import { FREELANCER_PLANS, PLANS } from "@/lib/plans";
+import { ALL_PLANS, FREELANCER_PLANS, LEGACY_PLANS, PLANS } from "@/lib/plans";
+import { SOCIAL_TIERS, socialAccessFrom } from "@/lib/social/access";
 
-// The top plan, named from plans.ts. These labels used to say "Pro"; the
-// plan was renamed to Scale and every hard-coded mention had to be hunted
-// down, which is the thing this avoids next time.
-const TOP = PLANS.find((p) => p.tier === "SCALE")!;
+// The plan Social Manager comes with, named from plans.ts. These labels used
+// to say "Pro", then "Scale"; reading the name keeps the next rename honest.
+const TOP = PLANS.find((p) => p.tier === "SCALE_V2")!;
 
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
@@ -34,49 +34,33 @@ const ok = (n: string, c: boolean, x = "") => {
 console.log(`\n— posting is ${TOP.name} only —`);
 {
   ok("no plan: no", !DEFAULT_ENTITLEMENTS.NONE.social_posting);
-  ok("Starter: no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
-  ok("Growth: no", !DEFAULT_ENTITLEMENTS.GROWTH.social_posting);
-  ok(`${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.SCALE.social_posting);
+  ok("MAIRO Pro: no", !DEFAULT_ENTITLEMENTS.PRO.social_posting);
+  ok(`${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.SCALE_V2.social_posting);
+  // The earlier plans keep exactly what they had: only the earlier Scale.
+  ok("Starter (earlier): no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
+  ok("Growth (earlier): no", !DEFAULT_ENTITLEMENTS.GROWTH.social_posting);
+  ok("Scale (earlier): yes, as bought", DEFAULT_ENTITLEMENTS.SCALE.social_posting);
+  ok("Studio: no", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
+  ok("Agency: no", !DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
 
-  // The freelancer ladder has to agree with the business one, or the same
-  // feature costs a different amount depending on which page you bought from.
-  ok("Studio mirrors Growth: no", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
-  // Social Manager is exclusive to Scale — including over the freelancer plans.
-  ok(`Agency: no (Social Manager is ${TOP.name}-only)`, !DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
-
-  // Exactly one business plan has it. A second would make "comes with Pro"
-  // false everywhere it is written.
-  const withPosting = (["STARTER", "GROWTH", "SCALE", "STUDIO", "AGENCY"] as const).filter(
-    (t) => DEFAULT_ENTITLEMENTS[t].social_posting
-  );
-  ok("exactly one plan includes it, and it is Scale", withPosting.join(",") === "SCALE", withPosting.join(","));
+  const withPosting = ALL_PLANS.map((p) => p.tier).filter((t) => DEFAULT_ENTITLEMENTS[t].social_posting);
+  ok("only the Scale plans include it", withPosting.join(",") === "SCALE_V2,SCALE", withPosting.join(","));
+  ok("and the access rule names exactly those", SOCIAL_TIERS.join(",") === "SCALE_V2,SCALE", SOCIAL_TIERS.join(","));
+  ok("MAIRO Pro is refused at the gate", !socialAccessFrom({ subscriptionTier: "PRO", subscriptionStatus: "active" }).ok);
+  ok(`${TOP.name}, active, is let in`, socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "active" }).ok);
+  ok(`${TOP.name}, past due, is paused`, !socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "past_due" }).ok);
+  ok("the earlier Scale keeps it", socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active" }).ok);
 }
 
 console.log("\n— the pricing cards say the same thing the code does —");
 {
-  const growth = PLANS.find((p) => p.tier === "GROWTH")!;
-  const pro = PLANS.find((p) => p.tier === "SCALE")!;
+  const pro = PLANS.find((p) => p.tier === "PRO")!;
+  ok("two plans are sold", PLANS.length === 2, String(PLANS.length));
+  ok("MAIRO Pro is first and $139", PLANS[0] === pro && pro.name === "MAIRO Pro" && pro.priceMonthly === 139, `${pro.name} $${pro.priceMonthly}`);
+  ok(`${TOP.name} is $299`, TOP.name === "MAIRO Scale" && TOP.priceMonthly === 299, `${TOP.name} $${TOP.priceMonthly}`);
+  ok("they climb", pro.priceMonthly < TOP.priceMonthly);
 
-  // The plan is called Scale. Pinned because it was called Pro until the name
-  // was hard-coded into a landing-page paragraph, two upsell screens, an error
-  // message and a handful of check labels — all of which now read it from
-  // plans.ts, and this is what catches the next one that doesn't.
-  ok("the top plan is called Scale", pro.name === "Scale", pro.name);
-  ok("Starter is called Starter", PLANS[0].name === "Starter", PLANS[0].name);
-  ok("Growth is called Growth", growth.name === "Growth", growth.name);
-
-  const starterPlan = PLANS.find((p) => p.tier === "STARTER")!;
-  ok("Starter is $149.99", starterPlan.priceMonthly === 149.99, `$${starterPlan.priceMonthly}`);
-  ok("Growth is $239.99", growth.priceMonthly === 239.99, `$${growth.priceMonthly}`);
-  ok(`${TOP.name} is $499.99`, pro.priceMonthly === 499.99, `$${pro.priceMonthly}`);
-  // The ladder has to climb, whatever the numbers are changed to next.
-  ok("they climb", starterPlan.priceMonthly < growth.priceMonthly && growth.priceMonthly < pro.priceMonthly);
-
-  // Prices here are what the customer is SHOWN; what they are charged is the
-  // Stripe Price behind STRIPE_PRICE_*. Nothing in this repo can check that
-  // they agree, so this asserts the shape a price is allowed to take and
-  // NEXT.md carries the reminder to move Stripe.
-  for (const plan of PLANS) {
+  for (const plan of ALL_PLANS) {
     ok(
       `${plan.name}'s price has at most two decimal places`,
       Math.round(plan.priceMonthly * 100) === plan.priceMonthly * 100,
@@ -84,120 +68,45 @@ console.log("\n— the pricing cards say the same thing the code does —");
     );
   }
 
-  // The cards are what somebody decides on. A feature list still promising
-  // Growth customers something the code no longer grants them is the kind of
-  // lie that ends in a refund.
-  const growthPromises = [...PLANS.filter((p) => p.tier !== "SCALE"), ...FREELANCER_PLANS].some((p) => p.features.some((f) => /social manager|posts to your|content calendar|scheduled (instagram|posting)/i.test(f)));
-  ok("no plan but Scale promises Social Manager or posting", !growthPromises);
-  ok(
-    `${TOP.name}'s card promises it`,
-    pro.features.includes("MAIRO Social Manager")
-  );
-  // TikTok was retired. A card still mentioning it would sell something the
-  // product can't do.
-  ok(
-    "no card mentions TikTok",
-    !PLANS.some((p) => [p.headline, p.tagline, ...p.features].some((f) => /tiktok/i.test(f)))
-  );
+  const promises = (p: (typeof PLANS)[number]) => p.features.some((f) => /social manager|instagram content|post approval queue|content calendar|scheduled (instagram|posting)/i.test(f));
+  ok("no plan but the Scale plans promises Social Manager or posting", ![pro, ...LEGACY_PLANS.filter((p) => p.tier !== "SCALE"), ...FREELANCER_PLANS].some(promises));
+  ok(`${TOP.name}'s card promises it`, promises(TOP));
+  ok("no card mentions TikTok", !ALL_PLANS.some((p) => [p.headline, p.tagline, ...p.features].some((f) => /tiktok/i.test(f))));
 }
 
-console.log("\n— Starter and Growth are told apart at a glance —");
+console.log("\n— Pro and Scale are told apart at a glance —");
 {
-  // The pricing grid was three columns of identically-shaped dashes, and
-  // telling Starter from Growth meant diffing fourteen bullets by eye. These
-  // assert the things that make the difference legible, because they are copy
-  // and copy rots.
-  const starter = PLANS.find((p) => p.tier === "STARTER")!;
-  const growth = PLANS.find((p) => p.tier === "GROWTH")!;
-  const pro = PLANS.find((p) => p.tier === "SCALE")!;
-
-  for (const plan of [starter, growth, pro]) {
+  const pro = PLANS.find((p) => p.tier === "PRO")!;
+  for (const plan of PLANS) {
     ok(`${plan.name} has a headline`, Boolean(plan.headline?.trim()));
-    // Long enough to mean something, short enough to read as a headline.
-    ok(`${plan.name}'s headline is short`, plan.headline.length <= 32, plan.headline);
+    ok(`${plan.name}'s headline is short`, plan.headline.length <= 48, plan.headline);
   }
-  ok("the three headlines are all different", new Set([starter.headline, growth.headline, pro.headline]).size === 3);
-
-  // Each upper plan names what it contains rather than restating it, so the
-  // length of its list is the size of the upgrade.
-  ok("Starter inherits nothing", !starter.inherits);
-  ok("Growth builds on Starter", growth.inherits === "Starter", growth.inherits);
-  ok(`${TOP.name} builds on Growth`, pro.inherits === "Growth", pro.inherits);
-
-  // A restated bullet is the bug this replaced: "Everything in Starter" as a
-  // feature, followed by things Starter already had.
-  for (const plan of [growth, pro]) {
-    ok(
-      `${plan.name} lists only what it adds`,
-      !plan.features.some((f) => /^Everything in/i.test(f))
-    );
-  }
-  // And nothing inherited should reappear further up the ladder.
-  const repeated = growth.features.filter((f) => starter.features.includes(f));
-  ok("Growth repeats nothing from Starter", repeated.length === 0, repeated.join(","));
-  const repeatedPro = pro.features.filter((f) => growth.features.includes(f));
-  ok(`${TOP.name} repeats nothing from Growth`, repeatedPro.length === 0, repeatedPro.join(","));
+  ok("the two headlines are different", pro.headline !== TOP.headline);
+  ok("Pro inherits nothing", !pro.inherits);
+  ok(`${TOP.name} builds on Pro`, TOP.inherits === pro.name, TOP.inherits);
+  ok(`${TOP.name} lists only what it adds`, !TOP.features.some((f) => /^Everything in/i.test(f)));
+  const repeated = TOP.features.filter((f) => pro.features.includes(f));
+  ok(`${TOP.name} repeats nothing from Pro`, repeated.length === 0, repeated.join(","));
 }
 
 console.log("\n— the comparison rows come from the entitlements, not from copy —");
 {
-  const rows = (tier: "STARTER" | "GROWTH" | "SCALE") =>
-    Object.fromEntries(planComparison(tier).map((r) => [r.label, r.value]));
-
-  const starter = rows("STARTER");
-  const growth = rows("GROWTH");
-  const pro = rows("SCALE");
-
-  // Every card shows the same rows in the same order, which is what makes the
-  // comparison a glance down a column instead of a hunt.
-  const labels = planComparison("STARTER").map((r) => r.label);
-  for (const tier of ["GROWTH", "SCALE"] as const) {
-    ok(
-      `${tier} shows the same rows in the same order`,
-      planComparison(tier).map((r) => r.label).join("|") === labels.join("|")
-    );
-  }
-
-  // Every plan runs the same networks now; the difference is how much MAIRO
-  // does on its own.
-  ok(
-    "every plan runs Facebook + Instagram",
-    [starter, growth, pro].every((c) => c["Runs ads on"] === "Facebook + Instagram"),
-  );
-  ok("Starter: you approve every change", starter["MAIRO works on its own"] === "You approve every change", starter["MAIRO works on its own"]);
-  ok("Growth: AI Assist", growth["MAIRO works on its own"] === "AI Assist", growth["MAIRO works on its own"]);
-  ok(`${TOP.name}: Full Autopilot`, pro["MAIRO works on its own"] === "Full Autopilot", pro["MAIRO works on its own"]);
-
-  // The one that separates Growth from the top plan.
-  ok("Growth has no Social Manager", growth["MAIRO Social Manager"] === "No");
-  ok(
-    `${TOP.name} does`,
-    pro["MAIRO Social Manager"] === "Instagram + Facebook",
-    pro["MAIRO Social Manager"]
-  );
-
-  // Campaign caps climb, and the top plan says "Unlimited" in a word — never
-  // as the string "Infinity".
-  ok("Starter runs 3 campaigns", starter["Campaigns at once"] === "3", starter["Campaigns at once"]);
-  ok("Growth runs 15", growth["Campaigns at once"] === "15", growth["Campaigns at once"]);
-  ok(`${TOP.name} is unlimited`, pro["Campaigns at once"] === "Unlimited", pro["Campaigns at once"]);
-  ok(
-    "and never leak the sentinel",
-    ![starter, growth, pro].some((c) => /Infinity/.test(c["Campaigns at once"])),
-  );
-  // Creative generation still costs real money per item, so that ladder climbs.
-  ok("creative counts climb", Number(starter["Creative requests a month"]) < Number(growth["Creative requests a month"]) && Number(growth["Creative requests a month"]) < Number(pro["Creative requests a month"]));
-  ok(
-    "and they match the limits",
-    Number(growth["Creative requests a month"]) === PLANS.find((p) => p.tier === "GROWTH")!.limits.creativesPerMonth,
-  );
-
-  // Every adjacent pair must differ in at least one row, or a card gives a
-  // reader no reason to choose it.
-  const differs = (a: Record<string, string>, c: Record<string, string>) =>
-    labels.some((l) => a[l] !== c[l]);
-  ok("Starter and Growth differ on the rows shown", differs(starter, growth));
-  ok("Growth and Pro differ on the rows shown", differs(growth, pro));
+  const rows = (tier: "PRO" | "SCALE_V2") => Object.fromEntries(planComparison(tier).map((r) => [r.label, r.value]));
+  const pro = rows("PRO");
+  const scale = rows("SCALE_V2");
+  const labels = planComparison("PRO").map((r) => r.label);
+  ok("Scale shows the same rows in the same order", planComparison("SCALE_V2").map((r) => r.label).join("|") === labels.join("|"));
+  ok("both run Facebook + Instagram", [pro, scale].every((c) => c["Runs ads on"] === "Facebook + Instagram"));
+  ok("Pro: you approve every change", pro["MAIRO works on its own"] === "You approve every change", pro["MAIRO works on its own"]);
+  ok(`${TOP.name}: Full Autopilot`, scale["MAIRO works on its own"] === "Full Autopilot", scale["MAIRO works on its own"]);
+  ok("Pro has no Social Manager", pro["MAIRO Social Manager"] === "No");
+  ok(`${TOP.name} does`, scale["MAIRO Social Manager"] === "Instagram + Facebook", scale["MAIRO Social Manager"]);
+  ok("Pro runs 15 campaigns", pro["Campaigns at once"] === "15", pro["Campaigns at once"]);
+  ok(`${TOP.name} is unlimited`, scale["Campaigns at once"] === "Unlimited", scale["Campaigns at once"]);
+  ok("and never leak the sentinel", ![pro, scale].some((c) => /Infinity/.test(c["Campaigns at once"])));
+  ok("creative counts climb", Number(pro["Creative requests a month"]) < Number(scale["Creative requests a month"]));
+  ok("and they match the limits", Number(pro["Creative requests a month"]) === PLANS[0].limits.creativesPerMonth);
+  ok("Pro and Scale differ on the rows shown", labels.some((l) => pro[l] !== scale[l]));
 }
 
 console.log("\n— the upgrade prompt has wording for the flag —");

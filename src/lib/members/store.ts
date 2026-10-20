@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
 import { canManage, isRole, ROLE_LABEL, type Role } from "./roles";
 import { audit } from "./audit";
+import { entitlementsFor } from "@/lib/entitlements";
 
 // A business's team: who's in it with which role, the invitations waiting,
 // and the changes to it. Every function takes the business and the person
@@ -16,6 +17,26 @@ const hash = (token: string) => createHash("sha256").update(token).digest("hex")
 const normEmail = (e: string) => e.trim().toLowerCase();
 
 type Fail = { ok: false; error: string };
+
+/**
+ * Null when the plan has room for one more person on this business, else
+ * why not. Team members are part of MAIRO Scale (member_limit); MAIRO Pro is
+ * the owner alone. People already on a team are never removed by a plan
+ * change — the limit only stops new ones joining. Open invitations count, so
+ * three links can't be handed out against one free seat.
+ */
+export async function seatProblem(organizationId: string, countOpenInvites = true): Promise<string | null> {
+  const ent = await entitlementsFor(organizationId);
+  if (!Number.isFinite(ent.member_limit)) return null;
+  const [members, invites] = await Promise.all([
+    db.organizationMember.count({ where: { organizationId } }),
+    countOpenInvites ? db.teamInvite.count({ where: { organizationId, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } } }) : Promise.resolve(0),
+  ]);
+  if (members + invites < ent.member_limit) return null;
+  return ent.member_limit <= 1
+    ? "Team members are part of MAIRO Scale. Upgrade to invite people and give them approval permissions."
+    : `Your plan covers ${ent.member_limit} people on this business.`;
+}
 
 async function roleOf(organizationId: string, userId: string): Promise<Role | null> {
   const m = await db.organizationMember.findUnique({ where: { organizationId_userId: { organizationId, userId } }, select: { role: true } });
@@ -47,6 +68,8 @@ export async function createInvite(organizationId: string, actorUserId: string, 
   if (already) return { ok: false, error: "They're already on the team." };
   // One open invitation per address: a new one replaces the old.
   await db.teamInvite.updateMany({ where: { organizationId, email, acceptedAt: null, revokedAt: null }, data: { revokedAt: new Date() } });
+  const full = await seatProblem(organizationId);
+  if (full) return { ok: false, error: full };
   const token = randomBytes(24).toString("base64url");
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 86_400_000);
   await db.teamInvite.create({ data: { organizationId, email, role, tokenHash: hash(token), invitedById: actorUserId, expiresAt } });
@@ -81,6 +104,10 @@ export async function acceptInvite(token: string, userId: string, userEmail: str
   const invite = await inviteFor(token);
   if (!invite || invite.state !== "open") return { ok: false, error: invite?.state === "expired" ? "This invitation has expired. Ask for a new one." : "This invitation can't be used any more." };
   if (normEmail(userEmail) !== invite.email) return { ok: false, error: `This invitation is for ${invite.email}. Sign in with that address to accept it.` };
+  // Checked again on accepting: the plan may have changed since the link was made.
+  if (!(await roleOf(invite.organization.id, userId)) && (await seatProblem(invite.organization.id, false))) {
+    return { ok: false, error: `${invite.organization.name}'s plan doesn't include more team members right now. Ask them to check their plan.` };
+  }
   const claimed = await db.teamInvite.updateMany({ where: { id: invite.id, acceptedAt: null, revokedAt: null, expiresAt: { gt: new Date() } }, data: { acceptedAt: new Date(), acceptedById: userId } });
   if (claimed.count === 0) return { ok: false, error: "This invitation can't be used any more." };
   const existing = await roleOf(invite.organization.id, userId);

@@ -122,7 +122,7 @@ export default async function FreelancerBillingPage() {
                 <PlanButton tier={plan.tier} label={`Choose ${plan.name}`} />
               ) : (
                 <p className="mt-6 text-[12px] text-faint">
-                  Not available yet — no price is configured for this plan.
+                  No longer offered to new subscribers. Workspaces already on Studio or Agency keep their plan, price and clients.
                 </p>
               )}
             </Card>

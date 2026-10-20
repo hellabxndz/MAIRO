@@ -47,7 +47,7 @@ export function absoluteUrl(path: string): string {
  */
 export const PUBLIC_ROUTES = [
   { path: "/", priority: 1, changeFrequency: "weekly" as const },
-  { path: "/for-freelancers", priority: 0.8, changeFrequency: "monthly" as const },
+  { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/sign-up", priority: 0.7, changeFrequency: "monthly" as const },
   { path: "/sign-in", priority: 0.3, changeFrequency: "yearly" as const },
   { path: "/privacy", priority: 0.2, changeFrequency: "yearly" as const },

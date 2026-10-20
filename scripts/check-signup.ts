@@ -6,7 +6,7 @@
 //   - Email addresses are stored trimmed and lower-case, so a capital letter
 //     or a phone keyboard's trailing space can't make a second account.
 //   - The page beside the form says the free plan needs no card, explains the
-//     Starter trial from the plan's own numbers, and links the Terms and
+//     MAIRO Pro trial from the plan's own numbers, and links the Terms and
 //     Privacy policy the account is created under.
 //
 //   npm run check:signup   (pure; no database, no network)
@@ -57,9 +57,9 @@ check("says what happens next, in the product's order", () => {
 });
 check("no card for the free plan; the trial comes from the plan's own numbers", () => {
   assert.match(page, /Your free plan needs no credit card/);
-  assert.match(page, /STARTER_TRIAL_DAYS/);
-  assert.match(page, /starter\.priceMonthly/);
-  assert.doesNotMatch(page, /7-day|\$149/);
+  assert.match(page, /PRO_TRIAL_DAYS/);
+  assert.match(page, /pro\.priceMonthly/);
+  assert.doesNotMatch(page, /7-day|\$149|\$139|Starter/);
 });
 check("the form links the Terms and Privacy policy, and keeps what was typed", () => {
   assert.match(form, /href="\/terms"/);

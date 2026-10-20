@@ -45,12 +45,12 @@ const TYPES = [
   },
   {
     key: "Agency",
-    goal: "Run every client from one place",
-    platforms: "Facebook + Instagram, per client",
-    budget: "Set per client",
-    creative: "Per-client brand and offers",
-    audience: "Each client's own audience",
-    note: "Freelancer and agency plans include client workspaces.",
+    goal: "Run several businesses from one place",
+    platforms: "Facebook + Instagram, per business",
+    budget: "Set per business",
+    creative: "Each brand's own look and offers",
+    audience: "Each business's own audience",
+    note: "MAIRO Scale covers up to three businesses or brands, each with its own Meta ad account.",
   },
 ] as const;
 
@@ -96,10 +96,10 @@ export function BusinessSelector() {
         </dl>
         <p className="mt-5 text-[12.5px] text-white/50">{t.note}</p>
         <Link
-          href={t.key === "Agency" ? "/for-freelancers" : "/sign-up"}
+          href={t.key === "Agency" ? "/pricing" : "/sign-up"}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-6 py-3 text-[14px] font-medium text-white shadow-[0_12px_40px_-12px_rgba(56,189,248,0.9)] transition hover:brightness-110"
         >
-          {t.key === "Agency" ? "See agency plans" : "See Example Plan"} <span aria-hidden>→</span>
+          {t.key === "Agency" ? "See MAIRO Scale" : "See Example Plan"} <span aria-hidden>→</span>
         </Link>
       </div>
     </div>

@@ -44,7 +44,7 @@ const FILM_CHAPTERS = ["Discovery", "Strategy", "Creative", "Campaign", "Approva
 const SOLUTIONS = [
   { title: "Local & service businesses", body: "Plumbers, clinics, salons, studios: leads and bookings from people near you, followed through to the jobs they became.", links: [{ href: "/solutions/local-services", label: "Local services" }, { href: "/solutions/appointments", label: "Appointments" }] },
   { title: "Online stores", body: "Sales campaigns built from your products and offers, judged on purchases — with Shopify connected to measure what sold.", links: [{ href: "/solutions/online-stores", label: "Online stores" }] },
-  { title: "Teams and agencies", body: "Six roles from Owner to Viewer, approvals and an audit log; a workspace per client. Studio and Agency plans aren't on sale yet.", links: [{ href: "/for-freelancers", label: "Freelancers & agencies" }] },
+  { title: "Teams and brands", body: "Six roles from Owner to Viewer, approvals and an audit log. MAIRO Scale covers up to three businesses or brands, each with its own Meta ad account.", links: [{ href: "/pricing", label: "See MAIRO Scale" }] },
 ];
 
 export function ConsoleHome() {

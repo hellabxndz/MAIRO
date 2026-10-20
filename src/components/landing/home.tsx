@@ -9,7 +9,8 @@ import { Faq } from "@/components/faq";
 import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { brandFont } from "@/lib/fonts";
-import { STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
+import { metaPostingApproved } from "@/lib/social/publishing-status";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { EVERY_PLAN, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, comparison, planStories, pricingFacts, type Cell, type IntegrationStatus } from "@/lib/pricing/compare";
 import { TeamConstellation } from "@/components/landing/team-constellation";
@@ -209,15 +210,15 @@ const FAQ = [
   },
   {
     q: "Does MAIRO change my campaigns without asking?",
-    a: "Not unless you switch it on. Every campaign needs your approval before it can spend, with the budget shown first. In Manual, nothing changes without you. AI Assist (Growth and Scale) and Full Autopilot (Scale) are optional and only make the changes listed for them, inside the limits you set. Launching a campaign, raising your total budget, spending past your ceiling and connecting a new ad account always wait for you, on every plan.",
+    a: "Not unless you switch it on. Every campaign needs your approval before it can spend, with the budget shown first. In Manual, nothing changes without you. AI Assist and Full Autopilot (MAIRO Scale) are optional and only make the changes listed for them, inside the limits you set. Launching a campaign, raising your total budget, spending past your ceiling and connecting a new ad account always wait for you, on every plan.",
   },
   {
     q: "What's the difference between the plans?",
-    a: `Every plan includes the planning, building, daily checks, recommendations, Spend Protection and reports. Starter runs up to ${DEFAULT_ENTITLEMENTS.STARTER.campaign_limit} campaigns and you approve every change. Growth adds optional AI Assist, every ad's results side by side and up to ${DEFAULT_ENTITLEMENTS.GROWTH.campaign_limit} campaigns. Scale adds optional Full Autopilot, unlimited campaigns and MAIRO Social Manager for your own Instagram and Facebook posts.`,
+    a: `There are two. MAIRO Pro ($139 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, MAIRO Social Manager for your own Instagram, your team, the Performance Coach and priority support.`,
   },
   {
     q: "Which platforms and tools does MAIRO work with?",
-    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Your Shopify store, if you connect it, reports the sales your ads bring; a ready-made Google Tag Manager container sets up your Meta pixel (connecting Tag Manager directly is waiting on Google's approval); and Stripe takes payment for your subscription. Posting to your own Instagram and Facebook (Scale) needs Meta's approval of MAIRO's posting access before it can publish.",
+    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Your Shopify store, if you connect it, reports the sales your ads bring; a ready-made Google Tag Manager container sets up your Meta pixel (connecting Tag Manager directly is waiting on Google's approval); and Stripe takes payment for your subscription. Posting to your own Instagram and Facebook (MAIRO Scale) needs Meta's approval of MAIRO's posting access before it can publish.",
   },
   {
     q: "What happens if I cancel?",
@@ -225,7 +226,7 @@ const FAQ = [
   },
   {
     q: "How does the free trial work?",
-    a: `The Starter plan starts with a ${STARTER_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and the first charge is after the trial. If that payment doesn't go through, MAIRO pauses your campaigns and cancels the subscription — your plan stays saved. Growth and Scale don't have a trial; they're billed from the day you subscribe.`,
+    a: `MAIRO Pro starts with a ${PRO_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and the first charge is after the trial. If that payment doesn't go through, MAIRO pauses your campaigns and cancels the subscription — your plan stays saved. MAIRO Scale has no trial; it's billed from the day you subscribe.`,
   },
   {
     q: "Can MAIRO guarantee results?",
@@ -628,53 +629,94 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
           <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
             <SectionHead
               badge="PRICING"
-              title="Three plans. The difference is how much MAIRO does on its own."
-              sub="Every plan includes your AI team's planning, building, daily checks, recommendations and reports. Your plan is free to make — you only subscribe when you want MAIRO to build and run it."
+              title="Two plans. One AI advertising team."
+              sub="Start with a free AI plan for your business — no card. When you're happy with it, choose MAIRO Pro or MAIRO Scale and MAIRO builds and runs it, with your approval before anything launches or spends."
             />
-            <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
-              {planStories().map((plan) => (
-                <article
-                  key={plan.tier}
-                  aria-labelledby={`plan-${plan.tier}`}
-                  className={`relative flex min-w-0 flex-col rounded-3xl p-6 sm:p-7 ${
-                    plan.featured ? "border border-violet-400/45 bg-gradient-to-b from-violet-500/[0.12] to-white/[0.02] shadow-[0_30px_80px_-30px_rgba(47,107,255,0.55)]" : GLASS
-                  }`}
-                >
-                  {plan.featured && (
-                    <span className="absolute -top-3 left-6 rounded-full bg-gradient-to-r from-[#3b6bff] to-[#2fa4ff] px-3 py-1 text-[11px] font-medium text-white">Recommended</span>
-                  )}
-                  <h3 id={`plan-${plan.tier}`} className="text-[18px] font-semibold">{plan.name}</h3>
-                  <p className="mt-0.5 text-[13px] text-white/55 md:min-h-[38px]">{plan.forWho}</p>
-                  <p className="mt-4 flex items-baseline gap-1">
-                    <span className="text-[40px] font-bold tracking-[-0.03em] tabular-nums">{money(plan.price)}</span>
-                    <span className="text-[13px] text-white/50">/month</span>
-                  </p>
-                  <p className="mt-1 h-[18px] text-[12.5px] font-medium text-emerald-300">{plan.trialDays ? `${plan.trialDays}-day free trial` : ""}</p>
-                  <p className="mt-3 text-[14.5px] leading-relaxed text-white/80">{plan.outcome}</p>
-                  <div className="mt-4">
-                    <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-white/45">Automation you can choose</p>
-                    <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`Automation modes on ${plan.name}`}>
-                      {plan.modes.map((m) => (
-                        <li key={m} className="rounded-full border border-violet-400/30 bg-violet-500/[0.06] px-2.5 py-1 text-[12px] font-medium text-violet-300">{m}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <dl className="mt-5 flex-1 divide-y divide-white/[0.07] border-y border-white/[0.07] text-[13.5px]">
-                    {plan.rows.map((r) => (
-                      <div key={r.label} className="flex gap-3 py-2.5">
-                        <dt className="w-[92px] shrink-0 text-white/50">{r.label}</dt>
-                        <dd className="min-w-0 text-white/85">{r.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <Link
-                    href={cta.href}
-                    className={`mt-6 rounded-full py-3 text-center text-[14px] font-medium ${plan.featured ? PRIMARY : "border border-white/15 transition hover:border-white/35"}`}
+            <div className="mx-auto mt-12 grid max-w-[1120px] grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+              {planStories().map((story) => {
+                const plan = PLANS.find((p) => p.tier === story.tier)!;
+                const scale = story.featured;
+                return (
+                  <article
+                    key={story.tier}
+                    aria-labelledby={`plan-${story.tier}`}
+                    className={`group relative flex min-w-0 flex-col overflow-hidden rounded-[28px] p-7 transition duration-500 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-9 ${
+                      scale
+                        ? "border border-[#4d7bff]/55 bg-[#0a1024] shadow-[0_40px_120px_-40px_rgba(47,107,255,0.75)] hover:shadow-[0_50px_140px_-40px_rgba(47,107,255,0.95)]"
+                        : `${GLASS} hover:border-[color:var(--mairo-line-lit)]`
+                    }`}
                   >
-                    {cta.label} <span aria-hidden>→</span>
-                  </Link>
-                </article>
-              ))}
+                    {/* Galaxy accents: two soft nebulae and a scatter of stars. Decoration only. */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-700 group-hover:opacity-100"
+                      style={{
+                        backgroundImage: scale
+                          ? "radial-gradient(60% 45% at 85% 0%, rgba(77,123,255,0.38), transparent 70%), radial-gradient(45% 35% at 0% 100%, rgba(139,92,246,0.22), transparent 70%)"
+                          : "radial-gradient(55% 40% at 100% 0%, rgba(77,123,255,0.16), transparent 70%)",
+                      }}
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_55%)]"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 88% 30%, rgba(170,190,255,0.9), transparent), radial-gradient(1px 1px at 40% 6%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 58% 26%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 26% 34%, rgba(170,190,255,0.6), transparent)",
+                      }}
+                    />
+                    <div className="relative flex flex-1 flex-col">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h3 id={`plan-${story.tier}`} className="text-[22px] font-semibold tracking-[-0.02em] text-white">{story.name}</h3>
+                        {scale && (
+                          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_-8px_rgba(47,107,255,0.9)]">Most Popular</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[14px] text-white/60">{plan.headline}</p>
+                      <p className="mt-6 flex items-baseline gap-1.5">
+                        <span className="text-[56px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-white">{money(story.price)}</span>
+                        <span className="text-[15px] text-white/55">/month</span>
+                      </p>
+                      <p className="mt-2 min-h-[20px] text-[13px] font-medium text-emerald-300">{story.trialDays ? `${story.trialDays}-day free trial` : "Billed from the day you subscribe"}</p>
+                      <p className="mt-4 text-[14.5px] leading-relaxed text-white/75">{plan.tagline}</p>
+
+                      <ul className="mt-6 flex-1 space-y-2.5 border-t border-white/[0.08] pt-6 text-[14px]" aria-label={`What ${story.name} includes`}>
+                        {plan.inherits && <li className="pb-1 text-[13px] font-medium text-white/55">Everything in {plan.inherits}, plus:</li>}
+                        {plan.features.map((f) => {
+                          const soon = /instagram content creation|post approval queue/i.test(f) && !metaPostingApproved();
+                          return (
+                            <li key={f} className="flex gap-2.5">
+                              <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#7ea0ff]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                                <path d="M3 8.5l3 3 7-7" />
+                              </svg>
+                              <span className="text-white/85">
+                                {f}
+                                {soon && <span className="ml-1.5 whitespace-nowrap rounded-full border border-amber-400/35 bg-amber-400/[0.08] px-2 py-0.5 text-[11px] font-medium text-amber-200">Publishing once Meta approves</span>}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+
+                      <Link
+                        href={cta.href}
+                        className={`mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold transition ${
+                          scale ? PRIMARY : "border border-white/20 text-white hover:border-white/45 hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        {plan.cta} <span aria-hidden>→</span>
+                      </Link>
+                      <p className="mt-3 text-center text-[12px] leading-relaxed text-white/45">Starts with your free AI plan. You choose {story.name} after reviewing it.</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="mx-auto mt-6 flex max-w-[1120px] flex-col gap-3 rounded-3xl border border-white/10 bg-white/[0.02] px-6 py-5 sm:flex-row sm:items-center sm:gap-6 sm:px-8">
+              <p className="shrink-0 text-[14px] font-semibold text-white">Ad spend is separate</p>
+              <p className="text-[13.5px] leading-relaxed text-white/65">
+                Your MAIRO subscription pays for your AI advertising team. What your ads cost is paid by you, directly to Meta, from your own ad account at the budget you approve — never through MAIRO, and never included in the price above.
+              </p>
             </div>
             <p className="mt-4 text-center text-[12.5px] text-white/50">Prices in US dollars, billed monthly. Cancel any time; cancelling stops the next renewal.</p>
 
@@ -722,8 +764,8 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
 
             <div className="mt-6">
               <Disclosure title="Compare every feature, plan by plan">
-            <div className={`overflow-hidden rounded-3xl ${GLASS}`} role="table" aria-label="Compare Starter, Growth and Scale">
-              <div role="row" className="hidden grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,1fr))] gap-4 border-b border-white/10 bg-white/[0.03] px-6 py-4 sm:grid">
+            <div className={`overflow-hidden rounded-3xl ${GLASS}`} role="table" aria-label="Compare MAIRO Pro and MAIRO Scale">
+              <div role="row" className="hidden grid-cols-[minmax(0,1.7fr)_repeat(2,minmax(0,1fr))] gap-4 border-b border-white/10 bg-white/[0.03] px-6 py-4 sm:grid">
                 <span role="columnheader" className="text-[13px] font-semibold text-white/60">Compare plans</span>
                 {planStories().map((p) => (
                   <span key={p.tier} role="columnheader" className="text-[14px] font-semibold text-white">{p.name}</span>
@@ -735,14 +777,13 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                     <span role="rowheader" className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-300">{g.title}</span>
                   </div>
                   {g.rows.map((r) => (
-                    <div key={r.key} role="row" className="grid grid-cols-3 gap-x-4 gap-y-2 border-b border-white/[0.06] px-6 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,1fr))] sm:items-start">
-                      <div role="rowheader" className="col-span-3 min-w-0 sm:col-span-1">
+                    <div key={r.key} role="row" className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-white/[0.06] px-6 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.7fr)_repeat(2,minmax(0,1fr))] sm:items-start">
+                      <div role="rowheader" className="col-span-2 min-w-0 sm:col-span-1">
                         <p className="text-[14px] font-medium text-white">{r.label}</p>
                         {r.help && <p className="mt-0.5 text-[12.5px] leading-relaxed text-white/55">{r.help}</p>}
                       </div>
-                      <PlanCell cell={r.cells.STARTER} tier="Starter" />
-                      <PlanCell cell={r.cells.GROWTH} tier="Growth" />
-                      <PlanCell cell={r.cells.SCALE} tier="Scale" />
+                      <PlanCell cell={r.cells.PRO} tier="Pro" />
+                      <PlanCell cell={r.cells.SCALE_V2} tier="Scale" />
                     </div>
                   ))}
                 </div>
@@ -778,7 +819,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               </div>
             </div>
             <p className="mx-auto mt-6 max-w-3xl text-center text-[13px] leading-relaxed text-white/50">
-              <Link href="/for-freelancers" className="text-violet-300 hover:text-white">Running ads for clients? Sign up as a freelancer or agency →</Link>
+              <Link href="/pricing" className="text-violet-300 hover:text-white">More than one business or brand? MAIRO Scale covers up to three Meta ad accounts →</Link>
             </p>
             <ResultsNote className="mx-auto mt-3 max-w-3xl text-center" />
           </section>

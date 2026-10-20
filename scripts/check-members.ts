@@ -56,6 +56,7 @@ const NO_ROLE_CHECK: Record<string, string> = {
   "client-actions:*": "a freelancer's own workspace (workspaceId checks FREELANCER)",
   "team-actions:leaveTeamAction": "anyone may leave; the store keeps the last owner",
   "team-actions:switchWorkspaceAction": "only to a business you're on the team of",
+  "brand-actions:openBusinessAction": "only to a business you're on the team of",
   "team-actions:acceptInviteAction": "only with the invited address",
   "team-actions:joinWithInviteAction": "only with an open invitation",
   "lead-actions:submitLeadAction": "the public lead form",

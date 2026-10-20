@@ -41,9 +41,11 @@ async function campaign(organizationId: string, status: "ACTIVE" | "PENDING_REVI
 }
 
 async function main() {
-  await check("only Starter has a free trial — 7 days; every other plan bills from day one", () => {
-    assert.equal(trialDaysFor("STARTER"), 7);
-    for (const p of ALL_PLANS.filter((x) => x.tier !== "STARTER")) assert.equal(trialDaysFor(p.tier), 0, p.tier);
+  await check("only MAIRO Pro has a free trial — 7 days; every other plan bills from day one", () => {
+    assert.equal(trialDaysFor("PRO"), 7);
+    // Starter's trial was for new checkouts; it isn't sold any more, and a
+    // Starter trial already running keeps the end date Stripe holds.
+    for (const p of ALL_PLANS.filter((x) => x.tier !== "PRO")) assert.equal(trialDaysFor(p.tier), 0, p.tier);
     assert.equal(trialDaysFor("NONE"), 0);
   });
   await check("a second checkout is refused while a subscription is live; a declined one can be replaced", () => {

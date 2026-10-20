@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { currentMember } from "@/lib/members/authorize";
-import { listTeam } from "@/lib/members/store";
+import { listTeam, seatProblem } from "@/lib/members/store";
 import { can, canManage, permissionsOf, PERMISSION_VERB, ROLE_LABEL, ROLE_SUMMARY, ROLES } from "@/lib/members/roles";
 import { TeamManager } from "./team-manager";
 
@@ -36,9 +36,10 @@ export default async function TeamPage() {
     );
   }
 
-  const [team, org] = await Promise.all([
+  const [team, org, seats] = await Promise.all([
     listTeam(me.organizationId),
     db.organization.findUnique({ where: { id: me.organizationId }, select: { name: true } }),
+    seatProblem(me.organizationId),
   ]);
   const manages = can(me.role, "team.manage");
 
@@ -49,6 +50,12 @@ export default async function TeamPage() {
       <p className="mt-1 mb-6 text-[14.5px] text-muted">
         Who works on {org?.name ?? "this business"} in MAIRO, and what each person can do. You&rsquo;re {/^[AEIOU]/.test(ROLE_LABEL[me.role]) ? "an" : "a"} {ROLE_LABEL[me.role]}.
       </p>
+      {manages && seats && (
+        <p className="mb-5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13.5px] leading-relaxed text-muted">
+          {seats} Everyone already on the team stays.{" "}
+          <Link href="/dashboard/billing" className="text-blue-bright hover:text-white">See plans</Link>
+        </p>
+      )}
       <TeamManager
         me={{ userId: me.userId, role: me.role }}
         manages={manages}

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { loadChangeHistory, loadFindings, type FindingView } from "@/lib/coach/store";
+import { COACH_LOCKED } from "@/lib/coach/run";
+import { can } from "@/lib/entitlements";
 import { CoachLive } from "@/components/coach/overview";
 import { FindingCard, type FindingCardData } from "@/components/coach/finding-card";
 import { ReviewNow } from "@/components/coach/review-now";
@@ -58,7 +60,7 @@ export default async function CoachPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   const now = new Date();
-  const [{ active, past, lastReviewedAt }, changes] = await Promise.all([loadFindings(organizationId, now), loadChangeHistory(organizationId, now)]);
+  const [{ active, past, lastReviewedAt }, changes, coachOn] = await Promise.all([loadFindings(organizationId, now), loadChangeHistory(organizationId, now), can(organizationId, "growth_coach")]);
 
   return (
     <div className="mx-auto max-w-[1100px]">
@@ -68,8 +70,14 @@ export default async function CoachPage() {
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">
           Follows your results from the ad all the way to paying customers, finds where things slow down, and says what may help — with the numbers behind it, and what it can&rsquo;t be sure of.
         </p>
+        {!coachOn && (
+          <p className="mt-4 max-w-[720px] rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13.5px] leading-relaxed text-white/75">
+            {COACH_LOCKED} Your AI team&rsquo;s daily recommendations carry on as usual{active.length + past.length > 0 ? ", and earlier findings stay below" : ""}.{" "}
+            <Link href="/dashboard/billing" className="text-blue-bright hover:text-white">See plans</Link>
+          </p>
+        )}
         <div className="mt-4 flex flex-wrap items-center gap-4">
-          <ReviewNow />
+          {coachOn && <ReviewNow />}
           <p className="text-[12.5px] text-faint">{lastReviewedAt ? `Last reviewed ${lastReviewedAt.toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}. Reviews run once a day.` : "Your first review runs with the daily check, or now if you ask."}</p>
         </div>
       </header>

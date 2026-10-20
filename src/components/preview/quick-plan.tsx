@@ -5,7 +5,7 @@ import { useState, type RefObject } from "react";
 import { FACT_LABEL, type Direction, type Preview, type PreviewFacts } from "@/lib/preview/build";
 import { analysisSteps, growthActions, opportunities } from "@/lib/preview/consult";
 import { BUSINESS_TYPES, businessTypeFrom } from "@/lib/onboarding/business-types";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import type { Finding } from "@/lib/website/audit";
 import { Panel, Pill, primaryAction, quietAction } from "@/components/console/kit";
 
@@ -204,8 +204,8 @@ export function QuickPlan({
             </button>
           </div>
           <p className="mt-3 max-w-[760px] text-[12.5px] leading-relaxed text-white/60">
-            Approving needs a free account — no card. Your plan carries over. A subscription is needed only when MAIRO builds and runs your campaigns — from ${PLANS[0].priceMonthly} a month, with a {STARTER_TRIAL_DAYS}-day trial on {PLANS[0].name} (
-            <Link href="/#pricing" className="underline underline-offset-2 hover:text-white">
+            Approving needs a free account — no card. Your plan carries over. A subscription is needed only when MAIRO builds and runs your campaigns — from ${PLANS[0].priceMonthly} a month, with a {PRO_TRIAL_DAYS}-day trial on {PLANS[0].name} (
+            <Link href="/pricing" className="underline underline-offset-2 hover:text-white">
               see plans
             </Link>
             ). Your ad budget is paid to Meta. No ad runs and nothing is charged without your explicit confirmation.

@@ -51,7 +51,14 @@ export function stripeMode(): "test" | "live" | "unknown" {
 
 // The Stripe price for each paid tier. These are ids, not secrets — they name a
 // price object in the Stripe dashboard and are safe in logs or error messages.
+// Every plan's Stripe price, sold or not. PRO and SCALE_V2 are the two plans
+// MAIRO sells; the rest are earlier plans whose subscribers keep their prices,
+// so their variables stay set for as long as anyone pays on them — the
+// webhook matches a subscription to its plan through this table, and a price
+// that matches nothing leaves the plan as it was rather than guessing.
 const PRICE_ENV: Record<Exclude<SubscriptionTier, "NONE">, string> = {
+  PRO: "STRIPE_PRICE_PRO",
+  SCALE_V2: "STRIPE_PRICE_SCALE_V2",
   STARTER: "STRIPE_PRICE_STARTER",
   GROWTH: "STRIPE_PRICE_GROWTH",
   SCALE: "STRIPE_PRICE_SCALE",
@@ -86,11 +93,13 @@ export function priceIdFor(tier: Exclude<SubscriptionTier, "NONE">): string {
   return value;
 }
 
-/** Which tiers can actually be purchased on this deployment. */
+/**
+ * Which tiers can actually be bought on this deployment: the plans MAIRO
+ * sells (Pro and Scale) whose price is set. An earlier plan's price stays set
+ * for its existing subscribers, and that must not make it buyable again.
+ */
 export function purchasableTiers(): Exclude<SubscriptionTier, "NONE">[] {
-  return (Object.keys(PRICE_ENV) as Exclude<SubscriptionTier, "NONE">[]).filter(
-    (tier) => Boolean(process.env[PRICE_ENV[tier]]?.trim())
-  );
+  return (["PRO", "SCALE_V2"] as const).filter((tier) => Boolean(process.env[PRICE_ENV[tier]]?.trim()));
 }
 
 /** Maps a Stripe price id back to the tier it sells, or null if unrecognised. */

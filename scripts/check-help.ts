@@ -16,7 +16,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { HELP_CATEGORIES, articleText, helpArticles, helpIndex, searchHelp } from "../src/lib/help/articles";
-import { PLANS, STARTER_TRIAL_DAYS } from "../src/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "../src/lib/plans";
 import { DEFAULT_ENTITLEMENTS } from "../src/lib/entitlements";
 import { BANNED_CLAIMS, capability } from "../src/lib/capabilities";
 import { RESERVATION_TIMEOUT_MS } from "../src/lib/creative-studio/credits";
@@ -81,16 +81,18 @@ check("prices, trial, campaign limits, credits and creative requests match the p
   const table = credits.blocks.find((b) => b.kind === "table");
   assert.ok(table && table.kind === "table");
   const row = (label: string) => table.rows.find((r) => r[0] === label)!.slice(1);
-  const tiers = ["STARTER", "GROWTH", "SCALE"] as const;
+  const tiers = ["PRO", "SCALE_V2"] as const;
   assert.deepEqual(table.head.slice(1), tiers.map((t) => PLANS.find((p) => p.tier === t)!.name));
   assert.deepEqual(row("Price"), tiers.map((t) => `$${PLANS.find((p) => p.tier === t)!.priceMonthly} a month`));
-  assert.deepEqual(row("Free trial"), [`${STARTER_TRIAL_DAYS} days`, "None", "None"]);
+  assert.deepEqual(row("Free trial"), [`${PRO_TRIAL_DAYS} days`, "None"]);
+  assert.deepEqual(row("Meta ad accounts"), tiers.map((t) => String(DEFAULT_ENTITLEMENTS[t].ad_account_limit)));
   assert.deepEqual(row("Campaigns at once"), tiers.map((t) => (Number.isFinite(DEFAULT_ENTITLEMENTS[t].campaign_limit) ? String(DEFAULT_ENTITLEMENTS[t].campaign_limit) : "Unlimited")));
   for (const [i, t] of tiers.entries()) {
     assert.match(row("AI image credits")[i], new RegExp(`^${DEFAULT_ENTITLEMENTS[t].studio_credits_monthly} a month`));
     assert.equal(row("Creative requests")[i], `${DEFAULT_ENTITLEMENTS[t].creative_limit} a month`);
   }
-  assert.match(text("billing"), /Starter is \$149\.99 a month, Growth is \$239\.99 a month, Scale is \$499\.99 a month/);
+  assert.match(text("billing"), /MAIRO Pro is \$139 a month, MAIRO Scale is \$299 a month/);
+  assert.match(text("billing"), /keep its price and features until you choose to switch/);
   assert.match(text("billing"), /7-day free trial/);
 });
 check("a failed picture costs nothing, and the hold's timeout is the ledger's own", () => {

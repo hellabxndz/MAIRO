@@ -1,3 +1,5 @@
+import { can } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
 import { db } from "@/lib/db";
 import type { AgentRole } from "@/generated/prisma/enums";
 import { limitProblem } from "@/lib/decisions/guardrails";
@@ -50,8 +52,15 @@ export function specialistLines(findings: Finding[], extra: { guardian?: string 
 
 export type CoachRun = { ok: true; result: CoachResult; created: number; decisionIds: string[] } | { ok: false; reason: string };
 
+/** Why the Coach didn't run on a plan without it. */
+export const COACH_LOCKED = `The Performance Coach's growth recommendations are part of ${planFor("SCALE_V2").name}.`;
+
 export async function runCoach(organizationId: string, opts: { parentRunId?: string | null; decisionInput?: DecisionInput | null; now?: Date } = {}): Promise<CoachRun> {
   const now = opts.now ?? new Date();
+  // Advanced growth recommendations: MAIRO Scale (and the earlier plans that
+  // had the Coach). Checked here so neither the daily review nor "Review now"
+  // runs it for a plan without it. Findings already made are kept.
+  if (!(await can(organizationId, "growth_coach"))) return { ok: false, reason: COACH_LOCKED };
   const own = opts.parentRunId ? null : await startRun({ organizationId, agent: "STRATEGIST", task: "coach-review" });
   const parentId = opts.parentRunId ?? own;
 

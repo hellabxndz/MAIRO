@@ -7,6 +7,7 @@ import { Card, PageHeader, EmptyState, Badge } from "@/components/ui";
 import { activeOrganizationId } from "@/lib/active-org";
 import { fetchOrganizationPerformance, type PlatformReport } from "@/lib/ad-platforms/performance";
 import { entitlementsFor } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
 import { PlatformIcon } from "@/components/platform-icons";
 import { formatInteger, formatMoney, NO_VALUE } from "@/components/metrics";
 import { platformName } from "@/lib/ad-platforms/registry";
@@ -296,14 +297,19 @@ export default async function AnalyticsPage({
             </Card>
           )}
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <AdvancedBreakdowns organizationId={organizationId} rangeKey={rangeKey} />
-          </Suspense>
+          {/* Every ad and placement side by side: advanced analytics, part
+              of MAIRO Scale (and the earlier Growth and Scale plans). Not
+              loaded at all without it. */}
+          {entitlements.advanced_analytics && (
+            <Suspense fallback={<SectionSkeleton />}>
+              <AdvancedBreakdowns organizationId={organizationId} rangeKey={rangeKey} />
+            </Suspense>
+          )}
 
           {!entitlements.advanced_analytics && (
             <Card className="mt-6">
               <p className="text-sm text-neutral-400">
-                Ad-by-ad breakdowns and creative-level figures are part of Growth.{" "}
+                Every ad and placement side by side is part of {planFor("SCALE_V2").name}&rsquo;s advanced analytics.{" "}
                 <Link href="/dashboard/billing" className="text-sky-300 underline underline-offset-4">
                   See plans
                 </Link>

@@ -57,9 +57,10 @@ or a public page makes a claim this inventory can't back.
 | Control | Manual, AI Assist, Full Autopilot | Partially working | `/dashboard/settings` | A watched week of real decisions | `check:automation`, `check:decisions` |
 | Control | Spend Protection | Working | `/dashboard/settings` | — | `check:budget` |
 | Social | Social Manager (Scale) | Partially working | `/dashboard/social` | Meta App Review: posting permissions | `check:social-manager`, `check:social-scheduler` |
-| Billing | Subscriptions through Stripe | Working | `/plan/activate`, `/dashboard/billing` | — | `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db` |
+| Billing | Subscriptions through Stripe | Working | `/pricing`, `/plan/activate`, `/dashboard/billing`, `/dashboard/billing/change` | — | `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db` |
 | Billing | Studio and Agency plans | Unavailable | `/clients/billing` | Stripe prices | `check:entitlements` |
 | Account | Team members and roles | Working | `/dashboard/settings/team`, `/invite/[token]` | — | `check:members`, `check:trust-db` |
+| Account | Up to 3 businesses on MAIRO Scale | Working | `/dashboard/settings/businesses`, `/dashboard/billing/change` | — | `check:plans-v2` |
 | Account | Multi-step approvals | Unavailable | — | An approval chain model and its review screens | — |
 | Account | Several brands under one account, with their own budgets and reporting across them | Unavailable | — | A parent organization for brands, cross-brand budgets and combined reports with per-brand labels | — |
 | Account | Sign in with Google | Partially working | `/sign-in`, `/sign-up` | GOOGLE_CLIENT_ID; GOOGLE_CLIENT_SECRET | `check:google` |
@@ -91,7 +92,7 @@ or a public page makes a claim this inventory can't back.
 | Free tools | Tracking readiness checker | Working | `/tools/tracking-readiness` | — | `check:website`, `check:safe-fetch` |
 | Free tools | UTM link builder | Working | `/tools/utm-builder` | — | `check:calculators` |
 
-## Working (42)
+## Working (43)
 
 ### Free advertising plan
 
@@ -405,25 +406,25 @@ A stop-loss and a monthly cap that warn, or pause a campaign if the owner choose
 
 *Billing* · `subscriptions`
 
-Starter $149.99 (7-day free trial, card at checkout), Growth $239.99, Scale $499.99 a month. Ad spend is paid to Meta, separately.
+MAIRO Pro $139 (7-day free trial, card at checkout) and MAIRO Scale $299 a month. Earlier plans (Starter, Growth, the $499.99 Scale, Studio, Agency) keep working for their subscribers and can't be bought. Ad spend is paid to Meta, separately.
 
-**Routes:** `/plan/activate`, `/dashboard/billing`
+**Routes:** `/pricing`, `/plan/activate`, `/dashboard/billing`, `/dashboard/billing/change`
 
 **Verification:** Live checkout returned through the webhook; entitlements follow the subscription.
 
-**Verified live:** A live Starter trial checkout came back through the webhook (NEXT.md item 8); billing enforced since 10 October 2026.
+**Verified live:** A live trial checkout on the earlier Starter plan came back through the webhook (NEXT.md item 8); billing enforced since 10 October 2026. Pro and Scale checkouts need their Stripe prices (STRIPE_PRICE_PRO, STRIPE_PRICE_SCALE_V2) and haven't been bought live yet.
 
-**Evidence:** `src/lib/plans.ts`, `src/lib/actions/billing-actions.ts`, `src/app/api/stripe/webhook/route.ts`
+**Evidence:** `src/lib/plans.ts`, `src/lib/entitlements.ts`, `src/lib/actions/billing-actions.ts`, `src/app/api/stripe/webhook/route.ts`, `src/app/dashboard/billing/change/page.tsx`
 
 **Checks:** `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db`
 
-**Public claim:** “Plans from $149.99 a month; Starter starts with a 7-day free trial.”
+**Public claim:** “MAIRO Pro $139 a month with a 7-day free trial; MAIRO Scale $299 a month.”
 
 ### Team members and roles
 
 *Account* · `team-roles`
 
-Invite people to a business with one of six roles — Owner, Administrator, Marketing Manager, Creative Editor, Analyst or Viewer — and change or remove them. The role is checked on the server for every change: only owners, administrators and marketing managers change budgets or approve launches; only owners and administrators manage the team or connect and disconnect advertising accounts; only owners handle billing. The assistant only offers the changes the person's role allows. Every team change is in the team's audit log. Someone on several teams switches between their businesses, and a removed person loses access on their next request. MAIRO makes the invitation link; the owner sends it — MAIRO doesn't email anyone.
+Invite people to a business with one of six roles — Owner, Administrator, Marketing Manager, Creative Editor, Analyst or Viewer — and change or remove them. The role is checked on the server for every change: only owners, administrators and marketing managers change budgets or approve launches; only owners and administrators manage the team or connect and disconnect advertising accounts; only owners handle billing. The assistant only offers the changes the person's role allows. Every team change is in the team's audit log. Someone on several teams switches between their businesses, and a removed person loses access on their next request. MAIRO makes the invitation link; the owner sends it — MAIRO doesn't email anyone. Team members are part of MAIRO Scale (and the earlier plans): on MAIRO Pro the owner works alone, and invitations are refused on the server (member_limit); a plan change never removes anyone already on a team.
 
 **Routes:** `/dashboard/settings/team`, `/invite/[token]`
 
@@ -434,6 +435,22 @@ Invite people to a business with one of six roles — Owner, Administrator, Mark
 **Checks:** `check:members`, `check:trust-db`
 
 **Public claim:** “Invite your team, each with a role that decides what they can change.”
+
+### Up to 3 businesses on MAIRO Scale
+
+*Account* · `scale-businesses`
+
+A MAIRO Scale owner adds up to two more businesses or brands under the same subscription, each with its own Meta ad account, campaigns, ads, results and team, and switches between them. The added businesses copy the paying business's plan (written on creation, by the Stripe webhook on every change, and by the daily review as a backstop). When the plan no longer covers one — a move to Pro, or the subscription ending — building, changing and launching stop there, but its running campaigns keep running until the owner pauses them, and nothing is deleted. Removing one is refused while anything runs on Meta.
+
+**Routes:** `/dashboard/settings/businesses`, `/dashboard/billing/change`
+
+**Verification:** check:plans-v2 — allowance by plan, sync on upgrade, downgrade and cancellation, oldest-first coverage, freelancer clients untouched.
+
+**Evidence:** `src/lib/brands.ts`, `src/lib/actions/brand-actions.ts`, `src/app/dashboard/settings/businesses/page.tsx`, `src/app/api/stripe/webhook/route.ts`
+
+**Checks:** `check:plans-v2`
+
+**Public claim:** “MAIRO Scale covers up to three Meta ad accounts, one per business or brand.”
 
 ### Self-serve account deletion
 
@@ -1309,13 +1326,13 @@ No video generation provider is configured. Uploaded videos work.
 
 *Billing* · `freelancer-plans`
 
-Built in the product, but no Stripe prices exist, so they show as not available yet.
+No longer sold (October 2026): the freelancer sign-up redirects to /pricing and checkout refuses these tiers. Workspaces already on Studio or Agency keep their plan and clients. Several businesses under one plan is MAIRO Scale's (up to 3).
 
 **Routes:** `/clients/billing`
 
 **Still needs:** Stripe prices
 
-**Verification:** Shown as not available.
+**Verification:** Shown as no longer offered.
 
 **Evidence:** `src/lib/plans.ts#FREELANCER_PLANS`
 

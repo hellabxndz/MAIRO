@@ -19,21 +19,22 @@ import type { ImportSummary } from "@/lib/leads/history";
 const field = "w-full rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white";
 const FIELD_LABEL: Record<string, string> = { name: "Name", firstName: "First name", lastName: "Last name", email: "Email", phone: "Phone", status: "Status", value: "Value", date: "Date", notes: "Notes" };
 
-export function LeadIntake() {
+/** tracking: advanced revenue and lead tracking (MAIRO Scale) — imports and lead values. Checked again on the server. */
+export function LeadIntake({ tracking }: { tracking: boolean }) {
   const [open, setOpen] = useState<"add" | "import" | null>(null);
   return (
     <div className="mb-6">
       <div className="flex flex-wrap gap-2">
         <button type="button" aria-expanded={open === "add"} onClick={() => setOpen(open === "add" ? null : "add")} className={quietClass}>+ Add a lead</button>
-        <button type="button" aria-expanded={open === "import"} onClick={() => setOpen(open === "import" ? null : "import")} className={quietClass}>Import from a spreadsheet</button>
+        {tracking && <button type="button" aria-expanded={open === "import"} onClick={() => setOpen(open === "import" ? null : "import")} className={quietClass}>Import from a spreadsheet</button>}
       </div>
-      {open === "add" && <AddLead onDone={() => setOpen(null)} />}
-      {open === "import" && <ImportLeads />}
+      {open === "add" && <AddLead tracking={tracking} onDone={() => setOpen(null)} />}
+      {open === "import" && tracking && <ImportLeads />}
     </div>
   );
 }
 
-function AddLead({ onDone }: { onDone: () => void }) {
+function AddLead({ onDone, tracking }: { onDone: () => void; tracking: boolean }) {
   const router = useRouter();
   const [v, setV] = useState({ name: "", email: "", phone: "", status: "NEW", valueDollars: "", notes: "", receivedOn: "" });
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +67,7 @@ function AddLead({ onDone }: { onDone: () => void }) {
             {LEAD_OUTCOMES.map((o) => <option key={o.status} value={o.status}>{o.label}</option>)}
           </select>
         </label>
-        {v.status === "WON" && <label className="text-[12.5px] text-muted">What the job was worth ($)<input className={`${field} mt-1`} inputMode="decimal" value={v.valueDollars} onChange={(e) => set({ valueDollars: e.target.value })} /></label>}
+        {v.status === "WON" && tracking && <label className="text-[12.5px] text-muted">What the job was worth ($)<input className={`${field} mt-1`} inputMode="decimal" value={v.valueDollars} onChange={(e) => set({ valueDollars: e.target.value })} /></label>}
         <label className="text-[12.5px] text-muted sm:col-span-2">Notes<textarea className={`${field} mt-1`} rows={2} maxLength={2000} value={v.notes} onChange={(e) => set({ notes: e.target.value })} /></label>
       </div>
       <p className="mt-2 text-[11.5px] text-faint">An email or a phone number is needed, so you can reach them and MAIRO can tell if they&apos;re already a lead.</p>

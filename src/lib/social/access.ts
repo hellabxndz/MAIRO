@@ -6,8 +6,9 @@ import type { SubscriptionTier } from "@/generated/prisma/enums";
 // Who may use MAIRO Social Manager: active Scale customers, and nobody else.
 //
 // Stricter on purpose than the rest of the product's plan checks:
-//   - The tier must be SCALE itself. A plan row in the database that switched
-//     social_posting on for another tier still doesn't open it.
+//   - The tier must be a Scale plan: MAIRO Scale (SCALE_V2), or the earlier
+//     Scale plan its subscribers keep (SCALE). A plan row in the database that
+//     switched social_posting on for another tier still doesn't open it.
 //   - The subscription must be live (active, or the trialing week the
 //     customer gave a card for), whatever BILLING_ENFORCED says. The
 //     free-access fallback that lets everyone try ads while billing is off
@@ -34,14 +35,17 @@ export type SocialAccessInput = {
   executionStoppedAt?: Date | null;
 };
 
-const SCALE = planFor("SCALE").name;
+const SCALE = planFor("SCALE_V2").name;
 
-export const SOCIAL_UPGRADE_MESSAGE = `Social Manager is available exclusively with MAIRO ${SCALE}. Upgrade to ${SCALE} to unlock AI social media management.`;
-export const SOCIAL_PAUSED_MESSAGE = `Social Manager is available exclusively with MAIRO ${SCALE}. Your existing content and history are saved. Upgrade back to ${SCALE} to continue.`;
+/** The tiers Social Manager belongs to. */
+export const SOCIAL_TIERS: readonly SubscriptionTier[] = ["SCALE_V2", "SCALE"];
+
+export const SOCIAL_UPGRADE_MESSAGE = `Social Manager is available exclusively with ${SCALE}. Upgrade to ${SCALE} to unlock AI social media management.`;
+export const SOCIAL_PAUSED_MESSAGE = `Social Manager is available exclusively with ${SCALE}. Your existing content and history are saved. Upgrade back to ${SCALE} to continue.`;
 
 /** The rule, without the database — so it can be checked line by line. */
 export function socialAccessFrom(org: SocialAccessInput | null, flagGranted = true): SocialAccess {
-  if (!org || org.subscriptionTier !== "SCALE" || !flagGranted) {
+  if (!org || !SOCIAL_TIERS.includes(org.subscriptionTier) || !flagGranted) {
     return { ok: false, reason: "not_scale", message: SOCIAL_UPGRADE_MESSAGE };
   }
   if (!(LIVE_STATUSES as readonly string[]).includes(org.subscriptionStatus ?? "") || org.executionStoppedAt) {

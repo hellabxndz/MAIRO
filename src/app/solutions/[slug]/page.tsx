@@ -10,7 +10,7 @@ import { buildPreview } from "@/lib/preview/build";
 import { exampleFacts } from "@/lib/preview/example";
 import { EXAMPLES } from "@/lib/demo/examples";
 import { helpArticle } from "@/lib/help/articles";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import { USABLE_TOOLS } from "@/lib/tools/registry";
 
 // One page per kind of business MAIRO's free plan is built around. What MAIRO
@@ -73,7 +73,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
               Open the full example
             </Link>
           </div>
-          <p className="mt-3 text-[12.5px] text-white/50">Free, no card. A subscription is needed only to build and run campaigns — from ${starter.priceMonthly}/month, {STARTER_TRIAL_DAYS}-day trial on {starter.name}.</p>
+          <p className="mt-3 text-[12.5px] text-white/50">Free, no card. A subscription is needed only to build and run campaigns — from ${starter.priceMonthly}/month, {PRO_TRIAL_DAYS}-day trial on {starter.name}.</p>
         </header>
 
         <section aria-labelledby="sets-up" className="mt-16 grid gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">

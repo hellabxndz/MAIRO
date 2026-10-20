@@ -32,7 +32,7 @@ export function PlanLock({
         </div>
       </div>
 
-      <div className="mt-7 grid gap-3 sm:grid-cols-3">
+      <div className="mt-7 grid gap-3 sm:grid-cols-2">
         {PLANS.map((plan) => (
           <div
             key={plan.tier}

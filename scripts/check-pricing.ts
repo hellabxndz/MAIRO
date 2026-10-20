@@ -1,7 +1,8 @@
 // Checks the pricing page and plan copy can't promise more than the product
 // does:
 //
-//   - The three business plans keep their prices and trial.
+//   - The two plans sold — MAIRO Pro and MAIRO Scale — have their prices and
+//     trial, and the earlier plans are kept, unsold, at theirs.
 //   - Every plan difference shown comes from the flags and limits the server
 //     enforces, and the automation modes match what each plan may switch on.
 //   - No automation level offers a change nothing implements (bid changes),
@@ -15,12 +16,15 @@
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { PLANS, FREELANCER_PLANS, STARTER_TRIAL_DAYS, campaignLimitText, creativeRequestText } from "../src/lib/plans";
+import { PLANS, LEGACY_PLANS, FREELANCER_PLANS, PRO_TRIAL_DAYS, SOLD_TIERS, campaignLimitText, creativeRequestText, trialDaysFor } from "../src/lib/plans";
 import { DEFAULT_ENTITLEMENTS, planComparison } from "../src/lib/entitlements";
 import { ACTIONS, ALWAYS_NEEDS_APPROVAL, automaticActions, mayDoAutomatically } from "../src/lib/automation/levels";
 import { actionFor } from "../src/lib/decisions/guardrails";
 import { BUSINESS_TIERS, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, automationModes, comparison, pictures, planStories, pricingFacts } from "../src/lib/pricing/compare";
 import { DEFAULT_COSTS } from "../src/lib/creative-studio/costs";
+
+// The landing page itself is a thin route; the pricing block is components/landing/home.tsx.
+const page = readFileSync(new URL("../src/components/landing/home.tsx", import.meta.url), "utf8");
 
 let passed = 0;
 function check(name: string, fn: () => void) {
@@ -30,26 +34,58 @@ function check(name: string, fn: () => void) {
 }
 
 console.log("— prices and plans —");
-check("Starter, Growth and Scale keep their prices; only Starter has the 7-day trial", () => {
-  assert.deepEqual(PLANS.map((p) => [p.tier, p.priceMonthly, p.trialDays ?? 0]), [
-    ["STARTER", 149.99, STARTER_TRIAL_DAYS],
-    ["GROWTH", 239.99, 0],
-    ["SCALE", 499.99, 0],
+check("exactly two plans are sold: MAIRO Pro $139 with a 7-day trial, MAIRO Scale $299 with none", () => {
+  assert.deepEqual(PLANS.map((p) => [p.tier, p.name, p.priceMonthly, p.trialDays ?? 0]), [
+    ["PRO", "MAIRO Pro", 139, PRO_TRIAL_DAYS],
+    ["SCALE_V2", "MAIRO Scale", 299, 0],
   ]);
-  assert.equal(STARTER_TRIAL_DAYS, 7);
+  assert.equal(PRO_TRIAL_DAYS, 7);
+  assert.deepEqual(SOLD_TIERS, ["PRO", "SCALE_V2"]);
+  assert.deepEqual(BUSINESS_TIERS, ["PRO", "SCALE_V2"]);
+  assert.equal(trialDaysFor("SCALE_V2"), 0);
+  assert.equal(PLANS.find((p) => p.featured)?.tier, "SCALE_V2", "Scale is the Most Popular card");
+  assert.deepEqual(PLANS.map((p) => p.cta), ["Get Started with Pro", "Start Scaling with MAIRO"]);
+});
+check("the earlier plans are kept, unsold, at the prices their subscribers pay", () => {
+  assert.deepEqual(LEGACY_PLANS.map((p) => [p.tier, p.priceMonthly, Boolean(p.legacy)]), [
+    ["STARTER", 149.99, true],
+    ["GROWTH", 239.99, true],
+    ["SCALE", 499.99, true],
+  ]);
+  for (const p of [...LEGACY_PLANS, ...FREELANCER_PLANS]) assert.ok(p.legacy && !SOLD_TIERS.includes(p.tier), p.tier);
+  // Their entitlements are what they bought — nothing taken away by the change.
+  assert.equal(DEFAULT_ENTITLEMENTS.SCALE.studio_credits_monthly, 400);
+  assert.equal(DEFAULT_ENTITLEMENTS.GROWTH.auto_optimize, true);
+  assert.equal(DEFAULT_ENTITLEMENTS.STARTER.campaign_limit, 3);
+  for (const t of ["STARTER", "GROWTH", "SCALE", "STUDIO", "AGENCY"] as const) {
+    assert.equal(DEFAULT_ENTITLEMENTS[t].member_limit, Infinity, `${t} keeps its team`);
+    assert.equal(DEFAULT_ENTITLEMENTS[t].growth_coach, true, `${t} keeps the Coach`);
+  }
 });
 check("the plan stories use those prices and the enforced limits", () => {
   const s = planStories();
-  assert.deepEqual(s.map((p) => p.price), [149.99, 239.99, 499.99]);
-  assert.match(s[0].highlights[0], /Up to 3 campaigns/);
-  assert.match(s[1].highlights[0], /Up to 15 campaigns/);
-  assert.equal(s[2].highlights[0], "Unlimited campaigns");
-  for (const p of s) assert.match(p.highlights[1], new RegExp(`${DEFAULT_ENTITLEMENTS[p.tier].studio_credits_monthly} AI image credits`));
+  assert.deepEqual(s.map((p) => p.price), [139, 299]);
+  assert.equal(s[0].highlights[0], "1 Meta ad account");
+  assert.equal(s[1].highlights[0], "Up to 3 Meta ad accounts");
+  assert.match(s[0].highlights[1], /Up to 15 campaigns/);
+  assert.equal(s[1].highlights[1], "Unlimited campaigns");
+  for (const p of s) assert.match(p.highlights[2], new RegExp(`${DEFAULT_ENTITLEMENTS[p.tier].studio_credits_monthly} AI image credits`));
+});
+check("Pro and Scale differ by what the server enforces", () => {
+  const pro = DEFAULT_ENTITLEMENTS.PRO;
+  const scale = DEFAULT_ENTITLEMENTS.SCALE_V2;
+  assert.deepEqual([pro.studio_credits_monthly, scale.studio_credits_monthly], [50, 200]);
+  assert.deepEqual([pro.ad_account_limit, scale.ad_account_limit], [1, 3]);
+  assert.deepEqual([pro.member_limit, scale.member_limit], [1, Infinity]);
+  for (const f of ["advanced_analytics", "advanced_tracking", "growth_coach", "social_posting", "auto_optimize", "autopilot"] as const) {
+    assert.equal(pro[f], false, `Pro: ${f}`);
+    assert.equal(scale[f], true, `Scale: ${f}`);
+  }
+  assert.ok(pro.meta_ads && scale.meta_ads);
 });
 check("automation modes per plan are exactly what the server lets each plan switch on", () => {
-  assert.deepEqual(automationModes("STARTER"), ["MANUAL"]);
-  assert.deepEqual(automationModes("GROWTH"), ["MANUAL", "ASSISTED"]);
-  assert.deepEqual(automationModes("SCALE"), ["MANUAL", "ASSISTED", "AUTOPILOT"]);
+  assert.deepEqual(automationModes("PRO"), ["MANUAL"]);
+  assert.deepEqual(automationModes("SCALE_V2"), ["MANUAL", "ASSISTED", "AUTOPILOT"]);
   for (const t of BUSINESS_TIERS) {
     assert.equal(automationModes(t).includes("ASSISTED"), DEFAULT_ENTITLEMENTS[t].auto_optimize, t);
     assert.equal(automationModes(t).includes("AUTOPILOT"), DEFAULT_ENTITLEMENTS[t].autopilot, t);
@@ -91,12 +127,12 @@ check("launching, raising the total, overspending and connecting always wait —
   assert.ok(alwaysYours().some((a) => /Increase your total budget/.test(a.label)));
 });
 check("plan feature lines for automation say it's opt-in and never raises the total", () => {
-  const growth = PLANS.find((p) => p.tier === "GROWTH")!.features.join(" ");
-  const scale = PLANS.find((p) => p.tier === "SCALE")!.features.join(" ");
-  assert.match(growth, /when you switch it on/i);
-  assert.match(growth, /never raising your total/);
-  assert.match(scale, /Full Autopilot, when you switch it on/);
-  assert.doesNotMatch(`${growth} ${scale}`, /\bbids?\b/i);
+  const pro = PLANS.find((p) => p.tier === "PRO")!.features.join(" ");
+  const scale = PLANS.find((p) => p.tier === "SCALE_V2")!.features.join(" ");
+  assert.match(pro, /recommendations, each one yours to approve/);
+  assert.match(pro, /Your approval before any campaign launches or spending changes/);
+  assert.match(scale, /AI Assist and Full Autopilot inside your limits, never raising your total/);
+  assert.doesNotMatch(`${pro} ${scale}`, /\bbids?\b/i);
 });
 
 console.log("\n— integrations —");
@@ -118,10 +154,14 @@ check("Shopify and Tag Manager are for tracking, Stripe for billing, posting lim
   assert.equal(STATUS_LABEL.pending, "Waiting for Meta's approval");
   assert.match(by["social-posting"].limits ?? "", /Meta's approval/);
 });
-check("Scale's posting lines say they depend on Meta's approval", () => {
-  const scale = PLANS.find((p) => p.tier === "SCALE")!.features.filter((f) => /posting|publishing/i.test(f));
-  assert.ok(scale.length >= 2);
-  for (const f of scale) assert.match(f, /once Meta approves/);
+check("Scale's Instagram lines are labelled on the page until Meta approves posting", () => {
+  // The feature lines name what Scale includes; the pricing card adds
+  // "Publishing once Meta approves" beside them while posting is pending.
+  const scale = PLANS.find((p) => p.tier === "SCALE_V2")!.features.filter((f) => /instagram content creation|post approval queue/i.test(f));
+  assert.equal(scale.length, 2);
+  assert.match(page, /instagram content creation\|post approval queue/);
+  assert.match(page, /Publishing once Meta approves/);
+  assert.match(page, /metaPostingApproved\(\)/);
 });
 check("no plan carries a service promise nothing in the product backs", () => {
   const all = [...PLANS, ...FREELANCER_PLANS].flatMap((p) => p.features).join(" | ");
@@ -133,8 +173,8 @@ check("Manual, AI Assist and Full Autopilot name the plans the server lets switc
   const levels = automationLevels();
   assert.deepEqual(levels.map((l) => [l.level, l.plans]), [
     ["MANUAL", "Every plan"],
-    ["ASSISTED", "Growth and Scale"],
-    ["AUTOPILOT", "Scale"],
+    ["ASSISTED", "MAIRO Scale"],
+    ["AUTOPILOT", "MAIRO Scale"],
   ]);
   for (const l of levels.slice(1)) {
     assert.deepEqual(l.does, automaticActions(l.level).map((a) => a.label));
@@ -143,16 +183,16 @@ check("Manual, AI Assist and Full Autopilot name the plans the server lets switc
 });
 check("the trial, credits, limits and Social facts are the enforced numbers", () => {
   const facts = Object.fromEntries(pricingFacts().map((f) => [f.key, f.body]));
-  assert.match(facts.trial, new RegExp(`^Starter starts with a ${STARTER_TRIAL_DAYS}-day free trial`));
+  assert.match(facts.trial, new RegExp(`^MAIRO Pro starts with a ${PRO_TRIAL_DAYS}-day free trial`));
   assert.match(facts.trial, /charges it when the trial ends, unless you cancel first/);
-  assert.match(facts.trial, /Growth and Scale are billed from the day you subscribe/);
+  assert.match(facts.trial, /MAIRO Scale is billed from the day you subscribe/);
   assert.match(facts.trial, /never needs a card/);
   assert.match(facts.credits, new RegExp(`standard picture uses ${DEFAULT_COSTS.standard}`));
   assert.match(facts.credits, /don't carry over/);
   const e = DEFAULT_ENTITLEMENTS;
-  assert.match(facts.limits, new RegExp(`Starter ${e.STARTER.campaign_limit}, Growth ${e.GROWTH.campaign_limit}, Scale unlimited`));
-  assert.match(facts.limits, new RegExp(`Starter ${e.STARTER.creative_limit} a month, Growth ${e.GROWTH.creative_limit} a month, Scale ${e.SCALE.creative_limit} a month`));
-  assert.match(facts.social, /^Scale only/);
+  assert.match(facts.limits, new RegExp(`MAIRO Pro ${e.PRO.campaign_limit}, MAIRO Scale unlimited`));
+  assert.match(facts.limits, new RegExp(`MAIRO Pro ${e.PRO.creative_limit} a month, MAIRO Scale ${e.SCALE_V2.creative_limit} a month`));
+  assert.match(facts.social, /^MAIRO Scale only/);
   if (process.env.META_POSTING_APPROVED !== "1") assert.match(facts.social, /waiting for Meta/);
 });
 
@@ -162,9 +202,10 @@ check("the plan cards' limits are the entitlement limits the server enforces", (
     const e = DEFAULT_ENTITLEMENTS[p.tier];
     assert.equal(p.limits.campaigns, e.campaign_limit, `${p.name} campaigns`);
     assert.equal(p.limits.creativesPerMonth, e.creative_limit, `${p.name} creative requests`);
-    assert.ok(p.features.some((f) => f.includes(`${e.studio_credits_monthly} AI image credits a month (about ${pictures(e.studio_credits_monthly)} pictures)`)), `${p.name} credits line`);
-    const campaignsLine = Number.isFinite(e.campaign_limit) ? `Up to ${e.campaign_limit} campaigns at a time` : "Unlimited campaigns";
-    assert.ok(p.features.includes(campaignsLine), `${p.name} campaigns line`);
+    assert.ok(p.features.includes(`${e.studio_credits_monthly} AI creative credits a month`), `${p.name} credits line`);
+    if (!Number.isFinite(e.campaign_limit)) assert.ok(p.features.includes("Unlimited campaigns"), `${p.name} campaigns line`);
+    // Ad accounts: the line on the card is the allowance the server enforces.
+    assert.ok(p.features.some((f) => f.startsWith(e.ad_account_limit === 1 ? "Connect 1 Meta advertising account" : `Connect up to ${e.ad_account_limit} Meta advertising accounts`)), `${p.name} ad accounts line`);
   }
 });
 check("an unlimited limit is never shown as the word Infinity", () => {
@@ -198,8 +239,6 @@ check("the money-and-control facts cover all eight questions", () => {
 });
 
 console.log("\n— the public page —");
-// The landing page itself is a thin route; the page is components/landing/home.tsx.
-const page = readFileSync(new URL("../src/components/landing/home.tsx", import.meta.url), "utf8");
 check("the landing page uses the shared pricing, integration and control data", () => {
   for (const name of ["planStories", "comparison", "alwaysYours", "INTEGRATIONS", "MONEY_AND_CONTROL", "EVERY_PLAN"]) assert.ok(page.includes(name), name);
 });
@@ -208,8 +247,13 @@ check("the landing page says what MAIRO does, and has no fake urgency or testimo
   for (const name of ["automationLevels", "pricingFacts"]) assert.ok(page.includes(name), name);
   assert.doesNotMatch(page, /limited time|only \d+ (spots|left)|hurry|act now|testimonial|★★★★★/i);
 });
-check("the freelancer link promises a sign-up, not plans the page doesn't show", () => {
-  assert.doesNotMatch(page, /See the freelancer and agency plans/);
+check("the pricing section is two large cards, Pro then Scale, with ad spend separate", () => {
+  assert.match(page, /Two plans\. One AI advertising team\./);
+  assert.match(page, /md:grid-cols-2/);
+  assert.match(page, /Most Popular/);
+  assert.match(page, /Ad spend is separate/);
+  assert.doesNotMatch(page, /Three plans/);
+  assert.doesNotMatch(page, /for-freelancers/, "the freelancer plans are no longer offered");
 });
 
 console.log(`\nPricing: ${passed} checks passed`);

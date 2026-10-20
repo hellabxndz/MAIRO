@@ -8,6 +8,9 @@ import { supersededSubscription } from "@/lib/billing/checkout-guard";
 import { scheduledEnd } from "@/lib/billing/cancellation-notice";
 import { announceCancellation } from "@/lib/billing/announce-cancellation";
 import { recordOnce } from "@/lib/analytics/funnel";
+import { syncBrands } from "@/lib/brands";
+import { notify } from "@/lib/notifications/notify";
+import { planFor } from "@/lib/plans";
 
 // Stripe tells us here what a client is actually paying for.
 //
@@ -130,7 +133,7 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
 
   const before = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { hasPaid: true, canceledAt: true, stripeSubscriptionId: true, subscriptionCancelAt: true },
+    select: { hasPaid: true, canceledAt: true, stripeSubscriptionId: true, subscriptionCancelAt: true, subscriptionTier: true },
   });
   const live = subscription.status === "active" || subscription.status === "trialing";
 
@@ -197,6 +200,27 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
   // The funnel's "subscribed" step, once per business (a trial counts).
   if (live) await recordOnce("checkout_success", organizationId);
 
+  // The confirmation: which plan is now on, once per subscription and plan,
+  // so a redelivered event or a renewal says nothing again. Stripe's own
+  // receipt emails are separate (Stripe Dashboard › Customer emails).
+  if (live && tier && tier !== before?.subscriptionTier) {
+    const plan = planFor(tier);
+    const trialEnds = subscription.status === "trialing" && subscription.trial_end ? new Date(subscription.trial_end * 1000) : null;
+    await notify({
+      organizationId,
+      kind: "SUBSCRIPTION_CHANGE",
+      dedupeKey: `sub-plan:${subscription.id}:${tier}`,
+      title: before?.subscriptionTier && before.subscriptionTier !== "NONE" ? `You're now on ${plan.name}` : `Welcome to ${plan.name}`,
+      body:
+        `${plan.name}, $${plan.priceMonthly} a month` +
+        (trialEnds ? `, free until ${trialEnds.toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : "") +
+        ". Your ad spend stays separate — Meta charges it to your own ad account — and nothing launches or changes spending without your approval.",
+      actionLabel: "View billing",
+      actionHref: "/dashboard/billing",
+      evidence: { subscriptionId: subscription.id, tier },
+    }).catch((error) => console.error("Plan confirmation notice failed:", error));
+  }
+
   // The cancellation, and what it doesn't change: Meta campaigns keep running.
   await announceCancellation({
     organizationId,
@@ -222,6 +246,11 @@ async function applySubscription(subscription: Stripe.Subscription): Promise<voi
   // Social Manager needs active Scale. A downgrade, cancellation or failed
   // payment pauses whatever was scheduled; history and drafts are kept.
   await pauseSocialIfLocked(organizationId).catch((error) => console.error("Pausing Social Manager failed:", error));
+
+  // MAIRO Scale covers up to two more businesses under this one; they follow
+  // its plan (lib/brands.ts). A move to Pro or a cancellation locks them
+  // without pausing their running campaigns.
+  await syncBrands(organizationId).catch((error) => console.error("Syncing brands failed:", error));
 }
 
 /**

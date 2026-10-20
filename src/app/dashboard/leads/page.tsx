@@ -1,3 +1,5 @@
+import { planFor } from "@/lib/plans";
+import { can as planAllows } from "@/lib/entitlements";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -40,6 +42,8 @@ export default async function LeadsPage({
   if (!session?.user?.organizationId) redirect("/sign-in");
 
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  // Lead values, the business's own stage names and imports: MAIRO Scale.
+  const tracking = await planAllows(organizationId, "advanced_tracking");
 
   // Reads, never writes. A form is a public page carrying this business's
   // name; opening a screen to see whether you have one is not a request to be
@@ -188,7 +192,7 @@ export default async function LeadsPage({
         </Card>
       )}
 
-      {total > 0 && (
+      {total > 0 && tracking && (
         <StageNames
           stages={RENAMEABLE.map((status) => ({ status, defaultLabel: LEAD_OUTCOMES.find((o) => o.status === status)!.label }))}
           labels={parseStageLabels(org?.leadStagesJson) as Record<string, string>}
@@ -196,7 +200,13 @@ export default async function LeadsPage({
         />
       )}
 
-      <LeadIntake />
+      <LeadIntake tracking={tracking} />
+      {!tracking && (
+        <p className="-mt-3 mb-6 text-[12.5px] text-faint">
+          Lead values, your own stage names and spreadsheet imports are part of {planFor("SCALE_V2").name}&rsquo;s advanced revenue and lead tracking.{" "}
+          <Link href="/dashboard/billing" className="text-blue-bright hover:text-white">See plans</Link>
+        </p>
+      )}
 
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-neutral-300">
@@ -287,6 +297,7 @@ export default async function LeadsPage({
                   lastContactedAt={lead.lastContactedAt?.toISOString() ?? null}
                   appointmentAt={lead.appointmentAt?.toISOString() ?? null}
                   nextFollowUpAt={lead.nextFollowUpAt?.toISOString() ?? null}
+                  tracking={tracking}
                 />
                 {(history.get(lead.id)?.length ?? 0) > 0 && (
                   <details className="mt-3">

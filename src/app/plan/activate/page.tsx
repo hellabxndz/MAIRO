@@ -1,3 +1,4 @@
+import { metaPostingApproved } from "@/lib/social/publishing-status";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -43,14 +44,12 @@ const UNLOCKS = [
 // What MAIRO may do on its own on each plan — the modes the server lets each
 // plan switch on (pricing/compare.ts). AI Assist and Full Autopilot are opt-in.
 const OPTIMIZATION: Record<string, string> = {
-  STARTER: "Manual: MAIRO recommends, you approve every change",
-  GROWTH: "Manual, or AI Assist if you switch it on: pauses losing ads, tests new ones, moves budget between campaigns",
-  SCALE: "Manual, AI Assist or Full Autopilot if you switch it on: also widens who sees your ads",
+  PRO: "AI optimization recommendations — MAIRO recommends, you approve every change",
+  SCALE_V2: "Manual, AI Assist or Full Autopilot if you switch it on — inside your limits, never raising your total",
 };
 const REPORTING: Record<string, string> = {
-  STARTER: "Daily Brief, weekly report, monthly results, Business Health, Profit First",
-  GROWTH: "Adds every ad's results side by side",
-  SCALE: "Adds every ad's results side by side",
+  PRO: "AI Daily Brief, weekly report, monthly results, Simple and Advanced views",
+  SCALE_V2: "Adds advanced analytics (every ad and placement), revenue and lead tracking, and the Performance Coach",
 };
 const FAILED = ["incomplete", "incomplete_expired", "past_due", "unpaid", "canceled"];
 
@@ -189,26 +188,32 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                     </p>
                   ) : (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                      Billed from today — {selected.name} has no free trial (only Starter does). Change or cancel any time.
+                      Billed from today — {selected.name} has no free trial (only MAIRO Pro does). Change or cancel any time.
                     </p>
                   )}
                   <Link href="/plan/activate?skip=1#plans" className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">Change plan</Link>
                 </div>
               ) : (
-                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                   {PLANS.map((p) => {
                     const ent = DEFAULT_ENTITLEMENTS[p.tier];
                     const rows: [string, string][] = [
+                      ["Meta ad accounts", ent.ad_account_limit > 1 ? `Up to ${ent.ad_account_limit}, one per business or brand` : "1"],
                       ["Campaigns", Number.isFinite(ent.campaign_limit) ? `Up to ${ent.campaign_limit} at a time` : "Unlimited"],
-                      ["AI creatives", p.features.find((f) => /image credits/i.test(f)) ?? `${ent.studio_credits_monthly} AI image credits a month`],
+                      ["AI creatives", `${ent.studio_credits_monthly} AI creative credits a month`],
                       ["Optimization", OPTIMIZATION[p.tier] ?? ""],
                       ["Reporting", REPORTING[p.tier] ?? ""],
                       ["Full Autopilot", ent.autopilot ? "Available — off until you switch it on" : "Not included"],
+                      ["Team", Number.isFinite(ent.member_limit) ? "Just you" : "Team members with approval permissions"],
+                      ["Social Manager", ent.social_posting ? (metaPostingApproved() ? "Included" : "Included — publishing once Meta approves MAIRO's posting access") : "Not included"],
                       ["Support", p.features.some((f) => /priority support/i.test(f)) ? "Priority support" : "Standard support"],
                     ];
                     return (
                       <div key={p.tier} className={`flex min-w-0 flex-col rounded-2xl border p-5 ${p.featured ? "border-violet/40 bg-violet/[0.05]" : "border-white/[0.07] bg-field/80"}`}>
-                        <p className="text-[15px] font-semibold text-white">{p.name}</p>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-[15px] font-semibold text-white">{p.name}</p>
+                          {p.featured && <span className="rounded-full bg-[#2f6bff] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-white">Most Popular</span>}
+                        </div>
                         <p className="mt-1 text-[28px] font-semibold tabular-nums text-white">
                           {money(p.priceMonthly)}<span className="text-[13px] font-normal text-faint">/month</span>
                         </p>
@@ -222,7 +227,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                           ))}
                         </dl>
                         <Link href={`/plan/activate?skip=1&tier=${p.tier}#plans`} className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#2f6bff] px-4 text-[14px] font-medium text-white hover:brightness-110">
-                          Choose {p.name}
+                          {p.cta ?? `Choose ${p.name}`}
                         </Link>
                       </div>
                     );

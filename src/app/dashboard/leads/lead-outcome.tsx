@@ -23,6 +23,8 @@ export type LeadRecordProps = {
   lastContactedAt: string | null;
   appointmentAt: string | null;
   nextFollowUpAt: string | null;
+  /** Advanced revenue and lead tracking (MAIRO Scale): lead values. Checked again on the server. */
+  tracking: boolean;
 };
 
 const dollars = (c: number | null) => (c === null ? "" : String(c / 100));
@@ -64,7 +66,7 @@ export function LeadOutcome(props: LeadRecordProps) {
     setError(null);
     setSaved(false);
     start(async () => {
-      const r = await setLeadOutcomeAction(leadId, next, next === "WON" ? parseDollars(value) : null, next === "LOST" ? lost || null : null);
+      const r = await setLeadOutcomeAction(leadId, next, next === "WON" && props.tracking ? parseDollars(value) : null, next === "LOST" ? lost || null : null);
       done(r, () => {
         setCurrent(next);
         if (next === "CONTACTED" && !contacted) setContacted(local(new Date().toISOString()));
@@ -80,8 +82,8 @@ export function LeadOutcome(props: LeadRecordProps) {
         ...(contacted !== local(props.lastContactedAt) ? { contactedAt: toIso(contacted) } : {}),
         appointmentAt: toIso(appointment),
         nextFollowUpAt: toIso(followUp),
-        estimatedValueDollars: parseDollars(estimate),
-        ...(current === "WON" ? { valueDollars: parseDollars(value) } : {}),
+        ...(props.tracking ? { estimatedValueDollars: parseDollars(estimate) } : {}),
+        ...(current === "WON" && props.tracking ? { valueDollars: parseDollars(value) } : {}),
         lostReason: current === "LOST" ? lost || null : null,
         notes,
       });
@@ -154,11 +156,11 @@ export function LeadOutcome(props: LeadRecordProps) {
             Next follow-up
             <input id={`followup-${leadId}`} type="datetime-local" value={followUp} onChange={(e) => setFollowUp(e.target.value)} className={field} />
           </label>
-          <label className="grid gap-1 text-[12.5px] text-muted">
+          {props.tracking && <label className="grid gap-1 text-[12.5px] text-muted">
             Expected value <span className="text-faint">(your estimate, optional)</span>
             <input id={`estimate-${leadId}`} inputMode="decimal" placeholder="$" value={estimate} onChange={(e) => setEstimate(e.target.value)} className={field} />
-          </label>
-          {current === "WON" && (
+          </label>}
+          {current === "WON" && props.tracking && (
             <label className="grid gap-1 text-[12.5px] text-muted">
               What the job was worth <span className="text-faint">(confirmed sale, optional)</span>
               <input id={`value-${leadId}`} inputMode="decimal" placeholder="$" value={value} onChange={(e) => setValue(e.target.value)} className={field} />

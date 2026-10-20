@@ -163,7 +163,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       mode={mode}
       businessName={organization?.name ?? ""}
       userName={session.user.name ?? ""}
-      showUpgrade={organization?.subscriptionTier !== "AGENCY"}
+      showUpgrade={!["AGENCY", "SCALE", "SCALE_V2"].includes(organization?.subscriptionTier ?? "NONE")}
       assistantName={assistantNameOf(organization?.assistantName)}
       // Social Manager is Scale-only: active Scale gets its section; every
       // other plan sees it locked, labelled Scale, leading to the upgrade.

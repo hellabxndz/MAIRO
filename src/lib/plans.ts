@@ -70,36 +70,103 @@ export type Plan = {
   features: string[];
   /** Days of free trial at checkout. Absent: no trial — billing starts when they subscribe. */
   trialDays?: number;
+  /** The button on the pricing card. */
+  cta?: string;
+  /** A plan kept for existing subscribers and no longer sold. */
+  legacy?: boolean;
 };
 
 /**
- * The free trial: Starter only, 7 days. Growth, Scale and the freelancer
- * plans bill from the day they subscribe.
+ * The free trial: MAIRO Pro only, 7 days. Scale bills from the day it starts.
  *
  * One number on the plan rather than one typed into Stripe and again into
  * the marketing copy — those two drift, and the version that drifts is always
  * the one on the page promising longer than the card actually gives. Checkout
  * and every line of copy read it through trialDaysFor().
  */
-export const STARTER_TRIAL_DAYS = 7;
+export const PRO_TRIAL_DAYS = 7;
 
 export const PLANS: Plan[] = [
-  // Three plans, one network. MAIRO runs Meta (Facebook and Instagram) only,
-  // so the plans can't differ by where the ads go; they differ by how much
-  // MAIRO does on its own and how much it can make. Every line below that
-  // separates one plan from another is something the product enforces — a
-  // limit in entitlements.ts or a flag it checks — not a promise in copy.
+  // The two plans MAIRO sells. MAIRO runs Meta (Facebook and Instagram) only,
+  // so the plans differ by how much MAIRO does on its own, how much it can
+  // make, and how many businesses and people it covers. Every line that
+  // separates them is something the product enforces — a limit or a flag in
+  // entitlements.ts, checked on the server — not a promise in copy.
+  {
+    tier: "PRO",
+    name: "MAIRO Pro",
+    priceMonthly: 139,
+    trialDays: PRO_TRIAL_DAYS,
+    tagline: "A complete AI advertising system for your business.",
+    spendGuidance: "For a business running its own Facebook and Instagram ads",
+    limits: { campaigns: 15, creativesPerMonth: 30 },
+    headline: "Your AI advertising department",
+    cta: "Get Started with Pro",
+    features: [
+      "Connect 1 Meta advertising account",
+      "All 8 AI advertising specialists",
+      "AI campaign strategy and creation",
+      "AI-generated ad creatives",
+      "AI audience recommendations",
+      "Website and business analysis",
+      "AI optimization recommendations, each one yours to approve",
+      "Simple and Advanced dashboard views",
+      "Your latest Meta results, each time you open the dashboard",
+      "AI Daily Brief",
+      "Monthly performance reports",
+      "50 AI creative credits a month",
+      "Your approval before any campaign launches or spending changes",
+    ],
+  },
+  {
+    // SCALE_V2, not SCALE: the earlier Scale plan was $499.99 with different
+    // allowances, and its subscribers keep it. Stripe price ids are keyed off
+    // the tier in the environment (STRIPE_PRICE_SCALE_V2), so the two can't
+    // be confused at the webhook.
+    tier: "SCALE_V2",
+    name: "MAIRO Scale",
+    priceMonthly: 299,
+    tagline: "For growing businesses, established brands and marketing teams.",
+    spendGuidance: "For brands advertising every month, or more than one business",
+    featured: true,
+    limits: { campaigns: Infinity, creativesPerMonth: 100 },
+    headline: "More accounts, more automation, your team",
+    inherits: "MAIRO Pro",
+    cta: "Start Scaling with MAIRO",
+    // Each line here is enforced: ad_account_limit, studio_credits_monthly,
+    // advanced_analytics, auto_optimize/autopilot, social_posting,
+    // advanced_tracking, member_limit and growth_coach in entitlements.ts.
+    features: [
+      "Connect up to 3 Meta advertising accounts, one per business or brand",
+      "200 AI creative credits a month",
+      "Advanced performance analytics: every ad and placement side by side",
+      "More AI optimization: AI Assist and Full Autopilot inside your limits, never raising your total",
+      "AI-powered Instagram content creation with MAIRO Social Manager",
+      "Social post approval queue",
+      "Advanced revenue and lead tracking, where your store or forms connect",
+      "Team members with approval permissions",
+      "Advanced growth recommendations from MAIRO's Performance Coach",
+      "Priority support",
+      "Unlimited campaigns",
+    ],
+  },
+];
+
+/**
+ * Plans MAIRO no longer sells, kept so existing subscribers keep exactly what
+ * they bought — the same allowances, on their own Stripe prices — until they
+ * choose to move to Pro or Scale. Nothing on the website offers them.
+ */
+export const LEGACY_PLANS: Plan[] = [
   {
     tier: "STARTER",
     name: "Starter",
     priceMonthly: 149.99,
-    trialDays: STARTER_TRIAL_DAYS,
     tagline: "MAIRO builds your ads. You approve every change.",
-    spendGuidance: "Best for trying paid ads for the first time",
-    // Three at a time: enough for an offer, an evergreen campaign and a test,
-    // and the clearest reason to move up once they're working.
+    spendGuidance: "An earlier plan",
     limits: { campaigns: 3, creativesPerMonth: 10 },
     headline: "Facebook & Instagram ads",
+    legacy: true,
     features: [
       "Facebook and Instagram ads, built for you",
       "AI campaign builder with a safety review before launch",
@@ -117,11 +184,11 @@ export const PLANS: Plan[] = [
     name: "Growth",
     priceMonthly: 239.99,
     tagline: "MAIRO handles the small changes for you.",
-    spendGuidance: "Best for businesses advertising every month",
-    featured: true,
+    spendGuidance: "An earlier plan",
     limits: { campaigns: 15, creativesPerMonth: 30 },
     headline: "Adds AI Assist",
     inherits: "Starter",
+    legacy: true,
     features: [
       "AI Assist, when you switch it on: MAIRO pauses losing ads, tests new ones and moves budget between your campaigns — never raising your total",
       "Advanced analytics: every ad's results, side by side",
@@ -130,36 +197,21 @@ export const PLANS: Plan[] = [
     ],
   },
   {
-    // The tier value stays SCALE whatever this plan is called. Stripe price ids
-    // are keyed off it in the environment, so renaming the enum would leave
-    // every existing subscriber matching no STRIPE_PRICE_* variable and the
-    // webhook would read that as having no plan at all. `name` is the only
-    // customer-facing part and is safe to change.
+    // The earlier Scale plan. Its enum value stays SCALE: renaming it would
+    // leave every existing subscriber matching no STRIPE_PRICE_* variable,
+    // which the webhook reads as having no plan at all.
     tier: "SCALE",
-    name: "Scale",
+    name: "Scale (earlier plan)",
     priceMonthly: 499.99,
     tagline: "Your AI advertising + marketing manager.",
-    spendGuidance: "Best for businesses that want ads and social media handled",
+    spendGuidance: "An earlier plan",
     limits: { campaigns: Infinity, creativesPerMonth: 100 },
     headline: "Adds MAIRO Social Manager",
     inherits: "Growth",
-    // Everything from "MAIRO Social Manager" to "AI adjusts strategy" is
-    // exclusive to this plan: lib/social/access.ts refuses it to every other
-    // plan, on the server, at every step including publishing.
+    legacy: true,
     features: [
       "MAIRO Social Manager",
-      "AI marketing strategy built around your business goal",
-      "Goal-based social content for sales, leads, bookings and launches",
-      "Instagram and Facebook content creation: posts, carousels, Reel ideas, captions and CTAs",
-      "Scheduled Instagram and Facebook posting, once Meta approves MAIRO's posting access",
-      "Automatic publishing of the posts you approve, once Meta approves MAIRO's posting access",
-      "Content approval system: each post, the whole week, or Autopilot",
-      "Promotion campaigns",
-      "New-product launch campaigns",
-      "Weekly and monthly social content calendar",
-      "Content performance learning",
-      "AI adjusts your strategy based on results",
-      "Full Autopilot, when you switch it on: AI Assist plus widening who sees your ads — inside your limits, never raising your total",
+      "Full Autopilot, when you switch it on",
       "Unlimited campaigns",
       "400 AI image credits a month (about 80 pictures)",
       "Priority support",
@@ -168,24 +220,16 @@ export const PLANS: Plan[] = [
 ];
 
 /**
- * Plans for someone running ads as their job rather than for their own
- * business.
- *
- * Kept out of PLANS on purpose: the landing page's pricing grid renders PLANS,
- * and a business owner comparing Starter against Growth should not be shown an
- * agency tier. These surface on the freelancer side of the site instead.
- *
- * The per-client limits are Growth-level, because a freelancer's client is a
- * real business running real campaigns — the freelancer is paying for reach
- * across several of them, not for a cheaper version of the product.
- *
- * PRICES ARE A STARTING POINT, not a recommendation. They need to be checked
- * against what a freelancer in this market actually charges their own clients.
+ * The earlier plans for someone running ads as their job rather than for
+ * their own business. No longer sold (October 2026: MAIRO sells Pro and Scale
+ * only); kept so existing freelancer workspaces keep their clients, limits
+ * and Stripe prices.
  */
 export const FREELANCER_PLANS: Plan[] = [
   {
     tier: "STUDIO",
     name: "Studio",
+    legacy: true,
     priceMonthly: 149.99,
     tagline: "For a freelancer with a handful of clients.",
     spendGuidance: "Up to 5 client businesses",
@@ -202,6 +246,7 @@ export const FREELANCER_PLANS: Plan[] = [
   {
     tier: "AGENCY",
     name: "Agency",
+    legacy: true,
     priceMonthly: 399.99,
     tagline: "For a book of business.",
     spendGuidance: "Up to 20 client businesses",
@@ -216,11 +261,18 @@ export const FREELANCER_PLANS: Plan[] = [
   },
 ];
 
-/** Every plan that exists, whichever side of the product it belongs to. */
-export const ALL_PLANS: Plan[] = [...PLANS, ...FREELANCER_PLANS];
+/** Every plan that exists, sold or kept for existing subscribers. */
+export const ALL_PLANS: Plan[] = [...PLANS, ...LEGACY_PLANS, ...FREELANCER_PLANS];
 
-/** True for the tiers that come with client businesses attached. */
-/** The free-trial days a plan starts with at checkout — 0 for every plan but Starter. */
+/** The tiers that can be bought today: MAIRO Pro and MAIRO Scale. */
+export const SOLD_TIERS: SubscriptionTier[] = PLANS.map((p) => p.tier);
+
+/** Whether a tier is one MAIRO sells today (rather than kept for existing subscribers). */
+export function isSoldTier(tier: SubscriptionTier): boolean {
+  return SOLD_TIERS.includes(tier);
+}
+
+/** The free-trial days a plan starts with at checkout — 0 for every plan but MAIRO Pro. */
 export function trialDaysFor(tier: SubscriptionTier): number {
   return ALL_PLANS.find((p) => p.tier === tier)?.trialDays ?? 0;
 }
@@ -234,9 +286,9 @@ export function isFreelancerTier(tier: SubscriptionTier): boolean {
 // This is a switch, and it is deliberately off by default.
 //
 // While off, NONE is treated as Growth: everyone gets a working product for
-// free. Growth rather than Starter because Starter now caps live campaigns at
-// three, and the Meta App Review test account already has more than that — a
-// cap would stop the reviewer building the campaign the screencast shows. It is
+// free. Growth (an earlier plan, kept) because it is what the Meta App Review
+// test account was reviewed on — changing what an unpaid account can do now
+// would change what the reviewer sees mid-review. It is
 // also what the submission tells the reviewer to expect — "billing is not yet enabled, so
 // this account has full access". Turning enforcement on before that review
 // completes would put a paywall in front of a reviewer we promised wouldn't
@@ -271,7 +323,7 @@ export function planFor(tier: SubscriptionTier): Plan {
   if (tier === "NONE") {
     return billingEnforced()
       ? UNSUBSCRIBED
-      : PLANS.find((p) => p.tier === DEFAULT_TIER) ?? PLANS[0];
+      : ALL_PLANS.find((p) => p.tier === DEFAULT_TIER) ?? PLANS[0];
   }
   return ALL_PLANS.find((p) => p.tier === tier) ?? PLANS[0];
 }

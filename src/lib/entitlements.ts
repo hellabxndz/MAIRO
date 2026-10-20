@@ -71,6 +71,22 @@ export type Entitlements = {
    * limit read as stingy and the other's as unlimited for no honest reason.
    */
   studio_credits_monthly: number;
+  /**
+   * Meta ad accounts the subscription covers: one per business, so this is
+   * the home business plus the extra businesses (brands) a Scale owner may
+   * add under the same subscription (lib/brands). 1 = just this business.
+   */
+  ad_account_limit: number;
+  /** People on the business, the owner included. 1 = the owner alone. */
+  member_limit: number;
+  /**
+   * Advanced revenue and lead tracking: store orders matched to ads, lead
+   * values and the business's own pipeline stages, and lead imports.
+   * Leads from Meta, and marking one booked, are on every plan.
+   */
+  advanced_tracking: boolean;
+  /** Advanced growth recommendations: MAIRO's Performance Coach. */
+  growth_coach: boolean;
 };
 
 export type EntitlementFlag = {
@@ -86,6 +102,10 @@ export type EntitlementFlag = {
  * saying out loud because it is invisible until someone checks their card
  * statement.
  */
+// What every earlier plan already had of the flags added with Pro and Scale:
+// everything, unlimited people, one ad account. Existing subscribers keep it.
+const EARLIER = { ad_account_limit: 1, member_limit: Infinity, advanced_tracking: true, growth_coach: true } as const;
+
 export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
   NONE: {
     meta_ads: false,
@@ -96,7 +116,45 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 0,
     campaign_limit: 0,
     studio_credits_monthly: 0,
+    ad_account_limit: 1,
+    member_limit: Infinity,
+    advanced_tracking: false,
+    growth_coach: false,
   },
+  // MAIRO Pro: the whole advertising system for one business. MAIRO
+  // recommends and the owner approves; nothing optimises on its own.
+  PRO: {
+    meta_ads: true,
+    social_posting: false,
+    auto_optimize: false,
+    autopilot: false,
+    advanced_analytics: false,
+    creative_limit: 30,
+    campaign_limit: 15,
+    studio_credits_monthly: 50,
+    ad_account_limit: 1,
+    member_limit: 1,
+    advanced_tracking: false,
+    growth_coach: false,
+  },
+  // MAIRO Scale: up to three businesses' ad accounts, a team, AI Assist and
+  // Autopilot (inside the owner's limits), Social Manager, and the advanced
+  // tracking and coaching. Its enum value is SCALE_V2 — see plans.ts.
+  SCALE_V2: {
+    meta_ads: true,
+    social_posting: true,
+    auto_optimize: true,
+    autopilot: true,
+    advanced_analytics: true,
+    creative_limit: 100,
+    campaign_limit: Infinity,
+    studio_credits_monthly: 200,
+    ad_account_limit: 3,
+    member_limit: Infinity,
+    advanced_tracking: true,
+    growth_coach: true,
+  },
+  // Earlier plans, kept for existing subscribers exactly as they were sold.
   // You approve every change: MAIRO recommends, nothing acts on its own.
   STARTER: {
     meta_ads: true,
@@ -107,6 +165,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 10,
     campaign_limit: 3,
     studio_credits_monthly: 50,
+    ...EARLIER,
   },
   // Assisted: small, reversible changes without asking, and the per-ad view.
   GROWTH: {
@@ -118,8 +177,9 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 30,
     campaign_limit: 15,
     studio_credits_monthly: 150,
+    ...EARLIER,
   },
-  // The top business plan. Its enum value is still SCALE and that is
+  // The earlier top plan. Its enum value is still SCALE and that is
   // deliberate: Stripe price ids are keyed off the tier name in the
   // environment, and renaming the value would leave every existing subscriber
   // matching no STRIPE_PRICE_* variable, which the webhook would read as
@@ -133,9 +193,10 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 100,
     campaign_limit: Infinity,
     studio_credits_monthly: 400,
+    ...EARLIER,
   },
-  // Freelancer plans. Per-client capability matches Growth and Scale, because
-  // a freelancer's client is a real business running real campaigns.
+  // Earlier freelancer plans. Per-client capability matches Growth and Scale,
+  // because a freelancer's client is a real business running real campaigns.
   STUDIO: {
     meta_ads: true,
     social_posting: false,
@@ -145,10 +206,11 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 30,
     campaign_limit: Infinity,
     studio_credits_monthly: 150,
+    ...EARLIER,
   },
   AGENCY: {
     meta_ads: true,
-    // Social Manager is exclusive to Scale (see lib/social/access.ts).
+    // Social Manager is exclusive to the Scale plans (see lib/social/access.ts).
     social_posting: false,
     auto_optimize: true,
     autopilot: true,
@@ -156,6 +218,7 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     creative_limit: 100,
     campaign_limit: Infinity,
     studio_credits_monthly: 400,
+    ...EARLIER,
   },
 };
 
@@ -166,6 +229,8 @@ export const FLAG_LABELS: Record<EntitlementFlag, string> = {
   auto_optimize: "AI Assist",
   autopilot: "Full Autopilot",
   advanced_analytics: "Advanced analytics",
+  advanced_tracking: "Advanced revenue and lead tracking",
+  growth_coach: "Performance Coach",
 };
 
 function parseEntitlements(raw: string, fallback: Entitlements): Entitlements {

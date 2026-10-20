@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { signOutAction } from "@/lib/actions/auth-actions";
+import { auth } from "@/lib/auth";
+import { workspacesOf } from "@/lib/members/workspace";
+import { WorkspaceSwitcher } from "@/components/mairo/workspace-switcher";
 import { SetupProgress } from "@/components/onboarding/setup-progress";
 import type { OnboardingStep, StepId } from "@/lib/onboarding/progress";
 
@@ -7,6 +10,23 @@ import type { OnboardingStep, StepId } from "@/lib/onboarding/progress";
 // from the records (lib/onboarding/progress). FREE shows what MAIRO would do
 // — the plan, and connecting the account. PAID is MAIRO doing it — building
 // and launching.
+
+/**
+ * The business switcher, for someone on more than one business — a MAIRO
+ * Scale owner setting up an added business must be able to get back to the
+ * first without finishing. Renders nothing for everyone else.
+ */
+async function JourneySwitcher() {
+  const session = await auth().catch(() => null);
+  if (!session?.user?.id || !session.user.organizationId) return null;
+  const workspaces = await workspacesOf(session.user.id).catch(() => []);
+  if (workspaces.length < 2) return null;
+  return (
+    <div className="w-[180px] max-w-[45vw]">
+      <WorkspaceSwitcher workspaces={workspaces} current={session.user.organizationId} compact />
+    </div>
+  );
+}
 
 /** The onboarding frame: no sidebar, just where they are and a way out. */
 export function JourneyFrame({ steps, here, showProblem, children, wide = false }: { steps: OnboardingStep[] | null; here?: StepId; showProblem?: boolean; children: React.ReactNode; wide?: boolean }) {
@@ -18,6 +38,7 @@ export function JourneyFrame({ steps, here, showProblem, children, wide = false 
             MAIRO
           </Link>
           <div className="flex items-center gap-4">
+            <JourneySwitcher />
             <Link href="/dashboard" className="text-[12.5px] text-faint hover:text-white">
               My account
             </Link>

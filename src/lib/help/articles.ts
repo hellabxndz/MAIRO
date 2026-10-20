@@ -1,4 +1,4 @@
-import { PLANS } from "@/lib/plans";
+import { PLANS, planFor } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { BUSINESS_TIERS, EVERY_PLAN, INTEGRATIONS, MONEY_AND_CONTROL, alwaysYours, automationLevels, pictures, pricingFacts } from "@/lib/pricing/compare";
 import { capability } from "@/lib/capabilities";
@@ -104,6 +104,11 @@ function planTable(): { head: string[]; rows: string[][] } {
       ["Campaigns at once", ...BUSINESS_TIERS.map((t) => (Number.isFinite(ent(t).campaign_limit) ? String(ent(t).campaign_limit) : "Unlimited"))],
       ["AI image credits", ...BUSINESS_TIERS.map((t) => `${ent(t).studio_credits_monthly} a month (about ${pictures(ent(t).studio_credits_monthly)} pictures)`)],
       ["Creative requests", ...BUSINESS_TIERS.map((t) => `${ent(t).creative_limit} a month`)],
+      ["Meta ad accounts", ...BUSINESS_TIERS.map((t) => String(ent(t).ad_account_limit))],
+      ["Team members", ...BUSINESS_TIERS.map((t) => (Number.isFinite(ent(t).member_limit) ? (ent(t).member_limit === 1 ? "Just you" : String(ent(t).member_limit)) : "Your team, with permissions"))],
+      ["AI Assist and Full Autopilot", ...BUSINESS_TIERS.map((t) => (ent(t).autopilot ? "Optional" : "Recommendations you approve"))],
+      ["Social Manager", ...BUSINESS_TIERS.map((t) => (ent(t).social_posting ? "Included" : "—"))],
+      ["Advanced analytics and tracking", ...BUSINESS_TIERS.map((t) => (ent(t).advanced_analytics && ent(t).advanced_tracking ? "Included" : "—"))],
     ],
   };
 }
@@ -258,7 +263,7 @@ export function helpArticles(): HelpArticle[] {
       links: [
         { label: "Billing", href: "/dashboard/billing", app: true },
         { label: "Creative Studio", href: "/dashboard/creative-studio", app: true },
-        { label: "Pricing", href: "/#pricing" },
+        { label: "Pricing", href: "/pricing" },
       ],
       related: ["billing", "failed-generation"],
     },
@@ -320,7 +325,7 @@ export function helpArticles(): HelpArticle[] {
         },
         { kind: "p", text: "In each case MAIRO shows the figure as missing and says why — it doesn't fill the gap with an estimate." },
         { kind: "h", text: "Reports and the Performance Coach" },
-        { kind: "p", text: `${every("Reports in plain English")} ${every("The Performance Coach")}` },
+        { kind: "p", text: `${every("Reports in plain English")} On ${planFor("SCALE_V2").name}, the Performance Coach also follows leads past the click to bookings and customers, and says what's missing when it can't tell.` },
         { kind: "p", text: "When the first enquiry from your ads arrives — or, without one, Meta reports your first purchase or booking — MAIRO tells you once, and says whether it counted that figure or Meta reported it." },
       ],
       links: [
@@ -338,7 +343,7 @@ export function helpArticles(): HelpArticle[] {
       keywords: ["billing", "plan", "price", "pricing", "trial", "cancel", "cancellation", "card", "invoice", "stripe", "upgrade", "downgrade", "subscription", "delete account"],
       blocks: [
         { kind: "p", text: `${plans.map((p) => `${p.name} is ${money(p.priceMonthly)} a month`).join(", ")}. ${fact("trial")}` },
-        { kind: "p", text: `${integration("stripe").what} Change plan, update your card or cancel from Billing in Settings, which opens Stripe's own billing page.` },
+        { kind: "p", text: `${integration("stripe").what} Switch between ${plans.map((p) => p.name).join(" and ")} from Billing: MAIRO lists what changes first — nothing running is paused and nothing is deleted — then Stripe shows the exact amount before you confirm. Update your card or cancel from the same page. If you're on an earlier MAIRO plan, you keep its price and features until you choose to switch.` },
         { kind: "h", text: "Your ad spend" },
         { kind: "p", text: control("who-pays") },
         { kind: "h", text: "If you cancel" },
@@ -349,7 +354,7 @@ export function helpArticles(): HelpArticle[] {
       ],
       links: [
         { label: "Billing", href: "/dashboard/billing", app: true },
-        { label: "Pricing", href: "/#pricing" },
+        { label: "Pricing", href: "/pricing" },
         { label: "Terms", href: "/terms" },
         { label: "Data deletion", href: "/data-deletion" },
       ],

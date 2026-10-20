@@ -15,7 +15,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
         ["Creative showcase", "/#showcase"],
         ["Dashboard & results", "/#dashboard"],
         ["Your AI team & approvals", "/#ai-team"],
-        ["Pricing", "/#pricing"],
+        ["Pricing", "/pricing"],
       ],
     },
     {
@@ -30,7 +30,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
         ["Help center", "/help"],
       ],
     },
-    { h: "Company", l: [["Online stores", "/solutions/online-stores"], ["Local services", "/solutions/local-services"], ["Appointments", "/solutions/appointments"], ["Freelancers & agencies", "/for-freelancers"], ["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
+    { h: "Company", l: [["Online stores", "/solutions/online-stores"], ["Local services", "/solutions/local-services"], ["Appointments", "/solutions/appointments"], ["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
   ];
   return (
     <footer className="relative border-t border-white/[0.07] px-5 py-16 sm:px-8">

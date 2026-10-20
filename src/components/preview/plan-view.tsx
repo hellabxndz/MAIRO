@@ -6,7 +6,7 @@ import type { Direction, Preview, PreviewFacts, PreviewGoal } from "@/lib/previe
 import { FACT_LABEL } from "@/lib/preview/build";
 import type { Finding } from "@/lib/website/audit";
 import { EXAMPLES, EXAMPLE_ORDER, type ExampleType } from "@/lib/demo/examples";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import { FindingCard } from "@/components/tools/website-report";
 import { DemoContext, Panel, Pill, primaryAction, quietAction } from "@/components/console/kit";
 import { PlacementMock, mockLabel, type MockMedia, type Placement } from "@/app/dashboard/creatives/suggested/placements";
@@ -391,8 +391,8 @@ export function PlanView({
                   </button>
                 </div>
                 <p className="mt-3 max-w-[760px] text-[12.5px] leading-relaxed text-white/60">
-                  Approving needs a free account — no card. Your facts carry over and you approve the plan there. A subscription is needed only when MAIRO builds and runs your campaigns — from ${PLANS[0].priceMonthly} a month, with a {STARTER_TRIAL_DAYS}-day trial on {PLANS[0].name} (
-                  <Link href="/#pricing" className="underline underline-offset-2 hover:text-white">
+                  Approving needs a free account — no card. Your facts carry over and you approve the plan there. A subscription is needed only when MAIRO builds and runs your campaigns — from ${PLANS[0].priceMonthly} a month, with a {PRO_TRIAL_DAYS}-day trial on {PLANS[0].name} (
+                  <Link href="/pricing" className="underline underline-offset-2 hover:text-white">
                     see plans
                   </Link>
                   ). Your ad budget is paid to Meta. No ad runs and nothing is charged without your explicit confirmation.

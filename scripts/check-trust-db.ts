@@ -251,7 +251,7 @@ async function main() {
     const terms = readFileSync(new URL("../src/app/terms/page.tsx", import.meta.url), "utf8");
     await check("the privacy policy no longer says MAIRO never posts, and says when it does", () => {
       assert.doesNotMatch(privacy, /We do not post to your Facebook Page/);
-      assert.match(privacy, /only on the Scale plan/);
+      assert.match(privacy, /only on MAIRO Scale/);
       assert.match(privacy, /Social Autopilot/);
       assert.match(privacy, /metaPostingApproved/);
     });

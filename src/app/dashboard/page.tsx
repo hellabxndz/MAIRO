@@ -1,3 +1,4 @@
+import { entitlementsFor } from "@/lib/entitlements";
 import Link from "next/link";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
@@ -160,7 +161,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // campaign's state.
   const [[readiness, autoLaunch], consoleData, fresh, intelligence, latestReport, reportSettings, firstCampaign] = await Promise.all([
     Promise.all([readinessFor(organizationId, { billing }), autoLaunchIntent(organizationId)]),
-    advanced ? loadConsole(organizationId, session.user.name ?? "", days, { adBreakdown: true }) : null,
+    // Ad-by-ad rows are advanced analytics (MAIRO Scale); the Advanced view
+    // itself, campaign by campaign, is on every plan.
+    advanced ? entitlementsFor(organizationId).then((e) => loadConsole(organizationId, session.user.name ?? "", days, { adBreakdown: e.advanced_analytics })) : null,
     db.organization.findUnique({ where: { id: organizationId }, select: { decisionsCheckedAt: true, briefFrequency: true } }),
     loadIntelligence(organizationId),
     db.weeklyReport.findFirst({ where: { organizationId }, orderBy: { weekStart: "desc" } }),

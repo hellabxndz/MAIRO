@@ -20,6 +20,15 @@ import { addLeadManually, dollars, importLeads, recordLeadEvent, type ImportSumm
 import { previewImport, type ImportPreview } from "@/lib/leads/import";
 import type { LeadStatus } from "@/generated/prisma/enums";
 import { deniedFor } from "@/lib/members/authorize";
+import { can as planAllows } from "@/lib/entitlements";
+import { planFor } from "@/lib/plans";
+
+// Advanced revenue and lead tracking (MAIRO Scale): what a lead is worth,
+// the business's own pipeline stages, and importing leads from a
+// spreadsheet. Leads themselves, and marking one contacted, booked, a
+// customer or lost, are on every plan. Checked here on the server; the
+// screens hide what the plan doesn't include.
+const TRACKING_REFUSAL = `Lead values, your own stages and imports are part of ${planFor("SCALE_V2").name}'s advanced revenue and lead tracking.`;
 
 /**
  * Takes a submission from the public form.
@@ -266,8 +275,13 @@ export async function setLeadOutcomeAction(
   }
 
   const now = new Date();
+  // The outcome is on every plan; what the job was worth is advanced tracking.
+  // Without it a value already recorded is left exactly as it was.
+  const tracking = await planAllows(organizationId, "advanced_tracking");
+  if (!tracking && valueCents !== null) return { ok: false, error: TRACKING_REFUSAL };
   const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, valueCents: true } });
   if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
+  if (!tracking) valueCents = lead.valueCents;
   if (lead.status !== status) await recordLeadEvent({ organizationId, leadId, kind: "status", actorUserId: session.user.id ?? null, actorLabel: "You", fromStatus: lead.status, toStatus: status });
   if (lead.valueCents !== valueCents && (valueCents !== null || lead.valueCents !== null)) await recordLeadEvent({ organizationId, leadId, kind: "value", actorUserId: session.user.id ?? null, actorLabel: "You", field: "valueCents", before: dollars(lead.valueCents), after: dollars(valueCents) });
   await db.lead.update({
@@ -319,6 +333,9 @@ export async function saveLeadDetailsAction(
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  if (("estimatedValueDollars" in patch || "valueDollars" in patch) && !(await planAllows(organizationId, "advanced_tracking"))) {
+    return { ok: false, error: TRACKING_REFUSAL };
+  }
   const lead = await db.lead.findFirst({ where: { id: leadId, organizationId }, select: { firstContactedAt: true, status: true, createdAt: true, appointmentAt: true, nextFollowUpAt: true, estimatedValueCents: true, valueCents: true, lostReason: true, notes: true } });
   if (!lead) return { ok: false, error: "That enquiry isn't there any more." };
 
@@ -383,6 +400,7 @@ export async function saveLeadStagesAction(labels: Record<string, string>): Prom
   const session = await auth();
   if (!session?.user?.organizationId) return { ok: false, error: "Not signed in." };
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  if (!(await planAllows(organizationId, "advanced_tracking"))) return { ok: false, error: TRACKING_REFUSAL };
   const clean = cleanStageLabels(labels);
   await db.organization.update({ where: { id: organizationId }, data: { leadStagesJson: Object.keys(clean).length ? JSON.stringify(clean) : null } });
   revalidatePath("/dashboard/leads");
@@ -404,6 +422,7 @@ export async function addLeadAction(input: { name: string; email: string; phone:
   const scope = await leadScope();
   if (!scope) return { ok: false, error: "Not signed in." };
   const clip = (v: unknown, n: number) => String(v ?? "").slice(0, n);
+  if (String(input.valueDollars ?? "").trim() && !(await planAllows(scope.organizationId, "advanced_tracking"))) return { ok: false, error: TRACKING_REFUSAL };
   const r = await addLeadManually(scope.organizationId, scope.userId, { name: clip(input.name, 120), email: clip(input.email, 200), phone: clip(input.phone, 40), status: clip(input.status, 40), valueDollars: clip(input.valueDollars, 20), notes: clip(input.notes, 2000), receivedOn: clip(input.receivedOn, 30) });
   if (r.ok) {
     revalidatePath("/dashboard/leads");
@@ -419,6 +438,7 @@ export async function previewLeadImportAction(text: string): Promise<ImportPrevi
   if (denied) return { error: denied };
   const scope = await leadScope();
   if (!scope) return { error: "Not signed in." };
+  if (!(await planAllows(scope.organizationId, "advanced_tracking"))) return { error: TRACKING_REFUSAL };
   if (typeof text !== "string") return { error: "That file couldn't be read." };
   return previewImport(text);
 }
@@ -430,6 +450,7 @@ export async function importLeadsAction(text: string, fileName: string): Promise
   if (denied) return { ok: false, error: denied };
   const scope = await leadScope();
   if (!scope) return { ok: false, error: "Not signed in." };
+  if (!(await planAllows(scope.organizationId, "advanced_tracking"))) return { ok: false, error: TRACKING_REFUSAL };
   if (typeof text !== "string") return { ok: false, error: "That file couldn't be read." };
   const r = await importLeads(scope.organizationId, scope.userId, text, String(fileName ?? "").replace(/[^\w .()-]/g, "").slice(0, 80));
   if (r.ok) {

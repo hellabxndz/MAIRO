@@ -338,6 +338,29 @@ of their nine drawings is now a 3D product render, made in the same way
   and `check:preview` 29 / 29. `videos.js` passes 58 / 58 and `links.js`
   finds 68 links with 0 problems.
 
+## K. Two plans: MAIRO Pro and MAIRO Scale (20 October)
+
+Requested by the owner. Verified locally with simulated Stripe and Meta: nothing
+was charged, sent to Stripe or Meta, or sent to a customer.
+
+| Requirement | State | Evidence |
+| --- | --- | --- |
+| Exactly two plans sold: Pro $139, Scale $299 | Done | `src/lib/plans.ts` (PLANS, SOLD_TIERS); checkout refuses every other tier (`billing-actions.ts`); `check:pricing`, `check:plans-v2` |
+| 7-day trial on Pro only | Done | `PRO_TRIAL_DAYS`, `trialDaysFor`; `check:payment-gate` |
+| Existing subscribers untouched | Done | Earlier plans kept as STARTER, GROWTH, SCALE ($499.99), STUDIO, AGENCY with their own entitlements and price variables; new tiers are new enum values PRO and SCALE_V2; nobody is moved without pressing "Switch" |
+| Upgrade / downgrade | Done | `/dashboard/billing/change` lists what changes, then Stripe's own confirmation (portal `subscription_update_confirm`); a Pro trial moving to Scale ends the trial and charges now, refusing a declined card (`error_if_incomplete`) |
+| Renewals, failed payments, cancellation | Done | Signed webhook events through the real handler: `check:plans-v2` (18 checks) |
+| Up to 3 Meta ad accounts on Scale | Done | Settings › Your businesses; `src/lib/brands.ts` mirrors the plan onto added businesses (webhook + daily review); extras locked, never paused, on Pro or after cancelling |
+| Scale-only gates on the server | Done | Team seats (`seatProblem`), advanced analytics (ad-level rows), advanced tracking (lead values, stages, imports), Performance Coach (`runCoach`), Social Manager (`SOCIAL_TIERS`), AI Assist / Autopilot (existing flags) |
+| Pricing section | Done | Two large cards, Pro left, Scale right "Most Popular", galaxy accents, hover lift, CTAs, ad-spend callout; `/pricing` page; browser run at 1440 and 390 (43 checks) |
+| Confirmation | Partial | In-app notice on each new plan ("Welcome to MAIRO Pro" / "You're now on MAIRO Scale"); MAIRO sends no email itself — receipts are Stripe's customer emails |
+| Instagram content creation and post queue | Partial | Built; publishing waits on Meta's approval, labelled "Publishing once Meta approves" on the card |
+| Freelancer plans | Retired | `/for-freelancers` redirects to `/pricing`; existing workspaces keep their plans |
+| Live Pro / Scale checkout | Blocked | Needs the two Stripe prices on the deployment |
+
+Database migration: `20261120120000_two_plans` adds the enum values PRO and
+SCALE_V2 (additive; runs on deploy).
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already
@@ -376,8 +399,14 @@ of their nine drawings is now a 3D product render, made in the same way
   kept now names the button by its new label, "Activate Your AI Advertising
   Team" (it was "Put MAIRO to Work"). The meaning is unchanged; please include
   it in the legal review.
-- **No price, plan or subscription change.** Starter $149.99 with a 7-day
-  trial, Growth $239.99 and Scale $499.99 are as they were.
+- **Price and plan change (requested, section K).** New customers can buy
+  MAIRO Pro ($139, 7-day trial) and MAIRO Scale ($299). Starter, Growth, the
+  $499.99 Scale, Studio and Agency are no longer sold; their subscribers keep
+  their price and features.
+- **Terms — trial wording (legal review).** "The MAIRO Pro plan begins with a
+  7-day free trial … MAIRO Scale has no trial … Plans bought before October
+  2026 keep their own price and terms until you change plan." Terms and
+  Privacy now name "MAIRO Scale" for posting; last updated 20 October 2026.
 
 ## D. What's needed from the owner
 
@@ -390,7 +419,8 @@ of their nine drawings is now a 3D product render, made in the same way
    - a licensed voice (narration);
    - ANTHROPIC_API_KEY, OPENAI_API_KEY and BLOB_READ_WRITE_TOKEN on the
      deployment (AI reading, rewrites, pictures);
-   - Stripe prices for the Studio and Agency plans;
+   - Stripe prices for MAIRO Pro ($139/month) and MAIRO Scale ($299/month),
+     set as STRIPE_PRICE_PRO and STRIPE_PRICE_SCALE_V2;
    - Google's approval for Tag Manager;
    - Meta's approval for posting;
    - a legal review of the privacy wording and the Instagram reading.

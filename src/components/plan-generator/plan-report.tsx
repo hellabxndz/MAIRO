@@ -5,7 +5,7 @@ import { useState, type ReactNode, type RefObject } from "react";
 import type { PlanReport } from "@/lib/preview/report";
 import type { PreviewGoal } from "@/lib/preview/build";
 import { BUDGET_CHOICES, GOAL_OPTIONS, budgetLabel } from "@/lib/preview/strategy";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import { AdMock, type Placement } from "./ad-mock";
 
 // The free AI ad plan, sections A to F, then the step from the free plan to
@@ -506,13 +506,13 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
               Build My Free AI Ad Plan →
             </Link>
           )}
-          <Link href="/#pricing" className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/45">
+          <Link href="/pricing" className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/45">
             Explore Plans
           </Link>
         </div>
         <p className="mt-5 max-w-[760px] text-[13px] leading-relaxed text-white/55">
           {actions ? "Your strategy comes with you: setup opens with your answers already filled in, for you to confirm. " : ""}
-          Creating an account is free. Plans start at ${starter.priceMonthly} a month{starter.trialDays ? `, and ${starter.name} includes a ${STARTER_TRIAL_DAYS}-day free trial` : ""}. Your ad spend is separate — Meta charges it to your own ad account, at the budget you approve.
+          Creating an account is free. Plans start at ${starter.priceMonthly} a month{starter.trialDays ? `, and ${starter.name} includes a ${PRO_TRIAL_DAYS}-day free trial` : ""}. Your ad spend is separate — Meta charges it to your own ad account, at the budget you approve.
         </p>
         {actions && (
           <p className="mt-2 text-[13px] text-white/55">

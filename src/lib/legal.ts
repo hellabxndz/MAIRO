@@ -22,7 +22,7 @@ export const LEGAL = {
   contactEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "blingmarketing1@gmail.com",
 
   // Bump when the substance changes, not for typo fixes.
-  lastUpdated: "14 October 2026",
+  lastUpdated: "20 October 2026",
 
   // How long a deletion request takes to complete, stated as a promise on the
   // data deletion page. Keep the page and reality in agreement.

@@ -1,7 +1,7 @@
 import { googleSignInEnabled } from "@/lib/google-sign-in";
 import { signInErrorMessage } from "@/lib/google-sign-in-rules";
 import { AuthCard } from "@/components/auth-card";
-import { PLANS, STARTER_TRIAL_DAYS } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { normalizeUrl } from "@/lib/campaigns/destination";
 import { pendingPlan } from "@/lib/preview/pending-plan";
@@ -35,7 +35,7 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
   const businessType = businessTypeFrom(typeof type === "string" ? type : null);
   // A free ad plan saved in this browser joins the account (see signUpAction).
   const plan = await pendingPlan().catch(() => null);
-  const starter = PLANS.find((p) => p.tier === "STARTER");
+  const pro = PLANS.find((p) => p.tier === "PRO");
   const noTrial = PLANS.filter((p) => !(p.trialDays ?? 0)).map((p) => p.name);
   return (
     <div className="mx-auto grid max-w-[900px] grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] md:gap-8">
@@ -68,10 +68,10 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
           <p>
             <strong className="font-semibold text-white">Your free plan needs no credit card.</strong> You pay only if you choose a subscription.
           </p>
-          {starter && (
+          {pro && (
             <p>
-              <strong className="font-semibold text-white">The Starter trial:</strong> {STARTER_TRIAL_DAYS} days free. Stripe takes your card when you subscribe and
-              charges {money(starter.priceMonthly)} a month from the day the trial ends, unless you cancel before then. {noTrial.join(" and ")} have no trial and are billed
+              <strong className="font-semibold text-white">The {pro.name} trial:</strong> {PRO_TRIAL_DAYS} days free. Stripe takes your card when you subscribe and
+              charges {money(pro.priceMonthly)} a month from the day the trial ends, unless you cancel before then. {noTrial.join(" and ")} {noTrial.length === 1 ? "has" : "have"} no trial and {noTrial.length === 1 ? "is" : "are"} billed
               from the day you subscribe.
             </p>
           )}

@@ -6,8 +6,7 @@ import type { Metadata } from "next";
 // the site-wide title, which says nothing about the page.
 export const metadata: Metadata = {
   title: "For freelancers",
-  description:
-    "Run Facebook and Instagram ads for all your clients from one login. MAIRO handles the campaigns; you keep the relationship.",
+  robots: { index: false },
 };
 
 export default function Layout({ children }: LayoutProps<"/for-freelancers">) {

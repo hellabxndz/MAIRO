@@ -1,18 +1,11 @@
-import { googleSignInEnabled } from "@/lib/google-sign-in";
-import { signInErrorMessage } from "@/lib/google-sign-in-rules";
-import { AuthCard } from "@/components/auth-card";
-import { FreelancerSignUpForm } from "./freelancer-sign-up-form";
+import { redirect } from "next/navigation";
 
-// Server half of the studio sign-up: whether Google is configured, and any
-// ?error= a Google login was sent back here with.
-export default async function Page({ searchParams }: PageProps<"/for-freelancers">) {
-  const { error } = await searchParams;
-  return (
-    <AuthCard>
-      <FreelancerSignUpForm
-        googleEnabled={googleSignInEnabled()}
-        initialError={signInErrorMessage(typeof error === "string" ? error : null)}
-      />
-    </AuthCard>
-  );
+// The freelancer sign-up (Studio and Agency plans) closed in October 2026,
+// when MAIRO moved to two plans, MAIRO Pro and MAIRO Scale. Existing
+// freelancer workspaces keep their clients and plans and sign in as usual;
+// someone running several businesses now uses MAIRO Scale, which covers up
+// to three. The sign-up form is kept in this folder, unused, in case the
+// freelancer plans return.
+export default function Page(): never {
+  redirect("/pricing");
 }

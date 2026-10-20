@@ -233,6 +233,7 @@ export default async function SettingsPage() {
           { href: "/dashboard/reports", label: "Reports", hint: "Weekly and monthly summaries" },
           { href: "/dashboard/activity", label: "MAIRO Activity", hint: "Everything MAIRO did, in order" },
           { href: "/dashboard/settings/team", label: "Team", hint: "Who's on the team and what each role can do" },
+          { href: "/dashboard/settings/businesses", label: "Your businesses", hint: "MAIRO Scale covers up to 3 Meta ad accounts, one per business" },
           { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
           { href: "/dashboard/account", label: "Account", hint: "Your login and more" },
           { href: "/dashboard/guide", label: "Help", hint: "How MAIRO works, with search" },
