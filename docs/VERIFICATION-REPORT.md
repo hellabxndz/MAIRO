@@ -229,6 +229,42 @@ missing and have to be made by hand:
 - real images from MAIRO's image model;
 - a licensed voice-over and music (`docs/PRODUCT-CLIPS.md`).
 
+## H. Link previews, the 404 page and the error page (20 October)
+
+- **Link preview.** The picture shown when a MAIRO link is pasted into a chat
+  or a post (`src/app/opengraph-image.tsx`) still had the old headline ("Your
+  Business Has More Potential…") and the old warm-black colours. It now shows
+  the hero's headline, "Your next ad strategy, built by AI.", on the midnight
+  background with the blue glow. The price line reads "Paid plans from
+  $149.99/mo", from `lib/plans.ts`; no price changed.
+- **404 page** (`src/app/not-found.tsx`). An unknown address used to show
+  Next's plain default page. It now has the site's own nav and footer, says the
+  page isn't there and that nothing about the account or the ads changed, and
+  offers three ways on: the free plan, how MAIRO works, and the help center.
+  It returns HTTP 404 and is not indexed.
+- **Error page** (`src/app/error.tsx`). When a page fails to render, visitors
+  see "This page didn't load" with Try again and Go to the homepage, and a
+  reference to quote to support. The error's own text is never shown, because
+  it can contain the business's data. The page doesn't claim that nothing
+  happened: if someone had just pressed a button, it asks them to check
+  whether the action went through before pressing it again.
+- **Dark first paint.** The page header told browsers the site was light,
+  while the stylesheet says dark. A slow connection could therefore flash
+  white before the styles loaded. The header now says dark too.
+
+**Evidence (local, production build).**
+- `npm run audit`: **83 / 83**. `tsc` and `eslint` are clean, and the build
+  passes.
+- `notfound.js`: **26 / 26** at 1440 and 390. It checks the 404 status, a
+  single robots tag, no sideways scroll, tap targets, keyboard focus, and that
+  the links work.
+- Error page: **16 / 16** at 1440 and 390, using a temporary page that throws
+  on purpose. It checks the 500 status, that the error text isn't on the
+  page, that a reference is shown, that Try again works, the tap targets, and
+  the home link. The temporary page was removed before committing.
+- `links.js`: 68 links, 0 problems. `a11y2.js`: 14 / 14. Homepage at 768, 412
+  and 390: no sideways scroll and no page errors.
+
 ## Fixed while verifying
 
 - Reading the Instagram bio link no longer replaces what the visitor already

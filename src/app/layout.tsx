@@ -57,13 +57,14 @@ export const metadata: Metadata = {
 // Separate from metadata on purpose — Next moved both of these out of it, and
 // leaving colorScheme behind logs a deprecation on every render.
 //
-// The site is light. Telling the browser so means the scrollbar, the form
-// controls and the first paint before the stylesheet arrives are light too,
-// rather than flashing dark on the way in. Dark panels set their own scheme
-// in CSS (the classic palette in globals.css).
+// The site is dark (`color-scheme: dark` on :root in globals.css). Telling
+// the browser so here too means the scrollbar, the form controls and the
+// first paint before the stylesheet arrives are dark as well, rather than
+// flashing white on the way in. Light sections, such as the homepage
+// showcase, set their own colours.
 export const viewport: Viewport = {
-  themeColor: "#07080d",
-  colorScheme: "light",
+  themeColor: "#05070d",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
