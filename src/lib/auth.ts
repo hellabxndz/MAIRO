@@ -1,9 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
+import { requestIp, takeLoginAttempt } from "@/lib/login-throttle";
 import { chosenWorkspace, resolveWorkspace } from "@/lib/members/workspace";
 import {
   googleCredentials,
@@ -18,6 +19,11 @@ import {
 // showing the button.
 const google = googleCredentials();
 
+/** Over the sign-in attempt limit (lib/login-throttle.ts): the form says so instead of "wrong password". */
+export class TooManySignInAttempts extends CredentialsSignin {
+  code = "rate_limited";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -26,12 +32,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const email = credentials?.email;
         const password = credentials?.password;
         if (typeof email !== "string" || typeof password !== "string") {
           return null;
         }
+        // Counted before anything is looked up, so a guesser learns nothing
+        // from timing once over the limit, and an unknown address counts too.
+        if (!(await takeLoginAttempt(email, requestIp(request)))) throw new TooManySignInAttempts();
 
         // Exact match first; then the same address in any capitalisation, so
         // "Jane@Shop.com" signs in to the account made as "jane@shop.com" (and

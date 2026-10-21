@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
+import { LOGIN_LIMIT_MESSAGE } from "@/lib/login-throttle";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
@@ -318,6 +319,7 @@ export async function signInAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
+      if (error instanceof CredentialsSignin && error.code === "rate_limited") return { error: LOGIN_LIMIT_MESSAGE, values: { email } };
       return { error: "That email and password don't match an account. Check them and try again.", values: { email } };
     }
     throw error;

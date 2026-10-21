@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 import { retryStuckReviews } from "@/lib/creatives/review-run";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { reportUnsentLeads } from "@/lib/leads/report";
@@ -157,6 +158,16 @@ export async function GET(req: Request) {
     return null;
   });
 
+  // Usage counters (free-tool, refine and sign-in limits) only matter inside
+  // their hour, day or 15-minute window; older ones are just rows.
+  const usageCounters = await db.toolUsage
+    .deleteMany({ where: { windowStart: { lt: new Date(Date.now() - 3 * 86_400_000) } } })
+    .then((r) => r.count)
+    .catch((error) => {
+      console.error("Usage counter sweep failed:", error instanceof Error ? error.name : "unknown");
+      return null;
+    });
+
   // Creatives whose safety check couldn't run (see above), as many as the
   // time left allows — each is a model call made in sequence. A backlog that
   // takes three nights to clear is better than a run that times out every
@@ -176,5 +187,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, ms: Date.now() - startedAt });
 }

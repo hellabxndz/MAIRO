@@ -11,6 +11,8 @@
 //   npm run check:hardening-db   (needs DATABASE_URL; makes no network calls)
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { LOGIN_ATTEMPTS_PER_ACCOUNT, LOGIN_ATTEMPTS_PER_VISITOR, LOGIN_WINDOW_MS, takeLoginAttempt } from "../src/lib/login-throttle";
 
 process.env.META_APP_ID ||= "hard-app";
 process.env.META_APP_SECRET ||= "hard-secret";
@@ -191,6 +193,39 @@ async function main() {
     });
   } finally {
     await cleanup();
+  }
+
+  console.log("\n— a password can't be guessed by trying thousands —");
+  {
+    // A window far from now, so nothing real shares its buckets.
+    const at = Date.UTC(2031, 0, 1, 12, 0, 0);
+    const email = `${TAG}-${Date.now()}@example.test`;
+    try {
+      await check("ten tries per account in 15 minutes, then refused — whatever the capitalisation", async () => {
+        for (let i = 0; i < LOGIN_ATTEMPTS_PER_ACCOUNT; i++) assert.equal(await takeLoginAttempt(i % 2 ? email.toUpperCase() : email, `203.0.113.${i}`, at), true, `try ${i + 1}`);
+        assert.equal(await takeLoginAttempt(email, "203.0.113.200", at), false);
+        // The next window starts fresh.
+        assert.equal(await takeLoginAttempt(email, "203.0.113.200", at + LOGIN_WINDOW_MS), true);
+      });
+      await check("thirty tries per visitor across accounts, then refused", async () => {
+        const ip = "198.51.100.7";
+        for (let i = 0; i < LOGIN_ATTEMPTS_PER_VISITOR; i++) assert.equal(await takeLoginAttempt(`${TAG}-spray-${i}@example.test`, ip, at), true);
+        assert.equal(await takeLoginAttempt(`${TAG}-spray-x@example.test`, ip, at), false);
+      });
+      await check("counted in the sign-in provider itself, before the account is looked up; the form says why", () => {
+        const auth = readFileSync("src/lib/auth.ts", "utf8");
+        const counted = auth.indexOf("takeLoginAttempt(email, requestIp(request))");
+        assert.ok(counted > 0 && counted < auth.indexOf("db.user.findUnique"));
+        assert.match(readFileSync("src/lib/actions/auth-actions.ts", "utf8"), /error\.code === "rate_limited"\) return \{ error: LOGIN_LIMIT_MESSAGE/);
+      });
+      await check("no email or IP address is stored in the counters", async () => {
+        const rows = await db.toolUsage.findMany({ where: { bucket: { startsWith: "login:" }, windowStart: new Date(Math.floor(at / LOGIN_WINDOW_MS) * LOGIN_WINDOW_MS) }, select: { bucket: true } });
+        assert.ok(rows.length > 0);
+        assert.ok(rows.every((r) => !/@|example|203\.0|198\.51/.test(r.bucket)), rows[0]?.bucket);
+      });
+    } finally {
+      await db.toolUsage.deleteMany({ where: { bucket: { startsWith: "login:" }, windowStart: { gte: new Date(at - LOGIN_WINDOW_MS) } } });
+    }
   }
   console.log(`\n${passed} hardening checks passed.`);
   await db.$disconnect();
