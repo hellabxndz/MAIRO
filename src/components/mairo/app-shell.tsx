@@ -314,14 +314,11 @@ export function AppShell({
   assistantName,
   footer,
   locked = [],
-  scale = false,
   switcher,
 }: {
   children: ReactNode;
   /** The business switcher for the phone's top bar, when this person is on more than one team. */
   switcher?: ReactNode;
-  /** Active Scale: the Create menu offers social posts. */
-  scale?: boolean;
   /** Nav destinations shown with a lock: the account hasn't subscribed yet. */
   locked?: string[];
   mode: ViewMode;
@@ -368,7 +365,7 @@ export function AppShell({
           MAIRO
         </Link>
         <div className="mb-4 shrink-0">
-          <CreateMenu scale={scale} />
+          <CreateMenu />
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5">
@@ -483,7 +480,7 @@ export function AppShell({
         aria-label="Primary"
       >
         {[...MOBILE_NAV.slice(0, 2), null, ...MOBILE_NAV.slice(2)].map((item) => {
-          if (!item) return <CreateMenu key="create" scale={scale} variant="bar" />;
+          if (!item) return <CreateMenu key="create" variant="bar" />;
           const active = isActive(pathname, item.href, item.also);
           return (
             <Link

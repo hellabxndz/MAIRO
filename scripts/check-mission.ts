@@ -2,7 +2,7 @@
 // what customers should do and to the right ad, industry-specific plans,
 // results that match the goal (never another goal's metric), objective tags,
 // the plan → approval → Create draft path, "Tell MAIRO something new"
-// (promotions, sold out), and that Social Manager still needs Scale.
+// (promotions, sold out), and that no plan gets Social Manager (discontinued).
 //
 //   npm run check:mission   (needs DATABASE_URL; no AI key or network needed)
 
@@ -170,38 +170,38 @@ async function main() {
       assert.equal(p.plan.category, "auto");
       assert.ok(p.plan.adConcepts.every((c) => c.objective && c.why.length > 10), "every ad has a reason");
       assert.ok(p.plan.focus.some((f) => /transformation/i.test(f)));
-      assert.equal(p.plan.scale, true);
-      assert.ok(p.plan.organic, "Scale plan includes social");
+      // Social posting was discontinued for every plan, the earlier Scale too.
+      assert.equal(p.plan.scale, false);
+      assert.equal(p.plan.organic, null);
       assert.equal(await activeMission(orgId), null, "nothing active until approved");
       // Asked once, never again.
       assert.equal((await startMission(orgId, { goal: "GET_BOOKINGS" })).kind, "plan");
     });
-    await check("approving: active mission, prefilled Create draft, Social Manager on the same goal (Scale)", async () => {
+    await check("approving: active mission, prefilled Create draft, and no Social Manager (discontinued)", async () => {
       const p = (await proposedMission(orgId))!;
       const r = await approveMission(orgId, p.id, null);
       assert.ok(r.draftId);
-      assert.equal(r.social, true);
+      assert.equal(r.social, false);
       const draft = await db.campaignDraft.findUniqueOrThrow({ where: { id: r.draftId! } });
       const data = draft.data as { goal: string; destinationType: string | null; dailyAmount: number };
       assert.equal(data.goal, "LEADS");
       assert.equal(data.destinationType, "WEBSITE");
       assert.ok(data.dailyAmount >= 5);
       assert.equal((await activeMission(orgId))?.id, p.id);
-      const social = await db.socialStrategy.findUniqueOrThrow({ where: { organizationId: orgId } });
-      assert.equal(social.goal, "GET_BOOKINGS");
+      assert.equal(await db.socialStrategy.count({ where: { organizationId: orgId } }), 0);
       assert.equal(await db.marketingMission.count({ where: { organizationId: orgId, status: "PROPOSED" } }), 0);
     });
     await check("no running campaign → MAIRO's next action is the planned campaign", async () => {
       const recs = await missionRecommendations(orgId, await activeMission(orgId));
       assert.ok(recs.some((r) => r.href.includes("draft=")));
     });
-    await check("'We're doing 20% off this weekend' becomes part of the plan (and Scale posts)", async () => {
+    await check("'We're doing 20% off this weekend' becomes part of the plan (no social posts)", async () => {
       const r = await tellMairo(orgId, "We're doing 20% off this weekend.", new Date("2026-10-01T15:00:00Z"));
       assert.equal(r.kind, "promotion");
       assert.ok(r.actions.some((a) => /urgency/i.test(a)));
-      assert.ok(r.actions.some((a) => /Scale: Social Manager/.test(a)));
+      assert.ok(!r.actions.some((a) => /Social Manager/.test(a)));
       assert.equal(await db.missionNote.count({ where: { organizationId: orgId, kind: "PROMOTION" } }), 1);
-      assert.equal(await db.socialPromotion.count({ where: { organizationId: orgId, kind: "SALE" } }), 1);
+      assert.equal(await db.socialPromotion.count({ where: { organizationId: orgId, kind: "SALE" } }), 0);
     });
     await check("'We sold out of the blue hoodie' stops planned posts that promote it", async () => {
       const post = await db.instagramPost.create({ data: { organizationId: orgId, caption: "Our Blue Hoodie is back — grab yours", status: "SUGGESTED", suggestedByMairo: true } });

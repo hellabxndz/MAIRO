@@ -262,8 +262,10 @@ async function main() {
     const o = await orgRow(legacy);
     assert.equal(o.subscriptionTier, "SCALE");
     const e = await entitlementsFor(legacy);
-    assert.deepEqual([e.studio_credits_monthly, e.member_limit, e.growth_coach, e.social_posting], [400, Infinity, true, true]);
-    assert.equal((await socialAccess(legacy)).ok, true);
+    assert.deepEqual([e.studio_credits_monthly, e.member_limit, e.growth_coach], [400, Infinity, true]);
+    // Social posting was discontinued for every plan, this one included.
+    assert.equal(e.social_posting, false);
+    assert.equal((await socialAccess(legacy)).ok, false);
     // A Growth subscriber, likewise.
     const g = await org("legacy-growth", { paymentRequired: false });
     await deliver("customer.subscription.updated", subscription(`${lid}_g`, g, PRICE.GROWTH, "active", now + 30 * day));

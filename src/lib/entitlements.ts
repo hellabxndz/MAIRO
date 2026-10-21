@@ -185,9 +185,10 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
   // environment, and renaming the value would leave every existing subscriber
   // matching no STRIPE_PRICE_* variable, which the webhook would read as
   // "no plan". The customer-facing name lives in plans.ts; this is internal.
+  // Social media posting was discontinued for every plan (lib/social/access.ts).
   SCALE: {
     meta_ads: true,
-    social_posting: true,
+    social_posting: false,
     auto_optimize: true,
     autopilot: true,
     advanced_analytics: true,

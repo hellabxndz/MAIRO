@@ -14,18 +14,3 @@ export function FREE_NAV(approved: boolean): NavEntry[] {
   ];
 }
 
-/**
- * Scale (active): MAIRO Social Manager — one entry. Its calendar, upcoming
- * and published posts, approvals, promotions and performance are tabs inside.
- */
-export const SOCIAL_NAV: NavEntry[] = [
-  { href: "/dashboard/social", label: "Social Manager", icon: icon("M10 3.5l1.9 4.1 4.4.5-3.3 3 1 4.4L10 13.3l-4 2.2 1-4.4-3.3-3 4.4-.5z") },
-];
-
-/** Every other plan: Social Manager shown, locked, labelled Scale. */
-export const SOCIAL_LOCKED_NAV: NavEntry = {
-  href: "/dashboard/social",
-  label: "Social Manager",
-  badge: "Paused",
-  icon: icon("M10 3.5l1.9 4.1 4.4.5-3.3 3 1 4.4L10 13.3l-4 2.2 1-4.4-3.3-3 4.4-.5z"),
-};

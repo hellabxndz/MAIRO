@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
-import { metaPostingApproved } from "@/lib/social/publishing-status";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · MAIRO",
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const postingLive = metaPostingApproved();
   return (
     <LegalPage
       title="Privacy policy"
@@ -91,9 +89,10 @@ export default function PrivacyPage() {
               type and ad click ID. The hashed details, those identifiers and the order value are passed
               to Meta so it can match the sale to your ads. If you give us your store&apos;s address, we
               also read its public product list.</>,
-            <><strong className="text-neutral-200">Your social posts (earlier Scale plan).</strong> The posts we
-              plan and write for you, the pictures and videos you upload or we make for them, and which
-              Instagram account and Facebook Page you connect for posting.</>,
+            <><strong className="text-neutral-200">Social posts from our discontinued Social Manager.</strong> If
+              you used it, the posts we planned and wrote for you and the pictures and videos for them
+              are kept with your account until you delete them or your account. We no longer publish
+              them.</>,
             <><strong className="text-neutral-200">Optional connections.</strong> If you connect Google
               Tag Manager, an access token from Google that lets us add your tracking tags. If you turn
               on text alerts, the phone number we text.</>,
@@ -117,7 +116,6 @@ export default function PrivacyPage() {
             "To build your monthly advertising plan from the goal and budget you gave us.",
             "To create, run, and adjust campaigns on the ad account you connected.",
             "To show you how those campaigns are performing, and which of them bring in leads and sales.",
-            "On the earlier Scale plan, to publish the social posts you approve, once Meta allows it.",
             "To answer your questions through the AI specialists.",
             "To contact you about your account or a problem with your campaigns.",
           ]}
@@ -139,7 +137,7 @@ export default function PrivacyPage() {
             "Everything we create stays in your account. You can see, edit, pause, or delete any of it in Meta Ads Manager at any time, with or without us.",
             "We read performance figures for your campaigns only, and show them back to you alone. We do not pool them with other businesses' data.",
             "We do not read your messages or access your personal profile content.",
-            `We post on your Facebook Page or Instagram only for subscribers on the earlier Scale plan, only if you turn on Social Manager and grant Meta's separate posting permission, and only as you choose: each post you approve, a week you approve at once, or — if you switch on Social Autopilot — posts it schedules itself, following the strategy and the posts you have already approved.${postingLive ? "" : " Meta has not yet approved MAIRO's posting permissions, so publishing is not available to customers yet."}`,
+            "We do not post to your Facebook Page or Instagram profile, and we don't ask for permission to. Your ads appear on Facebook and Instagram through your ad account.",
             "You can disconnect at any time from the Meta connection page in your dashboard. That deletes the access token immediately.",
           ]}
         />

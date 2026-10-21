@@ -188,30 +188,10 @@ async function main() {
       assert.match(byKey(gone, "mairo-campaigns").detail, /0 of 1 found/);
     });
 
-    await check("posting readiness: permissions, the linked Instagram, and a post through MAIRO on each network", async () => {
-      const posting = ["instagram_basic", "instagram_content_publish", "pages_manage_posts"];
-      // Not set up at all: skipped, and the business still reads as working.
+    await check("no posting step: organic posting was discontinued, so the check is about ads only", async () => {
       world = fresh();
-      let steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
-      assert.equal(byKey(steps, "posting").state, "skip");
-      // Permissions granted but no Instagram linked and nothing posted yet.
-      world = { ...fresh(), granted: [...fresh().granted, ...posting] };
-      methods.length = 0;
-      steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
-      const p = byKey(steps, "posting");
-      assert.equal(p.state, "warn");
-      assert.match(p.detail, /no professional .* account is linked/);
-      assert.match(p.detail, /0 on Instagram, 0 on Facebook/);
-      assert.ok(methods.every((m) => m === "GET"), "the posting check only reads");
-      // Linked, and one post through MAIRO on each network: ready.
-      world = { ...world, instagram: true };
-      await db.instagramPost.createMany({ data: [
-        { organizationId: ORG, caption: "Spring detail is back", status: "PUBLISHED", network: "INSTAGRAM", postedAt: new Date() },
-        { organizationId: ORG, caption: "Spring detail is back", status: "PUBLISHED", network: "FACEBOOK", postedAt: new Date() },
-      ] });
-      steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
-      assert.equal(byKey(steps, "posting").state, "pass", byKey(steps, "posting").detail);
-      assert.match(byKey(steps, "posting").detail, /@shineautospa/);
+      const steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
+      assert.equal(steps.some((s) => s.key === "posting"), false);
       noSecrets(steps);
     });
 

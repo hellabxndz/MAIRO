@@ -43,8 +43,6 @@ import { loadBrain } from "@/lib/business/brain";
 import { parseReport, reportIsFresh, WEEKDAYS } from "@/lib/reports/weekly";
 import { WeeklyReportCard } from "@/components/reports/weekly-card";
 import { FirstCampaignCard } from "@/components/strategy/journey-card";
-import { SocialManagerPrompt } from "@/components/strategy/social-manager-prompt";
-import { socialAccess } from "@/lib/social/access";
 import { FreeHome } from "@/components/strategy/free-access";
 import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
@@ -67,12 +65,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   //
   // Read together: each is its own question, and asking them one after the
   // other made every Overview load wait for all of them in a row.
-  const [free, social, socialStrategy, mode] = await Promise.all([
-    freeHomeState(organizationId),
-    socialAccess(organizationId),
-    db.socialStrategy.findUnique({ where: { organizationId }, select: { id: true } }),
-    dashboardMode(),
-  ]);
+  const [free, mode] = await Promise.all([freeHomeState(organizationId), dashboardMode()]);
   if (free) {
     return (
       <>
@@ -82,8 +75,6 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     );
   }
 
-  // Active Scale without a Social Manager goal yet: invite them to set one.
-  const askSocial = social.ok && !socialStrategy;
 
   // Before anything is read, anything that is ready goes live.
   //
@@ -213,7 +204,6 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     <>
       <SuggestedAdsPrompt organizationId={organizationId} />
       {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
-      {askSocial && <SocialManagerPrompt />}
       {/* Something went live on this visit, so it says so — the launch the
           owner approved happened just now, after Meta's review cleared. */}
       {launched.launched && (
@@ -392,7 +382,6 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // Advanced: the shared console on top, every figure underneath.
   const advancedBelow = (
     <>
-      {askSocial && <SocialManagerPrompt />}
       {recommendations.length > 0 && (
         <div className="space-y-4">
           {recommendations.map((item) => (

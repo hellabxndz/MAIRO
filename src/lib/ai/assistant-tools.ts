@@ -250,7 +250,7 @@ function allTools(organizationId: string) {
 
     tell_mairo: tool({
       description:
-        "Record news about the business that should change the marketing: a promotion (\"20% off this weekend\"), something sold out or discontinued (\"we sold out of the blue hoodie\"), or a fact to remember. MAIRO updates its plans (and social posts, for a business that still has Social Manager) and says what it changed. For a new goal or a launch, use propose_mission instead.",
+        "Record news about the business that should change the marketing: a promotion (\"20% off this weekend\"), something sold out or discontinued (\"we sold out of the blue hoodie\"), or a fact to remember. MAIRO updates its plans and says what it changed. For a new goal or a launch, use propose_mission instead.",
       inputSchema: z.object({ text: z.string().min(3).max(800).describe("What they told you, in their words") }),
       execute: async ({ text }) => {
         const r = await tellMairo(organizationId, text);
@@ -329,7 +329,7 @@ function allTools(organizationId: string) {
 
     go_to: tool({
       description:
-        "Show a button that takes the person to the right MAIRO page, when they want to see or do something there (\"show me my best creative\", \"I want to create a campaign\"). Use it with a one-sentence answer; don't describe menus. Social pages are only for a business still on the earlier Scale plan.",
+        "Show a button that takes the person to the right MAIRO page, when they want to see or do something there (\"show me my best creative\", \"I want to create a campaign\"). Use it with a one-sentence answer; don't describe menus.",
       inputSchema: z.object({ destination: z.enum(Object.keys(DESTINATIONS) as [keyof typeof DESTINATIONS, ...(keyof typeof DESTINATIONS)[]]) }),
       execute: async ({ destination }) => DESTINATIONS[destination],
     }),
@@ -371,10 +371,6 @@ export const DESTINATIONS = {
   analytics_advanced: { href: "/dashboard/analytics?view=advanced", label: "Open detailed analytics" },
   decisions: { href: "/dashboard/decisions", label: "Open your Approval Center" },
   mission: { href: "/dashboard/mission", label: "Open your goal and plan" },
-  social: { href: "/dashboard/social", label: "Open Social Manager" },
-  social_calendar: { href: "/dashboard/social/calendar", label: "Open the Content Calendar" },
-  social_approvals: { href: "/dashboard/social/posts?view=approval", label: "Review posts waiting for you" },
-  promotions: { href: "/dashboard/social/promotions", label: "Open Promotions" },
   reports: { href: "/dashboard/reports", label: "Open your reports" },
   settings: { href: "/dashboard/settings", label: "Open Settings" },
   billing: { href: "/dashboard/billing", label: "Open Billing" },
@@ -388,7 +384,7 @@ export const MISSION_BRIEF = [
   "- When they tell you news (a promotion, something sold out), call tell_mairo and relay what MAIRO changed.",
   "- When they correct or change a lasting fact about the business, call update_business_brain. Removing or replacing a fact needs their yes first: ask the question it returns, then call again with confirmed=true. After a change, say briefly “✓ MAIRO learned this.” — not after every message.",
   "- The Business Brain above is what MAIRO already knows. Never ask the owner for something in it; build on it (\"Your current goal is more ceramic coating bookings, and before/after videos have been your strongest format — I'll build the next concept around that.\"). Learned patterns are observations, never causes: say \"has generated\" or \"MAIRO has seen\", never \"caused\".",
-  "- MAIRO doesn't sell social media posting: it runs Facebook and Instagram ads. Only a business still on the earlier Scale plan has Social Manager; never offer or promise posting to anyone else. Never promise results.",
+  "- MAIRO runs Facebook and Instagram ads. It doesn't post to Instagram or Facebook profiles (that was discontinued); never offer or promise organic posting. Never promise results.",
   "- When the person wants to see or do something in MAIRO, call go_to so they get a button straight there, instead of describing where to click.",
   "- Before recommending anything, answer: what business objective does this help accomplish? If there's no clear answer, don't recommend it.",
   "- Say how sure MAIRO is in words (\"MAIRO needs more data\", \"MAIRO is becoming more confident\"), never as a percentage or a predicted result.",

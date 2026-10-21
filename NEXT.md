@@ -139,16 +139,15 @@ limits on every in-app screen. The `meta_only_plan_reset` migration deletes
 them, and the code defaults apply. After any *later* pricing change, run
 `npm run plans:sync` (prints a diff) and `-- --write` to apply it.
 
-**7. Social media posting: on hold, not sold.** MAIRO no longer offers
-posting to a business's Instagram or Facebook profile: it's off the landing
-page, the pricing cards and table, the help centre, and MAIRO Scale's
-features and entitlements (`SCALE_V2.social_posting` is false, and a stored
-PlanConfig row can't switch it back on). Only subscribers still on the
-earlier $499.99 Scale plan (`SCALE`) keep Social Manager, so no purchase
-changes. Meta App Review round 2 (`instagram_basic`,
-`instagram_content_publish`, `pages_manage_posts`) is not needed and shouldn't
-be submitted unless posting comes back; the steps are kept in
-**docs/META-APP-REVIEW-POSTING.md** for that case.
+**7. Social media posting: discontinued.** MAIRO doesn't post to Instagram or
+Facebook profiles on any plan, the earlier $499.99 Scale plan included (Meta
+never approved the posting permissions, so it never published for a customer).
+Nobody has access, the daily job no longer publishes or plans posts, the
+connect dialog never asks for posting permissions, and nothing in the app links
+to it. Saved posts are kept until deleted. Instagram and Facebook *ads* are
+unaffected. In the Meta developer dashboard, remove the Instagram
+content-publishing use case and `pages_manage_posts` if they were added; don't
+submit App Review round 2.
 
 **7c. After App Review: put the customer-action question into Create.** The
 Mission already asks "What do you want customers to do?" and prefills Create.

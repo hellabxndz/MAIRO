@@ -56,7 +56,7 @@ or a public page makes a claim this inventory can't back.
 | Results | Recommendations with approval | Working | `/dashboard/decisions`, `/dashboard/coach` | — | `check:decisions`, `check:decision-claim`, `check:command-center` |
 | Control | Manual, AI Assist, Full Autopilot | Partially working | `/dashboard/settings` | A watched week of real decisions | `check:automation`, `check:decisions` |
 | Control | Spend Protection | Working | `/dashboard/settings` | — | `check:budget` |
-| Social | Social Manager (earlier Scale plan only) | Partially working | `/dashboard/social` | Meta App Review: posting permissions | `check:social-manager`, `check:social-scheduler` |
+| Social | Social Manager (discontinued) | Unavailable | `/dashboard/social` | — | `check:social-manager`, `check:social-scheduler`, `check:ads` |
 | Billing | Subscriptions through Stripe | Working | `/pricing`, `/plan/activate`, `/dashboard/billing`, `/dashboard/billing/change` | — | `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db` |
 | Billing | Studio and Agency plans | Unavailable | `/clients/billing` | Stripe prices | `check:entitlements` |
 | Account | Team members and roles | Working | `/dashboard/settings/team`, `/invite/[token]` | — | `check:members`, `check:trust-db` |
@@ -788,7 +788,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (22)
+## Partially working (21)
 
 ### Reading the business's website
 
@@ -1146,26 +1146,6 @@ Manual: MAIRO only recommends. AI Assist and Full Autopilot make a listed set of
 
 **Public claim:** “Choose how much MAIRO may change on its own — or nothing at all.”
 
-### Social Manager (earlier Scale plan only)
-
-*Social* · `social-manager`
-
-Plans and writes organic Instagram and Facebook posts; publishing only what the owner approves. Not offered to new customers (October 2026): MAIRO Scale doesn't include it and the public site doesn't mention it. Kept for subscribers on the earlier $499.99 Scale plan.
-
-**Condition:** Publishing waits for Meta's approval of MAIRO's posting permissions (round 2 of App Review), which isn't being pursued now.
-
-**Routes:** `/dashboard/social`
-
-**Still needs:** Meta App Review: posting permissions
-
-**Verification:** Earlier Scale plan only; nothing published without approval.
-
-**Evidence:** `src/lib/social`, `src/lib/social/publishing-status.ts`
-
-**Checks:** `check:social-manager`, `check:social-scheduler`
-
-**Public claim:** none — not advertised
-
 ### Sign in with Google
 
 *Account* · `google-sign-in`
@@ -1280,7 +1260,7 @@ One page per kind of business the free plan is built around, at /solutions/onlin
 
 **Public claim:** none — not advertised
 
-## Unavailable (7)
+## Unavailable (8)
 
 ### TikTok ads
 
@@ -1319,6 +1299,24 @@ No video generation provider is configured. Uploaded videos work.
 **Verification:** Never advertised until a provider produces a real file.
 
 **Evidence:** `src/lib/creative-studio/format-info.ts`
+
+**Public claim:** none — not advertised
+
+### Social Manager (discontinued)
+
+*Social* · `social-manager`
+
+Discontinued in October 2026: MAIRO doesn't post to a business's own Instagram or Facebook profile on any plan, the earlier $499.99 Scale plan included. Nobody has access, the daily job no longer publishes or plans posts, the Meta connect dialog never asks for posting permissions (they can't be requested even through META_SCOPES), and nothing in the app links to it. Saved posts are kept until deleted. Instagram and Facebook *ads* are unaffected.
+
+**Condition:** Not offered. Meta never approved the posting permissions, so it never published for a customer.
+
+**Routes:** `/dashboard/social`
+
+**Verification:** Nobody has access on any plan; nothing publishes; no posting permission is requested.
+
+**Evidence:** `src/lib/social/access.ts`, `src/app/api/cron/launch/route.ts`, `src/lib/meta/oauth.ts`
+
+**Checks:** `check:social-manager`, `check:social-scheduler`, `check:ads`
 
 **Public claim:** none — not advertised
 

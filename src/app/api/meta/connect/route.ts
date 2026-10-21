@@ -44,11 +44,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // ?also=page_posts / ?also=instagram: Scale's Facebook and Instagram
-    // posting, each asked for on its own, never in the everyday dialog.
-    const also = req.nextUrl.searchParams.get("also");
-    // ?rerequest=1: connecting again after switching a permission off.
-    const authUrl = buildMetaAuthUrl(state, { pagePosting: also === "page_posts", instagram: also === "instagram", rerequest: req.nextUrl.searchParams.get("rerequest") === "1", origin: req.nextUrl.origin });
+    // ?rerequest=1: connecting again after switching a permission off. The
+    // ads permissions only: MAIRO no longer asks to post to Instagram or a
+    // Facebook Page (the old ?also=instagram / ?also=page_posts is ignored).
+    const authUrl = buildMetaAuthUrl(state, { rerequest: req.nextUrl.searchParams.get("rerequest") === "1", origin: req.nextUrl.origin });
     return NextResponse.redirect(authUrl);
   } catch (error) {
     // Usually a missing setting on this deployment. The business goes back

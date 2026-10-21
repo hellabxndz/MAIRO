@@ -19,7 +19,7 @@ const ICON: Record<string, string> = {
   tell: "M4 4.5h12v8H8l-4 3z",
 };
 
-export function CreateMenu({ scale, variant = "sidebar" }: { scale: boolean; variant?: "sidebar" | "bar" }) {
+export function CreateMenu({ variant = "sidebar" }: { variant?: "sidebar" | "bar" }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>("menu");
   const close = () => {
@@ -67,8 +67,7 @@ export function CreateMenu({ scale, variant = "sidebar" }: { scale: boolean; var
           <nav aria-label="Create" className="-mx-2 space-y-1">
             {row("campaign", "Create campaign", "Tell MAIRO the goal; it builds the campaign for you to confirm.", { href: "/dashboard/create" })}
             {row("creative", "Create creative", "An ad image or video idea, made with AI.", { href: "/dashboard/creative-studio" })}
-            {row("promotion", "Add promotion", "A sale, an offer, a launch — MAIRO plans around it.", scale ? { href: "/dashboard/social/promotions" } : { view: "promotion" })}
-            {scale && row("social", "Create social post", "Plan a post for Instagram or Facebook.", { href: "/dashboard/social/calendar" })}
+            {row("promotion", "Add promotion", "A sale, an offer, a launch — MAIRO plans around it.", { view: "promotion" })}
             {row("tell", "Tell MAIRO something", "Something sold out, a new goal, news about your business.", { view: "tell" })}
           </nav>
         ) : view === "promotion" ? (

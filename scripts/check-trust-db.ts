@@ -249,11 +249,10 @@ async function main() {
     const privacy = readFileSync(new URL("../src/app/privacy/page.tsx", import.meta.url), "utf8");
     const deletion = readFileSync(new URL("../src/app/data-deletion/page.tsx", import.meta.url), "utf8");
     const terms = readFileSync(new URL("../src/app/terms/page.tsx", import.meta.url), "utf8");
-    await check("the privacy policy no longer says MAIRO never posts, and says when it does", () => {
-      assert.doesNotMatch(privacy, /We do not post to your Facebook Page/);
-      assert.match(privacy, /only for subscribers on the earlier Scale plan/);
-      assert.match(privacy, /Social Autopilot/);
-      assert.match(privacy, /metaPostingApproved/);
+    await check("the privacy policy and terms say MAIRO doesn't post to profiles (discontinued)", () => {
+      assert.match(privacy, /We do not post to your Facebook Page or Instagram profile/);
+      assert.doesNotMatch(privacy, /Social Autopilot|earlier Scale plan, to publish/);
+      assert.match(terms, /does not post to your own Instagram or Facebook/);
     });
     await check("deletion is described the same way everywhere: live records at once, backups and logs within the window", () => {
       assert.doesNotMatch(deletion, /Deleted immediately|Both are immediate/);

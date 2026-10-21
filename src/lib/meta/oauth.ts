@@ -45,16 +45,12 @@ const SCOPES = [
 ];
 
 /**
- * Posting to the business's own Instagram (Scale's Social Manager).
- *
- * Not in SCOPES, for the same reason Facebook Page posting isn't: they are
- * asked for only when a Scale business connects Instagram, through their own
- * dialog (/api/meta/connect?also=instagram). They used to be in the everyday
- * dialog — and Facebook refuses a whole login that names a permission the app
- * hasn't been set up for ("Invalid Scopes: instagram_basic,
- * instagram_content_publish"), so until the app has the Instagram use case,
- * every business connecting an ad account saw an error page. Now only the
- * Instagram button depends on that setup, and connecting ads never does.
+ * The posting permissions MAIRO's discontinued Social Manager used (posting
+ * to the business's own Instagram and Facebook Page). MAIRO no longer asks
+ * for them — they're not in SCOPES or KNOWN_SCOPES, so no dialog and no
+ * META_SCOPES setting can request them. Kept only so the dormant publisher's
+ * own permission check still compiles. Instagram *ads* need none of these:
+ * ads run through ads_management and the Page's connected Instagram account.
  */
 export const INSTAGRAM_SCOPES = ["instagram_basic", "instagram_content_publish"];
 
@@ -77,18 +73,9 @@ const KNOWN_SCOPES = new Set([
   "ads_management",
   "ads_read",
   ...SCOPES.filter((s) => s !== "ads_management"),
-  ...INSTAGRAM_SCOPES,
-  "pages_manage_posts",
 ]);
 
-/**
- * Posting on the business's own Facebook Page (Scale).
- *
- * Deliberately not in SCOPES. It is asked for only when a Scale business says
- * yes to "Let MAIRO post on your Facebook Page?", through a second, smaller
- * dialog — so the everyday connect dialog (and the one recorded for App
- * Review) is unchanged, and nobody is asked for a permission they never use.
- */
+/** The discontinued Facebook Page posting permission — never asked for (see INSTAGRAM_SCOPES). */
 export const PAGE_POSTING_SCOPE = "pages_manage_posts";
 
 /**
@@ -192,7 +179,7 @@ export function metaRedirectUri(origin?: string | null): string {
   );
 }
 
-export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; instagram?: boolean; rerequest?: boolean; origin?: string } = {}): string {
+export function buildMetaAuthUrl(state: string, opts: { rerequest?: boolean; origin?: string } = {}): string {
   const appId = requireEnv("META_APP_ID");
   const redirectUri = metaRedirectUri(opts.origin);
 
@@ -200,14 +187,11 @@ export function buildMetaAuthUrl(state: string, opts: { pagePosting?: boolean; i
   url.searchParams.set("client_id", appId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  const extra = [...(opts.pagePosting ? [PAGE_POSTING_SCOPE] : []), ...(opts.instagram ? INSTAGRAM_SCOPES : [])];
-  const scopes = [...new Set([...metaScopes(), ...extra])];
-  url.searchParams.set("scope", scopes.join(","));
-  // Asks again for a permission that was turned down before, rather than
-  // Facebook silently skipping it.
-  // Also when a business switched something off last time and is connecting
-  // again to turn it back on.
-  if (extra.length > 0 || opts.rerequest) url.searchParams.set("auth_type", "rerequest");
+  url.searchParams.set("scope", metaScopes().join(","));
+  // When a business switched a permission off last time and is connecting
+  // again to turn it back on: asks again rather than Facebook silently
+  // skipping it.
+  if (opts.rerequest) url.searchParams.set("auth_type", "rerequest");
   url.searchParams.set("response_type", "code");
   return url.toString();
 }

@@ -1,12 +1,12 @@
 # Meta App Review, round 2: posting to Instagram and Facebook
 
-> **On hold (October 2026).** MAIRO no longer offers social media posting, so
-> this review isn't needed and shouldn't be submitted. It isn't on any plan
-> sold today: only subscribers still on the earlier Scale plan (`SCALE`) keep
-> Social Manager. These steps are kept in case posting comes back. If it
-> does, it has to be put back on a plan first. The steps below that set a
-> business to MAIRO Scale (`SCALE_V2`) would need the earlier plan, or the
-> plan that brings posting back, instead.
+> **Discontinued (October 2026). Don't submit this review.** MAIRO no longer
+> posts to Instagram or Facebook profiles on any plan, and the app no longer
+> asks for `instagram_basic`, `instagram_content_publish` or
+> `pages_manage_posts` (they can't be requested even through `META_SCOPES`).
+> If the Instagram content-publishing use case or `pages_manage_posts` was
+> added in the Meta developer dashboard, remove them, so the app asks only for
+> what ads need. Kept for the record only.
 
 MAIRO's Social Manager can publish to a business's own Instagram and Facebook
 Page. The code is built and tested: a post goes out only after the business

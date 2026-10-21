@@ -7,6 +7,7 @@
 //   npm run check:social-manager   (needs DATABASE_URL; no network calls, no AI key needed)
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { db } from "../src/lib/db";
 import { socialAccess, socialAccessFrom } from "../src/lib/social/access";
 import {
@@ -20,8 +21,7 @@ import {
   promotionSequence,
   recommendGoal,
 } from "../src/lib/social/goals";
-import { approveWeek, autopilotReady, generatePlan, loadStrategy, refreshMetrics, savePromotion, setGoal } from "../src/lib/social/manager";
-import { pauseSocialIfLocked, pauseSocialSweep, resumeSocial } from "../src/lib/social/pause";
+import { pauseSocialSweep } from "../src/lib/social/pause";
 import { publishPost } from "../src/lib/instagram/scheduler";
 
 delete process.env.ANTHROPIC_API_KEY;
@@ -44,24 +44,16 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 }) as typeof fetch;
 
 const TAG = `zz-socmgr-${Date.now()}`;
-const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
 async function main() {
   console.log("\n— who may use Social Manager —");
-  await check("only SCALE with a live subscription", () => {
-    for (const tier of ["NONE", "STARTER", "GROWTH", "STUDIO", "AGENCY"] as const) {
-      const a = socialAccessFrom({ subscriptionTier: tier, subscriptionStatus: "active" });
-      assert.equal(a.ok, false, tier);
-      assert.equal(!a.ok && a.reason, "not_scale");
+  await check("nobody: social posting was discontinued for every plan", () => {
+    for (const tier of ["NONE", "PRO", "SCALE_V2", "SCALE", "STARTER", "GROWTH", "STUDIO", "AGENCY"] as const) {
+      for (const status of ["active", "trialing"]) {
+        const a = socialAccessFrom({ subscriptionTier: tier, subscriptionStatus: status });
+        assert.equal(a.ok, false, `${tier} ${status}`);
+      }
     }
-    assert.equal(socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active" }).ok, true);
-    assert.equal(socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "trialing" }).ok, true, "the card-backed trial week counts");
-    for (const status of [null, "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired"]) {
-      const a = socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: status });
-      assert.equal(!a.ok && a.reason, "inactive", String(status));
-    }
-    assert.equal(socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active", executionStoppedAt: new Date() }).ok, false, "a stopped account");
-    assert.equal(socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active" }, false).ok, false, "plan flag switched off");
     assert.equal(socialAccessFrom(null).ok, false);
   });
 
@@ -165,127 +157,49 @@ async function main() {
   });
 
   // --- With the database --------------------------------------------------
+  // An earlier-Scale subscriber with Social Manager history: a strategy on
+  // Autopilot and approved posts due now. Since the feature was discontinued,
+  // none of it may go out.
   const scaleId = `${TAG}-scale`;
-  const growthId = `${TAG}-growth`;
   await db.organization.create({ data: { id: scaleId, name: "Threadline Apparel", industry: "Clothing boutique", subscriptionTier: "SCALE", subscriptionStatus: "active", hasPaid: true, timezone: "America/New_York" } });
-  await db.organization.create({ data: { id: growthId, name: "Growth Co", subscriptionTier: "GROWTH", subscriptionStatus: "active" } });
-  for (let i = 0; i < 5; i++) {
-    const req = await db.creativeRequest.create({ data: { organizationId: scaleId, brief: `Jacket look ${i}`, status: "APPROVED", month: "2026-10", type: "IMAGE" } });
-    await db.creativeImage.create({ data: { creativeRequestId: req.id, version: 1, isFinal: true, imageData: PNG } });
-  }
+  await db.socialStrategy.create({ data: { organizationId: scaleId, goal: "INCREASE_SALES", platforms: ["INSTAGRAM", "FACEBOOK"], approvalMode: "AUTOPILOT", strategyJson: "{}" } });
+  const due = new Date(Date.now() - 60_000);
+  const [ig, fb] = await Promise.all([
+    db.instagramPost.create({ data: { organizationId: scaleId, caption: "New jackets are in", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: due, network: "INSTAGRAM" } }),
+    db.instagramPost.create({ data: { organizationId: scaleId, caption: "New jackets are in", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: due, network: "FACEBOOK" } }),
+  ]);
 
   try {
     console.log("\n— the database side —");
-    await check("Growth is refused; active Scale is allowed — read fresh each time", async () => {
-      assert.equal((await socialAccess(growthId)).ok, false);
-      assert.equal((await socialAccess(scaleId)).ok, true);
+    await check("an active earlier-Scale subscriber is refused, read fresh", async () => {
+      assert.equal((await socialAccess(scaleId)).ok, false);
     });
 
-    await check("the goal builds a strategy for this business (no AI key: MAIRO's playbook)", async () => {
-      const r = await setGoal(scaleId, { goal: "INCREASE_SALES", goalDetail: "We're launching a new collection Friday", platforms: ["INSTAGRAM"], postsPerWeek: 4 });
-      assert.equal(r.ai, false);
-      assert.ok(r.strategy.contentTypes.some((c) => c.type === "New arrivals"), "retail playbook");
-      const view = await loadStrategy(scaleId);
-      assert.equal(view?.approvalMode, "APPROVAL_REQUIRED", "approval required by default");
+    await check("approved posts that are due never go out, on either network", async () => {
+      // The first refusal pauses everything the business had waiting.
+      assert.equal((await publishPost(ig.id, { budgetMs: 2_000 })).status, "PAUSED");
+      assert.notEqual((await publishPost(fb.id, { budgetMs: 2_000 })).status, "PUBLISHED");
+      for (const p of [ig, fb]) {
+        const row = await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } });
+        assert.equal(row.status, "PAUSED", p.network);
+        assert.equal(row.postedAt, null);
+      }
     });
 
-    await check("planning a week: every post has a goal, a type and a reason; nothing is approved", async () => {
-      const r = await generatePlan(scaleId, {});
-      assert.ok(r.created >= 3, String(r.created));
-      const posts = await db.instagramPost.findMany({ where: { organizationId: scaleId } });
-      assert.ok(posts.every((p) => p.objective === "Sales" && p.contentType && p.rationale && /goal is to increase sales/i.test(p.rationale)));
-      assert.ok(posts.every((p) => p.status === "SUGGESTED" || p.status === "DRAFT"));
-      assert.ok(posts.every((p) => !p.approvedAt));
-      assert.ok(posts.some((p) => p.mediaRefs.length > 0), "uses the business's own pictures");
-      const again = await generatePlan(scaleId, {});
-      assert.equal(again.created, 0, "planning again doesn't double up");
-    });
-
-    await check("a sale is sequenced into the calendar, mixed with useful posts", async () => {
-      const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
-      await savePromotion(scaleId, "SALE", { offer: "Jacket sale", discount: "25% off", code: "COZY25", start: day(3), end: day(6) });
-      const r = await generatePlan(scaleId, { offsetDays: 0 });
-      const promo = await db.instagramPost.findMany({ where: { organizationId: scaleId, promotionId: { not: null } } });
-      assert.ok(promo.length >= 2, `promo posts ${promo.length} (created ${r.created})`);
-      assert.ok(promo.every((p) => p.sequenceStep && /Jacket sale/.test(p.objective ?? "")));
-      assert.ok(promo.some((p) => /COZY25|25% off/.test(p.caption)), "uses the real offer details");
-    });
-
-    await check("weekly approval approves only posts that have their picture", async () => {
-      const n = await approveWeek(scaleId);
-      assert.ok(n > 0);
-      const drafts = await db.instagramPost.count({ where: { organizationId: scaleId, status: "DRAFT", approvedAt: { not: null } } });
-      assert.equal(drafts, 0);
-    });
-
-    await check("Autopilot needs posts the business approved itself first", async () => {
-      assert.ok((await autopilotReady(scaleId)).ok, "the week just approved counts");
-      assert.equal((await autopilotReady(growthId)).ok, false);
-    });
-
-    await check("downgrade: scheduled posts pause, Autopilot is off, nothing is deleted or published", async () => {
-      await db.socialStrategy.update({ where: { organizationId: scaleId }, data: { approvalMode: "AUTOPILOT" } });
-      const before = await db.instagramPost.count({ where: { organizationId: scaleId } });
-      const scheduled = await db.instagramPost.findFirstOrThrow({ where: { organizationId: scaleId, status: "SCHEDULED" } });
-      await db.organization.update({ where: { id: scaleId }, data: { subscriptionTier: "GROWTH" } });
-      assert.equal(await pauseSocialIfLocked(scaleId), true);
-      assert.equal(await db.instagramPost.count({ where: { organizationId: scaleId, status: "SCHEDULED" } }), 0);
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: scheduled.id } })).status, "PAUSED");
-      assert.equal(await db.instagramPost.count({ where: { organizationId: scaleId } }), before, "history kept");
-      const view = await loadStrategy(scaleId);
-      assert.ok(view?.pausedAt);
-      assert.equal(view?.approvalMode, "APPROVAL_REQUIRED", "Autopilot switched off");
-      // Even if forced due, a paused account's post never goes out.
-      await db.instagramPost.update({ where: { id: scheduled.id }, data: { status: "SCHEDULED", scheduledFor: new Date(Date.now() - 1000) } });
-      const r = await publishPost(scheduled.id, { budgetMs: 2_000 });
-      assert.equal(r.status, "PAUSED");
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: scheduled.id } })).status, "PAUSED");
-      assert.equal((await generatePlan(scaleId, { offsetDays: 14 })).created >= 0, true);
-    });
-
-    await check("a cancelled Scale subscription is caught by the daily sweep too", async () => {
-      await db.organization.update({ where: { id: scaleId }, data: { subscriptionTier: "SCALE", subscriptionStatus: "canceled" } });
-      const p = await db.instagramPost.findFirstOrThrow({ where: { organizationId: scaleId, status: "PAUSED" } });
-      await db.instagramPost.update({ where: { id: p.id }, data: { status: "SCHEDULED" } });
+    await check("the daily sweep pauses what's left and turns Autopilot off — nothing deleted", async () => {
+      await db.instagramPost.update({ where: { id: ig.id }, data: { status: "SCHEDULED" } });
       const r = await pauseSocialSweep();
       assert.ok(r.organizations >= 1);
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).status, "PAUSED");
+      assert.equal(await db.instagramPost.count({ where: { organizationId: scaleId, status: "SCHEDULED" } }), 0);
+      assert.equal(await db.instagramPost.count({ where: { organizationId: scaleId } }), 2, "history kept");
+      const strategy = await db.socialStrategy.findUniqueOrThrow({ where: { organizationId: scaleId } });
+      assert.ok(strategy.pausedAt);
+      assert.equal(strategy.approvalMode, "APPROVAL_REQUIRED");
     });
 
-    await check("back on Scale, resuming: future posts return, missed ones need approval again", async () => {
-      await db.organization.update({ where: { id: scaleId }, data: { subscriptionStatus: "active" } });
-      const paused = await db.instagramPost.findMany({ where: { organizationId: scaleId, status: "PAUSED" } });
-      assert.ok(paused.length >= 2);
-      await db.instagramPost.update({ where: { id: paused[0].id }, data: { scheduledFor: new Date(Date.now() - 3_600_000) } });
-      await db.instagramPost.update({ where: { id: paused[1].id }, data: { scheduledFor: new Date(Date.now() + 3 * 86_400_000) } });
-      const r = await resumeSocial(scaleId);
-      assert.ok(r.rescheduled >= 1 && r.needApproval >= 1);
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: paused[0].id } })).status, "SUGGESTED");
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: paused[1].id } })).status, "SCHEDULED");
-      assert.equal((await loadStrategy(scaleId))?.pausedAt, null);
-    });
-
-    await check("on Autopilot, new posts with pictures are scheduled under the business's rules", async () => {
-      await db.socialStrategy.update({ where: { organizationId: scaleId }, data: { approvalMode: "AUTOPILOT" } });
-      await generatePlan(scaleId, { offsetDays: 21 });
-      const auto = await db.instagramPost.findMany({ where: { organizationId: scaleId, autoApproved: true } });
-      assert.ok(auto.length > 0 && auto.every((p) => p.status === "SCHEDULED" && p.mediaRefs.length > 0));
-    });
-
-    await check("likes and comments are read back and feed what MAIRO learns", async () => {
-      const demo = await db.metaAdAccount.findFirst();
-      await db.metaAdAccount.create({ data: { organizationId: scaleId, metaAdAccountId: `act_${TAG}`, pageId: "page1", pageName: "Threadline", accessToken: demo?.accessToken ?? "token", status: "CONNECTED" } });
-      const mk = (mediaId: string, contentType: string) =>
-        db.instagramPost.create({ data: { organizationId: scaleId, caption: "x", status: "PUBLISHED", mediaId, postedAt: new Date(), contentType } });
-      await mk(`${TAG}-m1`, "Testimonial");
-      await mk(`${TAG}-m2`, "Testimonial");
-      await mk(`${TAG}-m3`, "Offer");
-      await mk(`${TAG}-m4`, "Offer");
-      const n = await refreshMetrics(scaleId, { limit: 10 });
-      assert.equal(n, 4);
-      const row = await db.instagramPost.findFirstOrThrow({ where: { organizationId: scaleId, mediaId: `${TAG}-m1` } });
-      assert.equal(row.likeCount, 40);
-      assert.equal(row.commentCount, 3);
+    await check("the daily job no longer publishes or plans social posts", () => {
+      const cron = readFileSync("src/app/api/cron/launch/route.ts", "utf8");
+      assert.doesNotMatch(cron, /publishDuePosts|socialAutopilotRun/);
     });
   } finally {
     await db.organization.deleteMany({ where: { id: { startsWith: TAG } } });

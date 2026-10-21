@@ -1,25 +1,19 @@
 import { db } from "@/lib/db";
 import { entitlementsForTier } from "@/lib/entitlements";
-import { planFor } from "@/lib/plans";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 
-// Who may use MAIRO Social Manager: subscribers on the earlier Scale plan who
-// bought it, and nobody else. MAIRO no longer offers social media posting to
-// new customers — MAIRO Scale (SCALE_V2) doesn't include it — so the feature
-// stays only for the people already paying for it.
+// Who may use MAIRO Social Manager: nobody. MAIRO discontinued posting to a
+// business's own Instagram or Facebook profile (October 2026) — it runs
+// Facebook and Instagram ads. Meta never approved the posting permissions
+// (instagram_content_publish, pages_manage_posts), so the feature could not
+// publish for a customer anyway; switching it off for every plan, the earlier
+// Scale plan included, takes nothing away that worked. Saved posts and
+// history are kept in the database, never published.
 //
-// Stricter on purpose than the rest of the product's plan checks:
-//   - The tier must be the earlier Scale plan (SCALE). A plan row in the
-//     database that switched social_posting on for another tier still
-//     doesn't open it.
-//   - The subscription must be live (active, or a trialing week the
-//     customer gave a card for), whatever BILLING_ENFORCED says. The
-//     free-access fallback that lets everyone try ads while billing is off
-//     never reaches Social Manager.
-//   - Execution must not be stopped (an unpaid trial).
-//
-// Checked again on the server for every action and before every publish.
-// The screens use it too, but they are not the lock.
+// The rule below still requires a tier in SOCIAL_TIERS (now none), a live
+// subscription and no stopped execution, and every action and the publisher
+// still ask it on the server — so nothing can post even if a screen or job
+// were reached.
 
 export const LIVE_STATUSES = ["active", "trialing"] as const;
 
@@ -38,11 +32,11 @@ export type SocialAccessInput = {
   executionStoppedAt?: Date | null;
 };
 
-/** The tiers Social Manager belongs to: only the earlier Scale plan, for the people who bought it. */
-export const SOCIAL_TIERS: readonly SubscriptionTier[] = ["SCALE"];
+/** The tiers Social Manager belongs to: none — it was discontinued. */
+export const SOCIAL_TIERS: readonly SubscriptionTier[] = [];
 
 export const SOCIAL_UPGRADE_MESSAGE = "Social media posting isn't part of MAIRO's plans. MAIRO runs your Facebook and Instagram ads.";
-export const SOCIAL_PAUSED_MESSAGE = `Social Manager is paused: it was part of the earlier ${planFor("SCALE").name.replace(/ \(earlier plan\)$/, "")} plan, which this business isn't on now. Your existing content and history are saved, and nothing scheduled will be published.`;
+export const SOCIAL_PAUSED_MESSAGE = "MAIRO no longer posts to Instagram or Facebook profiles — it runs your Facebook and Instagram ads. Your saved posts and history are kept, and nothing will be published.";
 
 /** The rule, without the database — so it can be checked line by line. */
 export function socialAccessFrom(org: SocialAccessInput | null, flagGranted = true): SocialAccess {

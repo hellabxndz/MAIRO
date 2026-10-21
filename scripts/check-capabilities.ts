@@ -77,9 +77,10 @@ check("every usable free tool has its page content and its component on the tool
 check("working and partial capabilities are backed by a check suite or a live run", () => {
   for (const c of CAPABILITIES.filter((x) => x.status === "working" || x.status === "partial")) assert.ok(c.checks.length > 0 || c.verifiedLive, c.id);
 });
+// Retired features (TikTok, Google Ads, Social Manager) need nothing: they're not coming back as they were.
 check("unavailable capabilities have no customer route, and say what they still need", () => {
   for (const c of CAPABILITIES.filter((x) => x.status === "unavailable" && x.area === "Free tools")) assert.deepEqual(c.routes, [], c.id);
-  for (const c of CAPABILITIES.filter((x) => x.status === "unavailable" && x.id !== "tiktok" && x.id !== "google-ads" && x.area !== "Free tools")) assert.ok(c.needs.length > 0, c.id);
+  for (const c of CAPABILITIES.filter((x) => x.status === "unavailable" && !["tiktok", "google-ads", "social-manager"].includes(x.id) && x.area !== "Free tools")) assert.ok(c.needs.length > 0, c.id);
 });
 check("ids are unique", () => {
   const ids = CAPABILITIES.map((c) => c.id);

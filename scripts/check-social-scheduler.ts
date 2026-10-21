@@ -27,7 +27,7 @@ const calls: Call[] = [];
 let reelChecks = 0;
 let videoChecks = 0;
 let n = 0;
-let pagePosting = false;
+const pagePosting = false;
 const realFetch = globalThis.fetch;
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
@@ -128,114 +128,26 @@ async function main() {
     db.instagramPost.create({ data: { organizationId: orgId, caption: "Hello from the shop", status: "SCHEDULED", approvedAt: new Date(), scheduledFor: past, ...data } as never });
 
   try {
-    await check("a photo post is published, via a JPEG address Instagram can fetch", async () => {
-      const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
-      const r = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(r.status, "PUBLISHED");
-      const create = calls.find((c) => c.method === "POST" && c.path === "/ig1/media" && c.params.image_url?.includes(p.id));
-      assert.ok(create && create.params.image_url.endsWith(`/api/social/media/${p.id}/0`) && create.params.caption === "Hello from the shop");
-      const row = await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } });
-      assert.equal(row.status, "PUBLISHED");
-      assert.ok(row.permalink?.startsWith("https://instagram.com/p/"));
-    });
-
-    await check("a carousel sends each picture as an item, then one carousel", async () => {
-      const p = await mk({ mediaType: "CAROUSEL", mediaRefs: ["creative:a", "studio:b", "creative:c"] });
-      const before = calls.length;
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "PUBLISHED");
-      const mine = calls.slice(before).filter((c) => c.method === "POST" && c.path === "/ig1/media");
-      assert.equal(mine.filter((c) => c.params.is_carousel_item === "true").length, 3);
-      const parent = mine.find((c) => c.params.media_type === "CAROUSEL");
-      assert.ok(parent && parent.params.children.split(",").length === 3 && parent.params.caption);
-    });
-
-    await check("a Reel still processing waits for the next check, then publishes", async () => {
-      const p = await mk({ mediaType: "REEL", mediaRefs: [`video:${ad.id}`] });
-      const first = await publishPost(p.id, { budgetMs: 1_000 });
-      assert.equal(first.status, "CREATED");
-      const reelCall = calls.find((c) => c.params.media_type === "REELS");
-      assert.ok(reelCall && reelCall.params.video_url === "https://blob.example/v.mp4");
-      const second = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(second.status, "PUBLISHED");
-      assert.equal(calls.filter((c) => c.params.media_type === "REELS").length, 1, "the container is created once");
-    });
-
-    await check("future and unapproved posts are left alone by the runner", async () => {
-      const future = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:f"], scheduledFor: new Date(Date.now() + 86_400_000) });
-      const suggestion = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:s"], status: "SUGGESTED", approvedAt: null });
+    // Posting to Instagram and Facebook profiles was discontinued for every
+    // plan (lib/social/access.ts). Even an earlier-Scale subscriber with a
+    // connected Page and approved posts due now gets nothing published.
+    await check("nothing reaches Instagram or Facebook: due, approved posts are paused, no Graph write is made", async () => {
+      const posts = await Promise.all([
+        mk({ mediaType: "IMAGE", mediaRefs: ["creative:x"] }),
+        mk({ mediaType: "CAROUSEL", mediaRefs: ["creative:a", "creative:b"] }),
+        mk({ mediaType: "REELS", mediaRefs: [`ad:${ad.id}`] }),
+        mk({ network: "FACEBOOK", mediaType: "IMAGE", mediaRefs: ["creative:fb"] }),
+      ]);
+      calls.length = 0;
       await publishDuePosts({ organizationId: orgId, budgetMs: 10_000 });
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: future.id } })).status, "SCHEDULED");
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: suggestion.id } })).status, "SUGGESTED");
-    });
-
-    await check("without Scale, nothing is posted — it is paused", async () => {
-      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "GROWTH" } });
-      const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:g"] });
-      const r = await publishPost(p.id, { budgetMs: 5_000 });
-      // Paused, not failed: the content is kept for when Scale is back.
-      assert.equal(r.status, "PAUSED");
-      assert.match(r.message, /Scale/);
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).status, "PAUSED");
-      await db.organization.update({ where: { id: orgId }, data: { subscriptionTier: "SCALE" } });
-    });
-
-    await check("a free-plan account without a live subscription can't post", async () => {
-      await db.organization.update({ where: { id: orgId }, data: { paymentRequired: true, subscriptionStatus: "past_due" } });
-      const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:h"] });
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "PAUSED");
-      await db.organization.update({ where: { id: orgId }, data: { paymentRequired: false, subscriptionStatus: "active" } });
-    });
-
-    await check("Instagram's 25-a-day limit holds a post for the next check", async () => {
-      await db.instagramPost.createMany({ data: Array.from({ length: 25 }, () => ({ organizationId: orgId, caption: "x", status: "PUBLISHED" as const, postedAt: new Date() })) });
-      const p = await mk({ mediaType: "IMAGE", mediaRefs: ["creative:l"] });
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "SCHEDULED");
-      assert.match((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).error ?? "", /25 posts a day/);
-    });
-
-    const fb = (data: Record<string, unknown>) => mk({ network: "FACEBOOK", ...data });
-
-    await check("Facebook: without the Page-posting permission nothing is posted", async () => {
-      pagePosting = false;
-      const before = calls.length;
-      const p = await fb({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
-      const r = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(r.status, "FAILED");
-      assert.match(r.message, /permission to post on your Facebook Page/);
-      assert.ok(!calls.slice(before).some((c) => c.method === "POST"), "no posting calls");
-    });
-
-    await check("Facebook: a photo is posted as the Page (even past Instagram's daily limit)", async () => {
-      pagePosting = true;
-      const p = await fb({ mediaType: "IMAGE", mediaRefs: ["creative:x"] });
-      const r = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(r.status, "PUBLISHED");
-      const call = calls.find((c) => c.method === "POST" && c.path === "/page1/photos" && c.params.url?.includes(p.id));
-      assert.ok(call && call.params.access_token === "page-token" && call.params.message === "Hello from the shop" && call.params.published === "true");
-      const row = await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } });
-      assert.ok(row.mediaId?.startsWith("fb:page1_") && row.permalink?.startsWith("https://www.facebook.com/"));
-    });
-
-    await check("Facebook: a multi-photo post uploads each picture unpublished, then one post", async () => {
-      const p = await fb({ mediaType: "CAROUSEL", mediaRefs: ["creative:a", "studio:b", "creative:c"] });
-      const before = calls.length;
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "PUBLISHED");
-      const mine = calls.slice(before).filter((c) => c.method === "POST");
-      assert.equal(mine.filter((c) => c.path === "/page1/photos" && c.params.published === "false").length, 3);
-      const feed = mine.find((c) => c.path === "/page1/feed");
-      assert.ok(feed && JSON.parse(feed.params.attached_media).length === 3 && feed.params.message);
-    });
-
-    await check("Facebook: a video processing waits for the next check, then is live", async () => {
-      const p = await fb({ mediaType: "REEL", mediaRefs: [`video:${ad.id}`] });
-      const first = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(first.status, "CREATED");
-      assert.ok(calls.some((c) => c.path === "/page1/videos" && c.params.file_url === "https://blob.example/v.mp4"));
-      assert.equal((await publishPost(p.id, { budgetMs: 5_000 })).status, "CREATED", "still processing");
-      const third = await publishPost(p.id, { budgetMs: 5_000 });
-      assert.equal(third.status, "PUBLISHED");
-      assert.equal(calls.filter((c) => c.path === "/page1/videos").length, 1, "the video is handed over once");
-      assert.equal((await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } })).permalink, "https://www.facebook.com/page1/videos/vid1/");
+      for (const p of posts) {
+        const r = await publishPost(p.id, { budgetMs: 2_000 });
+        assert.notEqual(r.status, "PUBLISHED");
+        const row = await db.instagramPost.findUniqueOrThrow({ where: { id: p.id } });
+        assert.equal(row.status, "PAUSED", `${row.network} ${row.mediaType}`);
+        assert.equal(row.postedAt, null);
+      }
+      assert.equal(calls.filter((c) => c.method === "POST").length, 0, "no post to Graph");
     });
   } finally {
     await db.organization.deleteMany({ where: { id: { startsWith: TAG } } });

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { MetaApiError, graphApiVersion, metaGraphRequest, withGraphTransport } from "./client";
 import { loadMetaConnection } from "./connection";
-import { INSTAGRAM_SCOPES, PAGE_POSTING_SCOPE, metaScopes } from "./oauth";
+import { metaScopes } from "./oauth";
 import { metaAccountStatusMessage } from "@/lib/ad-platforms/billing";
 
 // The live Meta check: asks the real Graph API, with the real credentials and
@@ -289,62 +289,7 @@ export async function checkOrganizationMeta(organizationId: string, opts: { fetc
     });
   }
 
-  // 8. Posting (Social Manager): what Meta's second App Review needs to see.
-  // Meta grants instagram_basic, instagram_content_publish and
-  // pages_manage_posts to customers only after review, and won't take the
-  // submission until each has been used successfully — which people with a
-  // role on MAIRO's Meta app can do beforehand, by posting through MAIRO.
-  steps.push(await postingReadiness(organizationId, connection.pageId, granted, get));
-
   return redact(steps, [token, app, process.env.META_APP_SECRET]);
-}
-
-const POSTING_SCOPES = [...INSTAGRAM_SCOPES, PAGE_POSTING_SCOPE];
-
-async function postingReadiness(
-  organizationId: string,
-  pageId: string | null,
-  granted: Set<string>,
-  get: <T>(path: string, params?: Record<string, string | number>) => Promise<T>,
-): Promise<LiveStep> {
-  const have = POSTING_SCOPES.filter((s) => granted.has(s));
-  const missing = POSTING_SCOPES.filter((s) => !granted.has(s));
-  const [instagramPosts, facebookPosts] = await Promise.all([
-    db.instagramPost.count({ where: { organizationId, network: "INSTAGRAM", status: "PUBLISHED" } }),
-    db.instagramPost.count({ where: { organizationId, network: "FACEBOOK", status: "PUBLISHED" } }),
-  ]);
-  if (have.length === 0 && instagramPosts + facebookPosts === 0) {
-    return { key: "posting", label: "Ready for posting", state: "skip", detail: `Posting isn't set up for this business: none of ${POSTING_SCOPES.join(", ")} granted.` };
-  }
-
-  let instagram = "Instagram: not checked (needs instagram_basic).";
-  let linked = false;
-  if (pageId && granted.has("instagram_basic")) {
-    try {
-      const r = await get<{ instagram_business_account?: { id?: string; username?: string } }>(`/${pageId}`, { fields: "instagram_business_account{id,username}" });
-      linked = Boolean(r.instagram_business_account?.id);
-      instagram = linked
-        ? `Instagram: @${r.instagram_business_account?.username ?? r.instagram_business_account?.id} is linked to the Page.`
-        : "Instagram: no professional (Business or Creator) account is linked to the Page — link one in the Instagram app or Meta Business Suite.";
-    } catch (e) {
-      instagram = `Instagram: couldn't check (${message(e)}).`;
-    }
-  } else if (!pageId) {
-    instagram = "Instagram: no Page chosen yet.";
-  }
-
-  const ready = missing.length === 0 && linked && instagramPosts > 0 && facebookPosts > 0;
-  return {
-    key: "posting",
-    label: "Ready for posting",
-    state: ready ? "pass" : "warn",
-    detail: [
-      missing.length ? `Missing ${missing.join(", ")} — use Connect Instagram and Allow posting on Facebook in Social Manager.` : `Granted: ${POSTING_SCOPES.join(", ")}.`,
-      instagram,
-      `Published through MAIRO: ${instagramPosts} on Instagram, ${facebookPosts} on Facebook.`,
-      ready ? "Each posting permission has been used successfully." : "Meta wants each permission used successfully at least once before the review is submitted.",
-    ].join(" "),
-  };
 }
 
 /** Every connected business, a few at a time so a slow Meta can't hold the page forever. */

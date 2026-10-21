@@ -46,7 +46,7 @@ async function main() {
 
   ok(`${TOP.name}: unlimited campaigns`, !Number.isFinite(scale.campaign_limit), `${scale.campaign_limit}`);
   ok(`${TOP.name}: Autopilot`, scale.auto_optimize && scale.autopilot);
-  ok(`${TOP.name}: posts to Instagram`, scale.social_posting);
+  ok(`${TOP.name}: no social posting (discontinued for every plan)`, !scale.social_posting);
 
   // The whole point of three plans: each step up buys something real.
   ok("each plan gives more image credits than the last",

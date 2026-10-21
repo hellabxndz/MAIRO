@@ -206,11 +206,12 @@ export const LEGACY_PLANS: Plan[] = [
     tagline: "Your AI advertising + marketing manager.",
     spendGuidance: "An earlier plan",
     limits: { campaigns: Infinity, creativesPerMonth: 100 },
-    headline: "Adds MAIRO Social Manager",
+    // MAIRO Social Manager was part of this plan; social posting was
+    // discontinued for every plan in October 2026 (lib/social/access.ts).
+    headline: "Adds Full Autopilot",
     inherits: "Growth",
     legacy: true,
     features: [
-      "MAIRO Social Manager",
       "Full Autopilot, when you switch it on",
       "Unlimited campaigns",
       "400 AI image credits a month (about 80 pictures)",

@@ -36,20 +36,13 @@ console.log("\n— posting is only for subscribers on the earlier Scale plan —
   ok("no plan: no", !DEFAULT_ENTITLEMENTS.NONE.social_posting);
   ok("MAIRO Pro: no", !DEFAULT_ENTITLEMENTS.PRO.social_posting);
   ok(`${TOP.name}: no — social posting isn't sold any more`, !DEFAULT_ENTITLEMENTS.SCALE_V2.social_posting);
-  // The earlier plans keep exactly what they had: only the earlier Scale.
-  ok("Starter (earlier): no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
-  ok("Growth (earlier): no", !DEFAULT_ENTITLEMENTS.GROWTH.social_posting);
-  ok("Scale (earlier): yes, as bought", DEFAULT_ENTITLEMENTS.SCALE.social_posting);
-  ok("Studio: no", !DEFAULT_ENTITLEMENTS.STUDIO.social_posting);
-  ok("Agency: no", !DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
-
+  // Discontinued for every plan (October 2026), the earlier Scale included.
   const withPosting = ALL_PLANS.map((p) => p.tier).filter((t) => DEFAULT_ENTITLEMENTS[t].social_posting);
-  ok("only the earlier Scale plan includes it", withPosting.join(",") === "SCALE", withPosting.join(","));
-  ok("and the access rule names exactly that", SOCIAL_TIERS.join(",") === "SCALE", SOCIAL_TIERS.join(","));
-  ok("MAIRO Pro is refused at the gate", !socialAccessFrom({ subscriptionTier: "PRO", subscriptionStatus: "active" }).ok);
-  ok(`${TOP.name}, active, is refused`, !socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "active" }).ok);
-  ok("the earlier Scale, past due, is paused", !socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "past_due" }).ok);
-  ok("the earlier Scale keeps it", socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active" }).ok);
+  ok("no plan includes social posting", withPosting.length === 0, withPosting.join(","));
+  ok("and the access rule names no plan", SOCIAL_TIERS.length === 0, SOCIAL_TIERS.join(","));
+  for (const tier of ["PRO", "SCALE_V2", "SCALE", "STARTER", "GROWTH", "STUDIO", "AGENCY"] as const) {
+    ok(`${tier}, active, is refused`, !socialAccessFrom({ subscriptionTier: tier, subscriptionStatus: "active" }).ok);
+  }
 }
 
 console.log("\n— the pricing cards say the same thing the code does —");

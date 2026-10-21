@@ -130,16 +130,26 @@ export async function fetchPerformance(input: {
   };
 }
 
-function friendlyInsightsError(error: unknown): string {
+/**
+ * What a failed Insights read means for the customer, from Meta's own error
+ * code ("(code 17, subcode 2446079)", see describeGraphError) rather than any
+ * digits that happen to appear in the message — a subcode like 1487190 used to
+ * read as an expired session and send people to reconnect for nothing.
+ */
+export function friendlyInsightsError(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error);
+  const code = Number(raw.match(/\(code (\d+)/)?.[1] ?? NaN);
 
-  if (/expired|session|OAuthException|190/i.test(raw)) {
+  // 190: the access token is invalid or expired.
+  if (code === 190 || /access token|session has expired|session is invalid/i.test(raw)) {
     return "Meta needs you to reconnect your ad account — the connection has expired.";
   }
-  if (/rate limit|too many|17|4$/i.test(raw)) {
+  // 4, 17, 32, 613 and 80000–80014: Meta's request and ads-API rate limits.
+  if ([4, 17, 32, 613].includes(code) || (code >= 80000 && code <= 80014) || /rate limit|too many calls|request limit reached/i.test(raw)) {
     return "Meta is rate limiting us. These numbers will fill in shortly.";
   }
-  if (/permission|OAuthException|200/i.test(raw)) {
+  // 10 and 200–299: a permission MAIRO doesn't have for this account.
+  if (code === 10 || (code >= 200 && code < 300) || /permission/i.test(raw)) {
     return "We don't have permission to read results for this campaign.";
   }
   return "Couldn't read results from Meta just now.";

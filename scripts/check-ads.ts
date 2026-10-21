@@ -54,6 +54,7 @@ import {
   priceToCents,
 } from "@/lib/catalog/scan";
 import { NICHES, primaryAction } from "@/lib/tracking/niches";
+import { friendlyInsightsError } from "@/lib/meta/performance";
 
 let bad = 0;
 const ok = (n: string, c: boolean, x = "") => {
@@ -688,29 +689,39 @@ console.log("\n— the permissions the login dialog asks for —");
 
   delete process.env.META_SCOPES;
 
-  // Facebook Page posting (Scale) is its own, later dialog — the everyday one
-  // (and the one recorded for App Review) must not grow a permission.
+  // Posting to a business's own Instagram or Facebook Page was discontinued:
+  // the connect dialog asks for the ads permissions only, and the posting
+  // permissions can't be asked for at all — not even through META_SCOPES.
   const hadApp = process.env.META_APP_ID;
   process.env.META_APP_ID = hadApp || "123";
   const everyday = new URL(buildMetaAuthUrl("s")).searchParams;
-  const posting = new URL(buildMetaAuthUrl("s", { pagePosting: true })).searchParams;
-  ok("the everyday connect doesn't ask to post on the Page", !everyday.get("scope")!.includes("pages_manage_posts") && !everyday.get("auth_type"));
-  ok("saying yes to Facebook posting asks for it, on top of the rest", posting.get("scope")!.split(",").includes("pages_manage_posts") && posting.get("scope")!.includes("ads_management") && posting.get("auth_type") === "rerequest");
-  process.env.META_SCOPES = "pages_manage_posts";
-  ok("and it's a name META_SCOPES accepts, for its own review round", metaScopes().join() === "pages_manage_posts");
+  ok("the connect dialog asks for exactly what Meta approved for ads", everyday.get("scope") === "ads_management,pages_show_list,pages_read_engagement,business_management" && !everyday.get("auth_type"), everyday.get("scope")!);
+  ok("and nothing for posting", !/pages_manage_posts|instagram_/.test(everyday.get("scope")!));
+  for (const posting of ["pages_manage_posts", "instagram_basic,instagram_content_publish"]) {
+    process.env.META_SCOPES = posting;
+    let refusedPosting = "";
+    try {
+      metaScopes();
+    } catch (error) {
+      refusedPosting = error instanceof Error ? error.message : String(error);
+    }
+    ok(`META_SCOPES can't ask for ${posting}`, refusedPosting.length > 0, refusedPosting);
+  }
   delete process.env.META_SCOPES;
-
-  // Instagram posting (Scale) is its own dialog too. Facebook refuses a whole
-  // login naming a permission the app isn't set up for, so having Instagram
-  // in the everyday dialog put an error page in front of every ad connect.
-  ok("the everyday connect doesn't ask for Instagram", !everyday.get("scope")!.includes("instagram_"), everyday.get("scope")!);
-  ok("and asks for exactly what Meta approved", everyday.get("scope") === "ads_management,pages_show_list,pages_read_engagement,business_management", everyday.get("scope")!);
-  const ig = new URL(buildMetaAuthUrl("s", { instagram: true })).searchParams;
-  ok("connecting Instagram asks for its two permissions, on top of the rest", ["instagram_basic", "instagram_content_publish", "ads_management"].every((x) => ig.get("scope")!.split(",").includes(x)) && ig.get("auth_type") === "rerequest", ig.get("scope")!);
-  process.env.META_SCOPES = "instagram_basic,instagram_content_publish";
-  ok("and they're names META_SCOPES accepts", metaScopes().length === 2);
-  delete process.env.META_SCOPES;
+  const again = new URL(buildMetaAuthUrl("s", { rerequest: true })).searchParams;
+  ok("reconnecting after switching a permission off asks again", again.get("auth_type") === "rerequest");
   if (hadApp === undefined) delete process.env.META_APP_ID;
+}
+
+console.log("\n— a failed results read is explained by Meta's code, not stray digits —");
+{
+  const say = (m: string) => friendlyInsightsError(new Error(m));
+  ok("an expired token asks to reconnect", /reconnect/.test(say("Error validating access token: Session has expired (code 190, subcode 463)")));
+  ok("a rate limit says it'll fill in", /rate limiting/.test(say("User request limit reached (code 17, subcode 2446079)")));
+  ok("an ads-API limit too", /rate limiting/.test(say("There have been too many calls from this ad-account (code 80004, subcode 2446079)")));
+  ok("a missing permission says so", /permission/.test(say("(#200) Requires ads_read permission (code 200)")));
+  ok("a subcode containing 190 isn't an expired session", !/reconnect/.test(say("Invalid parameter (code 100, subcode 1487190)")));
+  ok("a year containing 17 isn't a rate limit", !/rate limiting/.test(say("Unsupported request for 2017 data (code 100)")));
 }
 
 console.log("\n— a click has somewhere to go —");
