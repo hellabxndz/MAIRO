@@ -16,6 +16,9 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
   // own error, from the last password attempt, takes over once there is one.
   const redirectError = signInErrorMessage(searchParams.get("error"));
   const error = state?.error ?? redirectError;
+  // Back from "choose a new password": say it worked and fill in the address.
+  const resetDone = searchParams.get("reset") === "1";
+  const resetEmail = resetDone ? (searchParams.get("email") ?? undefined) : undefined;
 
   return (
     <div>
@@ -31,9 +34,20 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
           inputMode="email"
           autoComplete="email"
           placeholder="you@business.com"
-          defaultValue={state?.values?.email}
+          defaultValue={state?.values?.email ?? resetEmail}
         />
         <PasswordField autoComplete="current-password" />
+        <p className="-mt-2 text-right text-[13px]">
+          <Link href="/forgot-password" className="text-neutral-400 underline-offset-4 hover:text-white hover:underline">
+            Forgot your password?
+          </Link>
+        </p>
+
+        {resetDone && !error && (
+          <p role="status" className="rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2 text-[13.5px] text-emerald-300">
+            Your password has been changed. Sign in with the new one.
+          </p>
+        )}
 
         {error && (
           <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/[0.06] px-3 py-2 text-[13.5px] text-red-400">

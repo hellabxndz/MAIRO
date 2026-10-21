@@ -19,8 +19,8 @@ enum UserRole {
 }
 
 model User {
-  id              String        @id @default(cuid())
-  email           String        @unique
+  id              String               @id @default(cuid())
+  email           String               @unique
   /// Null for someone who only ever signed in with Google. The credentials
   /// provider refuses an account without one, so it can't be signed into with
   /// an empty password.
@@ -28,9 +28,9 @@ model User {
   /// The Google account's stable id (the OIDC `sub`), set the first time this
   /// person continues with Google. Matched before email, so a later change of
   /// address at Google still finds the same MAIRO account.
-  googleId        String?       @unique
+  googleId        String?              @unique
   name            String?
-  role            UserRole      @default(CLIENT)
+  role            UserRole             @default(CLIENT)
   /// When this person finished — or skipped — the walkthrough.
   ///
   /// On the account rather than in the browser, which is the whole point. It
@@ -39,12 +39,13 @@ model User {
   /// site data — and it was shared between two accounts used on one browser,
   /// so the second person to sign in never got shown it at all.
   tourCompletedAt DateTime?
-  organization    Organization? @relation(fields: [organizationId], references: [id])
+  organization    Organization?        @relation(fields: [organizationId], references: [id])
   organizationId  String?
   agentThreads    AgentThread[]
   memberships     OrganizationMember[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  passwordResets  PasswordReset[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 /// What one person may do in one business — see lib/members/roles.ts for each
@@ -266,7 +267,7 @@ model Organization {
   /// building, changing budgets, launching and creative generation always
   /// need a paid (or trialing) subscription, whatever BILLING_ENFORCED says.
   /// Older accounts, and the Meta App Review account, follow BILLING_ENFORCED.
-  paymentRequired        Boolean   @default(false)
+  paymentRequired        Boolean      @default(false)
   /// Answers on the setup screens before they're finished (OnboardingDraft),
   /// so leaving halfway — or a failed save — loses nothing. Cleared once the
   /// intake is saved.
@@ -276,7 +277,7 @@ model Organization {
   freeAdPlans            FreeAdPlan[]
   /// Whether a payment has ever gone through. A subscription that ends or
   /// fails before this is true never paid — its ads are stopped.
-  hasPaid                Boolean   @default(false)
+  hasPaid                Boolean      @default(false)
   /// When MAIRO stopped everything because the trial ended unpaid (or was
   /// cancelled before any payment), and why. Cleared by a new subscription.
   executionStoppedAt     DateTime?
@@ -3710,17 +3711,17 @@ model OwnerVideoRevision {
   /// The edits written into a new video file (lib/suggested-ads/render.ts).
   /// Null until asked for; RENDERING while it's being made; READY with the
   /// file; FAILED with the reason. The uploaded original is never changed.
-  renderStatus     String?
-  renderStartedAt  DateTime?
-  renderedAt       DateTime?
-  renderedUrl      String?
-  renderedPosterUrl String?
+  renderStatus       String?
+  renderStartedAt    DateTime?
+  renderedAt         DateTime?
+  renderedUrl        String?
+  renderedPosterUrl  String?
   renderedDurationMs Int?
-  renderedWidth    Int?
-  renderedHeight   Int?
-  renderedBytes    Int?
-  renderError      String?   @db.Text
-  renderAttempts   Int       @default(0)
+  renderedWidth      Int?
+  renderedHeight     Int?
+  renderedBytes      Int?
+  renderError        String?   @db.Text
+  renderAttempts     Int       @default(0)
 
   @@unique([videoId, version])
   @@index([organizationId])
@@ -3938,4 +3939,20 @@ model TrackingVerification {
   checkedAt      DateTime     @default(now())
 
   @@index([organizationId, check, checkedAt])
+}
+
+/// A "forgot your password?" link, emailed to the account's address. Only a
+/// hash of the token is stored, so a copy of the database can't be used to
+/// reset anyone's password. Good for an hour and for one use; a new password
+/// spends every outstanding link for that account.
+model PasswordReset {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }

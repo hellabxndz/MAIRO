@@ -39,6 +39,19 @@ export async function takeLoginAttempt(email: string, ip: string | null, now = D
   return account && visitor;
 }
 
+export const RESET_WINDOW_MS = 60 * 60 * 1000;
+export const RESET_REQUESTS_PER_ACCOUNT = 3;
+export const RESET_REQUESTS_PER_VISITOR = 10;
+
+/** Counts one "forgot your password?" request: a few an hour, so it can't be used to flood someone's inbox. */
+export async function takeResetRequest(email: string, ip: string | null, now = Date.now()): Promise<boolean> {
+  const window = Math.floor(now / RESET_WINDOW_MS);
+  const windowStart = new Date(window * RESET_WINDOW_MS);
+  const account = await take(`reset:acct:${hash(email.trim().toLowerCase())}:${window}`, RESET_REQUESTS_PER_ACCOUNT, windowStart);
+  const visitor = await take(`reset:ip:${hash(ip ?? "?")}:${window}`, RESET_REQUESTS_PER_VISITOR, windowStart);
+  return account && visitor;
+}
+
 /** The client's address as the hosting saw it (Vercel sets x-forwarded-for). */
 export function requestIp(request: Request | undefined): string | null {
   return request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request?.headers.get("x-real-ip") || null;

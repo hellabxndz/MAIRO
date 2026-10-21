@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { AuthError, CredentialsSignin } from "next-auth";
 import { LOGIN_LIMIT_MESSAGE } from "@/lib/login-throttle";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
 import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
 import { ownerSetupTokenIsValid } from "@/lib/owner-setup-token";
@@ -368,4 +370,26 @@ export async function googleSignInAction(rawMode: unknown, formData: FormData): 
 export async function signOutAction() {
   await signOut({ redirectTo: "/" });
   redirect("/");
+}
+
+/** "Forgot your password?": the same answer whether or not the address has an account. */
+export type ResetRequestState = { error?: string; field?: string; values?: Record<string, string>; sent?: boolean } | undefined;
+
+export async function requestPasswordResetAction(_prev: ResetRequestState, formData: FormData): Promise<ResetRequestState> {
+  const address = normalizeEmail(String(formData.get("email") ?? ""));
+  if (!address || !z.string().email().safeParse(address).success) {
+    return { error: "Enter the email address you sign in with.", field: "email", values: { email: address } };
+  }
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
+  const result = await requestPasswordReset(address, ip);
+  if (!result.ok) return { error: result.error, values: { email: address } };
+  return { sent: true, values: { email: address } };
+}
+
+/** Sets the new password from a reset link, then sends the person to sign in with it. */
+export async function resetPasswordAction(_prev: AuthActionState, formData: FormData): Promise<AuthActionState> {
+  const result = await resetPassword(String(formData.get("token") ?? ""), String(formData.get("password") ?? ""), String(formData.get("confirm") ?? ""));
+  if (!result.ok) return { error: result.error, field: result.field };
+  redirect(`/sign-in?reset=1&email=${encodeURIComponent(result.email)}`);
 }

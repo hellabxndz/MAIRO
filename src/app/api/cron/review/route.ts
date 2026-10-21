@@ -16,6 +16,7 @@ import { syncAllBrands } from "@/lib/brands";
 import { runAllPlatformIntelligence } from "@/lib/platform-intelligence/registry";
 import { sweepOrphanedFiles } from "@/lib/account/close";
 import { sweepUnclaimedPlans } from "@/lib/preview/saved-plan-store";
+import { sweepPasswordResets } from "@/lib/password-reset";
 import { ORGANIZATION_FOLDERS, deleteFilesUnder, organizationFolderIds } from "@/lib/storage/blob";
 
 // The backstop for a safety check that couldn't run.
@@ -167,6 +168,12 @@ export async function GET(req: Request) {
       console.error("Usage counter sweep failed:", error instanceof Error ? error.name : "unknown");
       return null;
     });
+  const resetLinks = await sweepPasswordResets()
+    .then((r) => r.count)
+    .catch((error) => {
+      console.error("Password reset sweep failed:", error instanceof Error ? error.name : "unknown");
+      return null;
+    });
 
   // Creatives whose safety check couldn't run (see above), as many as the
   // time left allows — each is a model call made in sequence. A backlog that
@@ -187,5 +194,5 @@ export async function GET(req: Request) {
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, ms: Date.now() - startedAt });
+  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, resetLinks, ms: Date.now() - startedAt });
 }

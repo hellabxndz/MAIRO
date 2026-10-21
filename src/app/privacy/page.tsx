@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
+import { emailConfigured } from "@/lib/email/send";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · MAIRO",
@@ -164,6 +165,10 @@ export default function PrivacyPage() {
               it. Also used if you sign in with Google or connect Google Tag Manager.</>,
             <><strong className="text-neutral-200">Twilio</strong> — sends text alerts, only if you turn
               them on.</>,
+            ...(emailConfigured()
+              ? [<><strong className="text-neutral-200">Resend</strong> — sends account emails, such as a
+                  password-reset link. Your email address and the message are sent to deliver them.</>]
+              : []),
             <><strong className="text-neutral-200">Neon</strong> — hosts our database.</>,
             <><strong className="text-neutral-200">Vercel</strong> — hosts and serves the application, and
               stores the pictures and videos you upload.</>,

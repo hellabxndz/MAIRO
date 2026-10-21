@@ -75,6 +75,7 @@
     "check:instagram": "tsx scripts/check-instagram.ts",
     "check:consult": "tsx scripts/check-consult.ts",
     "check:hardening-db": "tsx scripts/check-hardening-db.ts",
+    "check:password-reset": "tsx scripts/check-password-reset.ts",
     "check:domain": "tsx scripts/check-domain.ts",
     "check:trust-db": "tsx scripts/check-trust-db.ts",
     "check:signup": "tsx scripts/check-signup.ts",
