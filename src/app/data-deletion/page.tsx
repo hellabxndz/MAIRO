@@ -8,7 +8,7 @@ import { closePlan } from "@/lib/account/close";
 import { DeleteAccountButton } from "./delete-account-button";
 
 export const metadata: Metadata = {
-  title: "Delete your data · MAIRO",
+  title: "Delete your data",
   description: "How to remove your MAIRO account and everything we hold about you.",
 };
 

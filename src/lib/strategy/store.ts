@@ -170,7 +170,7 @@ export async function createStrategy(organizationId: string): Promise<{ ok: true
     agent: "STRATEGIST",
     task: "write-plan",
     status: "DONE",
-    summary: `Wrote your advertising plan: ${GOAL_LABEL[plan.goal].toLowerCase()}, about ${usd(plan.dailyBudget)} a day — waiting for your approval.`,
+    summary: `Wrote your advertising plan: ${GOAL_LABEL[plan.goal].toLowerCase()}, about ${usd(plan.dailyBudget)} a day, for you to approve.`,
     detail: plan.summary || null,
     href: "/plan",
   });

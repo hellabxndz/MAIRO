@@ -4,7 +4,7 @@ import { LEGAL } from "@/lib/legal";
 import { emailConfigured } from "@/lib/email/send";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy · MAIRO",
+  title: "Privacy Policy",
   description: "What MAIRO collects, why, and how to have it deleted.",
 };
 

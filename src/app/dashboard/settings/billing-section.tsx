@@ -33,16 +33,22 @@ export function BillingSection({
   status,
   periodEnd,
   hasCustomer,
+  paymentRequired,
 }: {
   tier: SubscriptionTier;
   status: string | null;
   periodEnd: Date | null;
   hasCustomer: boolean;
+  paymentRequired: boolean;
 }) {
   const configured = billingConfigured();
   const buyable = configured ? purchasableTiers() : [];
-  const current = planFor(tier);
   const subscribed = tier !== "NONE" && statusEntitles(status);
+  // Open without a plan only during launch, and only for an account that
+  // hasn't finished setup — one that has must choose a plan to run ads, so it
+  // is told so rather than shown the launch default as if it were its plan.
+  const open = !billingEnforced() && !paymentRequired;
+  const current = subscribed || open ? planFor(tier) : null;
   const note = statusLine(status, periodEnd);
 
   return (
@@ -56,17 +62,20 @@ export function BillingSection({
 
       <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-medium">{current.name}</p>
-          {current.priceMonthly > 0 && (
+          <p className="font-medium">{current?.name ?? "No plan yet"}</p>
+          {/* A price only for what's actually being paid: the launch default isn't on sale. */}
+          {subscribed && current && current.priceMonthly > 0 && (
             <p className="text-sm text-neutral-400">${current.priceMonthly}/month</p>
           )}
         </div>
         <p className="mt-1 text-sm text-neutral-500">
-          {campaignLimitText(current.limits.campaigns)} at a time · {creativeRequestText(current.limits.creativesPerMonth)}
+          {current
+            ? `${campaignLimitText(current.limits.campaigns)} at a time · ${creativeRequestText(current.limits.creativesPerMonth)}`
+            : "Choose MAIRO Pro or MAIRO Scale to start running ads."}
         </p>
         {note && <p className="mt-3 text-sm text-neutral-400">{note}</p>}
 
-        {!billingEnforced() && !subscribed && (
+        {open && !subscribed && (
           <p className="mt-3 text-xs leading-relaxed text-neutral-600">
             While MAIRO is in launch, everything is open and nothing is charged. Plans are
             here when you want to support it or need higher limits.

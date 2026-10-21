@@ -21,6 +21,8 @@ export default function PricingPage() {
     <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-paper text-white`}>
       <LandingNav toolsLive={toolsLive} />
       <main className="pt-6">
+        {/* The block's visible heading is an h2 (it's a section of the homepage too). */}
+        <h1 className="sr-only">MAIRO pricing: MAIRO Pro and MAIRO Scale</h1>
         <PricingBlock cta={{ href: "/preview", label: "Build My Free AI Ad Plan" }} />
         <FaqBlock />
       </main>

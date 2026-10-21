@@ -4,7 +4,7 @@ import { LEGAL } from "@/lib/legal";
 import { PRO_TRIAL_DAYS } from "@/lib/plans";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · MAIRO",
+  title: "Terms of Service",
   description: "The agreement between you and MAIRO.",
 };
 

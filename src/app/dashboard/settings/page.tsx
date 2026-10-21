@@ -41,6 +41,7 @@ export default async function SettingsPage() {
         currentPeriodEnd: true,
         stripeCustomerId: true,
         assistantName: true,
+        paymentRequired: true,
       },
     }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
@@ -109,6 +110,7 @@ export default async function SettingsPage() {
         status={organization.subscriptionStatus}
         periodEnd={organization.currentPeriodEnd}
         hasCustomer={Boolean(organization.stripeCustomerId)}
+        paymentRequired={organization.paymentRequired}
       />
     </div>
   );
