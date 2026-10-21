@@ -887,7 +887,7 @@ export async function setCampaignDestinationAction(
  */
 export async function approveCampaignAction(
   mairoCampaignId: string,
-): Promise<{ error?: string } | undefined> {
+): Promise<{ error?: string; reviewing?: string } | undefined> {
   // Role check: launch.approve (lib/members/roles.ts).
   const denied = await deniedFor("launch.approve");
   if (denied) return { error: denied };
@@ -926,6 +926,11 @@ export async function approveCampaignAction(
         outcome.heldBecause ??
         "Not live yet — the network is still reviewing this campaign. MAIRO switches it on the moment that clears, without you having to come back.",
     };
+  }
+  // Switched on, but "live" is Meta's word to give: until its review approves
+  // the ad, say that it's switched on and waiting.
+  if (outcome.delivering.length === 0) {
+    return { reviewing: "Switched on. Meta is reviewing the ad before it delivers, usually within a day — MAIRO tells you as soon as Meta answers." };
   }
   return undefined;
 }

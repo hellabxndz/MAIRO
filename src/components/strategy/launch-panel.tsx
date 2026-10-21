@@ -69,7 +69,7 @@ export function LaunchPanel({
 
       {done ? (
         <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-[14px] ${done.live ? "border border-emerald-400/30 bg-emerald-400/[0.06] text-white" : "bg-white/[0.04] text-white/90"}`}>
-          {done.live ? done.message ?? `Meta confirmed “${name}” is live. MAIRO is now watching how it does.` : done.message}
+          {done.live ? done.message ?? `Meta approved the ad and “${name}” is live. MAIRO is now watching how it does.` : done.message}
         </p>
       ) : (
         <>

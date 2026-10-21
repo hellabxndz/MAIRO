@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
+import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import { loadJourney, type JourneyStep } from "@/lib/strategy/journey";
 import { GOAL_LABEL, agesText, campaignTypeInfo, platformsText, usd } from "@/lib/strategy/plan-logic";
 import { buildFromPlanAction } from "@/lib/actions/strategy-actions";
@@ -43,6 +44,8 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
   if (!row) redirect("/dashboard");
   if (row.status !== "APPROVED" && !row.activatedAt) redirect("/plan");
 
+  // Meta's latest word on the ad, so "live" is said only once Meta approves it.
+  await syncAdReviews(organizationId).catch(() => 0);
   const journey = await loadJourney(organizationId, { checkFunding: true });
   if (!journey) redirect("/plan");
   const [steps, work, org] = await Promise.all([
@@ -69,15 +72,29 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
   const { plan } = journey;
 
   if (journey.next === "live") {
+    const delivering = journey.campaign?.reviewState === "APPROVED";
+    const rejected = journey.campaign?.reviewState === "REJECTED" || journey.campaign?.reviewState === "WITH_ISSUES";
     return (
       <div className="mx-auto max-w-[900px]">
         {steps && <SetupProgress steps={steps} />}
         <div className={`${card} mt-6 p-6 sm:p-8`}>
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> Live
-          </span>
+          {delivering ? (
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> Live
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-200">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-amber-300" /> {rejected ? "Needs a fix" : "In Meta's review"}
+            </span>
+          )}
           <h1 className="mt-3 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Welcome to your full MAIRO dashboard.</h1>
-          <p className="mt-2 text-[15px] text-muted">Meta confirmed your first campaign is live. MAIRO is now monitoring performance.</p>
+          <p className="mt-2 text-[15px] text-muted">
+            {delivering
+              ? "Meta approved your first campaign's ad and it's delivering. MAIRO is now monitoring performance."
+              : rejected
+                ? "Your first campaign is switched on, but Meta hasn't approved its ad, so it isn't delivering. The campaign page says why and what to change."
+                : "Your first campaign is switched on. Meta reviews new ads before they deliver, usually within a day; MAIRO tells you as soon as Meta answers."}
+          </p>
           <p className="mt-1 text-[13px] text-faint">The first numbers usually arrive from Meta within a few hours; until then your dashboard says it&rsquo;s collecting data rather than showing anything made up.</p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link href="/dashboard" className="inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">Open my dashboard</Link>

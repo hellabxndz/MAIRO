@@ -1,3 +1,4 @@
+import { syncAdReviews } from "@/lib/campaigns/ad-review-sync";
 import { recordRun } from "@/lib/team/runs";
 import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
@@ -53,11 +54,17 @@ export type AutoLaunchOutcome = {
   launched: boolean;
   /** Campaigns switched on, by name. */
   names: string[];
+  /**
+   * Of those, the ones Meta confirms are approved and delivering. Switching a
+   * campaign on isn't the same as it delivering: Meta reviews a new ad first,
+   * so a campaign is only called live once Meta says its ad is ACTIVE.
+   */
+  delivering: string[];
   /** Why nothing happened. Null when something did, or when nothing was due. */
   heldBecause: string | null;
 };
 
-const NOTHING: AutoLaunchOutcome = { launched: false, names: [], heldBecause: null };
+const NOTHING: AutoLaunchOutcome = { launched: false, names: [], delivering: [], heldBecause: null };
 
 /**
  * Switches on anything that is ready, if the account is.
@@ -187,6 +194,7 @@ export async function maybeGoLive(
   }
 
   const names: string[] = [];
+  const switchedOn: string[] = [];
 
   for (const child of due) {
     if (budget === 0) break;
@@ -237,6 +245,7 @@ export async function maybeGoLive(
     });
 
     names.push(child.mairoCampaign.name);
+    switchedOn.push(child.id);
     budget--;
   }
 
@@ -251,16 +260,28 @@ export async function maybeGoLive(
   // The funnel's last recorded step: Meta has switched a campaign on.
   await recordOnce("first_launch", organizationId);
 
+  // What Meta says about the ads now, read back rather than assumed: Meta
+  // accepting "switch it on" doesn't mean the ad has passed review.
+  await syncAdReviews(organizationId, { force: true }).catch((error) => {
+    console.error("Reading Meta's ad review after launch failed:", error instanceof Error ? error.name : "unknown");
+  });
+  const approved = await db.platformCampaign.findMany({
+    where: { id: { in: switchedOn }, adReviewState: "APPROVED" },
+    select: { mairoCampaign: { select: { name: true } } },
+  });
+  const delivering = [...new Set(approved.map((c) => c.mairoCampaign.name))];
+
   // The Campaign Agent's record of it — only now, after Meta switched it on.
   for (const name of launched) {
+    const state = delivering.includes(name) ? "Meta approved its ad and it's delivering" : "Meta is reviewing its ad before it delivers";
     await recordRun({
       organizationId,
       agent: "ARCHITECT",
       task: "launch",
       status: "DONE",
       summary: opts.approvedByPerson
-        ? `Put “${name}” live on Meta after your approval.`
-        : `Put “${name}” live on Meta once its ads were approved and everything was ready.`,
+        ? `Switched “${name}” on in Meta after your approval. ${state}.`
+        : `Switched “${name}” on in Meta once everything was ready. ${state}.`,
       href: "/dashboard/campaigns",
     });
   }
@@ -277,15 +298,19 @@ export async function maybeGoLive(
     await sendSms(
       organizationId,
       "campaign-live",
-      launched.length === 1
-        ? `Your campaign "${launched[0]}" is now live and running.`
-        : `${launched.length} of your campaigns are now live: ${launched.join(", ")}.`,
+      delivering.length === launched.length
+        ? launched.length === 1
+          ? `Your campaign "${launched[0]}" is live: Meta approved the ad and it's delivering.`
+          : `${launched.length} of your campaigns are live: ${launched.join(", ")}.`
+        : launched.length === 1
+          ? `Your campaign "${launched[0]}" is switched on. Meta is reviewing the ad; it starts delivering once approved.`
+          : `${launched.length} campaigns are switched on: ${launched.join(", ")}. Meta reviews new ads before they deliver.`,
     );
   } catch (error) {
     console.error("Could not send the campaign-live text:", error);
   }
 
-  return { launched: true, names: launched, heldBecause: null };
+  return { launched: true, names: launched, delivering, heldBecause: null };
 }
 
 /**

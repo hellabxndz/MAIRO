@@ -6,7 +6,8 @@ import { approveCampaignAction } from "@/lib/actions/campaign-actions";
 
 // Approving a launch from the Approval Center: the budget is shown and
 // confirmed in place before anything is sent, and "live" is said only when
-// Meta has switched the campaign on — otherwise the reason it isn't yet.
+// Meta has switched the campaign on and approved its ad — otherwise what it's
+// waiting for.
 
 export function LaunchApprove({ campaignId, name, budget }: { campaignId: string; name: string; budget: string }) {
   const [step, setStep] = useState<"idle" | "confirm" | "done">("idle");
@@ -18,7 +19,13 @@ export function LaunchApprove({ campaignId, name, budget }: { campaignId: string
     start(async () => {
       const res = await approveCampaignAction(campaignId);
       setStep("done");
-      setMessage(res?.error ? { live: false, text: res.error } : { live: true, text: `Meta confirmed “${name}” is live.` });
+      setMessage(
+        res?.error
+          ? { live: false, text: res.error }
+          : res?.reviewing
+            ? { live: false, text: res.reviewing }
+            : { live: true, text: `Meta approved the ad and “${name}” is live.` },
+      );
       router.refresh();
     });
 

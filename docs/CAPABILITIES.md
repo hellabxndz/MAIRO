@@ -64,6 +64,7 @@ or a public page makes a claim this inventory can't back.
 | Account | Multi-step approvals | Unavailable | — | An approval chain model and its review screens | — |
 | Account | Several brands under one account, with their own budgets and reporting across them | Unavailable | — | A parent organization for brands, cross-brand budgets and combined reports with per-brand labels | — |
 | Account | Sign in with Google | Partially working | `/sign-in`, `/sign-up` | GOOGLE_CLIENT_ID; GOOGLE_CLIENT_SECRET | `check:google` |
+| Account | Password reset by email | Partially working | `/forgot-password`, `/reset-password` | RESEND_API_KEY; EMAIL_FROM | `check:password-reset` |
 | Account | Text alerts | Partially working | `/dashboard/notifications` | Twilio settings | `check:notifications` |
 | Account | Self-serve account deletion | Working | `/dashboard/account`, `/data-deletion` | — | `check:trust-db` |
 | Public site | Homepage product clips, film and demos | Demo only | `/`, `/landing/classic` | Screen recordings of a real person using MAIRO in a demo account, to sit beside the component renders; Licensed voice-over and music for the film | `check:capabilities`, `check:preview`, `check:clips` |
@@ -788,7 +789,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (21)
+## Partially working (22)
 
 ### Reading the business's website
 
@@ -1163,6 +1164,26 @@ Shown only when the Google OAuth client is configured.
 **Evidence:** `src/lib/google-sign-in.ts`, `src/components/google-button.tsx`
 
 **Checks:** `check:google`
+
+**Public claim:** none — not advertised
+
+### Password reset by email
+
+*Account* · `password-reset`
+
+A one-use link, good for an hour, emailed to the account's own address. Without an email provider the page says to email support instead.
+
+**Condition:** Needs RESEND_API_KEY and EMAIL_FROM on the deployment.
+
+**Routes:** `/forgot-password`, `/reset-password`
+
+**Still needs:** RESEND_API_KEY; EMAIL_FROM
+
+**Verification:** Send one reset to a real inbox once the provider is configured.
+
+**Evidence:** `src/lib/password-reset.ts`, `src/lib/email/send.ts`
+
+**Checks:** `check:password-reset`
 
 **Public claim:** none — not advertised
 

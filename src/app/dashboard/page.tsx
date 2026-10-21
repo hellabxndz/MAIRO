@@ -101,14 +101,23 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   // anything that needs the owner, one insight, what's next. The Advanced and
   // Profit First views below keep every figure for those who want them.
   // A launch the owner approved that went live on this visit, said first.
+  // "Live" only for what Meta confirms is delivering; anything switched on
+  // whose ad Meta is still reviewing is called exactly that.
+  const one = launched.names.length === 1;
+  const allDelivering = launched.delivering.length === launched.names.length;
   const launchedNotice = launched.launched ? (
     <Card className="border-emerald-400/25 bg-emerald-400/[0.05]">
       <p className="font-medium text-emerald-200">
-        {launched.names.length === 1 ? `MAIRO put ${launched.names[0]} live` : `MAIRO put ${launched.names.length} campaigns live`}
+        {allDelivering
+          ? one ? `${launched.names[0]} is live` : `${launched.names.length} campaigns are live`
+          : one ? `MAIRO switched ${launched.names[0]} on` : `MAIRO switched ${launched.names.length} campaigns on`}
       </p>
       <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
-        You approved {launched.names.length === 1 ? "it" : "them"} at the budget you agreed to, and once Meta approved the ads and confirmed your ad account can be charged, MAIRO switched{" "}
-        {launched.names.length === 1 ? "it" : "them"} on. Meta charges your ad account as the ads deliver. You can pause{launched.names.length === 1 ? " it" : " them"} any time from Campaigns.
+        You approved {one ? "it" : "them"} at the budget you agreed to, and once Meta confirmed your ad account can be charged, MAIRO switched {one ? "it" : "them"} on.{" "}
+        {allDelivering
+          ? `Meta approved the ${one ? "ad" : "ads"} and ${one ? "it's" : "they're"} delivering.`
+          : "Meta reviews new ads before they deliver, usually within a day — the campaign page shows Meta's answer, and MAIRO tells you if an ad isn't approved."}{" "}
+        Meta charges your ad account as the ads deliver. You can pause {one ? "it" : "them"} any time from Campaigns.
       </p>
     </Card>
   ) : null;
@@ -204,23 +213,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     <>
       <SuggestedAdsPrompt organizationId={organizationId} />
       {firstCampaign && <FirstCampaignCard state={firstCampaign} />}
-      {/* Something went live on this visit, so it says so — the launch the
-          owner approved happened just now, after Meta's review cleared. */}
-      {launched.launched && (
-        <Card className="mb-6 border-emerald-400/25 bg-emerald-400/[0.05]">
-          <p className="font-medium text-emerald-200">
-            {launched.names.length === 1
-              ? `MAIRO put ${launched.names[0]} live`
-              : `MAIRO put ${launched.names.length} campaigns live`}
-          </p>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">
-            You approved {launched.names.length === 1 ? "it" : "them"} at the budget you agreed to, and once Meta
-            approved the ads and confirmed your ad account can be charged, MAIRO switched{" "}
-            {launched.names.length === 1 ? "it" : "them"} on. Meta charges your ad account as the ads deliver. You can pause
-            {launched.names.length === 1 ? " it" : " them"} any time from Campaigns.
-          </p>
-        </Card>
-      )}
+      {/* Something was switched on during this visit, so it says so — and
+          whether Meta has approved the ad yet. */}
+      {launchedNotice && <div className="mb-6">{launchedNotice}</div>}
 
       {/* The launch checklist covers the same steps for a plan-journey business. */}
       {!(firstCampaign && !firstCampaign.launched) && <ReadinessPanel

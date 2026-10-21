@@ -51,7 +51,12 @@ export async function launchPlanCampaign(organizationId: string): Promise<Launch
     if (outcome.launched) {
       await db.strategyPlan.update({ where: { id: row.id }, data: { launchedAt: new Date() } });
     }
-    if (outcome.launched) return { ok: true, live: true, message: null, problem: null };
+    // Switched on; "live" only once Meta's review has approved the ad.
+    if (outcome.launched) {
+      return outcome.delivering.length > 0
+        ? { ok: true, live: true, message: null, problem: null }
+        : { ok: true, live: true, message: "Switched on. Meta is reviewing the ad before it delivers, usually within a day — MAIRO tells you as soon as Meta answers.", problem: null };
+    }
 
     // Meta refused to switch it on: maybeGoLive put it back and kept Meta's words.
     const refused = await db.platformCampaign.findFirst({ where: { mairoCampaignId: row.campaignId, lastError: { not: null } }, select: { lastError: true } });

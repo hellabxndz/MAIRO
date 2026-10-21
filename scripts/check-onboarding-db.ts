@@ -31,6 +31,7 @@ import { approve, activateIfPaid, createStrategy } from "../src/lib/strategy/sto
 import { draftFromApprovedPlan } from "../src/lib/strategy/campaign";
 import { loadJourney } from "../src/lib/strategy/journey";
 import { maybeGoLive } from "../src/lib/campaigns/auto-launch";
+import { syncAdReviews } from "../src/lib/campaigns/ad-review-sync";
 import { executionBlock } from "../src/lib/billing/execution";
 
 let passed = 0;
@@ -54,6 +55,8 @@ const world = {
   pages: [{ id: "pg1", name: "Peak Roofing" }] as { id: string; name: string }[],
   funded: false,
   refuseWrites: null as string | null,
+  /** What Meta's ad review says about every ad (read with ?ids=). */
+  adStatus: "PENDING_REVIEW",
 };
 const writes: string[] = [];
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -75,6 +78,9 @@ const fakeMeta: typeof fetch = async (input, init) => {
     writes.push(`${method} ${path}`);
     if (world.refuseWrites) return json({ error: { message: world.refuseWrites, type: "OAuthException", code: 100 } }, 400);
     return json({ success: true });
+  }
+  if (path === "/" && url.searchParams.get("ids")) {
+    return json(Object.fromEntries(url.searchParams.get("ids")!.split(",").map((id) => [id, { effective_status: world.adStatus }])));
   }
   if (path === `/${ACT}`) {
     return json({ id: ACT, account_status: 1, currency: "USD", balance: "0", amount_spent: "0", ...(world.funded ? { funding_source_details: { id: "fs1", display_string: "Visa ·4242" } } : {}) });
@@ -338,6 +344,11 @@ async function main() {
       assert.equal(live, 1, JSON.stringify([a, b]));
       assert.ok(writes.length > before, "Meta was asked to switch it on");
       assert.equal(await db.agentRun.count({ where: { organizationId: ORG, task: "launch" } }), 1, "one 'put live' record");
+      // Meta accepted "switch it on" but its review hasn't approved the ad: not called live.
+      const said = [a, b].find((r) => r.ok && r.live && !/already/.test(r.message ?? ""));
+      assert.match((said as { message: string | null }).message ?? "", /Meta is reviewing the ad/);
+      const run = await db.agentRun.findFirstOrThrow({ where: { organizationId: ORG, task: "launch" } });
+      assert.match(run.summary ?? "", /Switched .* on in Meta.*Meta is reviewing its ad/);
       const c = await db.mairoCampaign.findUniqueOrThrow({ where: { id: campaignId }, include: { platformCampaigns: true } });
       assert.equal(c.status, "ACTIVE");
       assert.equal(c.platformCampaigns[0].status, "ACTIVE");
@@ -345,6 +356,16 @@ async function main() {
       assert.equal(focusStep(steps), null, "setup complete");
       const third = await viaMeta(() => launchPlanCampaign(ORG));
       assert.ok(third.ok && third.live && /already live/.test(third.message ?? ""));
+    });
+
+    await check("called live only once Meta's review approves the ad", async () => {
+      const before = await viaMeta(() => loadJourney(ORG, { checkFunding: false }));
+      assert.equal(before?.campaign?.reviewState, "PENDING");
+      world.adStatus = "ACTIVE";
+      await viaMeta(() => syncAdReviews(ORG, { force: true }));
+      const after = await viaMeta(() => loadJourney(ORG, { checkFunding: false }));
+      assert.equal(after?.next, "live");
+      assert.equal(after?.campaign?.reviewState, "APPROVED");
     });
 
     await check("once live, the launch can't be 'cancelled' — the owner is told to pause instead", async () => {

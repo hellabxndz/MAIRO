@@ -43,7 +43,7 @@ import { ChangeGoalModalButton } from "@/components/mairo/goal-actions";
 // anything has launched the Brief shows the steps left, never figures.
 // Advanced and Profit First stay one switch away for the full numbers.
 
-export async function SimpleOverview({ organizationId, userName, launched, askFeedback = false }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[] }; askFeedback?: boolean }) {
+export async function SimpleOverview({ organizationId, userName, launched, askFeedback = false }: { organizationId: string; userName: string; launched: { launched: boolean; names: string[]; delivering: string[] }; askFeedback?: boolean }) {
   const [org, mission, proposal, campaignCount, connections, pulseWanted, pulseLater] = await Promise.all([
     db.organization.findUnique({ where: { id: organizationId }, select: { timezone: true, foundingCustomer: true, assistantName: true } }),
     activeMission(organizationId),
@@ -103,7 +103,18 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
     blockers.push({ key: "billing", title: billingProblem.state === "no_payment_method" ? "Meta has no way to charge for your ads yet" : "Meta can't run your ads right now", text: billingProblem.message ?? "Open your Meta billing settings to fix it.", action: billingProblem.actionUrl ? { href: billingProblem.actionUrl, label: billingProblem.actionLabel ?? "Fix in Meta", external: true } : { href: "/dashboard/meta", label: "See details" } });
   }
   if (firstCampaign && !firstCampaign.launched) blockers.push({ key: "first", title: "Finish setting up your first campaign", text: "A few steps are left before it can run.", action: { href: "/dashboard/launch", label: "Continue" } });
-  if (launched.launched) blockers.push({ key: "launched", title: launched.names.length === 1 ? `“${launched.names[0]}” is now live` : `${launched.names.length} campaigns are now live`, text: "Meta approved the ads and confirmed your account can be charged, so the launch you approved went ahead. You can pause any time.", action: { href: "/dashboard/campaigns", label: "See campaigns" } });
+  if (launched.launched) {
+    const one = launched.names.length === 1;
+    const delivering = launched.delivering.length === launched.names.length;
+    blockers.push({
+      key: "launched",
+      title: delivering ? (one ? `“${launched.names[0]}” is now live` : `${launched.names.length} campaigns are now live`) : one ? `“${launched.names[0]}” is switched on` : `${launched.names.length} campaigns are switched on`,
+      text: delivering
+        ? "Meta approved the ads and confirmed your account can be charged, so the launch you approved went ahead. You can pause any time."
+        : "Meta confirmed your account can be charged, so the launch you approved went ahead. Meta is reviewing the ad before it delivers, usually within a day. You can pause any time.",
+      action: { href: "/dashboard/campaigns", label: "See campaigns" },
+    });
+  }
 
   const perfNote = perf?.problems.length
     ? "Meta couldn't be read just now, so some numbers may be missing — not zero. They fill in on the next look."
