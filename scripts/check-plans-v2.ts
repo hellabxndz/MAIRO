@@ -167,8 +167,10 @@ async function main() {
     assert.deepEqual([o.subscriptionTier, o.subscriptionStatus, o.hasPaid], ["SCALE_V2", "active", true]);
     const e = await entitlementsFor(home);
     assert.deepEqual([e.ad_account_limit, e.member_limit, e.studio_credits_monthly], [3, Infinity, 200]);
-    for (const f of ["advanced_tracking", "advanced_analytics", "auto_optimize", "autopilot", "growth_coach", "social_posting"] as const) assert.equal(await can(home, f), true, f);
-    assert.equal((await socialAccess(home)).ok, true);
+    for (const f of ["advanced_tracking", "advanced_analytics", "auto_optimize", "autopilot", "growth_coach"] as const) assert.equal(await can(home, f), true, f);
+    // Social media posting isn't sold on any plan now.
+    assert.equal(await can(home, "social_posting"), false);
+    assert.equal((await socialAccess(home)).ok, false);
     assert.equal(await seatProblem(home), null);
     assert.deepEqual((await notices(home)).map((n) => n.title).sort(), ["Welcome to MAIRO Pro", "You're now on MAIRO Scale"]);
   });
@@ -187,7 +189,7 @@ async function main() {
       const o = await orgRow(b);
       assert.deepEqual([o.subscriptionTier, o.subscriptionStatus], ["SCALE_V2", "active"], b);
       assert.ok(hasActivePlan(o));
-      assert.equal((await entitlementsFor(b)).social_posting, true);
+      assert.equal((await entitlementsFor(b)).social_posting, false);
       assert.equal((await payingBusinessOf(b))?.id, home);
     }
     const c = await orgRow(brandC);

@@ -134,15 +134,15 @@ export const PLANS: Plan[] = [
     inherits: "MAIRO Pro",
     cta: "Start Scaling with MAIRO",
     // Each line here is enforced: ad_account_limit, studio_credits_monthly,
-    // advanced_analytics, auto_optimize/autopilot, social_posting,
-    // advanced_tracking, member_limit and growth_coach in entitlements.ts.
+    // advanced_analytics, auto_optimize/autopilot, advanced_tracking,
+    // member_limit and growth_coach in entitlements.ts. Social media posting
+    // (MAIRO Social Manager) isn't offered any more; only subscribers on the
+    // earlier Scale plan keep it.
     features: [
       "Connect up to 3 Meta advertising accounts, one per business or brand",
       "200 AI creative credits a month",
       "Advanced performance analytics: every ad and placement side by side",
       "More AI optimization: AI Assist and Full Autopilot inside your limits, never raising your total",
-      "AI-powered Instagram content creation with MAIRO Social Manager",
-      "Social post approval queue",
       "Advanced revenue and lead tracking, where your store or forms connect",
       "Team members with approval permissions",
       "Advanced growth recommendations from MAIRO's Performance Coach",

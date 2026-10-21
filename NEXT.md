@@ -117,17 +117,16 @@ limits on every in-app screen. The `meta_only_plan_reset` migration deletes
 them, and the code defaults apply. After any *later* pricing change, run
 `npm run plans:sync` (prints a diff) and `-- --write` to apply it.
 
-**7. Meta App Review, round 2: the posting permissions.** Scale's Instagram
-and Facebook posting need `instagram_basic`, `instagram_content_publish` and
-`pages_manage_posts` (`pages_read_engagement` cleared in round 1). The code is
-built; until Meta approves, only people with a role on the Meta app can post.
-The whole submission is in **docs/META-APP-REVIEW-POSTING.md**: the dashboard
-setup (the Instagram use case with Facebook Login, and `pages_manage_posts`),
-one test post on each network, the reviewer account on MAIRO Scale
-(`SCALE_V2`, set in `/aios/organizations/<id>`, which also records it as
-active), the screencast, and the text to paste for each permission. AIOS →
-Live Meta check now has a **Ready for posting** line that turns green when
-Meta's prerequisites are met.
+**7. Social media posting: on hold, not sold.** MAIRO no longer offers
+posting to a business's Instagram or Facebook profile: it's off the landing
+page, the pricing cards and table, the help centre, and MAIRO Scale's
+features and entitlements (`SCALE_V2.social_posting` is false, and a stored
+PlanConfig row can't switch it back on). Only subscribers still on the
+earlier $499.99 Scale plan (`SCALE`) keep Social Manager, so no purchase
+changes. Meta App Review round 2 (`instagram_basic`,
+`instagram_content_publish`, `pages_manage_posts`) is not needed and shouldn't
+be submitted unless posting comes back; the steps are kept in
+**docs/META-APP-REVIEW-POSTING.md** for that case.
 
 **7c. After App Review: put the customer-action question into Create.** The
 Mission already asks "What do you want customers to do?" and prefills Create.
@@ -146,12 +145,10 @@ Mairo Activity.
 **10. `ANTHROPIC_API_KEY` — set.** Powers the Ad Score, Business Analyzer,
 Fix with AI, One-Click Fix and the social post captions.
 
-**11. Two switches to flip when the time comes.** `META_POSTING_APPROVED=1`
-once Meta approves the posting permissions (round 2) — until then every
-Social page, the pricing page and the privacy policy say publishing is
-waiting for Meta. `NEXT_PUBLIC_SUPPORT_EMAIL` once a monitored mailbox exists
+**11. A switch to flip when the time comes.** (`META_POSTING_APPROVED=1` only
+matters if posting comes back; see item 7.) `NEXT_PUBLIC_SUPPORT_EMAIL` once a monitored mailbox exists
 on a business domain (e.g. on mairo.io); until then the legal pages show the
-current Gmail address. Redeploy after either.
+current Gmail address. Redeploy after setting it.
 
 **12. Legal review before charging the first customers.** Have a qualified
 person check: the exact registered name of the operating company (the pages

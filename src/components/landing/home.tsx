@@ -10,7 +10,6 @@ import { InstagramMark, MetaMark } from "@/components/mairo/marks";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { brandFont } from "@/lib/fonts";
 import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
-import { metaPostingApproved } from "@/lib/social/publishing-status";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { EVERY_PLAN, INTEGRATIONS, MONEY_AND_CONTROL, STATUS_LABEL, alwaysYours, automationLevels, comparison, planStories, pricingFacts, type Cell, type IntegrationStatus } from "@/lib/pricing/compare";
 import { TeamConstellation } from "@/components/landing/team-constellation";
@@ -214,11 +213,11 @@ const FAQ = [
   },
   {
     q: "What's the difference between the plans?",
-    a: `There are two. MAIRO Pro ($139 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, MAIRO Social Manager for your own Instagram, your team, the Performance Coach and priority support.`,
+    a: `There are two. MAIRO Pro ($139 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, your team, the Performance Coach and priority support.`,
   },
   {
     q: "Which platforms and tools does MAIRO work with?",
-    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Your Shopify store, if you connect it, reports the sales your ads bring; a ready-made Google Tag Manager container sets up your Meta pixel (connecting Tag Manager directly is waiting on Google's approval); and Stripe takes payment for your subscription. Posting to your own Instagram and Facebook (MAIRO Scale) needs Meta's approval of MAIRO's posting access before it can publish.",
+    a: "MAIRO manages advertising on Meta only — Facebook and Instagram, through your own Meta ad account. Your Shopify store, if you connect it, reports the sales your ads bring; a ready-made Google Tag Manager container sets up your Meta pixel (connecting Tag Manager directly is waiting on Google's approval); and Stripe takes payment for your subscription. MAIRO runs ads; it doesn't post to your Instagram or Facebook profile.",
   },
   {
     q: "What happens if I cancel?",
@@ -681,20 +680,14 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
 
                       <ul className="mt-6 flex-1 space-y-2.5 border-t border-white/[0.08] pt-6 text-[14px]" aria-label={`What ${story.name} includes`}>
                         {plan.inherits && <li className="pb-1 text-[13px] font-medium text-white/55">Everything in {plan.inherits}, plus:</li>}
-                        {plan.features.map((f) => {
-                          const soon = /instagram content creation|post approval queue/i.test(f) && !metaPostingApproved();
-                          return (
-                            <li key={f} className="flex gap-2.5">
-                              <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#7ea0ff]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-                                <path d="M3 8.5l3 3 7-7" />
-                              </svg>
-                              <span className="text-white/85">
-                                {f}
-                                {soon && <span className="ml-1.5 whitespace-nowrap rounded-full border border-amber-400/35 bg-amber-400/[0.08] px-2 py-0.5 text-[11px] font-medium text-amber-200">Publishing once Meta approves</span>}
-                              </span>
-                            </li>
-                          );
-                        })}
+                        {plan.features.map((f) => (
+                          <li key={f} className="flex gap-2.5">
+                            <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#7ea0ff]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                              <path d="M3 8.5l3 3 7-7" />
+                            </svg>
+                            <span className="text-white/85">{f}</span>
+                          </li>
+                        ))}
                       </ul>
 
                       <Link
@@ -753,7 +746,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               ))}
             </ul>
 
-            <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {pricingFacts().map((f) => (
                 <div key={f.key} id={`pricing-${f.key}`} className={`scroll-mt-24 rounded-3xl ${GLASS} p-6`}>
                   <dt className="text-[15px] font-semibold text-white">{f.title}</dt>

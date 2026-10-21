@@ -53,7 +53,7 @@ export function GoalPicker({ initialGoal = null, onCancel, compact = false, afte
       {!hideHeading && (
         <>
           <h2 className="text-[22px] font-semibold leading-snug text-white">What do you want MAIRO to help your business accomplish?</h2>
-          <p className="mt-1.5 max-w-[640px] text-[14px] text-muted">Tell MAIRO the outcome. It works out the marketing — ads{" "}and, on Scale, your social posts — and shows you the plan before anything happens.</p>
+          <p className="mt-1.5 max-w-[640px] text-[14px] text-muted">Tell MAIRO the outcome. It works out your advertising and shows you the plan before anything happens.</p>
         </>
       )}
 

@@ -95,7 +95,7 @@ export default function TermsPage() {
         <p>
           {LEGAL.productName} manages advertising on Meta (Facebook and Instagram) only. Shopify and
           Google Tag Manager connections are used to measure results, and Stripe processes your
-          subscription payment. Posting to your own Instagram and Facebook (on MAIRO Scale)
+          subscription payment. Posting to your own Instagram and Facebook (on the earlier Scale plan)
           depends on Meta approving our posting permissions; until then, posts can be planned and
           written but not published by us.
         </p>

@@ -22,7 +22,8 @@ export const FREE_PAGES = [
   // Suggested ads: reading and editing the three directions is free; making a
   // picture, uploading a video and building the campaign are paid, and say so.
   "/dashboard/creatives/suggested",
-  // Opens to the Social Manager upgrade screen (Scale only), not a preview.
+  // Social Manager: only a business with posts from the earlier Scale plan
+  // reaches it; anyone else is sent back to the dashboard.
   "/dashboard/social",
 ];
 

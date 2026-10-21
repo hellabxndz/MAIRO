@@ -3,13 +3,16 @@ import { entitlementsForTier } from "@/lib/entitlements";
 import { planFor } from "@/lib/plans";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 
-// Who may use MAIRO Social Manager: active Scale customers, and nobody else.
+// Who may use MAIRO Social Manager: subscribers on the earlier Scale plan who
+// bought it, and nobody else. MAIRO no longer offers social media posting to
+// new customers — MAIRO Scale (SCALE_V2) doesn't include it — so the feature
+// stays only for the people already paying for it.
 //
 // Stricter on purpose than the rest of the product's plan checks:
-//   - The tier must be a Scale plan: MAIRO Scale (SCALE_V2), or the earlier
-//     Scale plan its subscribers keep (SCALE). A plan row in the database that
-//     switched social_posting on for another tier still doesn't open it.
-//   - The subscription must be live (active, or the trialing week the
+//   - The tier must be the earlier Scale plan (SCALE). A plan row in the
+//     database that switched social_posting on for another tier still
+//     doesn't open it.
+//   - The subscription must be live (active, or a trialing week the
 //     customer gave a card for), whatever BILLING_ENFORCED says. The
 //     free-access fallback that lets everyone try ads while billing is off
 //     never reaches Social Manager.
@@ -35,13 +38,11 @@ export type SocialAccessInput = {
   executionStoppedAt?: Date | null;
 };
 
-const SCALE = planFor("SCALE_V2").name;
+/** The tiers Social Manager belongs to: only the earlier Scale plan, for the people who bought it. */
+export const SOCIAL_TIERS: readonly SubscriptionTier[] = ["SCALE"];
 
-/** The tiers Social Manager belongs to. */
-export const SOCIAL_TIERS: readonly SubscriptionTier[] = ["SCALE_V2", "SCALE"];
-
-export const SOCIAL_UPGRADE_MESSAGE = `Social Manager is available exclusively with ${SCALE}. Upgrade to ${SCALE} to unlock AI social media management.`;
-export const SOCIAL_PAUSED_MESSAGE = `Social Manager is available exclusively with ${SCALE}. Your existing content and history are saved. Upgrade back to ${SCALE} to continue.`;
+export const SOCIAL_UPGRADE_MESSAGE = "Social media posting isn't part of MAIRO's plans. MAIRO runs your Facebook and Instagram ads.";
+export const SOCIAL_PAUSED_MESSAGE = `Social Manager is paused: it was part of the earlier ${planFor("SCALE").name.replace(/ \(earlier plan\)$/, "")} plan, which this business isn't on now. Your existing content and history are saved, and nothing scheduled will be published.`;
 
 /** The rule, without the database — so it can be checked line by line. */
 export function socialAccessFrom(org: SocialAccessInput | null, flagGranted = true): SocialAccess {

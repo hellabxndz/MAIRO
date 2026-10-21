@@ -1,28 +1,16 @@
-import { metaPostingApproved } from "@/lib/social/publishing-status";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { hasActivePlan } from "@/lib/readiness";
-import { planFor } from "@/lib/plans";
 import { SOCIAL_PAUSED_MESSAGE, socialAccess } from "@/lib/social/access";
 import { pauseSocialIfLocked } from "@/lib/social/pause";
 
-// Every Social Manager page starts here. Active Scale gets the page; anyone
-// else gets the upgrade screen — or, if they had Social Manager before, a
-// "Paused" screen that says their content is saved. The server actions and
-// the publisher check again on their own; this is the screen, not the lock.
-
-const SCALE = planFor("SCALE_V2");
-
-const BENEFITS = [
-  "AI determines what your business should post",
-  "Content built around sales, leads, bookings, launches and promotions",
-  "AI-generated captions and creatives",
-  "Smart content calendar",
-  `Instagram and Facebook scheduling${metaPostingApproved() ? "" : " — publishing once Meta approves"}`,
-  `Automatic publishing of what you approve${metaPostingApproved() ? "" : ", once Meta approves MAIRO's posting access"}`,
-  "Promotion campaigns",
-  "Performance learning",
-];
+// Every Social Manager page starts here. A subscriber on the earlier Scale
+// plan gets the page; a business that had Social Manager before gets a
+// "Paused" screen that says its content is saved; anyone else is sent back to
+// the dashboard, because social media posting isn't offered any more. The
+// server actions and the publisher check again on their own; this is the
+// screen, not the lock.
 
 function upgradeHref(org: { paymentRequired: boolean; subscriptionTier: string; subscriptionStatus: string | null }): string {
   // A free-plan account that hasn't subscribed picks a plan on its own page.
@@ -58,9 +46,11 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
           <p className="mt-3 text-[13px] text-muted">
             Saved: your goal and strategy{saved ? `, ${saved} post${saved === 1 ? "" : "s"}` : ""} and your posting history. Nothing scheduled will be published while Social Manager is paused.
           </p>
-          <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
-            {access.reason === "inactive" ? `Reactivate ${SCALE.name}` : `Upgrade back to ${SCALE.name}`}
-          </Link>
+          {access.reason === "inactive" && (
+            <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
+              Fix billing to continue
+            </Link>
+          )}
         </div>
         {published.length > 0 && (
           <section className="mt-8">
@@ -86,38 +76,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
     );
   }
 
-  return (
-    <div className="mx-auto max-w-[920px]">
-      <div className="overflow-hidden rounded-2xl border border-violet/30 bg-gradient-to-b from-violet/[0.12] to-transparent p-6 sm:p-9">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet/40 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-violet-bright">
-          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-            <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
-            <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
-          </svg>
-          {SCALE.name} only
-        </span>
-        <h1 className="mt-4 text-[30px] font-semibold leading-tight text-white">Social Manager</h1>
-        <p className="mt-2 text-[19px] text-white/90">Let MAIRO manage your social media.</p>
-        <p className="mt-3 max-w-[640px] text-[15px] leading-relaxed text-white/70">
-          MAIRO creates content based on your business goals, builds your posting strategy, lets you approve the content, and publishes approved posts for you.
-        </p>
-        <p className="mt-4 text-[14px] font-medium text-white">Available exclusively with {SCALE.name}.</p>
-        <ul className="mt-6 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
-          {BENEFITS.map((b) => (
-            <li key={b} className="flex gap-2.5 text-[14px] text-white/85">
-              <span aria-hidden className="text-emerald-300">✓</span>
-              {b}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href={href} className="inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
-            Upgrade to {SCALE.name}
-          </Link>
-          <span className="text-[13px] text-muted">{SCALE.tagline}</span>
-        </div>
-      </div>
-      <p className="mt-4 text-[12.5px] text-faint">Your ads keep working exactly as they do on your current plan. Social Manager adds organic posting on your own Instagram and Facebook Page.</p>
-    </div>
-  );
+  // Never had it: social media posting isn't offered any more, so there's
+  // nothing to sell here — back to the dashboard.
+  redirect("/dashboard");
 }

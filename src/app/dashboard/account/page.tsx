@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { showsEnquiries } from "@/lib/leads/fields";
+import { socialAccess } from "@/lib/social/access";
 import { GlassPanel } from "@/components/mairo";
 import { StartTourLink } from "@/components/tour";
 import { FeedbackButton } from "@/components/success/feedback";
@@ -30,12 +31,13 @@ export default async function AccountPage() {
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const [organization, leadForm] = await Promise.all([
+  const [organization, leadForm, social] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: { name: true, subscriptionTier: true, caseStudyConsentAt: true },
     }),
     db.leadForm.findFirst({ where: { organizationId }, select: { id: true } }),
+    socialAccess(organizationId),
   ]);
 
   const groups: { title: string; entries: Entry[] }[] = [
@@ -45,8 +47,14 @@ export default async function AccountPage() {
         { href: "/dashboard/reports/monthly", label: "Results", hint: "What your ads achieved and what MAIRO did, month by month" },
         { href: "/dashboard/analytics", label: "Analytics", hint: "Performance, and how sales are measured" },
         { href: "/dashboard/creatives", label: "Creatives", hint: "Every ad MAIRO has made for you" },
-        { href: "/dashboard/social", label: "Social Manager", hint: "AI social media management (Scale only)" },
-        { href: "/dashboard/social/calendar", label: "Content Calendar", hint: "Your planned and published posts (Scale only)" },
+        // Only listed for a business still on the earlier Scale plan: social
+        // posting isn't offered to anyone else.
+        ...(social.ok
+          ? [
+              { href: "/dashboard/social", label: "Social Manager", hint: "Your posts on Instagram and Facebook" },
+              { href: "/dashboard/social/calendar", label: "Content Calendar", hint: "Your planned and published posts" },
+            ]
+          : []),
         ...(showsEnquiries({ hasForm: Boolean(leadForm) })
           ? [{ href: "/dashboard/leads", label: "Enquiries", hint: "People who asked you to get in touch" }]
           : []),

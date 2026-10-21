@@ -117,7 +117,7 @@ export function DoingNow({ activity }: { activity: MissionActivity }) {
         <Row label="Running" value={plural(a.campaignsRunning, "campaign")} href="/dashboard/campaigns" />
         <Row label="Testing" value={plural(a.creativesTesting, "creative")} href="/dashboard/campaigns" />
         {optimizing && <Row label="Optimizing" value={optimizing} href="/dashboard/decisions" />}
-        {a.socialScheduled !== null && <Row label="Scale plan" value={`${plural(a.socialScheduled, "social post")} scheduled this week`} href="/dashboard/social/calendar" />}
+        {a.socialScheduled !== null && <Row label="Social posts" value={`${plural(a.socialScheduled, "social post")} scheduled this week`} href="/dashboard/social/calendar" />}
         {a.promotion && <Row label="Promotion" value={`${a.promotion}${a.promotionsActive > 1 ? ` (+${a.promotionsActive - 1} more)` : ""}`} href="/dashboard/mission" />}
       </ul>
     </section>

@@ -72,6 +72,18 @@ async function main() {
   const reverted = await entitlementsForTier("STARTER");
   ok("an empty override falls back cleanly", reverted.campaign_limit === 3 && !reverted.auto_optimize);
 
+  // Social media posting isn't sold any more: a stored row still saying a
+  // current plan includes it (seeded before the change) can't switch it on.
+  const scaleV2Row = await db.planConfig.findUnique({ where: { tier: "SCALE_V2" }, select: { entitlementsJson: true } });
+  await db.planConfig.upsert({
+    where: { tier: "SCALE_V2" },
+    update: { entitlementsJson: JSON.stringify({ social_posting: true }) },
+    create: { tier: "SCALE_V2", name: planFor("SCALE_V2").name, priceMonthly: 0, tagline: "", active: true, sortOrder: 99, featuresJson: "[]", entitlementsJson: JSON.stringify({ social_posting: true }) },
+  });
+  ok("a stored row can't turn social posting back on for a current plan", (await entitlementsForTier("SCALE_V2")).social_posting === false);
+  if (scaleV2Row) await db.planConfig.update({ where: { tier: "SCALE_V2" }, data: { entitlementsJson: scaleV2Row.entitlementsJson } });
+  else await db.planConfig.delete({ where: { tier: "SCALE_V2" } });
+
   console.log("\n— a malformed row can't break the product —");
   await db.planConfig.update({ where: { tier: "STARTER" }, data: { entitlementsJson: "{not json" } });
   const broken = await entitlementsForTier("STARTER");
@@ -100,7 +112,7 @@ async function main() {
 
 }
 
-main().finally(async () => {
+main().catch((e) => { bad++; console.error(e); }).finally(async () => {
   await db.$disconnect();
   process.exit(bad === 0 ? 0 : 1);
 });

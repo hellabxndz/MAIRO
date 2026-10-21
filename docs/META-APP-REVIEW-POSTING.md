@@ -1,9 +1,16 @@
 # Meta App Review, round 2: posting to Instagram and Facebook
 
-MAIRO's Social Manager (MAIRO Scale) can already publish to a business's own
-Instagram and Facebook Page. The code is built and tested: a post goes out only
-after the business approves it, and it is shown as published only when Meta
-confirms it.
+> **On hold (October 2026).** MAIRO no longer offers social media posting, so
+> this review isn't needed and shouldn't be submitted. It isn't on any plan
+> sold today: only subscribers still on the earlier Scale plan (`SCALE`) keep
+> Social Manager. These steps are kept in case posting comes back. If it
+> does, it has to be put back on a plan first. The steps below that set a
+> business to MAIRO Scale (`SCALE_V2`) would need the earlier plan, or the
+> plan that brings posting back, instead.
+
+MAIRO's Social Manager can publish to a business's own Instagram and Facebook
+Page. The code is built and tested: a post goes out only after the business
+approves it, and it is shown as published only when Meta confirms it.
 
 What it can't do yet is publish **for customers**. Meta lets an app use these
 three permissions with ordinary Facebook accounts only after App Review:

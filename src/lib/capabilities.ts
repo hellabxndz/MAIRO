@@ -620,16 +620,16 @@ const CORE: Capability[] = [
   {
     id: "social-manager",
     area: "Social",
-    name: "Social Manager (Scale)",
+    name: "Social Manager (earlier Scale plan only)",
     status: "partial",
-    summary: "Plans and writes organic Instagram and Facebook posts; publishing only what the owner approves.",
-    condition: "Publishing waits for Meta's approval of MAIRO's posting permissions (round 2 of App Review). Scale plan only.",
+    summary: "Plans and writes organic Instagram and Facebook posts; publishing only what the owner approves. Not offered to new customers (October 2026): MAIRO Scale doesn't include it and the public site doesn't mention it. Kept for subscribers on the earlier $499.99 Scale plan.",
+    condition: "Publishing waits for Meta's approval of MAIRO's posting permissions (round 2 of App Review), which isn't being pursued now.",
     routes: ["/dashboard/social"],
     evidence: ["src/lib/social", "src/lib/social/publishing-status.ts"],
     needs: ["Meta App Review: posting permissions"],
     checks: ["social-manager", "social-scheduler"],
-    verify: "Scale-only; nothing published without approval.",
-    claim: "On Scale: social posts planned and written for you; publishing once Meta approves MAIRO's posting access.",
+    verify: "Earlier Scale plan only; nothing published without approval.",
+    claim: null,
   },
 
   // --- Billing --------------------------------------------------------------

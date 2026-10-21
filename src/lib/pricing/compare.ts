@@ -7,7 +7,6 @@
 // the decision engine obeys), and every limit from the entitlement numbers.
 // If a plan changes, the page changes with it.
 
-import { metaPostingApproved } from "@/lib/social/publishing-status";
 import { PLANS, PRO_TRIAL_DAYS, type Plan } from "@/lib/plans";
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from "@/lib/entitlements";
 import { ALWAYS_NEEDS_APPROVAL, actionInfo, automaticActions, levelInfo } from "@/lib/automation/levels";
@@ -62,7 +61,7 @@ export type PlanStory = {
 
 const OUTCOME: Record<BusinessTier, string> = {
   PRO: "Your AI advertising team plans, builds and checks your Facebook and Instagram ads every day, and tells you what to change. Nothing launches and no spending changes without your yes.",
-  SCALE_V2: "Everything in Pro, for up to three businesses or brands — plus optional AI Assist and Full Autopilot inside your limits, MAIRO Social Manager for your own Instagram, deeper analytics and tracking, and your team.",
+  SCALE_V2: "Everything in Pro, for up to three businesses or brands — plus optional AI Assist and Full Autopilot inside your limits, deeper analytics and tracking, and your team.",
 };
 
 export function planStories(): PlanStory[] {
@@ -75,7 +74,6 @@ export function planStories(): PlanStory[] {
       `${e.studio_credits_monthly} AI image credits a month (about ${pictures(e.studio_credits_monthly)} pictures)`,
       ...(e.autopilot ? ["Full Autopilot available"] : e.auto_optimize ? ["AI Assist available"] : ["You approve every change"]),
       ...(e.advanced_analytics ? ["Every ad's results side by side"] : ["Results in plain English"]),
-      ...(e.social_posting ? [metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves"] : []),
       ...(e.member_limit > 1 ? ["Team members with approval permissions"] : []),
       ...(prioritySupport(t) ? ["Priority support"] : []),
     ];
@@ -94,7 +92,6 @@ export function planStories(): PlanStory[] {
         { label: "AI assistance", value: e.autopilot ? "Plans, builds and checks daily — Full Autopilot if you choose it" : e.auto_optimize ? "Plans, builds and checks daily — routine fixes if you switch on AI Assist" : "Plans, builds and checks daily; every change waits for you" },
         { label: "Approvals", value: "Launches and total-budget increases always wait for you" },
         { label: "Results", value: e.advanced_analytics ? "Plain English, plus every ad side by side" : "In plain English" },
-        ...(e.social_posting ? [{ label: "Social", value: metaPostingApproved() ? "MAIRO Social Manager" : "MAIRO Social Manager — publishing once Meta approves" }] : []),
         ...(e.member_limit > 1 ? [{ label: "Team", value: "Invite team members, each with their own permissions" }] : []),
         ...(prioritySupport(t) ? [{ label: "Support", value: "Priority support" }] : []),
       ],
@@ -149,18 +146,6 @@ export function comparison(): Group[] {
       ],
     },
     {
-      key: "social",
-      title: "Your own social media",
-      rows: [
-        {
-          key: "social",
-          label: "MAIRO Social Manager",
-          help: "Strategy, content calendar and posts for your own Instagram and Facebook — organic posts, not ads. Publishing needs Meta's approval of MAIRO's posting access.",
-          cells: each((t) => (ent(t).social_posting ? yes("Publishing needs Meta's approval") : no)),
-        },
-      ],
-    },
-    {
       key: "support",
       title: "Support",
       rows: [{ key: "support", label: "Support", cells: each((t) => text(prioritySupport(t) ? "Priority" : "Standard")) }],
@@ -186,7 +171,6 @@ export function automationLevels(): { level: "MANUAL" | "ASSISTED" | "AUTOPILOT"
 export function pricingFacts(): { key: string; title: string; body: string }[] {
   const names = (f: (t: BusinessTier) => string) => BUSINESS_TIERS.map((t) => `${plan(t).name} ${f(t)}`).join(", ");
   const trial = PLANS.filter((p) => (p.trialDays ?? 0) > 0).map((p) => p.name);
-  const social = BUSINESS_TIERS.filter((t) => ent(t).social_posting).map((t) => plan(t).name);
   const noTrial = BUSINESS_TIERS.filter((t) => !(plan(t).trialDays ?? 0)).map((t) => plan(t).name);
   return [
     {
@@ -203,15 +187,6 @@ export function pricingFacts(): { key: string; title: string; body: string }[] {
       key: "limits",
       title: "Campaign and creative limits",
       body: `Campaigns live or waiting at once: ${names((t) => (Number.isFinite(ent(t).campaign_limit) ? String(ent(t).campaign_limit) : "unlimited"))}. Archived ones don't count. Creative requests on the Creatives page (an ad idea with up to two pictures): ${names((t) => `${ent(t).creative_limit} a month`)}, separate from image credits.`,
-    },
-    {
-      key: "social",
-      title: "MAIRO Social Manager",
-      body: `${social.join(" and ")} only. Plans, writes and schedules posts for your own Instagram and Facebook — organic posts, not ads. ${
-        metaPostingApproved()
-          ? "It publishes only the posts you approve, or that Social Autopilot schedules if you switch it on."
-          : "Publishing is waiting for Meta to approve MAIRO's posting access. Until then you can plan and write posts, but MAIRO can't publish them for you."
-      }`,
     },
   ];
 }
@@ -255,15 +230,6 @@ export const INTEGRATIONS: Integration[] = [
     status: "full",
     what: "Your campaigns run on Instagram as well as Facebook, through the same Meta ad account.",
     limits: null,
-  },
-  {
-    key: "social-posting",
-    name: "Instagram and Facebook posting",
-    // Built, but customers can't use it until Meta approves the posting
-    // permissions (see lib/social/publishing-status.ts).
-    status: metaPostingApproved() ? "limited" : "pending",
-    what: "Scale's Social Manager plans and writes your organic posts and can publish the ones you approve.",
-    limits: "Publishing needs Meta's approval of MAIRO's posting permissions. Until Meta grants it, you can plan and write posts, but MAIRO can't publish them for you.",
   },
   {
     key: "shopify",

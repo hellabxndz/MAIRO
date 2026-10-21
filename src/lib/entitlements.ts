@@ -31,7 +31,7 @@ export type Entitlements = {
   /**
    * MAIRO Social Manager: goal-based social strategy, content calendar,
    * promotions and posting to the customer's own Instagram and Facebook Page.
-   * Scale only — lib/social/access.ts also requires the tier itself and a
+   * The earlier Scale plan only (no longer sold) — lib/social/access.ts also requires the tier itself and a
    * live subscription.
    *
    * Organic posts on their own feed, not ads. Separate from meta_ads for a
@@ -138,11 +138,12 @@ export const DEFAULT_ENTITLEMENTS: Record<SubscriptionTier, Entitlements> = {
     growth_coach: false,
   },
   // MAIRO Scale: up to three businesses' ad accounts, a team, AI Assist and
-  // Autopilot (inside the owner's limits), Social Manager, and the advanced
-  // tracking and coaching. Its enum value is SCALE_V2 — see plans.ts.
+  // Autopilot (inside the owner's limits), and the advanced tracking and
+  // coaching. Its enum value is SCALE_V2 — see plans.ts. No social media
+  // posting: MAIRO no longer offers it to new customers.
   SCALE_V2: {
     meta_ads: true,
-    social_posting: true,
+    social_posting: false,
     auto_optimize: true,
     autopilot: true,
     advanced_analytics: true,
@@ -281,7 +282,11 @@ export async function entitlementsForTier(tier: SubscriptionTier, paymentRequire
     .catch(() => null);
 
   if (!row || !row.active) return fallback;
-  return parseEntitlements(row.entitlementsJson, fallback);
+  const stored = parseEntitlements(row.entitlementsJson, fallback);
+  // Social media posting is no longer offered, so a stored row (seeded while a
+  // plan still included it) can switch it off but never back on: only a plan
+  // whose compiled-in defaults include it — the earlier Scale plan — keeps it.
+  return fallback.social_posting ? stored : { ...stored, social_posting: false };
 }
 
 /** The same thing, starting from an organization. */

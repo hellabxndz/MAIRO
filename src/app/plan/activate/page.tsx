@@ -1,4 +1,3 @@
-import { metaPostingApproved } from "@/lib/social/publishing-status";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -205,7 +204,6 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                       ["Reporting", REPORTING[p.tier] ?? ""],
                       ["Full Autopilot", ent.autopilot ? "Available — off until you switch it on" : "Not included"],
                       ["Team", Number.isFinite(ent.member_limit) ? "Just you" : "Team members with approval permissions"],
-                      ["Social Manager", ent.social_posting ? (metaPostingApproved() ? "Included" : "Included — publishing once Meta approves MAIRO's posting access") : "Not included"],
                       ["Support", p.features.some((f) => /priority support/i.test(f)) ? "Priority support" : "Standard support"],
                     ];
                     return (

@@ -143,14 +143,14 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
         </section>
       )}
 
-      <section className={card}>
-        <h3 className="text-[15px] font-semibold text-white">Social media</h3>
-        {plan.scale && plan.organic ? (
+      {/* Only for a business that still has Social Manager (the earlier Scale
+          plan): posting isn't offered to anyone else, so nothing here sells it. */}
+      {plan.scale && plan.organic && (
+        <section className={card}>
+          <h3 className="text-[15px] font-semibold text-white">Social media</h3>
           <p className="mt-1 text-[14px] text-white/85">{plan.organic}</p>
-        ) : (
-          <p className="mt-1 text-[13.5px] text-muted">Organic posting on your own Instagram and Facebook comes with MAIRO Scale (Social Manager). Your ads run either way.</p>
-        )}
-      </section>
+        </section>
+      )}
 
       {plan.timeline.length > 0 && (
         <section className={card}>

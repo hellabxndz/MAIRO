@@ -107,7 +107,6 @@ function planTable(): { head: string[]; rows: string[][] } {
       ["Meta ad accounts", ...BUSINESS_TIERS.map((t) => String(ent(t).ad_account_limit))],
       ["Team members", ...BUSINESS_TIERS.map((t) => (Number.isFinite(ent(t).member_limit) ? (ent(t).member_limit === 1 ? "Just you" : String(ent(t).member_limit)) : "Your team, with permissions"))],
       ["AI Assist and Full Autopilot", ...BUSINESS_TIERS.map((t) => (ent(t).autopilot ? "Optional" : "Recommendations you approve"))],
-      ["Social Manager", ...BUSINESS_TIERS.map((t) => (ent(t).social_posting ? "Included" : "—"))],
       ["Advanced analytics and tracking", ...BUSINESS_TIERS.map((t) => (ent(t).advanced_analytics && ent(t).advanced_tracking ? "Included" : "—"))],
     ],
   };
@@ -118,7 +117,6 @@ export function helpArticles(): HelpArticle[] {
   const pixel = capability("pixel");
   const gtm = capability("pixel-gtm");
   const automation = capability("automation-levels");
-  const social = integration("social-posting");
   const shopify = integration("shopify");
   const holdMinutes = Math.round(RESERVATION_TIMEOUT_MS / 60_000);
   const plans = BUSINESS_TIERS.map((t) => PLANS.find((p) => p.tier === t)!);
@@ -165,7 +163,7 @@ export function helpArticles(): HelpArticle[] {
         { kind: "p", text: "MAIRO picks an ad account your login can run ads from, and the first Facebook Page it finds as a starting point. The Meta connection page shows which were chosen and lets you change them. While MAIRO campaigns are running in one ad account, it won't quietly move you to another." },
         { kind: "p", text: "Connecting an ad account is always something you do yourself — MAIRO's automation never does it, at any level." },
         { kind: "h", text: "Instagram" },
-        { kind: "p", text: `${integration("instagram-ads").what} Posting to your own Instagram and Facebook — not ads — is part of Scale's Social Manager and asks for its own permission, only when you turn it on. ${social.limits ?? ""}`.trim() },
+        { kind: "p", text: `${integration("instagram-ads").what} MAIRO runs ads; it doesn't post to your Instagram or Facebook profile.` },
         { kind: "h", text: "Disconnecting" },
         { kind: "p", text: control("disconnect") },
       ],

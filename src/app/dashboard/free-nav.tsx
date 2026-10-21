@@ -26,6 +26,6 @@ export const SOCIAL_NAV: NavEntry[] = [
 export const SOCIAL_LOCKED_NAV: NavEntry = {
   href: "/dashboard/social",
   label: "Social Manager",
-  badge: "Scale",
+  badge: "Paused",
   icon: icon("M10 3.5l1.9 4.1 4.4.5-3.3 3 1 4.4L10 13.3l-4 2.2 1-4.4-3.3-3 4.4-.5z"),
 };

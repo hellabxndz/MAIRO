@@ -31,11 +31,11 @@ const ok = (n: string, c: boolean, x = "") => {
   } else console.log(`  ok   ${n}`);
 };
 
-console.log(`\n— posting is ${TOP.name} only —`);
+console.log("\n— posting is only for subscribers on the earlier Scale plan —");
 {
   ok("no plan: no", !DEFAULT_ENTITLEMENTS.NONE.social_posting);
   ok("MAIRO Pro: no", !DEFAULT_ENTITLEMENTS.PRO.social_posting);
-  ok(`${TOP.name}: yes`, DEFAULT_ENTITLEMENTS.SCALE_V2.social_posting);
+  ok(`${TOP.name}: no — social posting isn't sold any more`, !DEFAULT_ENTITLEMENTS.SCALE_V2.social_posting);
   // The earlier plans keep exactly what they had: only the earlier Scale.
   ok("Starter (earlier): no", !DEFAULT_ENTITLEMENTS.STARTER.social_posting);
   ok("Growth (earlier): no", !DEFAULT_ENTITLEMENTS.GROWTH.social_posting);
@@ -44,11 +44,11 @@ console.log(`\n— posting is ${TOP.name} only —`);
   ok("Agency: no", !DEFAULT_ENTITLEMENTS.AGENCY.social_posting);
 
   const withPosting = ALL_PLANS.map((p) => p.tier).filter((t) => DEFAULT_ENTITLEMENTS[t].social_posting);
-  ok("only the Scale plans include it", withPosting.join(",") === "SCALE_V2,SCALE", withPosting.join(","));
-  ok("and the access rule names exactly those", SOCIAL_TIERS.join(",") === "SCALE_V2,SCALE", SOCIAL_TIERS.join(","));
+  ok("only the earlier Scale plan includes it", withPosting.join(",") === "SCALE", withPosting.join(","));
+  ok("and the access rule names exactly that", SOCIAL_TIERS.join(",") === "SCALE", SOCIAL_TIERS.join(","));
   ok("MAIRO Pro is refused at the gate", !socialAccessFrom({ subscriptionTier: "PRO", subscriptionStatus: "active" }).ok);
-  ok(`${TOP.name}, active, is let in`, socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "active" }).ok);
-  ok(`${TOP.name}, past due, is paused`, !socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "past_due" }).ok);
+  ok(`${TOP.name}, active, is refused`, !socialAccessFrom({ subscriptionTier: "SCALE_V2", subscriptionStatus: "active" }).ok);
+  ok("the earlier Scale, past due, is paused", !socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "past_due" }).ok);
   ok("the earlier Scale keeps it", socialAccessFrom({ subscriptionTier: "SCALE", subscriptionStatus: "active" }).ok);
 }
 
@@ -69,8 +69,8 @@ console.log("\n— the pricing cards say the same thing the code does —");
   }
 
   const promises = (p: (typeof PLANS)[number]) => p.features.some((f) => /social manager|instagram content|post approval queue|content calendar|scheduled (instagram|posting)/i.test(f));
-  ok("no plan but the Scale plans promises Social Manager or posting", ![pro, ...LEGACY_PLANS.filter((p) => p.tier !== "SCALE"), ...FREELANCER_PLANS].some(promises));
-  ok(`${TOP.name}'s card promises it`, promises(TOP));
+  ok("no plan but the earlier Scale promises Social Manager or posting", ![pro, TOP, ...LEGACY_PLANS.filter((p) => p.tier !== "SCALE"), ...FREELANCER_PLANS].some(promises));
+  ok(`${TOP.name}'s card doesn't promise it`, !promises(TOP));
   ok("no card mentions TikTok", !ALL_PLANS.some((p) => [p.headline, p.tagline, ...p.features].some((f) => /tiktok/i.test(f))));
 }
 
@@ -100,7 +100,7 @@ console.log("\n— the comparison rows come from the entitlements, not from copy
   ok("Pro: you approve every change", pro["MAIRO works on its own"] === "You approve every change", pro["MAIRO works on its own"]);
   ok(`${TOP.name}: Full Autopilot`, scale["MAIRO works on its own"] === "Full Autopilot", scale["MAIRO works on its own"]);
   ok("Pro has no Social Manager", pro["MAIRO Social Manager"] === "No");
-  ok(`${TOP.name} does`, scale["MAIRO Social Manager"] === "Instagram + Facebook", scale["MAIRO Social Manager"]);
+  ok(`${TOP.name} doesn't either`, scale["MAIRO Social Manager"] === "No", scale["MAIRO Social Manager"]);
   ok("Pro runs 15 campaigns", pro["Campaigns at once"] === "15", pro["Campaigns at once"]);
   ok(`${TOP.name} is unlimited`, scale["Campaigns at once"] === "Unlimited", scale["Campaigns at once"]);
   ok("and never leak the sentinel", ![pro, scale].some((c) => /Infinity/.test(c["Campaigns at once"])));

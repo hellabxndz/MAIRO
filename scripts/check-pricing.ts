@@ -9,7 +9,7 @@
 //     and the four always-approved actions are listed on every plan.
 //   - Integrations are described as they are: Meta-only for advertising;
 //     Shopify and Google Tag Manager for tracking, Stripe for billing, and
-//     posting limited until Meta approves it.
+//     no social media posting, which MAIRO no longer offers.
 //   - Plan feature lines don't carry claims nothing backs.
 //
 //   npm run check:pricing   (pure; no database writes, no network)
@@ -77,7 +77,10 @@ check("Pro and Scale differ by what the server enforces", () => {
   assert.deepEqual([pro.studio_credits_monthly, scale.studio_credits_monthly], [50, 200]);
   assert.deepEqual([pro.ad_account_limit, scale.ad_account_limit], [1, 3]);
   assert.deepEqual([pro.member_limit, scale.member_limit], [1, Infinity]);
-  for (const f of ["advanced_analytics", "advanced_tracking", "growth_coach", "social_posting", "auto_optimize", "autopilot"] as const) {
+  // Social media posting isn't offered on either plan any more.
+  assert.equal(pro.social_posting, false);
+  assert.equal(scale.social_posting, false);
+  for (const f of ["advanced_analytics", "advanced_tracking", "growth_coach", "auto_optimize", "autopilot"] as const) {
     assert.equal(pro[f], false, `Pro: ${f}`);
     assert.equal(scale[f], true, `Scale: ${f}`);
   }
@@ -98,7 +101,6 @@ check("every yes/no in the comparison follows an enforced flag", () => {
     assert.equal(rows.assisted.cells[t].kind === "yes", e.auto_optimize, `assisted ${t}`);
     assert.equal(rows.autopilot.cells[t].kind === "yes", e.autopilot, `autopilot ${t}`);
     assert.equal(rows["per-ad"].cells[t].kind === "yes", e.advanced_analytics, `per-ad ${t}`);
-    assert.equal(rows.social.cells[t].kind === "yes", e.social_posting, `social ${t}`);
     const credits = rows.credits.cells[t];
     assert.ok(credits.kind === "text" && credits.text === `${e.studio_credits_monthly} a month` && credits.note === `about ${pictures(e.studio_credits_monthly)} pictures`);
   }
@@ -141,27 +143,23 @@ check("advertising is Meta-only; Google Ads and TikTok are listed as not support
   assert.deepEqual(full, ["meta", "instagram-ads"]);
   assert.equal(INTEGRATIONS.find((i) => i.key === "other-ads")?.status, "unsupported");
 });
-check("Shopify and Tag Manager are for tracking, Stripe for billing, posting limited — each with its limits", () => {
+check("Shopify and Tag Manager are for tracking, Stripe for billing — each with its limits; no social posting listed", () => {
   const by = Object.fromEntries(INTEGRATIONS.map((i) => [i.key, i]));
   assert.equal(by.shopify.status, "tracking");
   assert.match(by.shopify.limits ?? "", /Not a Shopify app/);
   assert.equal(by.gtm.status, "tracking");
   assert.equal(by.stripe.status, "billing");
   assert.match(by.stripe.limits ?? "", /Meta charges your ad account/);
-  // Until Meta approves posting, it's shown as waiting for Meta, not as a
-  // working feature with limits.
-  assert.equal(by["social-posting"].status, process.env.META_POSTING_APPROVED === "1" ? "limited" : "pending");
+  assert.equal(by["social-posting"], undefined, "social media posting isn't offered any more");
   assert.equal(STATUS_LABEL.pending, "Waiting for Meta's approval");
-  assert.match(by["social-posting"].limits ?? "", /Meta's approval/);
 });
-check("Scale's Instagram lines are labelled on the page until Meta approves posting", () => {
-  // The feature lines name what Scale includes; the pricing card adds
-  // "Publishing once Meta approves" beside them while posting is pending.
-  const scale = PLANS.find((p) => p.tier === "SCALE_V2")!.features.filter((f) => /instagram content creation|post approval queue/i.test(f));
-  assert.equal(scale.length, 2);
-  assert.match(page, /instagram content creation\|post approval queue/);
-  assert.match(page, /Publishing once Meta approves/);
-  assert.match(page, /metaPostingApproved\(\)/);
+check("nothing sold or shown publicly offers social media posting", () => {
+  const sold = PLANS.flatMap((p) => [p.headline, p.tagline, ...p.features]).join(" | ");
+  assert.doesNotMatch(sold, /social manager|instagram content|post approval|social post|posting/i);
+  assert.ok(!comparison().some((g) => g.key === "social"), "no social row in the comparison");
+  assert.ok(!pricingFacts().some((f) => f.key === "social"), "no social fact");
+  assert.doesNotMatch(page, /Social Manager|Publishing once Meta approves/);
+  assert.match(page, /it doesn't post to your Instagram or Facebook profile/);
 });
 check("no plan carries a service promise nothing in the product backs", () => {
   const all = [...PLANS, ...FREELANCER_PLANS].flatMap((p) => p.features).join(" | ");
@@ -192,8 +190,6 @@ check("the trial, credits, limits and Social facts are the enforced numbers", ()
   const e = DEFAULT_ENTITLEMENTS;
   assert.match(facts.limits, new RegExp(`MAIRO Pro ${e.PRO.campaign_limit}, MAIRO Scale unlimited`));
   assert.match(facts.limits, new RegExp(`MAIRO Pro ${e.PRO.creative_limit} a month, MAIRO Scale ${e.SCALE_V2.creative_limit} a month`));
-  assert.match(facts.social, /^MAIRO Scale only/);
-  if (process.env.META_POSTING_APPROVED !== "1") assert.match(facts.social, /waiting for Meta/);
 });
 
 console.log("\n— one set of numbers —");

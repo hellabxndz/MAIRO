@@ -79,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Everything the shell needs, read in one round rather than one after
   // another — each await in a row is another wait on the database before the
   // screen can show anything.
-  const [organization, intake, metaAccount, seenTour, socialPosting, exploring, journeyRow, mode, bellRows, unread, workspaces] = await Promise.all([
+  const [organization, intake, metaAccount, seenTour, socialPosting, hadSocial, exploring, journeyRow, mode, bellRows, unread, workspaces] = await Promise.all([
     db.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -93,6 +93,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     db.metaAdAccount.findUnique({ where: { organizationId }, select: { id: true } }),
     hasSeenTour(),
     socialAccess(organizationId).then((a) => a.ok),
+    // Social media posting isn't offered any more. Its entry stays only for a
+    // business that has content there (an earlier Scale subscriber), so its
+    // saved posts and history are still reachable; nobody else sees it.
+    db.socialStrategy.count({ where: { organizationId } }).then(async (n) => n > 0 || (await db.instagramPost.count({ where: { organizationId } })) > 0),
     isExploring(),
     active?.actingAsClient
       ? null
@@ -165,11 +169,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
       userName={session.user.name ?? ""}
       showUpgrade={!["AGENCY", "SCALE", "SCALE_V2"].includes(organization?.subscriptionTier ?? "NONE")}
       assistantName={assistantNameOf(organization?.assistantName)}
-      // Social Manager is Scale-only: active Scale gets its section; every
-      // other plan sees it locked, labelled Scale, leading to the upgrade.
-      // A short sidebar: Social Manager (Scale) or its locked entry; the free
-      // plan's two pages before subscribing. Enquiries lives inside Campaigns.
-      extraNav={[...(socialPosting && !unpaid ? SOCIAL_NAV : [SOCIAL_LOCKED_NAV]), ...(unpaid ? FREE_NAV(approved) : [])]}
+      // Social Manager: only for subscribers on the earlier Scale plan, who get
+      // its section. A business with saved social content but no access sees
+      // it paused; everyone else doesn't see it at all — it isn't sold. The
+      // free plan's two pages show before subscribing. Enquiries lives inside
+      // Campaigns.
+      extraNav={[...(socialPosting && !unpaid ? SOCIAL_NAV : hadSocial ? [SOCIAL_LOCKED_NAV] : []), ...(unpaid ? FREE_NAV(approved) : [])]}
       scale={socialPosting && !unpaid}
       locked={[...(unpaid ? LOCKED_NAV : []), ...(socialPosting && !unpaid ? [] : ["/dashboard/social"])]}
       notifications={

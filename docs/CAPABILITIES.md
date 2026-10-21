@@ -56,7 +56,7 @@ or a public page makes a claim this inventory can't back.
 | Results | Recommendations with approval | Working | `/dashboard/decisions`, `/dashboard/coach` | — | `check:decisions`, `check:decision-claim`, `check:command-center` |
 | Control | Manual, AI Assist, Full Autopilot | Partially working | `/dashboard/settings` | A watched week of real decisions | `check:automation`, `check:decisions` |
 | Control | Spend Protection | Working | `/dashboard/settings` | — | `check:budget` |
-| Social | Social Manager (Scale) | Partially working | `/dashboard/social` | Meta App Review: posting permissions | `check:social-manager`, `check:social-scheduler` |
+| Social | Social Manager (earlier Scale plan only) | Partially working | `/dashboard/social` | Meta App Review: posting permissions | `check:social-manager`, `check:social-scheduler` |
 | Billing | Subscriptions through Stripe | Working | `/pricing`, `/plan/activate`, `/dashboard/billing`, `/dashboard/billing/change` | — | `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db` |
 | Billing | Studio and Agency plans | Unavailable | `/clients/billing` | Stripe prices | `check:entitlements` |
 | Account | Team members and roles | Working | `/dashboard/settings/team`, `/invite/[token]` | — | `check:members`, `check:trust-db` |
@@ -1146,25 +1146,25 @@ Manual: MAIRO only recommends. AI Assist and Full Autopilot make a listed set of
 
 **Public claim:** “Choose how much MAIRO may change on its own — or nothing at all.”
 
-### Social Manager (Scale)
+### Social Manager (earlier Scale plan only)
 
 *Social* · `social-manager`
 
-Plans and writes organic Instagram and Facebook posts; publishing only what the owner approves.
+Plans and writes organic Instagram and Facebook posts; publishing only what the owner approves. Not offered to new customers (October 2026): MAIRO Scale doesn't include it and the public site doesn't mention it. Kept for subscribers on the earlier $499.99 Scale plan.
 
-**Condition:** Publishing waits for Meta's approval of MAIRO's posting permissions (round 2 of App Review). Scale plan only.
+**Condition:** Publishing waits for Meta's approval of MAIRO's posting permissions (round 2 of App Review), which isn't being pursued now.
 
 **Routes:** `/dashboard/social`
 
 **Still needs:** Meta App Review: posting permissions
 
-**Verification:** Scale-only; nothing published without approval.
+**Verification:** Earlier Scale plan only; nothing published without approval.
 
 **Evidence:** `src/lib/social`, `src/lib/social/publishing-status.ts`
 
 **Checks:** `check:social-manager`, `check:social-scheduler`
 
-**Public claim:** “On Scale: social posts planned and written for you; publishing once Meta approves MAIRO's posting access.”
+**Public claim:** none — not advertised
 
 ### Sign in with Google
 
