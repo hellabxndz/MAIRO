@@ -118,19 +118,16 @@ them, and the code defaults apply. After any *later* pricing change, run
 `npm run plans:sync` (prints a diff) and `-- --write` to apply it.
 
 **7. Meta App Review, round 2: the posting permissions.** Scale's Instagram
-and Facebook posting need `instagram_basic`, `instagram_content_publish`,
-`pages_read_engagement` and `pages_manage_posts`. All are review-gated, so
-until they clear only people with a role on the Meta app can post.
-`pages_manage_posts` is asked for in its own dialog (the Facebook posts page's
-"Allow posting on Facebook"), never in the everyday connect, so round 1 is
-unaffected. Before recording round 2, set the review account's organization to
-Scale in `/aios/organizations/<id>` — the Social pages are Scale-only, and with
-billing off everyone else gets Growth.
-
-**7b. Social Manager is Scale-only and needs an active subscription.** For
-the App Review round 2 recording, set the review account to Scale in
-`/aios/organizations/<id>` — that now also records it as active, which Social
-Manager requires.
+and Facebook posting need `instagram_basic`, `instagram_content_publish` and
+`pages_manage_posts` (`pages_read_engagement` cleared in round 1). The code is
+built; until Meta approves, only people with a role on the Meta app can post.
+The whole submission is in **docs/META-APP-REVIEW-POSTING.md**: the dashboard
+setup (the Instagram use case with Facebook Login, and `pages_manage_posts`),
+one test post on each network, the reviewer account on MAIRO Scale
+(`SCALE_V2`, set in `/aios/organizations/<id>`, which also records it as
+active), the screencast, and the text to paste for each permission. AIOS →
+Live Meta check now has a **Ready for posting** line that turns green when
+Meta's prerequisites are met.
 
 **7c. After App Review: put the customer-action question into Create.** The
 Mission already asks "What do you want customers to do?" and prefills Create.

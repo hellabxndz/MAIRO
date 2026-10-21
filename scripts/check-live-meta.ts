@@ -34,6 +34,8 @@ type World = {
   pixelFired: Date | null;
   campaign: { status: string } | null;
   appError?: string;
+  /** An Instagram professional account linked to the Page. */
+  instagram?: boolean;
 };
 let world: World;
 const fresh = (): World => ({
@@ -59,6 +61,7 @@ const fakeMeta: typeof fetch = async (input, init) => {
   if (!world.tokenValid) return err(401, "Error validating access token: Session has expired.", 190);
   if (path === "/me/permissions") return ok({ data: world.granted.map((p) => ({ permission: p, status: "granted" })).concat([{ permission: "pages_manage_posts", status: "declined" }]) });
   if (path === `/act_${TAG}`) return ok({ name: "Shine Ads", account_status: world.accountStatus, currency: "USD", timezone_name: "America/New_York", ...(world.funded ? { funding_source_details: { id: "fs1", display_string: "Visa *4242" } } : {}) });
+  if (path === "/page1" && /instagram_business_account/.test(url.searchParams.get("fields") ?? "")) return ok(world.instagram ? { instagram_business_account: { id: "ig1", username: "shineautospa" } } : {});
   if (path === "/page1") return ok({ id: "page1", name: "Shine Auto Spa" });
   if (path === `/act_${TAG}/campaigns`) return ok({ data: [{ id: "c1", effective_status: "ACTIVE" }, { id: "c2", effective_status: "PAUSED" }] });
   if (path === `/act_${TAG}/insights`) return ok({ data: [{ spend: "123.45", impressions: "9000", clicks: "210", account_currency: "USD" }] });
@@ -183,6 +186,33 @@ async function main() {
       const gone = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
       assert.equal(byKey(gone, "mairo-campaigns").state, "fail");
       assert.match(byKey(gone, "mairo-campaigns").detail, /0 of 1 found/);
+    });
+
+    await check("posting readiness: permissions, the linked Instagram, and a post through MAIRO on each network", async () => {
+      const posting = ["instagram_basic", "instagram_content_publish", "pages_manage_posts"];
+      // Not set up at all: skipped, and the business still reads as working.
+      world = fresh();
+      let steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
+      assert.equal(byKey(steps, "posting").state, "skip");
+      // Permissions granted but no Instagram linked and nothing posted yet.
+      world = { ...fresh(), granted: [...fresh().granted, ...posting] };
+      methods.length = 0;
+      steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
+      const p = byKey(steps, "posting");
+      assert.equal(p.state, "warn");
+      assert.match(p.detail, /no professional .* account is linked/);
+      assert.match(p.detail, /0 on Instagram, 0 on Facebook/);
+      assert.ok(methods.every((m) => m === "GET"), "the posting check only reads");
+      // Linked, and one post through MAIRO on each network: ready.
+      world = { ...world, instagram: true };
+      await db.instagramPost.createMany({ data: [
+        { organizationId: ORG, caption: "Spring detail is back", status: "PUBLISHED", network: "INSTAGRAM", postedAt: new Date() },
+        { organizationId: ORG, caption: "Spring detail is back", status: "PUBLISHED", network: "FACEBOOK", postedAt: new Date() },
+      ] });
+      steps = await checkOrganizationMeta(ORG, { fetch: fakeMeta });
+      assert.equal(byKey(steps, "posting").state, "pass", byKey(steps, "posting").detail);
+      assert.match(byKey(steps, "posting").detail, /@shineautospa/);
+      noSecrets(steps);
     });
 
     await check("a business that never connected is skipped, not failed", async () => {
