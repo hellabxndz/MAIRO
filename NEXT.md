@@ -3,6 +3,28 @@
 Honest running list of what stands between MAIRO and paying customers.
 Ordered by what blocks what. Updated as things land.
 
+## The free plan's question and "I like it — get started" (21 October 2026)
+
+Under a free plan MAIRO asks "Do you like your plan? What would you change?".
+The owner answers in their own words and the plan changes in place (budget,
+goal, area, who it's for, the offer); only figures and wording they wrote are
+kept. "I like it — get started" saves the plan, then sign-up → `/plan/start`
+(one question, MAIRO writes the strategy, the owner approves it) →
+`/plan/activate` (choose MAIRO Pro or Scale) → the launch page connects Meta.
+Check live once deployed:
+
+- a reply changes the plan and lists what changed; with `ANTHROPIC_API_KEY`
+  set it should say nothing about "MAIRO's rules" (that label means the AI
+  wasn't used);
+- a fresh account from "I like it — get started" lands on `/plan/start`, not
+  the 9-step setup.
+
+**Payment is the open step.** Buying MAIRO Pro or Scale there needs
+`STRIPE_SECRET_KEY` plus `STRIPE_PRICE_PRO` and `STRIPE_PRICE_SCALE_V2`
+(the Stripe setup, deferred). Until they're set, `/plan/activate` says so
+("Payments aren't switched on…" or "This plan can't be bought here yet") and
+the plan stays saved.
+
 ## Deployed 14 October 2026 — check it live
 
 Pushed 69b169e (the 17 commits after 238bd1a). Vercel's Production

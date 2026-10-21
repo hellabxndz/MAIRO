@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import type { PlanReport } from "@/lib/preview/report";
 import type { PreviewGoal } from "@/lib/preview/build";
 import { BUDGET_CHOICES, GOAL_OPTIONS, budgetLabel } from "@/lib/preview/strategy";
@@ -19,6 +19,20 @@ import { AdMock, type Placement } from "./ad-mock";
 
 export type SaveState = { status: "idle" | "saving" | "saved" | "error"; token?: string; message?: string; toAccount?: boolean; next?: string };
 
+/** One turn of "Do you like it? What would you change?" under the plan. */
+export type ChatTurn = {
+  who: "you" | "mairo";
+  text: string;
+  /** What MAIRO changed in the plan, one line each. */
+  changes?: string[];
+  /** What it was asked and couldn't change, and why. */
+  dropped?: string[];
+  likes?: boolean;
+  /** Who read the request: MAIRO's AI, the local test fixture, or MAIRO's rules. */
+  by?: "ai" | "fixture" | "rules";
+  note?: string | null;
+};
+
 export type ReportActions = {
   onEdit: () => void;
   onBudget: (monthly: number) => void;
@@ -28,6 +42,10 @@ export type ReportActions = {
   onWork: () => void;
   /** Already a customer: save, sign in, and the plan joins their business. */
   onSignIn: () => void;
+  /** The owner's answer to "What would you change?" — MAIRO updates the plan from it. */
+  onAsk: (message: string) => void;
+  chat: ChatTurn[];
+  asking: boolean;
   save: SaveState;
   working: boolean;
   shareNote: string | null;
@@ -213,6 +231,8 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         </p>
 
         <AtAGlance r={r} />
+
+        {actions && <PlanFeedback r={r} a={actions} />}
 
         {actions && <ActionBar r={r} a={actions} />}
 
@@ -499,7 +519,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           {actions ? (
             <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
-              {actions.working ? "Saving your strategy…" : "Activate Your AI Advertising Team →"}
+              {actions.working ? "Saving your strategy…" : "I like it — get started →"}
             </button>
           ) : (
             <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
@@ -511,7 +531,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
           </Link>
         </div>
         <p className="mt-5 max-w-[760px] text-[13px] leading-relaxed text-white/55">
-          {actions ? "Your strategy comes with you: setup opens with your answers already filled in, for you to confirm. " : ""}
+          {actions ? "Your strategy comes with you: create your free account, confirm your setup in one step, choose your MAIRO plan, then connect your Meta ad account. " : ""}
           Creating an account is free. Plans start at ${starter.priceMonthly} a month{starter.trialDays ? `, and ${starter.name} includes a ${PRO_TRIAL_DAYS}-day free trial` : ""}. Your ad spend is separate — Meta charges it to your own ad account, at the budget you approve.
         </p>
         {actions && (
@@ -525,6 +545,117 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
 
       {actions && actions.save.status !== "saved" && <AccountPrompt onSave={actions.onSave} />}
     </article>
+  );
+}
+
+/** Quick answers to start the conversation, made from this plan. */
+function starters(r: PlanReport): string[] {
+  const lower = Math.max(100, Math.round(r.budget.monthly / 2 / 50) * 50);
+  const other = GOAL_OPTIONS.find((g) => g.value !== r.goal && (r.goal === "leads" ? g.value === "bookings" : g.value === "leads"));
+  return [
+    lower < r.budget.monthly ? `Make my budget $${lower.toLocaleString("en-US")} a month` : `Make my budget $${(r.budget.monthly * 2).toLocaleString("en-US")} a month`,
+    other ? `Focus on ${other.label.toLowerCase().replace(/^(generate|get|increase|build) (more )?/, "")} instead` : "",
+  ].filter(Boolean);
+}
+
+/**
+ * MAIRO's question under a freshly made plan — "Do you like it? What would
+ * you change?" — and the way on when the answer is yes. What the owner writes
+ * goes to MAIRO (the AI, or its rules when the AI isn't on — each reply says
+ * which); the plan above changes in place, and the reply lists what changed.
+ */
+function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
+  const [text, setText] = useState("");
+  const log = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    log.current?.scrollTo({ top: log.current.scrollHeight, behavior: "smooth" });
+  }, [a.chat.length, a.asking]);
+  const send = (e?: FormEvent) => {
+    e?.preventDefault();
+    const t = text.trim();
+    if (!t || a.asking) return;
+    a.onAsk(t);
+    setText("");
+  };
+  const lastLikes = a.chat.length > 0 && a.chat[a.chat.length - 1].who === "mairo" && a.chat[a.chat.length - 1].likes;
+  return (
+    <section aria-labelledby="feedback-title" className="mp-noprint mt-6 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(139,124,255,0.35)", background: "radial-gradient(70% 120% at 0% 0%, rgba(124,92,255,0.16), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
+      <div className="p-5 sm:p-7">
+        <div className="flex items-start gap-3.5">
+          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)]">M</span>
+          <div className="min-w-0">
+            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-200">MAIRO</p>
+            <h2 id="feedback-title" className="mt-1 text-[clamp(19px,2.4vw,24px)] font-semibold leading-snug tracking-[-0.02em] text-white">Do you like your plan? What would you change?</h2>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-white/65">Tell me in your own words — your budget, your goal, where you advertise, who it&rsquo;s for, or your offer. I&rsquo;ll update the plan right here.</p>
+          </div>
+        </div>
+
+        {(a.chat.length > 0 || a.asking) && (
+          <div ref={log} role="log" aria-live="polite" aria-label="Your conversation with MAIRO" className="mt-5 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+            {a.chat.map((t, i) =>
+              t.who === "you" ? (
+                <p key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-[#2f6bff] px-4 py-2.5 text-[14px] leading-relaxed text-white">{t.text}</p>
+              ) : (
+                <div key={i} className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-[14px] leading-relaxed text-white/90">
+                  <p>{t.text}</p>
+                  {t.changes && t.changes.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-[13px] text-emerald-200">
+                      {t.changes.map((c) => (
+                        <li key={c} className="flex gap-2"><span aria-hidden>✓</span>{c}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {t.dropped && t.dropped.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-[12.5px] text-amber-200/90">
+                      {t.dropped.map((d) => (
+                        <li key={d} className="flex gap-2"><span aria-hidden>–</span>Not changed: {d}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {t.note && <p className="mt-2 text-[12px] text-white/50">{t.note}</p>}
+                  {t.by && t.by !== "ai" && <p className="mt-2 text-[11.5px] text-white/40">{t.by === "fixture" ? "Local test fixture, not MAIRO's AI." : "Read by MAIRO's rules — its AI isn't answering here right now."}</p>}
+                </div>
+              ),
+            )}
+            {a.asking && <p className="w-fit rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[13.5px] text-white/60" role="status">MAIRO is updating your plan…</p>}
+          </div>
+        )}
+
+        {a.chat.length === 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {starters(r).map((q) => (
+              <button key={q} type="button" onClick={() => a.onAsk(q)} disabled={a.asking} className="min-h-[38px] rounded-full border border-violet-400/35 bg-violet-500/[0.08] px-3.5 text-[13px] text-white transition hover:bg-violet-500/20 disabled:opacity-50">
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={send} className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <label htmlFor="plan-feedback" className="sr-only">What would you change?</label>
+          <input
+            id="plan-feedback"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={500}
+            placeholder="e.g. “Lower my budget to $300 and focus on phone calls”"
+            className="min-h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-[#0a0e1b]/70 px-5 text-[14.5px] text-white placeholder:text-white/35 focus:border-violet-400/60 focus:outline-none"
+          />
+          <button type="submit" disabled={a.asking || !text.trim()} className="min-h-[48px] shrink-0 rounded-full border border-white/20 px-5 text-[14px] font-semibold text-white transition hover:border-white/45 disabled:opacity-45">
+            {a.asking ? "Updating…" : "Send to MAIRO"}
+          </button>
+        </form>
+      </div>
+
+      <div className={`flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 ${lastLikes ? "bg-violet-500/[0.10]" : ""}`} style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+        <p className="text-[13px] leading-relaxed text-white/65">
+          <span className="font-semibold text-white">Like it as it is?</span> Create your free account, choose your MAIRO plan, then connect your Meta ad account. Nothing launches or spends until you approve it.
+        </p>
+        <button type="button" onClick={a.onWork} disabled={a.working} className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
+          {a.working ? "Saving your plan…" : "I like it — get started →"}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -544,7 +675,7 @@ function ActionBar({ r, a }: { r: PlanReport; a: ReportActions }) {
       {goalOpen && (
         <div id="goal-switch" className="mt-3 flex flex-wrap gap-2">
           {GOAL_OPTIONS.filter((g) => g.value !== r.goal).map((g) => (
-            <button key={g.value} type="button" onClick={() => a.onGoal(g.value)} className="min-h-[38px] rounded-full border border-violet-400/35 bg-violet-500/[0.08] px-3.5 text-[13px] text-white transition hover:bg-violet-500/20">
+            <button key={g.value} type="button" onClick={() => { setGoalOpen(false); a.onGoal(g.value); }} className="min-h-[38px] rounded-full border border-violet-400/35 bg-violet-500/[0.08] px-3.5 text-[13px] text-white transition hover:bg-violet-500/20">
               {g.label}
             </button>
           ))}

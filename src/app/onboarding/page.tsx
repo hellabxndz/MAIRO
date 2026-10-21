@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { plansFor } from "@/lib/preview/saved-plan-store";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { OnboardingForm } from "./onboarding-form";
@@ -24,7 +25,7 @@ export const dynamic = "force-dynamic";
 // Reading the website is a web fetch (and an AI call when configured).
 export const maxDuration = 60;
 
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string; type?: string; website?: string }> }) {
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ step?: string; type?: string; website?: string; full?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -47,15 +48,20 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
     );
   }
 
-  const { step, type, website: carriedWebsite } = await searchParams;
+  const { step, type, website: carriedWebsite, full } = await searchParams;
   const [org, steps, work, brain] = await Promise.all([
-    db.organization.findUnique({ where: { id: organizationId }, select: { website: true, industry: true, onboardingDraft: true, timezone: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { website: true, industry: true, onboardingDraft: true, timezone: true, parentId: true } }),
     loadOnboarding(organizationId),
     setupWork(organizationId),
     loadBrain(organizationId),
   ]);
   if (!org) redirect("/sign-in");
   const draft = parseDraft(org.onboardingDraft);
+
+  // A free plan the owner made before signing up: the quick start, which asks
+  // one question instead of the whole setup — unless they chose the full setup,
+  // or already started it.
+  if (!step && full !== "1" && !org.parentId && !draft.business?.savedAt && (await plansFor(organizationId)).length > 0) redirect("/plan/start");
 
   const screen = resumeScreen(draft, org.website, step);
 

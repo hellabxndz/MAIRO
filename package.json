@@ -86,6 +86,7 @@
     "check:preview": "tsx scripts/check-preview.ts",
     "check:strategy": "tsx scripts/check-strategy.ts",
     "check:plan-writing": "tsx scripts/check-plan-writing.ts",
+    "check:refine": "tsx scripts/check-refine.ts",
     "check:saved-plan": "tsx scripts/check-saved-plan.ts",
     "check:report": "tsx scripts/check-report.ts",
     "check:clips": "tsx scripts/check-clips.ts",

@@ -23,6 +23,16 @@ const STEPS = [
   { title: "Review and authorize the launch", body: "Nothing goes live until you approve it, with the budget shown." },
 ];
 
+// With a free plan waiting in this browser, the quick start: the plan is
+// already made, so setup is one question (app/plan/start).
+const PLAN_STEPS = [
+  { title: "Confirm your setup", body: "From the free plan you made — one question about where your ads send people." },
+  { title: "Approve your strategy", body: "MAIRO writes it from your plan. Change anything first, or approve it." },
+  { title: "Choose your MAIRO plan", body: "The subscription that lets MAIRO build and run your campaign." },
+  { title: "Connect your Meta ad account", body: "Your own account — Meta bills your ad spend directly." },
+  { title: "Review and authorize the launch", body: "Nothing goes live until you approve it, with the budget shown." },
+];
+
 function money(n: number): string {
   return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
 }
@@ -52,7 +62,7 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
       <aside aria-labelledby="next-title" className="rounded-2xl border border-white/10 bg-paper/70 p-6 sm:p-8">
         <h2 id="next-title" className="text-[16px] font-semibold text-white">What happens after you sign up</h2>
         <ol className="mt-5 space-y-4">
-          {STEPS.map((s, i) => (
+          {(plan ? PLAN_STEPS : STEPS).map((s, i) => (
             <li key={s.title} className="flex gap-3.5">
               <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-[12.5px] font-semibold text-violet-300">
                 {i + 1}

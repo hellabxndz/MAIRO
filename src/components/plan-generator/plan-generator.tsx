@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { useWebsiteScan } from "@/components/tools/use-website-scan";
-import { factsFromScan, type PreviewGoal } from "@/lib/preview/build";
+import { factsFromScan, type PreviewFacts, type PreviewGoal } from "@/lib/preview/build";
 import { factsFromAnswers, toSavedPlan, type GeneratorAnswers, type Writing } from "@/lib/preview/answers";
-import { buildReport, type PlanReport } from "@/lib/preview/report";
+import { buildReport, factsOf, type PlanReport } from "@/lib/preview/report";
+import { NO_CHANGES, applyChanges, describeChanges, hasChanges, withWriting, type RefineAnswer, type RefineChanges } from "@/lib/preview/refine";
 import { BUDGET_CHOICES, BUDGET_MAX, BUDGET_MIN, GOAL_OPTIONS, budgetLabel } from "@/lib/preview/strategy";
 import { savedPlanSchema, type SavedPlan } from "@/lib/preview/saved-plan";
 import type { ScanResult } from "@/lib/website/scan";
 import { heroVariant, track } from "@/lib/analytics/track";
-import { PlanReportView, type SaveState } from "./plan-report";
+import { PlanReportView, type ChatTurn, type SaveState } from "./plan-report";
 import { GoalIcon, IconCard, IconDoc, IconLink, IconPause, IconRocket, IconSearch, IconShield, IconSparkle, IconStore, IconTag } from "./icons";
 
 // The Free AI Meta Ad Strategy Generator: four answers — the website, what
@@ -106,6 +107,26 @@ function writeLast(l: Last | null) {
   }
 }
 
+/** The ad concepts, written by MAIRO's AI on the server (checked against the facts), or its templates — and which. */
+async function writeConcepts(facts: PreviewFacts, fromWebsite: string[], goal: PreviewGoal, monthly: number): Promise<Writing> {
+  try {
+    const res = await fetch("/api/tools/ad-plan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        facts: { name: facts.name, offering: facts.offering, customer: facts.customer, location: facts.location, offer: facts.offer, proof: facts.proof, problem: facts.problem, businessType: facts.businessType, website: facts.website, fromWebsite },
+        goal,
+        monthly,
+      }),
+    });
+    const j = (await res.json()) as Partial<Writing> & { ok?: boolean };
+    if (res.ok && j.ok && j.source) return { source: j.source, plan: j.plan ?? null, dropped: j.dropped ?? [], filled: j.filled ?? 0 };
+  } catch {
+    // Unreachable: the templates, labelled as such.
+  }
+  return { source: { by: "templates", why: "failed" }, plan: null, dropped: [], filled: 0 };
+}
+
 export type GeneratorInitial = { website?: string | null; sells?: string; name?: string; goal?: PreviewGoal | ""; budget?: number | null; autostart?: boolean };
 
 type Field = "website" | "sells" | "name" | "goal" | "budget";
@@ -138,6 +159,9 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
   const [save, setSave] = useState<SaveState>({ status: "idle" });
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  // "Do you like it? What would you change?" — the conversation under the plan.
+  const [chat, setChat] = useState<ChatTurn[]>([]);
+  const [asking, setAsking] = useState(false);
   const [last, setLast] = useState<Last | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const runningHeading = useRef<HTMLHeadingElement>(null);
@@ -237,22 +261,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
 
       // 5 — the ad concepts: MAIRO's AI on the server, checked, or its templates — and which.
       mark(4, "working");
-      let w: Writing = { source: { by: "templates", why: "failed" }, plan: null, dropped: [], filled: 0 };
-      try {
-        const res = await fetch("/api/tools/ad-plan", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            facts: { name: facts.name, offering: facts.offering, customer: facts.customer, location: facts.location, offer: facts.offer, proof: facts.proof, problem: facts.problem, businessType: facts.businessType, website: facts.website, fromWebsite: provisional.facts.fromWebsite },
-            goal: a.goal,
-            monthly: a.monthly,
-          }),
-        });
-        const j = (await res.json()) as Partial<Writing> & { ok?: boolean };
-        if (res.ok && j.ok && j.source) w = { source: j.source, plan: j.plan ?? null, dropped: j.dropped ?? [], filled: j.filled ?? 0 };
-      } catch {
-        // Unreachable: the templates, labelled as such.
-      }
+      const w = await writeConcepts(facts, provisional.facts.fromWebsite, a.goal, a.monthly);
       mark(4, "done", w.source.by === "ai" ? "Written by MAIRO's AI, then checked against your facts" : w.source.by === "fixture" ? "Local test fixture (not MAIRO's AI)" : "From MAIRO's ad templates");
 
       // 6 — the plan.
@@ -328,6 +337,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
     if (!a) return;
     const scan = a.website && read && read.url === a.website ? read.result : null;
     track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } });
+    setChat([]);
     if (mode === "hero") {
       if (handOffPlan(a, scan)) router.push("/preview?generate=1");
       // Too large or blocked: the form goes as a plain request instead.
@@ -354,11 +364,20 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
     keep(next.data, null);
   };
 
-  const tryGoal = (g: PreviewGoal) => {
-    if (!plan) return;
-    setGoal(g);
-    const a: GeneratorAnswers = { website: plan.inputs.website, sells: plan.inputs.sells, name: plan.facts.fromWebsite.includes("name") ? "" : plan.facts.name, goal: g, monthly: plan.inputs.monthly };
-    void generate(a, a.website && site?.url === a.website ? site.result : null);
+  const [switching, setSwitching] = useState(false);
+  const tryGoal = async (g: PreviewGoal) => {
+    if (!plan || switching) return;
+    setSwitching(true);
+    try {
+      if (!(await revise(plan, { ...NO_CHANGES, goal: g }))) {
+        // Couldn't be changed in place: made again from the answers.
+        setGoal(g);
+        const a: GeneratorAnswers = { website: plan.inputs.website, sells: plan.inputs.sells, name: plan.facts.fromWebsite.includes("name") ? "" : plan.facts.name, goal: g, monthly: plan.inputs.monthly };
+        void generate(a, a.website && site?.url === a.website ? site.result : null);
+      }
+    } finally {
+      setSwitching(false);
+    }
   };
 
   /** The answers a plan was made from, back in the form — for "Edit answers" on a plan reopened from this browser. */
@@ -375,6 +394,74 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
     } else {
       setCustomOn(true);
       setCustom(String(p.inputs.monthly));
+    }
+  };
+
+
+  /**
+   * A change made to the plan in place — from the conversation, or "Try another
+   * goal" — keeping everything else, including facts the owner changed by
+   * talking to MAIRO. A goal or fact change rewrites the concepts.
+   */
+  const revise = async (from: SavedPlan, changes: RefineChanges): Promise<{ note: string | null } | null> => {
+    const applied = applyChanges(from, changes);
+    let next = applied?.plan ?? null;
+    let note: string | null = null;
+    if (next && applied?.rewrite) {
+      const w = await writeConcepts(factsOf(next), next.facts.fromWebsite, next.inputs.goal, next.inputs.monthly);
+      next = withWriting(next, w);
+      if (w.source.by === "templates") note = "Your ad concepts were rewritten from MAIRO's templates this time.";
+    }
+    const r = next ? buildReport(next) : null;
+    if (!next || !r) return null;
+    setPlan(next);
+    setReport(r);
+    setSave({ status: "idle" });
+    setShareNote(null);
+    keep(next, null);
+    // The form follows, so Edit answers shows the plan as it is now.
+    setGoal(next.inputs.goal);
+    setSells(next.inputs.sells);
+    if ((BUDGET_CHOICES as readonly number[]).includes(next.inputs.monthly)) {
+      setBudget(next.inputs.monthly);
+      setCustomOn(false);
+    } else {
+      setCustomOn(true);
+      setCustom(String(next.inputs.monthly));
+    }
+    return { note };
+  };
+
+  /** The owner's answer to "What would you change?": MAIRO reads it, the plan changes in place, and the reply says what changed. */
+  const ask = async (message: string) => {
+    const text = message.trim();
+    if (!plan || asking || !text) return;
+    setChat((c) => [...c, { who: "you", text }]);
+    setAsking(true);
+    const say = (t: ChatTurn) => setChat((c) => [...c, t]);
+    try {
+      const res = await fetch("/api/free-plan/refine", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan, message: text }) });
+      const j = (await res.json()) as Partial<RefineAnswer> & { ok?: boolean; error?: string; limited?: string | null };
+      if (!res.ok || !j.ok || !j.changes) {
+        say({ who: "mairo", text: j.error ?? "I couldn't read that just now. Try again in a moment, or use Edit answers." });
+        return;
+      }
+      let lines: string[] = [];
+      let note = j.limited ?? null;
+      if (hasChanges(j.changes)) {
+        const done = await revise(plan, j.changes);
+        if (!done) {
+          say({ who: "mairo", text: "I couldn't make that change to your plan. Try saying it another way, or use Edit answers." });
+          return;
+        }
+        lines = describeChanges(plan, j.changes);
+        note = note ?? done.note;
+      }
+      say({ who: "mairo", text: j.reply ?? "", changes: lines, dropped: j.dropped ?? [], likes: Boolean(j.likes), by: j.by, note });
+    } catch {
+      say({ who: "mairo", text: "I couldn't reach MAIRO just now. Check your connection and try again." });
+    } finally {
+      setAsking(false);
     }
   };
 
@@ -445,11 +532,14 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
           actions={{
             onEdit: () => setPhase("input"),
             onBudget: changeBudget,
-            onGoal: tryGoal,
+            onGoal: (g) => void tryGoal(g),
             onSave: () => void doSave(),
             onShare: () => void share(),
             onWork: () => void work(),
             onSignIn: () => void signIn(),
+            onAsk: (m) => void ask(m),
+            chat,
+            asking,
             save,
             working,
             shareNote,
