@@ -17,7 +17,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-22T04:29:11.132Z",
+  "renderedAt": "2026-10-22T19:09:47.873Z",
   "clips": {
     "film": {
       "vtt": "/demo/film.vtt",
@@ -237,7 +237,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 26500,
-        "bytes": 1243832
+        "bytes": 1240694
       },
       "narrow": {
         "mp4": "/demo/campaign-narrow.mp4",
@@ -245,7 +245,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 26500,
-        "bytes": 1148390
+        "bytes": 1146334
       }
     },
     "team": {

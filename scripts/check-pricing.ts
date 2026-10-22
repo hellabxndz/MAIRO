@@ -34,10 +34,10 @@ function check(name: string, fn: () => void) {
 }
 
 console.log("— prices and plans —");
-check("exactly two plans are sold: MAIRO Pro $139 with a 7-day trial, MAIRO Scale $299 with none", () => {
+check("exactly two plans are sold: MAIRO Pro $139.99 with a 7-day trial, MAIRO Scale $299.99 with none", () => {
   assert.deepEqual(PLANS.map((p) => [p.tier, p.name, p.priceMonthly, p.trialDays ?? 0]), [
-    ["PRO", "MAIRO Pro", 139, PRO_TRIAL_DAYS],
-    ["SCALE_V2", "MAIRO Scale", 299, 0],
+    ["PRO", "MAIRO Pro", 139.99, PRO_TRIAL_DAYS],
+    ["SCALE_V2", "MAIRO Scale", 299.99, 0],
   ]);
   assert.equal(PRO_TRIAL_DAYS, 7);
   assert.deepEqual(SOLD_TIERS, ["PRO", "SCALE_V2"]);
@@ -64,7 +64,7 @@ check("the earlier plans are kept, unsold, at the prices their subscribers pay",
 });
 check("the plan stories use those prices and the enforced limits", () => {
   const s = planStories();
-  assert.deepEqual(s.map((p) => p.price), [139, 299]);
+  assert.deepEqual(s.map((p) => p.price), [139.99, 299.99]);
   assert.equal(s[0].highlights[0], "1 Meta ad account");
   assert.equal(s[1].highlights[0], "Up to 3 Meta ad accounts");
   assert.match(s[0].highlights[1], /Up to 15 campaigns/);

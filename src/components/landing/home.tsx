@@ -213,7 +213,7 @@ const FAQ = [
   },
   {
     q: "What's the difference between the plans?",
-    a: `There are two. MAIRO Pro ($139 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, your team, the Performance Coach and priority support.`,
+    a: `There are two. MAIRO Pro ($139.99 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299.99 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, your team, the Performance Coach and priority support.`,
   },
   {
     q: "Which platforms and tools does MAIRO work with?",

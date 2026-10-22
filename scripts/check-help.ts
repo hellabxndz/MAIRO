@@ -91,7 +91,7 @@ check("prices, trial, campaign limits, credits and creative requests match the p
     assert.match(row("AI image credits")[i], new RegExp(`^${DEFAULT_ENTITLEMENTS[t].studio_credits_monthly} a month`));
     assert.equal(row("Creative requests")[i], `${DEFAULT_ENTITLEMENTS[t].creative_limit} a month`);
   }
-  assert.match(text("billing"), /MAIRO Pro is \$139 a month, MAIRO Scale is \$299 a month/);
+  assert.match(text("billing"), /MAIRO Pro is \$139.99 a month, MAIRO Scale is \$299.99 a month/);
   assert.match(text("billing"), /keep its price and features until you choose to switch/);
   assert.match(text("billing"), /7-day free trial/);
 });

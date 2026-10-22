@@ -128,7 +128,7 @@ async function main() {
   });
   await check("the earlier Scale keeps its own price and allowances, separate from MAIRO Scale", () => {
     assert.equal(planFor("SCALE").priceMonthly, 499.99);
-    assert.equal(planFor("SCALE_V2").priceMonthly, 299);
+    assert.equal(planFor("SCALE_V2").priceMonthly, 299.99);
     assert.equal(extraBusinessesFor("SCALE"), 0, "the earlier Scale never had extra ad accounts");
     assert.equal(extraBusinessesFor("SCALE_V2"), 2);
     assert.equal(extraBusinessesFor("PRO"), 0);
@@ -292,7 +292,7 @@ async function main() {
     assert.equal(await payingBusinessOf(client), null);
   });
   await check("the pricing shown is the pricing sold", () => {
-    assert.deepEqual(PLANS.map((p) => `${p.name} $${p.priceMonthly}`), ["MAIRO Pro $139", "MAIRO Scale $299"]);
+    assert.deepEqual(PLANS.map((p) => `${p.name} $${p.priceMonthly}`), ["MAIRO Pro $139.99", "MAIRO Scale $299.99"]);
   });
 
   await cleanup();

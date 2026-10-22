@@ -149,7 +149,7 @@ What is in the code:
 
 | Item | State |
 |---|---|
-| Pro $139/mo, 7-day trial; Scale $299/mo, no trial | From `lib/plans.ts`; checkout reads the trial from the plan |
+| Pro $139.99/mo, 7-day trial; Scale $299.99/mo, no trial | From `lib/plans.ts`; checkout reads the trial from the plan |
 | Price ids | `STRIPE_PRICE_PRO`, `STRIPE_PRICE_SCALE_V2`. Earlier plans' ids stay mapped for their subscribers |
 | Webhook | Signature verified on the raw body. Re-reads the live subscription. Idempotent. Ignores stale events |
 | Entitlement | Only `active`/`trialing` unlocks a free-plan account. A trial ending unpaid stops execution |
@@ -166,9 +166,9 @@ redeploy, because variables only reach a new build.
 
 1. `STRIPE_SECRET_KEY`: `sk_live_…` for real customers, `sk_test_…` for a
    rehearsal.
-2. `STRIPE_PRICE_PRO`: a **recurring, monthly, $139** price created **in the
+2. `STRIPE_PRICE_PRO`: a **recurring, monthly, $139.99** price created **in the
    same mode as the key**.
-3. `STRIPE_PRICE_SCALE_V2`: a recurring, monthly, $299 price, in the same mode.
+3. `STRIPE_PRICE_SCALE_V2`: a recurring, monthly, $299.99 price, in the same mode.
    **This is the one blocking Scale.**
 4. `STRIPE_WEBHOOK_SECRET`: the signing secret of a webhook endpoint at
    `https://www.mairo.io/api/stripe/webhook`, created in the same mode. Its
@@ -196,12 +196,12 @@ or production while it still has test keys and no real customers:
 
 1. Sign up a fresh account, build and approve the free plan, skip Meta.
 2. Press **Get Started with Pro**. Stripe Checkout should open, showing "7 days
-   free" and then $139/month.
+   free" and then $139.99/month.
 3. Pay with `4242 4242 4242 4242`. You should land on `/dashboard/launch`, not
    the plans. Billing should show Pro, trialing.
 4. In Stripe: the subscription has metadata `organizationId`, the webhook
    delivery shows 200, and there is one subscription.
-5. Second account: **Start Scaling with MAIRO**. Stripe should show $299 due
+5. Second account: **Start Scaling with MAIRO**. Stripe should show $299.99 due
    today with no trial. Pay, and you should reach the dashboard. Billing shows
    Scale, active.
 6. Third account: use `4000 0000 0000 0002` (declined). You should stay on

@@ -49,8 +49,8 @@ console.log("\n— the pricing cards say the same thing the code does —");
 {
   const pro = PLANS.find((p) => p.tier === "PRO")!;
   ok("two plans are sold", PLANS.length === 2, String(PLANS.length));
-  ok("MAIRO Pro is first and $139", PLANS[0] === pro && pro.name === "MAIRO Pro" && pro.priceMonthly === 139, `${pro.name} $${pro.priceMonthly}`);
-  ok(`${TOP.name} is $299`, TOP.name === "MAIRO Scale" && TOP.priceMonthly === 299, `${TOP.name} $${TOP.priceMonthly}`);
+  ok("MAIRO Pro is first and $139.99", PLANS[0] === pro && pro.name === "MAIRO Pro" && pro.priceMonthly === 139.99, `${pro.name} $${pro.priceMonthly}`);
+  ok(`${TOP.name} is $299.99`, TOP.name === "MAIRO Scale" && TOP.priceMonthly === 299.99, `${TOP.name} $${TOP.priceMonthly}`);
   ok("they climb", pro.priceMonthly < TOP.priceMonthly);
 
   for (const plan of ALL_PLANS) {

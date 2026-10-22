@@ -407,7 +407,7 @@ A stop-loss and a monthly cap that warn, or pause a campaign if the owner choose
 
 *Billing* · `subscriptions`
 
-MAIRO Pro $139 (7-day free trial, card at checkout) and MAIRO Scale $299 a month. Earlier plans (Starter, Growth, the $499.99 Scale, Studio, Agency) keep working for their subscribers and can't be bought. Ad spend is paid to Meta, separately.
+MAIRO Pro $139.99 (7-day free trial, card at checkout) and MAIRO Scale $299.99 a month. Earlier plans (Starter, Growth, the $499.99 Scale, Studio, Agency) keep working for their subscribers and can't be bought. Ad spend is paid to Meta, separately.
 
 **Routes:** `/pricing`, `/plan/activate`, `/dashboard/billing`, `/dashboard/billing/change`
 
@@ -419,7 +419,7 @@ MAIRO Pro $139 (7-day free trial, card at checkout) and MAIRO Scale $299 a month
 
 **Checks:** `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db`
 
-**Public claim:** “MAIRO Pro $139 a month with a 7-day free trial; MAIRO Scale $299 a month.”
+**Public claim:** “MAIRO Pro $139.99 a month with a 7-day free trial; MAIRO Scale $299.99 a month.”
 
 ### Team members and roles
 

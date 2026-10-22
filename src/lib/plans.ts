@@ -95,7 +95,7 @@ export const PLANS: Plan[] = [
   {
     tier: "PRO",
     name: "MAIRO Pro",
-    priceMonthly: 139,
+    priceMonthly: 139.99,
     trialDays: PRO_TRIAL_DAYS,
     tagline: "A complete AI advertising system for your business.",
     spendGuidance: "For a business running its own Facebook and Instagram ads",
@@ -125,7 +125,7 @@ export const PLANS: Plan[] = [
     // be confused at the webhook.
     tier: "SCALE_V2",
     name: "MAIRO Scale",
-    priceMonthly: 299,
+    priceMonthly: 299.99,
     tagline: "For growing businesses, established brands and marketing teams.",
     spendGuidance: "For brands advertising every month, or more than one business",
     featured: true,
