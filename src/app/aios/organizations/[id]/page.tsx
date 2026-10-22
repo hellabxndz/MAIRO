@@ -19,7 +19,9 @@ const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
 // MANUAL_STATUSES in aios-actions.ts.
 const CREATIVE_STATUSES = ["REQUESTED", "IN_PROGRESS", "DELIVERED"];
 // The plans sold today first, then the earlier ones existing subscribers keep.
-const TIERS = ["NONE", "PRO", "SCALE_V2", "STARTER", "GROWTH", "SCALE"];
+// The plans MAIRO sells. A business still on an earlier plan keeps it in the
+// list (it's what the select shows), but nobody is moved onto one.
+const TIERS = ["NONE", "PRO", "SCALE_V2"];
 
 export default async function OrganizationDetailPage({
   params,
@@ -87,7 +89,7 @@ export default async function OrganizationDetailPage({
             <StatusSelect
               name="subscriptionTier"
               defaultValue={org.subscriptionTier}
-              options={TIERS}
+              options={TIERS.includes(org.subscriptionTier) ? TIERS : [...TIERS, org.subscriptionTier]}
             />
           </form>
         </div>

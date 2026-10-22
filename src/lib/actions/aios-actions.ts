@@ -114,7 +114,9 @@ export async function updateSubscriptionTierAction(organizationId: string, formD
   // without a status, features that need an active subscription — Social
   // Manager on Scale — would stay locked for an account the owner just
   // upgraded. A Stripe-billed account keeps Stripe's own status.
-  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true } });
+  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true, subscriptionTier: true } });
+  // Only the plans sold today (or the one already on, unchanged).
+  if (!["NONE", "PRO", "SCALE_V2"].includes(subscriptionTier) && subscriptionTier !== org?.subscriptionTier) return;
   const manualStatus = org?.stripeSubscriptionId ? {} : { subscriptionStatus: subscriptionTier === "NONE" ? null : "active" };
   await db.organization.update({ where: { id: organizationId }, data: { subscriptionTier, ...manualStatus } });
   await pauseSocialIfLocked(organizationId).catch((error) => console.error("Pausing Social Manager failed:", error));

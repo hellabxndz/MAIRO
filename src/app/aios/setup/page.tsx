@@ -249,10 +249,15 @@ export default async function SetupPage() {
         </p>
 
         <div className="mt-5 flex flex-col gap-4">
-          {prices.map((p) => (
-            <PriceRow key={p.tier} check={p} />
-          ))}
+          {prices
+            .filter((p) => !p.earlier || p.state !== "not_set")
+            .map((p) => (
+              <PriceRow key={p.tier} check={p} />
+            ))}
         </div>
+        <p className="mt-4 text-xs leading-relaxed text-neutral-500">
+          Earlier plans that are no longer sold appear here only while their price variable is still set — keep one only if someone still pays on that plan.
+        </p>
 
         {unsellable.length > 0 && (
           <p className="mt-6 border-t border-white/10 pt-4 text-sm leading-relaxed text-red-300">

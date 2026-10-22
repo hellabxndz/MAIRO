@@ -34,6 +34,8 @@ export type PriceCheck = {
     | "unreadable";
   /** What to do about it, when there is something to do. */
   detail: string | null;
+  /** An earlier plan that is no longer sold. */
+  earlier: boolean;
 };
 
 const PRICE_ENV: Record<string, string> = {
@@ -70,7 +72,7 @@ export async function checkPrices(): Promise<PriceCheck[]> {
       // 3999 across every value, and an off-by-one-cent false alarm on this
       // page would be worse than no page.
       const advertisedCents = Math.round(plan.priceMonthly * 100);
-      const base = { tier: plan.tier, planName: plan.name, envName, advertisedCents };
+      const base = { tier: plan.tier, planName: plan.name, envName, advertisedCents, earlier: Boolean(plan.legacy) };
 
       const priceId = process.env[envName]?.trim();
       if (!priceId) {
@@ -94,6 +96,20 @@ export async function checkPrices(): Promise<PriceCheck[]> {
           interval: null,
           state: "unreadable",
           detail: "STRIPE_SECRET_KEY isn't set, so the price can't be read back.",
+        };
+      }
+
+      // An earlier plan's variable holding a price MAIRO sells today: a
+      // copy-paste, not a subscriber's price.
+      const soldPlan = plan.legacy ? ALL_PLANS.find((p) => !p.legacy && process.env[PRICE_ENV[p.tier] ?? ""]?.trim() === priceId) : undefined;
+      if (soldPlan) {
+        return {
+          ...base,
+          stripeCents: null,
+          currency: null,
+          interval: null,
+          state: "amount_mismatch",
+          detail: `${envName} holds ${soldPlan.name}'s price, not ${plan.name}'s. ${plan.name} isn't sold any more: remove ${envName} in Vercel and redeploy.`,
         };
       }
 
