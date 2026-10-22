@@ -42,5 +42,12 @@ export async function sessionStillValid(token: { sub?: string | null; pw?: unkno
     console.error("Couldn't check the session's password stamp:", error instanceof Error ? error.message : error);
     return true;
   }
-  return current !== null && token.pw === current;
+  const valid = current !== null && token.pw === current;
+  if (!valid) {
+    // Why a session was ended, for the deployment's logs. No token or hash.
+    console.warn(
+      `[session] signed out user ${token.sub}: ${current === null ? "no such user" : token.pw === undefined ? "session from before password stamps" : "password changed since sign-in"}`
+    );
+  }
+  return valid;
 }
