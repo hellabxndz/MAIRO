@@ -7,6 +7,8 @@ import { siteUrl } from "@/lib/site";
 import { checkPrices, type PriceCheck } from "@/lib/stripe/price-check";
 import { checkAnthropicKey, type KeyCheck } from "@/lib/ai/key-check";
 import { stripeMode } from "@/lib/stripe/client";
+import { isSoldTier } from "@/lib/plans";
+import type { SubscriptionTier } from "@/generated/prisma/enums";
 
 // Owner-only configuration check. This exists because the failure mode when a
 // credential is missing or a redirect URI is a character off is an opaque
@@ -81,6 +83,37 @@ const CHECKS: { name: string; label: string; why: string; optional?: true }[] = 
     why: "Makes ad pictures in Creative Studio and Create. Without it, customers can only upload their own.",
   },
   {
+    name: "BILLING_ENFORCED",
+    label: "Billing enforced",
+    why:
+      "Set to 1 so accounts from before the free plan also need a subscription. Free-plan " +
+      "sign-ups always need one, whatever this says.",
+    optional: true,
+  },
+  {
+    name: "NEXT_PUBLIC_APP_URL",
+    label: "Site address",
+    why:
+      "https://www.mairo.io. Where Stripe sends a customer back to after checkout, and the " +
+      "address in emails. Without it, Vercel's production domain is used.",
+  },
+  {
+    name: "RESEND_API_KEY",
+    label: "Email: Resend API key",
+    why: "Sends password-reset links. Without it, “Forgot your password?” tells people to email support instead.",
+  },
+  {
+    name: "EMAIL_FROM",
+    label: "Email: sender address",
+    why: "The From address, on a domain verified in Resend (e.g. MAIRO <no-reply@mairo.io>).",
+  },
+  {
+    name: "SENTRY_DSN",
+    label: "Error tracking (Sentry)",
+    why: "Reports server errors, failed checkouts and missed cron runs to Sentry. Off until set.",
+    optional: true,
+  },
+  {
     name: "AUTH_GOOGLE_ID",
     label: "Google sign-in: client ID",
     why: "With the secret below, shows Continue with Google on the sign-in and sign-up pages.",
@@ -119,6 +152,8 @@ export default async function SetupPage() {
   // a customer's card statement.
   const prices = await checkPrices();
   const priceProblems = prices.filter((p) => p.state !== "ok" && p.state !== "not_set");
+  // A plan on sale with no price is the worst of these: nobody can buy it.
+  const unsellable = prices.filter((p) => p.state === "not_set" && isSoldTier(p.tier as SubscriptionTier));
 
   // Whether the AI key works, not whether it is typed in. These are different
   // questions and only one of them explains a queue of creative requests that
@@ -218,6 +253,16 @@ export default async function SetupPage() {
             <PriceRow key={p.tier} check={p} />
           ))}
         </div>
+
+        {unsellable.length > 0 && (
+          <p className="mt-6 border-t border-white/10 pt-4 text-sm leading-relaxed text-red-300">
+            {unsellable.map((p) => p.planName).join(" and ")} can&apos;t be bought: set{" "}
+            {unsellable.map((p) => p.envName).join(" and ")} in Vercel (Production) to the{" "}
+            <code className="text-red-200">price_…</code> id of a recurring monthly price created in
+            the same Stripe mode as the key ({stripeMode()}), then redeploy. Customers choosing it see
+            &ldquo;can&apos;t be bought right now&rdquo; until then.
+          </p>
+        )}
 
         {priceProblems.length > 0 && (
           <p className="mt-6 border-t border-white/10 pt-4 text-sm leading-relaxed text-amber-300">
@@ -324,7 +369,11 @@ function PriceRow({ check }: { check: PriceCheck }) {
     <div className="flex flex-col gap-2 border-t border-white/10 pt-4 first:border-0 first:pt-0 sm:flex-row sm:items-start sm:justify-between">
       <div className="max-w-lg">
         <div className="flex flex-wrap items-center gap-3">
-          <Badge tone={PRICE_TONE[check.state]}>{PRICE_LABEL[check.state]}</Badge>
+          {check.state === "not_set" && isSoldTier(check.tier as SubscriptionTier) ? (
+            <Badge tone="red">MISSING — CAN&apos;T BE BOUGHT</Badge>
+          ) : (
+            <Badge tone={PRICE_TONE[check.state]}>{PRICE_LABEL[check.state]}</Badge>
+          )}
           <span className="text-sm text-white">{check.planName}</span>
           <span className="text-xs tabular-nums text-neutral-400">
             page {dollars(check.advertisedCents, check.currency)}

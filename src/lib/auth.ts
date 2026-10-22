@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
+import { currentStamp, sessionStillValid } from "@/lib/auth-rules/session-stamp";
 import { requestIp, takeLoginAttempt } from "@/lib/login-throttle";
 import { chosenWorkspace, resolveWorkspace } from "@/lib/members/workspace";
 import {
@@ -102,10 +103,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // role or organization. Swap in the MAIRO user signIn just settled on, so
     // the token carries exactly what a password login's does.
     jwt: async (params) => {
+      let token;
       if (params.account?.provider === "google") {
         const user = await sessionFactsForGoogle(params.account.providerAccountId);
         if (!user) return null;
-        return {
+        token = {
           ...params.token,
           sub: user.id,
           email: user.email,
@@ -113,8 +115,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           organizationId: user.organizationId,
         };
+      } else {
+        token = await authConfig.callbacks!.jwt!(params);
       }
-      return authConfig.callbacks!.jwt!(params);
+      if (!token) return token;
+      // A fresh sign-in is stamped with the account's current password; any
+      // later read of a token whose stamp no longer matches — the password was
+      // reset since — signs that device out (lib/auth-rules/session-stamp.ts).
+      if (params.user || params.account) {
+        if (token.sub) token.pw = await currentStamp(token.sub);
+        return token;
+      }
+      return (await sessionStillValid(token)) ? token : null;
     },
   },
 });

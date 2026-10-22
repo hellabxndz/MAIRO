@@ -415,7 +415,7 @@ MAIRO Pro $139 (7-day free trial, card at checkout) and MAIRO Scale $299 a month
 
 **Verified live:** A live trial checkout on the earlier Starter plan came back through the webhook (NEXT.md item 8); billing enforced since 10 October 2026. Pro and Scale checkouts need their Stripe prices (STRIPE_PRICE_PRO, STRIPE_PRICE_SCALE_V2) and haven't been bought live yet.
 
-**Evidence:** `src/lib/plans.ts`, `src/lib/entitlements.ts`, `src/lib/actions/billing-actions.ts`, `src/app/api/stripe/webhook/route.ts`, `src/app/dashboard/billing/change/page.tsx`
+**Evidence:** `src/lib/plans.ts`, `src/lib/entitlements.ts`, `src/lib/actions/billing-actions.ts`, `src/lib/billing/checkout.ts`, `src/lib/billing/confirm-checkout.ts`, `src/lib/stripe/apply-subscription.ts`, `src/app/api/stripe/webhook/route.ts`, `src/app/dashboard/billing/change/page.tsx`
 
 **Checks:** `check:payment-gate`, `check:entitlements`, `check:pricing`, `check:trust-db`
 
@@ -447,7 +447,7 @@ A MAIRO Scale owner adds up to two more businesses or brands under the same subs
 
 **Verification:** check:plans-v2 — allowance by plan, sync on upgrade, downgrade and cancellation, oldest-first coverage, freelancer clients untouched.
 
-**Evidence:** `src/lib/brands.ts`, `src/lib/actions/brand-actions.ts`, `src/app/dashboard/settings/businesses/page.tsx`, `src/app/api/stripe/webhook/route.ts`
+**Evidence:** `src/lib/brands.ts`, `src/lib/actions/brand-actions.ts`, `src/app/dashboard/settings/businesses/page.tsx`, `src/lib/stripe/apply-subscription.ts`
 
 **Checks:** `check:plans-v2`
 

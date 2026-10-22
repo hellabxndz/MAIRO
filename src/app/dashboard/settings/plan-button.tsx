@@ -6,10 +6,11 @@ import { startCheckoutAction, type BillingActionState } from "@/lib/actions/bill
 
 // The subscribe button, with somewhere for a failure to be seen.
 //
-// This used to be a plain form posting straight to the server action, which
-// meant a Stripe misconfiguration threw and the client got Next's generic
-// "this page couldn't load" screen — no message, nothing to act on, and a
-// failed sale. Now the reason comes back and sits under the button.
+// A successful press leaves for Stripe's checkout page. A failed one stays
+// here and says why, in words for the customer (the operator's detail is in
+// the server logs and error tracking), and the button becomes "Retry
+// checkout". It is disabled while a request is in flight, and the server
+// reuses one open checkout per plan, so repeated presses never open two.
 
 export function PlanButton({ tier, label }: { tier: string; label: string }) {
   const [state, formAction, pending] = useActionState<BillingActionState, FormData>(
@@ -18,13 +19,16 @@ export function PlanButton({ tier, label }: { tier: string; label: string }) {
   );
 
   return (
-    <form action={formAction} className="mt-4">
+    <form action={formAction} className="mt-4" data-checkout-tier={tier}>
       <input type="hidden" name="tier" value={tier} />
-      <button type="submit" disabled={pending} className={`${primaryButtonClass} w-full`}>
-        {pending ? "Opening Stripe…" : label}
+      <button type="submit" disabled={pending} aria-busy={pending} className={`${primaryButtonClass} w-full`}>
+        {pending ? "Opening Stripe…" : state?.error ? "Retry checkout" : label}
       </button>
       {state?.error && (
-        <p className="mt-3 text-xs leading-relaxed text-red-300">{state.error}</p>
+        <p role="alert" className="mt-3 text-xs leading-relaxed text-red-300">
+          {state.error}
+          {state.code && <span className="mt-1 block text-[11px] text-faint">Reference: {state.code}</span>}
+        </p>
       )}
     </form>
   );

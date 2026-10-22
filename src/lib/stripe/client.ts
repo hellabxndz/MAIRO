@@ -21,8 +21,20 @@ export function stripe(): Stripe {
   }
   // Reused across requests: the client holds a connection pool, and building a
   // new one per call is wasted work on every checkout.
-  if (!cached) cached = new Stripe(key);
+  if (!cached) cached = new Stripe(key, fakeStripeHost(key));
   return cached;
+}
+
+/**
+ * Browser tests point the client at a local fake Stripe
+ * (scripts/e2e/fake-stripe.mjs) with STRIPE_FAKE_API. Honoured only with a
+ * test-mode key, so it can never redirect a live deployment's payments.
+ */
+function fakeStripeHost(key: string): Stripe.StripeConfig | undefined {
+  const fake = process.env.STRIPE_FAKE_API?.trim();
+  if (!fake || !key.startsWith("sk_test_")) return undefined;
+  const url = new URL(fake);
+  return { host: url.hostname, port: Number(url.port), protocol: url.protocol === "http:" ? "http" : "https" };
 }
 
 export function billingConfigured(): boolean {

@@ -9,6 +9,7 @@ import { PLANS, trialDaysFor } from "@/lib/plans";
 import { billingConfigured, purchasableTiers } from "@/lib/stripe/client";
 import { usd } from "@/lib/strategy/plan-logic";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
+import { reportError } from "@/lib/monitoring/report";
 import { JourneyFrame } from "@/components/strategy/journey";
 import { WatchDemo } from "@/components/landing/watch-demo";
 import { loadOnboarding } from "@/lib/onboarding/progress-store";
@@ -52,11 +53,22 @@ const REPORTING: Record<string, string> = {
 };
 const FAILED = ["incomplete", "incomplete_expired", "past_due", "unpaid", "canceled"];
 
+/** A plan that can't be bought on this deployment, said as such — never a silent dead end. */
+function Unavailable({ name, configured }: { name: string; configured: boolean }) {
+  return (
+    <p role="status" className="mt-4 rounded-lg border border-amber-400/30 bg-amber-400/[0.06] px-3 py-2.5 text-[12.5px] leading-relaxed text-amber-200">
+      {configured
+        ? `${name} can't be bought right now because its payment setup isn't finished on our side. We've been alerted. Your plan stays saved.`
+        : "Payments aren't switched on for this site yet. Your plan stays saved."}
+    </p>
+  );
+}
+
 function money(n: number): string {
   return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
 }
 
-export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ checkout?: string; tier?: string; skip?: string; connected?: string; subscribed?: string; metaError?: string; missing?: string; metaDetail?: string; acct?: string }> }) {
+export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ checkout?: string; tier?: string; skip?: string; connected?: string; subscribed?: string; try?: string; metaError?: string; missing?: string; metaDetail?: string; acct?: string }> }) {
   const params = await searchParams;
   const { checkout, tier: chosenTier, skip, connected: justConnected, subscribed } = params;
   const session = await auth();
@@ -80,14 +92,27 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   ]);
   if (!org) redirect("/sign-in");
 
-  // Back from Stripe before its confirmation reached MAIRO: say so and look again.
+  // Back from a checkout opened before returns went through /billing/return,
+  // with no session id to read back: wait on the webhook, for a while, then
+  // say so instead of refreshing for ever.
   if (subscribed === "1" && !FAILED.includes(org.subscriptionStatus ?? "")) {
+    const tries = Math.max(0, Math.min(10, Number.parseInt(params.try ?? "0", 10) || 0));
+    const waiting = tries < 10;
     return (
       <JourneyFrame steps={steps} here="subscribe">
         <div className="mx-auto mt-6 max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-8 text-center">
-          <meta httpEquiv="refresh" content="4" />
-          <p className="text-[18px] font-semibold text-white">Confirming your subscription with Stripe…</p>
-          <p className="mt-2 text-[14px] text-muted">This usually takes a few seconds. The page checks again on its own, then MAIRO is ready to build your campaign.</p>
+          {waiting && <meta httpEquiv="refresh" content={`4;url=/plan/activate?subscribed=1&try=${tries + 1}`} />}
+          <p className="text-[18px] font-semibold text-white">{waiting ? "Confirming your subscription with Stripe…" : "Stripe is taking longer than usual"}</p>
+          <p className="mt-2 text-[14px] text-muted">
+            {waiting
+              ? "This usually takes a few seconds. The page checks again on its own, then MAIRO is ready to build your campaign."
+              : "We haven't had Stripe's confirmation yet. If your payment went through, nothing more is needed — it will show up shortly."}
+          </p>
+          {!waiting && (
+            <Link href={`/plan/activate?subscribed=1&try=0`} className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#ffffff] px-6 text-[14px] font-medium text-black hover:brightness-110">
+              Check again
+            </Link>
+          )}
         </div>
       </JourneyFrame>
     );
@@ -99,8 +124,18 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   const connectionOk = steps?.find((s) => s.id === "connect")?.state === "done";
   const head = planHeadline(plan);
   const configured = billingConfigured();
-  const buyable = configured ? purchasableTiers() : [];
+  const buyable: string[] = configured ? purchasableTiers() : [];
   const selected = PLANS.find((p) => p.tier === chosenTier) ?? null;
+  // A plan on sale whose price isn't configured is a broken sale: say so on
+  // the page and alert whoever runs the deployment, rather than a dead end.
+  const unavailable = configured ? PLANS.filter((p) => !buyable.includes(p.tier)) : [];
+  if (showPlans && unavailable.length > 0) {
+    console.error(`Plan activation: ${unavailable.map((p) => p.name).join(", ")} can't be bought — set ${unavailable.map((p) => (p.tier === "PRO" ? "STRIPE_PRICE_PRO" : "STRIPE_PRICE_SCALE_V2")).join(", ")} on this deployment.`);
+    await reportError(new Error(`Plans on sale with no Stripe price configured: ${unavailable.map((p) => p.tier).join(", ")}`), {
+      where: "plan activation",
+      tags: { tiers: unavailable.map((p) => p.tier).join(",") },
+    });
+  }
   // What went wrong, if anything, said plainly with the way out: a connection
   // that came back with a problem, or one that worked but can't be used now
   // (expired, no Page), and a payment that didn't go through.
@@ -176,10 +211,10 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                     <div><dt className="text-faint">Recommended ad budget</dt><dd className="text-white">{usd(plan.dailyBudget)}/day, paid to Meta</dd></div>
                     <div><dt className="text-faint">Selected MAIRO plan</dt><dd className="text-white">{selected.name} — {money(selected.priceMonthly)}/month</dd></div>
                   </dl>
-                  {buyable.includes(selected.tier as (typeof buyable)[number]) ? (
+                  {buyable.includes(selected.tier) ? (
                     <PlanButton tier={selected.tier} label="Continue to Payment" />
                   ) : (
-                    <p className="mt-4 text-[13px] text-faint">This plan can&rsquo;t be bought here yet.</p>
+                    <Unavailable name={selected.name} configured={configured} />
                   )}
                   {trialDaysFor(selected.tier) > 0 ? (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
@@ -224,9 +259,15 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                             </div>
                           ))}
                         </dl>
-                        <Link href={`/plan/activate?skip=1&tier=${p.tier}#plans`} className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#ffffff] px-4 text-[14px] font-medium text-black hover:brightness-110">
-                          {p.cta ?? `Choose ${p.name}`}
-                        </Link>
+                        {/* Straight to Stripe: one press, not a second confirmation page. */}
+                        {buyable.includes(p.tier) ? (
+                          <PlanButton tier={p.tier} label={p.cta ?? `Choose ${p.name}`} />
+                        ) : (
+                          <Unavailable name={p.name} configured={configured} />
+                        )}
+                        <p className="mt-2 text-center text-[11.5px] text-faint">
+                          {trialDaysFor(p.tier) > 0 ? `${trialDaysFor(p.tier)}-day free trial, then ${money(p.priceMonthly)}/month` : `Billed ${money(p.priceMonthly)}/month from today — no trial`}
+                        </p>
                       </div>
                     );
                   })}

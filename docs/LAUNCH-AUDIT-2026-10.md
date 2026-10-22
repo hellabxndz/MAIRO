@@ -2,6 +2,8 @@
 
 Branch `claude/myro-ad-platform-u3ynfe`. Audit commits: `8a3feb4`, `15a15a1`, `aa8772f`, `997ee95`, `0d29861`, `1ac8c99`.
 
+> **Update, 22 October:** the checkout redirect loop and the remaining beta blockers are covered in [BETA-READINESS-2026-10.md](BETA-READINESS-2026-10.md).
+
 ## Verdict: READY FOR CONTROLLED BETA, not for public launch
 
 The product does what it says in every flow that could be exercised here, and this audit fixed the problems it found. Two things that matter most to a paying customer have still not been seen working end to end on the new plans:

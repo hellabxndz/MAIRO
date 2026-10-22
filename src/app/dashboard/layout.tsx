@@ -55,6 +55,8 @@ const ALWAYS_REACHABLE = [
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",
+  // A paying customer can always see, change or cancel what they pay for.
+  "/dashboard/billing",
   "/dashboard/guide",
   "/dashboard/leads",
 ];

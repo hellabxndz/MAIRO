@@ -39,6 +39,7 @@
     "check:weekly-report": "tsx scripts/check-weekly-report.ts",
     "check:strategy-plan": "tsx scripts/check-strategy-plan.ts",
     "check:payment-gate": "tsx scripts/check-payment-gate.ts",
+    "check:checkout": "tsx scripts/check-checkout.ts",
     "check:social-scheduler": "tsx scripts/check-social-scheduler.ts",
     "check:social-manager": "tsx scripts/check-social-manager.ts",
     "check:mission": "tsx scripts/check-mission.ts",

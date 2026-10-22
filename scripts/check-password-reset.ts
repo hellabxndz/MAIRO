@@ -104,6 +104,14 @@ async function main() {
     });
 
     let second = "";
+    const { passwordStamp, sessionStillValid } = await import("../src/lib/auth-rules/session-stamp");
+    const signedIn = { sub: user.id, pw: passwordStamp((await db.user.findUniqueOrThrow({ where: { id: user.id } })).passwordHash) };
+    await check("a session signed in with the old password is valid until the reset", async () => {
+      assert.equal(await sessionStillValid(signedIn), true);
+      assert.equal(await sessionStillValid({ sub: user.id }), false, "a token without a stamp is stale");
+      assert.equal(await sessionStillValid({ sub: user.id, pw: "forged" }), false);
+      assert.equal(await sessionStillValid({ sub: "no-such-user", pw: signedIn.pw }), false);
+    });
     await check("a new password works once, and spends every outstanding link", async () => {
       second = tokenFrom((await capture(() => requestPasswordReset(EMAIL, "203.0.113.3", at(10)))).sent[0].text);
       const r = await resetPassword(token, "new-password-77", "new-password-77", at(11));
@@ -113,6 +121,13 @@ async function main() {
       assert.ok(!(await bcrypt.compare(OLD, u.passwordHash!)));
       assert.deepEqual(await resetPassword(token, "another-pass-99", "another-pass-99", at(12)), { ok: false, error: RESET_INVALID_MESSAGE }, "same link twice");
       assert.deepEqual(await resetPassword(second, "another-pass-99", "another-pass-99", at(12)), { ok: false, error: RESET_INVALID_MESSAGE }, "the other link");
+    });
+    await check("after the reset every earlier session is signed out; signing in again with the new password works", async () => {
+      // (React's per-request cache only applies while rendering; a script reads afresh.)
+      assert.equal(await sessionStillValid(signedIn), false, "the old device is signed out");
+      const now = passwordStamp((await db.user.findUniqueOrThrow({ where: { id: user.id } })).passwordHash);
+      assert.notEqual(now, signedIn.pw);
+      assert.equal(await sessionStillValid({ sub: user.id, pw: now }), true);
     });
 
     await check("a link the provider refused to send can't be used", async () => {

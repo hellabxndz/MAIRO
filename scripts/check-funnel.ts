@@ -44,7 +44,7 @@ check("each step is recorded at the right moment", () => {
   // The plan review, and the quick start from a free plan the owner liked (/plan/start).
   assert.deepEqual(where("plan_created"), ["src/lib/actions/start-actions.ts", "src/lib/actions/strategy-actions.ts"]);
   assert.deepEqual(where("plan_approved"), ["src/lib/actions/start-actions.ts", "src/lib/actions/strategy-actions.ts"]);
-  assert.deepEqual(where("checkout_success"), ["src/app/api/stripe/webhook/route.ts"]);
+  assert.deepEqual(where("checkout_success"), ["src/lib/stripe/apply-subscription.ts"]);
   assert.deepEqual(where("first_launch"), ["src/lib/campaigns/auto-launch.ts"]);
   // Approved only after the approval was saved; subscribed only when Stripe says live.
   const actions = read("src/lib/actions/strategy-actions.ts");
@@ -52,7 +52,7 @@ check("each step is recorded at the right moment", () => {
   const start = read("src/lib/actions/start-actions.ts");
   assert.match(start, /const r = await approve\(w\.organizationId, version\);\n\s*if \(!r\.ok\) return \{ error: r\.error \};\n\s*await recordOnce\("plan_approved"/);
   assert.match(start, /const s = await createStrategy\(organizationId\);\n\s*if \(!s\.ok\) return \{ error: s\.error \};\n(?:\s*\/\/.*\n)*\s*await recordOnce\("plan_created"/);
-  assert.match(read("src/app/api/stripe/webhook/route.ts"), /if \(live\) await recordOnce\("checkout_success", organizationId\);/);
+  assert.match(read("src/lib/stripe/apply-subscription.ts"), /if \(live\) await recordOnce\("checkout_success", organizationId\);/);
   // Live only after Meta switched it on: after the resume call succeeded and at least one campaign launched.
   const launch = read("src/lib/campaigns/auto-launch.ts");
   const resume = launch.indexOf("adapter.resumeCampaign(");
