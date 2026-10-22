@@ -170,7 +170,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
 
   return (
     <figure className={`relative ${className}`}>
-      <div ref={root} className="group relative w-full overflow-hidden rounded-[22px] border bg-[#05070d] shadow-[0_50px_120px_-50px_rgba(47,107,255,0.45),0_30px_70px_-40px_rgba(0,0,0,0.9)]" style={{ aspectRatio: String(ratio), borderColor: "rgba(150,170,210,0.16)" }}>
+      <div ref={root} className="group relative w-full overflow-hidden rounded-[22px] border bg-[#090909] shadow-[0_50px_120px_-50px_rgba(255,255,255,0.45),0_30px_70px_-40px_rgba(0,0,0,0.9)]" style={{ aspectRatio: String(ratio), borderColor: "rgba(236,236,236,0.16)" }}>
         {file ? (
           <video
             ref={video}
@@ -224,7 +224,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
             onChange={(e) => seek(Number(e.target.value))}
             aria-label={`Position in ${title}`}
             aria-valuetext={`${fmt(t)} of ${fmt(duration)}`}
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-[#5cc8ff]"
+            className="h-1 min-w-0 flex-1 cursor-pointer accent-[#e6e6e6]"
           />
           <span className="hidden shrink-0 text-[11.5px] tabular-nums text-white/75 sm:inline">
             {fmt(t)} / {fmt(duration)}
@@ -237,7 +237,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
 
         {!isPlaying && !ended && t < 200 && (reduced || userPaused) && (
           <button type="button" onClick={toggle} aria-hidden tabIndex={-1} className="absolute inset-0 z-10 flex items-center justify-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-white shadow-[0_20px_50px_-12px_rgba(47,107,255,0.9)]">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-black shadow-[0_20px_50px_-12px_rgba(255,255,255,0.9)]">
               <svg viewBox="0 0 12 12" className="ml-1 h-5 w-5 fill-current"><path d="M2 1.2v9.6L10.5 6z" /></svg>
             </span>
           </button>

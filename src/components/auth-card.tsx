@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 // and the wordmark.
 export function AuthCard({ children, className = "mx-auto max-w-sm" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`w-full rounded-2xl border border-white/10 bg-paper p-6 shadow-[0_24px_60px_-30px_rgba(18,21,43,0.28)] sm:p-8 ${className}`}>
+    <div className={`w-full rounded-2xl border border-white/10 bg-paper p-6 shadow-[0_24px_60px_-30px_rgba(30,30,30,0.28)] sm:p-8 ${className}`}>
       {children}
     </div>
   );

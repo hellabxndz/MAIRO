@@ -175,7 +175,7 @@ export function AssistantConsole({
                     {brainLearned(m.parts) && <p className="mt-2 text-[12px] text-emerald-300">✨ Added to Business Brain</p>}
                     {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                     {links.map((l) => (
-                      <a key={l.href} href={l.href} className="mr-2 mt-3 inline-flex rounded-lg bg-[#2f6bff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">{l.label} →</a>
+                      <a key={l.href} href={l.href} className="mr-2 mt-3 inline-flex rounded-lg bg-[#ffffff] px-3.5 py-2 text-[13px] font-medium text-black hover:brightness-110">{l.label} →</a>
                     ))}
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export function AssistantConsole({
             {error && (
               <div
                 className="rounded-xl border px-4 py-3"
-                style={{ borderColor: "rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.06)" }}
+                style={{ borderColor: "rgba(255,61,110,0.3)", background: "rgba(255,61,110,0.06)" }}
               >
                 <p className="text-[13px] leading-relaxed text-alert">
                   {error.message || "Something went wrong reaching your assistant."}

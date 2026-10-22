@@ -41,7 +41,7 @@ const KIND_LABEL: Record<ActionKind, string> = {
 
 export function ActionCard({ item, controls }: { item: ActionItemData; controls?: ReactNode }) {
   return (
-    <article className="flex h-full flex-col rounded-[18px] border p-4 transition hover:border-[color:var(--mairo-line-lit)] sm:p-5" style={{ borderColor: item.urgent ? "rgba(248,113,113,0.4)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.55)" }}>
+    <article className="flex h-full flex-col rounded-[18px] border p-4 transition hover:border-[color:var(--mairo-line-lit)] sm:p-5" style={{ borderColor: item.urgent ? "rgba(255,61,110,0.4)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.55)" }}>
       <div className="flex items-center gap-2">
         <AgentIcon role={item.agent} size={26} />
         <p className="min-w-0 truncate text-[12px] text-muted">{AGENT[item.agent].name}</p>

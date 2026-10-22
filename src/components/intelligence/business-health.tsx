@@ -9,14 +9,14 @@ import type { HealthArea, HealthReport } from "@/lib/intelligence/types";
 // and what would help most. No data, no number — the area says what it needs.
 
 const STATUS = {
-  healthy: { label: "Healthy", tone: "text-emerald-300", ring: "#34d399" },
-  attention: { label: "Needs attention", tone: "text-amber-300", ring: "#fbbf24" },
-  risk: { label: "At risk", tone: "text-alert", ring: "#f87171" },
+  healthy: { label: "Healthy", tone: "text-emerald-300", ring: "#22ff88" },
+  attention: { label: "Needs attention", tone: "text-amber-300", ring: "#ffdd00" },
+  risk: { label: "At risk", tone: "text-alert", ring: "#ff3d6e" },
 } as const;
 
 function toneFor(score: number | null): string {
   if (score === null) return "bg-white/10";
-  if (score >= 80) return "bg-gradient-to-r from-[#2f6bff] to-[#8fb8ff]";
+  if (score >= 80) return "bg-gradient-to-r from-[#ffffff] to-[#ffffff]";
   if (score >= 60) return "bg-amber-400/80";
   return "bg-alert/80";
 }
@@ -24,11 +24,11 @@ function toneFor(score: number | null): string {
 export function HealthRing({ score, status, size = 132 }: { score: number | null; status: HealthReport["status"]; size?: number }) {
   const r = size / 2 - 9;
   const len = 2 * Math.PI * r;
-  const color = status ? STATUS[status].ring : "rgba(148,166,204,0.3)";
+  const color = status ? STATUS[status].ring : "rgba(232,232,232,0.3)";
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(148,166,204,0.14)" strokeWidth="9" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(232,232,232,0.14)" strokeWidth="9" />
         {score !== null && <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="9" strokeLinecap="round" strokeDasharray={`${(score / 100) * len} ${len}`} />}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -82,7 +82,7 @@ export function HealthCategory({ area, open, onToggle }: { area: HealthArea; ope
             <div className="mt-3 rounded-lg bg-violet/10 p-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">Recommended action</p>
               <p className="mt-0.5 text-[13px] text-white/90">{area.recommendation.text}</p>
-              <Link href={area.recommendation.href} className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#2f6bff] px-3.5 text-[12.5px] font-medium text-white hover:brightness-110">
+              <Link href={area.recommendation.href} className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#ffffff] px-3.5 text-[12.5px] font-medium text-black hover:brightness-110">
                 {area.recommendation.actionLabel} <span aria-hidden>→</span>
               </Link>
             </div>

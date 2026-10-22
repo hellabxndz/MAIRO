@@ -64,7 +64,7 @@ export function LandingNav({
   }, [res]);
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${scrolled || open ? "border-b border-white/[0.07] bg-[#07080d]/90 backdrop-blur-md" : "bg-transparent"}`}>
+    <header className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${scrolled || open ? "border-b border-white/[0.07] bg-[#0a0a0a]/90 backdrop-blur-md" : "bg-transparent"}`}>
       <nav aria-label="Main" className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
         <div className="flex items-center gap-[clamp(32px,6vw,96px)]">
           <Wordmark />
@@ -82,7 +82,7 @@ export function LandingNav({
                 </svg>
               </button>
               {res && (
-                <ul id="nav-resources" className="absolute left-1/2 top-[calc(100%+14px)] w-[320px] -translate-x-1/2 rounded-2xl border p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]" style={{ borderColor: "var(--mairo-line)", background: "#0d1020" }}>
+                <ul id="nav-resources" className="absolute left-1/2 top-[calc(100%+14px)] w-[320px] -translate-x-1/2 rounded-2xl border p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]" style={{ borderColor: "var(--mairo-line)", background: "#161616" }}>
                   {RES.map((r) => (
                     <li key={r.href}>
                       <Link href={r.href} onClick={() => setRes(false)} className="block rounded-xl px-3 py-2.5 transition hover:bg-white/[0.05]">
@@ -101,7 +101,7 @@ export function LandingNav({
           <Link href="/sign-in" className="hidden whitespace-nowrap rounded-full border border-white/12 px-5 py-2.5 text-[13.5px] font-medium text-white/90 transition hover:border-white/30 hover:text-white sm:inline-block">
             Sign In
           </Link>
-          <Link href={cta.href} className="whitespace-nowrap rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+          <Link href={cta.href} className="whitespace-nowrap rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
             {cta.label}
           </Link>
           <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? "Close menu" : "Open menu"} className="ml-1 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white lg:hidden">
@@ -121,7 +121,7 @@ export function LandingNav({
               </li>
             ))}
           </ul>
-          <Link href="/preview" onClick={() => setOpen(false)} className="mt-3 flex min-h-[50px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-white">
+          <Link href="/preview" onClick={() => setOpen(false)} className="mt-3 flex min-h-[50px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-black">
             Get My Free Plan
           </Link>
         </div>

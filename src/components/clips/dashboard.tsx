@@ -174,7 +174,7 @@ function Dashboard({ t, narrow }: { t: number; narrow: boolean }) {
       {narrow && (
         <div data-nav className="-mt-2 mb-4 flex flex-wrap gap-1.5">
           {DASH_PAGES.map((p) => (
-            <span key={p.href} className={`rounded-full border px-2.5 py-1 text-[11px] ${p.href === page.href ? "border-[#6c9eff]/60 bg-[#2f6bff]/15 text-white" : "border-white/10 text-muted"}`}>
+            <span key={p.href} className={`rounded-full border px-2.5 py-1 text-[11px] ${p.href === page.href ? "border-[#eeeeee]/60 bg-[#ffffff]/15 text-white" : "border-white/10 text-muted"}`}>
               {p.label}
             </span>
           ))}

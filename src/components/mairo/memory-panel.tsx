@@ -16,9 +16,9 @@ import { GlassPanel, HudLabel } from "@/components/mairo";
 // input left.
 
 function barColour(percent: number): string {
-  if (percent >= 70) return "rgb(52,211,153)";
-  if (percent >= 35) return "var(--color-blue-bright, #6c9eff)";
-  return "rgb(251,191,36)";
+  if (percent >= 70) return "rgb(34,255,136)";
+  if (percent >= 35) return "var(--color-blue-bright, #eeeeee)";
+  return "rgb(255,221,0)";
 }
 
 export function MemoryPanel({

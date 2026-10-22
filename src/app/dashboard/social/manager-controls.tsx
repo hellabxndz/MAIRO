@@ -9,7 +9,7 @@ import { GoalSetup } from "./goal-setup";
 
 // The interactive parts of the Social Manager overview.
 
-const primary = "min-h-[42px] rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
+const primary = "min-h-[42px] rounded-lg bg-[#ffffff] px-4 text-[13.5px] font-medium text-black transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[42px] rounded-lg border border-white/12 px-4 text-[13.5px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 
 function Note({ r }: { r: ManagerResult | null }) {
@@ -72,7 +72,7 @@ export function PostingSettings({ platforms, postsPerWeek }: { platforms: Networ
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-white/90">
       {(["INSTAGRAM", "FACEBOOK"] as Network[]).map((net) => (
         <label key={net} className="flex items-center gap-2">
-          <input type="checkbox" checked={p.includes(net)} onChange={() => setP((x) => (x.includes(net) ? x.filter((y) => y !== net) : [...x, net]))} className="h-4 w-4 accent-[#2f6bff]" />
+          <input type="checkbox" checked={p.includes(net)} onChange={() => setP((x) => (x.includes(net) ? x.filter((y) => y !== net) : [...x, net]))} className="h-4 w-4 accent-[#ffffff]" />
           {net === "INSTAGRAM" ? "Instagram" : "Facebook Page"}
         </label>
       ))}

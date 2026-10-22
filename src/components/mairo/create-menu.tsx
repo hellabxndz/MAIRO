@@ -30,7 +30,7 @@ export function CreateMenu({ variant = "sidebar" }: { variant?: "sidebar" | "bar
   const row = (key: string, label: string, sub: string, action: { href: string } | { view: View }) => {
     const inner = (
       <>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-blue-bright" style={{ background: "rgba(61,125,255,0.12)" }}>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-blue-bright" style={{ background: "rgba(214,214,214,0.12)" }}>
           <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={ICON[key]} /></svg>
         </span>
         <span className="min-w-0 text-left">
@@ -90,7 +90,7 @@ export function AskMairoButton({ name, compact = false }: { name: string; compac
       type="button"
       onClick={() => window.dispatchEvent(new CustomEvent("mairo:open-assistant"))}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "px-2.5" : ""}`}
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(47,107,255,0.12)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.12)" }}
     >
       <span aria-hidden>✨</span>
       {compact ? <span className="sr-only">Ask {name}</span> : <>Ask {name}</>}

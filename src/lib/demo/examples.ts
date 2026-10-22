@@ -129,7 +129,7 @@ const BUSINESSES: Record<Exclude<ExampleType, "brands">, Example> = {
     name: "Brightwater Plumbing",
     url: "brightwater-plumbing.example",
     site: { headline: "Leak and drain repair in Eastfield", sub: "Family-run since 2009. Licensed and insured.", nav: ["Services", "Areas", "Contact"], button: "Get a quote" },
-    profile: { offer: "Same-week leak and drain repair", audience: "Homeowners with a plumbing problem", location: "Eastfield and 15 miles around", style: "Clear, trustworthy, practical", swatches: ["#123a6b", "#3b82f6", "#f5b83d"] },
+    profile: { offer: "Same-week leak and drain repair", audience: "Homeowners with a plumbing problem", location: "Eastfield and 15 miles around", style: "Clear, trustworthy, practical", swatches: ["#3f3f3f", "#d1d1d1", "#f5b83d"] },
     goal: "Get more qualified leads",
     unknown: { question: "How far do you travel for a job?", answer: "Within 15 miles" },
     concepts: [
@@ -159,7 +159,7 @@ const BUSINESSES: Record<Exclude<ExampleType, "brands">, Example> = {
       { label: "Creative approved", state: "done" },
       { label: "Pixel on your website", state: "optional" },
     ],
-    colors: { a: "#123a6b", b: "#3b82f6", c: "#f5b83d", ink: "#10233f", paper: "#f3f7fc" },
+    colors: { a: "#3f3f3f", b: "#d1d1d1", c: "#f5b83d", ink: "#282828", paper: "#f3f7fc" },
     story: {
       cards: { sell: "Same-week leak and drain repair", serve: "Homeowners within 15 miles of Eastfield", goal: "More qualified leads" },
       reason: "A demonstration makes your service easier to understand.",

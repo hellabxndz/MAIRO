@@ -27,9 +27,9 @@ type Row = { name: string; revenueCents: number | null; spendCents: number | nul
 function Waterfall({ r }: { r: ProfitReport }) {
   const revenue = r.revenueCents ?? 0;
   const steps = [
-    { label: "Revenue", value: r.revenueCents, sign: "", tone: "bg-[#8fb8ff]" },
+    { label: "Revenue", value: r.revenueCents, sign: "", tone: "bg-[#ffffff]" },
     { label: "Product costs", value: r.productCostsCents, sign: "−", tone: "bg-white/25" },
-    { label: "Advertising", value: r.spendCents, sign: "−", tone: "bg-[#2f6bff]/70" },
+    { label: "Advertising", value: r.spendCents, sign: "−", tone: "bg-[#ffffff]/70" },
     { label: "Shipping & fees", value: r.shippingCents !== null && r.feesCents !== null ? r.shippingCents + r.feesCents : null, sign: "−", tone: "bg-white/20" },
     { label: "Other costs", value: r.otherCostsCents, sign: "−", tone: "bg-white/15" },
   ];

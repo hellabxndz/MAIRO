@@ -78,7 +78,7 @@ export function Walkthrough() {
   const step = STEPS[active];
 
   return (
-    <section id="how-it-works" aria-labelledby="hiw-title" className="relative scroll-mt-16 border-y py-20 sm:py-28" style={{ borderColor: "rgba(150,170,210,0.08)", background: "linear-gradient(180deg, rgba(10,14,28,0) 0%, #080b16 12%, #080b16 88%, rgba(10,14,28,0) 100%)" }}>
+    <section id="how-it-works" aria-labelledby="hiw-title" className="relative scroll-mt-16 border-y py-20 sm:py-28" style={{ borderColor: "rgba(236,236,236,0.08)", background: "linear-gradient(180deg, rgba(19,19,19,0) 0%, #0f0f0f 12%, #0f0f0f 88%, rgba(19,19,19,0) 100%)" }}>
       <div className="mx-auto max-w-[1360px] px-4 sm:px-8 lg:px-12">
         <div data-reveal className="max-w-[720px]">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">How it works</p>
@@ -100,7 +100,7 @@ export function Walkthrough() {
                 id={`step-${s.clip}`}
                 className="scroll-mt-28 lg:flex lg:min-h-[72vh] lg:items-center"
               >
-                <div className={`w-full border-l-2 py-2 pl-5 transition-colors duration-500 sm:pl-7 ${i === active ? "lg:border-[#4b8bff]" : "lg:border-white/[0.08]"} border-[#4b8bff]/60`}>
+                <div className={`w-full border-l-2 py-2 pl-5 transition-colors duration-500 sm:pl-7 ${i === active ? "lg:border-[#dddddd]" : "lg:border-white/[0.08]"} border-[#dddddd]/60`}>
                   <p className={`font-mono text-[13px] tracking-[0.1em] transition-colors duration-500 ${i === active ? "text-cyan-300" : "text-white/40"}`}>
                     {s.n} <span className="text-white/25">/ 05</span>
                   </p>

@@ -46,7 +46,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
             Saved: your goal and strategy{saved ? `, ${saved} post${saved === 1 ? "" : "s"}` : ""} and your posting history. Nothing scheduled will be published. To have them deleted, ask us or delete your account.
           </p>
           {access.reason === "inactive" && (
-            <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
+            <Link href={href} className="mt-5 inline-flex min-h-[44px] items-center rounded-lg bg-[#ffffff] px-5 text-[14px] font-medium text-black hover:brightness-110">
               Fix billing to continue
             </Link>
           )}

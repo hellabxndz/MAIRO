@@ -16,17 +16,18 @@ import { FeedPreview, Layer, StoryPreview } from "./stage";
 // shown: the video edit is the editor's trim, caption and crop, written to a
 // new file; approving in the story sends nothing anywhere.
 
-const INK = "#1d1838";
-const MUTED = "#6b6688";
-const LINE = "#e6e1f5";
-const ACCENT = "#2f6bff";
-const ACCENT_DEEP = "#5b3fd9";
-const ACCENT_SOFT = "#f1edff";
+const INK = "#111111";
+const MUTED = "#666666";
+const LINE = "#e3e3e3";
+// On white paper the accent is black: the mark, inverted.
+const ACCENT = "#111111";
+const ACCENT_DEEP = "#000000";
+const ACCENT_SOFT = "#f0f0f0";
 const GOOD = "#0f8a5f";
 
-export const STAGE_BACKGROUND = "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(47,107,255,0.13), transparent 70%), radial-gradient(ellipse 50% 40% at 90% 95%, rgba(91,108,255,0.10), transparent 70%), linear-gradient(180deg, #fcfbff, #f2eeff)";
-const card: CSSProperties = { background: "#ffffff", border: `1px solid ${LINE}`, boxShadow: "0 18px 44px -24px rgba(60,40,140,0.38), 0 2px 6px -2px rgba(60,40,140,0.08)", color: INK };
-const primary: CSSProperties = { background: `linear-gradient(90deg, #6b5cff, ${ACCENT_DEEP})`, color: "#fff" };
+export const STAGE_BACKGROUND = "radial-gradient(ellipse 70% 60% at 50% 35%, rgba(255,255,255,0.13), transparent 70%), radial-gradient(ellipse 50% 40% at 90% 95%, rgba(229,229,229,0.10), transparent 70%), linear-gradient(180deg, #fcfbff, #ffffff)";
+const card: CSSProperties = { background: "#ffffff", border: `1px solid ${LINE}`, boxShadow: "0 18px 44px -24px rgba(146,146,146,0.38), 0 2px 6px -2px rgba(146,146,146,0.08)", color: INK };
+const primary: CSSProperties = { background: `linear-gradient(90deg, #2a2a2a, ${ACCENT_DEEP})`, color: "#fff" };
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: ACCENT_DEEP }}>{children}</p>;
@@ -49,7 +50,7 @@ function StageInput({ ex, t, compact }: { ex: Example; t: number; compact: boole
   const caret = t < MOMENTS.press && Math.floor(t / 450) % 2 === 0;
   const pressed = t > MOMENTS.press && t < MOMENTS.press + 250;
   return (
-    <div className="flex h-full items-center gap-2 rounded-full bg-white px-2 pl-4" style={{ border: `1.5px solid ${ACCENT}`, boxShadow: "0 16px 40px -22px rgba(91,63,217,0.55)" }}>
+    <div className="flex h-full items-center gap-2 rounded-full bg-white px-2 pl-4" style={{ border: `1.5px solid ${ACCENT}`, boxShadow: "0 16px 40px -22px rgba(196,196,196,0.55)" }}>
       <span className="text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: ACCENT_DEEP }}>MAIRO</span>
       <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: INK }}>
         {typed || <span style={{ color: MUTED }}>Your business website</span>}
@@ -67,7 +68,7 @@ function Mark({ label, o, className = "", children }: { label: string; o: number
     <div className={`relative ${className}`}>
       {children}
       {o > 0.01 && (
-        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: `2px solid ${ACCENT}`, background: "rgba(47,107,255,0.08)", boxShadow: "0 0 0 4px rgba(47,107,255,0.14)" }}>
+        <div className="pointer-events-none absolute -inset-1 rounded-md" style={{ opacity: o, border: `2px solid ${ACCENT}`, background: "rgba(0,0,0,0.08)", boxShadow: "0 0 0 4px rgba(0,0,0,0.14)" }}>
           <span className="absolute -top-2.5 left-2 whitespace-nowrap rounded px-1.5 py-[1px] text-[9.5px] font-semibold text-white" style={{ background: ACCENT }}>{label}</span>
         </div>
       )}
@@ -80,7 +81,7 @@ function SiteBrowser({ ex, t, narrow }: { ex: Example; t: number; narrow: boolea
   const c = ex.colors;
   const mark = (i: 0 | 1 | 2) => reveal(t, MOMENTS.marks[i], MOMENTS.marks[i] + 350) * (1 - reveal(t, MOMENTS.marksEnd, MOMENTS.marksEnd + 400));
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[14px] bg-white" style={{ border: `1px solid ${LINE}`, boxShadow: "0 24px 60px -30px rgba(60,40,140,0.5)" }}>
+    <div className="flex h-full flex-col overflow-hidden rounded-[14px] bg-white" style={{ border: `1px solid ${LINE}`, boxShadow: "0 24px 60px -30px rgba(146,146,146,0.5)" }}>
       <div className="flex items-center gap-1.5 border-b px-3 py-2" style={{ borderColor: LINE, background: "#f6f4fc" }}>
         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -244,7 +245,7 @@ function ReasonCard({ ex, compact }: { ex: Example; compact: boolean }) {
 function AdThumb({ ex }: { ex: Example }) {
   const c = ex.concepts[ex.selected];
   return (
-    <div className="relative h-full overflow-hidden rounded-[18px] bg-black" style={{ border: "4px solid #141428" }}>
+    <div className="relative h-full overflow-hidden rounded-[18px] bg-black" style={{ border: "4px solid #1e1e1e" }}>
       <BusinessArt type={ex.type} variant={c.art} className="absolute inset-0 h-full w-full" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
       <p className="absolute left-2.5 right-2.5 top-3 text-[13px] font-extrabold leading-tight text-white" style={{ textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>{c.hook}</p>
@@ -288,7 +289,7 @@ function Frame({ ex, variant, caption, label }: { ex: Example; variant: "offer" 
 /** A clip's length as a bar; the demonstration in purple. */
 function Timeline({ total, from }: { total: number; from: number }) {
   return (
-    <div className="relative mt-1.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "#d9d4ea" }}>
+    <div className="relative mt-1.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "#ffffff" }}>
       <div className="absolute inset-y-0 right-0 rounded-full" style={{ left: `${(from / total) * 100}%`, background: ACCENT }} />
     </div>
   );
@@ -425,10 +426,10 @@ function ResultsBoard({ ex, t, narrow }: { ex: Example; t: number; narrow: boole
           );
         })}
       </ol>
-      <div className="mt-3 flex min-h-0 flex-1 flex-col rounded-xl p-3" style={{ border: `1px solid rgba(47,107,255,0.35)`, background: "#f8f6ff", opacity: rec, transform: `translateY(${(1 - rec) * 8}px)` }}>
+      <div className="mt-3 flex min-h-0 flex-1 flex-col rounded-xl p-3" style={{ border: `1px solid rgba(0,0,0,0.35)`, background: "#f6f6f6", opacity: rec, transform: `translateY(${(1 - rec) * 8}px)` }}>
         <Eyebrow>Recommendation</Eyebrow>
         <p className="mt-0.5 text-[14px] font-semibold">{s.recommendation.title}</p>
-        <p className="mt-0.5 text-[11.5px] leading-snug" style={{ color: "#3d3760" }}>{s.recommendation.why}</p>
+        <p className="mt-0.5 text-[11.5px] leading-snug" style={{ color: "#4c4c4c" }}>{s.recommendation.why}</p>
         <ul className={`mt-1.5 ${narrow ? "space-y-0.5" : "flex flex-wrap gap-1.5"}`}>
           {s.recommendation.evidence.map((e) => (
             <li key={e} className={`text-[10.5px] ${narrow ? "" : "rounded-md bg-white px-2 py-0.5"}`} style={{ color: MUTED, border: narrow ? undefined : `1px solid ${LINE}` }}>
@@ -455,7 +456,7 @@ function InviteCard({ drawButton }: { drawButton: boolean }) {
       <p className="relative text-[24px] font-bold leading-tight tracking-[-0.02em]" style={{ color: INK }}>What could MAIRO create for your business?</p>
       {drawButton && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center" style={{ height: INVITE_BUTTON_HEIGHT }}>
-          <span className="flex items-center gap-2 rounded-full px-6 text-[15px] font-semibold" style={{ ...primary, boxShadow: "0 14px 36px -14px rgba(91,63,217,0.8)" }}>
+          <span className="flex items-center gap-2 rounded-full px-6 text-[15px] font-semibold" style={{ ...primary, boxShadow: "0 14px 36px -14px rgba(196,196,196,0.8)" }}>
             Build My Free Ad Plan <span aria-hidden>→</span>
           </span>
         </div>
@@ -508,7 +509,7 @@ export function StoryStage({ ex, t, layout, showCaption = true, drawInviteButton
       )}
       {showCaption && (
         <p aria-hidden className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-[13px] font-semibold tracking-[0.01em] text-white" style={{ opacity: captionO }}>
-          <span className="rounded-full px-3 py-1.5" style={{ background: "rgba(29,24,56,0.88)" }}>{scene.label}</span>
+          <span className="rounded-full px-3 py-1.5" style={{ background: "rgba(40,40,40,0.88)" }}>{scene.label}</span>
         </p>
       )}
     </div>

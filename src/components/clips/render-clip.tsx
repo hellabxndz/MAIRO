@@ -56,7 +56,7 @@ export function RenderClip({ id, layout, captions = false }: { id: ClipId; layou
   }, [clip]);
   const { w, h } = CLIP_STAGE[layout];
   return (
-    <div data-clip-frame className="relative overflow-hidden" style={{ width: w, height: h, background: "#05070d" }}>
+    <div data-clip-frame className="relative overflow-hidden" style={{ width: w, height: h, background: "#090909" }}>
       {clip && <ClipStage clip={clip} t={t} layout={layout} showCaption={captions} onMeasured={noteTargets} />}
     </div>
   );

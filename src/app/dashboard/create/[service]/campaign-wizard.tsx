@@ -281,7 +281,7 @@ export function CampaignWizard(props: Props) {
                     <span
                       className="flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px]"
                       style={{
-                        borderColor: here ? "rgba(108,158,255,0.6)" : "var(--mairo-line)",
+                        borderColor: here ? "rgba(238,238,238,0.6)" : "var(--mairo-line)",
                         backgroundImage: here ? "var(--mairo-ramp)" : undefined,
                         color: here ? "white" : undefined,
                       }}
@@ -326,12 +326,12 @@ export function CampaignWizard(props: Props) {
           }}
         >
           {props.justConnected && missing.length === 0 && (
-            <p className="mb-6 rounded-xl border px-4 py-3 text-[13px] text-live" style={{ borderColor: "rgba(52,211,153,0.3)", background: "rgba(52,211,153,0.05)" }}>
+            <p className="mb-6 rounded-xl border px-4 py-3 text-[13px] text-live" style={{ borderColor: "rgba(34,255,136,0.3)", background: "rgba(34,255,136,0.05)" }}>
               Connected — carry on where you left off.
             </p>
           )}
           {missing.length > 0 && (
-            <div className="mb-8 rounded-xl border p-5" style={{ borderColor: "rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.05)" }}>
+            <div className="mb-8 rounded-xl border p-5" style={{ borderColor: "rgba(255,221,0,0.3)", background: "rgba(255,221,0,0.05)" }}>
               <p className="text-[14px] text-white">
                 Connect your Facebook &amp; Instagram account to make this campaign
               </p>
@@ -423,8 +423,8 @@ export function CampaignWizard(props: Props) {
 
               {!finalReviewLater && (
               <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4"
-                style={{ borderColor: agreedHere ? "rgba(108,158,255,0.5)" : "var(--mairo-line)", background: agreedHere ? "rgba(61,125,255,0.06)" : "transparent" }}>
-                <input type="checkbox" checked={agreedHere} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#6c9eff]" />
+                style={{ borderColor: agreedHere ? "rgba(238,238,238,0.5)" : "var(--mairo-line)", background: agreedHere ? "rgba(214,214,214,0.06)" : "transparent" }}>
+                <input type="checkbox" checked={agreedHere} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#eeeeee]" />
                 <span className="text-[13px] leading-relaxed text-white/90">
                   {spend.maxCents !== null
                     ? `I agree to spend up to ${dollars(spend.maxCents)} in total on this campaign, charged by ${NETWORK[plan.service]} to my ad account.`
@@ -447,7 +447,7 @@ export function CampaignWizard(props: Props) {
                 </div>
               )}
               {state?.upgradeNeeded && (
-                <p className="mt-5 rounded-xl border px-4 py-3 text-[13px] text-amber-200/90" style={{ borderColor: "rgba(251,191,36,0.25)" }}>
+                <p className="mt-5 rounded-xl border px-4 py-3 text-[13px] text-amber-200/90" style={{ borderColor: "rgba(255,221,0,0.25)" }}>
                   Your plan doesn&rsquo;t include this.{" "}
                   <Link href="/dashboard/billing" className="underline underline-offset-4">See plans</Link>
                 </p>

@@ -53,7 +53,7 @@ export function MorningBrief({
   const count = actions.length;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-violet/30 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(47,107,255,0.18),transparent_55%),linear-gradient(180deg,var(--color-field),var(--color-field-2))] p-5 sm:p-6">
+    <section className="relative overflow-hidden rounded-2xl border border-violet/30 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(255,255,255,0.18),transparent_55%),linear-gradient(180deg,var(--color-field),var(--color-field-2))] p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your morning brief</p>

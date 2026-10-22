@@ -207,7 +207,7 @@ export function VerifyFact({ field, question, list }: { field: string; question:
   const [changing, setChanging] = useState(false);
   const [text, setText] = useState("");
   return (
-    <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.05)" }}>
+    <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(255,221,0,0.3)", background: "rgba(255,221,0,0.05)" }}>
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">Quick check</p>
       <p className="mt-2 text-[15px] text-white">{question}</p>
       {!changing ? (

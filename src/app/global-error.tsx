@@ -14,7 +14,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
   useEffect(() => reportClientError(error), [error]);
   return (
     <html lang="en">
-      <body style={{ margin: 0, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#05070d", color: "#fff", fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", padding: "80px 16px" }}>
+      <body style={{ margin: 0, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#090909", color: "#fff", fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", padding: "80px 16px" }}>
         <title>Something went wrong · MAIRO</title>
         <main style={{ maxWidth: 520, textAlign: "center" }}>
           <p style={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.3em", color: "rgba(255,255,255,0.8)" }}>MAIRO</p>
@@ -23,7 +23,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
             Something went wrong on our side while showing it. Showing a page never changes your ads. If you had just pressed a button, check whether it went through before pressing it again.
           </p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button type="button" onClick={() => retry()} style={{ minHeight: 46, padding: "0 24px", borderRadius: 999, border: 0, background: "#2f6bff", color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+            <button type="button" onClick={() => retry()} style={{ minHeight: 46, padding: "0 24px", borderRadius: 999, border: 0, background: "#ffffff", color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
               Try again
             </button>
             <Link href="/" style={{ minHeight: 46, display: "inline-flex", alignItems: "center", padding: "0 24px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.85)", fontSize: 15, textDecoration: "none" }}>

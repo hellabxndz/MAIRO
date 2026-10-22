@@ -97,7 +97,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
           </p>
           <p className="mt-1 text-[13px] text-faint">The first numbers usually arrive from Meta within a few hours; until then your dashboard says it&rsquo;s collecting data rather than showing anything made up.</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Link href="/dashboard" className="inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">Open my dashboard</Link>
+            <Link href="/dashboard" className="inline-flex min-h-[46px] items-center rounded-lg bg-[#ffffff] px-6 text-[14.5px] font-medium text-black hover:brightness-110">Open my dashboard</Link>
             {journey.campaign && (
               <Link href={`/dashboard/campaigns/${journey.campaign.id}`} className="inline-flex min-h-[46px] items-center rounded-lg border border-white/12 px-5 text-[14px] text-white/85 hover:border-white/30">View campaign</Link>
             )}
@@ -170,7 +170,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
               <div className={`${card} p-6`}>
                 <p className="text-[17px] font-semibold text-white">Connect Facebook & Instagram</p>
                 <p className="mt-1 text-[13.5px] text-muted">MAIRO builds your campaign inside your own Meta ad account. Your login stays with Meta — MAIRO never sees your password. Connecting doesn&rsquo;t build or spend anything.</p>
-                <a href={connectHref("/dashboard/launch")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
+                <a href={connectHref("/dashboard/launch")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#ffffff] px-6 text-[14.5px] font-medium text-black hover:brightness-110">
                   Connect Facebook & Instagram
                 </a>
               </div>
@@ -186,7 +186,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
                   MAIRO opens the campaign builder with your approved plan already filled in. You confirm the location, make the final ads from your plan&rsquo;s ideas and check the budget. It&rsquo;s built in your ad account switched off — then you see the full review here, and nothing spends until you approve it.
                 </p>
                 <form action={buildFromPlanAction} className="mt-4">
-                  <PendingButton pendingText="Opening the builder…" className="min-h-[46px] rounded-lg bg-[#2f6bff] px-6 text-[14.5px] font-medium text-white hover:brightness-110">
+                  <PendingButton pendingText="Opening the builder…" className="min-h-[46px] rounded-lg bg-[#ffffff] px-6 text-[14.5px] font-medium text-black hover:brightness-110">
                     {journey.draftId ? "Continue building" : buildProblem ? "Try building again" : "Build my campaign"}
                   </PendingButton>
                 </form>

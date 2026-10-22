@@ -50,8 +50,8 @@ export function PostPicker({
               onClick={() => onSelect(post)}
               className="flex w-full gap-3 rounded-xl border p-3 text-left transition-all duration-300"
               style={{
-                borderColor: selected ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-                background: selected ? "rgba(61,125,255,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
+                borderColor: selected ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                background: selected ? "rgba(214,214,214,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
               }}
             >
               {post.imageUrl && (

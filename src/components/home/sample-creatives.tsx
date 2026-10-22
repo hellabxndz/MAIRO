@@ -57,9 +57,9 @@ export const SAMPLE_ADS: SampleAd[] = [
 export function SampleAdCard({ ad, className = "", compact = false }: { ad: SampleAd; className?: string; compact?: boolean }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   return (
-    <figure className={`overflow-hidden rounded-[18px] border bg-[#0b1020] text-left shadow-[0_30px_70px_-34px_rgba(0,0,0,0.95)] ${className}`} style={{ borderColor: "rgba(150,170,210,0.16)" }}>
+    <figure className={`overflow-hidden rounded-[18px] border bg-[#161616] text-left shadow-[0_30px_70px_-34px_rgba(0,0,0,0.95)] ${className}`} style={{ borderColor: "rgba(236,236,236,0.16)" }}>
       <div className={`flex items-center gap-2 ${compact ? "px-2.5 py-2" : "px-3 py-2.5"}`}>
-        <span aria-hidden className={`flex shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] font-semibold text-white ${compact ? "h-5 w-5 text-[9px]" : "h-7 w-7 text-[11px]"}`}>{ad.brand.charAt(0)}</span>
+        <span aria-hidden className={`flex shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] font-semibold text-black ${compact ? "h-5 w-5 text-[9px]" : "h-7 w-7 text-[11px]"}`}>{ad.brand.charAt(0)}</span>
         <span className="min-w-0 flex-1">
           <span className={`block truncate font-semibold text-white ${compact ? "text-[10.5px]" : "text-[12.5px]"}`}>{ad.brand}</span>
           <span className={`block text-white/45 ${compact ? "text-[8.5px]" : "text-[10.5px]"}`}>Sponsored</span>

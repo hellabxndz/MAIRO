@@ -54,14 +54,14 @@ export function RenderFrame({ clip, type, layout, label }: { clip: "story" | "wa
       style={{
         width: w,
         height: h,
-        background: walk ? "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(47,107,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(59,107,255,0.12), transparent 70%), #05060d" : STAGE_BACKGROUND,
+        background: walk ? "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255,255,255,0.22), transparent 70%), radial-gradient(ellipse 50% 40% at 85% 90%, rgba(213,213,213,0.12), transparent 70%), #090909" : STAGE_BACKGROUND,
       }}
     >
       {walk ? <WalkthroughStage t={t} layout={layout} onMeasured={noteTargets} /> : <StoryStage ex={EXAMPLES[type]} t={t} layout={layout} />}
       {walk ? (
         <p className="absolute left-3 top-3 z-50 rounded-full border border-amber-300/40 bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-amber-200">{label}</p>
       ) : (
-        <p className="absolute left-3 top-3 z-20 rounded-full border border-[#f0c463] bg-[#fff8e6] px-2.5 py-1 text-[11px] font-semibold text-[#7a5200]">{label}</p>
+        <p className="absolute left-3 top-3 z-20 rounded-full border border-[#ffe24d] bg-[#fff8e6] px-2.5 py-1 text-[11px] font-semibold text-[#7a5200]">{label}</p>
       )}
     </div>
   );

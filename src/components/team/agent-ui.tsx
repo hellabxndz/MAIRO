@@ -24,9 +24,9 @@ export function AgentIcon({ role, size = 40 }: { role: AgentRole; size?: number 
     <span
       aria-hidden
       className="flex shrink-0 items-center justify-center rounded-2xl"
-      style={{ width: size, height: size, background: "linear-gradient(140deg, #2f6bff, #4f6bff)", boxShadow: "0 6px 16px -8px rgba(47,107,255,0.7)" }}
+      style={{ width: size, height: size, background: "linear-gradient(140deg, #ffffff, #dfdfdf)", boxShadow: "0 6px 16px -8px rgba(255,255,255,0.7)" }}
     >
-      <svg viewBox="0 0 20 20" width={size * 0.5} height={size * 0.5} fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 20 20" width={size * 0.5} height={size * 0.5} fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d={GLYPH[role]} />
       </svg>
     </span>
@@ -37,14 +37,14 @@ export function AgentIcon({ role, size = 40 }: { role: AgentRole; size?: number 
 // in progress, and even then nothing spins or pulses — an animation would
 // suggest continuous processing the records can't back up.
 const TONE: Record<AgentState, { dot: string; text: string }> = {
-  WORKING: { dot: "#3b82f6", text: "text-violet-bright" },
+  WORKING: { dot: "#d1d1d1", text: "text-violet-bright" },
   MONITORING: { dot: "#10b981", text: "text-live" },
-  WAITING: { dot: "#f59e0b", text: "text-warn" },
-  COMPLETED: { dot: "#3b82f6", text: "text-blue-bright" },
+  WAITING: { dot: "#ffc400", text: "text-warn" },
+  COMPLETED: { dot: "#d1d1d1", text: "text-blue-bright" },
   ATTENTION: { dot: "#f97316", text: "text-warn" },
   IDLE: { dot: "rgba(var(--mairo-fg-rgb),0.35)", text: "text-muted" },
-  CONNECT: { dot: "#f59e0b", text: "text-warn" },
-  ERROR: { dot: "#ef4444", text: "text-alert" },
+  CONNECT: { dot: "#ffc400", text: "text-warn" },
+  ERROR: { dot: "#ff1f5a", text: "text-alert" },
 };
 
 export function StatePill({ status }: { status: AgentStatus }) {
@@ -117,7 +117,7 @@ export function AgentCard({ status, pending, contribution, now, timeZone }: { st
       {contribution && <p className="mt-3 text-[12px] text-muted">This month: {contribution}</p>}
       <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
         {action && (
-          <Link href={action.href} className="rounded-full bg-[image:var(--mairo-ramp)] px-3.5 py-1.5 text-[12.5px] font-medium text-white">
+          <Link href={action.href} className="rounded-full bg-[image:var(--mairo-ramp)] px-3.5 py-1.5 text-[12.5px] font-medium text-black">
             {action.label}
           </Link>
         )}

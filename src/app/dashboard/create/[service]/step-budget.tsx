@@ -31,8 +31,8 @@ export function StepBudget({
             <button key={a} type="button" aria-pressed={plan.dailyAmount === a} onClick={() => update({ dailyAmount: a })}
               className="rounded-full border px-4 py-2 text-[13px] transition"
               style={{
-                borderColor: plan.dailyAmount === a ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-                background: plan.dailyAmount === a ? "rgba(61,125,255,0.1)" : "transparent",
+                borderColor: plan.dailyAmount === a ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                background: plan.dailyAmount === a ? "rgba(214,214,214,0.1)" : "transparent",
                 color: plan.dailyAmount === a ? "var(--color-white)" : undefined,
               }}>
               ${a} per day
@@ -77,7 +77,7 @@ export function StepBudget({
       </SubQuestion>
 
       <div className="mt-8 grid gap-3">
-        <div className="rounded-xl border p-4" style={{ borderColor: "rgba(108,158,255,0.35)", background: "rgba(61,125,255,0.05)" }}>
+        <div className="rounded-xl border p-4" style={{ borderColor: "rgba(238,238,238,0.35)", background: "rgba(214,214,214,0.05)" }}>
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Planned spend</p>
           <p className="mt-1.5 text-[15px] text-white">
             {spend.maxCents !== null

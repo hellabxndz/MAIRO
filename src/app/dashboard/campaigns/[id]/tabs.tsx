@@ -52,7 +52,7 @@ export function CampaignTabs({ active }: { active: TabKey }) {
                   className="absolute inset-x-2 -bottom-px h-0.5 rounded-full"
                   style={{
                     backgroundImage: "var(--mairo-ramp)",
-                    boxShadow: "0 0 12px 1px rgba(61,125,255,0.45)",
+                    boxShadow: "0 0 12px 1px rgba(214,214,214,0.45)",
                   }}
                 />
               )}

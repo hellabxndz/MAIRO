@@ -289,12 +289,12 @@ export function MairoAssistant({
                           {learned && <span className="mt-2 block text-[12px] text-emerald-300">✨ Added to Business Brain</span>}
                           {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                           {links.map((l) => (
-                            <a key={l.href} href={l.href} className="mt-3 mr-2 inline-flex rounded-lg bg-[#2f6bff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
+                            <a key={l.href} href={l.href} className="mt-3 mr-2 inline-flex rounded-lg bg-[#ffffff] px-3.5 py-2 text-[13px] font-medium text-black hover:brightness-110">
                               {l.label} →
                             </a>
                           ))}
                           {planReady && (
-                            <a href="/dashboard/mission" className="mt-3 inline-flex rounded-lg bg-[#2f6bff] px-3.5 py-2 text-[13px] font-medium text-white hover:brightness-110">
+                            <a href="/dashboard/mission" className="mt-3 inline-flex rounded-lg bg-[#ffffff] px-3.5 py-2 text-[13px] font-medium text-black hover:brightness-110">
                               Review MAIRO&rsquo;s plan
                             </a>
                           )}

@@ -117,7 +117,7 @@ function Thumb({ row }: { row: CampaignRow }) {
       loading="lazy"
     />
   ) : (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#312e81] to-[#6d28d9] text-[13px] font-semibold text-white/85">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#585858] to-[#b9b9b9] text-[13px] font-semibold text-white/85">
       {row.name.slice(0, 1).toUpperCase()}
     </span>
   );
@@ -208,7 +208,7 @@ export function CampaignTable({
   return (
     <section className={`${PANEL} overflow-hidden`}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-3 pt-4">
-        <h2 className="text-[17px] font-semibold text-white">
+        <h2 className="text-[17px] font-semibold text-black">
           {advanced ? "Campaign performance" : "Your campaigns"}
         </h2>
         {advanced ? (
@@ -229,7 +229,7 @@ export function CampaignTable({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search campaigns…"
-                className="w-40 bg-transparent text-white outline-none placeholder:text-faint"
+                className="w-40 bg-transparent text-black outline-none placeholder:text-faint"
               />
             </label>
             <div ref={pickerBox} className="relative">
@@ -237,7 +237,7 @@ export function CampaignTable({
                 type="button"
                 onClick={() => setPicker((v) => !v)}
                 aria-expanded={picker}
-                className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12.5px] text-white/85 hover:border-white/25"
+                className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12.5px] text-black/85 hover:border-white/25"
               >
                 <svg
                   viewBox="0 0 20 20"
@@ -256,7 +256,7 @@ export function CampaignTable({
                 <ul className="absolute right-0 z-30 mt-2 w-52 rounded-xl border border-white/10 bg-field-2 p-1.5 shadow-2xl">
                   {Object.values(COLUMNS).map((c) => (
                     <li key={c.key}>
-                      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-white/85 hover:bg-white/[0.05]">
+                      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-black/85 hover:bg-white/[0.05]">
                         <input
                           type="checkbox"
                           checked={visible.includes(c.key)}
@@ -269,7 +269,7 @@ export function CampaignTable({
                                 : v.filter((k) => k !== c.key),
                             )
                           }
-                          className="accent-[#2f6bff]"
+                          className="accent-[#ffffff]"
                         />
                         {c.label}
                       </label>
@@ -282,7 +282,7 @@ export function CampaignTable({
               type="button"
               onClick={exportCsv}
               disabled={shown.length === 0}
-              className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12.5px] text-white/85 hover:border-white/25 disabled:opacity-40"
+              className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12.5px] text-black/85 hover:border-white/25 disabled:opacity-40"
             >
               <svg
                 viewBox="0 0 20 20"
@@ -300,7 +300,7 @@ export function CampaignTable({
         ) : (
           <Link
             href="/dashboard/campaigns"
-            className="text-[13px] text-violet-bright hover:text-white"
+            className="text-[13px] text-violet-bright hover:text-black"
           >
             View all campaigns →
           </Link>
@@ -309,13 +309,13 @@ export function CampaignTable({
 
       {rows.length === 0 ? (
         <div className="border-t border-white/[0.06] px-5 py-8 text-center">
-          <p className="text-[14px] text-white">No campaigns yet</p>
+          <p className="text-[14px] text-black">No campaigns yet</p>
           <p className="mt-1 text-[13px] text-muted">
             Build one and its results show up here.
           </p>
           <Link
             href="/dashboard/create"
-            className="mt-4 inline-flex rounded-lg bg-[#2f6bff] px-4 py-2 text-[13px] font-medium text-white hover:brightness-110"
+            className="mt-4 inline-flex rounded-lg bg-[#ffffff] px-4 py-2 text-[13px] font-medium text-black hover:brightness-110"
           >
             Create a campaign
           </Link>
@@ -329,7 +329,7 @@ export function CampaignTable({
                   <button
                     type="button"
                     onClick={() => toggleSort("name")}
-                    className="hover:text-white"
+                    className="hover:text-black"
                   >
                     Campaign{arrow("name")}
                   </button>
@@ -343,7 +343,7 @@ export function CampaignTable({
                     <button
                       type="button"
                       onClick={() => toggleSort(c.key)}
-                      className="whitespace-nowrap hover:text-white"
+                      className="whitespace-nowrap hover:text-black"
                     >
                       {(!advanced && SIMPLE_LABEL[c.key]) || c.label}
                       {arrow(c.key)}

@@ -129,7 +129,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
                 <button type="button" onClick={() => setOpen(false)} className="min-h-[44px] rounded-lg px-4 text-[14px] text-muted hover:text-white">
                   Cancel
                 </button>
-                <button type="submit" disabled={pending} className="min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110 disabled:opacity-60">
+                <button type="submit" disabled={pending} className="min-h-[44px] rounded-lg bg-[#ffffff] px-5 text-[14px] font-medium text-black hover:brightness-110 disabled:opacity-60">
                   {pending ? "Saving…" : "Save settings"}
                 </button>
               </div>

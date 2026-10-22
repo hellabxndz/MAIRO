@@ -28,9 +28,9 @@ export type BellItem = {
 };
 
 const TONE: Record<NotificationSeverity, string> = {
-  INFO: "var(--color-blue-bright, #6c9eff)",
-  OPPORTUNITY: "rgb(52,211,153)",
-  WARNING: "rgb(251,191,36)",
+  INFO: "var(--color-blue-bright, #eeeeee)",
+  OPPORTUNITY: "rgb(34,255,136)",
+  WARNING: "rgb(255,221,0)",
 };
 
 export function NotificationBell({ items, unread }: { items: BellItem[]; unread: number }) {

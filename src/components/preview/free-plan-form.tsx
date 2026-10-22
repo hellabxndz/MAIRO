@@ -49,7 +49,7 @@ const MODES: { id: FreePlanMode; label: string; short: string }[] = [
 export type FreePlanDemo = { website: string; goal: FreePlanStart["goal"]; focus: "website" | "goal" | null; pressed: boolean };
 
 const field =
-  "block min-h-[48px] w-full rounded-xl border border-white/12 bg-[#0e1122]/80 px-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
+  "block min-h-[48px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
 const label = "mb-1 block text-[12px] font-medium text-white/65";
 
 export function FreePlanForm({
@@ -89,7 +89,7 @@ export function FreePlanForm({
       </label>
       <select id={id("goal")} name="goal" value={shownGoal} onChange={(e) => setGoal(e.target.value as FreePlanStart["goal"])} className={`${field} text-[14.5px]${lit("goal")}`}>
         {GOALS.map((g) => (
-          <option key={g.value} value={g.value} className="bg-[#111426]">
+          <option key={g.value} value={g.value} className="bg-[#1c1c1c]">
             {g.label}
           </option>
         ))}
@@ -102,11 +102,11 @@ export function FreePlanForm({
         Industry or category
       </label>
       <select id={id("type")} name="type" value={type} onChange={(e) => setType(e.target.value)} className={`${field} text-[14.5px]`}>
-        <option value="" className="bg-[#111426]">
+        <option value="" className="bg-[#1c1c1c]">
           Choose one
         </option>
         {BUSINESS_TYPES.map((t) => (
-          <option key={t.id} value={t.id} className="bg-[#111426]">
+          <option key={t.id} value={t.id} className="bg-[#1c1c1c]">
             {t.label}
           </option>
         ))}
@@ -136,7 +136,7 @@ export function FreePlanForm({
         onStart({ website: w || null, instagram: ig || null, describe: d || null, name: n || null, goal, type, budget: Number.isFinite(b) && b > 0 ? Math.round(b) : null });
       }}
       className="rounded-[26px] border border-white/10 p-2.5 text-left sm:p-3.5"
-      style={{ background: "linear-gradient(170deg, rgba(25,31,62,0.82), rgba(14,17,33,0.86))", boxShadow: "0 0 0 1px rgba(47,107,255,0.14), 0 40px 100px -45px rgba(47,107,255,0.65)" }}
+      style={{ background: "linear-gradient(170deg, rgba(44,44,44,0.82), rgba(24,24,24,0.86))", boxShadow: "0 0 0 1px rgba(255,255,255,0.14), 0 40px 100px -45px rgba(255,255,255,0.65)" }}
     >
       <div role="tablist" aria-label="How to start" className="grid grid-cols-3 gap-1 rounded-full bg-black/30 p-1">
         {MODES.map((m) => (
@@ -151,7 +151,7 @@ export function FreePlanForm({
               setMode(m.id);
               setProblem(null);
             }}
-            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white shadow-[0_0_0_1px_rgba(143,184,255,0.25)]" : "text-white/55 hover:text-white"}`}
+            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.25)]" : "text-white/55 hover:text-white"}`}
           >
             <span className="sm:hidden">{m.short}</span>
             <span className="hidden sm:inline">{m.label}</span>
@@ -243,7 +243,7 @@ export function FreePlanForm({
 
         <button
           type="submit"
-          className="mt-3.5 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[16.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 focus-visible:outline-offset-4"
+          className="mt-3.5 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[16.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 focus-visible:outline-offset-4"
           style={demo?.pressed ? { transform: "scale(0.97)", filter: "brightness(1.15)" } : undefined}
         >
           Build My Free Ad Plan <span aria-hidden>→</span>

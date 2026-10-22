@@ -23,9 +23,9 @@ import type { NotificationSeverity } from "@/generated/prisma/enums";
 export const metadata = { title: "Notifications — MAIRO" };
 
 const TONE: Record<NotificationSeverity, { dot: string; label: string }> = {
-  INFO: { dot: "var(--color-blue-bright, #6c9eff)", label: "text-blue-bright" },
-  OPPORTUNITY: { dot: "rgb(52,211,153)", label: "text-live" },
-  WARNING: { dot: "rgb(251,191,36)", label: "text-warn" },
+  INFO: { dot: "var(--color-blue-bright, #eeeeee)", label: "text-blue-bright" },
+  OPPORTUNITY: { dot: "rgb(34,255,136)", label: "text-live" },
+  WARNING: { dot: "rgb(255,221,0)", label: "text-warn" },
 };
 
 export default async function NotificationsPage() {

@@ -177,7 +177,7 @@ function AssistantHero({
       <span
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl lg:left-[120px]"
-        style={{ background: "radial-gradient(circle, rgba(61,125,255,0.5), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, rgba(214,214,214,0.5), transparent 70%)" }}
       />
 
       <div className="relative flex flex-col items-center gap-7 text-center lg:flex-row lg:items-center lg:gap-9 lg:text-left">
@@ -256,12 +256,12 @@ function AssistantOrb() {
       <span
         aria-hidden
         className="mairo-orb-ring absolute inset-0 rounded-full border"
-        style={{ borderColor: "rgba(122,162,255,0.28)" }}
+        style={{ borderColor: "rgba(245,245,245,0.28)" }}
       />
       <span
         aria-hidden
         className="mairo-orb-ring-slow absolute inset-[10px] rounded-full border border-dashed"
-        style={{ borderColor: "rgba(122,162,255,0.22)" }}
+        style={{ borderColor: "rgba(245,245,245,0.22)" }}
       />
       <span
         aria-hidden

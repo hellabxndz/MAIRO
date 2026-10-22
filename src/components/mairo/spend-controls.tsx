@@ -109,8 +109,8 @@ export function SpendControls({
           <span
             className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium"
             style={{
-              background: level === "MANUAL" ? "rgba(var(--mairo-fg-rgb),0.06)" : "rgba(52,211,153,0.12)",
-              color: level === "MANUAL" ? "rgb(203,213,225)" : "rgb(110,231,183)",
+              background: level === "MANUAL" ? "rgba(var(--mairo-fg-rgb),0.06)" : "rgba(34,255,136,0.12)",
+              color: level === "MANUAL" ? "rgb(255,255,255)" : "rgb(110,231,183)",
             }}
           >
             <span

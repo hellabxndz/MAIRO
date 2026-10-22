@@ -34,7 +34,7 @@ export function ActivityTimeline({ entries, compact = false }: { entries: Activi
             <span
               aria-hidden
               className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full"
-              style={{ background: e.automatic ? "var(--mairo-ramp)" : "#94a3b8", backgroundImage: e.automatic ? "var(--mairo-ramp)" : undefined }}
+              style={{ background: e.automatic ? "var(--mairo-ramp)" : "#dedede", backgroundImage: e.automatic ? "var(--mairo-ramp)" : undefined }}
             />
             {showDay && !compact && <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{w.day}</p>}
             <p className="text-[11.5px] text-faint">

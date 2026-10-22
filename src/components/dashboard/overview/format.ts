@@ -3,7 +3,7 @@ import { NO_VALUE } from "@/components/metrics";
 // Number formatting for the dashboard's cards, chart and table. Missing is a
 // dash, never a zero.
 
-export const PANEL = "rounded-2xl border border-white/[0.07] bg-[#0b1122]/80";
+export const PANEL = "rounded-2xl border border-white/[0.07] bg-[#161616]/80";
 
 export function money(cents: number | null, opts: { whole?: boolean } = {}): string {
   if (cents === null) return NO_VALUE;

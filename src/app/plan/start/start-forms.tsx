@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { approveAndChooseAction, startFromPlanAction, writeStrategyAction, type StartState } from "@/lib/actions/start-actions";
 import type { StartDestination } from "@/lib/onboarding/quick-start";
 
-const primary = "inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[15.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60 sm:w-auto";
+const primary = "inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[15.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60 sm:w-auto";
 const field = "mt-1.5 min-h-[46px] w-full rounded-xl border border-white/12 bg-white/[0.03] px-4 text-[14.5px] text-white placeholder:text-white/35 focus:border-violet-400/60 focus:outline-none";
 
 /** Step 1: where a tap on an ad goes — the one thing the free plan doesn't know — then MAIRO writes the strategy. */
@@ -18,7 +18,7 @@ export function ConfirmSetupForm({ options, suggested, hasWebsite }: { options: 
         <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
           {options.map((o) => (
             <label key={o.key} className={`flex cursor-pointer gap-3 rounded-2xl border p-4 transition ${choice === o.key ? "border-violet-400/60 bg-violet-500/[0.10]" : "border-white/10 bg-white/[0.02] hover:border-white/25"}`}>
-              <input type="radio" name="destinationType" value={o.key} checked={choice === o.key} onChange={() => setChoice(o.key)} className="mt-1 accent-[#7c5cff]" />
+              <input type="radio" name="destinationType" value={o.key} checked={choice === o.key} onChange={() => setChoice(o.key)} className="mt-1 accent-[#e6e6e6]" />
               <span>
                 <span className="block text-[14.5px] font-medium text-white">{o.label}</span>
                 <span className="mt-0.5 block text-[12.5px] text-white/55">{o.sub}</span>

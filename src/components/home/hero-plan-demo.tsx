@@ -20,7 +20,7 @@ import { budgetPlan } from "@/lib/preview/strategy";
 
 const SHOP = EXAMPLES.shop;
 const BUDGET = budgetPlan({ monthly: 1000, goal: "sales", kind: "shop", hasWebsite: true, pixelSeen: true, usesLeadForm: false });
-const COLORS: Record<string, string> = { prospecting: "#2f6bff", retargeting: "#38bdf8", testing: "#a9c8ff", reach: "#5fd4c4", audiences: "#5fd4c4" };
+const COLORS: Record<string, string> = { prospecting: "#ffffff", retargeting: "#00f0ff", testing: "#8a8a8a", reach: "#22ff88", audiences: "#22ff88" };
 
 const STAGES = [
   { label: "Understanding your business", at: 0 },
@@ -141,7 +141,7 @@ export function HeroPlanDemo({ compact = false, className = "" }: { compact?: bo
     }
   };
 
-  const shine: CSSProperties = { borderColor: "rgba(150,170,210,0.18)", backgroundImage: "var(--mairo-glass)", boxShadow: "0 40px 90px -40px rgba(0,0,0,0.95), var(--mairo-glow-soft)" };
+  const shine: CSSProperties = { borderColor: "rgba(236,236,236,0.18)", backgroundImage: "var(--mairo-glass)", boxShadow: "0 40px 90px -40px rgba(0,0,0,0.95), var(--mairo-glow-soft)" };
 
   return (
     <figure ref={root} aria-label="Product demo: MAIRO making a free ad plan for a fictional business" className={`relative overflow-hidden rounded-[24px] border text-left ${className}`} style={shine}>
@@ -174,7 +174,7 @@ export function HeroPlanDemo({ compact = false, className = "" }: { compact?: bo
         <Panel on={stage === 0}>
           <div className={sz.pad}>
             <p className={`text-white/55 ${sz.xs}`}>Website</p>
-            <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-white/[0.12] bg-[#060912]/80 px-3 py-2.5">
+            <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-white/[0.12] bg-[#0c0c0c]/80 px-3 py-2.5">
               <span className={`font-mono text-white ${sz.s}`}>{typed || " "}</span>
               <span className={`-ml-1.5 h-4 w-px bg-cyan-200 ${t < 1.6 ? "animate-pulse" : "opacity-0"}`} />
             </div>
@@ -289,7 +289,7 @@ export function HeroPlanDemo({ compact = false, className = "" }: { compact?: bo
             <div className="mt-2.5 grid grid-cols-3 gap-2">
               {SHOP.concepts.map((c, i) => (
                 <In key={c.id} show={local > 0.2 + i * 0.4}>
-                  <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#0b1020]">
+                  <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#161616]">
                     <BusinessArt type="shop" variant={c.art} className={`w-full ${compact ? "h-[62px]" : "h-[96px]"}`} />
                     <div className={compact ? "p-1.5" : "p-2"}>
                       <p className={`font-semibold leading-snug text-white ${compact ? "text-[10px]" : "text-[11.5px]"}`}>{c.hook}</p>

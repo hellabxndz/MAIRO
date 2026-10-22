@@ -86,14 +86,14 @@ function Studio({ s, narrow }: { s: State; narrow: boolean }) {
         <Panel id="angles" title="Angles MAIRO suggests">
           <ul className={`grid gap-2.5 ${narrow ? "" : "grid-cols-3"}`}>
             {CONCEPTS.map((k, i) => (
-              <li key={k.label} data-cue={`angle-${i}`} className="flex items-start gap-3 rounded-2xl border p-3" style={{ borderColor: s.selected === i ? "rgba(108,158,255,0.7)" : "var(--mairo-line)", background: s.selected === i ? "rgba(47,107,255,0.10)" : "transparent", ...press(s.pressed === `angle-${i}`) }}>
+              <li key={k.label} data-cue={`angle-${i}`} className="flex items-start gap-3 rounded-2xl border p-3" style={{ borderColor: s.selected === i ? "rgba(238,238,238,0.7)" : "var(--mairo-line)", background: s.selected === i ? "rgba(255,255,255,0.10)" : "transparent", ...press(s.pressed === `angle-${i}`) }}>
                 <span className="h-14 w-11 shrink-0 overflow-hidden rounded-lg [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full">
                   <BusinessArt type="shop" variant={ART[i]} />
                 </span>
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[12.5px] font-medium text-white">{k.label}</span>
-                    {i === 0 && <span className="rounded-full bg-[image:var(--mairo-ramp)] px-2 py-0.5 text-[10px] font-medium text-white">Test this first</span>}
+                    {i === 0 && <span className="rounded-full bg-[image:var(--mairo-ramp)] px-2 py-0.5 text-[10px] font-medium text-black">Test this first</span>}
                   </span>
                   <span className="mt-0.5 block text-[12px] leading-snug text-white/70">“{i === 0 ? s.headline || " " : k.headline}”</span>
                 </span>
@@ -116,7 +116,7 @@ function Studio({ s, narrow }: { s: State; narrow: boolean }) {
                 <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Headline</dt>
                 <dd className="mt-1">
                   {s.editing ? (
-                    <span className="flex items-center gap-2 rounded-xl border border-[#6c9eff]/70 bg-[#0a0f1f] px-3 py-2 text-[15px] font-semibold text-white">
+                    <span className="flex items-center gap-2 rounded-xl border border-[#eeeeee]/70 bg-[#141414] px-3 py-2 text-[15px] font-semibold text-white">
                       {s.headline}
                       <span className="h-4 w-px animate-pulse bg-cyan-200" />
                     </span>

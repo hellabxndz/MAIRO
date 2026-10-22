@@ -213,7 +213,7 @@ export function HeroStarter() {
   const chip = (on: boolean) =>
     `flex cursor-pointer items-center justify-center rounded-xl border transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-cyan-300/60 ${on ? "border-violet-400/80 bg-violet-500/[0.16] text-white" : "border-white/[0.12] bg-white/[0.025] text-white/78 hover:border-white/30 hover:text-white"}`;
   const box = (bad: boolean) =>
-    `flex items-center gap-3 rounded-2xl border bg-[#060912]/80 px-4 transition focus-within:border-cyan-300/60 focus-within:ring-2 focus-within:ring-cyan-300/15 ${bad ? "border-red-400/55" : "border-white/[0.13]"}`;
+    `flex items-center gap-3 rounded-2xl border bg-[#0c0c0c]/80 px-4 transition focus-within:border-cyan-300/60 focus-within:ring-2 focus-within:ring-cyan-300/15 ${bad ? "border-red-400/55" : "border-white/[0.13]"}`;
 
   const cta = (
     <>
@@ -231,7 +231,7 @@ export function HeroStarter() {
       noValidate
       aria-label="Build your free AI ad plan"
       className="relative rounded-[26px] border p-3.5 text-left sm:p-5"
-      style={{ borderColor: "rgba(150,170,210,0.2)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}
+      style={{ borderColor: "rgba(236,236,236,0.2)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}
     >
       <input type="hidden" name="generate" value="1" />
       <div aria-hidden className="pointer-events-none absolute inset-x-10 -top-px h-px bg-gradient-to-r from-transparent via-cyan-300/50 to-transparent" />
@@ -288,7 +288,7 @@ export function HeroStarter() {
             <button
               type="submit"
               disabled={reading}
-              className="group inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-white shadow-[0_14px_40px_-14px_rgba(47,107,255,0.9)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-75 sm:px-6"
+              className="group inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-black shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-75 sm:px-6"
             >
               {reading ? (source === "website" ? "Reading your website…" : "Opening your profile…") : cta}
             </button>
@@ -439,7 +439,7 @@ export function HeroStarter() {
             </p>
           </fieldset>
 
-          <button type="submit" className="group mt-4 inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-white shadow-[0_14px_40px_-14px_rgba(47,107,255,0.9)] transition hover:brightness-110">
+          <button type="submit" className="group mt-4 inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-black shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110">
             {cta}
           </button>
         </>

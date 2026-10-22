@@ -36,7 +36,7 @@ export function WorkspaceSwitcher({ workspaces, current, compact = false }: { wo
         style={{ borderColor: "var(--mairo-line)" }}
       >
         {workspaces.map((w) => (
-          <option key={w.id} value={w.id} className="bg-[#111426] text-white">{w.name}</option>
+          <option key={w.id} value={w.id} className="bg-[#1c1c1c] text-white">{w.name}</option>
         ))}
       </select>
       {error && <p role="alert" className="mt-1 text-[12px] text-red-400">{error}</p>}

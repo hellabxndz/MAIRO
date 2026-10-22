@@ -473,7 +473,7 @@ function SuggestionPanel({
               type="button"
               onClick={onUse}
               disabled={ideaUsed}
-              className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-1.5 text-xs font-medium text-white transition hover:brightness-110 disabled:opacity-50"
+              className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-1.5 text-xs font-medium text-black transition hover:brightness-110 disabled:opacity-50"
             >
               {ideaUsed ? "Added above" : "Use this idea"}
             </button>

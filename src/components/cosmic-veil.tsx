@@ -15,15 +15,15 @@ const FORMATIONS = [
   {
     id: "veil-a",
     css: "left:-18%; top:-22%; width:86vw; height:86vw; max-width:1250px; max-height:1250px;",
-    from: "rgba(86,64,175,0.30)",
-    mid: "rgba(60,44,130,0.11)",
+    from: "rgba(176,176,176,0.30)",
+    mid: "rgba(87,87,87,0.11)",
     seconds: 74,
   },
   {
     id: "veil-b",
     css: "right:-24%; top:12%; width:70vw; height:70vw; max-width:1000px; max-height:1000px;",
-    from: "rgba(28,64,150,0.26)",
-    mid: "rgba(20,44,105,0.10)",
+    from: "rgba(89,89,89,0.26)",
+    mid: "rgba(62,62,62,0.10)",
     seconds: 96,
   },
   {

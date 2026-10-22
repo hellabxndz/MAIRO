@@ -20,7 +20,7 @@ export function PromotionForm({ initialKind }: { initialKind: PromotionKind | nu
       <div className="mt-3 flex flex-wrap gap-2">
         {PROMOTION_KINDS.map((k) => (
           <button key={k.key} type="button" onClick={() => { setKind(k.key); setDetails({}); setResult(null); }}
-            className={`rounded-full px-3.5 py-1.5 text-[13px] transition ${kind === k.key ? "bg-[#2f6bff] text-white" : "border border-white/12 text-white/85 hover:border-white/30"}`}>
+            className={`rounded-full px-3.5 py-1.5 text-[13px] transition ${kind === k.key ? "bg-[#ffffff] text-black" : "border border-white/12 text-black/85 hover:border-white/30"}`}>
             {k.label}
           </button>
         ))}
@@ -49,7 +49,7 @@ export function PromotionForm({ initialKind }: { initialKind: PromotionKind | nu
           <p className="mt-4 text-[12.5px] text-muted">
             MAIRO&rsquo;s plan: {SEQUENCES[kind].map((s) => s.step).join(" → ")}, with useful posts in between. Steps that would land in the past are left out.
           </p>
-          <button type="button" disabled={pending} className="mt-4 min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+          <button type="button" disabled={pending} className="mt-4 min-h-[44px] rounded-lg bg-[#ffffff] px-5 text-[14px] font-medium text-black hover:brightness-110 disabled:opacity-50"
             onClick={() => start(async () => {
               setResult(null);
               const r = await addPromotionAction({ kind, details }).catch(() => ({ ok: false as const, error: "Something went wrong. Try again." }));

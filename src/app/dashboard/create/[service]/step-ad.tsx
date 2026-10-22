@@ -185,7 +185,7 @@ export function StepAd({
         </div>
       ) : menu === "posts" && !metaConnected ? (
         <div className="space-y-4">
-          <div className="rounded-xl border p-5" style={{ borderColor: "rgba(108,158,255,0.35)", background: "rgba(61,125,255,0.05)" }}>
+          <div className="rounded-xl border p-5" style={{ borderColor: "rgba(238,238,238,0.35)", background: "rgba(214,214,214,0.05)" }}>
             <p className="text-[14px] text-white">First, connect your Facebook &amp; Instagram</p>
             <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">
               Your posts live on your Facebook Page and Instagram account, so MAIRO needs your permission to see them. Your

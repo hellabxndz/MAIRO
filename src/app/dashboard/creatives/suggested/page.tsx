@@ -37,7 +37,7 @@ export default async function SuggestedAdsPage() {
           <Step done={gate.profileConfirmed} label="Confirm what you sell in your Business Brain" href="/dashboard/settings/business-brain" />
         </ol>
         {gate.next && (
-          <Link href={gate.next.href} className="mt-6 inline-flex min-h-[40px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-medium text-white shadow-[var(--mairo-glow-key)]">
+          <Link href={gate.next.href} className="mt-6 inline-flex min-h-[40px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-medium text-black shadow-[var(--mairo-glow-key)]">
             {gate.next.label}
           </Link>
         )}

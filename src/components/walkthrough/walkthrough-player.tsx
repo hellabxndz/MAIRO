@@ -172,7 +172,7 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             role="img"
             aria-label={`Demo on a sample business, chapter: ${scene.label}. ${caption.text}`}
             className="relative aspect-[16/9] w-full overflow-hidden rounded-[22px] border border-white/10 max-[591px]:aspect-[9/16]"
-            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(47,107,255,0.2), transparent 70%), #07080D" }}
+            style={{ background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255,255,255,0.2), transparent 70%), #0a0a0a" }}
           >
             {scale > 0 && (
               <div aria-hidden className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})`, width: stage.w, height: stage.h }}>
@@ -216,13 +216,13 @@ export function WalkthroughPlayer({ media }: { media: Pick<RenderedMedia, "walkt
             onChange={(e) => seek(Number(e.target.value))}
             aria-label="Position in the demo"
             aria-valuetext={`${fmt(shown)} of ${fmt(WALK_DURATION)}, ${scene.label}`}
-            className="mt-3 w-full accent-[#3b82f6]"
+            className="mt-3 w-full accent-[#d1d1d1]"
           />
           <nav aria-label="Demo chapters" className="mt-2 flex flex-wrap gap-1.5">
             {WALK_CHAPTERS.map((c) => {
               const here = scene.id === c.id;
               return (
-                <button key={c.id} type="button" onClick={() => goChapter(c.id)} aria-current={here ? "step" : undefined} className={`h-9 rounded-full px-3 text-[12.5px] transition ${here ? "bg-white text-[#0b0b18]" : "text-white/70 hover:bg-white/[0.06] hover:text-white"}`}>
+                <button key={c.id} type="button" onClick={() => goChapter(c.id)} aria-current={here ? "step" : undefined} className={`h-9 rounded-full px-3 text-[12.5px] transition ${here ? "bg-white text-[#121212]" : "text-white/70 hover:bg-white/[0.06] hover:text-white"}`}>
                   {c.label}
                 </button>
               );

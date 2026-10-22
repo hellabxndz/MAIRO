@@ -32,19 +32,19 @@ export function GeneratingOverlay({ label = "Generating" }: { label?: string }) 
       style={{
         borderColor: "var(--mairo-line-lit)",
         backgroundImage:
-          "radial-gradient(circle at 50% 40%, rgba(108,158,255,0.16), transparent 65%), var(--mairo-glass)",
+          "radial-gradient(circle at 50% 40%, rgba(238,238,238,0.16), transparent 65%), var(--mairo-glass)",
       }}
     >
       <div className="relative h-16 w-16">
         <span
           aria-hidden
           className="mairo-spin-slow absolute inset-0 rounded-full border-2 border-dashed"
-          style={{ borderColor: "rgba(122,162,255,0.35)" }}
+          style={{ borderColor: "rgba(245,245,245,0.35)" }}
         />
         <span
           aria-hidden
           className="mairo-spin absolute inset-2 rounded-full border-2 border-transparent"
-          style={{ borderTopColor: "var(--color-sky-400, #3d7dff)", borderRightColor: "var(--color-purple-400, #8fb8ff)" }}
+          style={{ borderTopColor: "var(--color-sky-400, #d6d6d6)", borderRightColor: "var(--color-purple-400, #ffffff)" }}
         />
         <span
           aria-hidden

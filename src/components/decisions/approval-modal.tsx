@@ -196,7 +196,7 @@ export function ApprovalModal({
             )}
             <ul className="mt-5 space-y-3">
               {result.applied.map((a, i) => (
-                <li key={i} className="rounded-xl border p-3.5 text-[12.5px]" style={{ borderColor: a.ok ? "var(--mairo-line)" : "rgba(248,113,113,0.35)" }}>
+                <li key={i} className="rounded-xl border p-3.5 text-[12.5px]" style={{ borderColor: a.ok ? "var(--mairo-line)" : "rgba(255,61,110,0.35)" }}>
                   <p className="text-faint">{a.label}</p>
                   <p className="mt-0.5 text-white">
                     {a.ok ? (

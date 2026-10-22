@@ -82,7 +82,7 @@ export function PlanBuilder({ website }: { website: string | null }) {
       {error && (
         <div className="mt-5">
           <p className="rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{error}</p>
-          <button type="button" onClick={() => void run()} className="mt-3 min-h-[44px] rounded-lg bg-[#2f6bff] px-5 text-[14px] font-medium text-white hover:brightness-110">
+          <button type="button" onClick={() => void run()} className="mt-3 min-h-[44px] rounded-lg bg-[#ffffff] px-5 text-[14px] font-medium text-black hover:brightness-110">
             Try again
           </button>
         </div>

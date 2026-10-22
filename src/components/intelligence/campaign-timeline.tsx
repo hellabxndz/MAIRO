@@ -9,17 +9,17 @@ import type { CampaignJourney, TimelineEvent as Event, TimelineFilter, TimelineK
 // adds the figures under each event.
 
 const ICON: Record<TimelineKind, { tone: string; d: React.ReactNode }> = {
-  launch: { tone: "#8fb8ff", d: <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2m-2-3 3 3m-3-3c1-4 4-9 11-10-1 7-6 10-10 11" /> },
-  data: { tone: "#94a6cc", d: <path d="M4 19h16M7 16v-4M11 16V8M15 16v-6M19 16V5" /> },
-  winner: { tone: "#34d399", d: <path d="M8 4h8v5a4 4 0 0 1-8 0zM6 5H4v1.5A3 3 0 0 0 7 9.5M18 5h2v1.5A3 3 0 0 1 17 9.5M12 13v4M8.5 20h7" /> },
-  budget: { tone: "#7fb0ff", d: <path d="M5 19v-6M10 19V9M15 19v-9M20 19V5" /> },
-  creative: { tone: "#5cc8ff", d: <path d="M4 5h16v14H4zM4 15l4.5-4.5 4 4 2.5-2.5L20 17" /> },
-  audience: { tone: "#38bdf8", d: <path d="M9 8.5a3.2 3.2 0 1 0 0-.01M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M16 5.8a3 3 0 0 1 0 5.6M18 14.4c1.6.6 2.6 2.2 2.6 4.6" /> },
+  launch: { tone: "#ffffff", d: <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2m-2-3 3 3m-3-3c1-4 4-9 11-10-1 7-6 10-10 11" /> },
+  data: { tone: "#e8e8e8", d: <path d="M4 19h16M7 16v-4M11 16V8M15 16v-6M19 16V5" /> },
+  winner: { tone: "#22ff88", d: <path d="M8 4h8v5a4 4 0 0 1-8 0zM6 5H4v1.5A3 3 0 0 0 7 9.5M18 5h2v1.5A3 3 0 0 1 17 9.5M12 13v4M8.5 20h7" /> },
+  budget: { tone: "#f7f7f7", d: <path d="M5 19v-6M10 19V9M15 19v-9M20 19V5" /> },
+  creative: { tone: "#e6e6e6", d: <path d="M4 5h16v14H4zM4 15l4.5-4.5 4 4 2.5-2.5L20 17" /> },
+  audience: { tone: "#00f0ff", d: <path d="M9 8.5a3.2 3.2 0 1 0 0-.01M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M16 5.8a3 3 0 0 1 0 5.6M18 14.4c1.6.6 2.6 2.2 2.6 4.6" /> },
   retargeting: { tone: "#f472b6", d: <path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4" /> },
-  website: { tone: "#fbbf24", d: <path d="M3.5 5h17v14h-17zM3.5 9h17M6.5 7h.01M9 7h.01" /> },
-  warning: { tone: "#f59e0b", d: <path d="M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.3" /> },
-  optimization: { tone: "#6aa6ff", d: <path d="M12 3v3M12 18v3M3 12h3M18 12h3M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /> },
-  review: { tone: "#34d399", d: <path d="M5 4h10l4 4v12H5zM9 13l2 2 4-4" /> },
+  website: { tone: "#ffdd00", d: <path d="M3.5 5h17v14h-17zM3.5 9h17M6.5 7h.01M9 7h.01" /> },
+  warning: { tone: "#ffc400", d: <path d="M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.3" /> },
+  optimization: { tone: "#ededed", d: <path d="M12 3v3M12 18v3M3 12h3M18 12h3M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /> },
+  review: { tone: "#22ff88", d: <path d="M5 4h10l4 4v12H5zM9 13l2 2 4-4" /> },
 };
 
 const FILTERS: { key: TimelineFilter; label: string }[] = [

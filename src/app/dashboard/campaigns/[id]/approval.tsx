@@ -58,9 +58,9 @@ export function CampaignApproval({
       id="approve"
       className="rounded-[var(--radius-panel)] border p-5 sm:p-6"
       style={{
-        borderColor: "rgba(108,158,255,0.4)",
-        background: "linear-gradient(158deg, rgba(28,48,104,0.5), rgba(var(--mairo-bg-rgb),0.7))",
-        boxShadow: "0 0 30px rgba(61,125,255,0.18)",
+        borderColor: "rgba(238,238,238,0.4)",
+        background: "linear-gradient(158deg, rgba(66,66,66,0.5), rgba(var(--mairo-bg-rgb),0.7))",
+        boxShadow: "0 0 30px rgba(214,214,214,0.18)",
       }}
     >
       <h2 className="text-[16px] font-medium text-white">Ready for your approval</h2>

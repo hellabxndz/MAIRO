@@ -159,9 +159,9 @@ export function QuickPlan({
                     <label htmlFor="qp-businessType" className="block text-[12.5px] font-medium text-white">Your industry</label>
                     <p className="text-[11.5px] text-faint">Decides what the campaign counts as a result.</p>
                     <select id="qp-businessType" value={draft.businessType ?? ""} onChange={(e) => setDraft((d) => ({ ...d, businessType: e.target.value }))} className={field}>
-                      <option value="" className="bg-[#111426]">Choose one</option>
+                      <option value="" className="bg-[#1c1c1c]">Choose one</option>
                       {BUSINESS_TYPES.map((t) => (
-                        <option key={t.id} value={t.id} className="bg-[#111426]">{t.label}</option>
+                        <option key={t.id} value={t.id} className="bg-[#1c1c1c]">{t.label}</option>
                       ))}
                     </select>
                   </div>
@@ -189,7 +189,7 @@ export function QuickPlan({
 
         <Panel id="qp-next" title="Your next step" tone="lit">
           <h2 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-            Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+            Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
           </h2>
           <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
           <div className="mt-5 flex flex-wrap gap-2.5">
@@ -235,7 +235,7 @@ export function QuickPlan({
 }
 
 const field =
-  "mt-1.5 block min-h-[44px] w-full rounded-xl border border-white/12 bg-[#0e1122]/80 px-3 text-[14px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
+  "mt-1.5 block min-h-[44px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
 
 function Tile({ label, value, note, small = false }: { label: string; value: string; note?: string; small?: boolean }) {
   return (
@@ -252,15 +252,15 @@ function MiniAd({ d, business, first }: { d: Direction; business: string; first:
   return (
     <figure className="flex h-full flex-col overflow-hidden rounded-2xl border bg-white text-[#111]" style={{ borderColor: "var(--mairo-line)" }}>
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[12px] font-semibold text-white">{business.charAt(0).toUpperCase()}</span>
+        <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[12px] font-semibold text-black">{business.charAt(0).toUpperCase()}</span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12.5px] font-semibold">{business}</p>
           <p className="text-[10.5px] text-[#666]">Sponsored · concept</p>
         </div>
-        {first && <span className="shrink-0 rounded-full bg-[#ede9ff] px-2 py-0.5 text-[10.5px] font-semibold text-[#5b3fd6]">Test this first</span>}
+        {first && <span className="shrink-0 rounded-full bg-[#ffffff] px-2 py-0.5 text-[10.5px] font-semibold text-black/70">Test this first</span>}
       </div>
       <p className="px-3 pb-2.5 text-[13px] leading-snug">{d.hook}</p>
-      <div className="relative mx-3 flex aspect-[16/10] items-end overflow-hidden rounded-xl p-3" style={{ background: "linear-gradient(140deg, #1f1a4d 0%, #3b2a8f 55%, #6a54e8 100%)" }}>
+      <div className="relative mx-3 flex aspect-[16/10] items-end overflow-hidden rounded-xl p-3" style={{ background: "linear-gradient(140deg, #343434 0%, #959595 55%, #d6d6d6 100%)" }}>
         <p className="text-[11.5px] leading-snug text-white/85">
           <span className="font-semibold text-white">Picture: </span>
           {d.visual}

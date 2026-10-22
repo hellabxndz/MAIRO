@@ -1,5 +1,6 @@
 "use client";
 
+import { Wordmark } from "@/components/wordmark";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useTransition, type ReactNode } from "react";
@@ -299,7 +300,7 @@ export function NavRowView({ item, active, locked = false, href }: { item: NavEn
 }
 
 /** The sidebar's background, shared with the website's demonstrations. */
-export const SIDEBAR_BACKGROUND = "linear-gradient(180deg, rgba(17,20,38,0.92) 0%, rgba(10,11,20,0.94) 60%, rgba(7,8,13,0.96) 100%)";
+export const SIDEBAR_BACKGROUND = "linear-gradient(180deg, rgba(22,22,22,0.94) 0%, rgba(11,11,11,0.95) 60%, rgba(6,6,6,0.97) 100%)";
 
 /* -------------------------------------------------------------- the shell */
 
@@ -361,9 +362,9 @@ export function AppShell({
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
         style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}
       >
-        <Link href="/dashboard" className="mb-4 shrink-0 px-2 text-[15px] font-light tracking-[0.3em] text-white">
-          MAIRO
-        </Link>
+        <div className="mb-4 shrink-0 px-2">
+          <Wordmark href="/dashboard" className="text-[15px]" />
+        </div>
         <div className="mb-4 shrink-0">
           <CreateMenu />
         </div>
@@ -418,9 +419,7 @@ export function AppShell({
         className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 lg:hidden"
         style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
       >
-        <Link href="/dashboard" className="text-[13px] font-light tracking-[0.3em] text-white">
-          MAIRO
-        </Link>
+        <Wordmark href="/dashboard" className="text-[13px]" />
         {/* Someone on more than one team gets the switcher on a row of its own, so it never crowds the controls. */}
         {switcher ? <div className="order-last min-w-0 basis-full">{switcher}</div> : <span className="min-w-0 truncate text-[12px] text-faint">{businessName}</span>}
         <div className="ml-auto flex items-center gap-1.5">
@@ -495,7 +494,7 @@ export function AppShell({
                 <span
                   aria-hidden
                   className="absolute inset-x-3 top-0 h-px"
-                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "0 0 12px 1px rgba(61,125,255,0.6)" }}
+                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "0 0 12px 1px rgba(214,214,214,0.6)" }}
                 />
               )}
               <span

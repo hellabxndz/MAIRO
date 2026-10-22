@@ -16,7 +16,7 @@ import type { CalendarPost } from "./manager-data";
 
 type Result = { ok: true; message: string; permalink?: string | null } | { ok: false; error: string };
 
-const primary = "min-h-[40px] rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
+const primary = "min-h-[40px] rounded-lg bg-[#ffffff] px-4 text-[13px] font-medium text-black transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[40px] rounded-lg border border-white/12 px-4 text-[13px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
 
@@ -71,7 +71,7 @@ function Picker({ post, library, onDone }: { post: CalendarPost; library: MediaI
       <div className="flex flex-wrap gap-1.5">
         {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
           <button key={t} type="button" onClick={() => { setType(t); setPicked([]); }}
-            className={`rounded-full px-3 py-1 text-[12px] ${t === type ? "bg-[#2f6bff] text-white" : "border border-white/12 text-white/70"}`}>
+            className={`rounded-full px-3 py-1 text-[12px] ${t === type ? "bg-[#ffffff] text-black" : "border border-white/12 text-black/70"}`}>
             {mediaLabel(t, post.network)}
           </button>
         ))}
@@ -87,7 +87,7 @@ function Picker({ post, library, onDone }: { post: CalendarPost; library: MediaI
                 onClick={() => setPicked((p) => type === "CAROUSEL" ? (at >= 0 ? p.filter((r) => r !== m.ref) : p.length >= CAROUSEL_MAX ? p : [...p, m.ref]) : [m.ref])}
                 className={`relative aspect-square overflow-hidden rounded-lg border-2 ${at >= 0 ? "border-violet-400" : "border-transparent"}`}>
                 {m.previewUrl && <Image src={m.previewUrl} alt="" fill unoptimized sizes="90px" className="object-cover" />}
-                {at >= 0 && <span className="absolute right-1 top-1 rounded-full bg-violet-500 px-1.5 text-[10px] text-white">{type === "CAROUSEL" ? at + 1 : "✓"}</span>}
+                {at >= 0 && <span className="absolute right-1 top-1 rounded-full bg-violet-500 px-1.5 text-[10px] text-black">{type === "CAROUSEL" ? at + 1 : "✓"}</span>}
               </button>
             );
           })}

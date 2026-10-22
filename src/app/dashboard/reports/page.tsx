@@ -50,7 +50,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
         <div className="flex flex-wrap gap-2">
           <form action={generateNow}>
-            <button type="submit" className="min-h-[40px] rounded-lg bg-[#2f6bff] px-4 text-[13px] font-medium text-white hover:brightness-110">
+            <button type="submit" className="min-h-[40px] rounded-lg bg-[#ffffff] px-4 text-[13px] font-medium text-black hover:brightness-110">
               Create a report for the last 7 days
             </button>
           </form>

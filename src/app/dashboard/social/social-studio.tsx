@@ -44,7 +44,7 @@ export type PostView = {
 
 const card = "rounded-2xl border border-white/[0.07] bg-field/80 p-5";
 const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 text-[14px] text-white outline-none placeholder:text-faint focus:border-violet/60";
-const primary = "min-h-[42px] rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white transition hover:brightness-110 disabled:opacity-50";
+const primary = "min-h-[42px] rounded-lg bg-[#ffffff] px-4 text-[13.5px] font-medium text-black transition hover:brightness-110 disabled:opacity-50";
 const secondary = "min-h-[42px] rounded-lg border border-white/12 px-4 text-[13.5px] text-white/85 transition hover:border-white/30 disabled:opacity-50";
 
 function Thumb({ url, kind }: { url: string | null; kind: "image" | "video" }) {
@@ -252,7 +252,7 @@ export function SocialStudio({
         <div role="tablist" aria-label="Post type" className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
           {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
             <button key={t} role="tab" aria-selected={t === type} onClick={() => switchType(t)}
-              className={`rounded-full px-4 py-1.5 text-[13px] ${t === type ? "bg-[#2f6bff] text-white" : "text-white/65 hover:text-white"}`}>
+              className={`rounded-full px-4 py-1.5 text-[13px] ${t === type ? "bg-[#ffffff] text-black" : "text-black/65 hover:text-black"}`}>
               {mediaLabel(t, network)}
             </button>
           ))}
@@ -274,7 +274,7 @@ export function SocialStudio({
                   className={`relative rounded-xl border-2 p-0.5 transition ${at >= 0 ? "border-violet-400" : "border-transparent hover:border-white/20"}`}>
                   <Thumb url={m.previewUrl} kind={m.kind} />
                   {at >= 0 && (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[11px] font-semibold text-white">
+                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[11px] font-semibold text-black">
                       {type === "CAROUSEL" ? at + 1 : "✓"}
                     </span>
                   )}
@@ -291,8 +291,8 @@ export function SocialStudio({
         </label>
 
         <div className="mt-2 flex flex-wrap items-center gap-4 text-[13.5px]">
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "now"} onChange={() => setMode("now")} className="accent-[#2f6bff]" /> Post as soon as I approve it</label>
-          <label className="flex items-center gap-2"><input type="radio" checked={mode === "schedule"} onChange={() => setMode("schedule")} className="accent-[#2f6bff]" /> Schedule for</label>
+          <label className="flex items-center gap-2"><input type="radio" checked={mode === "now"} onChange={() => setMode("now")} className="accent-[#ffffff]" /> Post as soon as I approve it</label>
+          <label className="flex items-center gap-2"><input type="radio" checked={mode === "schedule"} onChange={() => setMode("schedule")} className="accent-[#ffffff]" /> Schedule for</label>
           {mode === "schedule" && (
             <span className="flex items-center gap-2">
               <input type="datetime-local" value={local} onChange={(e) => setLocal(e.target.value)} className={`${input} w-auto`} aria-label="When to post" />

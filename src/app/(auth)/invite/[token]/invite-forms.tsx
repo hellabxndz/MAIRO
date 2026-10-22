@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { acceptInviteAction, joinWithInviteAction, type JoinState } from "@/lib/actions/team-actions";
 import { AuthField, PasswordField } from "@/components/auth-field";
 
-const primary = "min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
+const primary = "min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
 
 /** Signed in with the invited address: one button, and only the server's answer counts. */
 export function AcceptInvite({ token, business }: { token: string; business: string }) {

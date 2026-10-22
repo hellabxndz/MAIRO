@@ -27,17 +27,17 @@ function Shape({ areas }: { areas: RadarReport["areas"] }) {
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="h-[240px] w-[240px]" role="img" aria-label="Opportunity by area">
       {[1, 2, 3].map((k) => (
-        <polygon key={k} points={ring(k)} fill="none" stroke="rgba(148,166,204,0.14)" />
+        <polygon key={k} points={ring(k)} fill="none" stroke="rgba(232,232,232,0.14)" />
       ))}
       {areas.map((_, i) => {
         const [x, y] = pt(i, R);
-        return <line key={i} x1={c} y1={c} x2={x} y2={y} stroke="rgba(148,166,204,0.1)" />;
+        return <line key={i} x1={c} y1={c} x2={x} y2={y} stroke="rgba(232,232,232,0.1)" />;
       })}
-      <polygon points={shape} fill="rgba(47,107,255,0.28)" stroke="#8fb8ff" strokeWidth="1.8" strokeLinejoin="round" />
+      <polygon points={shape} fill="rgba(255,255,255,0.28)" stroke="#ffffff" strokeWidth="1.8" strokeLinejoin="round" />
       {areas.map((a, i) => {
         const [x, y] = pt(i, R + 20);
         return (
-          <text key={a.area} x={x} y={y + 4} textAnchor="middle" className="fill-[#94a6cc] text-[11px]">
+          <text key={a.area} x={x} y={y + 4} textAnchor="middle" className="fill-[#e8e8e8] text-[11px]">
             {a.label}
           </text>
         );

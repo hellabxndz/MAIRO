@@ -74,7 +74,7 @@ export function LaunchPanel({
       ) : (
         <>
           <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-white/15 bg-paper/60 p-4">
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#2f6bff]" />
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#ffffff]" />
             <span className="text-[14px] leading-relaxed text-white/90">
               I approve this campaign and agree to spend up to {budget}{per30 ? ` (about ${per30} every 30 days)` : ""}, charged by Meta to my ad account. I can pause it at any time.
             </span>
@@ -84,7 +84,7 @@ export function LaunchPanel({
               type="button"
               onClick={launch}
               disabled={!agreed || pending || !ready}
-              className="min-h-[52px] rounded-xl bg-[#2f6bff] px-8 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] hover:brightness-110 disabled:opacity-50"
+              className="min-h-[52px] rounded-xl bg-[#ffffff] px-8 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] hover:brightness-110 disabled:opacity-50"
             >
               {pending ? "Approving…" : "Approve and launch"}
             </button>

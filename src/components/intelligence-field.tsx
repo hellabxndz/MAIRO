@@ -44,7 +44,7 @@ export function IntelligenceField({
 } = {}) {
   const frozen = still ? " if-still" : "";
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] overflow-hidden bg-[#04050a]">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-[20] overflow-hidden bg-[#070707]">
       {/* The blooms.
 
           Three, not more: each one is a screen-sized layer the compositor has
@@ -89,10 +89,10 @@ export function IntelligenceField({
               run the type full width, so the same left-to-right wash would
               cover the whole picture — those get a vertical fall instead,
               heaviest across the headline and easing down the frame. */}
-          <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(4,5,10,0.78)_0%,rgba(4,5,10,0.5)_28%,rgba(4,5,10,0.14)_58%,rgba(4,5,10,0)_82%)] md:block" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(4,5,10,0.72)_0%,rgba(4,5,10,0.4)_26%,rgba(4,5,10,0.26)_52%,rgba(4,5,10,0.3)_78%,rgba(4,5,10,0.6)_100%)] md:hidden" />
+          <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(7,7,7,0.78)_0%,rgba(7,7,7,0.5)_28%,rgba(7,7,7,0.14)_58%,rgba(7,7,7,0)_82%)] md:block" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(7,7,7,0.72)_0%,rgba(7,7,7,0.4)_26%,rgba(7,7,7,0.26)_52%,rgba(7,7,7,0.3)_78%,rgba(7,7,7,0.6)_100%)] md:hidden" />
           {/* Top and bottom, so the nav and the footer always have ground. */}
-          <div className="absolute inset-0 hidden bg-[linear-gradient(to_bottom,rgba(4,5,10,0.6)_0%,rgba(4,5,10,0)_16%,rgba(4,5,10,0)_80%,rgba(4,5,10,0.55)_100%)] md:block" />
+          <div className="absolute inset-0 hidden bg-[linear-gradient(to_bottom,rgba(7,7,7,0.6)_0%,rgba(7,7,7,0)_16%,rgba(7,7,7,0)_80%,rgba(7,7,7,0.55)_100%)] md:block" />
         </>
       )}
 
@@ -116,7 +116,7 @@ export function IntelligenceField({
         /* Indigo, the mass of it, centre-right and low. */
         .if-bloom-a {
           top: 2%; left: 26%; width: 88%; height: 112%;
-          background: radial-gradient(closest-side, rgba(88,86,244,0.42), rgba(88,86,244,0.14) 52%, transparent 78%);
+          background: radial-gradient(closest-side, rgba(221,221,221,0.42), rgba(221,221,221,0.14) 52%, transparent 78%);
           animation: if-drift-a 54s ease-in-out infinite;
         }
 
@@ -157,9 +157,9 @@ export function IntelligenceField({
           background: linear-gradient(
             to right,
             transparent 0%,
-            rgba(150,190,255,0.04) 38%,
-            rgba(200,220,255,0.06) 50%,
-            rgba(150,190,255,0.04) 62%,
+            rgba(255,255,255,0.04) 38%,
+            rgba(255,255,255,0.06) 50%,
+            rgba(255,255,255,0.04) 62%,
             transparent 100%
           );
           animation: if-scan 26s linear infinite;

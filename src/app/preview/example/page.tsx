@@ -29,7 +29,7 @@ export default function ExamplePlanPage() {
           <p className="text-[13.5px] leading-relaxed text-white/70">
             <span className="font-semibold text-white">Example plan.</span> {SHOP.name} is a fictional online shop — this is the plan MAIRO&rsquo;s generator makes from its answers. No ads were launched and nothing was spent.
           </p>
-          <Link href="/preview" className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-semibold text-white transition hover:brightness-110">
+          <Link href="/preview" className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-semibold text-black transition hover:brightness-110">
             Make one for your business <span aria-hidden>→</span>
           </Link>
         </div>

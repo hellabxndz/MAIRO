@@ -379,7 +379,7 @@ export function PlanView({
             ) : (
               <>
                 <h3 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-                  Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+                  Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
                 </h3>
                 <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
@@ -525,7 +525,7 @@ export function ConceptCard({
   }
 
   return (
-    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-violet-400/50" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--mairo-line)", background: c.recommended ? "linear-gradient(165deg, rgba(47,107,255,0.12), rgba(14,17,33,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
+    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-violet-400/50" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--mairo-line)", background: c.recommended ? "linear-gradient(165deg, rgba(255,255,255,0.12), rgba(24,24,24,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">Concept {index + 1}</span>
         <Pill tone="muted">{c.label}</Pill>
@@ -541,7 +541,7 @@ export function ConceptCard({
               <label htmlFor={`hl-${c.angle}`} className="sr-only">
                 Headline
               </label>
-              <input id={`hl-${c.angle}`} value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#0e1122] px-2.5 text-[13.5px] text-white outline-none focus:border-violet-400/70" />
+              <input id={`hl-${c.angle}`} value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13.5px] text-white outline-none focus:border-violet-400/70" />
               <button
                 type="button"
                 className="shrink-0 rounded-lg bg-white/[0.08] px-3 text-[12.5px] text-white hover:bg-white/[0.12]"
@@ -604,7 +604,7 @@ export function ConceptCard({
       {!isExample && (
         <>
           <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3.5" style={{ borderColor: "var(--mairo-line)" }}>
-            <button type="button" onClick={() => setRefining((v) => !v)} style={press("Refine")} className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1.5 text-[12px] font-semibold text-white">
+            <button type="button" onClick={() => setRefining((v) => !v)} style={press("Refine")} className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1.5 text-[12px] font-semibold text-black">
               Refine with MAIRO
             </button>
             <button type="button" onClick={() => setEditing(true)} style={press("Edit headline")} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
@@ -644,7 +644,7 @@ export function ConceptCard({
                     }
                   }}
                   placeholder="e.g. Make it shorter and more premium"
-                  className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#0e1122] px-2.5 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70"
+                  className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70"
                 />
                 <button type="button" disabled={busy || ask.trim().length < 3} onClick={() => void refine()} className="shrink-0 rounded-lg bg-white/[0.08] px-3 text-[12.5px] text-white hover:bg-white/[0.12] disabled:opacity-50">
                   {busy ? "Working…" : "Ask"}
@@ -702,7 +702,7 @@ function RefinePanel({ facts, onRefine, onEdit }: { facts: PreviewFacts; onRefin
   const [customer, setCustomer] = useState(facts.customer);
   const [offer, setOffer] = useState(facts.offer);
   const [done, setDone] = useState(false);
-  const input = "min-h-[42px] w-full rounded-xl border border-white/12 bg-[#0e1122]/80 px-3 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70";
+  const input = "min-h-[42px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70";
   return (
     <Panel id="pl-refine" title="Refine your plan with MAIRO" style={{ scrollMarginTop: 96 }}>
       <p className="-mt-1 max-w-[760px] text-[13.5px] leading-relaxed text-white/70">Change the objective, the budget, who it&rsquo;s for or a real offer, and MAIRO rebuilds the plan from your new answers. To change a concept&rsquo;s words, use Refine with MAIRO on the concept.</p>
@@ -712,9 +712,9 @@ function RefinePanel({ facts, onRefine, onEdit }: { facts: PreviewFacts; onRefin
             Objective
           </label>
           <select id="rf-goal" value={goal} onChange={(e) => setGoal(e.target.value as PreviewGoal)} className={input}>
-            <option value="sales" className="bg-[#111426]">Sales</option>
-            <option value="leads" className="bg-[#111426]">Leads</option>
-            <option value="bookings" className="bg-[#111426]">Bookings</option>
+            <option value="sales" className="bg-[#1c1c1c]">Sales</option>
+            <option value="leads" className="bg-[#1c1c1c]">Leads</option>
+            <option value="bookings" className="bg-[#1c1c1c]">Bookings</option>
           </select>
         </div>
         <div>

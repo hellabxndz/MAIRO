@@ -24,25 +24,25 @@ export function TeamConstellation() {
   return (
     <figure className="relative mx-auto w-full max-w-[560px]" aria-labelledby="team-figure-caption">
       <div className="relative aspect-square w-full">
-        <div aria-hidden className="absolute inset-[8%] rounded-full bg-[radial-gradient(closest-side,rgba(47,107,255,0.12),rgba(47,107,255,0.04)_60%,transparent)]" />
+        <div aria-hidden className="absolute inset-[8%] rounded-full bg-[radial-gradient(closest-side,rgba(255,255,255,0.12),rgba(255,255,255,0.04)_60%,transparent)]" />
         <svg aria-hidden viewBox="0 0 100 100" className="absolute inset-0 h-full w-full overflow-visible">
           <defs>
             <linearGradient id="tc-orbit" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0" stopColor="#2f6bff" stopOpacity="0.55" />
-              <stop offset="1" stopColor="#3b6bff" stopOpacity="0.35" />
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0.55" />
+              <stop offset="1" stopColor="#d5d5d5" stopOpacity="0.35" />
             </linearGradient>
           </defs>
           {/* Spokes: every specialty works for the same business. */}
           {ORBIT.map((_, i) => {
             const a = (-90 + (360 / ORBIT.length) * i) * (Math.PI / 180);
-            return <line key={i} x1={50 + 21 * Math.cos(a)} y1={50 + 21 * Math.sin(a)} x2={50 + (R - 5) * Math.cos(a)} y2={50 + (R - 5) * Math.sin(a)} stroke="#2f6bff" strokeOpacity="0.16" strokeWidth="0.25" />;
+            return <line key={i} x1={50 + 21 * Math.cos(a)} y1={50 + 21 * Math.sin(a)} x2={50 + (R - 5) * Math.cos(a)} y2={50 + (R - 5) * Math.sin(a)} stroke="#ffffff" strokeOpacity="0.16" strokeWidth="0.25" />;
           })}
           <circle cx="50" cy="50" r={R} fill="none" stroke="url(#tc-orbit)" strokeWidth="0.35" strokeDasharray="0.6 1.4" />
           {/* Budget Guardian: the ring around your money. */}
-          <circle cx="50" cy="50" r="19.5" fill="rgba(15,157,107,0.05)" stroke="#0f9d6b" strokeOpacity="0.55" strokeWidth="0.45" />
-          <circle cx="50" cy="50" r="17.6" fill="none" stroke="#0f9d6b" strokeOpacity="0.18" strokeWidth="0.25" />
+          <circle cx="50" cy="50" r="19.5" fill="rgba(0,192,96,0.05)" stroke="#00c060" strokeOpacity="0.55" strokeWidth="0.45" />
+          <circle cx="50" cy="50" r="17.6" fill="none" stroke="#00c060" strokeOpacity="0.18" strokeWidth="0.25" />
           <g className="mairo-orbit" style={{ transformOrigin: "50px 50px" }}>
-            <circle cx="50" cy={50 - R} r="0.9" fill="#2f6bff" />
+            <circle cx="50" cy={50 - R} r="0.9" fill="#ffffff" />
           </g>
         </svg>
 
@@ -59,7 +59,7 @@ export function TeamConstellation() {
         </div>
 
         {/* Budget Guardian sits on its ring. */}
-        <div className="absolute left-1/2 top-[69.5%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-paper px-2 py-1 shadow-[0_6px_18px_-8px_rgba(15,157,107,0.6)] ring-1 ring-live/30">
+        <div className="absolute left-1/2 top-[69.5%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full bg-paper px-2 py-1 shadow-[0_6px_18px_-8px_rgba(0,192,96,0.6)] ring-1 ring-live/30">
           <AgentIcon role="GUARDIAN" size={22} />
           <span className="whitespace-nowrap pr-1 text-[clamp(9.5px,2vw,12px)] font-semibold text-live">Budget Guardian</span>
         </div>
@@ -72,7 +72,7 @@ export function TeamConstellation() {
               className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
               style={{ left: `${50 + R * Math.cos(a)}%`, top: `${50 + R * Math.sin(a)}%` }}
             >
-              <span className="rounded-2xl bg-paper p-[3px] shadow-[0_10px_24px_-12px_rgba(91,63,224,0.55)]">
+              <span className="rounded-2xl bg-paper p-[3px] shadow-[0_10px_24px_-12px_rgba(200,200,200,0.55)]">
                 <AgentIcon role={n.role} size={40} />
               </span>
               <span className="whitespace-nowrap text-[clamp(10px,2.1vw,12.5px)] font-medium text-white">{n.label}</span>

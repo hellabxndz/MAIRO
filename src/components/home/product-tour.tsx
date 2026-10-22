@@ -46,7 +46,7 @@ export function DashboardTour() {
   const v = VIEWS[view];
   return (
     <section id="dashboard" aria-labelledby="dash-title" className="relative scroll-mt-16 py-20 sm:py-28">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_55%_60%_at_50%_0%,rgba(47,107,255,0.16),transparent_70%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_55%_60%_at_50%_0%,rgba(255,255,255,0.16),transparent_70%)]" />
       <div className="mx-auto max-w-[1280px] px-4 sm:px-8 lg:px-12">
         <div data-reveal className="mx-auto max-w-[780px] text-center">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">Dashboard &amp; results</p>
@@ -66,7 +66,7 @@ export function DashboardTour() {
               aria-selected={i === view}
               aria-controls="dash-panel"
               onClick={() => setView(i)}
-              className={`min-h-[42px] rounded-full px-5 text-[14px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 ${i === view ? "bg-white text-[#0b0f1c]" : "text-white/70 hover:text-white"}`}
+              className={`min-h-[42px] rounded-full px-5 text-[14px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60 ${i === view ? "bg-white text-[#141414]" : "text-white/70 hover:text-white"}`}
             >
               {x.label}
             </button>
@@ -84,7 +84,7 @@ export function DashboardTour() {
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/45">What the Simple view puts first</p>
           <dl className="mt-4 grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08] sm:grid-cols-2 lg:grid-cols-5">
             {SIMPLE.map((s) => (
-              <div key={s.k} className="bg-[#090d19] px-5 py-4">
+              <div key={s.k} className="bg-[#111111] px-5 py-4">
                 <dt className="text-[14.5px] font-semibold text-white">{s.k}</dt>
                 <dd className="mt-1 text-[13px] leading-relaxed text-white/58">{s.v}</dd>
               </div>
@@ -130,7 +130,7 @@ export function TeamSection() {
           <div className="min-w-0 lg:pt-4">
             <div data-reveal className="lg:sticky lg:top-24">
               <DemoVideo id="team" title="One morning's review by MAIRO's AI team for a fictional shop" />
-              <div className="mt-6 rounded-2xl border p-5" style={{ borderColor: "rgba(47,107,255,0.32)", background: "linear-gradient(160deg, rgba(47,107,255,0.12), rgba(47,107,255,0.02))" }}>
+              <div className="mt-6 rounded-2xl border p-5" style={{ borderColor: "rgba(255,255,255,0.32)", background: "linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02))" }}>
                 <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-cyan-200">Always waits for you — at every setting</p>
                 <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                   {ALWAYS_NEEDS_APPROVAL.map((x) => (

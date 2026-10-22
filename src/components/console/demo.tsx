@@ -71,7 +71,7 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
   const active = activeHref ?? ACTIVE[view];
   return (
     // A picture of the product to assistive technology — one label, nothing inside to tab to.
-    <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(164,172,195,0.16)", background: "#07080d", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(47,107,255,0.12), 0 60px 140px -60px rgba(47,107,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
+    <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(236,236,236,0.16)", background: "#0a0a0a", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 60px 140px -60px rgba(255,255,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
       <div className="flex" inert>
         {sidebar && (
           <aside aria-hidden className="hidden w-[220px] shrink-0 flex-col border-r px-3 py-4 @4xl/frame:flex" style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}>

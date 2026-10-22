@@ -149,7 +149,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
           <h2 id="waiting" className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Launches, plans and posts</h2>
           <ul className="grid gap-3 lg:grid-cols-2">
             {others.map((o) => (
-              <li key={o.key} className="flex flex-col rounded-2xl border p-4 sm:p-5" style={{ borderColor: o.kind === "launch" ? "rgba(245,158,11,0.4)" : "var(--mairo-line)" }}>
+              <li key={o.key} className="flex flex-col rounded-2xl border p-4 sm:p-5" style={{ borderColor: o.kind === "launch" ? "rgba(255,196,0,0.4)" : "var(--mairo-line)" }}>
                 <div className="flex items-center gap-2.5">
                   <AgentIcon role={o.agent} size={28} />
                   <p className="text-[12.5px] text-muted">
@@ -164,7 +164,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
                 </dl>
                 <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
                   {o.launch ? <LaunchApprove campaignId={o.launch.campaignId} name={o.title.replace(/^Launch “|”$/g, "")} budget={o.launch.budget} /> : null}
-                  <Link href={o.href} className={o.launch ? "text-[12.5px] text-muted hover:text-white" : "rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[12.5px] font-medium text-white"}>
+                  <Link href={o.href} className={o.launch ? "text-[12.5px] text-muted hover:text-white" : "rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[12.5px] font-medium text-black"}>
                     {o.launch ? "See the campaign" : "Review"}
                   </Link>
                 </div>
@@ -184,7 +184,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
             style={{
               borderColor: filter === x.key ? "var(--mairo-line-lit)" : "var(--mairo-line)",
               color: filter === x.key ? "var(--color-white)" : "var(--color-muted, #9aa3b5)",
-              background: filter === x.key ? "rgba(108,158,255,0.12)" : "transparent",
+              background: filter === x.key ? "rgba(238,238,238,0.12)" : "transparent",
             }}
             aria-current={filter === x.key ? "page" : undefined}
           >

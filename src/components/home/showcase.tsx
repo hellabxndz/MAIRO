@@ -21,14 +21,14 @@ type Direction = { format: Format; ink: "dark" | "light"; face: "serif" | "sans"
 
 const DIRECTION: Record<string, Direction> = {
   fashion: { format: "story", ink: "dark", face: "serif", place: "top" },
-  fitness: { format: "square", ink: "light", face: "display", place: "top", accent: "#38bdf8" },
+  fitness: { format: "square", ink: "light", face: "display", place: "top", accent: "#00f0ff" },
   skincare: { format: "feed", ink: "dark", face: "serif", place: "top" },
   local: { format: "story", ink: "light", face: "sans", place: "bottom" },
   luxury: { format: "feed", ink: "light", face: "serif", place: "top", accent: "#e3c98b" },
   realestate: { format: "square", ink: "dark", face: "sans", place: "top" },
   online: { format: "feed", ink: "light", face: "sans", place: "bottom" },
   furniture: { format: "story", ink: "dark", face: "serif", place: "top" },
-  services: { format: "feed", ink: "light", face: "sans", place: "top", accent: "#7fb0ff" },
+  services: { format: "feed", ink: "light", face: "sans", place: "top", accent: "#f7f7f7" },
 };
 
 const ORDER = ["fashion", "fitness", "skincare", "local", "luxury", "realestate", "online", "furniture", "services"];
@@ -120,7 +120,7 @@ export function CreativeShowcase() {
       <div className="mx-auto max-w-[1280px] px-4 sm:px-8 lg:px-12">
         <div className="grid items-end gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div data-reveal>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#2f6bff]">Creative showcase</p>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#ffffff]">Creative showcase</p>
             <h2 id="showcase-title" className="mt-3 text-[clamp(32px,4.6vw,60px)] font-semibold leading-[1.0] tracking-[-0.045em] [text-wrap:balance]">
               See the possibilities for your next campaign.
             </h2>
@@ -144,7 +144,7 @@ export function CreativeShowcase() {
         </ul>
         {/* …and a row to swipe on a phone. */}
       </div>
-      <ul tabIndex={0} aria-label="Sample ads for fictional businesses — swipe for more" className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f6bff]/50 md:hidden">
+      <ul tabIndex={0} aria-label="Sample ads for fictional businesses — swipe for more" className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3 [scrollbar-width:none] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffffff]/50 md:hidden">
         {ADS.map((ad) => (
           <li key={ad.key} className="w-[72vw] max-w-[300px] shrink-0 snap-center">
             <Poster ad={ad} />
@@ -154,7 +154,7 @@ export function CreativeShowcase() {
 
       <div className="mx-auto mt-8 flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
         <p className="max-w-[560px] text-[13px] leading-relaxed text-[#6b675e]">Your concepts are free in your plan. Finished pictures, made from your own photos or MAIRO&rsquo;s image credits, come with a subscription — always for you to approve.</p>
-        <Link href="/preview" className="inline-flex min-h-[50px] items-center gap-2 rounded-full bg-[#171717] px-6 text-[14.5px] font-semibold text-white transition hover:bg-[#2f6bff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f6bff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4f1ea]">
+        <Link href="/preview" className="inline-flex min-h-[50px] items-center gap-2 rounded-full bg-[#171717] px-6 text-[14.5px] font-semibold text-black transition hover:bg-[#ffffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffffff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4f1ea]">
           See what MAIRO would make for you <span aria-hidden>→</span>
         </Link>
       </div>

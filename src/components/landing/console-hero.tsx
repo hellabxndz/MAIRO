@@ -15,7 +15,7 @@ export function ConsoleHero() {
   return (
     <section id="product" aria-labelledby="hero-title" className="relative isolate scroll-mt-20 overflow-hidden pb-14 pt-[92px] sm:pb-20 sm:pt-[128px]">
       {/* Lit from above: one restrained blue bloom, a faint cyan edge. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_45%_at_30%_0%,rgba(47,107,255,0.24),transparent_70%),radial-gradient(ellipse_40%_35%_at_85%_25%,rgba(56,189,248,0.08),transparent_70%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_45%_at_30%_0%,rgba(255,255,255,0.24),transparent_70%),radial-gradient(ellipse_40%_35%_at_85%_25%,rgba(255,255,255,0.08),transparent_70%)]" />
       <div aria-hidden className="mairo-grid pointer-events-none absolute inset-0 -z-10 opacity-40" />
 
       <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,500px)] lg:gap-14 lg:px-12">
@@ -25,7 +25,7 @@ export function ConsoleHero() {
             Free AI Meta ad plan
           </p>
           <h1 id="hero-title" className="mt-5 text-[clamp(36px,5.6vw,68px)] font-semibold leading-[1.0] tracking-[-0.045em] text-white [text-wrap:balance]">
-            Your next ad strategy, <span className="bg-gradient-to-r from-[#bcd4ff] via-[#7fb0ff] to-[#5cc8ff] bg-clip-text pb-[0.06em] text-transparent">built by AI.</span>
+            Your next ad strategy, <span className="bg-gradient-to-r from-[#ffffff] via-[#f7f7f7] to-[#e6e6e6] bg-clip-text pb-[0.06em] text-transparent">built by AI.</span>
           </h1>
           <p className="mt-4 max-w-[560px] text-[clamp(15.5px,1.35vw,18px)] leading-relaxed text-white/70 sm:mt-5">
             Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free.

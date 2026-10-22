@@ -52,8 +52,8 @@ export function FirstSteps({
               <span
                 className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full border text-[11px]"
                 style={{
-                  borderColor: step.done ? "rgba(52,211,153,0.4)" : isNext ? "rgba(108,158,255,0.6)" : "var(--mairo-line)",
-                  background: step.done ? "rgba(52,211,153,0.1)" : isNext ? "rgba(61,125,255,0.15)" : "transparent",
+                  borderColor: step.done ? "rgba(34,255,136,0.4)" : isNext ? "rgba(238,238,238,0.6)" : "var(--mairo-line)",
+                  background: step.done ? "rgba(34,255,136,0.1)" : isNext ? "rgba(214,214,214,0.15)" : "transparent",
                   color: step.done ? "var(--color-emerald-300)" : isNext ? "var(--color-white)" : undefined,
                 }}
                 aria-hidden

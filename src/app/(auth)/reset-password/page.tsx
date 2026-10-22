@@ -21,7 +21,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
       ) : (
         <>
           <p role="alert" className="mt-3 text-sm leading-relaxed text-neutral-400">{RESET_INVALID_MESSAGE}</p>
-          <Link href="/forgot-password" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-lg bg-[image:var(--mairo-ramp)] px-3 text-[15px] font-semibold text-white">
+          <Link href="/forgot-password" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-lg bg-[image:var(--mairo-ramp)] px-3 text-[15px] font-semibold text-black">
             Send me a new link
           </Link>
         </>

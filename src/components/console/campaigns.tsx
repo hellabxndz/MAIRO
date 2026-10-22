@@ -51,7 +51,7 @@ export function CampaignsPanel({ counts, rows, allHref, createHref, emptyText }:
           {rows.map((r) => (
             <li key={r.id} style={{ borderColor: "var(--mairo-line)" }}>
               <Go href={r.href} className="group flex items-center gap-3 py-3">
-                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)", background: "linear-gradient(140deg, rgba(47,107,255,0.35), rgba(53,108,255,0.25))" }}>
+                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)", background: "linear-gradient(140deg, rgba(255,255,255,0.35), rgba(210,210,210,0.25))" }}>
                   {r.thumbnailUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={r.thumbnailUrl} alt="" className="h-full w-full object-cover" loading="lazy" />

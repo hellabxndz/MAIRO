@@ -239,7 +239,7 @@ export function WorkspaceShell({
                   className="absolute inset-x-3 top-0 h-px"
                   style={{
                     backgroundImage: "var(--mairo-ramp)",
-                    boxShadow: "0 0 12px 1px rgba(61,125,255,0.6)",
+                    boxShadow: "0 0 12px 1px rgba(214,214,214,0.6)",
                   }}
                 />
               )}

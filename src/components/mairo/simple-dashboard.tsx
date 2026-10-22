@@ -153,7 +153,7 @@ function Metric({
       <div className="flex items-center gap-3">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-blue-bright"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(61,125,255,0.10)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
         >
           <span className="h-[18px] w-[18px]">{icon}</span>
         </span>
@@ -190,24 +190,24 @@ function HeroOrb() {
         className="absolute inset-[-40%]"
         style={{
           background:
-            "radial-gradient(closest-side, rgba(61,125,255,0.38), rgba(61,125,255,0.10) 48%, transparent 76%)",
+            "radial-gradient(closest-side, rgba(214,214,214,0.38), rgba(214,214,214,0.10) 48%, transparent 76%)",
         }}
       />
       <svg viewBox="0 0 200 200" className="relative w-full">
         <defs>
           <radialGradient id="mairo-orb" cx="38%" cy="32%" r="72%">
-            <stop offset="0%" stopColor="#9ec8ff" stopOpacity="0.45" />
-            <stop offset="52%" stopColor="#1b49c9" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="#05070f" stopOpacity="0.95" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+            <stop offset="52%" stopColor="#aaaaaa" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#0a0a0a" stopOpacity="0.95" />
           </radialGradient>
           <linearGradient id="mairo-orb-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6aa6ff" stopOpacity="0.05" />
-            <stop offset="42%" stopColor="#6aa6ff" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#8fb8ff" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#ededed" stopOpacity="0.05" />
+            <stop offset="42%" stopColor="#ededed" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.1" />
           </linearGradient>
         </defs>
         <circle cx="100" cy="100" r="62" fill="url(#mairo-orb)" />
-        <circle cx="100" cy="100" r="62" fill="none" stroke="#9cc4ff" strokeOpacity="0.4" strokeWidth="1" />
+        <circle cx="100" cy="100" r="62" fill="none" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1" />
         <g className="mairo-orb-spin" style={{ transformOrigin: "100px 100px" }}>
           <ellipse cx="100" cy="100" rx="86" ry="34" fill="none" stroke="url(#mairo-orb-ring)" strokeWidth="1.4" />
         </g>
@@ -218,7 +218,7 @@ function HeroOrb() {
         <path
           d="M64 118a44 44 0 0 0 72 0"
           fill="none"
-          stroke="#8fc0ff"
+          stroke="#ffffff"
           strokeOpacity="0.75"
           strokeWidth="2.5"
           strokeLinecap="round"
@@ -650,7 +650,7 @@ export function SimpleDashboard({
             <div className="flex items-center gap-4">
               <span
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-blue-bright"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(61,125,255,0.10)" }}
+                style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
               >
                 <span className="h-5 w-5">{a.icon}</span>
               </span>

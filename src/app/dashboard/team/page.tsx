@@ -54,7 +54,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">Eight AI specialties working on your advertising</h1>
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">{team.welcome}</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-[var(--mairo-glow-key)]">
+          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium text-black shadow-[var(--mairo-glow-key)]">
             Ask your AI team
           </Link>
           {team.pending > 0 && (
@@ -88,7 +88,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         )}
       </section>
 
-      <section aria-labelledby="brief" className="mt-8 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(47,107,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+      <section aria-labelledby="brief" className="mt-8 rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.10), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
         <h2 id="brief" className={eyebrow}>Your Daily Brief</h2>
         <div className="mt-3">
           <DailyBrief brief={brief} now={now} timeZone={team.timeZone} />

@@ -39,7 +39,7 @@ export function LaunchApprove({ campaignId, name, budget }: { campaignId: string
           Launch “{name}” at <span className="font-medium">{budget}</span>, charged by Meta to your ad account? You can pause it any time.
         </p>
         <div className="mt-2.5 flex flex-wrap gap-2">
-          <button type="button" disabled={pending} onClick={approve} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-white disabled:opacity-60">
+          <button type="button" disabled={pending} onClick={approve} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-black disabled:opacity-60">
             {pending ? "Asking Meta…" : "Yes, approve the launch"}
           </button>
           <button type="button" disabled={pending} onClick={() => setStep("idle")} className="rounded-full border border-[color:var(--mairo-line)] px-4 py-1.5 text-[12.5px] text-white/85">
@@ -50,7 +50,7 @@ export function LaunchApprove({ campaignId, name, budget }: { campaignId: string
     );
   }
   return (
-    <button type="button" onClick={() => setStep("confirm")} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[12.5px] font-medium text-white">
+    <button type="button" onClick={() => setStep("confirm")} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[12.5px] font-medium text-black">
       Review and approve launch
     </button>
   );

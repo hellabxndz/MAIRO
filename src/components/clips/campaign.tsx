@@ -81,7 +81,7 @@ function Wizard({ step, narrow, next, pressed, children }: { step: (typeof WIZAR
           <ol className="space-y-1">
             {WIZARD_STEPS.map((s, i) => (
               <li key={s.id} className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] ${i === index ? "bg-white/[0.05] text-white" : i < index ? "text-muted" : "text-faint"}`}>
-                <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px]" style={{ borderColor: i === index ? "rgba(108,158,255,0.6)" : "var(--mairo-line)", backgroundImage: i === index ? "var(--mairo-ramp)" : undefined, color: i === index ? "white" : undefined }}>
+                <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px]" style={{ borderColor: i === index ? "rgba(238,238,238,0.6)" : "var(--mairo-line)", backgroundImage: i === index ? "var(--mairo-ramp)" : undefined, color: i === index ? "white" : undefined }}>
                   {i < index ? "✓" : i + 1}
                 </span>
                 {s.label}
@@ -121,11 +121,11 @@ function Connect({ t, narrow }: { t: number; narrow: boolean }) {
         <p className="mt-2 text-[13px] leading-relaxed text-white/70">Your Meta ad spend is separate: Meta charges it to your own ad account. MAIRO never spends from its own.</p>
       </Panel>
       {connected ? (
-        <p data-cue="connected" className="rounded-xl border px-4 py-3 text-[13px] text-live" style={{ borderColor: "rgba(52,211,153,0.3)", background: "rgba(52,211,153,0.05)" }}>
+        <p data-cue="connected" className="rounded-xl border px-4 py-3 text-[13px] text-live" style={{ borderColor: "rgba(34,255,136,0.3)", background: "rgba(34,255,136,0.05)" }}>
           Connected — carry on where you left off. <span className="text-white/60">{SHOP.name} · act_•••• 2290</span>
         </p>
       ) : (
-        <div className="rounded-xl border p-5" style={{ borderColor: "rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.05)" }}>
+        <div className="rounded-xl border p-5" style={{ borderColor: "rgba(255,221,0,0.3)", background: "rgba(255,221,0,0.05)" }}>
           <p className="text-[14px] text-white">Connect your Facebook &amp; Instagram account to make this campaign</p>
           <p className="mt-1 max-w-xl text-[12.5px] leading-relaxed text-muted">You can plan everything now — it saves as you go — but MAIRO can&rsquo;t create the campaign until the account is connected. Nothing is spent before then.</p>
           <span data-cue="connect" className="mt-3 inline-block rounded-full px-4 py-2 text-[12.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", ...press(pressedAt(t, T.connect)) }}>
@@ -209,8 +209,8 @@ function Launch({ t, narrow }: { t: number; narrow: boolean }) {
         <div data-cue="summary">
           <PlanSummary plan={{ ...plan, adChoice: "attached" }} mode="simple" detailed />
         </div>
-        <label data-cue="agree" className="mt-5 flex items-start gap-3 rounded-xl border p-4" style={{ borderColor: agreed ? "rgba(108,158,255,0.5)" : "var(--mairo-line)", background: agreed ? "rgba(61,125,255,0.06)" : "transparent", ...press(pressedAt(t, T.agree)) }}>
-          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${agreed ? "border-[#6c9eff] bg-[#6c9eff] text-white" : "border-white/40"}`}>{agreed ? "✓" : ""}</span>
+        <label data-cue="agree" className="mt-5 flex items-start gap-3 rounded-xl border p-4" style={{ borderColor: agreed ? "rgba(238,238,238,0.5)" : "var(--mairo-line)", background: agreed ? "rgba(214,214,214,0.06)" : "transparent", ...press(pressedAt(t, T.agree)) }}>
+          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${agreed ? "border-[#eeeeee] bg-[#eeeeee] text-black" : "border-white/40"}`}>{agreed ? "✓" : ""}</span>
           <span className="text-[13px] leading-relaxed text-white/90">{`I agree to spend ${dollars(spend.perDayCents)} a day (about ${dollars(spend.per30DaysCents)} every 30 days) on this campaign until I pause or stop it, charged by Meta to my ad account.`}</span>
         </label>
         <div className="mt-6 flex justify-end">

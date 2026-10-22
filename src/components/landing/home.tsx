@@ -49,8 +49,8 @@ const COACH_EXAMPLE = Object.fromEntries(EXAMPLE_STEPS.map((s) => [s, coachExamp
 
 
 
-const PRIMARY = "bg-[image:var(--mairo-ramp)] text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text text-transparent";
+const PRIMARY = "bg-[image:var(--mairo-ramp)] text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110";
+const GRADIENT_TEXT = "bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent";
 // The console's surface: no backdrop-filter (it paints an opaque panel on mobile).
 const GLASS = "border border-[color:var(--mairo-line)] bg-[image:var(--mairo-glass)] shadow-[var(--mairo-glow-soft)]";
 
@@ -129,7 +129,7 @@ const OUTCOME_STEPS: { step: string; body: string; source: Source }[] = [
   { step: "Verified revenue", body: "What you record a sale was worth, or orders your store reports.", source: "Confirmed" },
 ];
 const SOURCE_TONE: Record<Source, string> = {
-  "Meta reports": "border-[#3b6bff]/30 bg-[#3b6bff]/[0.07] text-[#2f5fd6]",
+  "Meta reports": "border-[#d5d5d5]/30 bg-[#d5d5d5]/[0.07] text-[#bbbbbb]",
   "MAIRO counts": "border-white/15 bg-white/[0.04] text-white/70",
   "You mark": "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
   Confirmed: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
@@ -162,7 +162,7 @@ const STATUS_TONE: Record<IntegrationStatus, string> = {
   full: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
   limited: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   pending: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
-  tracking: "border-[#3b6bff]/30 bg-[#3b6bff]/[0.07] text-[#2f5fd6]",
+  tracking: "border-[#d5d5d5]/30 bg-[#d5d5d5]/[0.07] text-[#bbbbbb]",
   billing: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
   unsupported: "border-white/15 bg-white/[0.04] text-white/60",
 };
@@ -264,7 +264,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
     {/* ── Hero ─────────────────────────────────────────────────────── */}
           <section id="product" className="relative isolate scroll-mt-20 overflow-hidden pt-[104px] sm:pt-[120px]">
             {/* One soft glow behind the team — nothing that competes with it. */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_60%_at_74%_44%,rgba(47,107,255,0.14),transparent_70%),radial-gradient(ellipse_40%_40%_at_12%_8%,rgba(59,107,255,0.06),transparent_70%)]" />
+            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_60%_at_74%_44%,rgba(255,255,255,0.14),transparent_70%),radial-gradient(ellipse_40%_40%_at_12%_8%,rgba(213,213,213,0.06),transparent_70%)]" />
 
             <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10 lg:px-12">
               <div className="min-w-0">
@@ -337,7 +337,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
               {steps.map((s, i) => (
                 <li key={s.n} className="relative flex gap-5 lg:flex-col lg:gap-0">
                   <div className="flex items-center gap-4">
-                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2f6bff] to-[#4f6dff] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(47,107,255,0.85)]">
+                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ffffff] to-[#dfdfdf] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(255,255,255,0.85)]">
                       {s.n}
                     </span>
                     {i < steps.length - 1 && (
@@ -542,7 +542,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
     <>
     {/* ── Final call ───────────────────────────────────────────────── */}
           <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(56,189,248,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(47,107,255,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
+            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(255,255,255,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(255,255,255,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
               <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
                 {story ? (
                   <>
@@ -641,7 +641,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                     aria-labelledby={`plan-${story.tier}`}
                     className={`group relative flex min-w-0 flex-col overflow-hidden rounded-[28px] p-7 transition duration-500 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-9 ${
                       scale
-                        ? "border border-[#4d7bff]/55 bg-[#0a1024] shadow-[0_40px_120px_-40px_rgba(47,107,255,0.75)] hover:shadow-[0_50px_140px_-40px_rgba(47,107,255,0.95)]"
+                        ? "border border-[#dedede]/55 bg-[#171717] shadow-[0_40px_120px_-40px_rgba(255,255,255,0.75)] hover:shadow-[0_50px_140px_-40px_rgba(255,255,255,0.95)]"
                         : `${GLASS} hover:border-[color:var(--mairo-line-lit)]`
                     }`}
                   >
@@ -651,8 +651,8 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                       className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-700 group-hover:opacity-100"
                       style={{
                         backgroundImage: scale
-                          ? "radial-gradient(60% 45% at 85% 0%, rgba(77,123,255,0.38), transparent 70%), radial-gradient(45% 35% at 0% 100%, rgba(139,92,246,0.22), transparent 70%)"
-                          : "radial-gradient(55% 40% at 100% 0%, rgba(77,123,255,0.16), transparent 70%)",
+                          ? "radial-gradient(60% 45% at 85% 0%, rgba(222,222,222,0.38), transparent 70%), radial-gradient(45% 35% at 0% 100%, rgba(225,225,225,0.22), transparent 70%)"
+                          : "radial-gradient(55% 40% at 100% 0%, rgba(222,222,222,0.16), transparent 70%)",
                       }}
                     />
                     <span
@@ -660,14 +660,14 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                       className="pointer-events-none absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_55%)]"
                       style={{
                         backgroundImage:
-                          "radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 88% 30%, rgba(170,190,255,0.9), transparent), radial-gradient(1px 1px at 40% 6%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 58% 26%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 26% 34%, rgba(170,190,255,0.6), transparent)",
+                          "radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 88% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 40% 6%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 58% 26%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 26% 34%, rgba(255,255,255,0.6), transparent)",
                       }}
                     />
                     <div className="relative flex flex-1 flex-col">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <h3 id={`plan-${story.tier}`} className="text-[22px] font-semibold tracking-[-0.02em] text-white">{story.name}</h3>
                         {scale && (
-                          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_24px_-8px_rgba(47,107,255,0.9)]">Most Popular</span>
+                          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-black shadow-[0_8px_24px_-8px_rgba(255,255,255,0.9)]">Most Popular</span>
                         )}
                       </div>
                       <p className="mt-1 text-[14px] text-white/60">{plan.headline}</p>
@@ -682,7 +682,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                         {plan.inherits && <li className="pb-1 text-[13px] font-medium text-white/55">Everything in {plan.inherits}, plus:</li>}
                         {plan.features.map((f) => (
                           <li key={f} className="flex gap-2.5">
-                            <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#7ea0ff]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                            <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#f7f7f7]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                               <path d="M3 8.5l3 3 7-7" />
                             </svg>
                             <span className="text-white/85">{f}</span>

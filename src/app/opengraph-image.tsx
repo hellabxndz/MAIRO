@@ -34,7 +34,7 @@ export default async function Image() {
           // hero. A flat #000 card next to the real page looks like a
           // different product.
           background:
-            "radial-gradient(70% 60% at 28% 0%, rgba(47,107,255,0.34) 0%, rgba(47,107,255,0) 70%), radial-gradient(45% 40% at 88% 22%, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0) 70%), #05070d",
+            "radial-gradient(70% 60% at 28% 0%, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 70%), radial-gradient(45% 40% at 88% 22%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%), #090909",
           color: "#f8f9ff",
           fontFamily: "sans-serif",
         }}
@@ -45,8 +45,8 @@ export default async function Image() {
               width: 14,
               height: 14,
               borderRadius: 999,
-              background: "#7c9dff",
-              boxShadow: "0 0 28px 8px rgba(53,108,255,0.6)",
+              background: "#f6f6f6",
+              boxShadow: "0 0 28px 8px rgba(210,210,210,0.6)",
             }}
           />
           <div style={{ fontSize: 30, letterSpacing: 14, color: "#e9ebf5" }}>
@@ -66,13 +66,13 @@ export default async function Image() {
             }}
           >
             <span>Your next ad strategy,&nbsp;</span>
-            <span style={{ color: "#7fb0ff" }}>built by AI.</span>
+            <span style={{ color: "#f7f7f7" }}>built by AI.</span>
           </div>
           <div
             style={{
               fontSize: 33,
               lineHeight: 1.35,
-              color: "#a7b0c6",
+              color: "#efefef",
               maxWidth: 940,
               display: "flex",
             }}

@@ -24,14 +24,14 @@ export function LazyWalkthrough({ media }: { media: Pick<RenderedMedia, "walkthr
   const poster = media.walkthrough.wide?.poster;
   const narrowPoster = media.walkthrough.narrow?.poster ?? poster;
   return (
-    <div ref={spot} data-palette="classic" className="relative aspect-[760/560] w-full overflow-hidden rounded-[22px] border border-white/10 bg-[#05060d] max-[591px]:aspect-[360/600]">
+    <div ref={spot} data-palette="classic" className="relative aspect-[760/560] w-full overflow-hidden rounded-[22px] border border-white/10 bg-[#090909] max-[591px]:aspect-[360/600]">
       {poster && (
         <picture>
           {narrowPoster && <source media="(max-width: 591px)" srcSet={narrowPoster} />}
           <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80" loading="lazy" decoding="async" />
         </picture>
       )}
-      <button type="button" onClick={() => setLoad(true)} className="absolute inset-0 m-auto h-12 w-fit rounded-full bg-white px-5 text-[14px] font-semibold text-[#0b0b18] shadow-lg">
+      <button type="button" onClick={() => setLoad(true)} className="absolute inset-0 m-auto h-12 w-fit rounded-full bg-white px-5 text-[14px] font-semibold text-[#121212] shadow-lg">
         ▶ Play the walkthrough
       </button>
     </div>

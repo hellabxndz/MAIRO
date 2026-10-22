@@ -262,7 +262,7 @@ export function HeroSlot({ id, children }: { id: CapabilityId; children: ReactNo
         style={{
           opacity: on ? 1 : 0,
           boxShadow:
-            "0 0 0 1px rgba(122,170,255,0.55), 0 0 30px rgba(61,125,255,0.45), inset 0 0 40px rgba(61,125,255,0.14)",
+            "0 0 0 1px rgba(245,245,245,0.55), 0 0 30px rgba(214,214,214,0.45), inset 0 0 40px rgba(214,214,214,0.14)",
         }}
       />
       <div
@@ -342,14 +342,14 @@ export function HeroCoreHud() {
         <svg viewBox="0 0 200 200" className="mairo-spin-slow absolute inset-0 h-full w-full" aria-hidden>
           <circle
             cx="100" cy="100" r="96" fill="none"
-            stroke="rgba(150,195,255,0.4)" strokeWidth="0.7"
+            stroke="rgba(255,255,255,0.4)" strokeWidth="0.7"
             strokeDasharray="1.5 7" strokeLinecap="round"
           />
         </svg>
         <svg viewBox="0 0 200 200" className="mairo-spin-rev absolute inset-[7%] h-auto w-auto" aria-hidden>
           <circle
             cx="100" cy="100" r="96" fill="none"
-            stroke="rgba(180,150,255,0.34)" strokeWidth="0.7"
+            stroke="rgba(255,255,255,0.34)" strokeWidth="0.7"
             strokeDasharray="14 26" strokeLinecap="round"
           />
           {[0, 90, 180, 270].map((a) => (
@@ -357,7 +357,7 @@ export function HeroCoreHud() {
               key={a}
               d="M100 4 m-13 0 a13 13 0 0 1 26 0"
               fill="none"
-              stroke="rgba(200,220,255,0.75)"
+              stroke="rgba(255,255,255,0.75)"
               strokeWidth="1.3"
               strokeLinecap="round"
               transform={`rotate(${a} 100 100)`}
@@ -368,19 +368,19 @@ export function HeroCoreHud() {
         {/* The readout, under the baked wordmark. */}
         <div className="absolute inset-x-0 top-[68%] text-center">
           <p
-            className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#dceaff] sm:text-[10px]"
-            style={{ textShadow: "0 1px 10px rgba(3,7,20,1), 0 0 22px rgba(3,7,20,0.9)" }}
+            className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#ffffff] sm:text-[10px]"
+            style={{ textShadow: "0 1px 10px rgba(12,12,12,1), 0 0 22px rgba(12,12,12,0.9)" }}
           >
             {text}
           </p>
           {/* Lighter than the muted token, and on a scrim. This line sits on the
               brightest part of the render — lit particles, not page background
-              — and at #8fb4ee it was under 3:1 against them. */}
+              — and at #f7f7f7 it was under 3:1 against them. */}
           <p
-            className="mx-auto mt-1.5 inline-block max-w-[86%] rounded-full px-3 py-1 text-[10px] leading-snug text-[#cfe2ff] sm:text-[11px]"
+            className="mx-auto mt-1.5 inline-block max-w-[86%] rounded-full px-3 py-1 text-[10px] leading-snug text-[#ffffff] sm:text-[11px]"
             style={{
-              background: "rgba(3,7,20,0.55)",
-              textShadow: "0 1px 10px rgba(3,7,20,1)",
+              background: "rgba(12,12,12,0.55)",
+              textShadow: "0 1px 10px rgba(12,12,12,1)",
             }}
           >
             {CAPABILITIES[active].line}
@@ -393,7 +393,7 @@ export function HeroCoreHud() {
         className="mairo-sweep pointer-events-none absolute inset-x-[18%] top-0 h-[22%] rounded-full"
         style={{
           background:
-            "linear-gradient(to bottom, transparent, rgba(160,205,255,0.16), transparent)",
+            "linear-gradient(to bottom, transparent, rgba(255,255,255,0.16), transparent)",
         }}
       />
       <span className="sr-only" aria-live="polite">
@@ -467,9 +467,9 @@ export function HeroBeams() {
     >
       <defs>
         <linearGradient id="hero-beam" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#6aa6ff" stopOpacity="0.05" />
-          <stop offset="45%" stopColor="#bcd9ff" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#c8b8ff" stopOpacity="0.5" />
+          <stop offset="0%" stopColor="#ededed" stopOpacity="0.05" />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.5" />
         </linearGradient>
       </defs>
       <path
@@ -566,9 +566,9 @@ export function HeroCommand() {
       <div
         className="flex items-center gap-2 rounded-full border px-2 py-2 pl-4 transition-all duration-500 [transition-timing-function:var(--ease-mairo)]"
         style={{
-          borderColor: focused ? "rgba(122,170,255,0.6)" : "var(--mairo-line)",
-          background: "rgba(6,11,26,0.72)",
-          boxShadow: focused ? "0 0 32px rgba(61,125,255,0.3)" : "none",
+          borderColor: focused ? "rgba(245,245,245,0.6)" : "var(--mairo-line)",
+          background: "rgba(16,16,16,0.72)",
+          boxShadow: focused ? "0 0 32px rgba(214,214,214,0.3)" : "none",
         }}
       >
         <span aria-hidden className="relative flex h-1.5 w-1.5 shrink-0">

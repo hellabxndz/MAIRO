@@ -15,14 +15,14 @@ export const CATEGORY_LABEL: Record<DecisionCategory, string> = {
 };
 
 export const CATEGORY_TONE: Record<DecisionCategory, string> = {
-  NEEDS_ATTENTION: "#f87171",
-  GROWTH: "#34d399",
-  CREATIVE: "#8fb8ff",
-  BUDGET: "#6c9eff",
-  AUDIENCE: "#38bdf8",
+  NEEDS_ATTENTION: "#ff3d6e",
+  GROWTH: "#22ff88",
+  CREATIVE: "#ffffff",
+  BUDGET: "#eeeeee",
+  AUDIENCE: "#00f0ff",
   RETARGETING: "#f472b6",
-  WEBSITE: "#fbbf24",
-  TESTING: "#94a3b8",
+  WEBSITE: "#ffdd00",
+  TESTING: "#dedede",
 };
 
 export const RISK_LABEL: Record<DecisionRisk, string> = {

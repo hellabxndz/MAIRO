@@ -134,7 +134,7 @@ function Finding({ view }: { view: ExampleView }) {
         <section>
           <h4 className={h}>Approve or investigate</h4>
           <div className="mt-2 flex flex-wrap gap-2" aria-hidden>
-            <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3.5 py-1.5 text-[12.5px] font-medium text-white">Approve the plan</span>
+            <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3.5 py-1.5 text-[12.5px] font-medium text-black">Approve the plan</span>
             <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[12.5px] text-white/85">Investigate with your AI team</span>
           </div>
           <p className="mt-2 text-[11.5px] leading-relaxed text-faint">In MAIRO, approving a plan changes nothing on Meta. Any change to a campaign shows what will change and waits for its own approval.</p>
@@ -160,7 +160,7 @@ export function CoachDemo({ views }: { views: Record<ExampleStep, ExampleView> }
   };
 
   return (
-    <div className="overflow-hidden rounded-[26px] border border-white/10 bg-paper shadow-[0_40px_120px_-50px_rgba(91,63,224,0.55)]">
+    <div className="overflow-hidden rounded-[26px] border border-white/10 bg-paper shadow-[0_40px_120px_-50px_rgba(200,200,200,0.55)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] px-5 py-3.5 sm:px-6">
         <p className="text-[13px] font-medium text-white">
           An invented roofing company <span className="font-normal text-muted">· the last two weeks</span>
@@ -184,7 +184,7 @@ export function CoachDemo({ views }: { views: Record<ExampleStep, ExampleView> }
             className={`border-b-2 px-2 py-3 text-left transition sm:px-5 ${step === s.id ? "border-violet-bright bg-violet/[0.05]" : "border-transparent hover:bg-white/[0.03]"}`}
           >
             <span className="flex items-center gap-2">
-              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${step === s.id ? "bg-[image:var(--mairo-ramp)] text-white" : "bg-white/[0.07] text-muted"}`}>{s.n}</span>
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${step === s.id ? "bg-[image:var(--mairo-ramp)] text-black" : "bg-white/[0.07] text-muted"}`}>{s.n}</span>
               <span className={`text-[12.5px] font-semibold leading-tight sm:text-[13.5px] ${step === s.id ? "text-white" : "text-white/75"}`}>{s.label}</span>
             </span>
             <span className="mt-1 hidden text-[11.5px] text-muted sm:block">{s.sub}</span>

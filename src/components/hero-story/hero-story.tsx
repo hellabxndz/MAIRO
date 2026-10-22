@@ -176,7 +176,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
             role="radio"
             aria-checked={type === k}
             onClick={() => chooseType(k)}
-            className={`min-h-[38px] rounded-full border px-3.5 text-[13px] font-medium transition ${type === k ? "border-[#8fb8ff]/70 bg-[#2f6bff]/20 text-white" : "border-white/12 bg-white/[0.03] text-white/70 hover:border-white/30 hover:text-white"}`}
+            className={`min-h-[38px] rounded-full border px-3.5 text-[13px] font-medium transition ${type === k ? "border-[#ffffff]/70 bg-[#ffffff]/20 text-white" : "border-white/12 bg-white/[0.03] text-white/70 hover:border-white/30 hover:text-white"}`}
           >
             {EXAMPLES[k].label}
           </button>
@@ -186,7 +186,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
       <div className="relative mt-3">
         {/* The rendered video and poster carry the same label in the picture; the live stage gets it here. */}
         {!asVideo && (scale > 0 || !posters.wide) && (
-          <p className="absolute left-3 top-3 z-20 rounded-full border border-[#f0c463] bg-[#fff8e6] px-2.5 py-1 text-[11px] font-semibold text-[#7a5200]">Product demo — sample data</p>
+          <p className="absolute left-3 top-3 z-20 rounded-full border border-[#ffe24d] bg-[#fff8e6] px-2.5 py-1 text-[11px] font-semibold text-[#7a5200]">Product demo — sample data</p>
         )}
         {asVideo && clip && RENDERED_MEDIA.captions.story ? (
           <video key={clip.mp4} controls autoPlay muted playsInline poster={clip.poster} className="aspect-[760/560] w-full rounded-[22px] border border-white/10 bg-black max-[591px]:aspect-[360/600]" aria-label={`The story as a video, ${ex.label.toLowerCase()} example, without sound`}>
@@ -215,7 +215,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
                         track({ name: "hero_play", props: { state: "invite", variant: variant.current } });
                         onInvite?.();
                       }}
-                      className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-[#6b5cff] to-[#5b3fd9] px-6 text-[15px] font-semibold text-white shadow-[0_14px_36px_-14px_rgba(91,63,217,0.8)] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5b3fd9]"
+                      className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-[#e6e6e6] to-[#c4c4c4] px-6 text-[15px] font-semibold text-black shadow-[0_14px_36px_-14px_rgba(196,196,196,0.8)] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c4c4c4]"
                     >
                       Build My Free Ad Plan <span aria-hidden>→</span>
                     </button>
@@ -264,7 +264,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
           {CHAPTERS.map((c) => {
             const here = scene.id === c.id;
             return (
-              <button key={c.id} type="button" onClick={() => goChapter(c.id)} aria-current={here ? "step" : undefined} title={c.describe} className={`h-9 rounded-full px-3 text-[12.5px] transition ${here ? "bg-white text-[#0b0b18]" : "text-white/70 hover:bg-white/[0.06] hover:text-white"}`}>
+              <button key={c.id} type="button" onClick={() => goChapter(c.id)} aria-current={here ? "step" : undefined} title={c.describe} className={`h-9 rounded-full px-3 text-[12.5px] transition ${here ? "bg-white text-[#121212]" : "text-white/70 hover:bg-white/[0.06] hover:text-white"}`}>
                 {c.label}
               </button>
             );
@@ -272,7 +272,7 @@ export function HeroStory({ initialType = "service", onTypeChange, hold = false,
         </nav>
       </div>
       <div aria-hidden className="mt-2 h-[3px] w-full overflow-hidden rounded-full bg-white/[0.08]">
-        <div data-story-progress className="h-full rounded-full bg-gradient-to-r from-[#5b6cff] to-[#8fb8ff]" style={{ width: `${Math.round(progress * 1000) / 10}%` }} />
+        <div data-story-progress className="h-full rounded-full bg-gradient-to-r from-[#e5e5e5] to-[#ffffff]" style={{ width: `${Math.round(progress * 1000) / 10}%` }} />
       </div>
       <p className="sr-only" aria-live="polite">{announce}</p>
       <p className="sr-only">{CHAPTERS.map((c) => `${c.label}: ${c.describe}`).join(" ")}</p>

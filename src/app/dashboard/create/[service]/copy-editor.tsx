@@ -212,7 +212,7 @@ export function CopyEditor({
                     const full = !on && running.size >= cap;
                     return (
                       <label key={i} className={`flex items-center gap-2.5 text-[13px] ${full ? "text-faint" : "text-white/90"}`}>
-                        <input type="checkbox" checked={on} disabled={main || full} onChange={() => togglePick(i)} className="h-4 w-4 accent-[#6c9eff]" />
+                        <input type="checkbox" checked={on} disabled={main || full} onChange={() => togglePick(i)} className="h-4 w-4 accent-[#eeeeee]" />
                         {i + 1}. {c.angle}
                         {main && <span className="text-[11px] text-faint">(main version)</span>}
                       </label>

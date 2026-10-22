@@ -122,10 +122,10 @@ export function PerformanceChart({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-5 text-[12.5px] text-muted">
           <span className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#2f6bff]" /> {dual ? "Amount spent" : "Money spent"}
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ffffff]" /> {dual ? "Amount spent" : "Money spent"}
           </span>
           <span className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#4b8bff]" : "bg-[#bcd4ff]"}`} /> {dual ? countLabel : "Sales / Revenue"}
+            <span className={`h-2.5 w-2.5 rounded-full ${dual ? "bg-[#dddddd]" : "bg-[#ffffff]"}`} /> {dual ? countLabel : "Sales / Revenue"}
           </span>
         </div>
         {!dual && (
@@ -149,12 +149,12 @@ export function PerformanceChart({
           <svg width={width} height={H} className="block" role="img" aria-label={dual ? `Amount spent and ${countLabel.toLowerCase()} over time` : "Money spent and sales over time"}>
             <defs>
               <linearGradient id={`pc-sales-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8fb8ff" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#8fb8ff" stopOpacity="0" />
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </linearGradient>
               <linearGradient id={`pc-bar-${gid}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4b8bff" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#2f6bff" stopOpacity="0.35" />
+                <stop offset="0%" stopColor="#dddddd" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.35" />
               </linearGradient>
             </defs>
 
@@ -162,12 +162,12 @@ export function PerformanceChart({
               const y = pad.top + innerH - (t / 4) * innerH;
               return (
                 <g key={t}>
-                  <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="rgba(148,166,204,0.12)" />
-                  <text x={pad.left - 8} y={y + 4} textAnchor="end" className="fill-[#5d6e91] text-[10.5px] tabular-nums">
+                  <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="rgba(232,232,232,0.12)" />
+                  <text x={pad.left - 8} y={y + 4} textAnchor="end" className="fill-[#afafaf] text-[10.5px] tabular-nums">
                     {axisMoney((moneyMax * t) / 4)}
                   </text>
                   {dual && (
-                    <text x={width - pad.right + 8} y={y + 4} className="fill-[#5d6e91] text-[10.5px] tabular-nums">
+                    <text x={width - pad.right + 8} y={y + 4} className="fill-[#afafaf] text-[10.5px] tabular-nums">
                       {Math.round((countMax * t) / 4)}
                     </text>
                   )}
@@ -184,31 +184,31 @@ export function PerformanceChart({
             ) : (
               <>
                 <path d={salesArea} fill={`url(#pc-sales-${gid})`} />
-                <path d={salesLine} fill="none" stroke="#bcd4ff" strokeWidth="2" strokeLinejoin="round" />
-                <path d={spendLine} fill="none" stroke="#2f6bff" strokeWidth="2" strokeLinejoin="round" />
+                <path d={salesLine} fill="none" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" />
+                <path d={spendLine} fill="none" stroke="#ffffff" strokeWidth="2" strokeLinejoin="round" />
               </>
             )}
-            {dual && <path d={purchaseLine} fill="none" stroke="#4b8bff" strokeWidth="2" strokeLinejoin="round" />}
+            {dual && <path d={purchaseLine} fill="none" stroke="#dddddd" strokeWidth="2" strokeLinejoin="round" />}
 
             {buckets.map((b, i) => (
               <g key={i}>
                 {dual ? (
-                  <circle cx={xAt(i)} cy={yCount(b.purchases)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#4b8bff" strokeWidth="1.8" />
+                  <circle cx={xAt(i)} cy={yCount(b.purchases)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#dddddd" strokeWidth="1.8" />
                 ) : (
                   <>
-                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#bcd4ff" strokeWidth="1.8" />
-                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#2f6bff" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.sales)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#ffffff" strokeWidth="1.8" />
+                    <circle cx={xAt(i)} cy={yMoney(b.spend)} r={hover === i ? 4 : n > 45 ? 0 : 2.6} className="fill-paper" stroke="#ffffff" strokeWidth="1.8" />
                   </>
                 )}
                 {i % labelEvery === 0 && (
-                  <text x={xAt(i)} y={H - 6} textAnchor="middle" className="fill-[#5d6e91] text-[10.5px]">
+                  <text x={xAt(i)} y={H - 6} textAnchor="middle" className="fill-[#afafaf] text-[10.5px]">
                     {b.label}
                   </text>
                 )}
                 <rect x={pad.left + slot * i} y={pad.top} width={slot} height={innerH} fill="transparent" onMouseEnter={() => setHover(i)} />
               </g>
             ))}
-            {hover !== null && <line x1={xAt(hover)} x2={xAt(hover)} y1={pad.top} y2={pad.top + innerH} stroke="rgba(143,184,255,0.35)" strokeDasharray="3 3" pointerEvents="none" />}
+            {hover !== null && <line x1={xAt(hover)} x2={xAt(hover)} y1={pad.top} y2={pad.top + innerH} stroke="rgba(255,255,255,0.35)" strokeDasharray="3 3" pointerEvents="none" />}
           </svg>
         )}
 

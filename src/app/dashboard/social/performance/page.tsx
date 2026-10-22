@@ -74,7 +74,7 @@ export default async function SocialPerformancePage() {
               <li key={t.type} className="grid grid-cols-[minmax(0,10rem)_1fr_auto] items-center gap-3 text-[13px]">
                 <span className="truncate text-white/85">{t.type}</span>
                 <span className="h-2.5 overflow-hidden rounded-full bg-white/[0.06]">
-                  <span className="block h-full rounded-full bg-[#2f6bff]" style={{ width: `${Math.max(4, (t.avgEngagement / max) * 100)}%` }} />
+                  <span className="block h-full rounded-full bg-[#ffffff]" style={{ width: `${Math.max(4, (t.avgEngagement / max) * 100)}%` }} />
                 </span>
                 <span className="tabular-nums text-white/70">{t.avgEngagement} · {t.posts} post{t.posts === 1 ? "" : "s"}</span>
               </li>

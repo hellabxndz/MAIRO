@@ -53,7 +53,7 @@ export async function saveBrainAction(input: Record<string, unknown>): Promise<S
   const current = await loadBrain(ctx.organizationId);
   const incoming = sanitizeProfile(input as Partial<Record<BrainField, unknown>>);
   const parsed = profileSchema.safeParse({ ...current.profile, ...incoming });
-  if (!parsed.success) return { error: "Some of that couldn't be saved. Check the colours are hex codes like #1a2b3c." };
+  if (!parsed.success) return { error: "Some of that couldn't be saved. Check the colours are hex codes like #2b2b2b." };
 
   const changed = (Object.keys(incoming) as BrainField[]).filter(
     (k) => JSON.stringify(current.profile[k]) !== JSON.stringify(parsed.data[k]),

@@ -90,7 +90,7 @@ export function Welcome({ planName, clientLimit }: { planName: string; clientLim
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(150,110,255,0.28),transparent_70%)]"
+          className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(239,239,239,0.28),transparent_70%)]"
         />
 
         <p className="relative text-[11px] uppercase tracking-[0.32em] text-neutral-500">
@@ -131,7 +131,7 @@ export function Welcome({ planName, clientLimit }: { planName: string; clientLim
             // somebody on a screen they have never seen before.
             window.dispatchEvent(new CustomEvent("mairo:start-tour"));
           }}
-          className="relative mt-9 w-full rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-6 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-white transition hover:brightness-110"
+          className="relative mt-9 w-full rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-6 py-3.5 text-xs font-medium uppercase tracking-[0.16em] text-black transition hover:brightness-110"
         >
           Show me around
         </button>

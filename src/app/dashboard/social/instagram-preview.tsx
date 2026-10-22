@@ -38,7 +38,7 @@ export function InstagramPreview({
   return (
     <article data-palette="classic" className="overflow-hidden rounded-xl border border-white/10 bg-black text-white" aria-label="Preview of the Instagram post">
       <header className="flex items-center gap-2.5 px-3 py-2.5">
-        <span className="rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-[2px]">
+        <span className="rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#b8b8b8] p-[2px]">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-[12px] font-semibold uppercase">{username.slice(0, 1)}</span>
         </span>
         <span className="text-[13.5px] font-semibold">{username}</span>
@@ -75,7 +75,7 @@ export function InstagramPreview({
         <Icon d="M21 4L3 11l7 2 2 7 9-16z" />
         {mediaType === "CAROUSEL" && images.length > 1 && (
           <span className="mx-auto flex gap-1">
-            {images.map((_, i) => <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === at ? "bg-[#3897f0]" : "bg-white/30"}`} />)}
+            {images.map((_, i) => <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === at ? "bg-[#cccccc]" : "bg-white/30"}`} />)}
           </span>
         )}
         <span className="ml-auto"><Icon d="M6 3h12v18l-6-4-6 4z" /></span>
@@ -83,7 +83,7 @@ export function InstagramPreview({
       <p className="whitespace-pre-wrap px-3 pb-3 pt-2 text-[13px] leading-snug">
         <span className="font-semibold">{username}</span>{" "}
         {(short ? caption.slice(0, 125) : caption).split(/(#[\p{L}\p{N}_]+)/u).map((part, i) =>
-          part.startsWith("#") ? <span key={i} className="text-[#e0f1ff]">{part}</span> : part,
+          part.startsWith("#") ? <span key={i} className="text-[#ffffff]">{part}</span> : part,
         )}
         {short && (
           <button type="button" onClick={() => setOpen(true)} className="text-white/55">… more</button>

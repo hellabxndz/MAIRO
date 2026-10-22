@@ -199,8 +199,8 @@ export default async function BusinessPage() {
             {a?.conversionIssues.length ? (
               <ul className="space-y-3">
                 {a.conversionIssues.map((i) => (
-                  <li key={i.issue} className="rounded-xl border p-4" style={{ borderColor: i.severity === "high" ? "rgba(248,113,113,0.35)" : "var(--mairo-line)" }}>
-                    <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: i.severity === "high" ? "#f87171" : i.severity === "medium" ? "#fbbf24" : "#94a3b8" }}>
+                  <li key={i.issue} className="rounded-xl border p-4" style={{ borderColor: i.severity === "high" ? "rgba(255,61,110,0.35)" : "var(--mairo-line)" }}>
+                    <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: i.severity === "high" ? "#ff3d6e" : i.severity === "medium" ? "#ffdd00" : "#dedede" }}>
                       {i.severity} impact
                     </p>
                     <p className="mt-1 text-[14px] text-white">{i.issue}</p>

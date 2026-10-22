@@ -21,7 +21,7 @@ type MetricKey = keyof typeof METRICS;
 function Mark({ publisher }: { publisher: string }) {
   if (publisher === "facebook")
     return (
-      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1877f2]/15 text-[#4b95ff]">
+      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1877f2]/15 text-[#dddddd]">
         <span className="h-6 w-6">
           <FacebookMark />
         </span>
@@ -98,7 +98,7 @@ export function PlatformSplit({
                     <p className="text-[11.5px] text-faint">of total {metric.of}</p>
                   </div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#2f6bff] to-[#8fb8ff]" style={{ width: `${Math.max(2, share * 100)}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#ffffff] to-[#ffffff]" style={{ width: `${Math.max(2, share * 100)}%` }} />
                   </div>
                 </div>
               </li>

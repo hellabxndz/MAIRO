@@ -73,8 +73,8 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
   // instead of one.
   const halo = x.createRadialGradient(mid, mid, 0, mid, mid, R);
   halo.addColorStop(0, "rgba(255,236,208,0.22)");
-  halo.addColorStop(0.16, "rgba(178,150,255,0.16)");
-  halo.addColorStop(0.52, "rgba(96,110,235,0.07)");
+  halo.addColorStop(0.16, "rgba(255,255,255,0.16)");
+  halo.addColorStop(0.52, "rgba(222,222,222,0.07)");
   halo.addColorStop(1, "rgba(0,0,0,0)");
   x.fillStyle = halo;
   x.fillRect(0, 0, size, size);
@@ -139,8 +139,8 @@ function buildGalaxy(size: number, dense: boolean): HTMLCanvasElement {
   const core = x.createRadialGradient(mid, mid, 0, mid, mid, R * 0.16);
   core.addColorStop(0, "rgba(255,248,232,0.9)");
   core.addColorStop(0.3, "rgba(248,214,190,0.34)");
-  core.addColorStop(0.7, "rgba(186,150,255,0.12)");
-  core.addColorStop(1, "rgba(150,120,255,0)");
+  core.addColorStop(0.7, "rgba(255,255,255,0.12)");
+  core.addColorStop(1, "rgba(244,244,244,0)");
   x.fillStyle = core;
   x.fillRect(0, 0, size, size);
 
@@ -264,9 +264,9 @@ function buildEarth(size: number, dense: boolean): HTMLCanvasElement {
 
   // Ocean: not black, but very close to it, and slightly blue.
   const sea = x.createRadialGradient(mid - R * 0.3, mid - R * 0.35, R * 0.1, mid, mid, R * 1.2);
-  sea.addColorStop(0, "#04070f");
-  sea.addColorStop(0.6, "#020409");
-  sea.addColorStop(1, "#000103");
+  sea.addColorStop(0, "#0a0a0a");
+  sea.addColorStop(0.6, "#060606");
+  sea.addColorStop(1, "#020202");
   x.fillStyle = sea;
   x.fillRect(0, 0, size, size);
 
@@ -278,7 +278,7 @@ function buildEarth(size: number, dense: boolean): HTMLCanvasElement {
   // what the first pass looked like.
   for (const pts of land) {
     trace(x, pts);
-    x.fillStyle = "#05070c";
+    x.fillStyle = "#080808";
     x.fill();
   }
 
@@ -376,7 +376,7 @@ function buildEarth(size: number, dense: boolean): HTMLCanvasElement {
   // Curvature: the limb falls away from the eye, so it darkens.
   const curve = x.createRadialGradient(mid, mid, R * 0.55, mid, mid, R);
   curve.addColorStop(0, "rgba(0,0,0,0)");
-  curve.addColorStop(1, "rgba(0,0,4,0.55)");
+  curve.addColorStop(1, "rgba(2,2,2,0.55)");
   x.fillStyle = curve;
   x.fillRect(0, 0, size, size);
 
@@ -391,10 +391,10 @@ function buildEarth(size: number, dense: boolean): HTMLCanvasElement {
   const gx = glowLayer.getContext("2d");
   if (gx) {
     const ring = gx.createRadialGradient(mid, mid, R * 0.985, mid, mid, R * 1.055);
-    ring.addColorStop(0, "rgba(90,170,255,0)");
-    ring.addColorStop(0.3, "rgba(130,205,255,0.34)");
-    ring.addColorStop(0.62, "rgba(70,150,255,0.09)");
-    ring.addColorStop(1, "rgba(40,110,235,0)");
+    ring.addColorStop(0, "rgba(229,229,229,0)");
+    ring.addColorStop(0.3, "rgba(249,249,249,0.34)");
+    ring.addColorStop(0.62, "rgba(219,219,219,0.09)");
+    ring.addColorStop(1, "rgba(194,194,194,0)");
     gx.fillStyle = ring;
     gx.fillRect(0, 0, size, size);
 
@@ -596,9 +596,9 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
         ctx!.rotate(-0.42);
         const g = ctx!.createLinearGradient(0, -height * 0.5, 0, height * 0.5);
         g.addColorStop(0, "rgba(0,0,0,0)");
-        g.addColorStop(0.4, "rgba(126,112,220,0.12)");
-        g.addColorStop(0.5, "rgba(226,216,255,0.22)");
-        g.addColorStop(0.6, "rgba(126,112,220,0.12)");
+        g.addColorStop(0.4, "rgba(222,222,222,0.12)");
+        g.addColorStop(0.5, "rgba(255,255,255,0.22)");
+        g.addColorStop(0.6, "rgba(222,222,222,0.12)");
         g.addColorStop(1, "rgba(0,0,0,0)");
         ctx!.fillStyle = g;
         const w = Math.hypot(width, height) * 1.2;
@@ -696,7 +696,7 @@ export function SpaceStage({ onScene, onCaption, onEnd, onTooSlow, clock, mobile
         const g = ctx!.createRadialGradient(cx, cy, 0, cx, cy, r);
         g.addColorStop(0, `rgba(255,255,255,${(0.5 * core).toFixed(3)})`);
         g.addColorStop(0.3, `rgba(190,170,255,${(0.22 * core).toFixed(3)})`);
-        g.addColorStop(1, "rgba(120,90,255,0)");
+        g.addColorStop(1, "rgba(229,229,229,0)");
         ctx!.fillStyle = g;
         ctx!.fillRect(cx - r, cy - r, r * 2, r * 2);
       }

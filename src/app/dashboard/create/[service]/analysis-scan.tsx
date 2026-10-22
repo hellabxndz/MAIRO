@@ -137,8 +137,8 @@ export function AnalysisScan({
       <style>{`
         .mairo-scan-dot { animation: mairo-scan-dot 1.8s ease-in-out infinite; }
         @keyframes mairo-scan-dot {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(61,125,255,0.35); }
-          50%      { box-shadow: 0 0 0 6px rgba(61,125,255,0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(214,214,214,0.35); }
+          50%      { box-shadow: 0 0 0 6px rgba(214,214,214,0); }
         }
         @media (prefers-reduced-motion: reduce) {
           .mairo-scan-dot { animation: none; }

@@ -126,7 +126,7 @@ export function LinkedInMark({ className = BOX }: MarkProps) {
 
 export function BrandMetaMark({ className = BOX }: MarkProps) {
   return (
-    <span className={`block text-[#0081FB] ${className}`}>
+    <span className={`block text-[#b6b6b6] ${className}`}>
       <MetaMark />
     </span>
   );
@@ -140,7 +140,7 @@ export function BrandInstagramMark({ className = BOX }: MarkProps) {
           <stop offset="0%" stopColor="#FFD521" />
           <stop offset="28%" stopColor="#F50000" />
           <stop offset="62%" stopColor="#B900B4" />
-          <stop offset="100%" stopColor="#5100FF" />
+          <stop offset="100%" stopColor="#b8b8b8" />
         </linearGradient>
       </defs>
       <rect x="3" y="3" width="18" height="18" rx="5.2" stroke="url(#ig-brand)" strokeWidth="1.8" />

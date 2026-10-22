@@ -108,7 +108,7 @@ function Bullets({ items, tone = "violet" }: { items: string[]; tone?: "violet" 
   );
 }
 
-const SEGMENT = ["#2f6bff", "#38bdf8", "#a9c8ff", "#5fd4c4"];
+const SEGMENT = ["#ffffff", "#00f0ff", "#8a8a8a", "#22ff88"];
 
 function sourceNote(r: PlanReport): { title: string; body: string; tone: "ai" | "templates" | "fixture" } {
   const s = r.concepts.source;
@@ -157,14 +157,14 @@ function BudgetRing({ lines }: { lines: PlanReport["budget"]["lines"] }) {
 function AtAGlance({ r }: { r: PlanReport }) {
   const first = r.concepts.list[r.concepts.first];
   return (
-    <section aria-label="Your plan at a glance" className="mt-7 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(108,158,255,0.28)", background: "radial-gradient(90% 140% at 100% 0%, rgba(47,107,255,0.20), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
+    <section aria-label="Your plan at a glance" className="mt-7 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(238,238,238,0.28)", background: "radial-gradient(90% 140% at 100% 0%, rgba(255,255,255,0.20), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
       <div className="grid gap-px bg-white/[0.06] md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="bg-[#0a0e1b]/80 p-5 sm:p-6">
+        <div className="bg-[#121212]/80 p-5 sm:p-6">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">First campaign</p>
           <p className="mt-2 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-white">{r.strategy.objective}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">Meta optimises for {r.strategy.optimiseFor.toLowerCase()} · {r.strategy.placements.join(", ")}</p>
         </div>
-        <div className="flex items-center gap-4 bg-[#0a0e1b]/80 p-5 sm:p-6">
+        <div className="flex items-center gap-4 bg-[#121212]/80 p-5 sm:p-6">
           <BudgetRing lines={r.budget.lines} />
           <div className="min-w-0">
             <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Monthly budget</p>
@@ -180,7 +180,7 @@ function AtAGlance({ r }: { r: PlanReport }) {
             </ul>
           </div>
         </div>
-        <div className="bg-[#0a0e1b]/80 p-5 sm:p-6">
+        <div className="bg-[#121212]/80 p-5 sm:p-6">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Test first</p>
           {first ? (
             <>
@@ -410,7 +410,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
                 <li key={`${c.headline}-${i}`} className={`flex min-w-0 flex-col rounded-[24px] border p-3 ${first ? "border-violet-400/60 bg-violet-500/[0.06] shadow-[var(--mairo-glow-key)]" : ""}`} style={first ? undefined : { borderColor: "var(--mairo-line)" }}>
                   <div className="flex items-center justify-between gap-2 px-1.5 pb-2.5 pt-1">
                     <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/55">Concept {i + 1} · {c.label}</p>
-                    {first && <span className="rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-0.5 text-[11px] font-semibold text-white">Test first</span>}
+                    {first && <span className="rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-0.5 text-[11px] font-semibold text-black">Test first</span>}
                   </div>
                   <AdMock c={c} business={r.name} placement={placement} domain={domain} />
                   {first && (
@@ -489,7 +489,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
       </div>
 
       {/* The step from the free plan to MAIRO doing the work. */}
-      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(47,107,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(53,108,255,0.16), transparent 60%), linear-gradient(170deg,#141833,#0b0d1a)" }}>
+      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(255,255,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(210,210,210,0.16), transparent 60%), linear-gradient(170deg,#242424,#121212)" }}>
         <h2 id="work-title" className="max-w-[760px] text-[clamp(26px,4vw,42px)] font-semibold leading-[1.06] tracking-[-0.035em] text-white [text-wrap:balance]">
           {actions ? "Your strategy is ready. Let MAIRO put it to work." : "Want a plan like this for your business?"}
         </h2>
@@ -518,11 +518,11 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           {actions ? (
-            <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
+            <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
               {actions.working ? "Saving your strategy…" : "I like it — get started →"}
             </button>
           ) : (
-            <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+            <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
               Build My Free AI Ad Plan →
             </Link>
           )}
@@ -579,10 +579,10 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
   };
   const lastLikes = a.chat.length > 0 && a.chat[a.chat.length - 1].who === "mairo" && a.chat[a.chat.length - 1].likes;
   return (
-    <section aria-labelledby="feedback-title" className="mp-noprint mt-6 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(139,124,255,0.35)", background: "radial-gradient(70% 120% at 0% 0%, rgba(124,92,255,0.16), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
+    <section aria-labelledby="feedback-title" className="mp-noprint mt-6 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(246,246,246,0.35)", background: "radial-gradient(70% 120% at 0% 0%, rgba(230,230,230,0.16), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
       <div className="p-5 sm:p-7">
         <div className="flex items-start gap-3.5">
-          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)]">M</span>
+          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)]">M</span>
           <div className="min-w-0">
             <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-200">MAIRO</p>
             <h2 id="feedback-title" className="mt-1 text-[clamp(19px,2.4vw,24px)] font-semibold leading-snug tracking-[-0.02em] text-white">Do you like your plan? What would you change?</h2>
@@ -594,7 +594,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
           <div ref={log} role="log" aria-live="polite" aria-label="Your conversation with MAIRO" className="mt-5 max-h-[420px] space-y-3 overflow-y-auto pr-1">
             {a.chat.map((t, i) =>
               t.who === "you" ? (
-                <p key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-[#2f6bff] px-4 py-2.5 text-[14px] leading-relaxed text-white">{t.text}</p>
+                <p key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-md bg-[#ffffff] px-4 py-2.5 text-[14px] leading-relaxed text-black">{t.text}</p>
               ) : (
                 <div key={i} className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-[14px] leading-relaxed text-white/90">
                   <p>{t.text}</p>
@@ -639,7 +639,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
             onChange={(e) => setText(e.target.value)}
             maxLength={500}
             placeholder="e.g. “Lower my budget to $300 and focus on phone calls”"
-            className="min-h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-[#0a0e1b]/70 px-5 text-[14.5px] text-white placeholder:text-white/35 focus:border-violet-400/60 focus:outline-none"
+            className="min-h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-[#121212]/70 px-5 text-[14.5px] text-white placeholder:text-white/35 focus:border-violet-400/60 focus:outline-none"
           />
           <button type="submit" disabled={a.asking || !text.trim()} className="min-h-[48px] shrink-0 rounded-full border border-white/20 px-5 text-[14px] font-semibold text-white transition hover:border-white/45 disabled:opacity-45">
             {a.asking ? "Updating…" : "Send to MAIRO"}
@@ -651,7 +651,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
         <p className="text-[13px] leading-relaxed text-white/65">
           <span className="font-semibold text-white">Like it as it is?</span> Create your free account, choose your MAIRO plan, then connect your Meta ad account. Nothing launches or spends until you approve it.
         </p>
-        <button type="button" onClick={a.onWork} disabled={a.working} className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
+        <button type="button" onClick={a.onWork} disabled={a.working} className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
           {a.working ? "Saving your plan…" : "I like it — get started →"}
         </button>
       </div>

@@ -78,7 +78,7 @@ function Media({ media, className }: { media: MockMedia; className: string }) {
 
 function Avatar({ name, size = 7 }: { name: string; size?: 6 | 7 | 8 }) {
   const cls = size === 6 ? "h-6 w-6 text-[11px]" : size === 8 ? "h-8 w-8 text-[13px]" : "h-7 w-7 text-[12px]";
-  return <span aria-hidden className={`flex ${cls} shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] font-semibold text-[#fff]`}>{(name.trim()[0] ?? "M").toUpperCase()}</span>;
+  return <span aria-hidden className={`flex ${cls} shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] font-semibold text-black`}>{(name.trim()[0] ?? "M").toUpperCase()}</span>;
 }
 
 const fold = (text: string, n: number) => (text.length > n ? { shown: `${text.slice(0, n).trimEnd()}…`, folded: true } : { shown: text, folded: false });
@@ -97,7 +97,7 @@ export function PlacementMock({ placement, media, words, businessName }: { place
           <span aria-hidden className="text-[16px] text-[#666]">···</span>
         </div>
         <Media media={media} className="aspect-[4/5] w-full" />
-        <div className="flex items-center justify-between bg-[#3f5efb] px-3 py-2 text-[12.5px] font-semibold text-[#fff]"><span>{words.cta}</span><span aria-hidden>›</span></div>
+        <div className="flex items-center justify-between bg-[#d5d5d5] px-3 py-2 text-[12.5px] font-semibold text-black"><span>{words.cta}</span><span aria-hidden>›</span></div>
         <div aria-hidden className="flex gap-3 px-3 pt-2.5 text-[17px]"><span>♡</span><span>💬</span><span>↗</span><span className="ml-auto">⌑</span></div>
         <p className="px-3 pb-3 pt-1.5 text-[12.5px] leading-snug"><span className="font-semibold">{handle(businessName)}</span> {t.shown}{t.folded && <span className="text-[#666]"> more</span>}</p>
         <figcaption className="sr-only">How the ad sits in the Instagram feed</figcaption>

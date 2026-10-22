@@ -224,7 +224,7 @@ export function PlatformCard({
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border p-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(61,125,255,0.08)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.08)" }}
         >
           {icon}
         </span>

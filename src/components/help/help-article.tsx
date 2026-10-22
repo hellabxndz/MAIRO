@@ -136,7 +136,7 @@ function Block({ block: b }: { block: HelpBlock }) {
 /** Where to go when the answer isn't here: the support address the legal pages use, and, signed in, the in-app routes. */
 export function HelpContact({ signedIn }: { signedIn: boolean }) {
   return (
-    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--mairo-line)] bg-gradient-to-br from-[#4f7dff]/[0.07] to-[#2fa4ff]/[0.09] p-6">
+    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--mairo-line)] bg-gradient-to-br from-[#dfdfdf]/[0.07] to-[#cfcfcf]/[0.09] p-6">
       <h2 id="help-contact" className="text-[17px] font-semibold text-white">
         Didn&rsquo;t find the answer?
       </h2>
@@ -158,7 +158,7 @@ export function HelpContact({ signedIn }: { signedIn: boolean }) {
         </p>
       )}
       {signedIn && (
-        <Link href="/dashboard/agents" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[13.5px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+        <Link href="/dashboard/agents" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
           Ask your AI team <span aria-hidden>→</span>
         </Link>
       )}

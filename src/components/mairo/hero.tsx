@@ -54,7 +54,7 @@ function BarGlyph({ className = "" }: { className?: string }) {
           width="2.4"
           height={h}
           rx="1.2"
-          fill="#6aa6ff"
+          fill="#ededed"
           fillOpacity={i % 2 ? 0.55 : 0.95}
         />
       ))}
@@ -86,8 +86,8 @@ function CornerLabel({
         className={`mt-2 block h-px w-12 ${right ? "ml-auto" : ""}`}
         style={{
           backgroundImage: right
-            ? "linear-gradient(to left, rgba(122,162,255,0.6), transparent)"
-            : "linear-gradient(to right, rgba(122,162,255,0.6), transparent)",
+            ? "linear-gradient(to left, rgba(245,245,245,0.6), transparent)"
+            : "linear-gradient(to right, rgba(245,245,245,0.6), transparent)",
         }}
       />
     </div>
@@ -112,7 +112,7 @@ function PlatformTile({ children }: { children: ReactNode }) {
   return (
     <span
       className="flex h-9 w-9 items-center justify-center rounded-full border p-2 text-white/80"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(61,125,255,0.08)" }}
+      style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.08)" }}
     >
       {children}
     </span>
@@ -142,7 +142,7 @@ function CapabilityCard({
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(61,125,255,0.10)" }}
+          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
         >
           {icon}
         </span>
@@ -152,7 +152,7 @@ function CapabilityCard({
             <h3 className="text-[15px] font-medium text-white">{title}</h3>
             <span
               className="rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-blue-bright"
-              style={{ background: "rgba(61,125,255,0.16)" }}
+              style={{ background: "rgba(214,214,214,0.16)" }}
             >
               {badge}
             </span>
@@ -354,7 +354,7 @@ function OptimizationCard() {
             in words, rather than handing you a chart to interpret. */}
         <div
           className="flex flex-col justify-center rounded-lg border px-3 py-2.5 text-center"
-          style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(61,125,255,0.10)" }}
+          style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(214,214,214,0.10)" }}
         >
           <p className="text-[13px] font-semibold leading-tight text-white">Plain English</p>
           <p className="mt-1.5 text-[9.5px] leading-tight text-muted">Not just charts</p>

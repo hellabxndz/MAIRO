@@ -208,7 +208,7 @@ function Cursor({ x, y, o, down, ripple }: { x: number; y: number; o: number; do
     <div className="pointer-events-none absolute left-0 top-0 z-20" style={{ transform: `translate(${x}px, ${y}px)`, opacity: o }}>
       {ripple !== null && <span className="absolute rounded-full border-2 border-white/70" style={{ width: 42, height: 42, left: -21, top: -21, transform: `scale(${0.3 + ripple * 0.9})`, opacity: 1 - ripple }} />}
       <svg width="22" height="26" viewBox="0 0 22 26" className="absolute -left-[3px] -top-[2px] drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]" style={{ transform: down ? "scale(0.86)" : undefined, transformOrigin: "3px 2px" }}>
-        <path d="M3 2 L3 21 L8.2 16.4 L11.6 24 L15 22.5 L11.7 15 L18.6 14.6 Z" fill="#fff" stroke="#05070d" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M3 2 L3 21 L8.2 16.4 L11.6 24 L15 22.5 L11.7 15 L18.6 14.6 Z" fill="#fff" stroke="#090909" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -225,8 +225,8 @@ function ChapterChip({ clip, t, narrow }: { clip: Clip; t: number; narrow: boole
   const o = ease(t, scene.start + 200, scene.start + 600) * (1 - ease(t, scene.start + 2900, scene.start + 3300));
   if (o <= 0.01) return null;
   return (
-    <p className={`absolute z-40 rounded-full border border-white/15 bg-[#05070d]/75 px-2.5 py-1 font-semibold uppercase tracking-[0.14em] text-white ${narrow ? "left-3 top-10 text-[9.5px]" : "right-3 top-3 text-[11px]"}`} style={{ opacity: o }}>
-      <span className="text-[#7fb0ff]">{String(n + 1).padStart(2, "0")}</span> · {scene.label}
+    <p className={`absolute z-40 rounded-full border border-white/15 bg-[#090909]/75 px-2.5 py-1 font-semibold uppercase tracking-[0.14em] text-white ${narrow ? "left-3 top-10 text-[9.5px]" : "right-3 top-3 text-[11px]"}`} style={{ opacity: o }}>
+      <span className="text-[#f7f7f7]">{String(n + 1).padStart(2, "0")}</span> · {scene.label}
     </p>
   );
 }
@@ -234,7 +234,7 @@ function ChapterChip({ clip, t, narrow }: { clip: Clip; t: number; narrow: boole
 /** The burned-in label: on every frame, so a still or a clip on its own still says what it is. */
 export function SampleBadge({ narrow }: { narrow: boolean }) {
   return (
-    <p className={`absolute left-3 top-3 z-50 rounded-full border border-amber-200/35 bg-[#05070d]/80 px-2.5 py-1 font-semibold text-amber-100 ${narrow ? "text-[9.5px]" : "text-[11px]"}`}>
+    <p className={`absolute left-3 top-3 z-50 rounded-full border border-amber-200/35 bg-[#090909]/80 px-2.5 py-1 font-semibold text-amber-100 ${narrow ? "text-[9.5px]" : "text-[11px]"}`}>
       Product demo · fictional business · sample data
     </p>
   );
@@ -248,7 +248,7 @@ export function ClipStage({ clip, t, layout, showCaption = false, onMeasured }: 
   // Only the scenes near t are drawn.
   const live = clip.scenes.filter((s) => t >= s.start - 50 && t < s.end + 50);
   return (
-    <div className="relative overflow-hidden text-left" style={{ width: w, height: h, background: "#05070d", backgroundImage: "var(--mairo-atmosphere)" }}>
+    <div className="relative overflow-hidden text-left" style={{ width: w, height: h, background: "#090909", backgroundImage: "var(--mairo-atmosphere)" }}>
       <DemoContext.Provider value>
         {live.map((s) => (
           <SceneLayer key={`${s.id}-${layout}`} scene={s} t={t} layout={layout} first={s === clip.scenes[0]} last={s === clip.scenes[clip.scenes.length - 1]} onMeasured={onMeasured} />

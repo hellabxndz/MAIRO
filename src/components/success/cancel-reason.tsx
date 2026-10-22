@@ -46,7 +46,7 @@ export function CancelReason({ onCancelPage = false }: { onCancelPage?: boolean 
             aria-pressed={reason === r}
             onClick={() => setReason(r)}
             className={`min-h-[36px] rounded-full border px-3.5 text-[12.5px] transition ${
-              reason === r ? "border-transparent bg-[image:var(--mairo-ramp)] text-white" : "border-[color:var(--mairo-line)] text-white/80 hover:text-white"
+              reason === r ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--mairo-line)] text-black/80 hover:text-black"
             }`}
           >
             {r}

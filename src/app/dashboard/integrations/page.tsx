@@ -149,7 +149,7 @@ export default async function IntegrationsPage({
                   ) : (
                     <a
                       href={meta.platform === "META" ? "/dashboard/meta" : meta.connectPath}
-                      className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-white transition hover:brightness-110"
+                      className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-black transition hover:brightness-110"
                     >
                       Connect {meta.name}
                     </a>

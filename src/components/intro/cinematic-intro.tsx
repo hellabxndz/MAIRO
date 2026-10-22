@@ -31,7 +31,7 @@ const CONCEPTS = [
   {
     headline: "Built for the walk home.",
     cta: "Shop now",
-    wash: "linear-gradient(160deg, rgba(120,90,230,0.30), rgba(20,16,44,0.5))",
+    wash: "linear-gradient(160deg, rgba(216,216,216,0.30), rgba(30,30,30,0.5))",
   },
   {
     headline: "Heavyweight. Nothing else.",
@@ -41,7 +41,7 @@ const CONCEPTS = [
   {
     headline: "Made to be worn out.",
     cta: "Shop now",
-    wash: "linear-gradient(160deg, rgba(60,110,220,0.28), rgba(12,20,44,0.5))",
+    wash: "linear-gradient(160deg, rgba(196,196,196,0.28), rgba(28,28,28,0.5))",
   },
 ];
 

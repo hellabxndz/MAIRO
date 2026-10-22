@@ -38,13 +38,13 @@ export function BeforeAfter() {
             ))}
           </ul>
         </article>
-        <article className="relative overflow-hidden rounded-[26px] border p-6 sm:p-8" style={{ borderColor: "rgba(47,107,255,0.4)", background: "radial-gradient(90% 80% at 100% 0%, rgba(47,107,255,0.22), transparent 60%), rgba(255,255,255,0.02)" }}>
+        <article className="relative overflow-hidden rounded-[26px] border p-6 sm:p-8" style={{ borderColor: "rgba(255,255,255,0.4)", background: "radial-gradient(90% 80% at 100% 0%, rgba(255,255,255,0.22), transparent 60%), rgba(255,255,255,0.02)" }}>
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300">With MAIRO</p>
           <p className="mt-3 text-[clamp(19px,2vw,24px)] font-semibold leading-snug text-white">Describe your business. Review the plan. Approve your campaigns.</p>
           <ol className="mt-6 space-y-3">
             {AFTER.map((a) => (
               <li key={a.n} className="flex gap-4 rounded-2xl bg-white/[0.04] px-4 py-3.5">
-                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-white">{a.n}</span>
+                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-black">{a.n}</span>
                 <span>
                   <span className="block text-[15px] font-semibold text-white">{a.t}</span>
                   <span className="mt-0.5 block text-[13.5px] leading-relaxed text-white/65">{a.d}</span>

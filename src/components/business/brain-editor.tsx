@@ -81,7 +81,7 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
         ))}
         <label>
           <span className="text-[12.5px] text-muted">Brand colors{mark("brandColors")}</span>
-          <input value={colors} onChange={(e) => setColors(e.target.value)} placeholder="#1a2b3c, #ff6600" className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
+          <input value={colors} onChange={(e) => setColors(e.target.value)} placeholder="#2b2b2b, #ff6600" className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
           <span className="mt-1 block text-[11.5px] text-faint">Hex codes, separated by commas</span>
         </label>
         <label>

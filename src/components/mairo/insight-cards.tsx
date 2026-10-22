@@ -20,9 +20,9 @@ import { GlassPanel } from "@/components/mairo";
 // two vocabularies overlapped — an OPPORTUNITY notification was rendering as
 // "Opportunity · Opportunity", which reads like a bug because it is one.
 const TONE: Record<NotificationSeverity, { edge: string; text: string }> = {
-  INFO: { edge: "rgba(108,158,255,0.42)", text: "text-blue-bright" },
-  OPPORTUNITY: { edge: "rgba(52,211,153,0.42)", text: "text-live" },
-  WARNING: { edge: "rgba(251,191,36,0.42)", text: "text-warn" },
+  INFO: { edge: "rgba(238,238,238,0.42)", text: "text-blue-bright" },
+  OPPORTUNITY: { edge: "rgba(34,255,136,0.42)", text: "text-live" },
+  WARNING: { edge: "rgba(255,221,0,0.42)", text: "text-warn" },
 };
 
 export function InsightCards({

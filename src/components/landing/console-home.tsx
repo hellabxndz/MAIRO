@@ -60,7 +60,7 @@ export function ConsoleHome() {
         {/* 2 — the film, the centerpiece: right under the hero, full width */}
         <section id="film" aria-labelledby="film-title" className="relative scroll-mt-16 pb-20 pt-6 sm:pb-28 sm:pt-10">
           <span id="walkthrough" aria-hidden className="block scroll-mt-20" />
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[18%] -z-10 h-[70%] bg-[radial-gradient(ellipse_50%_55%_at_50%_50%,rgba(47,107,255,0.18),transparent_72%)]" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[18%] -z-10 h-[70%] bg-[radial-gradient(ellipse_50%_55%_at_50%_50%,rgba(255,255,255,0.18),transparent_72%)]" />
           <div className="mx-auto max-w-[1320px] px-4 sm:px-8 lg:px-12">
             <div data-reveal className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
               <div className="max-w-[720px]">
@@ -153,11 +153,11 @@ export function ConsoleHome() {
 
         {/* The final call */}
         <section className="relative mx-auto max-w-[1280px] px-4 pb-24 pt-10 sm:px-8 lg:px-12">
-          <div data-reveal className="relative overflow-hidden rounded-[32px] border px-6 py-16 text-center sm:px-12" style={{ borderColor: "rgba(47,107,255,0.32)", background: "radial-gradient(80% 120% at 50% 0%, rgba(47,107,255,0.26), transparent 60%), #0a0f1f" }}>
+          <div data-reveal className="relative overflow-hidden rounded-[32px] border px-6 py-16 text-center sm:px-12" style={{ borderColor: "rgba(255,255,255,0.32)", background: "radial-gradient(80% 120% at 50% 0%, rgba(255,255,255,0.26), transparent 60%), #141414" }}>
             <h2 className="mx-auto max-w-[900px] text-[clamp(32px,5vw,64px)] font-semibold leading-[0.98] tracking-[-0.045em] text-white [text-wrap:balance]">Your AI advertising team is ready.</h2>
             <p className="mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-white/70">Start with a free plan for your business. No credit card, and no ads launched.</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href={CTA.href} className="inline-flex min-h-[56px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[16px] font-semibold text-white shadow-[0_18px_44px_-16px_rgba(47,107,255,0.85)] transition hover:brightness-110">
+              <Link href={CTA.href} className="inline-flex min-h-[56px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[16px] font-semibold text-black shadow-[0_18px_44px_-16px_rgba(255,255,255,0.85)] transition hover:brightness-110">
                 Build Your Free Ad Plan <span aria-hidden>→</span>
               </Link>
               <a href="#film" className="inline-flex min-h-[56px] items-center rounded-full border border-white/15 px-7 text-[16px] font-semibold text-white transition hover:border-white/40">

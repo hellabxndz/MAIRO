@@ -12,7 +12,7 @@ import { saveHandoff, type HandoffInput } from "@/lib/tools/handoff";
 export const inputCls =
   "w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2.5 text-[14.5px] text-white placeholder:text-white/35 outline-none transition focus:border-violet/70 focus:ring-2 focus:ring-violet/25";
 export const primaryBtn =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#4f7dff] to-[#2fa4ff] px-5 py-2.5 text-[14px] font-semibold text-white shadow-[0_8px_26px_-10px_rgba(47,107,255,0.9)] transition hover:brightness-110 disabled:opacity-50";
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#dfdfdf] to-[#cfcfcf] px-5 py-2.5 text-[14px] font-semibold text-black shadow-[0_8px_26px_-10px_rgba(255,255,255,0.9)] transition hover:brightness-110 disabled:opacity-50";
 export const secondaryBtn =
   "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-4 py-2 text-[13.5px] text-white/85 transition hover:border-white/35 hover:text-white disabled:opacity-50";
 
@@ -293,7 +293,7 @@ export function ExampleBadge({ show }: { show: boolean }) {
  */
 export function NextStep({ title, body, action, handoff, href = "/sign-up?from=tools" }: { title: string; body: string; action: string; handoff?: HandoffInput | null; href?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#4f7dff]/[0.08] to-[#2fa4ff]/[0.1] p-5 sm:p-6">
+    <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#dfdfdf]/[0.08] to-[#cfcfcf]/[0.1] p-5 sm:p-6">
       <p className="text-[16px] font-semibold text-white">{title}</p>
       <p className="mt-1 text-[13.5px] leading-relaxed text-white/75">{body}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -22,7 +22,7 @@ export default function ErrorPage({ error, retry }: { error: Error & { digest?: 
   useEffect(() => reportClientError(error), [error]);
   return (
     <main className="relative isolate flex min-h-screen items-center bg-paper px-4 py-20 text-white sm:px-8">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_45%_at_50%_0%,rgba(47,107,255,0.18),transparent_70%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_45%_at_50%_0%,rgba(255,255,255,0.18),transparent_70%)]" />
       <div className="mx-auto w-full max-w-[560px] text-center">
         <Link href="/" className="inline-flex min-h-[44px] items-center text-[15px] font-semibold tracking-[0.3em] text-white/80 hover:text-white">MAIRO</Link>
         <h1 className="mt-8 text-[clamp(28px,4vw,42px)] font-semibold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">
@@ -35,7 +35,7 @@ export default function ErrorPage({ error, retry }: { error: Error & { digest?: 
           <button
             type="button"
             onClick={() => retry()}
-            className="inline-flex min-h-[46px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60"
+            className="inline-flex min-h-[46px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/60"
           >
             Try again
           </button>

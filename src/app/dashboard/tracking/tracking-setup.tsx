@@ -167,7 +167,7 @@ export function TrackingSetup({ view }: { view: SetupView }) {
                           {choices.map((c) => (
                             <li key={c.id}>
                               <label className={`flex cursor-pointer gap-3 rounded-xl border px-4 py-3 text-sm ${picked === c.id ? "border-violet/60 bg-violet/[0.06]" : "border-white/10"} ${c.unavailable ? "cursor-not-allowed opacity-60" : ""}`}>
-                                <input type="radio" name="pixel" value={c.id} checked={picked === c.id} disabled={c.unavailable} onChange={() => setPicked(c.id)} className="mt-1 accent-[#2f6bff]" />
+                                <input type="radio" name="pixel" value={c.id} checked={picked === c.id} disabled={c.unavailable} onChange={() => setPicked(c.id)} className="mt-1 accent-[#ffffff]" />
                                 <span className="min-w-0">
                                   <span className="flex flex-wrap items-center gap-2 text-white">
                                     {c.name}

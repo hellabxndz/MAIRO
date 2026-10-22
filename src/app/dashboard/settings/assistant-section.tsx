@@ -131,7 +131,7 @@ export function AssistantSection({
             <input
               type="checkbox"
               name="consent"
-              className="mt-1 h-4 w-4 flex-none accent-[color:var(--color-blue-bright,#6c9eff)]"
+              className="mt-1 h-4 w-4 flex-none accent-[color:var(--color-blue-bright,#eeeeee)]"
             />
             <span>{SMS_CONSENT_TEXT}</span>
           </label>
@@ -197,7 +197,7 @@ export function AssistantSection({
                   type="checkbox"
                   name={u.name}
                   defaultChecked={phone.prefs[u.name]}
-                  className="mt-1 h-4 w-4 flex-none accent-[color:var(--color-blue-bright,#6c9eff)]"
+                  className="mt-1 h-4 w-4 flex-none accent-[color:var(--color-blue-bright,#eeeeee)]"
                 />
                 <span>
                   <span className="block text-sm text-white">{u.label}</span>

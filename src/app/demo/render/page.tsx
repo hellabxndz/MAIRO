@@ -17,14 +17,14 @@ export default async function RenderPage({ searchParams }: PageProps<"/demo/rend
   // The homepage's product clips and film (components/clips/).
   if (isClipId(clip)) {
     return (
-      <div style={{ margin: 0, background: "#05070d" }}>
+      <div style={{ margin: 0, background: "#090909" }}>
         <RenderClip id={clip} layout={layout === "narrow" ? "narrow" : "wide"} captions={captions === "1"} />
       </div>
     );
   }
   const walk = clip === "walkthrough";
   return (
-    <div style={{ margin: 0, background: "#05060d" }}>
+    <div style={{ margin: 0, background: "#090909" }}>
       <RenderFrame
         clip={walk ? "walkthrough" : "story"}
         type={walk ? "service" : exampleFrom(typeof type === "string" ? type : null)}

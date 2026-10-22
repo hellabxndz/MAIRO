@@ -73,7 +73,7 @@ export function StageNames({
           </label>
         ))}
         <div className="flex items-center gap-3 sm:col-span-2">
-          <button type="submit" disabled={pending} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-white disabled:opacity-60">
+          <button type="submit" disabled={pending} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-black disabled:opacity-60">
             Save names
           </button>
           <span className="text-[12px]" aria-live="polite">

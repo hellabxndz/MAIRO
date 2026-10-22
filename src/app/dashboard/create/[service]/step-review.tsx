@@ -121,7 +121,7 @@ function FindingList({ title, findings, onFix }: { title: string; findings: Find
       {title && <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">{title}</p>}
       <ul className="mt-3 space-y-2.5">
         {findings.map((f) => (
-          <li key={f.id} className="rounded-xl border p-4" style={{ borderColor: f.severity === "blocking" ? "rgba(248,113,113,0.3)" : "var(--mairo-line)" }}>
+          <li key={f.id} className="rounded-xl border p-4" style={{ borderColor: f.severity === "blocking" ? "rgba(255,61,110,0.3)" : "var(--mairo-line)" }}>
             <p className="text-[11px] text-faint">{f.area}</p>
             <p className="mt-0.5 text-[14px] text-white">{f.title}</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{f.detail}</p>

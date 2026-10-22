@@ -21,7 +21,7 @@ export function ExamplePlan({ example }: { example: Exclude<ExampleType, "brands
   if (!preview) return null;
   const ex = EXAMPLES[example];
   return (
-    <div role="img" aria-label={`Example: the free plan MAIRO builds for ${ex.name}, a fictional ${ex.label.toLowerCase()}. Sample data.`} className="relative rounded-[24px] border border-[color:var(--mairo-line)] bg-[#0b0d18] p-4 sm:p-6">
+    <div role="img" aria-label={`Example: the free plan MAIRO builds for ${ex.name}, a fictional ${ex.label.toLowerCase()}. Sample data.`} className="relative rounded-[24px] border border-[color:var(--mairo-line)] bg-[#121212] p-4 sm:p-6">
       <div className="mb-4">
         <SampleLabel>Example · {ex.name} is a fictional business · sample plan</SampleLabel>
       </div>

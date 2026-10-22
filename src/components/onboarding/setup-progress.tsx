@@ -61,7 +61,7 @@ export function SetupProgress({ steps, here, showProblem = true }: { steps: Onbo
       </ol>
       {focus?.why && <p className="mt-2 text-[12.5px] text-muted">{focus.why}</p>}
       {go && (
-        <Link href={go} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-white shadow-[var(--mairo-glow-key)]">
+        <Link href={go} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black shadow-[var(--mairo-glow-key)]">
           Continue: {focus!.label} →
         </Link>
       )}

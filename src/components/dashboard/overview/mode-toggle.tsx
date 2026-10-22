@@ -28,7 +28,7 @@ export function DashboardModeToggle({ mode }: { mode: DashboardMode }) {
             aria-pressed={on}
             disabled={pending}
             onClick={() => start(() => void (m.key === "profit" ? setDashboardLensAction("profit") : setViewMode(m.key)))}
-            className={`min-h-[34px] rounded-lg px-3.5 text-[13px] font-medium transition disabled:opacity-60 ${on ? "bg-gradient-to-r from-[#2f6bff] to-[#2f6bff] text-white" : "text-muted hover:text-white"}`}
+            className={`min-h-[34px] rounded-lg px-3.5 text-[13px] font-medium transition disabled:opacity-60 ${on ? "bg-gradient-to-r from-[#ffffff] to-[#ffffff] text-black" : "text-muted hover:text-black"}`}
           >
             {m.label}
           </button>

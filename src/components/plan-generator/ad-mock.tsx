@@ -13,7 +13,7 @@ export type Placement = "facebook" | "instagram";
 
 function Avatar({ name }: { name: string }) {
   return (
-    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-white">
+    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-black">
       {name.trim().charAt(0).toUpperCase() || "M"}
     </span>
   );
@@ -31,7 +31,7 @@ function Picture({ image, label, tall }: { image: ReactNode; label: string; tall
 
 function VisualConcept({ c, tall }: { c: PlanConcept; tall: boolean }) {
   return (
-    <div className={`relative flex flex-col justify-between overflow-hidden p-4 text-white ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`} style={{ background: "radial-gradient(120% 90% at 85% 0%, rgba(47,107,255,0.55), transparent 60%), radial-gradient(90% 80% at 0% 100%, rgba(53,108,255,0.35), transparent 60%), linear-gradient(160deg,#151a36,#0b0d1a)" }}>
+    <div className={`relative flex flex-col justify-between overflow-hidden p-4 text-white ${tall ? "aspect-[4/5]" : "aspect-[1.91/1] sm:aspect-[4/3]"}`} style={{ background: "radial-gradient(120% 90% at 85% 0%, rgba(255,255,255,0.55), transparent 60%), radial-gradient(90% 80% at 0% 100%, rgba(210,210,210,0.35), transparent 60%), linear-gradient(160deg,#262626,#121212)" }}>
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-full border border-white/25 bg-black/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/85">Visual concept</span>
         <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10.5px] text-white/80">{c.format}</span>
@@ -56,8 +56,8 @@ export function AdMock({ c, business, placement, domain, image, imageLabel = "Sa
         </div>
         {image ? <Picture image={image} label={imageLabel} tall /> : <VisualConcept c={c} tall />}
         <div className="flex items-center justify-between border-b border-[#efefef] bg-[#f5f6ff] px-3 py-2.5">
-          <span className="text-[13px] font-semibold text-[#3b31c9]">{c.cta}</span>
-          <span aria-hidden className="text-[14px] text-[#3b31c9]">›</span>
+          <span className="text-[13px] font-semibold text-[#b5b5b5]">{c.cta}</span>
+          <span aria-hidden className="text-[14px] text-[#b5b5b5]">›</span>
         </div>
         <figcaption className="px-3 py-2.5 text-[13px] leading-snug">
           <span className="font-semibold">{handle}</span> {c.primaryText}

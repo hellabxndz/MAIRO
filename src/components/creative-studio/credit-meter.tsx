@@ -41,7 +41,7 @@ export function CreditMeter({
           style={{
             width: `${pct}%`,
             backgroundImage: wouldExceed ? undefined : "var(--mairo-ramp)",
-            background: wouldExceed ? "rgb(251,191,36)" : undefined,
+            background: wouldExceed ? "rgb(255,221,0)" : undefined,
           }}
         />
       </div>

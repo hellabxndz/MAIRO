@@ -77,7 +77,7 @@ export function FixWithMairo({ insight, label, className = "" }: { insight: Pick
   const href = insight.decisionId ? "/dashboard/decisions" : (insight.action?.href ?? "/dashboard/decisions");
   const text = label ?? (insight.decisionId || insight.decisionDedupeKey ? "Fix with MAIRO" : (insight.action?.label ?? "Take a look"));
   const external = /^https?:\/\//.test(href);
-  const cls = `inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#2f6bff] px-3.5 text-[13px] font-medium text-white transition hover:brightness-110 ${className}`;
+  const cls = `inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#ffffff] px-3.5 text-[13px] font-medium text-black transition hover:brightness-110 ${className}`;
   return external ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
       {text} <span aria-hidden>↗</span>

@@ -32,7 +32,7 @@ export function WeeklyReportCard({ report, nextDay, enabled }: { report: { id: s
       </div>
       <Link
         href={ready ? `/dashboard/reports/weekly/${ready.id}` : enabled ? "/dashboard/reports" : "/dashboard/settings/reports"}
-        className="inline-flex min-h-[42px] shrink-0 items-center justify-center rounded-lg bg-[#2f6bff] px-4 text-[13.5px] font-medium text-white hover:brightness-110"
+        className="inline-flex min-h-[42px] shrink-0 items-center justify-center rounded-lg bg-[#ffffff] px-4 text-[13.5px] font-medium text-black hover:brightness-110"
       >
         {ready ? "Open weekly report" : enabled ? "See reports" : "Report settings"} →
       </Link>

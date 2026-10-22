@@ -29,7 +29,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
       <button type="button" onClick={() => setOpen(true)} className={className}>
         <span
           aria-hidden
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-paper shadow-sm"
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
         >
           <svg viewBox="0 0 12 12" className="ml-0.5 h-2.5 w-2.5 fill-black">
             <path d="M2 1.2v9.6L10.5 6z" />
@@ -59,7 +59,7 @@ export function WatchDemo({ className = "" }: { className?: string }) {
               >
                 <span aria-hidden>✕</span>
               </button>
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-paper shadow-[0_40px_120px_-20px_rgba(47,107,255,0.5)]">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-paper shadow-[0_40px_120px_-20px_rgba(255,255,255,0.5)]">
                 <LiveDemo />
               </div>
               <p className="mt-3 text-center text-[12px] text-[#fff]/70">

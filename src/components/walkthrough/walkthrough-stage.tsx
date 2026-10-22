@@ -404,7 +404,7 @@ function Cursor({ x, y, o, down, ripple }: { x: number; y: number; o: number; do
     <div className="pointer-events-none absolute left-0 top-0 z-20" style={{ transform: `translate(${x}px, ${y}px)`, opacity: o }}>
       {ripple !== null && <span className="absolute rounded-full border-2 border-white/70" style={{ width: 44, height: 44, left: -22, top: -22, transform: `scale(${0.3 + ripple * 0.9})`, opacity: 1 - ripple }} />}
       <svg width="22" height="26" viewBox="0 0 22 26" className="absolute -left-[3px] -top-[2px] drop-shadow-[0_4px_10px_rgba(0,0,0,0.55)]" style={{ transform: down ? "scale(0.86)" : undefined, transformOrigin: "3px 2px" }}>
-        <path d="M3 2 L3 21 L8.2 16.4 L11.6 24 L15 22.5 L11.7 15 L18.6 14.6 Z" fill="#fff" stroke="#0b0d18" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M3 2 L3 21 L8.2 16.4 L11.6 24 L15 22.5 L11.7 15 L18.6 14.6 Z" fill="#fff" stroke="#121212" strokeWidth="1.4" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -414,7 +414,7 @@ function Cursor({ x, y, o, down, ripple }: { x: number; y: number; o: number; do
 
 function Backdrop({ t }: { t: number }) {
   const drift = Math.sin(t / 2400) * 6;
-  return <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 34%, rgba(47,107,255,0.34), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(53,108,255,0.22), transparent 70%), #07080d` }} />;
+  return <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 34%, rgba(255,255,255,0.34), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(210,210,210,0.22), transparent 70%), #0a0a0a` }} />;
 }
 
 function Wordmark({ size }: { size: number }) {
@@ -437,10 +437,10 @@ function TitleCard({ t, narrow }: { t: number; narrow: boolean }) {
       <div className="relative" style={{ opacity: mark, transform: `translateY(${(1 - mark) * 10}px)` }}>
         <Wordmark size={narrow ? 15 : 17} />
       </div>
-      <p className="relative mt-5 font-semibold text-white" style={{ fontSize: narrow ? 44 : 76, lineHeight: 1, letterSpacing: `${-0.04 + 0.14 * (1 - meet)}em`, opacity: meet, transform: `scale(${1.05 - 0.05 * meet})`, textShadow: "0 0 50px rgba(47,107,255,0.5)" }}>
+      <p className="relative mt-5 font-semibold text-white" style={{ fontSize: narrow ? 44 : 76, lineHeight: 1, letterSpacing: `${-0.04 + 0.14 * (1 - meet)}em`, opacity: meet, transform: `scale(${1.05 - 0.05 * meet})`, textShadow: "0 0 50px rgba(255,255,255,0.5)" }}>
         {WALK_ONSCREEN.intro}
       </p>
-      <p className="relative mt-4 bg-gradient-to-r from-[#c6dcff] via-[#8fb8ff] to-[#7c9dff] bg-clip-text font-semibold text-transparent" style={{ fontSize: narrow ? 20 : 28, opacity: sub, transform: `translateY(${(1 - sub) * 10}px)` }}>
+      <p className="relative mt-4 bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text font-semibold text-transparent" style={{ fontSize: narrow ? 20 : 28, opacity: sub, transform: `translateY(${(1 - sub) * 10}px)` }}>
         {WALK_ONSCREEN.introSub}
       </p>
     </div>
@@ -474,7 +474,7 @@ function EndScreen({ t, narrow }: { t: number; narrow: boolean }) {
         })}
       </ul>
       <div className="relative mt-8 flex flex-col items-center" style={{ opacity: cta, transform: `scale(${0.96 + 0.04 * cta})` }}>
-        <span className="inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[17px] font-semibold text-white" style={{ boxShadow: `0 0 48px rgba(47,107,255,${glow}), 0 18px 40px -16px rgba(53,108,255,0.6)` }}>
+        <span className="inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[17px] font-semibold text-black" style={{ boxShadow: `0 0 48px rgba(47,107,255,${glow}), 0 18px 40px -16px rgba(210,210,210,0.6)` }}>
           {WALK_ONSCREEN.cta} <span aria-hidden>→</span>
         </span>
         <span className="mt-3 text-[12px] text-white/60">{WALK_ONSCREEN.ctaNote}</span>
@@ -492,7 +492,7 @@ function SceneTitle({ t, narrow }: { t: number; narrow: boolean }) {
   if (o <= 0.01) return null;
   return (
     <p className="absolute right-3 top-3 z-40 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white" style={{ opacity: o }}>
-      <span className="text-[#8fb8ff]">{String(n + 1).padStart(2, "0")}</span> · {narrow ? WALK_CHAPTERS[n].label : scene.label}
+      <span className="text-[#ffffff]">{String(n + 1).padStart(2, "0")}</span> · {narrow ? WALK_CHAPTERS[n].label : scene.label}
     </p>
   );
 }
@@ -505,7 +505,7 @@ export function WalkthroughStage({ t, layout, showCaption = true, onMeasured }: 
   // Only the scenes near t are drawn.
   const live = WALK_SCENES.filter((s) => s.id !== "ready" && t >= s.start - 600 && t < s.end + 600);
   return (
-    <div className="relative overflow-hidden text-left" style={{ width: w, height: h, background: "#07080d", backgroundImage: "var(--mairo-atmosphere)" }}>
+    <div className="relative overflow-hidden text-left" style={{ width: w, height: h, background: "#0a0a0a", backgroundImage: "var(--mairo-atmosphere)" }}>
       <DemoContext.Provider value>
         {live.map((s) => (
           <SceneLayer key={`${s.id}-${layout}`} id={s.id} t={t} layout={layout} onMeasured={onMeasured} />

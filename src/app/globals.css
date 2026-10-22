@@ -9,13 +9,17 @@
    pictures and the real dashboard are the same material. Nothing below this
    file should contain a hand-written blue.
 
-   Night by default: a near-black environment (#05070D), deep navy surfaces
-   (#0F1424, #141B33), MAIRO's electric blue (#2F6BFF) for the actions that
-   matter with a whisper of cyan (#38BDF8) on interactive light, near-white
-   type (#F8F9FF) with a metallic silver second voice (#A7B0C6).
+   Black and white, like the mark (October 2026): pure black (#000000),
+   neutral grey surfaces with no tint, white type (#FAFAFA) with a silver
+   second voice (#A6A6A6), and white for the actions that matter — a white
+   button with black type and a white glow, like the ring around the mark.
 
-   The "violet" utility family is kept as a name only: since October 2026 it
-   carries the electric-blue accent, so every component moved with one edit.
+   Colour is kept for important information only, in neon: green for live
+   and good results (#22FF88), yellow for warnings (#FFDD00), pink-red for
+   problems (#FF3D6E) and cyan for highlights (#00F0FF).
+
+   The "violet", "blue" and "sky" utility families are kept as names only;
+   they carry the white accent now, so every component moved with one edit.
 
    The rule worth keeping: glow is a signal, not a texture. A primary action
    glows. A metric that moved glows. A card sitting there does not. If
@@ -32,87 +36,97 @@
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* ---- Environment ----------------------------------------------------- */
-  --color-ink: #05070d;
-  --color-ink-2: #090c16;
-  --color-surface: #0f1424;
-  --color-surface-2: #141b33;
-  --color-line: #1d2742;
-  --color-line-lit: #2f4c8f;
+  /* Black and white, like the mark: pure black, and greys with no tint. */
+  --color-ink: #000000;
+  --color-ink-2: #070707;
+  --color-surface: #0e0e0e;
+  --color-surface-2: #161616;
+  --color-line: #262626;
+  --color-line-lit: #6b6b6b;
   /* Inputs and inset panels. */
-  --color-field: #0e1122;
-  --color-field-2: #111426;
-  --color-field-3: #07080d;
+  --color-field: #0b0b0b;
+  --color-field-2: #111111;
+  --color-field-3: #050505;
 
-  /* ---- Signal ---------------------------------------------------------- */
-  --color-blue: #356cff;
-  --color-blue-bright: #7c9dff;
-  --color-blue-deep: #2350d6;
-  --color-cyan: #38bdf8;
-  --color-violet: #2f6bff;
-  --color-violet-bright: #8fb8ff;
+  /* ---- The accent: white ------------------------------------------------ */
+  /* What used to be MAIRO's blue. The names stay so every component moved
+     with this edit; the values are white and silver now. A solid accent
+     carries black type (see the rule further down). */
+  --color-blue: #ffffff;
+  --color-blue-bright: #f2f2f2;
+  --color-blue-deep: #d9d9d9;
+  --color-violet: #ffffff;
+  --color-violet-bright: #ffffff;
 
-  /* ---- Status ---------------------------------------------------------- */
-  --color-live: #34d399;
-  --color-warn: #fbbf24;
-  --color-alert: #f87171;
+  /* ---- Neon: only for what matters -------------------------------------- */
+  /* Live and good results, warnings, problems, and highlighted information.
+     Nothing else on the page has colour, so these are what the eye finds. */
+  --color-live: #22ff88;
+  --color-warn: #ffdd00;
+  --color-alert: #ff3d6e;
+  --color-cyan: #00f0ff;
 
   /* ---- Text ------------------------------------------------------------ */
   /* "white" is the primary type colour (text-white across the product).
      "paper" is the page itself: bg-paper is the environment, and a panel at
      bg-paper/70 is the environment seen through. */
-  --color-white: #f8f9ff;
-  --color-paper: #05070d;
-  --color-muted: #a7b0c6;
-  /* The quietest type that still reads: 4.7:1 on the page. */
-  --color-faint: #7a83a0;
+  --color-white: #fafafa;
+  --color-paper: #000000;
+  --color-muted: #a6a6a6;
+  /* The quietest type that still reads: 5:1 on the page. */
+  --color-faint: #7d7d7d;
 
   /* ---- The greys ------------------------------------------------------- */
-  /* Low steps are light type, high steps dark surfaces, tinted toward the
-     brand's navy rather than a neutral grey. */
-  --color-neutral-50: #f6f7fc;
-  --color-neutral-100: #e9ebf5;
-  --color-neutral-200: #d3d7e8;
-  --color-neutral-300: #b8bed6;
-  --color-neutral-400: #a4acc3;
-  --color-neutral-500: #858da8;
-  --color-neutral-600: #636b88;
-  --color-neutral-700: #3c4363;
-  --color-neutral-800: #222842;
-  --color-neutral-900: #141830;
-  --color-neutral-950: #0a0c16;
+  /* Low steps are light type, high steps dark surfaces. Neutral: no tint. */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f0f0f0;
+  --color-neutral-200: #d9d9d9;
+  --color-neutral-300: #bfbfbf;
+  --color-neutral-400: #a6a6a6;
+  --color-neutral-500: #8a8a8a;
+  --color-neutral-600: #666666;
+  --color-neutral-700: #3d3d3d;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0d0d0d;
 
-  /* Accent families: the light steps are type on the dark page. */
-  --color-sky-200: #b4c8ff;
-  --color-sky-300: #93b0ff;
-  --color-sky-400: #5d87ff;
-  --color-sky-500: #356cff;
+  /* Former accent families, now silver: the light steps are type on black. */
+  --color-sky-200: #f5f5f5;
+  --color-sky-300: #e6e6e6;
+  --color-sky-400: #d4d4d4;
+  --color-sky-500: #ffffff;
+  --color-violet-200: #f5f5f5;
+  --color-violet-300: #e6e6e6;
+  --color-violet-400: #d4d4d4;
+  --color-violet-500: #ffffff;
+  --color-blue-200: #f0f0f0;
 
-  --color-emerald-100: #d3f7e7;
-  --color-emerald-200: #a7e9cd;
-  --color-emerald-300: #6fe0b4;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #17b783;
-  --color-emerald-600: #0f9b6c;
+  /* Neon families. Light steps are type on black, the 400s are dots, bars
+     and fills. */
+  --color-emerald-100: #dbffea;
+  --color-emerald-200: #a8ffcc;
+  --color-emerald-300: #5cffa3;
+  --color-emerald-400: #22ff88;
+  --color-emerald-500: #00e676;
+  --color-emerald-600: #00c060;
 
-  --color-amber-100: #fdf3d4;
-  --color-amber-200: #fde9a8;
-  --color-amber-300: #fcd469;
-  --color-amber-400: #fbbf24;
-  --color-amber-500: #eaa612;
+  --color-amber-100: #fffbd1;
+  --color-amber-200: #fff480;
+  --color-amber-300: #ffea33;
+  --color-amber-400: #ffdd00;
+  --color-amber-500: #f5c400;
 
-  --color-red-200: #fecaca;
-  --color-red-300: #fca5a5;
-  --color-red-400: #f87171;
-  --color-violet-200: #d6e4ff;
-  --color-violet-300: #a9c8ff;
-  --color-violet-400: #6fa3ff;
-  --color-violet-500: #2f6bff;
-  --color-cyan-200: #bae9fd;
-  --color-cyan-300: #7dd3fc;
-  --color-cyan-400: #38bdf8;
-  --color-blue-200: #c3d3ff;
-  --color-orange-200: #fed7aa;
-  --color-rose-300: #fda4af;
+  --color-red-200: #ffc2d3;
+  --color-red-300: #ff7fa1;
+  --color-red-400: #ff3d6e;
+  --color-red-500: #ff1f5a;
+  --color-red-600: #e6004a;
+
+  --color-cyan-200: #b8fcff;
+  --color-cyan-300: #5cf6ff;
+  --color-cyan-400: #00f0ff;
+  --color-orange-200: #ffcf99;
+  --color-rose-300: #ff8ac4;
 
   /* ---- Form ------------------------------------------------------------ */
   --radius-card: 1.125rem;
@@ -128,91 +142,80 @@
   color-scheme: dark;
   /* Overlays written as rgba(<fg>, a) — a faint wash of the type colour —
      and panels as rgba(<bg>, a). */
-  --mairo-fg-rgb: 248, 249, 255;
-  --mairo-bg-rgb: 5, 7, 13;
+  --mairo-fg-rgb: 250, 250, 250;
+  --mairo-bg-rgb: 0, 0, 0;
 
   /* Values Tailwind cannot express as utilities. Referenced by name from the
      MAIRO components, never retyped. */
-  --mairo-line: rgba(164, 172, 195, 0.14);
-  --mairo-line-lit: rgba(47, 107, 255, 0.55);
+  --mairo-line: rgba(255, 255, 255, 0.12);
+  --mairo-line-lit: rgba(255, 255, 255, 0.45);
 
-  /* A card: deep navy, a hairline, and light falling from the top edge.
+  /* A card: near-black, a hairline, and light falling from the top edge.
      No backdrop-filter anywhere in this product: it can't sample a fixed
      backdrop on mobile and paints a translucent panel as an opaque black
      rectangle — that shipped once and took weeks to find. */
-  --mairo-glass: linear-gradient(170deg, rgba(22, 30, 54, 0.86) 0%, rgba(14, 19, 35, 0.86) 55%, rgba(11, 15, 28, 0.9) 100%);
+  --mairo-glass: linear-gradient(170deg, rgba(24, 24, 24, 0.88) 0%, rgba(14, 14, 14, 0.88) 55%, rgba(9, 9, 9, 0.92) 100%);
   /* A raised panel: one step lighter, for the thing in front. */
-  --mairo-glass-2: linear-gradient(170deg, rgba(28, 38, 70, 0.92) 0%, rgba(18, 25, 48, 0.92) 100%);
+  --mairo-glass-2: linear-gradient(170deg, rgba(34, 34, 34, 0.94) 0%, rgba(20, 20, 20, 0.94) 100%);
 
   /* Three lifts, a scale rather than a palette: rest, interactive, and the
-     one thing on the screen that matters most (the violet glow). */
-  --mairo-glow-soft: 0 0 0 1px rgba(164, 172, 195, 0.06), inset 0 1px 0 rgba(248, 249, 255, 0.04), 0 18px 48px -26px rgba(0, 0, 0, 0.9);
-  --mairo-glow-lift: 0 0 0 1px rgba(47, 107, 255, 0.3), inset 0 1px 0 rgba(248, 249, 255, 0.06), 0 26px 60px -26px rgba(47, 107, 255, 0.45);
-  --mairo-glow-key: 0 0 0 1px rgba(47, 107, 255, 0.45), 0 0 34px -6px rgba(47, 107, 255, 0.55), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
+     one thing on the screen that matters most (the white glow, like the
+     ring around the mark). */
+  --mairo-glow-soft: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px -26px rgba(0, 0, 0, 0.9);
+  --mairo-glow-lift: 0 0 0 1px rgba(255, 255, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 26px 60px -26px rgba(255, 255, 255, 0.14);
+  --mairo-glow-key: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 0 30px -4px rgba(255, 255, 255, 0.35), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
 
-  /* The primary action, and the headline's accent line. The same ramp, so
-     the button and the word on the page are recognisably the same light. */
-  --mairo-ramp: linear-gradient(120deg, #1f56f0 0%, #2f6bff 55%, #3d8bff 100%);
-  --mairo-ramp-soft: linear-gradient(120deg, #c9d8ff 0%, #a9c8ff 55%, #8fdcff 100%);
+  /* The primary action: white, with black type (see the rule below), and the
+     headline's accent line in brushed silver, like the mark. */
+  --mairo-ramp: linear-gradient(120deg, #e8e8e8 0%, #ffffff 55%, #f0f0f0 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #ffffff 0%, #bdbdbd 55%, #f5f5f5 100%);
 
-  /* The environment behind the signed-in app and the site: violet light from
-     above, a cooler blue from the side, falling off into the page. Painted
-     once, fixed, never animated. */
+  /* The environment behind the signed-in app and the site: a faint white
+     light from above on black. Painted once, fixed, never animated. */
   --mairo-atmosphere:
-    radial-gradient(ellipse 70% 50% at 80% -10%, rgba(47, 107, 255, 0.16), transparent 70%),
-    radial-gradient(ellipse 50% 40% at -8% 16%, rgba(56, 189, 248, 0.06), transparent 70%),
-    linear-gradient(180deg, #070a14 0%, #05070d 40%, #05070d 100%);
+    radial-gradient(ellipse 70% 50% at 80% -10%, rgba(255, 255, 255, 0.07), transparent 70%),
+    radial-gradient(ellipse 50% 40% at -8% 16%, rgba(255, 255, 255, 0.03), transparent 70%),
+    linear-gradient(180deg, #080808 0%, #000000 40%, #000000 100%);
 }
 
 /* ===========================================================================
-   CLASSIC — kept as a name.
+   ON THE WHITE ACCENT — black type.
 
-   Containers marked data-palette="classic" (and type sitting on the
-   violet/blue ramp or a solid accent) were the dark islands while the
-   product was light. Night is now the default, so the scope only pins the
-   colour scheme and white type; every value is inherited from above.
+   The primary action is white now, so whatever sits on it is black: the
+   element itself and any white type inside it, whatever text utility was
+   left on them. Unlayered, so it wins over Tailwind's utilities.
    =========================================================================== */
-[data-palette="classic"],
 [class~="bg-[image:var(--mairo-ramp)]"],
 [style*="--mairo-ramp)"],
-[class~="bg-[#2f6bff]"],
-[class~="bg-[#2f6bff]/70"],
-[class~="from-[#2f6bff]"],
-[class~="from-[#2f6bff]"],
-[class~="from-[#3b6bff]"],
-[class~="from-[#4f7dff]"],
-[class~="from-[#3567ff]"],
-[class~="from-[#312e81]"],
+[class~="bg-[#ffffff]"],
+[class~="bg-violet"],
+[class~="bg-violet-500"],
+[class~="bg-blue"] {
+  color: #000;
+  color-scheme: light;
+}
+:is([class~="bg-[image:var(--mairo-ramp)]"], [style*="--mairo-ramp)"], [class~="bg-[#ffffff]"], [class~="bg-violet"], [class~="bg-violet-500"], [class~="bg-blue"])
+  :is(.text-white, [class*="text-white/"], .text-violet, .text-violet-200, .text-violet-300, .text-muted) {
+  color: rgb(0 0 0 / 0.72);
+}
+
+/* Dark islands — Facebook's own colours in ad previews and the solid alert —
+   keep white type. In the base layer, so any text utility still wins. */
+[data-palette="classic"],
 [class~="bg-[#1877f2]"],
 [class~="bg-[#18191a]"],
-[class~="bg-violet-500"],
 [class~="bg-red-500"],
 [class~="bg-red-500/80"],
 [class~="bg-red-500/90"] {
   color-scheme: dark;
 }
-
-/* Type inside the classic scope defaults to its white, so a solid accent
-   whose label never named a colour (it used to inherit white from the page)
-   keeps it. In the base layer, so any text utility on the element still wins. */
 @layer base {
-[data-palette="classic"],
-[class~="bg-[image:var(--mairo-ramp)]"],
-[style*="--mairo-ramp)"],
-[class~="bg-[#2f6bff]"],
-[class~="bg-[#2f6bff]/70"],
-[class~="from-[#2f6bff]"],
-[class~="from-[#2f6bff]"],
-[class~="from-[#3b6bff]"],
-[class~="from-[#4f7dff]"],
-[class~="from-[#3567ff]"],
-[class~="from-[#312e81]"],
-[class~="bg-[#1877f2]"],
-[class~="bg-[#18191a]"],
-[class~="bg-violet-500"],
-[class~="bg-red-500"],
-[class~="bg-red-500/80"],
-[class~="bg-red-500/90"] {
+  [data-palette="classic"],
+  [class~="bg-[#1877f2]"],
+  [class~="bg-[#18191a]"],
+  [class~="bg-red-500"],
+  [class~="bg-red-500/80"],
+  [class~="bg-red-500/90"] {
     color: var(--color-white);
   }
 }
@@ -221,8 +224,8 @@
    to sections that already exist; it never moves and costs one paint. */
 .mairo-grid {
   background-image:
-    repeating-linear-gradient(to right, rgba(122, 162, 255, 0.05) 0 1px, transparent 1px 88px),
-    repeating-linear-gradient(to bottom, rgba(122, 162, 255, 0.05) 0 1px, transparent 1px 88px);
+    repeating-linear-gradient(to right, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 88px),
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 88px);
   -webkit-mask-image: radial-gradient(ellipse 120% 78% at 50% 42%, #000 10%, rgba(0, 0, 0, 0.45) 58%, transparent 92%);
   mask-image: radial-gradient(ellipse 120% 78% at 50% 42%, #000 10%, rgba(0, 0, 0, 0.45) 58%, transparent 92%);
 }

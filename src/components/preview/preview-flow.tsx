@@ -490,7 +490,7 @@ export function Steps({ step }: { step: number }) {
         const state = n < step ? "done" : n === step ? "now" : "later";
         return (
           <li key={label} className="flex min-w-0 flex-1 items-center gap-2" aria-current={state === "now" ? "step" : undefined}>
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${state === "done" ? "bg-emerald-400/15 text-emerald-300" : state === "now" ? "bg-[image:var(--mairo-ramp)] text-white" : "bg-white/[0.06] text-white/45"}`}>{state === "done" ? "✓" : n}</span>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${state === "done" ? "bg-emerald-400/15 text-emerald-300" : state === "now" ? "bg-[image:var(--mairo-ramp)] text-black" : "bg-white/[0.06] text-black/45"}`}>{state === "done" ? "✓" : n}</span>
             <span className={`hidden truncate @md:inline ${state === "later" ? "text-white/45" : "text-white/85"}`}>{label}</span>
             {n < STEPS.length && <span aria-hidden className="h-px min-w-3 flex-1 bg-white/10" />}
           </li>
@@ -542,7 +542,7 @@ export function GoalFieldset({ value, onChange }: { value: PreviewGoal | ""; onC
         {GOALS.map((g) => (
           <label key={g.value} className={`flex cursor-pointer flex-col rounded-xl border px-3.5 py-3 transition ${value === g.value ? "border-violet/70 bg-violet/[0.10]" : "border-white/12 bg-white/[0.02] hover:border-white/30"}`}>
             <span className="flex items-center gap-2 text-[14px] font-medium text-white">
-              <input type="radio" name="pv-goal" value={g.value} checked={value === g.value} onChange={() => onChange(g.value)} className="accent-[#2f6bff]" />
+              <input type="radio" name="pv-goal" value={g.value} checked={value === g.value} onChange={() => onChange(g.value)} className="accent-[#ffffff]" />
               {g.label}
             </span>
             <span className="mt-0.5 pl-6 text-[12.5px] text-white/60">{g.detail}</span>

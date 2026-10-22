@@ -129,7 +129,7 @@ export function MairoToday({
           <ul className="mt-3 space-y-2">
             {doing.map((d) => (
               <li key={d.label} className="flex items-start gap-2.5 text-[13px]">
-                <span aria-hidden className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ background: d.on ? "#34d399" : "rgba(var(--mairo-fg-rgb),0.18)" }} />
+                <span aria-hidden className="mt-[6px] h-2 w-2 shrink-0 rounded-full" style={{ background: d.on ? "#22ff88" : "rgba(var(--mairo-fg-rgb),0.18)" }} />
                 <span>
                   <span className={d.on ? "text-white" : "text-muted"}>{d.label}</span>
                   <span className="block text-[12px] text-faint">{d.status}</span>

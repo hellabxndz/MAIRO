@@ -37,7 +37,7 @@ export function CreativeBriefTool() {
           <legend className="text-[13.5px] font-medium text-white">Where it runs</legend>
           <div className="mt-1.5 flex flex-wrap gap-3 text-[13.5px] text-white/80">
             {(["feed", "stories", "reels"] as Placement[]).map((p) => (
-              <label key={p} className="flex items-center gap-2"><input type="checkbox" className="accent-[#2f6bff]" checked={s.placements.includes(p)} onChange={() => togglePlacement(p)} />{p.charAt(0).toUpperCase() + p.slice(1)}</label>
+              <label key={p} className="flex items-center gap-2"><input type="checkbox" className="accent-[#ffffff]" checked={s.placements.includes(p)} onChange={() => togglePlacement(p)} />{p.charAt(0).toUpperCase() + p.slice(1)}</label>
             ))}
           </div>
         </fieldset>

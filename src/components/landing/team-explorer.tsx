@@ -29,7 +29,7 @@ const FLOW: Step[] = [
 function Detail({ role, panelRef }: { role: AgentRole; panelRef: Ref<HTMLDivElement> }) {
   const a = AGENT[role];
   return (
-    <div ref={panelRef} aria-live="polite" className="scroll-mt-24 rounded-[24px] border border-white/10 bg-paper p-6 shadow-[0_30px_80px_-40px_rgba(91,63,224,0.45)] sm:p-7">
+    <div ref={panelRef} aria-live="polite" className="scroll-mt-24 rounded-[24px] border border-white/10 bg-paper p-6 shadow-[0_30px_80px_-40px_rgba(200,200,200,0.45)] sm:p-7">
       <div className="flex items-center gap-3">
         <AgentIcon role={role} size={48} />
         <div className="min-w-0">
@@ -170,7 +170,7 @@ export function TeamExplorer() {
                   type="button"
                   onClick={() => pick(a.role)}
                   aria-pressed={selected === a.role}
-                  className={`flex h-full w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition ${selected === a.role ? "border-[color:var(--mairo-line-lit)] bg-violet/[0.07] shadow-[0_14px_30px_-20px_rgba(91,63,224,0.6)]" : "border-white/10 bg-paper hover:border-[color:var(--mairo-line-lit)]"}`}
+                  className={`flex h-full w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition ${selected === a.role ? "border-[color:var(--mairo-line-lit)] bg-violet/[0.07] shadow-[0_14px_30px_-20px_rgba(200,200,200,0.6)]" : "border-white/10 bg-paper hover:border-[color:var(--mairo-line-lit)]"}`}
                 >
                   <AgentIcon role={a.role} size={34} />
                   <span className="min-w-0">

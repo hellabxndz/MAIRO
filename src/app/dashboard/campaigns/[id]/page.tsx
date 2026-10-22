@@ -253,7 +253,7 @@ export default async function CampaignPage({
           {campaign.platformCampaigns
             .filter((p) => p.adReviewState === "REJECTED" || p.adReviewState === "WITH_ISSUES")
             .map((p) => (
-              <section key={p.platform} className="rounded-[20px] p-5" style={{ background: "rgba(248,113,113,0.06)" }}>
+              <section key={p.platform} className="rounded-[20px] p-5" style={{ background: "rgba(255,61,110,0.06)" }}>
                 <p className="text-[15px] font-medium text-white">{p.adReviewState === "REJECTED" ? "Meta didn't approve this ad" : "Meta flagged a problem with this ad"}</p>
                 {p.adReviewExplanation && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{p.adReviewExplanation}</p>}
                 {p.adReviewAction && <p className="mt-2 text-[13px] leading-relaxed text-white/90">What to do: {p.adReviewAction}</p>}
@@ -273,7 +273,7 @@ export default async function CampaignPage({
                 {advice.map((a) => (
                   <GlassPanel key={a.title} className="p-4">
                     <p className="flex items-center gap-2 text-[14px] text-white">
-                      <span className="h-2 w-2 flex-none rounded-full" style={{ background: a.tone === "good" ? "#34d399" : a.tone === "fix" ? "#fbbf24" : a.tone === "idea" ? "#6c9eff" : "rgba(var(--mairo-fg-rgb),0.35)" }} aria-hidden />
+                      <span className="h-2 w-2 flex-none rounded-full" style={{ background: a.tone === "good" ? "#22ff88" : a.tone === "fix" ? "#ffdd00" : a.tone === "idea" ? "#eeeeee" : "rgba(var(--mairo-fg-rgb),0.35)" }} aria-hidden />
                       {a.title}
                     </p>
                     <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{a.detail}</p>

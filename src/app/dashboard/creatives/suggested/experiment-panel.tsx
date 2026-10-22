@@ -21,7 +21,7 @@ const STEPS: { key: ExperimentView["status"]; label: string }[] = [
 ];
 
 const usd = (cents: number) => `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
-const primary = "inline-flex min-h-[40px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-[#fff] disabled:opacity-60";
+const primary = "inline-flex min-h-[40px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-black disabled:opacity-60";
 const quiet = "inline-flex min-h-[40px] items-center justify-center rounded-full border px-4 text-[13px] text-white/85 hover:text-white disabled:opacity-60";
 
 export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView | null; approved: number; paid: boolean }) {

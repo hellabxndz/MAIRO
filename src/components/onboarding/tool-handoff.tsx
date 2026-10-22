@@ -48,7 +48,7 @@ export function ToolHandoff({ kinds, onUse }: { kinds: Handoff["kind"][]; onUse:
               <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
-                  className="min-h-[36px] rounded-full bg-violet px-3.5 text-[12.5px] font-medium text-white hover:brightness-110"
+                  className="min-h-[36px] rounded-full bg-violet px-3.5 text-[12.5px] font-medium text-black hover:brightness-110"
                   onClick={() => {
                     const where = onUse(h);
                     dropHandoff(h);

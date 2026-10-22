@@ -134,7 +134,7 @@ function ResultsView() {
             type="button"
             aria-pressed={m === mode}
             onClick={() => setMode(m)}
-            className={`rounded-full px-3.5 py-1.5 text-[12.5px] transition ${m === mode ? "bg-[image:var(--mairo-ramp)] font-medium text-white" : "text-muted hover:text-white"}`}
+            className={`rounded-full px-3.5 py-1.5 text-[12.5px] transition ${m === mode ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:text-black"}`}
           >
             {m}
           </button>
@@ -153,12 +153,12 @@ function ResultsView() {
         <svg viewBox="0 0 300 80" className="mt-1 h-[72px] w-full" preserveAspectRatio="none" aria-hidden>
           <defs>
             <linearGradient id="pp-fill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#2f6bff" stopOpacity="0.28" />
-              <stop offset="1" stopColor="#2f6bff" stopOpacity="0" />
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0.28" />
+              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={`${line} L300,80 L0,80 Z`} fill="url(#pp-fill)" />
-          <path d={line} fill="none" stroke="#6544f0" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+          <path d={line} fill="none" stroke="#d2d2d2" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         </svg>
       </div>
     </Pane>
@@ -200,7 +200,7 @@ function RecsView() {
           Budget Guardian checked it: within your limits.
         </p>
         <div className="mt-3 flex flex-wrap gap-2" aria-hidden>
-          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-white">Approve</span>
+          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-black">Approve</span>
           <span className="rounded-full border border-white/15 px-4 py-1.5 text-[12.5px] text-white/85">Ask why</span>
           <span className="rounded-full border border-white/15 px-4 py-1.5 text-[12.5px] text-white/85">Decline</span>
         </div>
@@ -309,7 +309,7 @@ export function ProductPreview() {
 
   return (
     <div>
-      <div className="overflow-hidden rounded-[26px] border border-white/10 bg-paper shadow-[0_40px_120px_-50px_rgba(91,63,224,0.55)]">
+      <div className="overflow-hidden rounded-[26px] border border-white/10 bg-paper shadow-[0_40px_120px_-50px_rgba(200,200,200,0.55)]">
         <div className="grid grid-cols-1 md:grid-cols-[210px_minmax(0,1fr)]">
           <div className="min-w-0 border-b border-white/[0.07] bg-white/[0.02] p-3 md:border-b-0 md:border-r md:p-4">
             <p className="hidden px-2 pb-3 text-[13px] font-light tracking-[0.3em] text-white md:block">MAIRO</p>
@@ -326,7 +326,7 @@ export function ProductPreview() {
                   aria-controls="pp-panel"
                   tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => setTab(t.id)}
-                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-[13px] transition ${tab === t.id ? "bg-[image:var(--mairo-ramp)] font-medium text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"}`}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-[13px] transition ${tab === t.id ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:bg-white/[0.04] hover:text-black"}`}
                 >
                   {t.label}
                 </button>

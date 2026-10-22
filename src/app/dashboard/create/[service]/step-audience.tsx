@@ -102,8 +102,8 @@ export function StepAudience({
                     onClick={() => update({ genders: g.v })}
                     className="rounded-lg border px-3 py-2 text-[13px] transition disabled:opacity-40"
                     style={{
-                      borderColor: plan.genders === g.v ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-                      background: plan.genders === g.v ? "rgba(61,125,255,0.08)" : "transparent",
+                      borderColor: plan.genders === g.v ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                      background: plan.genders === g.v ? "rgba(214,214,214,0.08)" : "transparent",
                       color: plan.genders === g.v ? "var(--color-white)" : undefined,
                     }}>
                     {g.l}
@@ -193,7 +193,7 @@ function PlaceSearch({ plan, update }: { plan: CampaignPlan; update: (patch: Par
   if (plan.geoKey) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <span className="rounded-lg border px-3 py-2 text-[13px] text-white" style={{ borderColor: "rgba(108,158,255,0.5)" }}>
+        <span className="rounded-lg border px-3 py-2 text-[13px] text-white" style={{ borderColor: "rgba(238,238,238,0.5)" }}>
           {plan.geoLabel}
         </span>
         <select value={plan.geoRadius} onChange={(e) => update({ geoRadius: Number(e.target.value) })}

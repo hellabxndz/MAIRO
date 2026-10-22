@@ -101,7 +101,7 @@ export function ReadinessPanel({ r, onImprove, improving, onCreate }: { r: Readi
       {r.fixes.length > 0 && onImprove && (
         <div className="mt-4 rounded-xl bg-violet/[0.08] px-3.5 py-3">
           <p className="text-[12.5px] text-white/90">MAIRO can make {r.fixes.length === 1 ? "this change" : "these changes"} for you: {r.fixes.map((f) => f.label.charAt(0).toLowerCase() + f.label.slice(1)).join(", ")}. It&rsquo;s saved as a new version — you can go back to the current one.</p>
-          <button type="button" disabled={improving} onClick={onImprove} className="mt-2 inline-flex min-h-[36px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[12.5px] font-semibold text-[#fff] disabled:opacity-60">{improving ? "Improving…" : "Improve this ad"}</button>
+          <button type="button" disabled={improving} onClick={onImprove} className="mt-2 inline-flex min-h-[36px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[12.5px] font-semibold text-black disabled:opacity-60">{improving ? "Improving…" : "Improve this ad"}</button>
         </div>
       )}
       <p className="mt-3 text-[11.5px] leading-relaxed text-faint">{r.label}</p>

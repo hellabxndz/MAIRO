@@ -171,13 +171,13 @@ function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType
           </>
         ) : (
           // A concept: its words and a direction for the picture — clearly not a photograph.
-          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(47,107,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
+          <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center" style={{ background: "radial-gradient(90% 70% at 50% 35%, rgba(255,255,255,0.14), transparent 70%), rgba(var(--mairo-fg-rgb),0.025)" }}>
             <p className="text-[15px] font-semibold leading-snug text-white">“{d.words?.hook}”</p>
             <p className="text-[12px] text-muted">{failed ? "The last picture couldn't be made — no credits were used." : "Concept — no picture yet"}</p>
           </div>
         )}
         <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-medium text-[#fff]">{d.style}</span>
-        {d.recommended && <span className="absolute right-3 top-3 rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-1 text-[11.5px] font-medium text-[#fff]">Test this first</span>}
+        {d.recommended && <span className="absolute right-3 top-3 rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-1 text-[11.5px] font-medium text-black">Test this first</span>}
       </div>
 
       <div className="flex flex-1 flex-col p-5">

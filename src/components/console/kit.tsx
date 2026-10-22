@@ -59,9 +59,9 @@ export function Panel({
   const demo = useContext(DemoContext);
   const bg =
     tone === "lit"
-      ? "linear-gradient(165deg, rgba(47,107,255,0.16) 0%, rgba(21,27,54,0.9) 42%, rgba(17,20,38,0.9) 100%)"
+      ? "linear-gradient(165deg, rgba(255,255,255,0.16) 0%, rgba(38,38,38,0.9) 42%, rgba(28,28,28,0.9) 100%)"
       : tone === "warn"
-        ? "linear-gradient(165deg, rgba(251,191,36,0.10) 0%, rgba(17,20,38,0.9) 50%)"
+        ? "linear-gradient(165deg, rgba(255,221,0,0.10) 0%, rgba(28,28,28,0.9) 50%)"
         : "var(--mairo-glass)";
   return (
     <section
@@ -69,7 +69,7 @@ export function Panel({
       data-panel={id}
       aria-labelledby={title && id && !demo ? `${id}-title` : undefined}
       className={`relative overflow-hidden rounded-[22px] border ${pad ? "p-5 sm:p-6" : ""} ${className}`}
-      style={{ borderColor: tone === "warn" ? "rgba(251,191,36,0.28)" : tone === "lit" ? "rgba(47,107,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
+      style={{ borderColor: tone === "warn" ? "rgba(255,221,0,0.28)" : tone === "lit" ? "rgba(255,255,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
     >
       {/* A hairline of light along the top edge: depth without a drop shadow. */}
       <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(248,249,255,0.14),transparent)]" />
@@ -98,7 +98,7 @@ const PILL_TONE = {
   warn: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   alert: "border-red-400/35 bg-red-400/[0.08] text-red-300",
   violet: "border-violet-400/35 bg-violet-500/[0.10] text-violet-200",
-  blue: "border-[#356cff]/35 bg-[#356cff]/[0.10] text-sky-200",
+  blue: "border-[#d2d2d2]/35 bg-[#d2d2d2]/[0.10] text-sky-200",
   muted: "border-white/10 bg-white/[0.04] text-muted",
 } as const;
 export type PillTone = keyof typeof PILL_TONE;
@@ -117,7 +117,7 @@ export function Pill({ tone = "muted", dot = false, children, className = "" }: 
 /** The label every demonstration carries, so sample figures are never mistaken for a customer's. */
 export function SampleLabel({ children = "Product demo · sample data" }: { children?: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-[#07080d]/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-[#0a0a0a]/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-amber-200">
       <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-300" />
       {children}
     </span>
@@ -126,6 +126,6 @@ export function SampleLabel({ children = "Product demo · sample data" }: { chil
 
 /** A primary action: the violet-blue ramp, the one glow on the screen. */
 export const primaryAction =
-  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-white shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
+  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
 export const quietAction =
   "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 text-[13px] font-medium text-white/90 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white disabled:opacity-60";

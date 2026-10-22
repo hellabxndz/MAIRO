@@ -146,11 +146,11 @@ export function MairoCard({
       }
       style={{
         backgroundImage: lit
-          ? "linear-gradient(158deg, rgba(28,48,104,0.58), rgba(var(--mairo-bg-rgb),0.72))"
+          ? "linear-gradient(158deg, rgba(66,66,66,0.58), rgba(var(--mairo-bg-rgb),0.72))"
           : "var(--mairo-glass)",
-        borderColor: lit ? "rgba(108,158,255,0.42)" : "var(--mairo-line)",
+        borderColor: lit ? "rgba(238,238,238,0.42)" : "var(--mairo-line)",
         boxShadow: lit
-          ? "0 0 0 1px rgba(80,130,235,0.12), 0 0 28px rgba(61,125,255,0.22), 0 18px 48px rgba(2,6,18,0.6)"
+          ? "0 0 0 1px rgba(214,214,214,0.12), 0 0 28px rgba(214,214,214,0.22), 0 18px 48px rgba(10,10,10,0.6)"
           : "var(--mairo-glow-soft)",
       }}
     >
@@ -201,7 +201,7 @@ export function HudLabel({
       <span
         aria-hidden
         className={`mt-2 block h-px w-10 ${align === "right" ? "ml-auto" : ""}`}
-        style={{ backgroundImage: "linear-gradient(to right, transparent, rgba(122,162,255,0.55))" }}
+        style={{ backgroundImage: "linear-gradient(to right, transparent, rgba(245,245,245,0.55))" }}
       />
     </div>
   );

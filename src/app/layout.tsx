@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 // flashing white on the way in. Light sections, such as the homepage
 // showcase, set their own colours.
 export const viewport: Viewport = {
-  themeColor: "#05070d",
+  themeColor: "#090909",
   colorScheme: "dark",
 };
 

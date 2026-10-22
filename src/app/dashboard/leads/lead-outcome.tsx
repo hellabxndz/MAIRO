@@ -115,8 +115,8 @@ export function LeadOutcome(props: LeadRecordProps) {
               onClick={() => setStage(on ? "NEW" : o.status)}
               className={`min-h-[34px] rounded-full border px-3.5 text-[12.5px] transition disabled:opacity-60 ${
                 on
-                  ? "border-transparent bg-[image:var(--mairo-ramp)] text-white"
-                  : "border-[color:var(--mairo-line)] text-white/80 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
+                  ? "border-transparent bg-[image:var(--mairo-ramp)] text-black"
+                  : "border-[color:var(--mairo-line)] text-black/80 hover:border-[color:var(--mairo-line-lit)] hover:text-black"
               }`}
             >
               {labels[o.status]}
@@ -184,7 +184,7 @@ export function LeadOutcome(props: LeadRecordProps) {
             <textarea id={`notes-${leadId}`} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={field} />
           </label>
           <div className="sm:col-span-2">
-            <button type="submit" disabled={pending} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-white disabled:opacity-60">
+            <button type="submit" disabled={pending} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-black disabled:opacity-60">
               Save details
             </button>
           </div>

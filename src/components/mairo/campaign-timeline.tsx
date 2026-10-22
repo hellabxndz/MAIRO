@@ -71,7 +71,7 @@ export function CampaignTimeline({ steps }: { steps: TimelineStep[] }) {
         className="pointer-events-none absolute left-[15px] top-4 w-px transition-[height] duration-700 [transition-timing-function:var(--ease-mairo)]"
         style={{
           height: `calc(${litTo}% - 1rem)`,
-          backgroundImage: "linear-gradient(to bottom, rgba(52,211,153,0.7), rgba(106,166,255,0.7))",
+          backgroundImage: "linear-gradient(to bottom, rgba(34,255,136,0.7), rgba(237,237,237,0.7))",
         }}
       />
 
@@ -165,8 +165,8 @@ export function CampaignTimeline({ steps }: { steps: TimelineStep[] }) {
       <style>{`
         .mairo-step-pulse { animation: mairo-step-pulse 4s ease-in-out infinite; }
         @keyframes mairo-step-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(61,125,255,0); }
-          50%      { box-shadow: 0 0 0 5px rgba(61,125,255,0.12); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(214,214,214,0); }
+          50%      { box-shadow: 0 0 0 5px rgba(214,214,214,0.12); }
         }
         @media (prefers-reduced-motion: reduce) {
           .mairo-step-pulse { animation: none; }

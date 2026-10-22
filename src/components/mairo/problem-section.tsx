@@ -73,7 +73,7 @@ export function ProblemSection() {
               className="block h-full w-px"
               style={{
                 backgroundImage:
-                  "linear-gradient(to bottom, rgba(122,162,255,0.05), rgba(122,162,255,0.55))",
+                  "linear-gradient(to bottom, rgba(245,245,245,0.05), rgba(245,245,245,0.55))",
               }}
             />
           </div>
@@ -81,17 +81,17 @@ export function ProblemSection() {
           <div
             className="relative overflow-hidden rounded-[var(--radius-panel)] border p-7 sm:p-10"
             style={{
-              borderColor: "rgba(108,158,255,0.42)",
+              borderColor: "rgba(238,238,238,0.42)",
               backgroundImage:
-                "linear-gradient(158deg, rgba(28,48,104,0.55), rgba(var(--mairo-bg-rgb),0.72))",
+                "linear-gradient(158deg, rgba(66,66,66,0.55), rgba(var(--mairo-bg-rgb),0.72))",
               boxShadow:
-                "0 0 0 1px rgba(80,130,235,0.12), 0 0 40px rgba(61,125,255,0.2), 0 24px 60px rgba(2,6,18,0.6)",
+                "0 0 0 1px rgba(214,214,214,0.12), 0 0 40px rgba(214,214,214,0.2), 0 24px 60px rgba(10,10,10,0.6)",
             }}
           >
             <span
               aria-hidden
               className="pointer-events-none absolute -top-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full opacity-50 blur-3xl"
-              style={{ background: "radial-gradient(circle, rgba(61,125,255,0.55), transparent 70%)" }}
+              style={{ background: "radial-gradient(circle, rgba(214,214,214,0.55), transparent 70%)" }}
             />
             <div className="relative">
               <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-blue-bright/90">

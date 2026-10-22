@@ -248,7 +248,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
                   href={billingProblem.actionUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-white transition hover:brightness-110"
+                  className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
                 >
                   {billingProblem.actionLabel} →
                 </a>

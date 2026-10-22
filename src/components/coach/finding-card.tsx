@@ -198,7 +198,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
         <div className="mt-4 flex flex-wrap items-center gap-2.5">
           {pendingChange && <FixThisForMe decisionIds={[f.decisionId!]} label="Review and approve the change" />}
           {f.status === "OPEN" && (
-            <button type="button" disabled={pending} onClick={() => act(() => approveFindingAction(f.id))} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60">
+            <button type="button" disabled={pending} onClick={() => act(() => approveFindingAction(f.id))} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[13px] font-medium text-black disabled:opacity-60">
               Approve the plan
             </button>
           )}

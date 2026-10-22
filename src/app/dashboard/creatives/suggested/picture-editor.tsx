@@ -116,7 +116,7 @@ export function PictureEditor({ angleId, image, available, paid }: { angleId: st
             </span>
           </div>
           {q?.blocked && <p className="mt-2 text-[12.5px] text-warn">{q.blocked}</p>}
-          <button type="button" disabled={!canChange || busy} onClick={change} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-[#fff] disabled:opacity-50">
+          <button type="button" disabled={!canChange || busy} onClick={change} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black disabled:opacity-50">
             {busy ? "Changing the picture… up to a minute" : q ? `Change it — ${q.cost} credit${q.cost === 1 ? "" : "s"}` : "Change it"}
           </button>
           <p className="mt-1.5 text-[11.5px] text-faint">Credits are used only if the new version is made. You&rsquo;ll approve the new picture before it&rsquo;s used.</p>

@@ -84,7 +84,7 @@ const SCENES: ClipScene[] = [
 
 function Backdrop({ t }: { t: number }) {
   const drift = Math.sin(t / 2400) * 5;
-  return <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 34%, rgba(47,107,255,0.30), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(56,189,248,0.10), transparent 70%), #05070d` }} />;
+  return <div aria-hidden className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 45% at ${50 + drift}% 34%, rgba(255,255,255,0.30), transparent 70%), radial-gradient(ellipse 45% 35% at ${78 - drift}% 88%, rgba(255,255,255,0.10), transparent 70%), #090909` }} />;
 }
 
 function Wordmark({ size }: { size: number }) {
@@ -143,7 +143,7 @@ function EndCard({ t, narrow }: { t: number; narrow: boolean }) {
         })}
       </ul>
       <div className="relative mt-8 flex flex-col items-center" style={{ opacity: cta, transform: `scale(${0.96 + 0.04 * cta})` }}>
-        <span className="inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[17px] font-semibold text-white shadow-[0_18px_44px_-16px_rgba(47,107,255,0.8)]">
+        <span className="inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[17px] font-semibold text-black shadow-[0_18px_44px_-16px_rgba(255,255,255,0.8)]">
           Build Your Free Ad Plan <span aria-hidden>→</span>
         </span>
         <span className="mt-3 text-[12px] text-white/60">Free · No credit card · Nothing runs until you approve it</span>

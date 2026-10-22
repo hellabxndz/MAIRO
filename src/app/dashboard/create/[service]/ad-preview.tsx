@@ -47,8 +47,8 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
             disabled={loading}
             className="rounded-full border px-3.5 py-1.5 text-[12px] transition disabled:opacity-50"
             style={{
-              borderColor: format === f.value ? "rgba(108,158,255,0.5)" : "var(--mairo-line)",
-              background: format === f.value ? "rgba(61,125,255,0.1)" : "transparent",
+              borderColor: format === f.value ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+              background: format === f.value ? "rgba(214,214,214,0.1)" : "transparent",
               color: format === f.value ? "var(--color-white)" : undefined,
             }}
           >

@@ -30,7 +30,7 @@ import { Drawer } from "@/components/mairo/overlay";
 // raises the score except checking the campaign again, and the score never
 // blocks a launch — only a real setup problem does.
 
-const tone = (score: number) => (score >= 85 ? "#34d399" : score >= 70 ? "#6c9eff" : score >= 55 ? "#fbbf24" : "#f87171");
+const tone = (score: number) => (score >= 85 ? "#22ff88" : score >= 70 ? "#eeeeee" : score >= 55 ? "#ffdd00" : "#ff3d6e");
 const ramp = { backgroundImage: "var(--mairo-ramp)" } as const;
 const line = { borderColor: "var(--mairo-line)" } as const;
 const primaryBtn = "rounded-full px-4 py-2 text-[12.5px] font-medium text-white disabled:opacity-50";
@@ -130,7 +130,7 @@ export function CampaignReviewPanel({
 
       {/* --- improve your campaign ----------------------------------------------- */}
       {score.blocking === 0 && (count > 0 || review.questions.learn.length > 0) && (
-        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(47,107,255,0.45)", background: "linear-gradient(180deg, rgba(47,107,255,0.12), rgba(var(--mairo-bg-rgb),0.5))" }}>
+        <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(255,255,255,0.45)", background: "linear-gradient(180deg, rgba(255,255,255,0.12), rgba(var(--mairo-bg-rgb),0.5))" }}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[16px] font-medium text-white">Improve Your Campaign</p>
@@ -297,7 +297,7 @@ function useCountUp(from: number | null, to: number): number {
 function ComparisonBanner({ c, learned }: { c: Comparison; learned: number }) {
   const up = c.delta > 0;
   return (
-    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(52,211,153,0.35)" : "var(--mairo-line)", background: up ? "rgba(52,211,153,0.06)" : "rgba(var(--mairo-fg-rgb),0.02)" }}>
+    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(34,255,136,0.35)" : "var(--mairo-line)", background: up ? "rgba(34,255,136,0.06)" : "rgba(var(--mairo-fg-rgb),0.02)" }}>
       <p className="text-[14.5px] font-medium text-white">{c.headline}</p>
       <p className="mt-0.5 text-[13px] text-white/85">
         {c.from} → {c.to}
@@ -420,22 +420,22 @@ function AreaPanel({ detail: d, review, h, onClose }: { detail: AreaDetail; revi
         </p>
       )}
 
-      <List title="What's working" items={d.working} mark="✓" color="#34d399" />
+      <List title="What's working" items={d.working} mark="✓" color="#22ff88" />
       {d.key === "landing" ? (
         <>
-          <List title="Detected issues" items={d.detected} mark="⚠" color="#fbbf24" />
-          <List title="Suggested things to check" items={d.toCheck} mark="·" color="#94a3b8" />
+          <List title="Detected issues" items={d.detected} mark="⚠" color="#ffdd00" />
+          <List title="Suggested things to check" items={d.toCheck} mark="·" color="#dedede" />
           {d.detected.length === 0 && d.toCheck.length > 0 && <p className="mt-2 text-[11.5px] text-faint">These are suggestions — MAIRO hasn&rsquo;t detected a problem with them.</p>}
         </>
       ) : (
         <>
-          <List title="What could improve" items={d.improve} mark="•" color="#fbbf24" />
-          <List title="Suggested things to check" items={d.toCheck} mark="·" color="#94a3b8" />
+          <List title="What could improve" items={d.improve} mark="•" color="#ffdd00" />
+          <List title="Suggested things to check" items={d.toCheck} mark="·" color="#dedede" />
         </>
       )}
 
       {d.recommendation && (
-        <div className="mt-5 rounded-xl px-4 py-3" style={{ background: "rgba(47,107,255,0.1)" }}>
+        <div className="mt-5 rounded-xl px-4 py-3" style={{ background: "rgba(255,255,255,0.1)" }}>
           <p className="text-[12px] text-violet-bright">MAIRO recommendation</p>
           <p className="mt-1 text-[13.5px] leading-relaxed text-white">&ldquo;{d.recommendation}&rdquo;</p>
           {d.estimate !== null && (
@@ -680,7 +680,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
               const on = chosen.includes(c);
               return (
                 <button key={c} type="button" aria-pressed={on} onClick={() => setChosen((x) => (on ? x.filter((y) => y !== c) : [...x, c]))}
-                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(47,107,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
+                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(255,255,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
                   {on ? "✓ " : ""}{c}
                 </button>
               );
