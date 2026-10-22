@@ -23,7 +23,7 @@ import type { Clip, ClipScene } from "./stage";
 // review, and is shown live only once Meta says so.
 
 const noop = () => {};
-const GROWTH = PLANS.find((p) => p.name === "Growth")!;
+const PRO = PLANS.find((p) => p.tier === "PRO")!;
 const CONCEPT = { ...(SHOP_PLAN.written!.concepts[0] as PlanConcept), headline: "Made by hand. Yours every morning." };
 
 export const CAMPAIGN_T = {
@@ -112,7 +112,7 @@ function Connect({ t, narrow }: { t: number; narrow: boolean }) {
       <Panel id="plan-card" title="Your MAIRO plan" tone="lit">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-[22px] font-semibold text-white">
-            {GROWTH.name} <span className="text-[15px] font-normal text-muted">· ${GROWTH.priceMonthly} a month</span>
+            {PRO.name} <span className="text-[15px] font-normal text-muted">· ${PRO.priceMonthly} a month</span>
           </p>
           <Pill tone="live" dot>
             Active

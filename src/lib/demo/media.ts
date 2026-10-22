@@ -17,7 +17,7 @@ export type RenderedMedia = {
 };
 
 export const RENDERED_MEDIA: RenderedMedia = {
-  "renderedAt": "2026-10-20T17:03:00.517Z",
+  "renderedAt": "2026-10-22T04:29:11.132Z",
   "clips": {
     "film": {
       "vtt": "/demo/film.vtt",
@@ -89,7 +89,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 74000,
-        "bytes": 4183191
+        "bytes": 3824457
       },
       "narrow": {
         "mp4": "/demo/film-narrow.mp4",
@@ -97,7 +97,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 74000,
-        "bytes": 3170264
+        "bytes": 3064115
       }
     },
     "creative": {
@@ -140,7 +140,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 22500,
-        "bytes": 1370999
+        "bytes": 1299410
       },
       "narrow": {
         "mp4": "/demo/creative-narrow.mp4",
@@ -148,7 +148,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 22500,
-        "bytes": 744720
+        "bytes": 727329
       }
     },
     "understand": {
@@ -181,7 +181,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 17000,
-        "bytes": 858655
+        "bytes": 823177
       },
       "narrow": {
         "mp4": "/demo/understand-narrow.mp4",
@@ -189,7 +189,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 17000,
-        "bytes": 651392
+        "bytes": 675160
       }
     },
     "campaign": {
@@ -237,7 +237,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 26500,
-        "bytes": 1251108
+        "bytes": 1243832
       },
       "narrow": {
         "mp4": "/demo/campaign-narrow.mp4",
@@ -245,7 +245,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 26500,
-        "bytes": 1278201
+        "bytes": 1148390
       }
     },
     "team": {
@@ -283,7 +283,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 18500,
-        "bytes": 965252
+        "bytes": 917764
       },
       "narrow": {
         "mp4": "/demo/team-narrow.mp4",
@@ -291,7 +291,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 18500,
-        "bytes": 716078
+        "bytes": 644082
       }
     },
     "dashboard": {
@@ -344,7 +344,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 23500,
-        "bytes": 858447
+        "bytes": 761861
       },
       "narrow": {
         "mp4": "/demo/dashboard-narrow.mp4",
@@ -352,7 +352,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 23500,
-        "bytes": 677622
+        "bytes": 690646
       }
     },
     "optimize": {
@@ -390,7 +390,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 21700,
-        "bytes": 854038
+        "bytes": 722604
       },
       "narrow": {
         "mp4": "/demo/optimize-narrow.mp4",
@@ -398,7 +398,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 21700,
-        "bytes": 480097
+        "bytes": 479595
       }
     },
     "results": {
@@ -431,7 +431,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 17500,
-        "bytes": 544788
+        "bytes": 495188
       },
       "narrow": {
         "mp4": "/demo/results-narrow.mp4",
@@ -439,7 +439,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 17500,
-        "bytes": 399926
+        "bytes": 396396
       }
     },
     "plan": {
@@ -472,7 +472,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1440,
         "height": 810,
         "ms": 16500,
-        "bytes": 822299
+        "bytes": 704327
       },
       "narrow": {
         "mp4": "/demo/plan-narrow.mp4",
@@ -480,7 +480,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 540,
         "height": 960,
         "ms": 16500,
-        "bytes": 549506
+        "bytes": 630050
       }
     }
   },
@@ -492,7 +492,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1520,
         "height": 1120,
         "ms": 24000,
-        "bytes": 1708940
+        "bytes": 1147863
       },
       "narrow": {
         "mp4": "/walkthrough/story-shop-narrow.mp4",
@@ -500,7 +500,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 720,
         "height": 1200,
         "ms": 24000,
-        "bytes": 1220844
+        "bytes": 812201
       }
     },
     "service": {
@@ -510,7 +510,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1520,
         "height": 1120,
         "ms": 24000,
-        "bytes": 1788852
+        "bytes": 1196800
       },
       "narrow": {
         "mp4": "/walkthrough/story-service-narrow.mp4",
@@ -518,7 +518,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 720,
         "height": 1200,
         "ms": 24000,
-        "bytes": 1243630
+        "bytes": 822086
       }
     },
     "brands": {
@@ -528,7 +528,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 1520,
         "height": 1120,
         "ms": 24000,
-        "bytes": 1790082
+        "bytes": 1185932
       },
       "narrow": {
         "mp4": "/walkthrough/story-brands-narrow.mp4",
@@ -536,7 +536,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
         "width": 720,
         "height": 1200,
         "ms": 24000,
-        "bytes": 1236414
+        "bytes": 829401
       }
     }
   },
@@ -547,7 +547,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
       "width": 1920,
       "height": 1080,
       "ms": 73000,
-      "bytes": 11383651
+      "bytes": 7614940
     },
     "narrow": {
       "mp4": "/walkthrough/walkthrough-narrow.mp4",
@@ -555,7 +555,7 @@ export const RENDERED_MEDIA: RenderedMedia = {
       "width": 720,
       "height": 1280,
       "ms": 73000,
-      "bytes": 7051999
+      "bytes": 4864151
     }
   },
   "captions": {
