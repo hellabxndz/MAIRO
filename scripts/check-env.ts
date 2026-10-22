@@ -41,6 +41,10 @@ const HOST_PROVIDED = new Set([
   // Set to "1" on every Vercel build and function; the website reader uses it
   // to refuse local test fixtures there.
   "VERCEL",
+  // Which deployment (production, preview) and commit an error came from, for
+  // error monitoring (lib/monitoring/report.ts).
+  "VERCEL_ENV",
+  "VERCEL_GIT_COMMIT_SHA",
 ]);
 
 /**

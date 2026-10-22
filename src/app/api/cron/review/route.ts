@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reportError, startCronCheckIn } from "@/lib/monitoring/report";
 import { db } from "@/lib/db";
 import { retryStuckReviews } from "@/lib/creatives/review-run";
 import { syncAllMetaLeads } from "@/lib/leads/meta-form";
@@ -51,10 +52,30 @@ function authorized(req: Request): boolean {
 }
 
 export async function GET(req: Request) {
-  const startedAt = Date.now();
   if (!authorized(req)) {
     return new NextResponse("Not authorized", { status: 401 });
   }
+  // Told to error monitoring: the run itself (so a night it doesn't happen, or
+  // dies part way, is noticed too), and every step that failed, since each one
+  // is caught so the rest can carry on and would otherwise only reach a log
+  // nobody reads.
+  const checkIn = startCronCheckIn("cron-review", "30 9 * * *", 2);
+  try {
+    return await review(checkIn);
+  } catch (error) {
+    await checkIn("error");
+    throw error;
+  }
+}
+
+async function review(checkIn: (status: "ok" | "error") => Promise<void>) {
+  const startedAt = Date.now();
+  const failed: string[] = [];
+  const stepFailed = (step: string, error: unknown) => {
+    failed.push(step);
+    console.error(`${step} failed:`, error instanceof Error ? `${error.name}: ${error.message}` : "unknown");
+    void reportError(error, { where: `cron/review: ${step}` });
+  };
   // What is left of the run, keeping a few seconds to answer. Every step
   // after the first two is given a share of it, so one slow step on a slow
   // night can't time the whole run out and starve everything after it — which
@@ -67,16 +88,16 @@ export async function GET(req: Request) {
   // backstop for a missed Stripe webhook), and anything scheduled by an
   // account whose Scale lapsed is paused, never published.
   const unpaid = await stopUnpaidSweep().catch((error) => {
-    console.error("Unpaid sweep failed:", error);
+    stepFailed("Unpaid sweep", error);
     return null;
   });
   const socialPaused = await pauseSocialSweep().catch((error) => {
-    console.error("Social pause sweep failed:", error);
+    stepFailed("Social pause sweep", error);
     return null;
   });
   // Businesses added under a MAIRO Scale plan follow it (lib/brands.ts).
   const brands = await syncAllBrands().catch((error) => {
-    console.error("Brand sync sweep failed:", error);
+    stepFailed("Brand sync sweep", error);
     return null;
   });
 
@@ -86,7 +107,7 @@ export async function GET(req: Request) {
   // Runs before the text sweep because a notification written here is what
   // that sweep may end up texting about.
   const insights = await detectAll(50, Math.min(20_000, left())).catch((error) => {
-    console.error("Insight detection cron failed:", error);
+    stepFailed("Insight detection cron", error);
     return null;
   });
 
@@ -95,14 +116,14 @@ export async function GET(req: Request) {
   // not tell us about". A native instant form holds its leads on Meta until
   // somebody asks, and nobody would.
   const leads = await syncAllMetaLeads().catch((error) => {
-    console.error("Lead sync cron failed:", error);
+    stepFailed("Lead sync cron", error);
     return null;
   });
 
   // Leads from MAIRO's own form that haven't reached Meta yet — a failed send,
   // or a pixel that arrived after the lead did. Meta takes them up to a week late.
   const leadsReported = await reportUnsentLeads({ limit: 50, budgetMs: Math.min(5_000, left()) }).catch((error) => {
-    console.error("Lead reporting cron failed:", error);
+    stepFailed("Lead reporting cron", error);
     return null;
   });
 
@@ -114,7 +135,7 @@ export async function GET(req: Request) {
   // evidence rules. Before the decisions run, so a test that just ended has
   // its proposal in place and a running test keeps its ads from the rules.
   const experiments = await checkAllExperiments(new Date(), Math.min(10_000, left())).catch((error) => {
-    console.error("Creative test cron failed:", error);
+    stepFailed("Creative test cron", error);
     return null;
   });
 
@@ -122,7 +143,7 @@ export async function GET(req: Request) {
   // the run allows; anyone not reached today is first tomorrow, and is
   // refreshed when they next open the dashboard.
   const decisions = await refreshAllDecisions(40, Math.min(15_000, left())).catch((error) => {
-    console.error("MAIRO Decisions cron failed:", error);
+    stepFailed("MAIRO Decisions cron", error);
     return null;
   });
 
@@ -130,7 +151,7 @@ export async function GET(req: Request) {
   // so each report reads this morning's Insights; before the text sweep,
   // because the report's own notification is what carries its text.
   const weekly = await generateDueWeeklyReports(new Date(), { limit: 3, budgetMs: Math.min(25_000, left()) }).catch((error) => {
-    console.error("Weekly reports cron failed:", error);
+    stepFailed("Weekly reports cron", error);
     return null;
   });
 
@@ -139,7 +160,7 @@ export async function GET(req: Request) {
   // AI Team runs that never finished (a timeout, a crash) are marked failed,
   // so no agent shows "Working" on something that stopped.
   const stuckRuns = await sweepStuckRuns().catch((error) => {
-    console.error("AI Team stuck-run sweep failed:", error);
+    stepFailed("AI Team stuck-run sweep", error);
     return null;
   });
 
@@ -147,7 +168,7 @@ export async function GET(req: Request) {
   // at the moment of deletion). The deletion page promises this daily check.
   const orphanedFiles = left() > 5_000
     ? await sweepOrphanedFiles({ folders: ORGANIZATION_FOLDERS, folderIds: organizationFolderIds, deleteFiles: deleteFilesUnder }).catch((error) => {
-        console.error("Orphaned file sweep failed:", error);
+        stepFailed("Orphaned file sweep", error);
         return null;
       })
     : null;
@@ -155,7 +176,7 @@ export async function GET(req: Request) {
   // Free ad plans saved or shared by visitors who never made an account are
   // deleted after 30 days, as the privacy policy says.
   const unclaimedPlans = await sweepUnclaimedPlans().catch((error) => {
-    console.error("Unclaimed free plan sweep failed:", error instanceof Error ? error.name : "unknown");
+    stepFailed("Unclaimed free plan sweep", error);
     return null;
   });
 
@@ -165,13 +186,13 @@ export async function GET(req: Request) {
     .deleteMany({ where: { windowStart: { lt: new Date(Date.now() - 3 * 86_400_000) } } })
     .then((r) => r.count)
     .catch((error) => {
-      console.error("Usage counter sweep failed:", error instanceof Error ? error.name : "unknown");
+      stepFailed("Usage counter sweep", error);
       return null;
     });
   const resetLinks = await sweepPasswordResets()
     .then((r) => r.count)
     .catch((error) => {
-      console.error("Password reset sweep failed:", error instanceof Error ? error.name : "unknown");
+      stepFailed("Password reset sweep", error);
       return null;
     });
 
@@ -189,10 +210,11 @@ export async function GET(req: Request) {
   const platformIntelligence =
     left() > 3_000
       ? await runAllPlatformIntelligence(Math.min(12_000, left())).catch((error) => {
-          console.error("Platform intelligence cron failed:", error);
+          stepFailed("Platform intelligence cron", error);
           return null;
         })
       : null;
 
-  return NextResponse.json({ reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, resetLinks, ms: Date.now() - startedAt });
+  await checkIn(failed.length > 0 ? "error" : "ok");
+  return NextResponse.json({ failed: failed.length > 0 ? failed : undefined, reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, resetLinks, ms: Date.now() - startedAt });
 }

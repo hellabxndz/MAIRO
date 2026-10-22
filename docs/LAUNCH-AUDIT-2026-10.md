@@ -53,7 +53,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
 | Security | Dependency vulnerabilities | PARTIAL | Next.js upgraded to 16.3.8 (`8a3feb4`). 8 remain (2 high) in `@fastify/busboy`/`undici` via `openai@7` and `@ai-sdk`; the only fix is a breaking upgrade. |
 | Website | Titles, descriptions, one h1, alt text, links, phone width | PASS after fixes | /pricing had no h1; legal titles said "MAIRO" twice (`0d29861`) |
 | Reliability | Error pages | PASS after fix | Added a root-level error page (`0d29861`) |
-| Reliability | Error monitoring, uptime alerts | **NOT PRESENT** | Only Vercel logs; no Sentry or similar |
+| Reliability | Error monitoring | **ADDED — needs SENTRY_DSN** | Server errors, browser crashes, failed cron steps, Stripe webhook failures, and missed or failed cron runs are reported to Sentry, scrubbed first. Tested against a local fake Sentry; never against real Sentry. Uptime checks are set up in Sentry's dashboard. |
 | Reliability | Database backups | **NOT TESTED** | Neon's backup and restore have not been checked |
 
 ## Problems found and fixed
@@ -74,7 +74,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
 
 1. **Stripe Pro/Scale never purchased** (blocker; see the manual steps).
 2. **No real-account launch on the new flow** (blocker; see the manual steps).
-3. **No error monitoring or alerting.** A failing cron or checkout would go unnoticed until a customer complains. *Strongly recommended before public launch.*
+3. **Error monitoring is built but off until `SENTRY_DSN` is set.** Until then, a failing cron or checkout only reaches the Vercel logs. *Set it before public launch.*
 4. **No transactional email provider configured.** Until RESEND_API_KEY and EMAIL_FROM are set, password resets go through support by hand. *Recommended before beta; required before public launch.*
 5. **A password reset doesn't sign out other sessions.** Sessions are 30-day JWTs, so someone already signed in stays signed in. Optional for beta.
 6. **Dependency advisories** in `@fastify/busboy`/`undici` (via `openai@7`, `@ai-sdk`). These are reachable only through outbound AI calls, not public uploads, but they should be upgraded.
@@ -118,7 +118,11 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
    - then pause from MAIRO and confirm it pauses in Ads Manager.
 4. **Meta app dashboard.** Remove the organic posting permissions (`pages_manage_posts`, `instagram_content_publish` and the like) from the app's requested permissions, so the consent screen matches the reduced scopes.
 5. **Email.** Set RESEND_API_KEY and EMAIL_FROM on a domain verified in Resend. Request a reset to your own inbox, use the link, confirm it can't be used twice.
-6. **Monitoring.** Add an error tracker and an uptime check on `/` and `/sign-in`; alert on cron failures.
+6. **Monitoring.**
+   - Create a Sentry project (platform: Next.js) and set `SENTRY_DSN` in Vercel (Production).
+   - After the next 09:00/09:30 UTC runs, confirm the monitors `cron-launch` and `cron-review` appear under Crons, and set their alert rules.
+   - In Sentry, add uptime checks on `/` and `/sign-in`.
+   - Set an alert rule for new issues to email you.
 7. **Backups.** In Neon, confirm point-in-time restore is on and do one test restore to a branch.
 8. **Legal.** Have the privacy policy and terms re-read. They now say MAIRO doesn't post to Pages or Instagram profiles, and they list Resend only when it's configured.
 

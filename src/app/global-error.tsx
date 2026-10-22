@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { reportClientError } from "@/lib/monitoring/client";
 import Link from "next/link";
 
 // What shows when the root layout itself fails, which app/error.tsx can't
@@ -8,6 +10,8 @@ import Link from "next/link";
 // reference (error.digest) that matches the server's log, never the message.
 
 export default function GlobalError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  // Reported once per error; a browser-side crash is otherwise invisible to us.
+  useEffect(() => reportClientError(error), [error]);
   return (
     <html lang="en">
       <body style={{ margin: 0, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#05070d", color: "#fff", fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", padding: "80px 16px" }}>

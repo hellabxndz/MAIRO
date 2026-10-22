@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { reportError } from "@/lib/monitoring/report";
 import type Stripe from "stripe";
 import { db } from "@/lib/db";
 import { stripe, tierForPriceId } from "@/lib/stripe/client";
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) {
     console.error("Stripe webhook received but STRIPE_WEBHOOK_SECRET is not set.");
+    await reportError(new Error("STRIPE_WEBHOOK_SECRET is not set"), { where: "stripe webhook" });
     return NextResponse.json({ error: "Billing is not configured." }, { status: 500 });
   }
 
@@ -85,6 +87,7 @@ export async function POST(req: NextRequest) {
     // database problem — the alternative is a paying customer stuck on the
     // free tier because one write failed once.
     console.error(`Stripe webhook ${event.type} failed:`, error);
+    await reportError(error, { where: "stripe webhook", tags: { eventType: event.type } });
     return NextResponse.json({ error: "Failed to record subscription." }, { status: 500 });
   }
 

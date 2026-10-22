@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
 import { emailConfigured } from "@/lib/email/send";
+import { monitoringConfigured } from "@/lib/monitoring/report";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -168,6 +169,11 @@ export default function PrivacyPage() {
             ...(emailConfigured()
               ? [<><strong className="text-neutral-200">Resend</strong> — sends account emails, such as a
                   password-reset link. Your email address and the message are sent to deliver them.</>]
+              : []),
+            ...(monitoringConfigured()
+              ? [<><strong className="text-neutral-200">Sentry</strong> — receives reports of errors in the service so we can
+                  fix them: the page or step that failed and the error itself. Email addresses, phone numbers,
+                  access tokens and web-address parameters are removed before a report is sent.</>]
               : []),
             <><strong className="text-neutral-200">Neon</strong> — hosts our database.</>,
             <><strong className="text-neutral-200">Vercel</strong> — hosts and serves the application, and

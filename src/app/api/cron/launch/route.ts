@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reportError, startCronCheckIn } from "@/lib/monitoring/report";
 import { db } from "@/lib/db";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 
@@ -51,7 +52,17 @@ export async function GET(req: Request) {
   if (!authorized(req)) {
     return new NextResponse("Not authorized", { status: 401 });
   }
+  // Told to error monitoring, including a run that dies part way.
+  const checkIn = startCronCheckIn("cron-launch", "0 9 * * *", 2);
+  try {
+    return await launchWaiting(checkIn);
+  } catch (error) {
+    await checkIn("error");
+    throw error;
+  }
+}
 
+async function launchWaiting(checkIn: (status: "ok" | "error") => Promise<void>) {
   // Only organizations with something actually waiting. maybeGoLive is cheap
   // when there is nothing to do, but it is not free — it reads billing from
   // Meta — and running it for every account on the platform every hour would
@@ -81,8 +92,11 @@ export async function GET(req: Request) {
       // One account's problem must not stop the rest of the run. Recorded and
       // carried on; the next hour tries again.
       errors.push(`${organizationId}: ${error instanceof Error ? error.message : "failed"}`);
+      await reportError(error, { where: "cron/launch", tags: { organizationId } });
     }
   }
+
+  await checkIn(errors.length > 0 ? "error" : "ok");
 
   return NextResponse.json({
     checked: organizationIds.length,

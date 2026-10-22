@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { reportClientError } from "@/lib/monitoring/client";
 import Link from "next/link";
 
 // What shows when a page fails to render, instead of Next's default.
@@ -7,13 +9,17 @@ import Link from "next/link";
 // Deliberately says nothing about the cause: an error forwarded from the
 // server carries only a reference (error.digest) that matches the server's
 // log, and the message of one thrown in the browser may contain the
-// business's own data, so neither the message nor the stack is shown or
-// logged from here. What it does say is the thing an owner worries about
-// first, without promising more than is known: showing a page never changes
+// business's own data, so neither the message nor the stack is shown. A
+// browser-side one is sent to error monitoring, which scrubs it on the server
+// before it goes anywhere (lib/monitoring/report.ts). What the page does say
+// is the thing an owner worries about first, without promising more than is
+// known: showing a page never changes
 // their ads, but an action they had just pressed may or may not have gone
 // through, so it sends them to check before pressing it again.
 
 export default function ErrorPage({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  // Reported once per error; a browser-side crash is otherwise invisible to us.
+  useEffect(() => reportClientError(error), [error]);
   return (
     <main className="relative isolate flex min-h-screen items-center bg-paper px-4 py-20 text-white sm:px-8">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_55%_45%_at_50%_0%,rgba(47,107,255,0.18),transparent_70%)]" />
