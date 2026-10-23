@@ -149,6 +149,8 @@ export type TrackingTags = {
   microsoftAds: boolean;
   /** Shopify's web pixels manager: pixels set up in Shopify run in a sandbox a public scan can't see into. */
   shopifyWebPixels: boolean;
+  /** MAIRO tags on the page (lib/tracking/smart-tag.ts), by tag id: they load the pixel, so its id isn't in the HTML. */
+  mairoTagIds: string[];
   evidence: Evidence[];
 };
 
@@ -168,7 +170,9 @@ export function detectTracking(html: string): TrackingTags {
   const microsoftAds = /bat\.bing\.com\/bat\.js/i.test(html);
   const shopifyWebPixels = /web-pixels-manager|webPixelsManager|\/wpm@/i.test(html);
   if (shopifyWebPixels) ev.push({ what: "Shopify web pixels", where: firstMatch(html, /web-pixels-manager|webPixelsManager|\/wpm@[^"']{0,40}/i) ?? "web pixels manager" });
-  return { metaPixelIds: pixelIds, metaPixelScript: fbScript || pixelIds.length > 0, gtmContainers: gtm.slice(0, 4), ga4Ids: ga4.slice(0, 4), googleAdsIds: ads.slice(0, 4), tiktok, pinterest, snapchat, microsoftAds, shopifyWebPixels, evidence: ev };
+  const mairoTagIds = [...new Set([...html.matchAll(/<script[^>]+src=["'][^"']*\/t\/(c[a-z0-9]{20,32})\.js["']/gi)].map((m) => m[1]))];
+  if (mairoTagIds.length) ev.push({ what: "MAIRO tag", where: `/t/${mairoTagIds[0]}.js` });
+  return { metaPixelIds: pixelIds, metaPixelScript: fbScript || pixelIds.length > 0 || mairoTagIds.length > 0, gtmContainers: gtm.slice(0, 4), ga4Ids: ga4.slice(0, 4), googleAdsIds: ads.slice(0, 4), tiktok, pinterest, snapchat, microsoftAds, shopifyWebPixels, mairoTagIds, evidence: ev };
 }
 
 // --- Consent --------------------------------------------------------------------------------

@@ -243,8 +243,10 @@ export async function checkInstallation(organizationId: string): Promise<SetupRe
     return { ok: true, data: { ...r, checkedAt: new Date() } };
   }
   const onPage = result.tracking.metaPixelIds.includes(pixel.externalPixelId);
-  const r: Omit<CheckRecord, "checkedAt"> = onPage
-    ? { status: "VERIFIED", source: "public_scan", detail: `Found pixel ${pixel.externalPixelId} on ${result.finalUrl ?? org.website}.`, count: null }
+  // The MAIRO tag loads the pixel itself, so the page names the tag, not the pixel.
+  const tagOnPage = (result.tracking.mairoTagIds ?? []).includes(pixel.id);
+  const r: Omit<CheckRecord, "checkedAt"> = onPage || tagOnPage
+    ? { status: "VERIFIED", source: "public_scan", detail: tagOnPage ? `Found your MAIRO tag on ${result.finalUrl ?? org.website}.` : `Found pixel ${pixel.externalPixelId} on ${result.finalUrl ?? org.website}.`, count: null }
     : {
         status: "NOT_DETECTED",
         source: "public_scan",

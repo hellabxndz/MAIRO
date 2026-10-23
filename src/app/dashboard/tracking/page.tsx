@@ -28,6 +28,8 @@ import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
 import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
 import { HelpLinks } from "@/components/help/help-link";
+import { SimplePixel, type SimplePixelView } from "./simple-pixel";
+import { PASTE_STEPS, pasteGuideFor, tagSnippet } from "@/lib/tracking/smart-tag";
 
 // "Is the advertising actually making me money?"
 //
@@ -104,6 +106,24 @@ export default async function TrackingPage() {
   const ingestUrl = `${appUrl}/api/orders/${ingest.token}`;
 
   const metaPixel = pixels.find((p) => p.platform === "META");
+  // The MAIRO tag is named by the pixel row's id (lib/tracking/smart-tag.ts).
+  const tagRow = overview.pixel
+    ? await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { id: true } })
+    : null;
+  const primaryEvent = overview.requiredEvent;
+  const simple: SimplePixelView = {
+    connected: connections.get("META")?.connected ?? false,
+    pixel: overview.pixel ? { id: overview.pixel.id, name: overview.pixel.name } : null,
+    snippet: tagRow ? tagSnippet(appUrl, tagRow.id) : null,
+    guides: PASTE_STEPS.map(({ id, label, steps }) => ({ id, label, steps })),
+    suggestedGuide: pasteGuideFor(overview.detectedPlatform),
+    counts: niche.actions.map((a) => ({ label: a.label, event: a.metaEvent })),
+    nicheLabel: niche.label,
+    install: overview.install ? { status: overview.install.status, detail: overview.install.detail } : null,
+    primaryEvent: primaryEvent
+      ? { name: primaryEvent, status: overview.events[primaryEvent]?.status ?? null, detail: overview.events[primaryEvent]?.detail ?? null }
+      : null,
+  };
   const kind = niche.id === "ecommerce" ? "shop" : "service";
   const setupView: SetupView = {
     connected: connections.get("META")?.connected ?? false,
@@ -127,6 +147,13 @@ export default async function TrackingPage() {
     recommended: recommendedEvents(kind, { booking: overview.requiredEvent === "Schedule" }).map((e) => ({ name: e.name, required: e.required, when: e.when, notWhen: e.notWhen })),
   };
 
+  const verified = overview.stage.stage === "verified";
+  const simpleCard = (
+    <Card className="mb-8">
+      <SimplePixel view={simple} />
+    </Card>
+  );
+
   return (
     <div>
       <PageHeader
@@ -135,8 +162,11 @@ export default async function TrackingPage() {
       />
       <HelpLinks className="-mt-5 mb-6" links={[{ slug: "website-tracking", label: "What each tracking stage and check means" }]} />
 
-      {/* The headline comparison. Deliberately first: somebody who opens this
-          page wants the number, and the setup below is the price of it. */}
+      {/* Until the pixel is proven, setting it up is the page's job, so it comes first. */}
+      {!verified && simpleCard}
+
+      {/* The headline comparison. First once tracking works: somebody who opens
+          this page then wants the number, and the setup below is the price of it. */}
       <Card className="mb-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -201,6 +231,17 @@ export default async function TrackingPage() {
           Neither is wrong; they answer different questions.
         </p>
       </Card>
+
+      {verified && simpleCard}
+
+      {/* Everything else, for anyone who wants more control: choosing among
+          several pixels, other install routes, Tag Manager, a store's orders. */}
+      <details id="advanced" className="group">
+        <summary className="mb-4 cursor-pointer list-none text-sm text-neutral-400 hover:text-white">
+          <span className="group-open:hidden">Show advanced options</span>
+          <span className="hidden group-open:inline">Hide advanced options</span>
+          <span className="text-neutral-600"> — choose a different pixel, Google Tag Manager, connect your store</span>
+        </summary>
 
       <h2 className="mb-3 text-sm font-medium text-neutral-300">1. Tell Meta when someone becomes a lead or customer</h2>
       <Card>
@@ -272,6 +313,7 @@ export default async function TrackingPage() {
         />
         <ManualOrderForm currency={comparison.currency} />
       </Card>
+      </details>
 
       {orders.length > 0 && (
         <>

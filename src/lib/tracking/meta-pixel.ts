@@ -147,7 +147,8 @@ export type ServerEvent = {
   eventTime: Date;
   /** Must match the browser pixel's event id, or the sale counts twice. */
   eventId: string;
-  valueCents: number;
+  /** Null for an event with no money in it (a lead, a call): no value is sent rather than a made-up one. */
+  valueCents: number | null;
   currency: string;
   hashedEmail?: string | null;
   hashedPhone?: string | null;
@@ -209,12 +210,16 @@ export async function sendMetaConversions(
       action_source: "website",
       ...(e.sourceUrl ? { event_source_url: e.sourceUrl } : {}),
       user_data: userData,
-      custom_data: {
-        // Meta takes whole currency units here, unlike the account node's
-        // minor units. Sending cents would report a hundredfold revenue.
-        value: Number((e.valueCents / 100).toFixed(2)),
-        currency: e.currency.toUpperCase(),
-      },
+      ...(e.valueCents === null
+        ? {}
+        : {
+            custom_data: {
+              // Meta takes whole currency units here, unlike the account node's
+              // minor units. Sending cents would report a hundredfold revenue.
+              value: Number((e.valueCents / 100).toFixed(2)),
+              currency: e.currency.toUpperCase(),
+            },
+          }),
     };
   });
 

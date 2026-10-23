@@ -226,7 +226,7 @@ const failed = (requestedUrl: string, status: ScanStatus, error: string, started
   shopifyTheme: null,
   appExtensions: 0,
   apps: [],
-  tracking: { metaPixelIds: [], metaPixelScript: false, gtmContainers: [], ga4Ids: [], googleAdsIds: [], tiktok: false, pinterest: false, snapchat: false, microsoftAds: false, shopifyWebPixels: false, evidence: [] },
+  tracking: { metaPixelIds: [], metaPixelScript: false, gtmContainers: [], ga4Ids: [], googleAdsIds: [], tiktok: false, pinterest: false, snapchat: false, microsoftAds: false, shopifyWebPixels: false, mairoTagIds: [], evidence: [] },
   consent: [],
   destinations: { phoneLinks: [], emailLink: false, booking: [], forms: [], cart: false, checkout: false },
   social: [],

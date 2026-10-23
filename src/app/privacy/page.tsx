@@ -101,6 +101,12 @@ export default function PrivacyPage() {
             <><strong className="text-neutral-200">Optional connections.</strong> If you connect Google
               Tag Manager, an access token from Google that lets us add your tracking tags. If you turn
               on text alerts, the phone number we text.</>,
+            <><strong className="text-neutral-200">The MAIRO tag on your website.</strong> If you add it, it
+              loads your own Meta pixel and, when a visitor sends an enquiry, taps your number or books,
+              passes that event to your pixel through us: the page address (without its query), the
+              visitor&apos;s IP address and browser, and Meta&apos;s cookies. We relay it to Meta on your
+              behalf and don&apos;t keep it. It does nothing for a browser that sends Global Privacy
+              Control. Your own website&apos;s privacy notice should mention Meta&apos;s pixel.</>,
             <><strong className="text-neutral-200">What you tell us.</strong> Feedback you send, including
               why you&apos;re cancelling if you choose to say, and whether you agreed to let us use your
               results anonymously in a case study.</>,

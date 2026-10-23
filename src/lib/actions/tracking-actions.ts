@@ -83,6 +83,36 @@ export async function createPixelAction(): Promise<TrackingResult> {
   return { ok: true, message: r.data.reused ? `Found the pixel an earlier attempt created (${r.data.id}) and used it — no duplicate.` : `Created “${r.data.name}” in your ad account. Meta confirmed it: ${r.data.id}.` };
 }
 
+/**
+ * The simple setup's one button, "Set up my pixel": reuse the pixel the ad
+ * account already has (the one rankPixels recommends — reusing keeps its
+ * history), or create one when there is none. The button says it does both,
+ * so pressing it is the owner's decision either way.
+ */
+export async function quickSetupPixelAction(): Promise<TrackingResult> {
+  // Role check: accounts.manage (lib/members/roles.ts).
+  const denied = await deniedFor("accounts.manage");
+  if (denied) return { ok: false, error: denied };
+  const ctx = await context();
+  if (!ctx) return { ok: false, error: "Not authenticated" };
+  const existing = await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId: ctx.organizationId, platform: "META" } } });
+  if (existing) return { ok: true, message: `You're set up with “${existing.name}”.` };
+  const list = await listPixelChoices(ctx.organizationId);
+  if (!list.ok) return { ok: false, error: list.message };
+  const best = list.data.choices.find((c) => c.recommended);
+  if (best) {
+    const r = await selectPixel(ctx.organizationId, ctx.userId, best.id);
+    revalidatePath("/dashboard/tracking");
+    if (!r.ok) return { ok: false, error: r.message };
+    return { ok: true, message: `Using your existing pixel “${r.data.name}”, so it keeps its history.` };
+  }
+  const org = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { name: true } });
+  const r = await createPixel(ctx.organizationId, ctx.userId, org?.name ?? "My business");
+  revalidatePath("/dashboard/tracking");
+  if (!r.ok) return { ok: false, error: r.message };
+  return { ok: true, message: `Created “${r.data.name}” in your ad account.` };
+}
+
 export async function setInstallRouteAction(route: string): Promise<TrackingResult> {
   // Role check: business.edit (lib/members/roles.ts).
   const denied = await deniedFor("business.edit");
