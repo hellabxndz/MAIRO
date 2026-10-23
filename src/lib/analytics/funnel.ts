@@ -18,12 +18,14 @@ export async function heroVariantCookie(): Promise<string> {
   }
 }
 
-/** Records a once-per-business server step. Never throws into the caller. */
-export async function recordOnce(name: (typeof SERVER_EVENT_NAMES)[number], organizationId: string, props: Record<string, string> = {}): Promise<void> {
+/** Records a once-per-business server step; true the first time. Never throws into the caller. */
+export async function recordOnce(name: (typeof SERVER_EVENT_NAMES)[number], organizationId: string, props: Record<string, string> = {}): Promise<boolean> {
   try {
     await db.funnelEvent.create({ data: { name, organizationId, propsJson: JSON.stringify(props), dedupeKey: `${name}:${organizationId}` } });
+    return true;
   } catch {
     // Already recorded (the dedupe key), or the table is unavailable: measurement never blocks the product.
+    return false;
   }
 }
 

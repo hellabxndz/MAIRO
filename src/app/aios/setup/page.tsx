@@ -108,6 +108,18 @@ const CHECKS: { name: string; label: string; why: string; optional?: true }[] = 
     why: "The From address, on a domain verified in Resend (e.g. MAIRO <no-reply@mairo.io>).",
   },
   {
+    name: "NEXT_PUBLIC_META_PIXEL_ID",
+    label: "MAIRO's own Meta pixel",
+    why: "Measures MAIRO's own Facebook and Instagram ads: page views on the public pages. The privacy policy updates itself when this is set. Needs a redeploy.",
+    optional: true,
+  },
+  {
+    name: "META_CONVERSIONS_TOKEN",
+    label: "MAIRO's own Meta pixel: Conversions API token",
+    why: "With the pixel above, reports free plans (Lead), sign-ups (CompleteRegistration) and subscriptions (StartTrial / Subscribe) to Meta, so ads can be judged on customers, not clicks.",
+    optional: true,
+  },
+  {
     name: "SENTRY_DSN",
     label: "Error tracking (Sentry)",
     why: "Reports server errors, failed checkouts and missed cron runs to Sentry. Off until set.",

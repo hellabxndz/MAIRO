@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { adClickIds, later, reportSiteEvent } from "@/lib/site-tracking";
 
 // Public funnel events. Only names on the list, only these properties, only
 // these values: no URLs, no free text, nothing personal. A visitor's repeat
@@ -39,6 +40,11 @@ export async function POST(request: Request) {
   const dedupeKey = parsed.name === "hero_view" && anonId ? `hero_view:${anonId}:${day}` : parsed.name === "preview_complete" && anonId ? `preview_complete:${anonId}:${day}` : null;
   try {
     await db.funnelEvent.create({ data: { name: parsed.name, anonId, propsJson: JSON.stringify(parsed.props), dedupeKey } });
+    // A finished free plan is MAIRO's own ads' first result: a Lead to MAIRO's
+    // pixel, once a visitor a day, after the response (lib/site-tracking.ts).
+    if (parsed.name === "preview_complete" && anonId) {
+      later(async () => reportSiteEvent({ event: "Lead", eventId: `lead-${anonId}-${day}`, path: "/preview", clickIds: await adClickIds(), fromRequest: true }));
+    }
   } catch {
     // A repeat of a once-a-day event, or the database is busy: nothing to tell the visitor.
   }

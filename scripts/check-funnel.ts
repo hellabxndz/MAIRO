@@ -52,7 +52,8 @@ check("each step is recorded at the right moment", () => {
   const start = read("src/lib/actions/start-actions.ts");
   assert.match(start, /const r = await approve\(w\.organizationId, version\);\n\s*if \(!r\.ok\) return \{ error: r\.error \};\n\s*await recordOnce\("plan_approved"/);
   assert.match(start, /const s = await createStrategy\(organizationId\);\n\s*if \(!s\.ok\) return \{ error: s\.error \};\n(?:\s*\/\/.*\n)*\s*await recordOnce\("plan_created"/);
-  assert.match(read("src/lib/stripe/apply-subscription.ts"), /if \(live\) await recordOnce\("checkout_success", organizationId\);/);
+  // Recorded for every live subscription; the &&-chain after it only decides whether MAIRO's own pixel hears too.
+  assert.match(read("src/lib/stripe/apply-subscription.ts"), /if \(live && \(await recordOnce\("checkout_success", organizationId\)\)/);
   // Live only after Meta switched it on: after the resume call succeeded and at least one campaign launched.
   const launch = read("src/lib/campaigns/auto-launch.ts");
   const resume = launch.indexOf("adapter.resumeCampaign(");

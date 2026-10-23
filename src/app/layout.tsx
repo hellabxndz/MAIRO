@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
+import { sitePixelId } from "@/lib/site-tracking";
+import { SitePixel } from "@/components/site-pixel";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -68,12 +70,17 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // MAIRO's own pixel, for measuring MAIRO's own ads. Off until its id is set.
+  const pixelId = sitePixelId();
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-neutral-950 text-white">{children}</body>
+      <body className="min-h-full flex flex-col bg-neutral-950 text-white">
+        {children}
+        {pixelId && <SitePixel pixelId={pixelId} />}
+      </body>
     </html>
   );
 }

@@ -16,6 +16,7 @@ import type { GoogleIntentMode } from "@/lib/google-sign-in-rules";
 import { PASSWORD_MAX, normalizeEmail, passwordProblem } from "@/lib/auth-rules/password";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { normalizeUrl } from "@/lib/campaigns/destination";
+import { adClickIds, later, reportSiteEvent } from "@/lib/site-tracking";
 
 // The sign-up fields, checked on the server whatever the form did. Text is
 // trimmed and capped (a name is shown across the product; a 10,000-character
@@ -167,6 +168,9 @@ export async function signUpAction(
   // A free ad plan saved in this browser before signing up comes with the
   // account, and setup opens with its answers. Never blocks the sign-up.
   await claimPendingPlan(organizationId);
+
+  // MAIRO's own ads: a sign-up, to MAIRO's pixel (lib/site-tracking.ts).
+  later(async () => reportSiteEvent({ event: "CompleteRegistration", eventId: `reg-${organizationId}`, path: "/sign-up", email, clickIds: await adClickIds(), fromRequest: true }));
 
   try {
     // A business type picked in the website's walkthrough opens setup with it chosen.

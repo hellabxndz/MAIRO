@@ -3,6 +3,7 @@ import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
 import { emailConfigured } from "@/lib/email/send";
 import { monitoringConfigured } from "@/lib/monitoring/report";
+import { sitePixelId } from "@/lib/site-tracking";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  // Whether MAIRO measures its own ads with Meta's pixel on this deployment.
+  const pixel = Boolean(sitePixelId());
   return (
     <LegalPage
       title="Privacy policy"
@@ -103,12 +106,31 @@ export default function PrivacyPage() {
               results anonymously in a case study.</>,
           ]}
         />
-        <p>
-          We do not collect payment card details. We do not use advertising cookies or third-party
-          trackers on this site; the only cookies we set keep you signed in, protect the Meta and
-          Google sign-in steps, remember your settings, and remember a free plan you saved so it can
-          join the account you create.
-        </p>
+        {pixel ? (
+          <>
+            <p>
+              We do not collect payment card details. The cookies we set keep you signed in, protect the
+              Meta and Google sign-in steps, remember your settings, and remember a free plan you saved
+              so it can join the account you create.
+            </p>
+            <p>
+              <strong className="text-neutral-200">Measuring our own advertising.</strong> We advertise
+              MAIRO on Facebook and Instagram, and use Meta&apos;s pixel to see which ads work. On our
+              public pages (not your dashboard) it sets Meta&apos;s cookies and tells Meta which page was
+              viewed. When you finish a free plan, create an account or start a subscription, we tell
+              Meta that it happened, with those cookies and, for an account, your email address in
+              hashed form. We never send Meta your business details, your plan or your answers. If your
+              browser sends Global Privacy Control or Do Not Track, none of this happens.
+            </p>
+          </>
+        ) : (
+          <p>
+            We do not collect payment card details. We do not use advertising cookies or third-party
+            trackers on this site; the only cookies we set keep you signed in, protect the Meta and
+            Google sign-in steps, remember your settings, and remember a free plan you saved so it can
+            join the account you create.
+          </p>
+        )}
       </Section>
 
       <Section heading="Why we hold it">
@@ -124,7 +146,8 @@ export default function PrivacyPage() {
         />
         <p>
           We do not sell your information. We do not share it with advertisers, data brokers, or
-          anyone building marketing lists.
+          anyone building marketing lists
+          {pixel ? ", apart from the measurement of our own ads with Meta described above, which you can turn off with Global Privacy Control" : ""}.
         </p>
       </Section>
 
@@ -153,7 +176,7 @@ export default function PrivacyPage() {
         <Bullets
           items={[
             <><strong className="text-neutral-200">Meta Platforms</strong> — to create and read the ads
-              we run for you.</>,
+              we run for you.{pixel ? " Also to measure MAIRO's own advertising, as described above." : ""}</>,
             <><strong className="text-neutral-200">Anthropic</strong> — powers the AI that writes your
               plans, ad copy, and specialist replies. Your prompts and business context are sent to
               generate those responses.</>,

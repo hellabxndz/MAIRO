@@ -71,6 +71,7 @@
     "check:help": "tsx scripts/check-help.ts",
     "check:solutions": "tsx scripts/check-solutions.ts",
     "check:funnel": "tsx scripts/check-funnel.ts",
+    "check:site-pixel": "tsx scripts/check-site-pixel.ts",
     "check:pause-everything-db": "tsx scripts/check-pause-everything-db.ts",
     "check:first-result-db": "tsx scripts/check-first-result-db.ts",
     "check:instagram": "tsx scripts/check-instagram.ts",

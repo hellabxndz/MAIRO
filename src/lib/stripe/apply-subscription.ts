@@ -10,6 +10,7 @@ import { recordOnce } from "@/lib/analytics/funnel";
 import { syncBrands } from "@/lib/brands";
 import { notify } from "@/lib/notifications/notify";
 import { planFor } from "@/lib/plans";
+import { later, ownerEmail, reportSiteEvent } from "@/lib/site-tracking";
 
 // Recording what Stripe says a business is paying for. Two callers: the
 // webhook (signed events from Stripe) and the return from Checkout, which
@@ -123,8 +124,24 @@ export async function applySubscription(subscription: Stripe.Subscription): Prom
     },
   });
 
-  // The funnel's "subscribed" step, once per business (a trial counts).
-  if (live) await recordOnce("checkout_success", organizationId);
+  // The funnel's "subscribed" step, once per business (a trial counts), and
+  // the same step for MAIRO's own ads (lib/site-tracking.ts).
+  if (live && (await recordOnce("checkout_success", organizationId)) && tier) {
+    const trial = subscription.status === "trialing";
+    const valueCents = Math.round(planFor(tier).priceMonthly * 100);
+    const { fbp, fbc } = subscription.metadata ?? {};
+    later(async () =>
+      reportSiteEvent({
+        event: trial ? "StartTrial" : "Subscribe",
+        eventId: `sub-${subscription.id}`,
+        path: "/billing/return",
+        email: await ownerEmail(organizationId),
+        clickIds: { fbp, fbc },
+        valueCents,
+        fromRequest: false,
+      })
+    );
+  }
 
   // The confirmation: which plan is now on, once per subscription and plan,
   // so a redelivered event or a renewal says nothing again. Stripe's own

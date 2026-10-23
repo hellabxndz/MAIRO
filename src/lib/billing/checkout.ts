@@ -7,6 +7,7 @@ import type { SubscriptionTier } from "@/generated/prisma/enums";
 import { isFreelancerTier, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
 import { checkoutGuard } from "@/lib/billing/checkout-guard";
 import { payingBusinessOf } from "@/lib/brands";
+import { adClickIds } from "@/lib/site-tracking";
 
 // Starting a Stripe Checkout for MAIRO Pro or MAIRO Scale.
 //
@@ -281,6 +282,9 @@ export async function beginCheckout(input: { organizationId: string; email: stri
 
     const trialDays = trialDaysFor(tier);
     const metadata = { organizationId, tier, returnTo };
+    // Meta's cookies from this browser, for MAIRO's own ad measurement when
+    // the subscription starts (lib/site-tracking.ts). Empty unless that's on.
+    const clickIds = await adClickIds();
     const checkout = await stripe().checkout.sessions.create(
       {
         mode: "subscription",
@@ -294,7 +298,7 @@ export async function beginCheckout(input: { organizationId: string; email: stri
         // a lookup, and without trusting anything the client sent us.
         metadata,
         subscription_data: {
-          metadata: { organizationId },
+          metadata: { organizationId, ...clickIds },
           // The trial. Stripe still collects a card, which is deliberate: it
           // is what lets the subscription continue without a second
           // conversation, and a trial that ends by silently locking somebody
