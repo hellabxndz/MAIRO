@@ -220,6 +220,17 @@
   }
 }
 
+/* A grid with no column template of its own — the phone layout of every
+   "grid sm:grid-cols-2" — gets one column that can shrink to the screen.
+   Without it the implicit column sizes to its widest unbreakable content, so
+   one long campaign name or select option pushed the whole page sideways.
+   In the base layer, so any grid-cols-* utility still wins. */
+@layer base {
+  :where(.grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* The lattice. Used as a class rather than a component because it is applied
    to sections that already exist; it never moves and costs one paint. */
 .mairo-grid {
@@ -356,4 +367,27 @@
   .mp-print-root .mp-section, .mp-print-root .mp-section * { background: transparent !important; border-color: #d9dbe3 !important; }
   .mp-print-root .mp-section { break-inside: avoid-page; animation: none; }
   .mp-print-root figure, .mp-print-root li { break-inside: avoid; }
+}
+
+/* Phones and tablets.
+ *
+ * iOS zooms the whole page into any form field whose text is under 16px, and
+ * doesn't zoom back out. On a touch screen, or any screen narrower than a
+ * laptop, every field is at least 16px; a desktop keeps each field's designed
+ * size. Width as well as pointer, because the pointer alone isn't a promise
+ * (a tablet with a trackpad reports a fine one). Unlayered on purpose, so it
+ * outranks the text-size utilities on the fields themselves.
+ *
+ * And text keeps its designed size when a phone turns sideways (iOS otherwise
+ * inflates it). */
+@media (pointer: coarse), (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }

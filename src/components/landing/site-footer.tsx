@@ -49,10 +49,11 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
         {columns.map((col) => (
           <div key={col.h}>
             <p className="text-[13px] font-semibold text-white">{col.h}</p>
-            <ul className="mt-4 space-y-2.5 text-[13px] text-white/55">
+            {/* Each link a full 44px row on a phone; the desktop list stays tight. */}
+            <ul className="mt-2 text-[13px] text-white/55 sm:mt-4 sm:space-y-2.5">
               {col.l.map(([label, href]) => (
                 <li key={label}>
-                  <Link href={href} className="hover:text-white">{label}</Link>
+                  <Link href={href} className="flex min-h-11 items-center hover:text-white sm:inline sm:min-h-0">{label}</Link>
                 </li>
               ))}
             </ul>

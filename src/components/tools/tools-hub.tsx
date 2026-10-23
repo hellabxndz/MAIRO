@@ -28,7 +28,7 @@ export function ToolsHub({ tools, categories }: { tools: HubTool[]; categories: 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <label className="relative block w-full sm:max-w-[360px]">
           <span className="sr-only">Search the tools</span>
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: ROAS, hooks, UTM, cost per lead…" className="w-full rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-[14px] text-white placeholder:text-white/40 outline-none focus:border-violet/70 focus:ring-2 focus:ring-violet/25" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: ROAS, hooks, UTM, cost per lead…" className="w-full rounded-full border border-white/12 bg-white/[0.04] px-4 py-2.5 text-[16px] text-white placeholder:text-white/40 outline-none focus:border-violet/70 focus:ring-2 focus:ring-violet/25" />
         </label>
         <div role="group" aria-label="Filter by kind" className="flex flex-wrap gap-2">
           {(["All", ...categories] as const).map((c) => (

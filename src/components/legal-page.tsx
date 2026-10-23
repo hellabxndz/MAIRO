@@ -25,7 +25,7 @@ export function LegalPage({
       <div className="relative mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-20">
         <div className="flex items-center justify-between gap-4">
           <Wordmark />
-          <Link href="/" className="text-[13px] text-neutral-500 transition hover:text-white">
+          <Link href="/" className="inline-flex min-h-11 items-center sm:min-h-0 text-[13px] text-neutral-500 transition hover:text-white">
             ← Back to the home page
           </Link>
         </div>
@@ -54,9 +54,9 @@ export function LegalPage({
             {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.
           </p>
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.15em] text-neutral-500">
-            <Link href="/privacy" className="transition hover:text-white">Privacy</Link>
-            <Link href="/terms" className="transition hover:text-white">Terms</Link>
-            <Link href="/data-deletion" className="transition hover:text-white">Data deletion</Link>
+            <Link href="/privacy" className="inline-flex min-h-11 items-center sm:min-h-0 transition hover:text-white">Privacy</Link>
+            <Link href="/terms" className="inline-flex min-h-11 items-center sm:min-h-0 transition hover:text-white">Terms</Link>
+            <Link href="/data-deletion" className="inline-flex min-h-11 items-center sm:min-h-0 transition hover:text-white">Data deletion</Link>
           </div>
         </footer>
       </div>

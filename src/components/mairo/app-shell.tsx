@@ -236,7 +236,7 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
             aria-pressed={on}
             disabled={pending}
             onClick={() => start(() => void setViewMode(m))}
-            className={`rounded-full px-3 py-1.5 text-[11px] font-medium capitalize transition-all duration-300 [transition-timing-function:var(--ease-mairo)] disabled:opacity-60 ${
+            className={`min-h-9 rounded-full px-3 py-1.5 text-[11px] font-medium capitalize transition-all duration-300 lg:min-h-0 [transition-timing-function:var(--ease-mairo)] disabled:opacity-60 ${
               on ? "text-white" : "text-faint hover:text-muted"
             }`}
             style={on ? { backgroundImage: "var(--mairo-ramp)" } : undefined}
@@ -429,13 +429,10 @@ export function AppShell({
           {notifications}
           {/* Settings — and from there analytics' neighbours, billing, account
               and signing out — on a phone. */}
-          <Link
-            href="/dashboard/settings"
-            aria-label="Settings"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-white"
-            style={{ backgroundImage: "var(--mairo-ramp)" }}
-          >
-            {(userName || businessName || "?").charAt(0).toUpperCase()}
+          <Link href="/dashboard/settings" aria-label="Settings" className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+            <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
+              {(userName || businessName || "?").charAt(0).toUpperCase()}
+            </span>
           </Link>
         </div>
       </header>
@@ -445,7 +442,7 @@ export function AppShell({
           pb-24 on mobile so the bottom bar never sits on top of the last
           control on the screen, which is the single most common way a bottom
           nav breaks a form. */}
-      <main className="px-4 pb-24 pt-5 sm:px-6 lg:ml-[248px] lg:px-10 lg:pb-16 lg:pt-8">
+      <main className="px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:ml-[248px] lg:px-10 lg:pb-16 lg:pt-8">
         {/* Desktop keeps the toggle at the top of the content rather than in
             the sidebar: it changes what this screen shows, so it belongs
             beside the screen. */}

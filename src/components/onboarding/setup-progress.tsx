@@ -69,7 +69,7 @@ export function SetupProgress({ steps, here, showProblem = true }: { steps: Onbo
       {showProblem && focus?.problem && <ProblemCard problem={focus.problem} tone={focus.state === "waiting" ? "warn" : "alert"} className="mt-3" />}
 
       <details className="group mt-3">
-        <summary className="cursor-pointer list-none text-[12.5px] text-violet-bright hover:text-white">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center text-[12.5px] text-violet-bright hover:text-white sm:min-h-0">
           <span className="group-open:hidden">See every step</span>
           <span className="hidden group-open:inline">Hide the steps</span>
         </summary>

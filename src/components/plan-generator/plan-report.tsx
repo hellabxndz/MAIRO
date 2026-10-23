@@ -158,15 +158,15 @@ function AtAGlance({ r }: { r: PlanReport }) {
   const first = r.concepts.list[r.concepts.first];
   return (
     <section aria-label="Your plan at a glance" className="mt-7 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(238,238,238,0.28)", background: "radial-gradient(90% 140% at 100% 0%, rgba(255,255,255,0.20), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
-      <div className="grid gap-px bg-white/[0.06] md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-px bg-white/[0.06] md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="bg-[#121212]/80 p-5 sm:p-6">
           <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">First campaign</p>
           <p className="mt-2 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-white">{r.strategy.objective}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">Meta optimises for {r.strategy.optimiseFor.toLowerCase()} · {r.strategy.placements.join(", ")}</p>
         </div>
-        <div className="flex items-center gap-4 bg-[#121212]/80 p-5 sm:p-6">
+        <div className="flex min-w-0 items-center gap-4 bg-[#121212]/80 p-5 sm:p-6">
           <BudgetRing lines={r.budget.lines} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Monthly budget</p>
             <p className="mt-1 text-[28px] font-semibold leading-none tracking-[-0.03em] text-white">{money(r.budget.monthly)}</p>
             <ul className="mt-2.5 space-y-1 text-[12.5px] text-white/70">

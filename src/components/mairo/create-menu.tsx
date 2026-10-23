@@ -89,7 +89,7 @@ export function AskMairoButton({ name, compact = false }: { name: string; compac
     <button
       type="button"
       onClick={() => window.dispatchEvent(new CustomEvent("mairo:open-assistant"))}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "px-2.5" : ""}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "min-h-10 min-w-10 justify-center px-2.5" : ""}`}
       style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.12)" }}
     >
       <span aria-hidden>✨</span>

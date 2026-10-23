@@ -69,7 +69,7 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
         onClick={() => setOpen(!open)}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-white"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-white lg:h-9 lg:w-9"
       >
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" aria-hidden>
           <path
@@ -91,11 +91,13 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
         )}
       </button>
 
+      {/* On a phone, a panel above the bottom bar — anchored to the bell it
+          would hang off the screen; on a desktop, the dropdown under it. */}
       {open && (
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-11 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border"
+          className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 max-h-[70dvh] overflow-y-auto overscroll-contain rounded-2xl border lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-11 lg:max-h-none lg:w-[360px] lg:overflow-hidden"
           style={{
             borderColor: "var(--mairo-line-lit)",
             background: "rgba(var(--mairo-bg-rgb),0.98)",

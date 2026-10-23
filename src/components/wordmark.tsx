@@ -13,7 +13,8 @@ export function Wordmark({ href = "/", className = "text-[19px]" }: { href?: str
     </span>
   );
   return href ? (
-    <Link href={href} aria-label="MAIRO home" className="inline-block">
+    // 44px tall to tap, whatever size the name is drawn at.
+    <Link href={href} aria-label="MAIRO home" className="-my-2 inline-flex min-h-11 items-center">
       {mark}
     </Link>
   ) : (

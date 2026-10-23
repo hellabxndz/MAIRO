@@ -206,7 +206,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
 
         {/* Controls: always reachable by keyboard; shown on hover, focus, pause or end. */}
         <div className={`absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2.5 pt-8 transition-opacity duration-300 focus-within:opacity-100 group-hover:opacity-100 ${isPlaying ? "opacity-0" : "opacity-100"}`}>
-          <button type="button" onClick={toggle} aria-label={ended ? `Replay: ${title}` : isPlaying ? `Pause: ${title}` : `Play: ${title}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70">
+          <button type="button" onClick={toggle} aria-label={ended ? `Replay: ${title}` : isPlaying ? `Pause: ${title}` : `Play: ${title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur sm:h-9 sm:w-9 transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70">
             {ended ? (
               <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-none stroke-current" strokeWidth="1.8"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3" strokeLinecap="round" strokeLinejoin="round" /></svg>
             ) : isPlaying ? (
@@ -224,13 +224,14 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
             onChange={(e) => seek(Number(e.target.value))}
             aria-label={`Position in ${title}`}
             aria-valuetext={`${fmt(t)} of ${fmt(duration)}`}
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-[#e6e6e6]"
+            className="h-11 min-w-0 flex-1 cursor-pointer accent-[#e6e6e6] sm:h-1"
           />
           <span className="hidden shrink-0 text-[11.5px] tabular-nums text-white/75 sm:inline">
             {fmt(t)} / {fmt(duration)}
           </span>
-          <button type="button" onClick={() => setCaptionsOn((c) => !c)} aria-pressed={captionsOn} aria-label="Captions" className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10.5px] font-bold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 ${captionsOn ? "border-white/70 text-white" : "border-white/30 text-white/50"}`}>
-            CC
+          {/* 44px to tap on a phone; the visible badge stays small. */}
+          <button type="button" onClick={() => setCaptionsOn((c) => !c)} aria-pressed={captionsOn} aria-label="Captions" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 sm:min-h-0 sm:min-w-0">
+            <span className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-bold tracking-wide transition ${captionsOn ? "border-white/70 text-white" : "border-white/30 text-white/50"}`}>CC</span>
           </button>
           <span className="hidden shrink-0 text-[10.5px] text-white/55 md:inline">No sound</span>
         </div>
@@ -245,7 +246,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
       </div>
       {transcript && cues.length > 0 && (
         <details className="mt-3 text-[13px] text-white/60">
-          <summary className="cursor-pointer select-none hover:text-white">Read what the video shows</summary>
+          <summary className="cursor-pointer select-none py-3 hover:text-white sm:py-1">Read what the video shows</summary>
           <ol className="mt-2 space-y-1 leading-relaxed">
             {cues.map((c) => (
               <li key={c.start}>

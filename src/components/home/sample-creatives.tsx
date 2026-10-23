@@ -27,7 +27,7 @@ function rendered(key: string): () => ReactNode {
     const p = SHOWCASE_PHOTOS[key];
     if (!p) return null;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={p.src} alt={p.alt} className="block h-full w-full object-cover" style={{ objectPosition: p.focus ?? "center" }} decoding="async" draggable={false} />;
+    return <img src={p.src} alt={p.alt} className="block h-full w-full object-cover" style={{ objectPosition: p.focus ?? "center" }} loading="lazy" decoding="async" draggable={false} />;
   };
 }
 

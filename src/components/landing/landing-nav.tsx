@@ -9,6 +9,10 @@ import { Wordmark } from "@/components/wordmark";
 // the page scrolls. Resources holds the free tools and the reference pages so
 // the main bar stays on the signup journey. On a phone everything folds into
 // one menu. Links are absolute ("/pricing") so they work from any page.
+//
+// On the narrowest phones (under 375px) the bar's own call to action steps
+// aside: the logo, the button and the menu don't fit side by side, and the
+// same button is in the menu and directly under the bar in every hero.
 
 const MAIN = [
   { href: "/#how-it-works", label: "How It Works" },
@@ -65,9 +69,9 @@ export function LandingNav({
 
   return (
     <header className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${scrolled || open ? "border-b border-white/[0.07] bg-[#0a0a0a]/90 backdrop-blur-md" : "bg-transparent"}`}>
-      <nav aria-label="Main" className="mx-auto flex h-[72px] max-w-[1360px] items-center justify-between px-5 sm:px-8 lg:px-10">
-        <div className="flex items-center gap-[clamp(32px,6vw,96px)]">
-          <Wordmark />
+      <nav aria-label="Main" className="mx-auto flex h-[64px] max-w-[1360px] items-center justify-between gap-2 px-4 sm:h-[72px] sm:px-8 lg:px-10">
+        <div className="flex min-w-0 items-center gap-[clamp(32px,6vw,96px)]">
+          <Wordmark className="text-[16.5px] sm:text-[19px]" />
           <div className="hidden items-center gap-7 whitespace-nowrap text-[14px] font-medium text-white/80 lg:flex xl:gap-9">
             {MAIN.map((l) => (
               <Link key={l.href} href={l.href} className="transition-colors hover:text-white">
@@ -97,21 +101,21 @@ export function LandingNav({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Link href="/sign-in" className="hidden whitespace-nowrap rounded-full border border-white/12 px-5 py-2.5 text-[13.5px] font-medium text-white/90 transition hover:border-white/30 hover:text-white sm:inline-block">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+          <Link href="/sign-in" className="hidden min-h-[44px] items-center whitespace-nowrap rounded-full border border-white/12 px-5 text-[13.5px] font-medium text-white/90 transition hover:border-white/30 hover:text-white sm:inline-flex">
             Sign In
           </Link>
-          <Link href={cta.href} className="whitespace-nowrap rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+          <Link href={cta.href} className="hidden min-h-[44px] items-center whitespace-nowrap rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 min-[375px]:inline-flex sm:px-5">
             {cta.label}
           </Link>
-          <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? "Close menu" : "Open menu"} className="ml-1 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white lg:hidden">
+          <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="nav-mobile" aria-label={open ? "Close menu" : "Open menu"} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white lg:hidden">
             <span aria-hidden>{open ? "✕" : "☰"}</span>
           </button>
         </div>
       </nav>
 
       {open && (
-        <div id="nav-mobile" className="max-h-[calc(100vh-72px)] overflow-y-auto border-t border-white/[0.07] px-5 pb-6 lg:hidden">
+        <div id="nav-mobile" className="max-h-[calc(100dvh-64px)] overflow-y-auto overscroll-contain border-t border-white/[0.07] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-72px)] sm:px-8 lg:hidden">
           <ul className="space-y-1 pt-3">
             {[...MAIN, ...RES.map((r) => ({ href: r.href, label: r.label })), { href: "/sign-in", label: "Sign In" }].map((l) => (
               <li key={l.href}>

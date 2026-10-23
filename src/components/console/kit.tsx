@@ -81,7 +81,7 @@ export function Panel({
             </h2>
           )}
           {action && (
-            <Go href={action.href} className="text-[12.5px] text-muted transition hover:text-white">
+            <Go href={action.href} className="-my-3 inline-flex min-h-11 items-center text-[12.5px] text-muted transition hover:text-white lg:my-0 lg:min-h-0">
               {action.label} <span aria-hidden>→</span>
             </Go>
           )}

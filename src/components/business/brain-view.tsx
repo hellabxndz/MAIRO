@@ -105,7 +105,7 @@ export function AddFact({ missing }: { missing: { key: string; label: string; li
         <label className="flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
           <span>+ Tell MAIRO about</span>
           <select value="" onChange={(e) => setKey(e.target.value)} aria-label="Add something MAIRO doesn't know yet"
-            className="rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-1 text-[12.5px] text-white">
+            className="min-h-11 min-w-0 max-w-full rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-1 text-[12.5px] text-white sm:min-h-0">
             <option value="">choose…</option>
             {missing.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
           </select>

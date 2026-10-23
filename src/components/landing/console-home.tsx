@@ -136,7 +136,7 @@ export function ConsoleHome() {
                 <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/62">{s.body}</p>
                 <p className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-3 text-[13.5px]">
                   {s.links.map((l) => (
-                    <Link key={l.href} href={l.href} className="text-cyan-200 hover:text-white">
+                    <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center sm:min-h-0 text-cyan-200 hover:text-white">
                       {l.label} <span aria-hidden>→</span>
                     </Link>
                   ))}

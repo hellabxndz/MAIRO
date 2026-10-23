@@ -38,7 +38,7 @@ export function HelpSearch({ entries, categories, basePath, initialQuery = "" }:
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search: credits, pixel, cancel, approve…"
           autoComplete="off"
-          className="w-full rounded-full border border-[color:var(--mairo-line)] bg-white/[0.04] py-3 pl-11 pr-4 text-[15px] text-white outline-none placeholder:text-faint focus:border-violet/70 focus:ring-2 focus:ring-violet/25"
+          className="w-full rounded-full border border-[color:var(--mairo-line)] bg-white/[0.04] py-3 pl-11 pr-4 text-[16px] text-white outline-none placeholder:text-faint focus:border-violet/70 focus:ring-2 focus:ring-violet/25"
         />
       </form>
 
