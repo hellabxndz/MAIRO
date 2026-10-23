@@ -127,7 +127,7 @@ const IntroWorld = memo(function IntroWorld({ site, goal, focus, pressed }: Intr
       <Steps step={1} />
       <section className="mx-auto max-w-[760px]">
         <p className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white">Build your free ad plan</p>
-        <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Tell us about your business, share your Instagram, or add your website — MAIRO builds a personalized advertising plan around your goals.</p>
+        <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Tell us about your business or add your website — MAIRO builds a personalized advertising plan around your goals.</p>
         <div id="walk-form" className="mt-7">
           <FreePlanForm idPrefix="walk" demo={{ website: site, goal, focus, pressed }} />
         </div>

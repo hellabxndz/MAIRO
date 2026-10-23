@@ -11,7 +11,7 @@ const BEFORE = [
 ];
 
 const AFTER = [
-  { n: "1", t: "Describe your business.", d: "Your website, your Instagram, or a sentence." },
+  { n: "1", t: "Describe your business.", d: "Your website, or a sentence." },
   { n: "2", t: "Review the plan.", d: "Strategy, audience, budget split and ad concepts — each with its reason." },
   { n: "3", t: "Approve your campaigns.", d: "MAIRO builds them in your own Meta ad account. Nothing runs until you say so." },
 ];

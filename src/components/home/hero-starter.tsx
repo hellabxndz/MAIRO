@@ -12,23 +12,22 @@ import type { ScanResult } from "@/lib/website/scan";
 import { heroVariant, track } from "@/lib/analytics/track";
 
 // The homepage's free plan, as a short conversation: one answer first — the
-// website, the Instagram username or, with neither, a sentence about the
-// business — then MAIRO says what it read and asks the three things it still
+// website or, without one, a sentence about the business — then MAIRO says
+// what it read and asks the three things it still
 // needs (what they sell, the goal, the monthly Meta budget). The plan itself
 // is made on /preview, handed over through this tab's session storage (never
 // the address bar); without JavaScript the form goes there as a plain request
 // and the full generator takes over.
 //
-// Nothing is guessed: what the website or profile said is shown for the
+// Nothing is guessed: what the website said is shown for the
 // visitor to check, a reading that fails says so, and the visitor's own
 // words are always enough to continue.
 
-type Source = "website" | "instagram" | "describe";
+type Source = "website" | "describe";
 type Read = { by: Source; label: string; ok: boolean; message: string | null; name: string; sells: string; goal: PreviewGoal | null; scan: ScanResult | null; website: string | null };
 
 const SOURCES: { key: Source; label: string }[] = [
   { key: "website", label: "Website" },
-  { key: "instagram", label: "Instagram" },
   { key: "describe", label: "No website" },
 ];
 
@@ -48,8 +47,6 @@ function normalize(raw: string): string | null {
 
 const readOk = (r: ScanResult | null) => Boolean(r && (r.status === "OK" || r.status === "PARTIAL") && !r.socialInstead);
 
-type InstagramReply = { status: "read"; profile: { handle: string; name: string | null; bio: string | null; website: string | null } } | { status: string; message?: string; handle?: string };
-
 export function HeroStarter() {
   const router = useRouter();
   const { state: scanState, run: runScan } = useWebsiteScan();
@@ -67,9 +64,6 @@ export function HeroStarter() {
   const [customOn, setCustomOn] = useState(false);
   const [tried, setTried] = useState(false);
   const [firstError, setFirstError] = useState<string | null>(null);
-  // When Instagram won't show the profile: the link in the bio, read as a website instead.
-  const [bioLink, setBioLink] = useState("");
-  const [bioError, setBioError] = useState<string | null>(null);
 
   const monthly = customOn ? Math.round(Number(custom.replace(/[^0-9]/g, ""))) || null : budget;
   const budgetOk = Boolean(monthly && monthly >= BUDGET_MIN && monthly <= BUDGET_MAX);
@@ -84,7 +78,7 @@ export function HeroStarter() {
     if (source === "website") {
       const url = normalize(value);
       if (!url) {
-        setFirstError(value ? "Enter a web address like yourbusiness.com." : "Add your website — or choose Instagram or No website.");
+        setFirstError(value ? "Enter a web address like yourbusiness.com." : "Add your website — or choose No website.");
         focus("first");
         return;
       }
@@ -106,42 +100,6 @@ export function HeroStarter() {
       next({ by: "website", label: domainOf(url), ok, message, name: f?.name ?? "", sells: f?.offering ?? "", goal: f?.goal || null, scan: ok ? result : null, website: url });
       return;
     }
-    if (source === "instagram") {
-      if (!value) {
-        setFirstError("Enter your Instagram username, like @yourbusiness.");
-        focus("first");
-        return;
-      }
-      track({ name: "preview_start", props: { source: "manual", variant: heroVariant() } });
-      setBusy(true);
-      let reply: InstagramReply | null = null;
-      try {
-        const res = await fetch("/api/tools/instagram", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ handle: value }) });
-        reply = (await res.json()) as InstagramReply;
-      } catch {
-        reply = null;
-      }
-      setBusy(false);
-      if (reply?.status === "invalid") {
-        setFirstError(("message" in reply && reply.message) || "That doesn't look like an Instagram username.");
-        focus("first");
-        return;
-      }
-      const handle = `@${value.replace(/^@+/, "").replace(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\//i, "").replace(/\/.*$/, "")}`;
-      if (reply?.status === "read" && "profile" in reply) {
-        const p = reply.profile;
-        // The bio's link is usually the website: read it too, and say so only if it was read.
-        const link = p.website ? normalize(p.website) : null;
-        const result = link && !/(^|\.)instagram\.com$/i.test(new URL(link).hostname) ? (setBusy(true), await runScan({ url: link })) : null;
-        setBusy(false);
-        const site = readOk(result) && result ? result : null;
-        const f = site ? factsFromScan(site) : null;
-        next({ by: "instagram", label: site ? `@${p.handle} and ${domainOf(link!)}` : `@${p.handle}`, ok: true, message: null, name: p.name ?? f?.name ?? "", sells: (p.bio || f?.offering || "").slice(0, 400), goal: f?.goal || null, scan: site, website: site ? link : null });
-      } else {
-        next({ by: "instagram", label: handle, ok: false, message: (reply && "message" in reply && reply.message) || "MAIRO couldn't reach Instagram just now.", name: "", sells: "", goal: null, scan: null, website: null });
-      }
-      return;
-    }
     if (value.length < 3) {
       setFirstError("Tell MAIRO what your business does, in a few words.");
       focus("first");
@@ -149,29 +107,6 @@ export function HeroStarter() {
     }
     track({ name: "preview_start", props: { source: "manual", variant: heroVariant() } });
     next({ by: "describe", label: "Your description", ok: true, message: null, name: "", sells: value.slice(0, 400), goal: null, scan: null, website: null });
-  };
-
-  /** Instagram showed nothing: read the link from the bio as a website instead. */
-  const readBioLink = async () => {
-    setBioError(null);
-    const url = normalize(bioLink);
-    if (!url || /(^|\.)instagram\.com$/i.test(new URL(url).hostname)) {
-      setBioError(/instagram\.com/i.test(bioLink) ? "That's the Instagram profile itself — paste the website link from the bio." : "Paste a web address like yourbusiness.com.");
-      focus("biolink");
-      return;
-    }
-    setBusy(true);
-    const result = await runScan({ url });
-    setBusy(false);
-    const ok = readOk(result);
-    if (!ok || !result) {
-      setBioError(result?.error ?? "MAIRO couldn't read that page either. Tell MAIRO what you sell below instead.");
-      focus("biolink");
-      return;
-    }
-    const f = factsFromScan(result);
-    setBioLink("");
-    next({ by: "website", label: domainOf(url), ok: true, message: null, name: f.name ?? "", sells: f.offering ?? "", goal: f.goal || null, scan: result, website: url });
   };
 
   const next = (r: Read) => {
@@ -196,7 +131,7 @@ export function HeroStarter() {
       focus(missing);
       return;
     }
-    // A name the website gave comes from its reading; one from a profile, or typed, is the visitor's.
+    // A name the website gave comes from its reading; one typed is the visitor's.
     const a: GeneratorAnswers = { website: read.website, sells: sells.trim(), name: read.by === "website" && read.name ? "" : read.name || name.trim(), goal: goal as PreviewGoal, monthly: monthly! };
     track({ name: "hero_cta", props: { cta: "free_plan", variant: heroVariant() } });
     if (handOffPlan(a, read.scan)) {
@@ -208,7 +143,7 @@ export function HeroStarter() {
   };
 
   const reading = busy || scanState.phase === "running";
-  const progress = scanState.phase === "running" ? (scanState.progress?.label ?? "Opening your website…") : source === "instagram" ? "Opening the public profile…" : null;
+  const progress = scanState.phase === "running" ? (scanState.progress?.label ?? "Opening your website…") : null;
 
   const chip = (on: boolean) =>
     `flex cursor-pointer items-center justify-center rounded-xl border transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-cyan-300/60 ${on ? "border-violet-400/80 bg-violet-500/[0.16] text-white" : "border-white/[0.12] bg-white/[0.025] text-white/78 hover:border-white/30 hover:text-white"}`;
@@ -217,7 +152,7 @@ export function HeroStarter() {
 
   const cta = (
     <>
-      <IconSparkle className="h-[18px] w-[18px]" />
+      <IconSparkle className="h-[18px] w-[18px] shrink-0" />
       Build My Free AI Ad Plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
     </>
   );
@@ -258,11 +193,11 @@ export function HeroStarter() {
           </div>
 
           <label htmlFor="hero-first" className="mt-3.5 block text-[14.5px] font-semibold text-white">
-            {source === "website" ? "Your website" : source === "instagram" ? "Your Instagram username" : "What does your business do?"}
+            {source === "website" ? "Your website" : "What does your business do?"}
           </label>
           <div className="mt-2 flex flex-col gap-2.5 sm:flex-row">
             <div className={`min-w-0 flex-1 ${box(Boolean(firstError))}`}>
-              {source === "describe" ? <IconStore className="h-5 w-5 shrink-0 text-white/45" /> : source === "instagram" ? <span aria-hidden className="w-5 shrink-0 text-center text-[17px] text-white/45">@</span> : <IconLink className="h-5 w-5 shrink-0 text-white/45" />}
+              {source === "describe" ? <IconStore className="h-5 w-5 shrink-0 text-white/45" /> : <IconLink className="h-5 w-5 shrink-0 text-white/45" />}
               <input
                 id="hero-first"
                 data-field="first"
@@ -277,7 +212,7 @@ export function HeroStarter() {
                 autoCapitalize={source === "describe" ? "sentences" : "none"}
                 spellCheck={source === "describe"}
                 maxLength={source === "describe" ? 400 : 200}
-                placeholder={source === "website" ? "yourbusiness.com" : source === "instagram" ? "yourbusiness" : "We sell handmade mugs online"}
+                placeholder={source === "website" ? "yourbusiness.com" : "e.g. handmade mugs"}
                 aria-invalid={Boolean(firstError)}
                 aria-describedby="hero-first-note"
                 disabled={reading}
@@ -288,9 +223,9 @@ export function HeroStarter() {
             <button
               type="submit"
               disabled={reading}
-              className="group inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-black shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-75 sm:px-6"
+              className="group inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-4 text-[15px] font-semibold text-black min-[375px]:px-5 min-[375px]:text-[15.5px] shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-75 sm:px-6"
             >
-              {reading ? (source === "website" ? "Reading your website…" : "Opening your profile…") : cta}
+              {reading ? "Reading your website…" : cta}
             </button>
           </div>
           <p id="hero-first-note" role="status" className="mt-2 min-h-[18px] text-[12.5px] leading-snug">
@@ -300,11 +235,7 @@ export function HeroStarter() {
               <span className="text-white/70">{progress}</span>
             ) : (
               <span className="text-white/50">
-                {source === "website"
-                  ? "MAIRO reads your public pages only."
-                  : source === "instagram"
-                    ? "Only what Instagram shows anyone signed out: the name and bio. No posts, no insights."
-                    : "A sentence is enough — MAIRO asks the rest."}
+                {source === "website" ? "MAIRO reads your public pages only." : "A sentence is enough — MAIRO asks the rest."}
               </span>
             )}
           </p>
@@ -333,48 +264,6 @@ export function HeroStarter() {
               Change
             </button>
           </div>
-          {read.by === "instagram" && !read.ok && (
-            <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-3">
-              <label htmlFor="hero-biolink" className="text-[13.5px] font-semibold text-white">Is there a link in your bio?</label>
-              <p className="mt-0.5 text-[12.5px] text-white/55">Usually it&rsquo;s your website — paste it and MAIRO reads that instead.</p>
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                <div className={`min-w-0 flex-1 ${box(Boolean(bioError))}`}>
-                  <IconLink className="h-5 w-5 shrink-0 text-white/45" />
-                  <input
-                    id="hero-biolink"
-                    data-field="biolink"
-                    value={bioLink}
-                    onChange={(e) => {
-                      setBioLink(e.target.value);
-                      setBioError(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void readBioLink();
-                      }
-                    }}
-                    inputMode="url"
-                    autoComplete="url"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    maxLength={200}
-                    placeholder="yourbusiness.com"
-                    aria-invalid={Boolean(bioError)}
-                    aria-describedby="hero-biolink-note"
-                    disabled={reading}
-                    className="min-h-[48px] min-w-0 flex-1 mairo-bare bg-transparent text-[16px] text-white outline-none placeholder:text-white/35 disabled:opacity-70"
-                  />
-                </div>
-                <button type="button" onClick={() => void readBioLink()} disabled={reading} className="inline-flex min-h-[50px] shrink-0 items-center justify-center rounded-2xl border border-white/20 px-5 text-[14px] font-semibold text-white transition hover:border-white/45 disabled:cursor-wait disabled:opacity-70">
-                  {reading ? "Reading…" : "Read my link"}
-                </button>
-              </div>
-              <p id="hero-biolink-note" role="status" className="mt-1.5 min-h-[16px] text-[12.5px]">
-                {bioError ? <span className="text-red-300">{bioError}</span> : reading ? <span className="text-white/70">{progress ?? "Opening your website…"}</span> : <span className="text-white/45">Or skip it and tell MAIRO what you sell below.</span>}
-              </p>
-            </div>
-          )}
           {read.website && <input type="hidden" name="website" value={read.website} />}
 
           {needsName && (
@@ -390,11 +279,11 @@ export function HeroStarter() {
           <div className="mt-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label htmlFor="hero-sells" className="text-[14.5px] font-semibold text-white">{read.by === "describe" ? "What you sell" : "Is this what you sell?"}</label>
-              {read.ok && read.by !== "describe" && read.sells && sells === read.sells && <span className="rounded-full bg-emerald-400/12 px-2.5 py-0.5 text-[11.5px] font-medium text-emerald-300">From {read.by === "website" ? "your website" : read.scan ? "your profile and website" : "your bio"} — check it</span>}
+              {read.ok && read.by !== "describe" && read.sells && sells === read.sells && <span className="rounded-full bg-emerald-400/12 px-2.5 py-0.5 text-[11.5px] font-medium text-emerald-300">From your website — check it</span>}
             </div>
             <div className={`mt-1.5 !items-start ${box(tried && sells.trim().length < 3)}`}>
               <IconTag className="mt-[14px] h-5 w-5 shrink-0 text-white/45" />
-              <textarea id="hero-sells" data-field="sells" name="sells" value={sells} onChange={(e) => setSells(e.target.value)} rows={2} maxLength={400} placeholder="Tell MAIRO what your business sells or offers…" aria-invalid={tried && sells.trim().length < 3} className="block min-h-[50px] w-full min-w-0 flex-1 resize-none mairo-bare bg-transparent py-3 text-[16px] leading-relaxed text-white outline-none placeholder:text-white/35" />
+              <textarea id="hero-sells" data-field="sells" name="sells" value={sells} onChange={(e) => setSells(e.target.value)} rows={3} maxLength={400} placeholder="Tell MAIRO what your business sells or offers…" aria-invalid={tried && sells.trim().length < 3} className="block min-h-[50px] w-full min-w-0 flex-1 resize-none mairo-bare bg-transparent py-3 text-[16px] leading-relaxed text-white outline-none placeholder:text-white/35" />
             </div>
           </div>
 
@@ -439,7 +328,7 @@ export function HeroStarter() {
             </p>
           </fieldset>
 
-          <button type="submit" className="group mt-4 inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-5 text-[15.5px] font-semibold text-black shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110">
+          <button type="submit" className="group mt-4 inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[image:var(--mairo-ramp)] px-4 text-[15px] font-semibold text-black min-[375px]:px-5 min-[375px]:text-[15.5px] shadow-[0_14px_40px_-14px_rgba(255,255,255,0.9)] transition hover:brightness-110">
             {cta}
           </button>
         </>

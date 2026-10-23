@@ -364,7 +364,7 @@ export function PlanView({
           <Panel id="pl-next" title={isExample ? "See it for your business" : "Your next step"} tone="lit">
             {isExample ? (
               <>
-                <p className="max-w-[720px] text-[14px] leading-relaxed text-white/75">Tell MAIRO about your business, share your Instagram or add your website, and it builds this plan for you — free.</p>
+                <p className="max-w-[720px] text-[14px] leading-relaxed text-white/75">Tell MAIRO about your business or add your website, and it builds this plan for you — free.</p>
                 <div className="mt-4 flex flex-wrap gap-2.5">
                   <Link href="/preview" className={primaryAction}>
                     Build My Free Ad Plan

@@ -4,14 +4,11 @@ import { useState } from "react";
 import { BUSINESS_TYPES } from "@/lib/onboarding/business-types";
 import type { PreviewGoal } from "@/lib/preview/build";
 
-// "Build My Free Ad Plan": how a visitor starts. Three ways in, and none of
-// them needs a website:
+// "Build My Free Ad Plan": how a visitor starts. Two ways in, and neither
+// needs a website:
 //
 //   Tell us about your business (the default) — the name, what it sells, the
 //     industry and the main goal. Seconds to fill in.
-//   Analyze my Instagram — a username. MAIRO reads only what Instagram shows
-//     anyone without signing in (lib/website/instagram.ts); when that's
-//     nothing, the visitor describes the business instead.
 //   Use my website — MAIRO's server reads its public pages.
 //
 // Everything else is asked on the next screen if it's needed, never guessed.
@@ -20,7 +17,7 @@ import type { PreviewGoal } from "@/lib/preview/build";
 // JavaScript loads. The product walkthrough draws this same form, driven by
 // its clock through `demo` (and inert there).
 
-export type FreePlanMode = "describe" | "instagram" | "website";
+export type FreePlanMode = "describe" | "website";
 
 export type FreePlanStart = {
   website: string | null;
@@ -41,7 +38,6 @@ const GOALS = [
 
 const MODES: { id: FreePlanMode; label: string; short: string }[] = [
   { id: "describe", label: "Tell us about your business", short: "Your business" },
-  { id: "instagram", label: "Analyze my Instagram", short: "Instagram" },
   { id: "website", label: "Use my website", short: "Website" },
 ];
 
@@ -65,9 +61,8 @@ export function FreePlanForm({
   idPrefix?: string;
   demo?: FreePlanDemo;
 }) {
-  const [mode, setMode] = useState<FreePlanMode>(initial?.website ? "website" : initial?.instagram ? "instagram" : "describe");
+  const [mode, setMode] = useState<FreePlanMode>(initial?.website ? "website" : "describe");
   const [website, setWebsite] = useState(initial?.website ?? "");
-  const [instagram, setInstagram] = useState(initial?.instagram ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [describe, setDescribe] = useState(initial?.describe ?? "");
   const [goal, setGoal] = useState<FreePlanStart["goal"]>(initial?.goal ?? "");
@@ -121,10 +116,9 @@ export function FreePlanForm({
       inert={demo ? true : undefined}
       onSubmit={(e) => {
         const w = mode === "website" ? website.trim() : "";
-        const ig = mode === "instagram" ? instagram.trim() : "";
         const d = mode === "describe" ? describe.trim() : "";
         const n = mode === "describe" ? name.trim() : "";
-        const missing = mode === "website" ? !w && "Enter your website — or tell MAIRO about your business instead." : mode === "instagram" ? !ig && "Enter your Instagram username, like @yourbusiness." : !n ? "What's your business called?" : !d ? "Tell MAIRO what your business sells or offers." : !goal && "Choose your main goal — it decides what your first campaign is for.";
+        const missing = mode === "website" ? !w && "Enter your website — or tell MAIRO about your business instead." : !n ? "What's your business called?" : !d ? "Tell MAIRO what your business sells or offers." : !goal && "Choose your main goal — it decides what your first campaign is for.";
         if (missing) {
           e.preventDefault();
           setProblem(missing);
@@ -133,12 +127,12 @@ export function FreePlanForm({
         if (!onStart) return; // A plain GET to /preview.
         e.preventDefault();
         const b = Number(budget.replace(/[^0-9.]/g, ""));
-        onStart({ website: w || null, instagram: ig || null, describe: d || null, name: n || null, goal, type, budget: Number.isFinite(b) && b > 0 ? Math.round(b) : null });
+        onStart({ website: w || null, instagram: null, describe: d || null, name: n || null, goal, type, budget: Number.isFinite(b) && b > 0 ? Math.round(b) : null });
       }}
       className="rounded-[26px] border border-white/10 p-2.5 text-left sm:p-3.5"
       style={{ background: "linear-gradient(170deg, rgba(44,44,44,0.82), rgba(24,24,24,0.86))", boxShadow: "0 0 0 1px rgba(255,255,255,0.14), 0 40px 100px -45px rgba(255,255,255,0.65)" }}
     >
-      <div role="tablist" aria-label="How to start" className="grid grid-cols-3 gap-1 rounded-full bg-black/30 p-1">
+      <div role="tablist" aria-label="How to start" className="grid grid-cols-2 gap-1 rounded-full bg-black/30 p-1">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -178,24 +172,6 @@ export function FreePlanForm({
               <textarea id={id("describe")} name="describe" value={describe} onChange={(e) => setDescribe(e.target.value)} maxLength={400} rows={2} placeholder="e.g. We sell premium streetwear clothing for young adults." className={`${field} py-3 leading-relaxed`} />
             </div>
             <div className="sm:col-span-2">{goalField}</div>
-          </div>
-        )}
-
-        {shownMode === "instagram" && (
-          <div className="grid gap-3">
-            <div>
-              <label htmlFor={id("instagram")} className={label}>
-                Your Instagram username or profile link
-              </label>
-              <div className="relative">
-                <span aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[15px] text-white/45">
-                  @
-                </span>
-                <input id={id("instagram")} name="instagram" value={instagram} onChange={(e) => setInstagram(e.target.value)} autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={120} placeholder="novaclothing" className={`${field} pl-8`} />
-              </div>
-              <p className="mt-1.5 text-[12px] leading-relaxed text-white/50">MAIRO reads only what Instagram shows anyone without signing in — your profile&rsquo;s name, bio and link. No private insights, and nothing about how your ads perform.</p>
-            </div>
-            {goalField}
           </div>
         )}
 

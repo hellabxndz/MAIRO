@@ -18,7 +18,7 @@ const STEPS: Step[] = [
   {
     n: "01",
     title: "Understand your business",
-    body: "Point MAIRO at your website, your Instagram or a few sentences. It reads your public pages and turns them into a brief — every fact with where it came from, its own ideas labelled as suggestions.",
+    body: "Point MAIRO at your website, or describe your business in a few sentences. It reads your public pages and turns them into a brief — every fact with where it came from, its own ideas labelled as suggestions.",
     points: ["Public pages only", "Nothing guessed about you"],
     clip: "understand",
     clipTitle: "MAIRO reading a fictional shop's website and saying what it understood",
