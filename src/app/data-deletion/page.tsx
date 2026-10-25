@@ -79,6 +79,7 @@ export default async function DataDeletionPage() {
             `Server logs. Short-lived logs kept by our hosting provider can include account identifiers. They expire within ${days} days.`,
             "Copies already sent to other companies to do the work — ads and conversion events sent to Meta, and text and pictures sent to the AI providers listed in our privacy policy — are kept under those companies' own retention rules.",
             "Billing records. Stripe keeps its payment records, and we keep invoice records for as long as tax law requires. They're used for nothing else.",
+            "Free trial records. The ID of any Meta ad account used for a MAIRO free trial is kept, so the trial can't be taken again with a new account. It's Meta's account number and nothing else.",
           ]}
         />
         <p>

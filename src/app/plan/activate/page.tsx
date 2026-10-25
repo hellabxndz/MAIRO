@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { activateIfPaid, approvedPlanOf, planHeadline } from "@/lib/strategy/store";
 import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
+import { hasActivePlan } from "@/lib/readiness";
 import { PLANS, trialDaysFor } from "@/lib/plans";
+import { trialEligible } from "@/lib/billing/trial-claims";
 import { billingConfigured, purchasableTiers } from "@/lib/stripe/client";
 import { usd } from "@/lib/strategy/plan-logic";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
@@ -74,11 +76,21 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
+  // One free trial per business and per Meta ad account (lib/billing/trial-claims.ts).
+  const canTrial = await trialEligible(organizationId);
+  const trialDays = (t: Parameters<typeof trialDaysFor>[0]) => (canTrial ? trialDaysFor(t) : 0);
 
   // Paid (or trialing) with an approved plan: straight on to building it.
   const row = await activateIfPaid(organizationId);
   if (!row || row.status !== "APPROVED") redirect("/plan");
-  if (row.activatedAt) redirect("/dashboard/launch?welcome=1");
+  // Already started, and still paid for: on to the campaign. Started but no
+  // longer paid for (a trial cancelled, or a card declined when it ended)
+  // stays here to choose a plan again — sending it to the launch page, which
+  // sends unpaid businesses back here, was a redirect loop.
+  if (row.activatedAt) {
+    const billing = await db.organization.findUnique({ where: { id: organizationId }, select: { subscriptionTier: true, subscriptionStatus: true, paymentRequired: true } });
+    if (!billing || hasActivePlan(billing)) redirect("/dashboard/launch?welcome=1");
+  }
   const plan = approvedPlanOf(row);
   if (!plan) redirect("/plan");
 
@@ -216,13 +228,15 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                   ) : (
                     <Unavailable name={selected.name} configured={configured} />
                   )}
-                  {trialDaysFor(selected.tier) > 0 ? (
+                  {trialDays(selected.tier) > 0 ? (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                      Starts with a {trialDaysFor(selected.tier)}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, MAIRO pauses your campaigns and cancels the subscription — your plan stays saved.
+                      Starts with a {trialDays(selected.tier)}-day free trial: Stripe takes your card today and the first charge is after the trial. If that payment doesn&rsquo;t go through, MAIRO pauses your campaigns and cancels the subscription — your plan stays saved.
                     </p>
                   ) : (
                     <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                      Billed from today — {selected.name} has no free trial (only MAIRO Pro does). Change or cancel any time.
+                      {trialDaysFor(selected.tier) > 0
+                        ? "Billed from today — your free trial has been used (each business and each Meta ad account gets one). Change or cancel any time."
+                        : `Billed from today — ${selected.name} has no free trial (only MAIRO Pro does). Change or cancel any time.`}
                     </p>
                   )}
                   <Link href="/plan/activate?skip=1#plans" className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">Change plan</Link>
@@ -266,7 +280,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                           <Unavailable name={p.name} configured={configured} />
                         )}
                         <p className="mt-2 text-center text-[11.5px] text-faint">
-                          {trialDaysFor(p.tier) > 0 ? `${trialDaysFor(p.tier)}-day free trial, then ${money(p.priceMonthly)}/month` : `Billed ${money(p.priceMonthly)}/month from today — no trial`}
+                          {trialDays(p.tier) > 0 ? `${trialDays(p.tier)}-day free trial, then ${money(p.priceMonthly)}/month` : `Billed ${money(p.priceMonthly)}/month from today — no trial`}
                         </p>
                       </div>
                     );

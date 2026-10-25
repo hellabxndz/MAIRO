@@ -11,6 +11,7 @@ import { syncBrands } from "@/lib/brands";
 import { notify } from "@/lib/notifications/notify";
 import { planFor } from "@/lib/plans";
 import { later, ownerEmail, reportSiteEvent } from "@/lib/site-tracking";
+import { recordTrialStart } from "@/lib/billing/trial-claims";
 
 // Recording what Stripe says a business is paying for. Two callers: the
 // webhook (signed events from Stripe) and the return from Checkout, which
@@ -123,6 +124,11 @@ export async function applySubscription(subscription: Stripe.Subscription): Prom
       subscriptionCancelAt: cancelAt,
     },
   });
+
+  // The trial is spent, for this business and its ad account, for good.
+  if (subscription.status === "trialing") {
+    await recordTrialStart(organizationId).catch((error) => console.error("Couldn't record the trial:", error));
+  }
 
   // The funnel's "subscribed" step, once per business (a trial counts), and
   // the same step for MAIRO's own ads (lib/site-tracking.ts).

@@ -107,6 +107,8 @@ const server = http.createServer(async (req, res) => {
       const sub = subscriptions.get(b);
       if (!sub) return missing(res, `subscription: '${b}'`);
       if (req.method === "DELETE") sub.status = "canceled";
+      // Ending a trial now (billing-actions endTrialNowAction): paid today.
+      if (req.method === "POST" && form.trial_end === "now") Object.assign(sub, { status: "active", trial_end: null });
       return json(res, 200, sub);
     }
     return json(res, 400, { error: { type: "invalid_request_error", message: `fake Stripe doesn't do ${req.method} ${url.pathname}` } });

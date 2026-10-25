@@ -147,7 +147,7 @@ async function business(id: string, extra: Record<string, unknown> = {}) {
   await db.organization.create({ data: { id: orgId, name: `Checkout ${id}`, paymentRequired: true, ...extra } });
   await db.onboardingIntake.create({ data: { organizationId: orgId, primaryGoal: "LEADS", monthlyBudgetCents: 90_000, offering: "Roof repair", customerLocation: "Austin, TX" } });
   await db.strategyPlan.create({ data: { organizationId: orgId, status: "APPROVED", planJson: JSON.stringify({ goal: "LEADS", dailyBudget: 30 }), approvedSnapshotJson: JSON.stringify({ goal: "LEADS", dailyBudget: 30 }), approvedAt: new Date(), approvedVersion: 0 } });
-  await db.metaAdAccount.create({ data: { organizationId: orgId, metaAdAccountId: `act_${id}`, accessToken: encryptSecret("fake-token"), status: "CONNECTED", pageId: "1234", pageName: "Test Page" } });
+  await db.metaAdAccount.create({ data: { organizationId: orgId, metaAdAccountId: `act_${orgId}`, accessToken: encryptSecret("fake-token"), status: "CONNECTED", pageId: "1234", pageName: "Test Page" } });
   return orgId;
 }
 
@@ -166,6 +166,8 @@ async function onboardingState(id: string) {
 
 async function cleanup() {
   await db.organization.deleteMany({ where: { id: { startsWith: TAG } } });
+  // Trial claims outlive the business on purpose (lib/billing/trial-claims.ts); a test's own go too.
+  await db.trialClaim.deleteMany({ where: { metaAdAccountId: { startsWith: "act_zz-checkout-" } } });
 }
 
 async function main() {

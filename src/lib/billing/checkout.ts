@@ -5,6 +5,7 @@ import { stripe, priceIdFor, purchasableTiers, stripeMode } from "@/lib/stripe/c
 import { reportError } from "@/lib/monitoring/report";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 import { isFreelancerTier, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
+import { trialEligible } from "@/lib/billing/trial-claims";
 import { checkoutGuard } from "@/lib/billing/checkout-guard";
 import { payingBusinessOf } from "@/lib/brands";
 import { adClickIds } from "@/lib/site-tracking";
@@ -280,7 +281,8 @@ export async function beginCheckout(input: { organizationId: string; email: stri
     const reused = await reuseOrExpireOpenSessions(customerId, { organizationId, tier, successUrl, cancelUrl });
     if (reused) return { kind: "redirect", url: reused, reused: true };
 
-    const trialDays = trialDaysFor(tier);
+    // One trial per business and per Meta ad account (lib/billing/trial-claims.ts).
+    const trialDays = trialDaysFor(tier) > 0 && (await trialEligible(organizationId)) ? trialDaysFor(tier) : 0;
     const metadata = { organizationId, tier, returnTo };
     // Meta's cookies from this browser, for MAIRO's own ad measurement when
     // the subscription starts (lib/site-tracking.ts). Empty unless that's on.
@@ -307,8 +309,9 @@ export async function beginCheckout(input: { organizationId: string; email: stri
           //
           // MAIRO Pro only: read from the plan, so the checkout and the copy
           // cannot disagree about which plans have one or how long it is.
-          // Every other plan has none, and the field is omitted entirely
-          // rather than sent as 0, which Stripe rejects.
+          // Every other plan has none, nor does a business that already had
+          // its trial; the field is omitted entirely rather than sent as 0,
+          // which Stripe rejects.
           ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
         },
         // Lets Stripe collect the address it needs for tax where that applies.

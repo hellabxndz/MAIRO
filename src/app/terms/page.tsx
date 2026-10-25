@@ -72,7 +72,10 @@ export default function TermsPage() {
         <p>
           The MAIRO Pro plan begins with a {PRO_TRIAL_DAYS}-day free trial. You enter a card at
           checkout; it isn&apos;t charged during the trial, and the first monthly payment is taken when
-          the trial ends unless you cancel before then. MAIRO Scale has no trial and is charged when
+          the trial ends unless you cancel before then. Each business, and each Meta ad account, gets
+          one free trial: a business that already had one, or an ad account that was used for a trial
+          by another MAIRO account, is billed from the day it subscribes, and an ad account like that
+          can&apos;t be connected during a trial. MAIRO Scale has no trial and is charged when
           you subscribe. Plans bought before October 2026 keep their own price and terms until you
           change plan. Your Meta ad spend is never part of the trial or the subscription.
         </p>

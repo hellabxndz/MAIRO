@@ -3,6 +3,7 @@ import { recordActivity } from "@/lib/activity/log";
 import { loadMetaConnection } from "@/lib/meta/connection";
 import { fetchAdAccounts } from "@/lib/meta/oauth";
 import { accountStatusLabel, switchRefusal, type ManagedCampaigns } from "@/lib/meta/account-choice";
+import { adAccountAllowedDuringTrial } from "@/lib/billing/trial-claims";
 
 /**
  * MAIRO campaigns that exist in Meta and haven't been removed — the ones that
@@ -54,6 +55,9 @@ export async function switchMetaAdAccount(input: { organizationId: string; adAcc
 
   const refusal = switchRefusal({ current: connection.metaAdAccountId, next: chosen.id, managed: await managedMetaCampaigns(input.organizationId) });
   if (refusal) return { ok: false, error: refusal };
+  if (!(await adAccountAllowedDuringTrial(input.organizationId, chosen.id))) {
+    return { ok: false, error: "That ad account has already had a MAIRO free trial, so it can't be used during yours. Start your paid plan now (Billing), or choose another ad account." };
+  }
 
   await db.$transaction([
     db.metaAdAccount.update({ where: { organizationId: input.organizationId }, data: { metaAdAccountId: chosen.id } }),

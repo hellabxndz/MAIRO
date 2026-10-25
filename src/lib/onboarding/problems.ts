@@ -55,6 +55,7 @@ export type MetaConnectCode =
   | "link_expired"
   | "wrong_account"
   | "lost_account"
+  | "trial_used"
   | "setup"
   | "unavailable"
   | "unknown";
@@ -147,6 +148,16 @@ export function explainMetaConnect(code: MetaConnectCode, ctx: { returnTo: strin
         message: `MAIRO is managing campaigns in ${/^act_\d{1,20}$/.test(technical ?? "") ? `ad account ${technical}` : "the ad account you connected before"}, and this login doesn't have access to it — so MAIRO kept your existing connection rather than lose sight of them. Connect again with the Facebook login that manages that account, or delete those campaigns in MAIRO first (that pauses them in Meta) if you want to move to a different account.`,
         kept: KEPT,
         fix: again,
+        technical,
+      };
+    case "trial_used":
+      return {
+        code,
+        title: "That ad account has already had its free trial",
+        message: "Each Meta ad account gets one MAIRO free trial, and this one was used by another MAIRO account before. MAIRO didn't connect it. To use it, start your paid MAIRO Pro plan now — your card is charged today instead of when the trial ends — then connect again. Or connect with a Facebook login that manages a different ad account.",
+        kept: `${KEPT} ${NOTHING_SPENT}`,
+        fix: { label: "Start my paid plan now", href: "/dashboard/billing?endTrial=1#end-trial" },
+        also: [again],
         technical,
       };
     case "setup":
@@ -305,7 +316,7 @@ export const UNEXPECTED: Problem = {
   fix: null,
 };
 
-const CONNECT_CODES: MetaConnectCode[] = ["denied", "permissions", "no_ad_account", "no_page", "link_expired", "wrong_account", "lost_account", "setup", "unavailable", "unknown"];
+const CONNECT_CODES: MetaConnectCode[] = ["denied", "permissions", "no_ad_account", "no_page", "link_expired", "wrong_account", "lost_account", "trial_used", "setup", "unavailable", "unknown"];
 
 /** The connection problem a page was sent back with (?metaError=…), if any. */
 export function connectProblemFromParams(p: { metaError?: string | null; missing?: string | null; metaDetail?: string | null; acct?: string | null }, returnTo: string): Problem | null {

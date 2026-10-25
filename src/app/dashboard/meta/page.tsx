@@ -22,6 +22,7 @@ export default async function MetaConnectionPage({
 }: {
   searchParams: Promise<{
     error?: string;
+    metaError?: string;
     connected?: string;
     required?: string;
     checkBilling?: string;
@@ -33,7 +34,7 @@ export default async function MetaConnectionPage({
   const organizationId =
     (await activeOrganizationId()) ?? session.user.organizationId;
 
-  const { error, connected, required, checkBilling } = await searchParams;
+  const { error, metaError, connected, required, checkBilling } = await searchParams;
 
   // Selected explicitly rather than loading the whole row: this page shows the
   // account id and when it was connected, and has no business pulling the
@@ -85,6 +86,11 @@ export default async function MetaConnectionPage({
       {error && (
         <Card className="mb-6 border-red-500/30 bg-red-500/[0.06]">
           <p className="text-sm text-red-300">{decodeURIComponent(error)}</p>
+          {metaError === "trial_used" && (
+            <Link href="/dashboard/billing?endTrial=1#end-trial" className="mt-3 inline-flex min-h-11 items-center text-sm text-white underline underline-offset-4 sm:min-h-0">
+              Start my paid plan now
+            </Link>
+          )}
         </Card>
       )}
       {connected && (

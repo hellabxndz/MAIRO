@@ -11,6 +11,7 @@ import { payingBusinessOf } from "@/lib/brands";
 import { deniedFor } from "@/lib/members/authorize";
 import { beginCheckout, customerStillExists, explainStripeError, originUrl } from "@/lib/billing/checkout";
 import { reportError } from "@/lib/monitoring/report";
+import { applySubscription } from "@/lib/stripe/apply-subscription";
 
 // Starting a checkout and opening the billing portal. Both hand off to a page
 // Stripe hosts, so no card details ever reach this application.
@@ -201,4 +202,42 @@ export async function changePlanAction(_prev: BillingActionState, formData: Form
     return { error: "Stripe couldn't change your plan, so nothing changed — you're still on your current plan. Please try again shortly." };
   }
   redirect(url);
+}
+
+/**
+ * Ends a free trial today and starts paying — for a business whose Meta ad
+ * account already had a trial (lib/billing/trial-claims.ts), or anyone who
+ * would rather start now. Only ever from its own button, which says the
+ * amount. "error_if_incomplete": a declined card changes nothing, and the
+ * trial carries on.
+ */
+export async function endTrialNowAction(): Promise<BillingActionState> {
+  const denied = await deniedFor("billing.manage");
+  if (denied) return { error: denied };
+  const session = await auth();
+  if (!session?.user?.organizationId) redirect("/sign-in");
+  const organizationId = session.user.organizationId;
+
+  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { stripeSubscriptionId: true, subscriptionStatus: true } });
+  if (!org?.stripeSubscriptionId || org.subscriptionStatus !== "trialing") return { error: "You're not on a free trial, so there's nothing to end." };
+
+  try {
+    const subscription = await stripe().subscriptions.update(org.stripeSubscriptionId, {
+      trial_end: "now",
+      proration_behavior: "none",
+      payment_behavior: "error_if_incomplete",
+    });
+    // Recorded now rather than waiting for the webhook, so connecting Meta
+    // straight after sees the paid plan.
+    await applySubscription(subscription);
+  } catch (error) {
+    if (error instanceof Stripe.errors.StripeCardError) {
+      return { error: "Your card was declined, so nothing changed — your trial carries on. Update your card in Manage billing and try again." };
+    }
+    const { code, operator } = explainStripeError(error);
+    console.error(`Ending a trial failed (${code}): ${operator}`);
+    await reportError(error, { where: "stripe end trial", tags: { code } });
+    return { error: "Stripe couldn't start your plan, so nothing changed — your trial carries on. Please try again shortly." };
+  }
+  redirect("/dashboard/billing?trialEnded=1");
 }

@@ -11,6 +11,8 @@ import Link from "next/link";
 import { runningMetaCampaigns } from "@/lib/billing/running-campaigns";
 import { PlanButton } from "../settings/plan-button";
 import { HelpLinks } from "@/components/help/help-link";
+import { trialEligible } from "@/lib/billing/trial-claims";
+import { EndTrialButton } from "./end-trial-button";
 
 // Where "Upgrade" goes: every plan side by side, and one button from each
 // straight to Stripe's checkout.
@@ -65,7 +67,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
     );
   }
 
-  const { subscribed: justSubscribed, checkout, cancelled, changed } = await searchParams;
+  const { subscribed: justSubscribed, checkout, cancelled, changed, endTrial, trialEnded } = await searchParams;
   // Campaigns are a separate question from the plan, answered separately:
   // cancelling one never changes the other.
   const running = await runningMetaCampaigns([organizationId]);
@@ -78,6 +80,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
   const current = planFor(tier);
   const status = organization.subscriptionStatus;
   const periodEnd = organization.currentPeriodEnd;
+  // One free trial per business and per Meta ad account (lib/billing/trial-claims.ts).
+  const canTrial = !subscribed && (await trialEligible(organizationId));
+  const trialDays = (t: (typeof PLANS)[number]["tier"]) => (canTrial ? trialDaysFor(t) : 0);
 
   return (
     <div>
@@ -85,7 +90,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         title={subscribed ? "Your plan" : "Choose a plan"}
         description={
           !subscribed
-            ? `MAIRO Pro starts with a ${PRO_TRIAL_DAYS}-day free trial — Stripe takes your card, and you can cancel before it ends at no charge. MAIRO Scale is billed from the day you subscribe. Your ad spend is paid to Meta directly, never through MAIRO.`
+            ? canTrial
+              ? `MAIRO Pro starts with a ${PRO_TRIAL_DAYS}-day free trial — Stripe takes your card, and you can cancel before it ends at no charge. MAIRO Scale is billed from the day you subscribe. Your ad spend is paid to Meta directly, never through MAIRO.`
+              : "Your free trial has been used — each business and each Meta ad account gets one — so a plan is billed from the day you subscribe. Your ad spend is paid to Meta directly, never through MAIRO."
             : "Change or cancel any time. Your ad spend is paid to Meta directly — never through this."
         }
       />
@@ -119,6 +126,23 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
           <p className="mt-1">
             {current.name} isn&rsquo;t sold any more, and that changes nothing for you: you keep its price and everything it includes for as long as you stay on it. MAIRO now offers {PLANS.map((p) => p.name).join(" and ")} below — moving to one is your choice, and Stripe shows the exact amount before anything is charged.
           </p>
+        </div>
+      )}
+      {trialEnded === "1" && (
+        <p role="status" className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">
+          Your paid plan has started. You can connect any ad account you manage now.
+        </p>
+      )}
+      {status === "trialing" && (
+        <div id="end-trial" className={`mb-6 rounded-xl border px-4 py-3 text-sm leading-relaxed text-neutral-300 ${endTrial === "1" ? "border-amber-400/40 bg-amber-400/[0.06]" : "border-white/10 bg-white/[0.03]"}`}>
+          <p className="font-medium text-white">Start your paid plan now</p>
+          <p className="mt-1">
+            {endTrial === "1"
+              ? "The Meta ad account you tried to connect already had a MAIRO free trial, so it can't be used during yours. Starting your plan now lets you connect it."
+              : "Ends your free trial today instead of when it runs out."}{" "}
+            {money(current.priceMonthly)} is charged to the card on your subscription today, then monthly. If the card is declined, nothing changes.
+          </p>
+          <EndTrialButton label={`Start ${current.name} — pay ${money(current.priceMonthly)} now`} />
         </div>
       )}
       {checkout === "cancelled" && (
@@ -231,7 +255,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
               ) : (
                 <PlanButton
                   tier={plan.tier}
-                  label={plan.cta ? `${plan.cta}${trialDaysFor(plan.tier) > 0 ? ` — ${trialDaysFor(plan.tier)} days free` : ""}` : trialDaysFor(plan.tier) > 0 ? `Start ${trialDaysFor(plan.tier)}-day free trial` : `Choose ${plan.name}`}
+                  label={plan.cta ? `${plan.cta}${trialDays(plan.tier) > 0 ? ` — ${trialDays(plan.tier)} days free` : ""}` : trialDays(plan.tier) > 0 ? `Start ${trialDays(plan.tier)}-day free trial` : `Choose ${plan.name}`}
                 />
               )}
             </div>

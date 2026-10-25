@@ -278,6 +278,10 @@ model Organization {
   /// Whether a payment has ever gone through. A subscription that ends or
   /// fails before this is true never paid — its ads are stopped.
   hasPaid                Boolean      @default(false)
+  /// When this business started its MAIRO Pro free trial. A business gets
+  /// one, ever: cancelling and subscribing again starts billing at once.
+  /// See TrialClaim for the same rule per Meta ad account.
+  trialUsedAt            DateTime?
   /// When MAIRO stopped everything because the trial ended unpaid (or was
   /// cancelled before any payment), and why. Cleared by a new subscription.
   executionStoppedAt     DateTime?
@@ -3956,3 +3960,36 @@ model PasswordReset {
 
   @@index([userId])
 }
+
+/// One MAIRO Pro free trial per Meta ad account, for good.
+///
+/// Written when a trialing business connects an ad account, or starts its
+/// trial with one already connected. Another business — a new sign-up, or
+/// the same person after deleting their account — can't spend a second trial
+/// on the same ad account: connecting it during a trial is refused until they
+/// start paying, and checkout gives them no trial.
+///
+/// organizationId is plain text, not a relation, on purpose: the record has to
+/// outlive the business it names, or deleting an account would bring the
+/// trial back. It holds Meta's ad account id and nothing else about anyone.
+model TrialClaim {
+  id              String   @id @default(cuid())
+  /// Meta's ad account id, act_ and digits.
+  metaAdAccountId String   @unique
+  organizationId  String
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+/// A few settings MAIRO's owner changes from AIOS rather than in the
+/// deployment's variables — so they take effect without a redeploy.
+///
+///   site_pixel_org   the business (MAIRO's own) whose Meta pixel and
+///                    connection measure MAIRO's own ads (lib/site-tracking.ts)
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+

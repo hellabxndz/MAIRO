@@ -176,7 +176,7 @@ export function pricingFacts(): { key: string; title: string; body: string }[] {
     {
       key: "trial",
       title: "The free trial",
-      body: `${trial.join(" and ")} starts with a ${PRO_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and charges it when the trial ends, unless you cancel first. ${noTrial.join(" and ")} ${noTrial.length === 1 ? "is" : "are"} billed from the day you subscribe. Your free advertising plan never needs a card.`,
+      body: `${trial.join(" and ")} starts with a ${PRO_TRIAL_DAYS}-day free trial. Stripe takes your card at checkout and charges it when the trial ends, unless you cancel first. There's one trial per business and per Meta ad account. ${noTrial.join(" and ")} ${noTrial.length === 1 ? "is" : "are"} billed from the day you subscribe. Your free advertising plan never needs a card.`,
     },
     {
       key: "credits",

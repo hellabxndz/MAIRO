@@ -3,6 +3,7 @@ import { META_CONNECTION_NOTICES } from "@/lib/meta/token-expiry";
 import { managedMetaCampaigns } from "@/lib/meta/account-switch";
 import { metaGraphRequest } from "@/lib/meta/client";
 import { saveMetaConnection } from "@/lib/meta/connection";
+import { adAccountAllowedDuringTrial } from "@/lib/billing/trial-claims";
 import { exchangeCodeForToken, exchangeForLongLivedToken, fetchAdAccounts, fetchPages, metaRedirectUri, metaScopes } from "@/lib/meta/oauth";
 import { REQUIRED_PERMISSIONS, classifyMetaConnect, type MetaConnectCode } from "@/lib/onboarding/problems";
 
@@ -76,7 +77,21 @@ export async function completeMetaConnection(organizationId: string, code: strin
     if (managed.count > 0) return { ok: false, code: "lost_account", technical: previous.metaAdAccountId };
   }
 
-  const chosen = adAccounts.find((a) => a.id === previous?.metaAdAccountId) ?? adAccounts.find((a) => a.account_status === 1) ?? adAccounts[0];
+  const preferred = adAccounts.find((a) => a.id === previous?.metaAdAccountId) ?? adAccounts.find((a) => a.account_status === 1) ?? adAccounts[0];
+
+  // During a free trial, an ad account another business already had its
+  // trial on can't be used (lib/billing/trial-claims.ts). Another account
+  // this login manages can — the preferred one first, then any that can
+  // spend, then the rest.
+  const candidates = [preferred, ...adAccounts.filter((a) => a !== preferred).sort((a, b) => Number(b.account_status === 1) - Number(a.account_status === 1))];
+  let chosen: (typeof adAccounts)[number] | null = null;
+  for (const account of candidates) {
+    if (await adAccountAllowedDuringTrial(organizationId, account.id)) {
+      chosen = account;
+      break;
+    }
+  }
+  if (!chosen) return { ok: false, code: "trial_used", technical: preferred.id };
 
   // No Page isn't a reason to throw the connection away: the ad account is
   // still the right one. The setup steps ask for a Page next.
