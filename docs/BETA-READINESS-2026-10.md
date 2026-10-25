@@ -329,6 +329,9 @@ since the audit raised the count above 8.
   `https://www.mairo.io/api/health` every 1–5 minutes, with alerts to email or
   phone. Better Stack, UptimeRobot or Sentry Uptime all work. Add a second
   monitor on `https://www.mairo.io/` for the page itself.
+  **Done without an account (Oct 25):** `.github/workflows/uptime.yml` checks it
+  every 10 minutes from GitHub Actions; a failure is GitHub's email to you. A
+  dedicated monitor can still add SMS and a status page.
 
 ## 5. Recommendations (not implemented — need your approval)
 

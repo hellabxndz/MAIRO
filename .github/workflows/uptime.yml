@@ -1,0 +1,33 @@
+# Is mairo.io up? Every 10 minutes GitHub asks the site's health check
+# (src/app/api/health), which answers 200 only when the site and its database
+# both work. A failed run is GitHub's own email to whoever last changed this
+# file — that's the alert. Free on a public repository.
+#
+# Runs only from the default branch. GitHub pauses scheduled workflows after
+# 60 days without commits; re-enable it under Actions if that happens.
+
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: mairo.io answers, and can reach its database
+        run: |
+          # Three tries a minute apart, so one slow cold start isn't an alarm.
+          for i in 1 2 3; do
+            status=$(curl -s -o body.txt -w '%{http_code}' -L --max-time 20 https://mairo.io/api/health || echo 000)
+            if [ "$status" = "200" ]; then echo "Up: $(cat body.txt)"; exit 0; fi
+            echo "Try $i: HTTP $status $(head -c 200 body.txt 2>/dev/null)"
+            [ "$i" = 3 ] || sleep 60
+          done
+          echo "::error::mairo.io is down or can't reach its database (HTTP $status)."
+          exit 1
