@@ -10,7 +10,8 @@ import { browserOptedOut, pixelAllowedOn, queryAllowed } from "@/lib/site-pixel-
 // are reported server-side (lib/site-tracking.ts), because they finish on
 // pages the pixel stays off.
 //
-// Loaded only when NEXT_PUBLIC_META_PIXEL_ID is set, only on the pages
+// Loaded only when NEXT_PUBLIC_META_PIXEL_ID is set or a pixel was set up from
+// AIOS → Setup, only on the pages
 // pixelAllowedOn() names with no parameters but queryAllowed()'s, and never
 // for a browser that sends Global Privacy Control or Do Not Track. Two of the pixel's own behaviours are switched off:
 // automatic page views on every client-side navigation (disablePushState),
@@ -54,12 +55,31 @@ function load(pixelId: string) {
   fbq("init", pixelId);
 }
 
-export function SitePixel({ pixelId }: { pixelId: string }) {
+// The id set up from AIOS, asked for once per visit and only on a page the
+// pixel may run on (app/api/site-pixel). Null: measurement is off.
+let fetched: Promise<string | null> | null = null;
+function pixelFromServer(): Promise<string | null> {
+  fetched ??= fetch("/api/site-pixel")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((body: { pixelId?: unknown } | null) => (typeof body?.pixelId === "string" && /^\d{6,20}$/.test(body.pixelId) ? body.pixelId : null))
+    .catch(() => null);
+  return fetched;
+}
+
+/** pixelId: the deployment's NEXT_PUBLIC_META_PIXEL_ID, or null to use the one set up from AIOS, if any. */
+export function SitePixel({ pixelId }: { pixelId: string | null }) {
   const pathname = usePathname();
   useEffect(() => {
     if (!pathname || !pixelAllowedOn(pathname) || !queryAllowed(window.location.search) || browserOptedOut()) return;
-    load(pixelId);
-    window.fbq?.("track", "PageView");
+    let cancelled = false;
+    void (pixelId ? Promise.resolve(pixelId) : pixelFromServer()).then((id) => {
+      if (!id || cancelled) return;
+      load(id);
+      window.fbq?.("track", "PageView");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, pixelId]);
   return null;
 }

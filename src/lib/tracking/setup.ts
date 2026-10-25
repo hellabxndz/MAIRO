@@ -211,6 +211,28 @@ async function record(organizationId: string, pixelId: string, check: string, r:
  * ever seen an event from it?). Either is proof; neither is "not detected",
  * which is an answer, not a failure.
  */
+/**
+ * The one-press pixel: the business's pixel if it has one, else the best one
+ * its ad account already has (keeping its history), else a new one. For the
+ * Tracking page's "Set up my pixel", and AIOS setting up MAIRO's own.
+ */
+export async function quickSetupPixel(organizationId: string, userId: string): Promise<SetupResult<{ pixelId: string; name: string; message: string }>> {
+  const existing = await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } } });
+  if (existing) return { ok: true, data: { pixelId: existing.externalPixelId, name: existing.name, message: `You're set up with “${existing.name}”.` } };
+  const list = await listPixelChoices(organizationId);
+  if (!list.ok) return list;
+  const best = list.data.choices.find((c) => c.recommended);
+  if (best) {
+    const r = await selectPixel(organizationId, userId, best.id);
+    if (!r.ok) return r;
+    return { ok: true, data: { pixelId: r.data.id, name: r.data.name, message: `Using your existing pixel “${r.data.name}”, so it keeps its history.` } };
+  }
+  const org = await db.organization.findUnique({ where: { id: organizationId }, select: { name: true } });
+  const r = await createPixel(organizationId, userId, org?.name ?? "My business");
+  if (!r.ok) return r;
+  return { ok: true, data: { pixelId: r.data.id, name: r.data.name, message: `Created “${r.data.name}” in your ad account.` } };
+}
+
 export async function checkInstallation(organizationId: string): Promise<SetupResult<CheckRecord>> {
   const pixel = await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } } });
   if (!pixel) return err("not_found", "Choose or create a pixel first.");

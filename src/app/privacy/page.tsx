@@ -3,16 +3,20 @@ import { LegalPage, Section, Bullets } from "@/components/legal-page";
 import { LEGAL } from "@/lib/legal";
 import { emailConfigured } from "@/lib/email/send";
 import { monitoringConfigured } from "@/lib/monitoring/report";
-import { sitePixelId } from "@/lib/site-tracking";
+import { siteTarget } from "@/lib/site-tracking";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "What MAIRO collects, why, and how to have it deleted.",
 };
 
-export default function PrivacyPage() {
+// Re-read every few minutes, so the policy follows MAIRO's own pixel being
+// switched on or off in AIOS without a redeploy.
+export const revalidate = 300;
+
+export default async function PrivacyPage() {
   // Whether MAIRO measures its own ads with Meta's pixel on this deployment.
-  const pixel = Boolean(sitePixelId());
+  const pixel = Boolean(await siteTarget());
   return (
     <LegalPage
       title="Privacy policy"
@@ -223,7 +227,9 @@ export default function PrivacyPage() {
           your account, its records are removed from the live service straight away; backup copies
           and server logs expire within {LEGAL.deletionWindowDays} days; information already sent to
           the providers above is kept under their own retention rules; and billing records are kept
-          for as long as tax law requires. The{" "}
+          for as long as tax law requires. So a free trial can&apos;t be taken twice, we also keep the
+          ID of any Meta ad account used for a trial — Meta&apos;s account number and nothing else —
+          after the account is deleted. The{" "}
           <a href="/data-deletion" className="text-neutral-200 underline underline-offset-4 hover:text-white">
             data deletion page
           </a>{" "}

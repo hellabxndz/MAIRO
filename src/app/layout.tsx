@@ -70,7 +70,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  // MAIRO's own pixel, for measuring MAIRO's own ads. Off until its id is set.
+  // MAIRO's own pixel, for measuring MAIRO's own ads: the deployment's id, or
+  // (null) the one set up from AIOS, which the component asks for itself so
+  // this layout stays static. Off when neither.
   const pixelId = sitePixelId();
   return (
     <html
@@ -79,7 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-neutral-950 text-white">
         {children}
-        {pixelId && <SitePixel pixelId={pixelId} />}
+        <SitePixel pixelId={pixelId} />
       </body>
     </html>
   );

@@ -7,6 +7,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { runSafetyReview } from "@/lib/creatives/review-run";
 import type { CreativeStatus } from "@/generated/prisma/enums";
+import { quickSetupPixel } from "@/lib/tracking/setup";
+import { SITE_PIXEL_SETTING, forgetSiteTarget } from "@/lib/site-tracking";
 
 async function requireOwner() {
   const session = await auth();
@@ -233,4 +235,39 @@ export async function deleteOrganizationAction(
   revalidatePath("/aios/organizations");
   revalidatePath("/aios/creatives");
   redirect("/aios/organizations");
+}
+
+export type SitePixelState = { ok: boolean; message: string } | undefined;
+
+/**
+ * MAIRO's own pixel in one press: a pixel in the Meta ad account connected to
+ * the owner's own business (reused if it has one), recorded so the public
+ * pages load it and sign-ups and subscriptions are reported to it — no
+ * deployment variables, no redeploy (lib/site-tracking.ts).
+ */
+export async function setUpSitePixelAction(): Promise<SitePixelState> {
+  const session = await requireOwner();
+  const organizationId = session.user.organizationId;
+  if (!organizationId || !session.user.id) return { ok: false, message: "Your owner account has no business of its own to measure with." };
+  const meta = await db.metaAdAccount.findUnique({ where: { organizationId }, select: { status: true, metaAdAccountId: true } });
+  if (!meta || meta.status !== "CONNECTED") {
+    return { ok: false, message: "Connect MAIRO's own Meta ad account first: in your dashboard, Meta → Connect, with the Facebook login that runs MAIRO's ads. Then press this again." };
+  }
+  const r = await quickSetupPixel(organizationId, session.user.id);
+  if (!r.ok) return { ok: false, message: r.message };
+  await db.siteSetting.upsert({ where: { key: SITE_PIXEL_SETTING }, create: { key: SITE_PIXEL_SETTING, value: organizationId }, update: { value: organizationId } });
+  forgetSiteTarget();
+  revalidatePath("/aios/setup");
+  revalidatePath("/privacy");
+  return { ok: true, message: `On. ${r.data.message} Pixel ${r.data.pixelId}, ad account ${meta.metaAdAccountId}. The public pages load it within about five minutes; free plans, sign-ups and subscriptions are reported to it from now.` };
+}
+
+/** Stops MAIRO measuring its own ads with the pixel set up here. The pixel itself stays in Meta. */
+export async function turnOffSitePixelAction(): Promise<SitePixelState> {
+  await requireOwner();
+  await db.siteSetting.deleteMany({ where: { key: SITE_PIXEL_SETTING } });
+  forgetSiteTarget();
+  revalidatePath("/aios/setup");
+  revalidatePath("/privacy");
+  return { ok: true, message: "Off. The public pages stop loading it within about five minutes. The pixel stays in your Meta account." };
 }

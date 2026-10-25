@@ -9,6 +9,10 @@ import { checkAnthropicKey, type KeyCheck } from "@/lib/ai/key-check";
 import { stripeMode } from "@/lib/stripe/client";
 import { isSoldTier } from "@/lib/plans";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { SITE_PIXEL_SETTING, siteTarget, sitePixelId } from "@/lib/site-tracking";
+import { SitePixelSetup } from "./site-pixel-setup";
 
 // Owner-only configuration check. This exists because the failure mode when a
 // credential is missing or a redirect URI is a character off is an opaque
@@ -110,7 +114,7 @@ const CHECKS: { name: string; label: string; why: string; optional?: true }[] = 
   {
     name: "NEXT_PUBLIC_META_PIXEL_ID",
     label: "MAIRO's own Meta pixel",
-    why: "Measures MAIRO's own Facebook and Instagram ads: page views on the public pages. The privacy policy updates itself when this is set. Needs a redeploy.",
+    why: "Optional — the “MAIRO's own Meta pixel” card above does this in one press without it. Set here, it wins over that, and needs a redeploy.",
     optional: true,
   },
   {
@@ -172,12 +176,47 @@ export default async function SetupPage() {
   // never got checked.
   const aiKey = await checkAnthropicKey();
 
+  // MAIRO's own pixel: from the deployment's variables, or set up here with
+  // the Meta account connected to the owner's own business.
+  const session = await auth();
+  const ownOrgId = session?.user?.organizationId ?? null;
+  const [ownMeta, pixelSetting, target] = await Promise.all([
+    ownOrgId ? db.metaAdAccount.findUnique({ where: { organizationId: ownOrgId }, select: { status: true, metaAdAccountId: true, organization: { select: { name: true } } } }) : null,
+    db.siteSetting.findUnique({ where: { key: SITE_PIXEL_SETTING } }),
+    siteTarget(),
+  ]);
+  const envPixel = sitePixelId();
+
   return (
     <div>
       <PageHeader
         title="Setup check"
         description="What this deployment is configured with, and the exact values to paste into Meta."
       />
+
+      <Card className="mb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-sm font-medium text-white">MAIRO&apos;s own Meta pixel</h2>
+          <span className={`text-[11px] uppercase tracking-[0.16em] ${target ? (target.token ? "text-emerald-300" : "text-amber-300") : "text-neutral-500"}`}>
+            {target ? (target.token ? "On" : "Page views only") : "Off"}
+          </span>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-400">
+          Measures MAIRO&apos;s own Facebook and Instagram ads: page views on the public pages, and free plans, sign-ups and
+          subscriptions through the Conversions API. One press creates (or reuses) a pixel in the Meta ad account connected to
+          your own business and switches it on — no variables, no redeploy. The privacy policy updates itself.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-neutral-300">
+          {envPixel
+            ? `Set in the deployment's variables (pixel ${envPixel}), which win over anything here. ${target?.token ? "Conversions are reported with META_CONVERSIONS_TOKEN." : "META_CONVERSIONS_TOKEN isn't set, so only page views are measured."}`
+            : target
+              ? `Pixel ${target.pixelId}, in ad account ${ownMeta && pixelSetting?.value === ownOrgId ? ownMeta.metaAdAccountId : "of the business it was set up with"}. ${target.token ? "Conversions are reported with that business's Meta connection." : "That business's Meta connection has lapsed, so only page views are measured — reconnect Meta in its dashboard."}`
+              : ownMeta?.status === "CONNECTED"
+                ? `Will use ad account ${ownMeta.metaAdAccountId}, connected to ${ownMeta.organization.name}.`
+                : "Your own business has no Meta ad account connected yet. Connect MAIRO's ad account from your dashboard (Meta → Connect) first."}
+        </p>
+        {!envPixel && <SitePixelSetup on={Boolean(pixelSetting)} canSetUp={ownMeta?.status === "CONNECTED"} />}
+      </Card>
 
       <Card className="mb-6">
         <h2 className="text-sm font-medium text-white">Meta OAuth redirect URI</h2>

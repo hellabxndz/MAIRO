@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { encryptSecret } from "@/lib/crypto/secret-box";
-import { checkEvents, checkInstallation, createPixel, listPixelChoices, markInstalled, requiredEventFor, selectPixel, setConsentPolicy, setInstallRoute } from "@/lib/tracking/setup";
+import { checkEvents, checkInstallation, createPixel, listPixelChoices, markInstalled, quickSetupPixel, requiredEventFor, selectPixel, setConsentPolicy, setInstallRoute } from "@/lib/tracking/setup";
 import { routeFrom } from "@/lib/tracking/state";
 import { recordOrder, rotateIngestToken } from "@/lib/tracking/orders";
 import { ensureTrackingProfile } from "@/lib/tracking/profile";
@@ -95,22 +95,10 @@ export async function quickSetupPixelAction(): Promise<TrackingResult> {
   if (denied) return { ok: false, error: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Not authenticated" };
-  const existing = await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId: ctx.organizationId, platform: "META" } } });
-  if (existing) return { ok: true, message: `You're set up with “${existing.name}”.` };
-  const list = await listPixelChoices(ctx.organizationId);
-  if (!list.ok) return { ok: false, error: list.message };
-  const best = list.data.choices.find((c) => c.recommended);
-  if (best) {
-    const r = await selectPixel(ctx.organizationId, ctx.userId, best.id);
-    revalidatePath("/dashboard/tracking");
-    if (!r.ok) return { ok: false, error: r.message };
-    return { ok: true, message: `Using your existing pixel “${r.data.name}”, so it keeps its history.` };
-  }
-  const org = await db.organization.findUnique({ where: { id: ctx.organizationId }, select: { name: true } });
-  const r = await createPixel(ctx.organizationId, ctx.userId, org?.name ?? "My business");
+  const r = await quickSetupPixel(ctx.organizationId, ctx.userId);
   revalidatePath("/dashboard/tracking");
   if (!r.ok) return { ok: false, error: r.message };
-  return { ok: true, message: `Created “${r.data.name}” in your ad account.` };
+  return { ok: true, message: r.data.message };
 }
 
 export async function setInstallRouteAction(route: string): Promise<TrackingResult> {
