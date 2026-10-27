@@ -47,6 +47,7 @@ import { FreeHome } from "@/components/strategy/free-access";
 import { freeHomeState } from "@/lib/strategy/free-home";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
 import { SuggestedAdsPrompt } from "@/components/suggested-ads-prompt";
+import { PixelGuide } from "@/components/dashboard/pixel-guide";
 
 // Results are read live from Meta on every load, so this page is only as fast
 // as their API is. The default budget is not enough when several campaigns are
@@ -123,7 +124,22 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   ) : null;
 
   if (mode === "simple") {
-    return <ConsoleOverview organizationId={organizationId} userName={session.user.name ?? ""} days={days} mode="simple" askFeedback={query.feedback === "1"} above={launchedNotice} />;
+    return (
+      <ConsoleOverview
+        organizationId={organizationId}
+        userName={session.user.name ?? ""}
+        days={days}
+        mode="simple"
+        askFeedback={query.feedback === "1"}
+        above={
+          <>
+            {launchedNotice}
+            {/* Until tracking works: how to set the pixel up, right here. */}
+            <PixelGuide organizationId={organizationId} />
+          </>
+        }
+      />
+    );
   }
 
   // Read side by side rather than one after another.
@@ -279,6 +295,9 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
           {problem.message}
         </p>
       ))}
+
+      {/* Until tracking works: how to set the pixel up, right here. */}
+      <PixelGuide organizationId={organizationId} className="mb-6" />
     </>
   );
 

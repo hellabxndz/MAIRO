@@ -28,8 +28,8 @@ import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { gtmConnectionSummary } from "@/lib/tracking/gtm-connection";
 import { gtmApiConfigured } from "@/lib/tracking/gtm-api/oauth";
 import { HelpLinks } from "@/components/help/help-link";
-import { SimplePixel, type SimplePixelView } from "./simple-pixel";
-import { PASTE_STEPS, pasteGuideFor, tagSnippet } from "@/lib/tracking/smart-tag";
+import { SimplePixel } from "./simple-pixel";
+import { simplePixelView } from "@/lib/tracking/simple-view";
 
 // "Is the advertising actually making me money?"
 //
@@ -110,20 +110,8 @@ export default async function TrackingPage() {
   const tagRow = overview.pixel
     ? await db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { id: true } })
     : null;
-  const primaryEvent = overview.requiredEvent;
-  const simple: SimplePixelView = {
-    connected: connections.get("META")?.connected ?? false,
-    pixel: overview.pixel ? { id: overview.pixel.id, name: overview.pixel.name } : null,
-    snippet: tagRow ? tagSnippet(appUrl, tagRow.id) : null,
-    guides: PASTE_STEPS.map(({ id, label, steps }) => ({ id, label, steps })),
-    suggestedGuide: pasteGuideFor(overview.detectedPlatform),
-    counts: niche.actions.map((a) => ({ label: a.label, event: a.metaEvent })),
-    nicheLabel: niche.label,
-    install: overview.install ? { status: overview.install.status, detail: overview.install.detail } : null,
-    primaryEvent: primaryEvent
-      ? { name: primaryEvent, status: overview.events[primaryEvent]?.status ?? null, detail: overview.events[primaryEvent]?.detail ?? null }
-      : null,
-  };
+  const simple = simplePixelView({ connected: connections.get("META")?.connected ?? false, overview, nicheId: profile.nicheId, tagId: tagRow?.id ?? null, appUrl });
+
   const kind = niche.id === "ecommerce" ? "shop" : "service";
   const setupView: SetupView = {
     connected: connections.get("META")?.connected ?? false,

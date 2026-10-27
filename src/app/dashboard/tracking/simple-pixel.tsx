@@ -2,27 +2,18 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { checkEventsAction, checkInstallationAction, quickSetupPixelAction } from "@/lib/actions/tracking-actions";
 import { CopyField } from "@/components/copy-field";
 import { Badge, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import type { CheckStatus } from "@/lib/tracking/state";
+import type { SimplePixelView } from "@/lib/tracking/simple-view";
 
 // The whole of tracking for somebody who doesn't know what a pixel is:
 // one button, one line to paste, one check. Everything else on the page sits
 // under Advanced for the people who want it.
 
-export type SimplePixelView = {
-  connected: boolean;
-  pixel: { id: string; name: string } | null;
-  snippet: string | null;
-  guides: { id: string; label: string; steps: string[] }[];
-  suggestedGuide: string;
-  /** What the tag counts for this kind of business, in the owner's words. */
-  counts: { label: string; event: string }[];
-  nicheLabel: string;
-  install: { status: CheckStatus; detail: string | null } | null;
-  primaryEvent: { name: string; status: CheckStatus | null; detail: string | null } | null;
-};
+export type { SimplePixelView };
 
 const STATUS: Record<CheckStatus, { label: string; tone: "green" | "yellow" | "red" | "neutral" }> = {
   VERIFIED: { label: "Working", tone: "green" },
@@ -34,7 +25,9 @@ const STATUS: Record<CheckStatus, { label: string; tone: "green" | "yellow" | "r
 
 type Result = { ok: true; message: string } | { ok: false; error: string };
 
-export function SimplePixel({ view }: { view: SimplePixelView }) {
+/** advancedHref: where "change it under Advanced" goes — this page's section, or the Tracking page from elsewhere. */
+export function SimplePixel({ view, advancedHref = "#advanced", heading = true }: { view: SimplePixelView; advancedHref?: string; heading?: boolean }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [guide, setGuide] = useState(view.suggestedGuide);
@@ -42,6 +35,8 @@ export function SimplePixel({ view }: { view: SimplePixelView }) {
     start(async () => {
       const r = await fn();
       setNote(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error });
+      // The next step (the line to paste, the check's answer) comes from the server.
+      router.refresh();
     });
 
   const installed = view.install?.status === "VERIFIED";
@@ -54,16 +49,18 @@ export function SimplePixel({ view }: { view: SimplePixelView }) {
     : null;
 
   return (
-    <section aria-labelledby="simple-pixel-title" className="space-y-6">
-      <div>
-        <h2 id="simple-pixel-title" className="text-base font-medium text-white">
-          Your pixel, in three steps
-        </h2>
-        <p className="mt-1 max-w-3xl text-sm leading-relaxed text-neutral-400">
-          One line on your website lets Meta see who becomes a customer, so your ads can find more people like them. No other setup:
-          MAIRO already knows what counts for your kind of business.
-        </p>
-      </div>
+    <section aria-labelledby={heading ? "simple-pixel-title" : undefined} className="space-y-6">
+      {heading && (
+        <div>
+          <h2 id="simple-pixel-title" className="text-base font-medium text-white">
+            Your pixel, in three steps
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-neutral-400">
+            One line on your website lets Meta see who becomes a customer, so your ads can find more people like them. No other setup:
+            MAIRO already knows what counts for your kind of business.
+          </p>
+        </div>
+      )}
 
       {/* 1. The pixel */}
       <Step n={1} title="Set up your pixel" done={Boolean(view.pixel)}>
@@ -158,7 +155,7 @@ export function SimplePixel({ view }: { view: SimplePixelView }) {
             ))}
           </ul>
           <p className="mt-2 text-xs text-neutral-500">
-            Wrong type of business? Change it under <a href="#advanced" className="underline underline-offset-4">Advanced</a>.
+            Wrong type of business? Change it under <a href={advancedHref} className="underline underline-offset-4">Advanced</a>.
           </p>
         </div>
       )}
