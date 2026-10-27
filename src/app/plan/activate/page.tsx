@@ -8,7 +8,7 @@ import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { hasActivePlan } from "@/lib/readiness";
 import { PLANS, trialDaysFor } from "@/lib/plans";
 import { trialEligible } from "@/lib/billing/trial-claims";
-import { billingConfigured, purchasableTiers } from "@/lib/stripe/client";
+import { billingConfigured, priceEnvFor, purchasableTiers } from "@/lib/stripe/client";
 import { usd } from "@/lib/strategy/plan-logic";
 import { PlanButton } from "@/app/dashboard/settings/plan-button";
 import { reportError } from "@/lib/monitoring/report";
@@ -146,7 +146,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   // the page and alert whoever runs the deployment, rather than a dead end.
   const unavailable = configured ? PLANS.filter((p) => !buyable.includes(p.tier)) : [];
   if (showPlans && unavailable.length > 0) {
-    console.error(`Plan activation: ${unavailable.map((p) => p.name).join(", ")} can't be bought — set ${unavailable.map((p) => (p.tier === "PRO" ? "STRIPE_PRICE_PRO" : "STRIPE_PRICE_SCALE_V2")).join(", ")} on this deployment.`);
+    console.error(`Plan activation: ${unavailable.map((p) => p.name).join(", ")} can't be bought — set ${unavailable.map((p) => priceEnvFor(p.tier)).join(", ")} on this deployment.`);
     await reportError(new Error(`Plans on sale with no Stripe price configured: ${unavailable.map((p) => p.tier).join(", ")}`), {
       where: "plan activation",
       tags: { tiers: unavailable.map((p) => p.tier).join(",") },

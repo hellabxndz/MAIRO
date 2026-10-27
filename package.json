@@ -71,6 +71,7 @@
     "check:onboarding": "tsx scripts/check-onboarding.ts",
     "check:onboarding-db": "tsx scripts/check-onboarding-db.ts",
     "check:pricing": "tsx scripts/check-pricing.ts",
+    "check:price-mapping": "tsx scripts/check-price-mapping.ts",
     "check:plans-v2": "tsx scripts/check-plans-v2.ts",
     "check:help": "tsx scripts/check-help.ts",
     "check:solutions": "tsx scripts/check-solutions.ts",

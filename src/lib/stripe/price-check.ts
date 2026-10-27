@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { ALL_PLANS, type Plan } from "@/lib/plans";
-import { billingConfigured, stripe, stripeMode } from "@/lib/stripe/client";
+import { billingConfigured, priceEnvFor, stripe, stripeMode } from "@/lib/stripe/client";
 
 // Does Stripe agree with the pricing page?
 //
@@ -38,16 +38,6 @@ export type PriceCheck = {
   earlier: boolean;
 };
 
-const PRICE_ENV: Record<string, string> = {
-  PRO: "STRIPE_PRICE_PRO",
-  SCALE_V2: "STRIPE_PRICE_SCALE_V2",
-  STARTER: "STRIPE_PRICE_STARTER",
-  GROWTH: "STRIPE_PRICE_GROWTH",
-  SCALE: "STRIPE_PRICE_SCALE",
-  STUDIO: "STRIPE_PRICE_STUDIO",
-  AGENCY: "STRIPE_PRICE_AGENCY",
-};
-
 function money(cents: number, currency = "usd"): string {
   return (cents / 100).toLocaleString("en-US", {
     style: "currency",
@@ -67,7 +57,7 @@ export async function checkPrices(): Promise<PriceCheck[]> {
 
   return Promise.all(
     plans.map(async (plan): Promise<PriceCheck> => {
-      const envName = PRICE_ENV[plan.tier] ?? `STRIPE_PRICE_${plan.tier}`;
+      const envName = priceEnvFor(plan.tier);
       // Rounded, because priceMonthly is a float: 39.99 * 100 is not reliably
       // 3999 across every value, and an off-by-one-cent false alarm on this
       // page would be worse than no page.
@@ -101,7 +91,7 @@ export async function checkPrices(): Promise<PriceCheck[]> {
 
       // An earlier plan's variable holding a price MAIRO sells today: a
       // copy-paste, not a subscriber's price.
-      const soldPlan = plan.legacy ? ALL_PLANS.find((p) => !p.legacy && process.env[PRICE_ENV[p.tier] ?? ""]?.trim() === priceId) : undefined;
+      const soldPlan = plan.legacy ? ALL_PLANS.find((p) => !p.legacy && process.env[priceEnvFor(p.tier)]?.trim() === priceId) : undefined;
       if (soldPlan) {
         return {
           ...base,

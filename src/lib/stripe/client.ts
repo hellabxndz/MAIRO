@@ -94,6 +94,15 @@ export function priceEnvNames(): string[] {
   return Object.values(PRICE_ENV);
 }
 
+/**
+ * The variable that holds a tier's Stripe price. Checkout, the webhook and the
+ * price check all go through this one table, so what the setup page compares
+ * against the pricing page is the price checkout actually charges.
+ */
+export function priceEnvFor(tier: SubscriptionTier): string {
+  return tier === "NONE" ? "" : PRICE_ENV[tier];
+}
+
 export function priceIdFor(tier: Exclude<SubscriptionTier, "NONE">): string {
   const value = process.env[PRICE_ENV[tier]]?.trim();
   if (!value) {

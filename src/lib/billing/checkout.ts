@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { stripe, priceIdFor, purchasableTiers, stripeMode } from "@/lib/stripe/client";
+import { stripe, priceEnvFor, priceIdFor, purchasableTiers, stripeMode } from "@/lib/stripe/client";
 import { reportError } from "@/lib/monitoring/report";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
 import { isFreelancerTier, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
@@ -245,7 +245,7 @@ export async function beginCheckout(input: { organizationId: string; email: stri
 
   // The plan's own price, or an explicit "can't be bought" — never another plan's price.
   if (!purchasableTiers().includes(tier)) {
-    const missing = !process.env.STRIPE_SECRET_KEY?.trim() ? "STRIPE_SECRET_KEY" : tier === "PRO" ? "STRIPE_PRICE_PRO" : "STRIPE_PRICE_SCALE_V2";
+    const missing = !process.env.STRIPE_SECRET_KEY?.trim() ? "STRIPE_SECRET_KEY" : priceEnvFor(tier);
     await logCheckoutFailure("plan_unavailable", `${missing} is not set on this deployment, so ${planFor(tier).name} can't be bought.`, { organizationId, tier });
     return fail("plan_unavailable", tier);
   }
