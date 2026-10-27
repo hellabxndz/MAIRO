@@ -14,7 +14,7 @@
 
 import { explainCampaignError, explainConnectionState, explainSubscription, type Problem } from "./problems";
 
-export type StepId = "business" | "learn" | "goal" | "plan" | "edit" | "approve" | "creative" | "video" | "connect" | "subscribe" | "prepare" | "launch";
+export type StepId = "business" | "learn" | "goal" | "plan" | "edit" | "approve" | "creative" | "video" | "connect" | "pixel" | "subscribe" | "prepare" | "launch";
 
 export type PhaseId = "business" | "goal" | "strategy" | "free-plan" | "creatives" | "video" | "account" | "launch" | "next";
 
@@ -26,7 +26,7 @@ export const PHASES: { id: PhaseId; label: string; steps: StepId[] }[] = [
   { id: "free-plan", label: "Free plan", steps: ["approve"] },
   { id: "creatives", label: "Creatives", steps: ["creative"] },
   { id: "video", label: "Video", steps: ["video"] },
-  { id: "account", label: "Account & payment", steps: ["connect", "subscribe"] },
+  { id: "account", label: "Account & payment", steps: ["connect", "pixel", "subscribe"] },
   { id: "launch", label: "Approval & launch", steps: ["prepare", "launch"] },
   { id: "next", label: "Next steps", steps: [] },
 ];
@@ -63,6 +63,13 @@ export type OnboardingFacts = {
   plan: { status: string; yourChanges: number; activated: boolean } | null;
   meta: { status: string; adAccount: string | null; pageName: string | null; hasPage: boolean; expiresAt: Date | null } | null;
   subscription: { paid: boolean; status: string | null; trial: boolean; planName: string | null };
+  /** The Meta Pixel: what this business needs, the owner's choice, and what Meta reports. Absent: not asked yet. */
+  pixel?: {
+    need: "required_for_purchases" | "optional";
+    decision: "use" | "declined" | null;
+    status: "not_set_up" | "declined" | "access_lost" | "selected_not_receiving" | "receiving" | "purchases_verified";
+    leadMeasurement: string | null;
+  };
   /** The suggested ads: how many directions, whether one is approved as it is now, and the owner's own videos. */
   creative?: { directions: number; approved: boolean; videos: number };
   campaign: {
@@ -195,6 +202,41 @@ export function onboardingSteps(f: OnboardingFacts): OnboardingStep[] {
     detail: connectedProblem ? connectedProblem.title : connected ? [f.meta!.adAccount, f.meta!.pageName ? `Page: ${f.meta!.pageName}` : null].filter(Boolean).join(" · ") : null,
     href: "/plan/activate",
     problem: connectedProblem,
+  });
+
+  // The Meta Pixel, once Meta is connected. Required before an online shop's
+  // purchase campaigns launch; optional for everyone else (tracking/pixel-rules.ts).
+  // Declining is an answer, so it moves the setup on either way — for a shop
+  // the launch gate is what then holds a purchase campaign, and says why.
+  const px = f.pixel ?? { need: "optional" as const, decision: null, status: "not_set_up" as const, leadMeasurement: null };
+  const shop = px.need === "required_for_purchases";
+  const chosen = px.status !== "not_set_up" && px.status !== "declined";
+  add({
+    id: "pixel",
+    label: shop ? "Connect your Meta Pixel" : "Connect your Meta Pixel (optional)",
+    why: shop
+      ? "Needed to measure purchases on your website, and before MAIRO launches a campaign aimed at website purchases."
+      : "Optional. Lets MAIRO count enquiries on your website. Calls, forms and leads you mark are counted without it.",
+    who: "you",
+    // Optional and not yet answered is fine to move past: it never holds up a
+    // business that doesn't need it. A shop that hasn't answered is asked.
+    state: !connected ? "todo" : px.status === "access_lost" ? "attention" : chosen ? "done" : px.decision === "declined" || !shop ? "skipped" : "todo",
+    detail: !connected
+      ? null
+      : px.status === "access_lost"
+        ? "MAIRO can't reach the Pixel you chose — re-check access"
+        : px.status === "selected_not_receiving"
+          ? "Chosen — not receiving website events yet"
+          : px.status === "receiving" || px.status === "purchases_verified"
+            ? "Chosen and receiving website events"
+            : px.decision === "declined"
+              ? shop
+                ? "Not connected — purchase campaigns can't launch without it"
+                : "Not connected — leads measured another way"
+              : shop
+                ? null
+                : "Optional — connect one any time",
+    href: "/dashboard/pixel?returnTo=%2Fdashboard%2Flaunch",
   });
 
   const payment = explainSubscription(f.subscription.status, { paid: f.subscription.paid });

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getAdapter } from "@/lib/ad-platforms/registry";
 import { readinessFor } from "@/lib/readiness";
 import { campaignLimitText } from "@/lib/plans";
+import { campaignLaunchGate } from "@/lib/tracking/pixel-setup";
 import { entitlementsFor } from "@/lib/entitlements";
 import { recordOnce } from "@/lib/analytics/funnel";
 import { describeStart, isDue } from "@/lib/campaigns/schedule";
@@ -135,7 +136,7 @@ export async function maybeGoLive(
     },
     include: {
       mairoCampaign: {
-        select: { id: true, name: true, status: true, startDate: true, startTimeZone: true },
+        select: { id: true, name: true, status: true, startDate: true, startTimeZone: true, objective: true, destinationType: true },
       },
     },
   });
@@ -195,9 +196,21 @@ export async function maybeGoLive(
 
   const names: string[] = [];
   const switchedOn: string[] = [];
+  // A campaign that depends on measuring website purchases waits for a
+  // working Pixel (tracking/pixel-rules.ts) — asked once per campaign.
+  const gates = new Map<string, Awaited<ReturnType<typeof campaignLaunchGate>>>();
+  let heldForPixel: string | null = null;
 
   for (const child of due) {
     if (budget === 0) break;
+
+    const mc = child.mairoCampaign;
+    if (!gates.has(mc.id)) gates.set(mc.id, await campaignLaunchGate(organizationId, { objective: mc.objective, destinationType: mc.destinationType }));
+    const gate = gates.get(mc.id)!;
+    if (!gate.ok) {
+      heldForPixel ??= `${mc.name}: ${gate.title}. ${gate.reason}`;
+      continue;
+    }
 
     const adapter = getAdapter(child.platform);
     if (!adapter || !child.externalCampaignId) continue;
@@ -249,7 +262,7 @@ export async function maybeGoLive(
     budget--;
   }
 
-  if (names.length === 0) return NOTHING;
+  if (names.length === 0) return heldForPixel ? { ...NOTHING, heldBecause: heldForPixel } : NOTHING;
 
   await db.organization.update({
     where: { id: organizationId },

@@ -1,5 +1,6 @@
 "use server";
 
+import { launchGateForCampaign } from "@/lib/tracking/pixel-setup";
 import { recordRun } from "@/lib/team/runs";
 
 import { linkMissionCampaign } from "@/lib/mission/store";
@@ -903,6 +904,10 @@ export async function approveCampaignAction(
   if (!owned) return { error: "Campaign not found." };
   const blocked = await executionBlock(organizationId);
   if (blocked) return { error: blocked };
+  // A purchase campaign needs a working Pixel before it may launch — refused
+  // here, before the approval is recorded, so nothing goes live later on it.
+  const gate = await launchGateForCampaign(organizationId, owned.id);
+  if (!gate.ok) return { error: `${gate.title}. ${gate.reason}` };
 
   // Recorded, so a campaign still in Meta's review goes live when it clears
   // even on an account that asked MAIRO to hold.

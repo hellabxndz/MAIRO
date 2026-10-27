@@ -57,7 +57,7 @@ check("each step is recorded at the right moment", () => {
   // Live only after Meta switched it on: after the resume call succeeded and at least one campaign launched.
   const launch = read("src/lib/campaigns/auto-launch.ts");
   const resume = launch.indexOf("adapter.resumeCampaign(");
-  const empty = launch.indexOf("if (names.length === 0) return NOTHING;");
+  const empty = launch.indexOf("if (names.length === 0) return");
   const rec = launch.indexOf('recordOnce("first_launch"');
   assert.ok(resume > 0 && empty > resume && rec > empty, "first_launch is recorded after Meta accepted the launch");
 });

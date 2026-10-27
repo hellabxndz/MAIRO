@@ -46,6 +46,7 @@ or a public page makes a claim this inventory can't back.
 | Creative | Editing an uploaded video | Partially working | `/dashboard/creatives/suggested` | ffmpeg on the server (ffmpeg-static install script); BLOB_READ_WRITE_TOKEN | `check:suggested-ads`, `check:video-render` |
 | Creative | AI-generated video | Unavailable | — | A video generation provider | — |
 | Tracking | Meta pixel: choose, install, verify | Partially working | `/dashboard/tracking` | Connected Meta ad account; A live run against a real ad account | `check:tracking`, `check:tracking-setup` |
+| Tracking | Meta Pixel in setup, and the purchase-launch rule | Partially working | `/dashboard/pixel`, `/dashboard/launch`, `/dashboard/settings` | Connected Meta ad account; A live run against a real ad account | `check:pixel-setup` |
 | Tracking | Meta pixel through Google Tag Manager | Partially working | `/dashboard/tracking` | Google verification of the Tag Manager scope | `check:gtm`, `check:tracking` |
 | Tracking | Shopify orders | Working | `/dashboard/tracking` | — | `check:tracking` |
 | Tracking | Lead outcomes | Working | `/dashboard/leads` | — | `check:lead-outcomes`, `check:lead-report` |
@@ -789,7 +790,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (22)
+## Partially working (23)
 
 ### Reading the business's website
 
@@ -1106,6 +1107,26 @@ Lists the pixels in the connected ad account with who owns each and recommends t
 **Checks:** `check:tracking`, `check:tracking-setup`
 
 **Public claim:** “Choose your existing Meta pixel or create one in your own account.”
+
+### Meta Pixel in setup, and the purchase-launch rule
+
+*Tracking* · `pixel-setup`
+
+After Meta is connected, setup asks which Pixel MAIRO should use — with why it asks, the Pixels shared with the ad account (name, ID, the websites Meta saw them on), a website to confirm, creating one where the connection allows it or the Events Manager steps where it doesn't, and "I don't want to connect a Pixel". The choice is saved per business with its ad account, website and time, and shown in Settings and the campaign review. A campaign that depends on website purchases (an online shop's sales campaign to its website) doesn't launch until the Pixel is receiving events — chosen isn't enough; lead, call and form campaigns never need one.
+
+**Condition:** Needs a connected Meta account with ads_management. Creating, listing, the access re-check and the by-website stats have been exercised against a stubbed Meta only, not yet a live account.
+
+**Routes:** `/dashboard/pixel`, `/dashboard/launch`, `/dashboard/settings`
+
+**Still needs:** Connected Meta ad account; A live run against a real ad account
+
+**Verification:** Stubbed-Meta suite: need by business type, objective and destination; chosen vs receiving; the launch gate for each state; choosing only Pixels shared with the ad account; create with and without permission and on Meta refusing; decline saved for shops and lead businesses; revoked and lost access; auto-launch holding a purchase campaign and launching a lead one; onboarding step; isolation.
+
+**Evidence:** `src/lib/tracking/pixel-rules.ts`, `src/lib/tracking/pixel-setup.ts`, `src/lib/actions/pixel-actions.ts`, `src/app/dashboard/pixel/pixel-setup.tsx`, `src/lib/campaigns/auto-launch.ts`
+
+**Checks:** `check:pixel-setup`
+
+**Public claim:** none — not advertised
 
 ### Meta pixel through Google Tag Manager
 

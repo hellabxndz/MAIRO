@@ -12,6 +12,9 @@ import { db } from "@/lib/db";
 import { planFor } from "@/lib/plans";
 import { hasActivePlan } from "@/lib/readiness";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
+import { ensureTrackingProfile } from "@/lib/tracking/profile";
+import { pixelStateFor } from "@/lib/tracking/pixel-setup";
+import { PIXEL_STATUS_LABEL, campaignPixelNeed, launchGate, pixelStatus, type LaunchGate, type PixelNeed } from "@/lib/tracking/pixel-rules";
 import { GOAL_LABEL, type StrategyContent } from "@/lib/strategy/plan-logic";
 import type { CompareRow } from "@/lib/strategy/compare";
 import type { JourneyStep } from "@/lib/strategy/journey";
@@ -62,6 +65,8 @@ export type PreLaunchInput = {
   account: { adAccount: string | null; pageName: string | null; connected: boolean };
   subscription: { tier: string; status: string | null; paid: boolean; trialEnds: Date | null };
   pixelActive: boolean;
+  /** What this campaign needs from the Pixel, and whether it may launch (tracking/pixel-rules.ts). */
+  measurement?: { need: PixelNeed; gate: LaunchGate; statusLabel: string };
   adReview: string | null;
   funding: { state: ApprovalState; detail: string | null };
   differences: CompareRow[];
@@ -120,7 +125,10 @@ export function composePreLaunch(i: PreLaunchInput) {
   // What MAIRO and Meta can and can't count, said before launch rather than
   // discovered in the first report.
   const tracking: string[] = [];
-  if (c.destinationType === "WEBSITE") {
+  const purchaseGate = i.measurement?.need === "required_for_purchases" ? i.measurement.gate : null;
+  if (purchaseGate && !purchaseGate.ok) {
+    tracking.push(`${purchaseGate.title}. ${purchaseGate.reason}`);
+  } else if (c.destinationType === "WEBSITE") {
     if (i.pixelActive) tracking.push("Your Meta pixel is active, so Meta can count sales and sign-ups on your website.");
     else {
       tracking.push("MAIRO can't yet count sales or sign-ups that happen on your website — your Meta pixel isn't active. Meta will count clicks and visits until it is.");
@@ -166,6 +174,17 @@ export function composePreLaunch(i: PreLaunchInput) {
       ...(reviewProblem ? { fix: { label: "Change the ad", href: `/dashboard/campaigns/${c.id}` } } : {}),
     },
   ];
+  // A purchase campaign's Pixel is one more thing that has to be true before launch.
+  if (purchaseGate) {
+    approvals.push({
+      key: "pixel",
+      label: "Your Meta Pixel can measure website purchases",
+      who: "You",
+      state: purchaseGate.ok ? "done" : "problem",
+      detail: purchaseGate.ok ? (i.measurement?.statusLabel ?? "Receiving website events") : purchaseGate.reason,
+      ...(purchaseGate.ok ? {} : { fix: purchaseGate.fixes[0] }),
+    });
+  }
 
   return {
     campaign: { id: c.id, name: c.name },
@@ -185,7 +204,8 @@ export function composePreLaunch(i: PreLaunchInput) {
     approvals,
     differences: i.differences.filter((d) => d.status === "different"),
     launchApproved: Boolean(c.launchApprovedAt),
-    ready: i.subscription.paid && i.account.connected && !reviewProblem,
+    ready: i.subscription.paid && i.account.connected && !reviewProblem && (!purchaseGate || purchaseGate.ok),
+    measurementBlock: purchaseGate && !purchaseGate.ok ? purchaseGate : null,
   };
 }
 
@@ -222,9 +242,17 @@ export async function loadPreLaunch(
     account: { adAccount: meta?.metaAdAccountId ?? null, pageName: meta?.pageName ?? null, connected: meta?.status === "CONNECTED" },
     subscription: { tier: org.subscriptionTier, status: org.subscriptionStatus, paid: hasActivePlan(org), trialEnds: org.subscriptionStatus === "trialing" ? org.currentPeriodEnd : null },
     pixelActive: pixel ? canOptimizeTowards(pixel.status) : false,
+    measurement: await measurementFor(organizationId, campaign),
     adReview: journey.campaign.reviewState,
     funding: funding ? { state: funding.state === "done" ? "done" : funding.state === "unknown" ? "unknown" : "problem", detail: funding.detail } : { state: "unknown", detail: null },
     differences: journey.comparison ?? [],
     timeZone: org.timezone,
   });
+}
+
+async function measurementFor(organizationId: string, campaign: { objective: string; destinationType: string }): Promise<PreLaunchInput["measurement"]> {
+  const profile = await ensureTrackingProfile(organizationId);
+  const { need } = campaignPixelNeed({ nicheId: profile.nicheId, objective: campaign.objective, destination: campaign.destinationType });
+  const state = await pixelStateFor(organizationId);
+  return { need, gate: launchGate(need, state), statusLabel: PIXEL_STATUS_LABEL[pixelStatus(state)] };
 }

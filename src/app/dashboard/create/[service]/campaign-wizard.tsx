@@ -64,6 +64,8 @@ type Props = {
   platforms: AdPlatform[];
   defaultDestination: DefaultDestination;
   pixelActive: boolean;
+  /** Set when a website-sales campaign can't launch yet for want of a working Pixel. */
+  purchaseGate: { title: string; reason: string } | null;
   businessPhone: string | null;
   /** The customer asked MAIRO to wait for Approve before anything goes live. */
   autoLaunchHeld: boolean;
@@ -80,7 +82,7 @@ type Props = {
 };
 
 export function CampaignWizard(props: Props) {
-  const { orgName, platforms, defaultDestination, pixelActive, businessPhone, autoLaunchHeld, mode, studio, connected } = props;
+  const { orgName, platforms, defaultDestination, pixelActive, purchaseGate, businessPhone, autoLaunchHeld, mode, studio, connected } = props;
   const missing = platforms.filter((p) => !connected.includes(p));
   const metaConnected = connected.includes("META");
   const router = useRouter();
@@ -352,7 +354,7 @@ export function CampaignWizard(props: Props) {
 
           {current === "business" && <StepBusiness plan={plan} update={update} orgName={orgName} />}
           {current === "goal" && (
-            <StepGoal plan={plan} update={update} recommended={recommended} pixelActive={pixelActive} businessPhone={businessPhone} mode={mode} />
+            <StepGoal plan={plan} update={update} recommended={recommended} pixelActive={pixelActive} purchaseGate={purchaseGate} businessPhone={businessPhone} mode={mode} />
           )}
           {current === "audience" && <StepAudience plan={plan} update={update} mode={mode} />}
           {current === "budget" && <StepBudget plan={plan} update={update} />}

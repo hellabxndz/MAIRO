@@ -147,6 +147,11 @@ export default async function TrackingPage() {
       <PageHeader
         title="Measuring sales"
         description="What it takes for MAIRO to tell you whether the ads made you money — and for the ads to get better at it."
+        action={
+          <Link href="/dashboard/pixel" className="text-sm text-violet-bright underline underline-offset-4">
+            Which Pixel MAIRO uses
+          </Link>
+        }
       />
       <HelpLinks className="-mt-5 mb-6" links={[{ slug: "website-tracking", label: "What each tracking stage and check means" }]} />
 

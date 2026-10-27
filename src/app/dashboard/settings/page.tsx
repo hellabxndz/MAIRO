@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Card, PageHeader, secondaryButtonClass } from "@/components/ui";
+import { Badge, Card, PageHeader, secondaryButtonClass } from "@/components/ui";
 import { BusinessForm, BriefForm } from "./settings-forms";
 import { BillingSection } from "./billing-section";
 import { AutomationSection } from "./automation-section";
@@ -19,6 +19,8 @@ import { maskPhone } from "@/lib/sms/send";
 import { viewMode } from "@/lib/view-mode";
 import { advancedSettingsSummary } from "@/lib/dashboard/settings-summary";
 import { AdvancedFold } from "./advanced-fold";
+import { loadPixelSetup } from "@/lib/tracking/pixel-setup";
+import { PIXEL_STATUS_LABEL } from "@/lib/tracking/pixel-rules";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -52,6 +54,7 @@ export default async function SettingsPage() {
     viewMode(),
   ]);
   if (!organization) redirect("/sign-in");
+  const pixel = await loadPixelSetup(organizationId);
 
   const plan = planFor(organization.subscriptionTier);
   // The plan to point at, found by price rather than named, so changing which
@@ -99,6 +102,40 @@ export default async function SettingsPage() {
         </div>
         <Link href="/dashboard/settings/reports" className={secondaryButtonClass}>
           Report settings
+        </Link>
+      </div>
+    </Card>
+  );
+  const pixelCard = (
+    <Card className="mb-8" id="pixel">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-medium">Meta Pixel</h2>
+            <Badge
+              tone={
+                pixel.status === "receiving" || pixel.status === "purchases_verified"
+                  ? "green"
+                  : pixel.status === "access_lost"
+                    ? "red"
+                    : pixel.status === "declined" && pixel.need === "optional"
+                      ? "neutral"
+                      : "yellow"
+              }
+            >
+              {PIXEL_STATUS_LABEL[pixel.status]}
+            </Badge>
+          </div>
+          <p className="max-w-xl text-sm text-neutral-400">
+            {pixel.pixel
+              ? `${pixel.pixel.name} · ID ${pixel.pixel.id}${pixel.pixel.websiteDomain ? ` · ${pixel.pixel.websiteDomain}` : ""}`
+              : pixel.need === "required_for_purchases"
+                ? "Needed to measure website purchases, and before a purchase campaign launches."
+                : "Optional — counts what people do on your website after clicking an ad."}
+          </p>
+        </div>
+        <Link href="/dashboard/pixel" className={secondaryButtonClass}>
+          {pixel.pixel ? "Change or re-check" : "Set up"}
         </Link>
       </div>
     </Card>
@@ -265,6 +302,7 @@ export default async function SettingsPage() {
       <div>
         {header}
         {businessCard}
+        {pixelCard}
         {billingCard}
         {assistantCard}
         <AdvancedFold lines={lines}>
@@ -282,6 +320,7 @@ export default async function SettingsPage() {
       {header}
       {businessCard}
       {brainCard}
+      {pixelCard}
       {reportsCard}
       {billingCard}
       {autoLaunchCard}

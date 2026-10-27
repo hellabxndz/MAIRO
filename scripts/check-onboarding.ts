@@ -57,15 +57,15 @@ const paid = { paid: true, status: "active", trial: false, planName: "Growth" };
 console.log("— the steps, in nine phases —");
 check("a brand-new business starts at step 1, with nothing done", () => {
   const steps = onboardingSteps(blank);
-  assert.equal(steps.length, 12);
+  assert.equal(steps.length, 13);
   assert.equal(focusStep(steps)?.id, "business");
   assert.equal(focusStep(steps)?.state, "current");
-  assert.deepEqual(progressCount(steps), { finished: 0, total: 12 });
+  assert.deepEqual(progressCount(steps), { finished: 0, total: 13 });
   assert.equal(resumeHref(steps), "/onboarding");
 });
 check("the steps are the journey, in order, each with who does it and why", () => {
   const steps = onboardingSteps(blank);
-  assert.deepEqual(steps.map((s) => s.id), ["business", "learn", "goal", "plan", "edit", "approve", "creative", "video", "connect", "subscribe", "prepare", "launch"]);
+  assert.deepEqual(steps.map((s) => s.id), ["business", "learn", "goal", "plan", "edit", "approve", "creative", "video", "connect", "pixel", "subscribe", "prepare", "launch"]);
   assert.ok(steps.every((s) => s.why.length > 10));
   assert.deepEqual(steps.filter((s) => s.who === "mairo").map((s) => s.id), ["learn", "plan", "prepare"]);
 });
@@ -116,6 +116,22 @@ check("built but not approved: the final approval is next; nothing says live", (
   const s = onboardingSteps(facts({ business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid, campaign: { ...blank.campaign, built: true, id: "c1" } }));
   assert.equal(focusStep(s)?.id, "launch");
   assert.ok(!s.some((x) => /live/i.test(x.detail ?? "")));
+});
+check("the Pixel step: an online shop that hasn't answered is asked; a lead business isn't held up by it", () => {
+  const base = { business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid, campaign: { ...blank.campaign, built: true, id: "c1" } };
+  const shop = onboardingSteps(facts({ ...base, pixel: { need: "required_for_purchases", decision: null, status: "not_set_up", leadMeasurement: null } }));
+  assert.equal(focusStep(shop)?.id, "pixel");
+  assert.doesNotMatch(shop.find((x) => x.id === "pixel")!.label, /optional/);
+  const leads = onboardingSteps(facts({ ...base, pixel: { need: "optional", decision: null, status: "not_set_up", leadMeasurement: null } }));
+  assert.equal(leads.find((x) => x.id === "pixel")!.state, "skipped");
+  assert.match(leads.find((x) => x.id === "pixel")!.label, /optional/);
+  assert.equal(focusStep(leads)?.id, "launch");
+  // Chosen counts as done for setup — the launch rule, not this step, decides whether events are needed.
+  const chosen = onboardingSteps(facts({ ...base, pixel: { need: "required_for_purchases", decision: "use", status: "selected_not_receiving", leadMeasurement: null } }));
+  assert.equal(chosen.find((x) => x.id === "pixel")!.state, "done");
+  assert.match(chosen.find((x) => x.id === "pixel")!.detail ?? "", /not receiving/);
+  const lost = onboardingSteps(facts({ ...base, pixel: { need: "required_for_purchases", decision: "use", status: "access_lost", leadMeasurement: null } }));
+  assert.equal(lost.find((x) => x.id === "pixel")!.state, "attention");
 });
 check("approved and waiting on Meta is 'waiting'; live only when Meta confirmed it", () => {
   const base = { business: true, goal: true, plan: approvedPlan, meta: connected, subscription: paid };

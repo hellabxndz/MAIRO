@@ -3,6 +3,8 @@ import { hasActivePlan } from "@/lib/readiness";
 import { planFor } from "@/lib/plans";
 import { parseDraft } from "./draft";
 import { onboardingSteps, type OnboardingFacts, type OnboardingStep } from "./progress";
+import { businessPixelNeed, pixelStatus } from "@/lib/tracking/pixel-rules";
+import { pixelStateFor } from "@/lib/tracking/pixel-setup";
 
 // The facts behind the setup steps, read from the records — the intake, the
 // plan and its revisions, the suggested ads, the Meta connection, the
@@ -50,6 +52,12 @@ export async function loadOnboardingFacts(organizationId: string, now = new Date
       : null,
   ]);
 
+  const [pixelState, intakeGoal, profile] = await Promise.all([
+    pixelStateFor(organizationId),
+    db.onboardingIntake.findUnique({ where: { organizationId }, select: { primaryGoal: true } }),
+    db.trackingProfile.findUnique({ where: { organizationId }, select: { nicheId: true } }),
+  ]);
+
   const pcs = campaign?.platformCampaigns ?? [];
   const built = pcs.some((p) => p.externalCampaignId && p.externalAdId);
   // Live only once Meta switched it on (the campaign is marked ACTIVE after Meta accepted it).
@@ -64,6 +72,12 @@ export async function loadOnboardingFacts(organizationId: string, now = new Date
     plan: plan ? { status: plan.status, yourChanges, activated: Boolean(plan.activatedAt) } : null,
     meta: meta ? { status: meta.status, adAccount: meta.metaAdAccountId || null, pageName: meta.pageName, hasPage: Boolean(meta.pageId), expiresAt: meta.tokenExpiresAt } : null,
     creative: { directions, approved: approvedNow, videos },
+    pixel: {
+      need: businessPixelNeed({ nicheId: profile?.nicheId ?? "general", goal: intakeGoal?.primaryGoal ?? null }),
+      decision: pixelState.decision,
+      status: pixelStatus(pixelState),
+      leadMeasurement: pixelState.leadMeasurement,
+    },
     subscription: {
       paid,
       status: org.subscriptionStatus,

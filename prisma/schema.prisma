@@ -1757,6 +1757,17 @@ model TrackingPixel {
   lastCheckedAt DateTime?
   lastError     String?     @db.Text
 
+  /// The Meta ad account this pixel was confirmed against when it was chosen.
+  /// A later connection to a different ad account makes the choice stale.
+  metaAdAccountId    String?
+  /// The website the owner confirmed this pixel is for, as a host
+  /// (shop.example.com). Owner-confirmed, not proof of installation.
+  websiteDomain      String?
+  websiteConfirmedAt DateTime?
+  /// The last access check (re-check, or a check MAIRO ran) found the
+  /// connection can no longer read this pixel. Cleared by a check that can.
+  accessLostAt       DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2092,6 +2103,18 @@ model TrackingProfile {
   /// the store says the shopper refused tracking; "require_granted" sends only
   /// orders the store marks as consented.
   serverEventsConsent  String    @default("respect_denied")
+
+  /// The owner's answer to "connect a Meta Pixel?": "use" once they chose one,
+  /// "declined" when they said no. Null until they answer. Declining is a
+  /// choice MAIRO respects and records — for an online shop it also means a
+  /// campaign optimised for website purchases can't launch (tracking/pixel-rules.ts).
+  pixelDecision     String?
+  pixelDecidedAt    DateTime?
+  pixelDecidedById  String?
+  /// How leads are measured when not by a pixel: "calls", "meta_forms",
+  /// "crm" or "other". What the owner told MAIRO — not a connection; nothing
+  /// is claimed as connected because of it.
+  leadMeasurement   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

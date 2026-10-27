@@ -108,8 +108,13 @@ export async function listPixelChoices(organizationId: string): Promise<SetupRes
   }
 }
 
-async function savePixel(organizationId: string, userId: string, pixel: MetaPixel, origin: "EXISTING" | "CREATED_BY_MAIRO") {
+async function savePixel(organizationId: string, userId: string, pixel: MetaPixel, origin: "EXISTING" | "CREATED_BY_MAIRO", adAccountId: string) {
+  // Choosing a pixel is the owner's answer to "connect a Pixel?" (tracking/pixel-rules.ts).
+  await ensureTrackingProfile(organizationId);
+  await db.trackingProfile.update({ where: { organizationId }, data: { pixelDecision: "use", pixelDecidedAt: new Date(), pixelDecidedById: userId } });
   const data = {
+    metaAdAccountId: adAccountId,
+    accessLostAt: null,
     externalPixelId: pixel.id,
     name: pixel.name,
     origin,
@@ -139,7 +144,10 @@ export async function selectPixel(organizationId: string, userId: string, pixelI
     const pixel = await fetchMetaPixel(id, creds.accessToken);
     if (!pixel?.id || pixel.id !== id) return err("not_found", "Meta didn't confirm that pixel for your connection.");
     if (pixel.unavailable) return err("failed", "Meta marks that pixel as unavailable. Choose another, or create one.");
-    const row = await savePixel(organizationId, userId, pixel, "EXISTING");
+    // Readable by the login isn't enough: it has to be shared with this business's ad account.
+    const inAccount = (await listMetaPixels(creds.externalAccountId, creds.accessToken)).some((p) => p.id === id);
+    if (!inAccount) return err("not_found", `That pixel isn't shared with your ad account ${creds.externalAccountId}. Share it with the ad account in Meta Business Settings, or choose another.`);
+    const row = await savePixel(organizationId, userId, pixel, "EXISTING", creds.externalAccountId);
     return { ok: true, data: { id: row.externalPixelId, name: row.name } };
   } catch (e) {
     const c = classifyMetaError(e);
@@ -189,7 +197,7 @@ export async function createPixel(organizationId: string, userId: string, busine
     // Confirm on a fresh read before telling anyone it exists.
     const confirmed = await fetchMetaPixel(pixel.id, creds.accessToken);
     if (!confirmed?.id || confirmed.id !== pixel.id) return err("failed", "Meta didn't confirm the new pixel yet. Check again in a minute — MAIRO won't create a second one.");
-    const row = await savePixel(organizationId, userId, confirmed, "CREATED_BY_MAIRO");
+    const row = await savePixel(organizationId, userId, confirmed, "CREATED_BY_MAIRO", creds.externalAccountId);
     return { ok: true, data: { id: row.externalPixelId, name: row.name, reused } };
   } catch (e) {
     const c = classifyMetaError(e);

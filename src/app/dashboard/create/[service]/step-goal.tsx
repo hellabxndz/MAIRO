@@ -18,6 +18,7 @@ export function StepGoal({
   update,
   recommended,
   pixelActive,
+  purchaseGate,
   businessPhone,
   mode,
 }: {
@@ -25,6 +26,7 @@ export function StepGoal({
   update: (patch: Partial<CampaignPlan>) => void;
   recommended: AdGoal;
   pixelActive: boolean;
+  purchaseGate?: { title: string; reason: string } | null;
   businessPhone: string | null;
   mode: "simple" | "advanced";
 }) {
@@ -68,7 +70,18 @@ export function StepGoal({
           </Note>
         </div>
       )}
-      {plan.goal === "SALES" && !pixelActive && (
+      {plan.goal === "SALES" && purchaseGate && (!plan.destinationType || plan.destinationType === "WEBSITE") && (
+        <div className="mt-3">
+          <Note tone="warn">
+            <strong className="font-medium">{purchaseGate.title}.</strong> {purchaseGate.reason} You can build it now; it
+            won&rsquo;t launch until then.{" "}
+            <Link href="/dashboard/pixel" className="underline underline-offset-4">
+              Set up your Meta Pixel
+            </Link>
+          </Note>
+        </div>
+      )}
+      {plan.goal === "SALES" && !pixelActive && !purchaseGate && (
         <div className="mt-3">
           <Note tone="warn">
             Your website may need additional tracking setup so we can measure purchases accurately. Until Meta sees

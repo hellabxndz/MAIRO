@@ -18,6 +18,7 @@ import { focusStep } from "@/lib/onboarding/progress";
 import { setupWork } from "@/lib/onboarding/team";
 import { loadPreLaunch } from "@/lib/onboarding/prelaunch";
 import { connectHref, connectProblemFromParams } from "@/lib/onboarding/problems";
+import { pixelStateFor } from "@/lib/tracking/pixel-setup";
 
 // LET'S TURN YOUR PLAN INTO A REAL CAMPAIGN.
 //
@@ -132,6 +133,13 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
   const buildProblem = stepOf("prepare")?.problem ?? null;
   const launchProblem = stepOf("launch")?.problem ?? null;
   const reviewing = journey.next === "review" || journey.next === "waiting";
+  // Right after Meta is connected: which Pixel measures the website (or none).
+  const pixelStep = stepOf("pixel");
+  const connected = stepOf("connect")?.state === "done";
+  // Asked until answered — needed or not — and again when access is lost. Optional never blocks.
+  const pixelDecision = connected ? (await pixelStateFor(organizationId)).decision : null;
+  const askPixel =
+    connected && pixelStep && journey.next !== "waiting" && (pixelStep.state === "attention" || (pixelDecision === null && pixelStep.state !== "done"));
 
   return (
     <div className="mx-auto max-w-[1100px]">
@@ -177,6 +185,20 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
             )
           )}
 
+          {askPixel && pixelStep && (
+            <div className={`${card} p-6`} data-step="pixel">
+              <p className="text-[17px] font-semibold text-white">{pixelStep.label}</p>
+              <p className="mt-1 text-[13.5px] text-muted">{pixelStep.why}</p>
+              {pixelStep.state === "attention" && pixelStep.detail && <p className="mt-1 text-[13.5px] text-amber-200">{pixelStep.detail}</p>}
+              <Link href={pixelStep.href ?? "/dashboard/pixel"} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#ffffff] px-6 text-[14.5px] font-medium text-black hover:brightness-110">
+                {pixelStep.state === "attention" ? "Re-check your Pixel" : "Choose your Pixel"}
+              </Link>
+              {pixelStep.state === "skipped" && (
+                <p className="mt-2 text-[12.5px] text-muted">Optional — you can carry on without it and connect one later from Settings.</p>
+              )}
+            </div>
+          )}
+
           {journey.next === "build" && (
             <>
               {buildProblem && <ProblemCard problem={buildProblem} />}
@@ -209,6 +231,19 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
                     <div className="mt-3"><CancelLaunch /></div>
                   </div>
                 )
+              )}
+              {review.measurementBlock && journey.next === "review" && (
+                <ProblemCard
+                  problem={{
+                    code: `pixel_${review.measurementBlock.code}`,
+                    title: review.measurementBlock.title,
+                    message: review.measurementBlock.reason,
+                    kept: "Your campaign is saved in your ad account, switched off. Nothing has been spent.",
+                    fix: review.measurementBlock.fixes[0] ?? null,
+                    also: review.measurementBlock.fixes.slice(1),
+                  }}
+                  tone="warn"
+                />
               )}
               <PreLaunchReview review={review} campaignHref={campaignHref} />
               {journey.next === "review" && (

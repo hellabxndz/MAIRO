@@ -16,6 +16,7 @@ import { viewMode } from "@/lib/view-mode";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { isWizardStep, newPlan, type CampaignPlan, type WizardStep } from "@/lib/campaigns/plan";
 import { canOptimizeTowards } from "@/lib/tracking/pixels";
+import { campaignLaunchGate } from "@/lib/tracking/pixel-setup";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { brainFacts, loadBrain } from "@/lib/business/brain";
 
@@ -101,6 +102,9 @@ export default async function CreateServicePage({
 
   const defaultDestination = asDefaultDestination(organization.defaultDestination);
   const pixelActive = pixel ? canOptimizeTowards(pixel.status) : false;
+  // Whether a website-sales campaign could launch now (only an online shop's is ever held).
+  const salesGate = await campaignLaunchGate(organizationId, { objective: "SALES", destinationType: "WEBSITE" });
+  const purchaseGate = salesGate.ok ? null : { title: salesGate.title, reason: salesGate.reason };
   const fresh = newPlan({
     service: slug as CampaignPlan["service"],
     businessName: organization.name,
@@ -149,6 +153,7 @@ export default async function CreateServicePage({
         platforms={service.platforms}
         defaultDestination={defaultDestination}
         pixelActive={pixelActive}
+        purchaseGate={purchaseGate}
         businessPhone={organization.phone}
         autoLaunchHeld={organization.autoLaunchHeld}
         connected={service.platforms.filter((p) => connections.get(p)?.connected)}

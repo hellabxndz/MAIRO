@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { hasActivePlan } from "@/lib/readiness";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
+import { launchGateForCampaign } from "@/lib/tracking/pixel-setup";
 import { recordRun } from "@/lib/team/runs";
 import { UNEXPECTED, explainCampaignError, type Problem } from "./problems";
 
@@ -40,6 +41,11 @@ export async function launchPlanCampaign(organizationId: string): Promise<Launch
     if (!campaign.platformCampaigns.some((p) => p.externalAdId)) {
       return { ok: false, error: "The campaign isn't fully built on Meta yet, so there's nothing to switch on. Finish building it first." };
     }
+
+    // A purchase campaign needs a working Pixel before it may launch
+    // (tracking/pixel-rules.ts). Refused before anything is recorded.
+    const gate = await launchGateForCampaign(ctx.organizationId, row.campaignId);
+    if (!gate.ok) return { ok: false, error: `${gate.title}. ${gate.reason}` };
 
     // Recorded once. A second press finds it already there.
     const first = await db.mairoCampaign.updateMany({

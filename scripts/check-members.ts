@@ -86,6 +86,7 @@ const NO_ROLE_CHECK: Record<string, string> = {
   "notification-actions:dismissNotificationAction": "the bell",
   "strategy-actions:dismissWelcomeAction": "a welcome note",
   "suggested-ads-actions:creditQuoteAction": "a price quote",
+  "pixel-actions:listPixelsAction": "reads the Pixels the ad account can use; chooses nothing",
 };
 
 function unguardedActions(): string[] {
