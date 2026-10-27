@@ -329,6 +329,15 @@ export function planFor(tier: SubscriptionTier): Plan {
   return ALL_PLANS.find((p) => p.tier === tier) ?? PLANS[0];
 }
 
+/**
+ * The plan to show a business as being on. A business that signed up through
+ * the free plan and has no subscription (never had one, or it ended) is on no
+ * plan — not the plan launch mode lends older accounts, which planFor returns.
+ */
+export function shownPlanFor(tier: SubscriptionTier, paymentRequired: boolean): Plan {
+  return tier === "NONE" && paymentRequired ? UNSUBSCRIBED : planFor(tier);
+}
+
 export function limitsFor(tier: SubscriptionTier): PlanLimits {
   return planFor(tier).limits;
 }

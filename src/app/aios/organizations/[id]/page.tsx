@@ -11,7 +11,7 @@ import {
   updateSubscriptionTierAction,
 } from "@/lib/actions/aios-actions";
 import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
-import { campaignLimitText, planFor } from "@/lib/plans";
+import { campaignLimitText, shownPlanFor } from "@/lib/plans";
 import { SuccessPanel } from "./success-panel";
 
 const PLAN_STATUSES = ["DRAFT", "IN_REVIEW", "APPROVED", "ACTIVE", "COMPLETE"];
@@ -48,7 +48,7 @@ export default async function OrganizationDetailPage({
 
   if (!org) notFound();
 
-  const plan = planFor(org.subscriptionTier);
+  const plan = shownPlanFor(org.subscriptionTier, org.paymentRequired);
   const month = currentMonthKey();
   const creativesThisMonth = org.creativeRequests.filter((r) => r.month === month).length;
   const activeCampaigns = org.campaigns.filter((c) => c.status !== "ARCHIVED").length;
@@ -81,7 +81,9 @@ export default async function OrganizationDetailPage({
             </p>
             {org.subscriptionTier === "NONE" && (
               <p className="mt-1 text-xs text-amber-400">
-                No tier assigned — being treated as {plan.name} limits.
+                {org.paymentRequired
+                  ? "No subscription — signed up through the free plan, so it can't build or run campaigns until it subscribes."
+                  : `No tier assigned — being treated as ${plan.name} limits.`}
               </p>
             )}
           </div>

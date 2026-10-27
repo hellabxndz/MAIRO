@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activeOrganizationId } from "@/lib/active-org";
 import { PageHeader, secondaryButtonClass } from "@/components/ui";
-import { PLANS, PRO_TRIAL_DAYS, billingEnforced, creativeRequestText, isSoldTier, planFor, trialDaysFor } from "@/lib/plans";
+import { PLANS, PRO_TRIAL_DAYS, billingEnforced, creativeRequestText, isSoldTier, planFor, shownPlanFor, trialDaysFor } from "@/lib/plans";
 import { payingBusinessOf } from "@/lib/brands";
 import { billingConfigured, purchasableTiers, statusEntitles } from "@/lib/stripe/client";
 import { openBillingPortalAction } from "@/lib/actions/billing-actions";
@@ -42,7 +42,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
 
   const organization = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { subscriptionTier: true, subscriptionStatus: true, currentPeriodEnd: true, stripeCustomerId: true, subscriptionCancelAt: true },
+    select: { subscriptionTier: true, subscriptionStatus: true, currentPeriodEnd: true, stripeCustomerId: true, subscriptionCancelAt: true, paymentRequired: true },
   });
   if (!organization) redirect("/sign-in");
 
@@ -77,7 +77,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
   const buyable = configured ? purchasableTiers() : [];
   const tier = organization.subscriptionTier;
   const subscribed = tier !== "NONE" && statusEntitles(organization.subscriptionStatus);
-  const current = planFor(tier);
+  const current = shownPlanFor(tier, organization.paymentRequired);
   const status = organization.subscriptionStatus;
   const periodEnd = organization.currentPeriodEnd;
   // One free trial per business and per Meta ad account (lib/billing/trial-claims.ts).
