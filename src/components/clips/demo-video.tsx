@@ -230,7 +230,7 @@ export function DemoVideo({ id, title, className = "", layout: forced, transcrip
             {fmt(t)} / {fmt(duration)}
           </span>
           {/* 44px to tap on a phone; the visible badge stays small. */}
-          <button type="button" onClick={() => setCaptionsOn((c) => !c)} aria-pressed={captionsOn} aria-label="Captions" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 sm:min-h-0 sm:min-w-0">
+          <button type="button" onClick={() => setCaptionsOn((c) => !c)} aria-pressed={captionsOn} aria-label="Captions" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 sm:pointer-fine:min-h-0 sm:min-w-0">
             <span className={`rounded-md border px-1.5 py-0.5 text-[10.5px] font-bold tracking-wide transition ${captionsOn ? "border-white/70 text-white" : "border-white/30 text-white/50"}`}>CC</span>
           </button>
           <span className="hidden shrink-0 text-[10.5px] text-white/55 md:inline">No sound</span>

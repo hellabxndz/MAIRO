@@ -23,19 +23,42 @@ export function campaignTab(c: { status: CampaignStatus; endDate: Date | null },
   return "drafts";
 }
 
-/** Status in plain words, with the dot that says it at a glance. */
-export function statusLabel(c: { status: CampaignStatus; endDate: Date | null }, now: Date): { dot: string; text: string; tone: "green" | "yellow" | "neutral" | "blue" } {
+/**
+ * Status in plain words, with the dot that says it at a glance — kept apart
+ * the way Meta keeps them apart: a campaign MAIRO switched on (Meta accepted
+ * the change) isn't "delivering" until Meta's ad review approved the ad, and
+ * a rejected ad or a failed launch says so instead of "Active".
+ */
+export function statusLabel(
+  c: {
+    status: CampaignStatus;
+    endDate: Date | null;
+    launchApprovedAt?: Date | null;
+    platformCampaigns?: { adReviewState?: string | null; lastError?: string | null; [field: string]: unknown }[];
+  },
+  now: Date,
+): { dot: string; text: string; tone: "green" | "yellow" | "neutral" | "blue" } {
   if (c.status === "ARCHIVED") return { dot: "⚪", text: "Stopped", tone: "neutral" };
   if (c.endDate && c.endDate < now) return { dot: "⚪", text: "Completed", tone: "neutral" };
+  const pcs = c.platformCampaigns ?? [];
+  const review = (s: string) => pcs.some((p) => p.adReviewState === s);
+  const failed = pcs.some((p) => p.lastError);
   switch (c.status) {
     case "ACTIVE":
-      return { dot: "🟢", text: "Active", tone: "green" };
+      if (review("REJECTED")) return { dot: "🔴", text: "Ad rejected by Meta", tone: "yellow" };
+      if (review("WITH_ISSUES")) return { dot: "🟡", text: "Delivering with issues", tone: "yellow" };
+      if (review("PENDING")) return { dot: "🟡", text: "Switched on — in Meta's review", tone: "yellow" };
+      if (review("APPROVED")) return { dot: "🟢", text: "Delivering", tone: "green" };
+      // Meta accepted "switch it on"; its review hasn't been read yet.
+      return { dot: "🟢", text: "Switched on", tone: "green" };
     case "PENDING_REVIEW":
-      return { dot: "🟡", text: "Starting", tone: "yellow" };
+      if (failed) return { dot: "🔴", text: "Launch failed — see why", tone: "yellow" };
+      if (c.launchApprovedAt) return { dot: "🟡", text: "Approved — waiting for Meta", tone: "yellow" };
+      return { dot: "🟡", text: "Built — waiting for your approval", tone: "yellow" };
     case "PAUSED":
       return { dot: "⏸", text: "Paused", tone: "yellow" };
     default:
-      return { dot: "📝", text: "Draft", tone: "blue" };
+      return { dot: "📝", text: failed ? "Draft — last build failed" : "Draft", tone: "blue" };
   }
 }
 

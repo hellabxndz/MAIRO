@@ -34,16 +34,16 @@ export function JourneyFrame({ steps, here, showProblem, children, wide = false 
     <div className="min-h-screen bg-paper text-white">
       <header className="border-b border-white/[0.06]">
         <div className={`mx-auto flex items-center justify-between gap-4 px-4 py-4 sm:px-6 ${wide ? "max-w-[1240px]" : "max-w-[1000px]"}`}>
-          <Link href="/" className="inline-flex min-h-11 items-center sm:min-h-0 text-[14px] font-light tracking-[0.3em] text-white">
+          <Link href="/" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[14px] font-light tracking-[0.3em] text-white">
             MAIRO
           </Link>
           <div className="flex items-center gap-4">
             <JourneySwitcher />
-            <Link href="/dashboard" className="inline-flex min-h-11 items-center sm:min-h-0 text-[12.5px] text-faint hover:text-white">
+            <Link href="/dashboard" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[12.5px] text-faint hover:text-white">
               My account
             </Link>
             <form action={signOutAction}>
-              <button type="submit" className="inline-flex min-h-11 items-center sm:min-h-0 text-[12.5px] text-faint hover:text-white">
+              <button type="submit" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[12.5px] text-faint hover:text-white">
                 Sign out
               </button>
             </form>

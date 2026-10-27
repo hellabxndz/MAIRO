@@ -1,6 +1,11 @@
 # Is mairo.io up? Every 10 minutes GitHub asks the site's health check
 # (src/app/api/health), which answers 200 only when the site and its database
-# both work. A failed run is GitHub's own email to whoever last changed this
+# both work — and loads the homepage on both addresses (mairo.io and
+# www.mairo.io), because pages are redirected to the one address the site
+# lives on (lib/canonical-host.ts) while /api is not: a redirect loop between
+# the two, an expired certificate or a broken DNS record would leave the
+# health check green while visitors see an error. A failed run is GitHub's own
+# email to whoever last changed this
 # file — that's the alert. Free on a public repository.
 #
 # Runs only from the default branch. GitHub pauses scheduled workflows after
@@ -31,3 +36,19 @@ jobs:
           done
           echo "::error::mairo.io is down or can't reach its database (HTTP $status)."
           exit 1
+
+      - name: the homepage loads on both addresses, without a redirect loop
+        run: |
+          fail=0
+          for url in https://mairo.io/ https://www.mairo.io/; do
+            ok=""
+            for i in 1 2 3; do
+              # At most 5 redirects: a loop between the two addresses fails here (curl exit 47).
+              out=$(curl -sS -o /dev/null -L --max-redirs 5 --max-time 25 -w '%{http_code} %{num_redirects} %{url_effective}' "$url" 2>&1) && code=${out%% *} || code=000
+              if [ "$code" = "200" ]; then ok=1; echo "$url → $out"; break; fi
+              echo "Try $i for $url: $out"
+              [ "$i" = 3 ] || sleep 30
+            done
+            [ -n "$ok" ] || { echo "::error::$url doesn't load ($out)."; fail=1; }
+          done
+          exit $fail

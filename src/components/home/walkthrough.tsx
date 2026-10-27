@@ -147,7 +147,7 @@ export function Walkthrough() {
               <p className="mt-4 flex items-center justify-between gap-4 text-[13px] text-white/50">
                 <span>Product demo · fictional business · sample data</span>
                 <Link href="/preview" className="font-medium text-cyan-200 hover:text-white">
-                  Try it with your business →
+                  See your free plan →
                 </Link>
               </p>
             </div>

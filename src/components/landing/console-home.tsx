@@ -37,7 +37,7 @@ import { brandFont } from "@/lib/fonts";
 // plan is free, and a subscription is only for building and running real
 // campaigns, each of which waits for the owner's approval.
 
-const CTA = { href: "/preview", label: "Build My Free AI Ad Plan" };
+const CTA = { href: "/preview", label: "See your free plan" };
 
 const FILM_CHAPTERS = ["Discovery", "Strategy", "Creative", "Campaign", "Approval", "Dashboard", "Recommendations"];
 
@@ -136,7 +136,7 @@ export function ConsoleHome() {
                 <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/62">{s.body}</p>
                 <p className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-3 text-[13.5px]">
                   {s.links.map((l) => (
-                    <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center sm:min-h-0 text-cyan-200 hover:text-white">
+                    <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-cyan-200 hover:text-white">
                       {l.label} <span aria-hidden>→</span>
                     </Link>
                   ))}
@@ -158,7 +158,7 @@ export function ConsoleHome() {
             <p className="mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-white/70">Start with a free plan for your business. No credit card, and no ads launched.</p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href={CTA.href} className="inline-flex min-h-[56px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[16px] font-semibold text-black shadow-[0_18px_44px_-16px_rgba(255,255,255,0.85)] transition hover:brightness-110">
-                Build Your Free Ad Plan <span aria-hidden>→</span>
+                See your free plan <span aria-hidden>→</span>
               </Link>
               <a href="#film" className="inline-flex min-h-[56px] items-center rounded-full border border-white/15 px-7 text-[16px] font-semibold text-white transition hover:border-white/40">
                 Watch the product film

@@ -21,7 +21,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
     {
       h: "Resources",
       l: [
-        ["Build your free ad plan", "/preview"],
+        ["See your free plan", "/preview"],
         ...(toolsLive ? ([["Free advertising tools", "/tools"]] as [string, string][]) : []),
         ["Watch MAIRO in action", "/#film"],
         ["Security & control", "/#control"],
@@ -53,7 +53,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
             <ul className="mt-2 text-[13px] text-white/55 sm:mt-4 sm:space-y-2.5">
               {col.l.map(([label, href]) => (
                 <li key={label}>
-                  <Link href={href} className="flex min-h-11 items-center hover:text-white sm:inline sm:min-h-0">{label}</Link>
+                  <Link href={href} className="flex min-h-11 items-center hover:text-white sm:pointer-fine:inline sm:pointer-fine:min-h-0">{label}</Link>
                 </li>
               ))}
             </ul>

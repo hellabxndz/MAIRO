@@ -692,11 +692,12 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
 
                       <Link
                         href={cta.href}
+                        aria-label={`${cta.label} — then choose ${story.name}`}
                         className={`mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold transition ${
                           scale ? PRIMARY : "border border-white/20 text-white hover:border-white/45 hover:bg-white/[0.04]"
                         }`}
                       >
-                        {plan.cta} <span aria-hidden>→</span>
+                        {cta.label} <span aria-hidden>→</span>
                       </Link>
                       <p className="mt-3 text-center text-[12px] leading-relaxed text-white/45">Starts with your free AI plan. You choose {story.name} after reviewing it.</p>
                     </div>

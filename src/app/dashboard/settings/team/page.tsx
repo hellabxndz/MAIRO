@@ -21,7 +21,7 @@ export default async function TeamPage() {
   if (!me) redirect("/dashboard");
 
   const back = (
-    <Link href="/dashboard/settings" className="inline-flex min-h-11 items-center sm:min-h-0 text-[13px] text-muted hover:text-white">
+    <Link href="/dashboard/settings" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[13px] text-muted hover:text-white">
       ← Settings
     </Link>
   );

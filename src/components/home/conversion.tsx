@@ -14,12 +14,12 @@ export function ConversionBlock() {
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div>
             <h2 id="convert-title" className="text-[clamp(30px,4.2vw,54px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white [text-wrap:balance]">
-              Your strategy is ready. Let MAIRO put it to work.
+              See your plan before you pay for anything.
             </h2>
-            <p className="mt-5 max-w-[560px] text-[17px] leading-relaxed text-white/70">Go from recommendations to advertising campaigns with your AI team managing the workflow.</p>
+            <p className="mt-5 max-w-[560px] text-[17px] leading-relaxed text-white/70">Tell MAIRO about your business and get a free Meta ad plan — strategy, budget and first ad ideas. Subscribe only if you want MAIRO to build and run it; your ad spend is paid to Meta separately.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/sign-up?from=home" className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[0_18px_44px_-16px_rgba(255,255,255,0.85)] transition hover:brightness-110">
-                Activate Your AI Advertising Team <span aria-hidden>→</span>
+              <Link href="/preview" className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[0_18px_44px_-16px_rgba(255,255,255,0.85)] transition hover:brightness-110">
+                See your free plan <span aria-hidden>→</span>
               </Link>
               <Link href="#pricing" className="inline-flex min-h-[54px] items-center justify-center rounded-full border border-white/15 px-7 text-[15.5px] font-semibold text-white transition hover:border-white/40">
                 Explore Plans

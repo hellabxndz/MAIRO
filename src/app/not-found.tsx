@@ -15,7 +15,7 @@ import { USABLE_TOOLS } from "@/lib/tools/registry";
 export const metadata: Metadata = { title: "Page not found" };
 
 const WAYS = [
-  { href: "/preview", label: "Build your free ad plan", hint: "A Meta ad strategy for your business, in a few minutes" },
+  { href: "/preview", label: "See your free plan", hint: "A Meta ad strategy for your business, in a few minutes" },
   { href: "/#how-it-works", label: "See how MAIRO works", hint: "The five steps, from your business to results" },
   { href: "/help", label: "Help center", hint: "Approvals, billing, Meta and your account" },
 ];

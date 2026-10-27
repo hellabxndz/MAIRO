@@ -25,7 +25,7 @@ export default async function ReportSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[760px]">
-      <Link href="/dashboard/settings" className="inline-flex min-h-11 items-center sm:min-h-0 text-[13px] text-muted hover:text-white">
+      <Link href="/dashboard/settings" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[13px] text-muted hover:text-white">
         ← Settings
       </Link>
       <h1 className="mt-3 text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.02em] text-white">Reports</h1>

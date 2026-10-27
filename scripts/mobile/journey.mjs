@@ -56,18 +56,18 @@ async function main() {
   await page.getByRole("button", { name: "Close menu" }).click();
   await page.getByRole("button", { name: "No website" }).click();
   await page.locator("#hero-first").fill("Handmade ceramic mugs, sold online across the US");
-  const build = page.getByRole("button", { name: /Build My Free AI Ad Plan/ }).first();
-  await tappable(build, "Build My Free AI Ad Plan");
+  const build = page.getByRole("button", { name: /See your free plan/ }).first();
+  await tappable(build, "See your free plan");
   await build.click();
   await page.locator("#hero-name").waitFor();
   await screen(page, "plan-questions");
   // Submitting with nothing chosen shows what's missing, on screen.
-  await page.getByRole("button", { name: /Build My Free AI Ad Plan/ }).last().click();
+  await page.getByRole("button", { name: /See your free plan/ }).last().click();
   await screen(page, "plan-questions-errors");
   await page.locator("#hero-name").fill("Nova Ceramics");
   await page.locator("fieldset").filter({ hasText: "What should your ads do?" }).locator("label").first().click();
   await page.locator("fieldset").filter({ hasText: "Monthly Meta ad budget" }).locator("label").nth(1).click();
-  await page.getByRole("button", { name: /Build My Free AI Ad Plan/ }).last().click();
+  await page.getByRole("button", { name: /See your free plan/ }).last().click();
 
   // 2. The plan.
   await page.waitForURL(/\/preview/, { timeout: 30_000 });

@@ -192,6 +192,13 @@ export function explainMetaConnect(code: MetaConnectCode, ctx: { returnTo: strin
   }
 }
 
+/**
+ * Losing the connection doesn't stop Meta: a campaign already live keeps
+ * delivering and spending. MAIRO never says otherwise — it can't pause
+ * anything (or confirm anything was paused) without the connection.
+ */
+export const STILL_SPENDING = "Any campaign already live keeps running — and spending — in Meta while MAIRO is disconnected, and MAIRO can't pause it until you reconnect. To stop it now, pause it in Meta Ads Manager.";
+
 /** A connection that worked once but can't be used now. */
 export function explainConnectionState(state: { status: string; expiresAt?: Date | null; hasPage: boolean; accountStatus?: number | null }, ctx: { returnTo: string; now?: Date }): Problem | null {
   const now = ctx.now ?? new Date();
@@ -200,7 +207,7 @@ export function explainConnectionState(state: { status: string; expiresAt?: Date
     return {
       code: "expired",
       title: "Your Meta connection has expired",
-      message: "Meta asks for the connection to be renewed every so often. Reconnect — it takes a few seconds, and your plan, campaign and settings are all kept.",
+      message: `Meta asks for the connection to be renewed every so often. Reconnect — it takes a few seconds, and your plan, campaign and settings are all kept. ${STILL_SPENDING}`,
       kept: KEPT,
       fix: { label: "Reconnect Meta", href: connectHref(ctx.returnTo) },
     };
@@ -209,7 +216,7 @@ export function explainConnectionState(state: { status: string; expiresAt?: Date
     return {
       code: "connection_error",
       title: "Meta stopped accepting MAIRO's connection",
-      message: "This usually means the password changed or access was removed in Facebook settings. Reconnect to fix it — nothing else is lost.",
+      message: `This usually means the password changed or access was removed in Facebook settings. Reconnect to fix it — nothing else is lost. ${STILL_SPENDING}`,
       kept: KEPT,
       fix: { label: "Reconnect Meta", href: connectHref(ctx.returnTo, { rerequest: true }) },
     };

@@ -153,7 +153,7 @@ export function HeroStarter() {
   const cta = (
     <>
       <IconSparkle className="h-[18px] w-[18px] shrink-0" />
-      Build My Free AI Ad Plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
+      See your free plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
     </>
   );
 

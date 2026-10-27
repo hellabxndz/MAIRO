@@ -668,7 +668,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
                   setErrors((e) => ({ ...e, website: undefined }));
                 }}
                 aria-pressed={noSite}
-                className="text-[13px] text-violet-200/90 underline-offset-4 hover:text-white hover:underline"
+                className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[13px] text-violet-200/90 underline-offset-4 hover:text-white hover:underline"
               >
                 {noSite ? "I have a website" : "No website?"}
               </button>
@@ -844,7 +844,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
             {reading ? "Reading your website…" : (
               <>
                 <IconSparkle className="h-5 w-5" />
-                Build My Free AI Ad Plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
+                See your free plan <span aria-hidden className="transition group-hover:translate-x-0.5">→</span>
               </>
             )}
           </button>

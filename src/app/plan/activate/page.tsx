@@ -72,7 +72,7 @@ function money(n: number): string {
 
 export default async function ActivatePage({ searchParams }: { searchParams: Promise<{ checkout?: string; tier?: string; skip?: string; connected?: string; subscribed?: string; try?: string; metaError?: string; missing?: string; metaDetail?: string; acct?: string }> }) {
   const params = await searchParams;
-  const { checkout, tier: chosenTier, skip, connected: justConnected, subscribed } = params;
+  const { checkout, tier: chosenTier, connected: justConnected, subscribed } = params;
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
@@ -131,7 +131,11 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
   }
 
   const connected = meta?.status === "CONNECTED";
-  const showPlans = connected || skip === "1";
+  // The plans are always on this page: it's where someone comes to pay, and
+  // hiding them behind connecting Meta first sent people who pressed "Get
+  // started" back to an earlier step. Connecting is offered alongside —
+  // before or after paying, it's needed before anything launches.
+  const showPlans = true;
   // Connected, and usable: not expired, a Page chosen, nothing Meta flagged.
   const connectionOk = steps?.find((s) => s.id === "connect")?.state === "done";
   const head = planHeadline(plan);
@@ -170,7 +174,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
           {connectProblem && <ProblemCard problem={connectProblem} tone={params.metaError ? "alert" : "warn"} />}
 
           {/* The ad account */}
-          {connected && connectionOk ? (
+          {connected && connectionOk && (
             <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-5">
               <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Account connected ✓</p>
               <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -179,21 +183,6 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                 <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Status</dt><dd className="text-[14px] text-white">Ready for MAIRO</dd></div>
               </dl>
               {justConnected === "1" && <p className="mt-3 text-[12.5px] text-muted">Nothing was created in your account and nothing was spent.</p>}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-6">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Plan approved ✓</p>
-              <p className="mt-2 text-[20px] font-semibold text-white">Connect your ad account</p>
-              <p className="mt-1 text-[14px] text-muted">So MAIRO knows where your campaign will eventually run. You&rsquo;ll sign in with Facebook and choose your ad account and Facebook Page — keep every option switched on so MAIRO can build your campaign.</p>
-              <a href={connectHref("/plan/activate?connected=1")} className="mt-4 inline-flex min-h-[46px] items-center rounded-lg bg-[#ffffff] px-6 text-[14.5px] font-medium text-black hover:brightness-110">
-                {connected ? "Reconnect My Ad Account" : "Connect My Ad Account"}
-              </a>
-              <p className="mt-3 text-[13px] text-muted">Connecting your account does not launch anything or spend money.</p>
-              {!showPlans && (
-                <Link href="/plan/activate?skip=1" className="mt-3 inline-block text-[12.5px] text-faint hover:text-white">
-                  Skip for now — I&rsquo;ll connect after choosing a plan
-                </Link>
-              )}
             </div>
           )}
 
@@ -239,7 +228,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                         : `Billed from today — ${selected.name} has no free trial (only MAIRO Pro does). Change or cancel any time.`}
                     </p>
                   )}
-                  <Link href="/plan/activate?skip=1#plans" className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">Change plan</Link>
+                  <Link href="/plan/activate#plans" className="mt-3 inline-block text-[12.5px] text-violet-bright hover:text-white">Change plan</Link>
                 </div>
               ) : (
                 <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -291,6 +280,20 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
               <p className="mt-1 text-[12px] text-faint">Payment is handled by Stripe; MAIRO never sees your card. Cancel any time — cancelling stops the next renewal.</p>
             </section>
           )}
+
+          {/* The ad account, when it isn't connected (or needs reconnecting): before or after paying. */}
+          {!(connected && connectionOk) && (
+            <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
+              <p className="text-[15px] font-semibold text-white">{connected ? "Reconnect your Meta ad account" : "Your Meta ad account — now or after choosing a plan"}</p>
+              <p className="mt-1 text-[13.5px] text-muted">
+                MAIRO builds your campaign in your own ad account. You&rsquo;ll sign in with Facebook and choose the ad account and Facebook Page — keep every option switched on. It&rsquo;s needed before anything launches, not before you pay.
+              </p>
+              <a href={connectHref("/plan/activate?connected=1")} className="mt-3 inline-flex min-h-[44px] items-center rounded-lg border border-white/15 px-5 text-[14px] font-medium text-white hover:border-white/35">
+                {connected ? "Reconnect My Ad Account" : "Connect My Ad Account"}
+              </a>
+              <p className="mt-2 text-[12.5px] text-faint">Connecting doesn&rsquo;t launch anything or spend money.</p>
+            </div>
+          )}
         </div>
 
         <aside className="min-w-0 space-y-4">
@@ -314,7 +317,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
           <div className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
             <p className="text-[15px] font-semibold text-white">Your approved plan</p>
             <p className="mt-1 text-[13px] text-muted">{head.goal} · {head.platform} · {head.budget} · {head.campaign}</p>
-            <Link href="/plan" className="mt-2 inline-block text-[12.5px] text-violet-bright hover:text-white">Review or change it</Link>
+            <Link href="/plan" className="mt-2 inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[12.5px] text-violet-bright hover:text-white">Review or change it</Link>
             <div className="mt-4 border-t border-white/[0.06] pt-4">
               <p className="text-[13px] text-white">See the dashboard first</p>
               <p className="mt-0.5 text-[12px] text-faint">A short walkthrough with sample data — not your numbers.</p>

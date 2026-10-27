@@ -155,7 +155,7 @@ export function CreativeShowcase() {
       <div className="mx-auto mt-8 flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
         <p className="max-w-[560px] text-[13px] leading-relaxed text-[#6b675e]">Your concepts are free in your plan. Finished pictures, made from your own photos or MAIRO&rsquo;s image credits, come with a subscription — always for you to approve.</p>
         <Link href="/preview" className="inline-flex min-h-[50px] items-center gap-2 rounded-full bg-[#171717] px-6 text-[14.5px] font-semibold text-black transition hover:bg-[#ffffff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffffff]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4f1ea]">
-          See what MAIRO would make for you <span aria-hidden>→</span>
+          See your free plan <span aria-hidden>→</span>
         </Link>
       </div>
     </section>

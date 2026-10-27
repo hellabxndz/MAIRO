@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Wordmark } from "@/components/wordmark";
 
 // The public top bar: How It Works, Features, Pricing and Resources, then
-// Sign In and Get My Free Plan. Sticky, on MAIRO's night with a hairline once
+// Sign In and See your free plan. Sticky, on MAIRO's night with a hairline once
 // the page scrolls. Resources holds the free tools and the reference pages so
 // the main bar stays on the signup journey. On a phone everything folds into
 // one menu. Links are absolute ("/pricing") so they work from any page.
@@ -32,7 +32,7 @@ const resourcesFor = (toolsLive: boolean) => [
 
 export function LandingNav({
   toolsLive = false,
-  cta = { href: "/preview", label: "Get My Free Plan" },
+  cta = { href: "/preview", label: "See your free plan" },
 }: {
   toolsLive?: boolean;
   cta?: { href: string; label: string };
@@ -74,7 +74,7 @@ export function LandingNav({
           <Wordmark className="text-[16.5px] sm:text-[19px]" />
           <div className="hidden items-center gap-7 whitespace-nowrap text-[14px] font-medium text-white/80 lg:flex xl:gap-9">
             {MAIN.map((l) => (
-              <Link key={l.href} href={l.href} className="transition-colors hover:text-white">
+              <Link key={l.href} href={l.href} className="inline-flex min-h-11 items-center transition-colors hover:text-white pointer-fine:min-h-0">
                 {l.label}
               </Link>
             ))}
@@ -126,7 +126,7 @@ export function LandingNav({
             ))}
           </ul>
           <Link href="/preview" onClick={() => setOpen(false)} className="mt-3 flex min-h-[50px] items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-black">
-            Get My Free Plan
+            See your free plan
           </Link>
         </div>
       )}

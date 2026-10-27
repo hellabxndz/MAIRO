@@ -73,7 +73,7 @@ export function DailyBrief({ brief, now, timeZone, compact = false }: { brief: B
           <h3 className={h}>Waiting for your approval</h3>
           <p className={`mt-1.5 text-[13px] leading-relaxed ${brief.pending.count ? "text-warn" : "text-muted"}`}>{brief.pending.text}</p>
           {brief.pending.count > 0 && (
-            <Link href="/dashboard/decisions" className="mt-1.5 inline-flex min-h-11 items-center sm:min-h-0 text-[12.5px] text-violet-bright hover:underline sm:inline-block">
+            <Link href="/dashboard/decisions" className="mt-1.5 inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-[12.5px] text-violet-bright hover:underline sm:inline-block">
               Open your Approval Center →
             </Link>
           )}

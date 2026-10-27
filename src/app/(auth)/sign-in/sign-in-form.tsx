@@ -38,7 +38,7 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
         />
         <PasswordField autoComplete="current-password" />
         <p className="-mt-2 text-right text-[13px]">
-          <Link href="/forgot-password" className="text-neutral-400 underline-offset-4 hover:text-white hover:underline">
+          <Link href="/forgot-password" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 text-neutral-400 underline-offset-4 hover:text-white hover:underline">
             Forgot your password?
           </Link>
         </p>

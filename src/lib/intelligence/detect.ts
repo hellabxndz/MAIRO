@@ -453,7 +453,7 @@ function trackingSetup(input: DecisionInput, ctx: IntelligenceContext): Insight[
       metric: "Pixel events",
       previousValue: null,
       currentValue: none ? "No pixel" : "No events",
-      title: none ? "Sales aren't being tracked" : "Your pixel isn't recording anything",
+      title: none ? (needs.some((c) => c.objective === "SALES") ? "Sales aren't being tracked" : "Website enquiries aren't being tracked") : "Your pixel isn't recording anything",
       happened: none
         ? `${needs.length} campaign${needs.length === 1 ? "" : "s"} send people to your website, but there's no Meta pixel set up to record what they do there.`
         : "Your Meta pixel exists, but Meta hasn't seen any events from it recently.",

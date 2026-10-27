@@ -98,6 +98,9 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
           <h2 id="why-title" className="text-base font-medium text-white">Why MAIRO is asking</h2>
           {shop ? <Badge tone="yellow">Needed for purchase measurement</Badge> : <Badge tone="neutral">Optional for your business</Badge>}
         </div>
+        <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-white">
+          This connection helps MAIRO measure actions on your website, including purchases, so you can understand your ad results.
+        </p>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-300">
           MAIRO uses your website&rsquo;s Meta Pixel to measure actions such as product views, add-to-cart events, checkout starts, and
           purchases. This helps us report what happened after an ad click and make better campaign recommendations. You control which
@@ -191,7 +194,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
         <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6" aria-labelledby="choose-title" aria-busy={list.state === "loading"}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="choose-title" className="text-base font-medium text-white">Choose your Pixel</h2>
-            <button type="button" className="min-h-11 text-sm text-violet-bright underline underline-offset-4 sm:min-h-0" onClick={load} disabled={list.state === "loading"}>
+            <button type="button" className="min-h-11 text-sm text-violet-bright underline underline-offset-4 sm:pointer-fine:min-h-0" onClick={load} disabled={list.state === "loading"}>
               Refresh the list
             </button>
           </div>
@@ -295,7 +298,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
                     </p>
                   )}
                   <details className="mt-4 rounded-xl border border-white/10 p-4">
-                    <summary className="min-h-11 cursor-pointer text-sm text-white sm:min-h-0">Create it yourself in Meta Events Manager</summary>
+                    <summary className="min-h-11 cursor-pointer text-sm text-white sm:pointer-fine:min-h-0">Create it yourself in Meta Events Manager</summary>
                     <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-neutral-300">
                       <li>
                         Open{" "}
@@ -321,7 +324,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
       {view.connected && view.decision !== "declined" && (
         <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 sm:p-6">
           {!declining ? (
-            <button type="button" className="min-h-11 text-sm text-neutral-300 underline underline-offset-4 hover:text-white sm:min-h-0" onClick={() => setDeclining(true)}>
+            <button type="button" className="min-h-11 text-sm text-neutral-300 underline underline-offset-4 hover:text-white sm:pointer-fine:min-h-0" onClick={() => setDeclining(true)}>
               I don&rsquo;t want to connect a Pixel
             </button>
           ) : (

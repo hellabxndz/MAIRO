@@ -98,8 +98,14 @@ async function main() {
   await check("goals and statuses in plain words", () => {
     assert.equal(goalLabel("SALES"), "Get More Sales");
     for (const g of ["SALES", "LEADS", "TRAFFIC", "AWARENESS", "ENGAGEMENT", "APP_PROMOTION"] as const) assert.doesNotMatch(goalLabel(g), /OUTCOME_|objective/i);
-    assert.deepEqual(statusLabel({ status: "ACTIVE", endDate: null }, NOW), { dot: "🟢", text: "Active", tone: "green" });
-    assert.equal(statusLabel({ status: "PENDING_REVIEW", endDate: null }, NOW).text, "Starting");
+    // Switched on is not delivering: only Meta's approved review says delivering.
+    assert.deepEqual(statusLabel({ status: "ACTIVE", endDate: null }, NOW), { dot: "🟢", text: "Switched on", tone: "green" });
+    assert.equal(statusLabel({ status: "ACTIVE", endDate: null, platformCampaigns: [{ adReviewState: "APPROVED" }] }, NOW).text, "Delivering");
+    assert.equal(statusLabel({ status: "ACTIVE", endDate: null, platformCampaigns: [{ adReviewState: "PENDING" }] }, NOW).text, "Switched on — in Meta's review");
+    assert.equal(statusLabel({ status: "ACTIVE", endDate: null, platformCampaigns: [{ adReviewState: "REJECTED" }] }, NOW).text, "Ad rejected by Meta");
+    assert.equal(statusLabel({ status: "PENDING_REVIEW", endDate: null }, NOW).text, "Built — waiting for your approval");
+    assert.equal(statusLabel({ status: "PENDING_REVIEW", endDate: null, launchApprovedAt: NOW }, NOW).text, "Approved — waiting for Meta");
+    assert.equal(statusLabel({ status: "PENDING_REVIEW", endDate: null, platformCampaigns: [{ lastError: "Meta refused" }] }, NOW).text, "Launch failed — see why");
   });
   await check("each card shows the one result that matters for its goal", () => {
     assert.deepEqual(primaryResult("SALES", "WEBSITE", m({ purchases: 22, clicks: 900 })), { label: "Sales", value: "22" });

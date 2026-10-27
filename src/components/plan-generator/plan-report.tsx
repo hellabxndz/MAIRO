@@ -523,7 +523,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </button>
           ) : (
             <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-              Build My Free AI Ad Plan →
+              See your free plan →
             </Link>
           )}
           <Link href="/pricing" className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-white/20 px-6 text-[15px] font-semibold text-white transition hover:border-white/45">

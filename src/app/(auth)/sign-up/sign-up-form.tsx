@@ -12,6 +12,7 @@ export function SignUpForm({
   businessType = null,
   website = null,
   planFor = null,
+  businessName = null,
 }: {
   googleEnabled: boolean;
   /** Sent back from a Google login that needs this page, e.g. no account yet. */
@@ -22,6 +23,8 @@ export function SignUpForm({
   website?: string | null;
   /** Who the free ad plan saved in this browser is for — it joins the account. */
   planFor?: string | null;
+  /** The business name from that free plan, so it isn't typed twice. */
+  businessName?: string | null;
 }) {
   const [state, formAction, pending] = useActionState(signUpAction, undefined);
   const fieldError = (name: string) => (state?.field === name ? state.error : null);
@@ -50,7 +53,7 @@ export function SignUpForm({
           label="Business name"
           autoComplete="organization"
           placeholder="Diaz Dental Co."
-          defaultValue={state?.values?.businessName}
+          defaultValue={state?.values?.businessName ?? businessName ?? undefined}
           error={fieldError("businessName")}
           hint="The name your customers know you by. MAIRO uses it in your ads; you can change it later in Settings."
         />

@@ -56,6 +56,7 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
           businessType={businessType?.id ?? null}
           website={carriedWebsite ?? plan?.inputs.website ?? null}
           planFor={plan ? plan.facts.name || plan.inputs.sells : null}
+          businessName={plan?.facts.name || null}
         />
       </AuthCard>
 
