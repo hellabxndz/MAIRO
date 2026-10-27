@@ -6,7 +6,9 @@ import { COMPATIBILITY_LABEL, PIPELINE, PIPELINE_LABEL, type Compatibility, type
 import { gateContext, parseAnalysis, parseProposal } from "@/lib/meta-intelligence/pipeline";
 import { canMove, fastTrack, nextStep, sensitive } from "@/lib/meta-intelligence/pipeline/rules";
 import { sandboxConfigured } from "@/lib/meta-intelligence/testing/run";
-import { ActButton, ManualTestForm, MoveUpdate, SandboxForm } from "../../client";
+import { ActButton, ImpactReview, ManualTestForm, MoveUpdate, SandboxForm } from "../../client";
+import { IMPACT_LABEL, impactClass } from "@/lib/meta-intelligence/impact";
+import { mappingOf } from "@/lib/meta-intelligence/feature-registry/store";
 
 // One Meta update: what changed, MAIRO's reading of it, the proposal, the
 // test evidence, and where it is in the pipeline. The excerpt is shown as
@@ -29,6 +31,10 @@ export default async function UpdatePage({ params }: PageProps<"/aios/meta-intel
   const next = nextStep(ctx);
   const blocked = next ? canMove(ctx, next) : null;
   const history = JSON.parse(u.historyJson || "[]") as { at: string; by: string; from?: string; to: string; note?: string }[];
+  const impact = impactClass(u);
+  const feature = u.featureKey ? await db.platformFeature.findUnique({ where: { platform_featureKey: { platform: "META", featureKey: u.featureKey } }, select: { name: true, mairoSupport: true, mairoMapping: true } }) : null;
+  const mapping = feature ? mappingOf(feature.mairoMapping) : null;
+  const label = (x: string) => PIPELINE_LABEL[x as PipelineStatus] ?? IMPACT_LABEL[x as keyof typeof IMPACT_LABEL] ?? (x === "not_affected" ? "Doesn't affect MAIRO" : x === "unreviewed" ? "Not reviewed" : x);
   return (
     <div className="space-y-5">
       <Link href="/aios/meta-intelligence?tab=updates" className="text-[13px] text-violet-bright hover:underline">← All updates</Link>
@@ -47,6 +53,22 @@ export default async function UpdatePage({ params }: PageProps<"/aios/meta-intel
           <summary className="cursor-pointer text-[13px] text-white/85">What the source says (untrusted text)</summary>
           <pre className="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-lg bg-field-2 p-3 text-[12.5px] text-white/75">{u.excerpt}</pre>
         </details>
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-[16px] font-semibold text-white">Impact on MAIRO</h2>
+          <Badge tone={impact.cls === "affects_mairo" ? "red" : impact.cls === "potentially_breaking" ? "yellow" : "neutral"}>{IMPACT_LABEL[impact.cls]}</Badge>
+          <span className="text-[12px] text-faint">{impact.reviewed ? `Reviewed by ${u.impactReviewedById} on ${u.impactReviewedAt?.toLocaleDateString("en-US")}` : "Detector's reading — not reviewed by a person yet"}</span>
+        </div>
+        {u.impactNote && <p className="mt-2 text-[13px] text-white/85">{u.impactNote}</p>}
+        <dl className="mt-3 grid gap-x-6 gap-y-2 text-[13px] md:grid-cols-2">
+          <div><dt className="text-faint">Meta feature</dt><dd className="text-white/85">{feature ? `${feature.name} (MAIRO: ${COMPATIBILITY_LABEL[feature.mairoSupport as Compatibility] ?? feature.mairoSupport})` : "Not matched to a feature in the registry"}</dd></div>
+          <div><dt className="text-faint">MAIRO features that use it</dt><dd className="text-white/85">{mapping?.systems.join(", ") || "None mapped"}</dd></div>
+          <div className="md:col-span-2"><dt className="text-faint">Code paths</dt><dd className="break-all font-mono text-[12px] text-white/75">{mapping?.code.join(", ") || "None mapped"}</dd></div>
+        </dl>
+        <div className="mt-4"><ImpactReview id={u.id} current={u.impact} /></div>
+        <p className="mt-2 text-[12px] text-faint">Only a person can mark a change as confirmed to affect MAIRO. A fix still goes through the pipeline below — tests, then your approval, then a normal deployment.</p>
       </Card>
 
       {a ? (
@@ -119,7 +141,7 @@ export default async function UpdatePage({ params }: PageProps<"/aios/meta-intel
       <Card>
         <h2 className="text-[16px] font-semibold text-white">History</h2>
         <ol className="mt-2 space-y-1 text-[13px] text-white/80">
-          {history.map((h, i) => <li key={i}>{new Date(h.at).toLocaleString("en-US")} — {h.by}: {h.from ? `${PIPELINE_LABEL[h.from as PipelineStatus] ?? h.from} → ` : ""}{PIPELINE_LABEL[h.to as PipelineStatus] ?? h.to}{h.note ? ` (${h.note})` : ""}</li>)}
+          {history.map((h, i) => <li key={i}>{new Date(h.at).toLocaleString("en-US")} — {h.by}: {h.from ? `${label(h.from)} → ` : ""}{label(h.to)}{h.note ? ` (${h.note})` : ""}</li>)}
         </ol>
       </Card>
     </div>

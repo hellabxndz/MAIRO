@@ -41,11 +41,11 @@ export async function ingestText(source: Source, html: string, now = new Date())
   }
 
   if (last && last.hash === hash) {
-    await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: now, lastError: null } });
+    await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: now, lastSuccessAt: now, lastError: null } });
     return { changed: false, updates: 0, baseline: false };
   }
   await db.platformSourceSnapshot.create({ data: { sourceId: source.id, hash, text: text.slice(0, 400_000), fetchedAt: now } });
-  await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: now, lastChangedAt: now, lastError: null } });
+  await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: now, lastSuccessAt: now, lastChangedAt: now, lastError: null } });
   if (!last) return { changed: true, updates: 0, baseline: true };
 
   const { added, removed } = diffBlocks(last.text.split("\n\n"), blocks);

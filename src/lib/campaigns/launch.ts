@@ -32,6 +32,7 @@ import { fetchImageBytes } from "@/lib/storage/blob";
 import { uploadAdVideo, waitForVideo } from "@/lib/meta/videos";
 import { creativeOfAccountAd } from "@/lib/meta/existing-ads";
 import type { CreateAdInput } from "@/lib/ad-platforms/types";
+import { metaOperationPaused } from "@/lib/meta-intelligence/operations";
 
 // Turning one MAIRO campaign into real campaigns on real networks.
 //
@@ -327,6 +328,17 @@ export async function launchOne(input: {
       stage: "none",
       blocker: error,
     };
+  }
+
+  // Meta failing campaign creation for everyone right now (an outage, a rate
+  // limit): don't start a build that would stop half-way. The campaign stays a
+  // draft with the reason, ready to try again (meta-intelligence/operations).
+  if (input.platform === "META") {
+    const held = await metaOperationPaused("build");
+    if (held.paused) {
+      await recordFailure(input.platformCampaignId, held.message);
+      return { platform: input.platform, launched: false, externalCampaignId: null, error: held.message, stage: "none", blocker: held.message };
+    }
   }
 
   // Looked up before the campaign is created, not after. The objective sent to

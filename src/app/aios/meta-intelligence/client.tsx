@@ -13,6 +13,7 @@ import {
   ingestOfficialTextAction,
   markAlertsReadAction,
   moveUpdateAction,
+  reviewImpactAction,
   recordManualTestAction,
   runContractTestsAction,
   runSandboxAction,
@@ -74,6 +75,22 @@ export function MoveUpdate({ id, next, stages }: { id: string; next: string | nu
         </select>
         <input value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Note for the record (optional)" className={`${inputClass} min-w-[220px] flex-1`} aria-label="Note" />
         <button type="button" disabled={pending || !to} onClick={() => act(() => moveUpdateAction(id, to, why))} className={primaryButtonClass}>{pending ? "Moving…" : "Move"}</button>
+      </div>
+      {note}
+    </div>
+  );
+}
+
+/** A person's call on whether a Meta change affects MAIRO. */
+export function ImpactReview({ id, current }: { id: string; current: string | null }) {
+  const { pending, act, note } = useAct();
+  const [why, setWhy] = useState("");
+  return (
+    <div>
+      <input value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Why (which feature or endpoint), for the record" className={inputClass} aria-label="Reason" />
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" disabled={pending || current === "affects_mairo"} onClick={() => act(() => reviewImpactAction(id, "affects_mairo", why))} className={secondaryButtonClass}>Confirm it affects MAIRO</button>
+        <button type="button" disabled={pending || current === "not_affected"} onClick={() => act(() => reviewImpactAction(id, "not_affected", why))} className={secondaryButtonClass}>Doesn&rsquo;t affect MAIRO</button>
       </div>
       {note}
     </div>

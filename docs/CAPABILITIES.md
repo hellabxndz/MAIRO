@@ -24,6 +24,7 @@ or a public page makes a claim this inventory can't back.
 | Plan | Business Brain | Working | `/dashboard/settings/business-brain` | — | `check:brain` |
 | Plan | Setup in nine phases, saved as you go | Working | `/onboarding`, `/sign-up` | — | `check:onboarding`, `check:onboarding-db` |
 | Campaigns | Build Facebook and Instagram campaigns | Working | `/dashboard/create`, `/dashboard/launch`, `/dashboard/campaigns` | — | `check:meta-contract`, `check:ads`, `check:campaign-wizard` |
+| Campaigns | Meta API updates and integration health (internal) | Partially working | `/aios/meta-intelligence` | — | `check:meta-reliability`, `check:meta-contract`, `check:meta-intelligence` |
 | Campaigns | Launch only after the owner approves | Working | `/dashboard/launch`, `/plan/activate` | — | `check:payment-gate`, `check:decision-claim`, `check:readiness` |
 | Campaigns | Pause from MAIRO | Working | `/dashboard/campaigns` | — | `check:trust-db`, `check:payment-gate`, `check:pause-everything-db` |
 | Campaigns | Lead forms | Working | `/dashboard/leads`, `/f/[slug]` | — | `check:leads`, `check:page-token` |
@@ -790,7 +791,7 @@ Build tagged links for your ads so your analytics can tell which ad sent each vi
 
 **Public claim:** “Build tagged links for your ads so your analytics can tell which ad sent each visitor — with Meta's dynamic values when you want them.”
 
-## Partially working (23)
+## Partially working (24)
 
 ### Reading the business's website
 
@@ -845,6 +846,24 @@ For the free plan: with one request through the same guarded fetcher as the webs
 **Evidence:** `src/lib/website/instagram.ts`, `src/app/api/tools/instagram/route.ts`, `src/lib/preview/build.ts#factsFromInstagram`
 
 **Checks:** `check:instagram`, `check:safe-fetch`
+
+**Public claim:** none — not advertised
+
+### Meta API updates and integration health (internal)
+
+*Campaigns* · `meta-updates`
+
+Reads Meta's official Graph and Marketing API changelogs and version pages daily, records when each was last read successfully, files changes as updates classified informational / potentially breaking / confirmed (by a person) to affect MAIRO, maps them to the MAIRO features that use them, and routes fixes through tests and an administrator's approval — never applied automatically. Reads retry Meta-side failures with backoff; writes never retry. When Meta fails one kind of action for everyone, only that action is paused and customers are told what's unavailable.
+
+**Condition:** The changelog pages are read as public HTML; Meta can change their layout, which the freshness check surfaces as a failed or stale read. Outage detection needs real traffic to count; it has been exercised against a stubbed Meta only.
+
+**Routes:** `/aios/meta-intelligence`
+
+**Verification:** Freshness from successful reads only; impact confirmed only by a person; whose problem an error is; reads-only retries; pausing only the failing action in auto-launch, approvals and building; recommendations on unverified purchase data held from raising spend; no token or business data in the admin summary.
+
+**Evidence:** `src/lib/meta-intelligence/impact.ts`, `src/lib/meta-intelligence/health.ts`, `src/lib/meta-intelligence/errors/classify.ts`, `src/lib/meta-intelligence/operations/rules.ts`, `src/lib/meta/client.ts`
+
+**Checks:** `check:meta-reliability`, `check:meta-contract`, `check:meta-intelligence`
 
 **Public claim:** none — not advertised
 

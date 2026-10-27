@@ -1,5 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { DEFAULT_GRAPH_API_VERSION } from "@/lib/meta-intelligence/capabilities";
+import { classifyMetaFailure, errorFields, retryDelayMs, type Failure } from "@/lib/meta-intelligence/errors/classify";
+import { operationOf } from "@/lib/meta-intelligence/operations/rules";
 
 // The version MAIRO builds against (metaCapabilities, tracked by Meta
 // Intelligence's API version registry). META_GRAPH_API_VERSION overrides it,
@@ -14,7 +16,7 @@ const GRAPH_HOST = "https://graph.facebook.com";
  * sandbox run trying a candidate version, can never affect a customer's
  * request running at the same moment.
  */
-type Transport = { fetch: typeof fetch; version?: string; record?: boolean };
+type Transport = { fetch: typeof fetch; version?: string; record?: boolean; /** Retry wait base, for tests. */ retryBaseMs?: number };
 const transport = new AsyncLocalStorage<Transport>();
 
 export function withGraphTransport<T>(t: Transport, fn: () => Promise<T>): Promise<T> {
@@ -160,38 +162,71 @@ async function sendGraphRequest<T>(
   // honest answers, a large account's all-time results, come in well under);
   // changes and uploads get longer, since a video can take a while to send.
   const limit = method === "GET" ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS;
-  let res: Response;
-  try {
-    res = await (ctx?.fetch ?? fetch)(url.toString(), {
-      method,
-      headers: contentType ? { "Content-Type": contentType } : undefined,
-      body: requestBody,
-      cache: "no-store",
-      signal: AbortSignal.timeout(limit),
-    });
-  } catch (error) {
-    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
-      throw new MetaApiError(`Meta didn't answer within ${Math.round(limit / 1000)} seconds. Try again in a minute.`, 504, null);
+  const op = operationOf(path, method);
+  const record = ctx?.record !== false;
+  const countOperation = (failure: Failure | null) => {
+    if (!op || !record) return;
+    void import("@/lib/meta-intelligence/operations")
+      .then((m) => m.recordOperation(op, failure?.cause ?? null))
+      .catch(() => undefined);
+  };
+
+  // Reads are retried, a couple of times with backoff, when Meta's own side
+  // failed (an outage, a rate limit, no answer in time): asking again can't
+  // change anything. Writes are never retried here — a "failed" create can
+  // have succeeded on Meta's side, and a blind retry makes a second campaign
+  // or ad. Each write path has its own guard against that (a lease, a claim,
+  // or reading back before trying again).
+  for (let attempt = 0; ; attempt++) {
+    let res: Response;
+    try {
+      res = await (ctx?.fetch ?? fetch)(url.toString(), {
+        method,
+        headers: contentType ? { "Content-Type": contentType } : undefined,
+        body: requestBody,
+        cache: "no-store",
+        signal: AbortSignal.timeout(limit),
+      });
+    } catch (error) {
+      const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+      const failure = classifyMetaFailure({ status: timedOut ? 504 : null, code: null, transient: true });
+      if (method === "GET" && attempt < MAX_READ_RETRIES) {
+        await sleep(retryDelayMs(attempt, failure.cause, ctx?.retryBaseMs));
+        continue;
+      }
+      countOperation(failure);
+      if (timedOut) throw new MetaApiError(`Meta didn't answer within ${Math.round(limit / 1000)} seconds. Try again in a minute.`, 504, null);
+      throw error;
     }
-    throw error;
-  }
 
-  const json = await res.json().catch(() => null);
+    const json = await res.json().catch(() => null);
 
-  if (!res.ok) {
-    // Meta Intelligence watches every Graph error: an unfamiliar one spreading
-    // across accounts is often the first sign Meta changed something. Fire and
-    // forget — monitoring can never break or slow the request it watches.
-    if (ctx?.record !== false) {
-      void import("@/lib/meta-intelligence/errors/monitor")
-        .then((m) => m.recordMetaError({ status: res.status, body: json, path, method, apiVersion: version, accessToken }))
-        .catch(() => undefined);
+    if (!res.ok) {
+      const failure = classifyMetaFailure({ status: res.status, ...errorFields(json) });
+      if (method === "GET" && failure.retryable && attempt < MAX_READ_RETRIES) {
+        await sleep(retryDelayMs(attempt, failure.cause, ctx?.retryBaseMs));
+        continue;
+      }
+      // Meta Intelligence watches every Graph error: an unfamiliar one spreading
+      // across accounts is often the first sign Meta changed something. Fire and
+      // forget — monitoring can never break or slow the request it watches.
+      if (record) {
+        void import("@/lib/meta-intelligence/errors/monitor")
+          .then((m) => m.recordMetaError({ status: res.status, body: json, path, method, apiVersion: version, accessToken }))
+          .catch(() => undefined);
+      }
+      countOperation(failure);
+      throw new MetaApiError(describeGraphError(json, res.status), res.status, json);
     }
-    throw new MetaApiError(describeGraphError(json, res.status), res.status, json);
-  }
 
-  return json as T;
+    countOperation(null);
+    return json as T;
+  }
 }
+
+/** Retries after the first try, for reads only. Kept small: a page is waiting. */
+const MAX_READ_RETRIES = 2;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Turns a Graph error body into a sentence worth showing someone.

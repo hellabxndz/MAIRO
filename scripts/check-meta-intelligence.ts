@@ -189,7 +189,7 @@ async function main() {
     const a = versionAlerts(rows, "v24.0", NOW);
     const retiring = a.find((x) => x.key.startsWith("version-90"))!;
     assert.equal(retiring.severity, "HIGH");
-    assert.match(retiring.body, /^MAIRO is currently using Meta API v24\.0\. Meta plans to retire this version on 2026-11-30\. Migration testing should begin\.$/);
+    assert.match(retiring.body, /^MAIRO is currently using Meta API v24\.0\. Meta plans to retire this version on 2026-11-30\. Migration testing should begin\. Every Meta call MAIRO makes uses this version/);
     assert.ok(a.some((x) => x.key === "version-available:v25.0"));
     assert.equal(versionAlerts([{ ...rows[0], retiresAt: new Date(NOW.getTime() + 10 * DAY) }], "v24.0", NOW)[0].severity, "CRITICAL");
     assert.equal(versionAlerts([{ ...rows[0], retiresAt: null }], "v24.0", NOW).length, 0, "no date, no invented alert");

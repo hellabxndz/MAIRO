@@ -153,6 +153,23 @@ export async function moveUpdate(id: string, to: PipelineStatus, by: string, not
 }
 
 /**
+ * A person's call on whether the change affects MAIRO — the only way an
+ * update becomes "confirmed to affect MAIRO". Recorded with who and when, and
+ * in the update's history alongside every pipeline move.
+ */
+export async function reviewImpact(id: string, impact: "affects_mairo" | "not_affected", by: string, note?: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const u = await db.platformUpdate.findUnique({ where: { id }, select: { historyJson: true, impact: true } });
+  if (!u) return { ok: false, error: "No such update." };
+  const history = historyOf(u.historyJson);
+  history.push({ at: new Date().toISOString(), by, from: u.impact ?? "unreviewed", to: impact, note: note?.slice(0, 500) });
+  await db.platformUpdate.update({
+    where: { id },
+    data: { impact, impactNote: note?.slice(0, 2000) || null, impactReviewedAt: new Date(), impactReviewedById: by, historyJson: JSON.stringify(history) },
+  });
+  return { ok: true };
+}
+
+/**
  * Production: the proposal's registry and knowledge changes, a flag (OFF) for
  * anything new, and a release-log entry. Nothing else — no code, no campaign.
  */

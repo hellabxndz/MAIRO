@@ -8,6 +8,7 @@ import { campaignsUnderTest } from "@/lib/experiments/store";
 import { limitProblem, mayAutoApply } from "./guardrails";
 import { applyDecision } from "./apply";
 import type { DataStatus } from "./types";
+import { purchaseDataFrom, withDataBasis } from "./data-basis";
 import { runIntelligence } from "@/lib/intelligence/run";
 import { runEngineDecisions } from "@/lib/engine";
 import { mergeDrafts } from "@/lib/engine/recommend";
@@ -93,7 +94,21 @@ export async function refreshDecisions(
     worsened.map((w) => ({ kind: w.kind, mairoCampaignId: w.mairoCampaignId, at: w.decidedAt! })),
     now,
   ).kept;
-  const ids = await persistDrafts(organizationId, merged, "daily", { reviewRunId: review });
+  // What each recommendation's figures rest on: a sales campaign judged on
+  // purchases MAIRO hasn't verified says so, and never raises spend by itself.
+  const [pixel, purchaseCheck] = await Promise.all([
+    db.trackingPixel.findUnique({ where: { organizationId_platform: { organizationId, platform: "META" } }, select: { externalPixelId: true } }),
+    db.trackingVerification.findFirst({ where: { organizationId, check: "event:Purchase" }, orderBy: { checkedAt: "desc" }, select: { status: true, checkedAt: true } }),
+  ]);
+  const purchase = purchaseDataFrom({ pixelChosen: Boolean(pixel), latestPurchaseCheck: purchaseCheck }, now);
+  const heldForData = new Set<string>();
+  const based = merged.map((d) => {
+    const c = d.mairoCampaignId ? input.campaigns.find((x) => x.mairoCampaignId === d.mairoCampaignId) ?? null : null;
+    const r = withDataBasis(d, c, purchase);
+    if (r.holdAutomatic) heldForData.add(d.dedupeKey);
+    return r.draft;
+  });
+  const ids = await persistDrafts(organizationId, based, "daily", { reviewRunId: review });
 
   // Who proposed what. The Optimization Agent always reports, even when it
   // found nothing; the others only when they had something to say.
@@ -136,6 +151,8 @@ export async function refreshDecisions(
         requireApprovalPlatformShift: settings?.requireApprovalPlatformShift ?? true,
       };
       if (!mayAutoApply(level, changes, switches)) continue;
+      // More spend on figures MAIRO couldn't verify waits for the owner.
+      if (heldForData.has(d.dedupeKey)) continue;
       const running = await db.mairoCampaign.aggregate({
         where: { organizationId, status: "ACTIVE" },
         _sum: { totalDailyBudgetCents: true },

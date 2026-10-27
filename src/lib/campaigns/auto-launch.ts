@@ -10,6 +10,7 @@ import { recordOnce } from "@/lib/analytics/funnel";
 import { describeStart, isDue } from "@/lib/campaigns/schedule";
 import { finishHalfBuilt } from "@/lib/campaigns/launch";
 import { sendSms } from "@/lib/sms/send";
+import { metaOperationPaused } from "@/lib/meta-intelligence/operations";
 
 // Putting the ads live without asking.
 //
@@ -165,6 +166,11 @@ export async function maybeGoLive(
         : null,
     };
   }
+
+  // Meta failing switch-ons for everyone right now: wait rather than try. The
+  // approval stands, so the next run (or the next approval) picks it up.
+  const changes = await metaOperationPaused("change");
+  if (changes.paused) return { ...NOTHING, heldBecause: changes.message };
 
   // The expensive check, and the one that must never be guessed.
   const readiness = await readinessFor(organizationId, { checkFunding: true });

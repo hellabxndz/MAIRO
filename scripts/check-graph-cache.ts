@@ -15,7 +15,9 @@ let calls = 0;
 let fail = false;
 globalThis.fetch = (async () => {
   calls++;
-  if (fail) return new Response(JSON.stringify({ error: { message: "boom" } }), { status: 500 });
+  // A refusal, not an outage: reads retry Meta-side failures (meta/client.ts),
+  // which is pinned by the contract suite; here only caching is under test.
+  if (fail) return new Response(JSON.stringify({ error: { message: "boom", code: 100 } }), { status: 400 });
   return new Response(JSON.stringify({ n: calls }), { status: 200 });
 }) as typeof fetch;
 

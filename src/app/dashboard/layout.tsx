@@ -25,6 +25,7 @@ import { workspacesOf } from "@/lib/members/workspace";
 import { WorkspaceSwitcher } from "@/components/mairo/workspace-switcher";
 import { FREE_NAV } from "./free-nav";
 import { LOCKED_NAV, LockedArea, isFreePage } from "@/components/strategy/free-access";
+import { MetaStatusNotice } from "@/components/dashboard/meta-status-notice";
 
 // Pages the not-yet-connected client can still open.
 //
@@ -252,6 +253,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </div>
       )}
+      {metaAccount && !lockedHere && <MetaStatusNotice />}
       {lockedHere ? <LockedArea pathname={pathname} approved={approved} /> : children}
 
       {/* MAIRO, reachable from every screen. Mounted here rather than per page

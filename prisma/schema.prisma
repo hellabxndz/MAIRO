@@ -2108,13 +2108,13 @@ model TrackingProfile {
   /// "declined" when they said no. Null until they answer. Declining is a
   /// choice MAIRO respects and records — for an online shop it also means a
   /// campaign optimised for website purchases can't launch (tracking/pixel-rules.ts).
-  pixelDecision     String?
-  pixelDecidedAt    DateTime?
-  pixelDecidedById  String?
+  pixelDecision    String?
+  pixelDecidedAt   DateTime?
+  pixelDecidedById String?
   /// How leads are measured when not by a pixel: "calls", "meta_forms",
   /// "crm" or "other". What the owner told MAIRO — not a connection; nothing
   /// is claimed as connected because of it.
-  leadMeasurement   String?
+  leadMeasurement  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3131,6 +3131,9 @@ model PlatformSource {
   authority     String    @default("OFFICIAL")
   active        Boolean   @default(true)
   lastCheckedAt DateTime?
+  /// The last check that actually read the page. lastCheckedAt moves on a
+  /// failed check too; freshness is judged from this one.
+  lastSuccessAt DateTime?
   lastChangedAt DateTime?
   lastError     String?   @db.Text
   createdAt     DateTime  @default(now())
@@ -3158,35 +3161,42 @@ model PlatformSourceSnapshot {
 /// pipeline: DETECTED → ANALYZED → PROPOSED → DEVELOPMENT → AUTOMATED_TESTING
 /// → SANDBOX_TESTING → APPROVED → PRODUCTION (or DISMISSED).
 model PlatformUpdate {
-  id            String          @id @default(cuid())
-  platform      String          @default("META")
-  source        PlatformSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
-  sourceId      String?
+  id                 String          @id @default(cuid())
+  platform           String          @default("META")
+  source             PlatformSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  sourceId           String?
   /// Same change, same key: a re-run never files it twice.
-  dedupeKey     String          @unique
-  title         String
+  dedupeKey          String          @unique
+  title              String
   /// The text that changed (untrusted, shown as plain text only).
-  excerpt       String          @db.Text
-  sourceUrl     String?
+  excerpt            String          @db.Text
+  sourceUrl          String?
   /// NEW_FEATURE, DEPRECATION, API_VERSION_RELEASE, PERMISSION_CHANGE, … (see platform-intelligence/types.ts)
-  changeType    String
+  changeType         String
   /// Area: campaign-creation, budget, publishing, permissions, billing, optimization, targeting, placements, creative, measurement, ai, api-version, knowledge
-  areas         String[]        @default([])
-  urgency       String          @default("LOW")
-  risk          String          @default("UNKNOWN")
-  compatibility String          @default("NOT_APPLICABLE")
-  status        String          @default("DETECTED")
+  areas              String[]        @default([])
+  urgency            String          @default("LOW")
+  risk               String          @default("UNKNOWN")
+  compatibility      String          @default("NOT_APPLICABLE")
+  status             String          @default("DETECTED")
   /// The AI (or rule) interpretation, as JSON.
-  analysisJson  String?         @db.Text
-  analyzedBy    String?
+  analysisJson       String?         @db.Text
+  analyzedBy         String?
   /// A structured, validated proposal: registry/knowledge changes only (JSON).
-  proposalJson  String?         @db.Text
+  proposalJson       String?         @db.Text
   /// Feature in the registry this concerns, when known.
-  featureKey    String?
+  featureKey         String?
   /// Who moved it last, and every move (JSON array), for the audit trail.
-  historyJson   String          @default("[]") @db.Text
-  detectedAt    DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  historyJson        String          @default("[]") @db.Text
+  /// A person's call on whether this change affects MAIRO: "affects_mairo" or
+  /// "not_affected". Null until someone reviewed it — the detector's guess is
+  /// never presented as confirmed (meta-intelligence/impact.ts).
+  impact             String?
+  impactNote         String?         @db.Text
+  impactReviewedAt   DateTime?
+  impactReviewedById String?
+  detectedAt         DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@index([platform, status])
   @@index([platform, urgency])
@@ -4016,3 +4026,26 @@ model SiteSetting {
   updatedAt DateTime @updatedAt
 }
 
+/// How MAIRO's changes on Meta (creating, switching on, budgets) went, hour by
+/// hour, platform-wide. Counts only — no business, account, campaign or token —
+/// so Meta-side trouble with one kind of action can be told apart from one
+/// customer's problem, and only that action paused (meta-intelligence/operations).
+model MetaOperationStat {
+  id          String   @id @default(cuid())
+  /// build (campaigns, ad sets, creatives, ads, media), change (status, budget,
+  /// edits to an existing object), auth (permissions, tokens).
+  operation   String
+  /// The start of the hour, UTC.
+  hour        DateTime
+  ok          Int      @default(0)
+  /// Meta's side: outages, timeouts.
+  metaDown    Int      @default(0)
+  rateLimited Int      @default(0)
+  /// The customer's side: expired token, missing permission.
+  account     Int      @default(0)
+  /// Meta refused what MAIRO sent: most likely a MAIRO bug or a Meta change.
+  rejected    Int      @default(0)
+
+  @@unique([operation, hour])
+  @@index([hour])
+}

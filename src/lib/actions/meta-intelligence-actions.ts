@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { FLAG_STAGES, PIPELINE, type FlagStage, type PipelineStatus } from "@/lib/platform-intelligence/types";
 import { ensureMetaIntelligence } from "@/lib/meta-intelligence";
 import { checkSource, ingestText } from "@/lib/meta-intelligence/change-detector/run";
-import { analyzeUpdate, moveUpdate, validateFeature } from "@/lib/meta-intelligence/pipeline";
+import { analyzeUpdate, moveUpdate, reviewImpact, validateFeature } from "@/lib/meta-intelligence/pipeline";
 import { recordContractRun, recordManualTest, runSandbox } from "@/lib/meta-intelligence/testing/run";
 import { ensureFlag, flagKeyFor, setFlagStage } from "@/lib/meta-intelligence/feature-flags";
 import { upsertFeature } from "@/lib/meta-intelligence/feature-registry/store";
@@ -88,6 +88,14 @@ export async function moveUpdateAction(id: string, to: string, note: string): Pr
   const by = await owner();
   if (![...PIPELINE, "DISMISSED"].includes(to)) return { ok: false, error: "Unknown stage." };
   const r = await moveUpdate(id, to as PipelineStatus, by, note);
+  return r.ok ? done() : { ok: false, error: r.error };
+}
+
+/** "This affects MAIRO" / "This doesn't affect MAIRO" — a reviewed call, never the detector's guess. */
+export async function reviewImpactAction(id: string, impact: string, note: string): Promise<Result> {
+  const by = await owner();
+  if (impact !== "affects_mairo" && impact !== "not_affected") return { ok: false, error: "Unknown answer." };
+  const r = await reviewImpact(id, impact, by, note);
   return r.ok ? done() : { ok: false, error: r.error };
 }
 

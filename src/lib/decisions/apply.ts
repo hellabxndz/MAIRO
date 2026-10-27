@@ -14,6 +14,7 @@ import type { DecisionChange } from "./types";
 import { learningsBrief } from "@/lib/reports/learnings";
 import { parseChanges } from "./store";
 import { variationBrief } from "@/lib/engine/brief";
+import { metaOperationPaused } from "@/lib/meta-intelligence/operations";
 
 // Carrying out a decision.
 //
@@ -237,6 +238,14 @@ export async function applyDecision(input: {
   ]);
   const problem = limitProblem(changes, guardrails, running._sum.totalDailyBudgetCents ?? 0);
   if (problem) return { ok: false, error: problem, applied: [] };
+
+  // Meta failing this kind of change for everyone right now: say so and keep
+  // the decision waiting, rather than claim it and fail half-way.
+  const needs = new Set(changes.map((c) => (c.type === "new-ad-variation" ? "build" : c.type === "try-meta-feature" || c.type === "guide" ? null : "change")).filter((x): x is "build" | "change" => x !== null));
+  for (const op of needs) {
+    const held = await metaOperationPaused(op);
+    if (held.paused) return { ok: false, error: held.message, applied: [] };
+  }
 
   // Claim it before anything reaches Meta. Checking the status above isn't
   // enough on its own: a double click, a second tab, or MAIRO's automatic

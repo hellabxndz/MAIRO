@@ -8,6 +8,10 @@ import { deprecationImpact } from "@/lib/meta-intelligence/deprecations";
 import { sandboxConfigured } from "@/lib/meta-intelligence/testing/run";
 import { CONTRACT_TESTS } from "@/lib/meta-intelligence/testing/contract";
 import { ActButton, FlagForm, ManualTestForm, SandboxForm, SourceForms } from "./client";
+import { IMPACT_LABEL, impactClass } from "@/lib/meta-intelligence/impact";
+import { errorSide, integrationHealth } from "@/lib/meta-intelligence/health";
+import { SIDE_LABEL } from "@/lib/meta-intelligence/errors/classify";
+import { OPERATION_LABEL } from "@/lib/meta-intelligence/operations/rules";
 
 // AIOS → Meta Intelligence: what Meta changed, what it means for MAIRO, where
 // each change is in the safe update pipeline, and the controls (tests, flags,
@@ -113,7 +117,8 @@ export default async function MetaIntelligencePage({ searchParams }: PageProps<"
   );
 }
 
-function UpdateCard({ u }: { u: { id: string; title: string; detectedAt: Date; status: string; urgency: string; compatibility: string; areas: string[]; changeType: string; analysisJson: string | null } }) {
+function UpdateCard({ u }: { u: { id: string; title: string; detectedAt: Date; status: string; urgency: string; risk: string; impact: string | null; compatibility: string; areas: string[]; changeType: string; analysisJson: string | null } }) {
+  const impact = impactClass(u);
   let recommendation = "";
   try {
     const a = u.analysisJson ? (JSON.parse(u.analysisJson) as { whyItMatters?: string }) : null;
@@ -133,6 +138,7 @@ function UpdateCard({ u }: { u: { id: string; title: string; detectedAt: Date; s
       </dl>
       <div className="mt-2 flex items-center gap-2">
         <Badge tone={TONE[u.urgency]}>{u.urgency.toLowerCase()}</Badge>
+        <Badge tone={impact.cls === "affects_mairo" ? "red" : impact.cls === "potentially_breaking" ? "yellow" : "neutral"}>{IMPACT_LABEL[impact.cls]}{impact.reviewed ? "" : "?"}</Badge>
         {recommendation && <p className="line-clamp-1 text-[12.5px] text-muted">{recommendation}</p>}
       </div>
     </Link>
@@ -150,8 +156,54 @@ async function Overview() {
   ]);
   const versions = await listVersions();
   const prod = versions.find((v) => v.version === graphApiVersion());
+  const health = await integrationHealth();
+  const monitorTone = health.monitor.state === "current" ? "green" : health.monitor.state === "stale" ? "yellow" : "red";
   return (
     <div className="space-y-6">
+      <section aria-labelledby="health-title">
+        <h2 id="health-title" className="mb-3 text-[16px] font-semibold text-white">Integration health</h2>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card>
+            <p className="text-[12.5px] text-muted">Meta changelog check</p>
+            <p className="mt-1.5"><Badge tone={monitorTone}>{health.monitor.label}</Badge></p>
+            <p className="mt-2 text-[12px] text-faint">{health.monitor.detail}</p>
+            <p className="mt-1 text-[11.5px] text-faint">Means MAIRO read Meta&rsquo;s official changelog — not that every change is supported.</p>
+          </Card>
+          <Card>
+            <p className="text-[12.5px] text-muted">MAIRO&rsquo;s changes on Meta, last hour</p>
+            <ul className="mt-2 space-y-1.5">
+              {health.operations.map((o) => (
+                <li key={o.operation} className="text-[12.5px]">
+                  <span className="flex flex-wrap items-center gap-1.5 text-white/85">
+                    <Badge tone={o.state === "paused" ? "red" : o.state === "investigate" ? "yellow" : "neutral"}>{o.state === "paused" ? "paused" : o.state === "investigate" ? "investigate" : o.attempts ? "ok" : "no activity"}</Badge>
+                    {OPERATION_LABEL[o.operation]}
+                  </span>
+                  {o.attempts > 0 && <span className="block text-faint">{o.okCount} succeeded · {o.metaFailures} failed on Meta&rsquo;s side · {o.rejected} refused</span>}
+                  {o.reason && <span className="block text-amber-200/90">{o.reason}</span>}
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card>
+            <p className="text-[12.5px] text-muted">Meta errors, last 24 hours (groups)</p>
+            <dl className="mt-2 space-y-1 text-[12.5px]">
+              {(["meta", "account", "mairo", "unknown"] as const).map((k) => (
+                <div key={k} className="flex justify-between gap-3"><dt className="text-white/80">{SIDE_LABEL[k]}</dt><dd className={k === "mairo" && health.errors24h[k] > 0 ? "text-alert" : "text-white"}>{health.errors24h[k]}</dd></div>
+              ))}
+            </dl>
+            <Link href="/aios/meta-intelligence?tab=errors" className="mt-2 inline-block text-[12.5px] text-violet-bright hover:underline">See errors</Link>
+          </Card>
+          <Card>
+            <p className="text-[12.5px] text-muted">Engineering review</p>
+            <dl className="mt-2 space-y-1 text-[12.5px]">
+              <div className="flex justify-between gap-3"><dt className="text-white/80">In the update pipeline</dt><dd className="text-white">{health.review.inPipeline}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-white/80">Potentially breaking, not reviewed</dt><dd className={health.review.unreviewedBreaking ? "text-amber-200" : "text-white"}>{health.review.unreviewedBreaking}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-white/80">Confirmed to affect MAIRO</dt><dd className={health.review.confirmedOpen ? "text-alert" : "text-white"}>{health.review.confirmedOpen}</dd></div>
+            </dl>
+            <p className="mt-2 text-[11.5px] text-faint">Fixes are made by a developer, tested, approved here and deployed normally — never applied automatically.</p>
+          </Card>
+        </div>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><p className="text-[12.5px] text-muted">Open updates</p><p className="mt-1 text-[26px] font-semibold text-white">{open}</p><p className="text-[12px] text-faint">{critical.length} critical or high</p></Card>
         <Card><p className="text-[12.5px] text-muted">Production API</p><p className="mt-1 text-[26px] font-semibold text-white">{graphApiVersion()}</p><p className="text-[12px] text-faint">{prod?.retiresAt ? `Retires ${fmt(prod.retiresAt)}` : "Retirement date not known yet"}</p></Card>
@@ -377,15 +429,16 @@ async function Errors() {
   const rows = await db.platformApiError.findMany({ where: { platform: "META" }, orderBy: { lastAt: "desc" }, take: 50 });
   return (
     <div className="space-y-3">
-      <p className="text-[13px] text-muted">Every Graph error MAIRO receives, grouped by code, endpoint and method, with how many accounts it hit (hashed — never a token). An unfamiliar error spreading across accounts is flagged as a possible Meta API behavior change.</p>
+      <p className="text-[13px] text-muted">Every Graph error MAIRO receives, grouped by code, endpoint and method, with how many accounts it hit (hashed — never a token). An unfamiliar error spreading across accounts is flagged as a possible Meta API behavior change. &ldquo;Whose problem&rdquo;: Meta&rsquo;s side (outage, rate limit — reads are retried), the customer&rsquo;s connection (token, permission — they can fix it), or MAIRO (Meta refused the request — a developer should look).</p>
       {rows.length === 0 ? <EmptyState title="No Meta errors recorded" /> : (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[880px] text-left text-[13px]">
-            <thead className="text-[11px] uppercase tracking-[0.12em] text-faint"><tr>{["Error", "Endpoint", "Version", "Count", "Accounts", "First", "Last", ""].map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
+          <table className="w-full min-w-[980px] text-left text-[13px]">
+            <thead className="text-[11px] uppercase tracking-[0.12em] text-faint"><tr>{["Error", "Whose problem", "Endpoint", "Version", "Count", "Accounts", "First", "Last", ""].map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((e) => (
                 <tr key={e.id} className="border-t border-[color:var(--mairo-line)] align-top">
                   <td className="max-w-[300px] px-4 py-2.5 text-white/85"><span className="font-mono text-[12px] text-faint">{e.code ?? "?"}{e.subcode ? `/${e.subcode}` : ""}</span> {e.message.slice(0, 140)}</td>
+                  <td className="px-4 py-2.5"><Badge tone={errorSide(e) === "mairo" ? "red" : errorSide(e) === "meta" ? "yellow" : "neutral"}>{SIDE_LABEL[errorSide(e)]}</Badge></td>
                   <td className="px-4 py-2.5 font-mono text-[12px] text-white/75">{e.method} {e.endpoint}</td>
                   <td className="px-4 py-2.5 text-white/75">{e.apiVersion}</td>
                   <td className="px-4 py-2.5 text-white/85">{e.count}</td>
@@ -410,7 +463,7 @@ async function Sources() {
       <p className="text-[13px] text-muted">Official Meta sources have the highest authority. Pages are fetched over https from allowlisted hosts only, as plain text, and never followed or obeyed. Nothing changes MAIRO&rsquo;s behaviour based on a blog, a social post or a rumor.</p>
       <Card className="overflow-x-auto p-0">
         <table className="w-full min-w-[820px] text-left text-[13px]">
-          <thead className="text-[11px] uppercase tracking-[0.12em] text-faint"><tr>{["Source", "Kind", "Authority", "Last checked", "Last changed", "", ""].map((h, i) => <th key={i} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
+          <thead className="text-[11px] uppercase tracking-[0.12em] text-faint"><tr>{["Source", "Kind", "Authority", "Last checked", "Last successful read", "Last changed", "", ""].map((h, i) => <th key={i} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((s) => (
               <tr key={s.id} className="border-t border-[color:var(--mairo-line)] align-top">
@@ -418,6 +471,7 @@ async function Sources() {
                 <td className="px-4 py-2.5 text-white/75">{s.kind.toLowerCase().replace("_", " ")}</td>
                 <td className="px-4 py-2.5"><Badge tone={s.authority === "OFFICIAL" ? "green" : "blue"}>{s.authority.toLowerCase()}</Badge></td>
                 <td className="px-4 py-2.5 text-white/75">{fmt(s.lastCheckedAt)}</td>
+                <td className="px-4 py-2.5 text-white/75">{fmt(s.lastSuccessAt)}</td>
                 <td className="px-4 py-2.5 text-white/75">{fmt(s.lastChangedAt)}</td>
                 <td className="px-4 py-2.5"><ActButton label="Check now" run={{ check: s.id }} /></td>
                 <td className="px-4 py-2.5"><ActButton label={s.active ? "Pause" : "Resume"} run={{ toggleSource: s.id, active: !s.active }} /></td>

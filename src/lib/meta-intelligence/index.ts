@@ -5,6 +5,7 @@ import { checkSources } from "./change-detector/run";
 import { deprecationSweep } from "./deprecations";
 import { discoverySweep } from "./discovery";
 import { errorSweep } from "./errors/monitor";
+import { operationSweep } from "./operations";
 import { seedRegistry } from "./feature-registry/store";
 import { analyzePending } from "./pipeline";
 import { seedSources } from "./sources/store";
@@ -23,7 +24,12 @@ import { seedSources } from "./sources/store";
 //   feature-flags/      Off → Internal → Selected → All eligible
 //   api-versioning/     production/latest/retiring versions and alerts
 //   deprecations/       impact, replacement, migration plan
-//   errors/             centralized Graph error monitoring and spike detection
+//   errors/             centralized Graph error monitoring, spike detection, and
+//                       whose problem an error is (Meta, the customer, MAIRO)
+//   operations/         how MAIRO's writes to Meta are going; pauses only the
+//                       action Meta is failing for everyone
+//   impact.ts           changelog-check freshness; informational / potentially
+//                       breaking / confirmed (by a person) to affect MAIRO
 //   discovery/          what each business's own ad account can use
 //   strategy-integration/ what the Strategy Engine may consider, goal first
 //   alerts/ release-log/  admin notifications and the Meta Update log
@@ -51,6 +57,7 @@ export async function runMetaIntelligence(opts: { budgetMs?: number; now?: Date;
   const analyzed = left() > 3_000 ? await analyzePending(3) : 0;
   const versionAlerts = await versionSweep(now);
   const spikes = await errorSweep(now);
+  const operationDrops = await operationSweep(now);
   const deprecations = await deprecationSweep(now);
   const discovered = left() > 3_000 ? await discoverySweep(3, now).catch(() => 0) : 0;
   return {
@@ -59,6 +66,7 @@ export async function runMetaIntelligence(opts: { budgetMs?: number; now?: Date;
     analyzed,
     versionAlerts,
     spikes,
+    operationDrops,
     deprecations,
     discovered,
   };

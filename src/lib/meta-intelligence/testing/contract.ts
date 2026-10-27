@@ -8,6 +8,9 @@ import { metaScopes } from "@/lib/meta/oauth";
 import type { AdGoal } from "@/generated/prisma/enums";
 import { metaCapabilities, placementTargeting } from "../capabilities";
 import { eligibility } from "../discovery";
+import { classifyMetaFailure } from "../errors/classify";
+import { operationOf } from "../operations/rules";
+import { createMetaPixel, listMetaPixels } from "@/lib/tracking/meta-pixel";
 
 // The Meta contract suite: MAIRO's real request code, run against a stubbed
 // Meta inside withGraphTransport (scoped to this run — never global), so it
@@ -42,7 +45,7 @@ function check(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Error(message);
 }
 
-const run = <T>(meta: ReturnType<typeof fakeMeta>, fn: () => Promise<T>, version?: string) => withGraphTransport({ fetch: meta.fetch, version, record: false }, fn);
+const run = <T>(meta: ReturnType<typeof fakeMeta>, fn: () => Promise<T>, version?: string) => withGraphTransport({ fetch: meta.fetch, version, record: false, retryBaseMs: 1 }, fn);
 
 // Which ad set optimization goals Meta accepts under each ODAX objective
 // (outcome-driven ad experiences), as MAIRO relies on them.
@@ -305,6 +308,70 @@ export const CONTRACT_TESTS: ContractTest[] = [
       check(msg.includes("Bid Amount Required") && msg.includes("subcode 1815857"), "error detail lost");
       check(toFailureKind(new MetaApiError("x", 400, { error: { code: 200 } })) === "insufficient_scope", "permission error misread");
       check(toFailureKind(new MetaApiError("x", 503, {})) === "unavailable", "outage misread");
+    },
+  },
+  {
+    key: "retries.reads-only",
+    name: "Retries: reads retry Meta-side failures with backoff; writes and the customer's errors never retry",
+    area: "Errors",
+    critical: true,
+    features: ["api.graph_version"],
+    run: async () => {
+      // A read that hits two transient Meta errors, then succeeds.
+      let n = 0;
+      const flaky = fakeMeta([{ match: /\/me$/, status: 200, json: () => (++n <= 2 ? { error: { message: "An unknown error occurred", code: 1, is_transient: true } } : { id: "1" }) }]);
+      const flakyFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const r = await flaky.fetch(input, init);
+        return n <= 2 ? new Response(await r.text(), { status: 500, headers: { "content-type": "application/json" } }) : r;
+      }) as typeof fetch;
+      const got = await withGraphTransport({ fetch: flakyFetch, record: false, retryBaseMs: 1 }, () => metaGraphRequest<{ id: string }>("/me", { accessToken: "t" }));
+      check(got.id === "1" && flaky.calls.length === 3, `read not retried to success (${flaky.calls.length} calls)`);
+      // An expired token is the customer's to fix: asked once.
+      const token = fakeMeta([{ match: /\/me$/, status: 400, json: { error: { message: "Expired", code: 190 } } }]);
+      await run(token, () => metaGraphRequest("/me", { accessToken: "t" })).catch(() => undefined);
+      check(token.calls.length === 1, "an expired-token read was retried");
+      // A write is never retried, even when Meta says it failed: it may have succeeded.
+      const write = fakeMeta([{ match: /\/act_1\/campaigns$/, method: "POST", status: 500, json: { error: { message: "Service unavailable", code: 2, is_transient: true } } }]);
+      await run(write, () => metaGraphRequest("/act_1/campaigns", { method: "POST", accessToken: "t", params: { name: "x" } })).catch(() => undefined);
+      check(write.calls.length === 1, `a write was retried (${write.calls.length} calls) — risks a duplicate campaign`);
+      // A read that keeps failing gives up after two retries.
+      const down = fakeMeta([{ match: /\/me$/, status: 503, json: { error: { message: "Down", code: 2 } } }]);
+      await run(down, () => metaGraphRequest("/me", { accessToken: "t" })).catch(() => undefined);
+      check(down.calls.length === 3, `gave up after ${down.calls.length} calls, expected 3`);
+    },
+  },
+  {
+    key: "errors.whose-problem",
+    name: "Error classification: Meta outage, the customer's connection, or a likely MAIRO bug",
+    area: "Errors",
+    critical: true,
+    features: ["api.graph_version"],
+    run: async () => {
+      const side = (status: number | null, code: number | null, subcode: number | null = null) => classifyMetaFailure({ status, code, subcode }).side;
+      check(side(500, 2) === "meta" && side(400, 17) === "meta" && side(400, 80004) === "meta" && side(504, null) === "meta", "Meta-side failures misread");
+      check(side(400, 190) === "account" && side(403, 200) === "account" && side(400, 10) === "account" && side(400, 100, 33) === "account", "customer-side failures misread");
+      check(side(400, 100) === "mairo", "a refused request isn't flagged as MAIRO's");
+      check(!classifyMetaFailure({ status: 400, code: 100, subcode: null }).retryable && classifyMetaFailure({ status: 400, code: 4, subcode: null }).retryable, "retryable misread");
+      check(operationOf("/act_1/campaigns", "POST") === "build" && operationOf("/123456789", "POST") === "change" && operationOf("/act_1/insights", "GET") === null, "operations misread");
+    },
+  },
+  {
+    key: "pixels.list-and-create",
+    name: "Pixel selection: listing reads the ad account's Pixels and creates nothing; creating returns Meta's id",
+    area: "Tracking",
+    critical: true,
+    features: ["api.graph_version"],
+    run: async () => {
+      const meta = fakeMeta([
+        { match: /\/act_1\/adspixels$/, method: "GET", json: { data: [{ id: "111", name: "Shop pixel", last_fired_time: "2026-10-01T00:00:00+0000" }] } },
+        { match: /\/act_1\/adspixels$/, method: "POST", json: { id: "222" } },
+      ]);
+      const list = await run(meta, () => listMetaPixels("act_1", "t"));
+      check(list.length === 1 && list[0].id === "111" && list[0].lastFiredAt instanceof Date, "pixel list misread");
+      check(meta.calls.every((c) => c.method === "GET"), "listing sent a write");
+      check(meta.calls[0].url.searchParams.get("fields")?.includes("last_fired_time"), "last event time not requested");
+      const created = await run(meta, () => createMetaPixel("act_1", "t", "Shop"));
+      check(created.id === "222" && meta.calls.filter((c) => c.method === "POST").length === 1, "create didn't return Meta's id once");
     },
   },
   {
