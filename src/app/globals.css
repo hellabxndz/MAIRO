@@ -324,6 +324,18 @@
   color: #fff;
 }
 
+/* AIOS core (components/aios/ai-core.tsx): slow turns and a breath, only
+   where motion is welcome. */
+@media (prefers-reduced-motion: no-preference) {
+  .mairo-core-ring { animation: mairo-core-spin 38s linear infinite; }
+  .mairo-core-ring-rev { animation: mairo-core-spin 26s linear infinite reverse; }
+  .mairo-core-pulse { animation: mairo-core-breathe 5.5s ease-in-out infinite; }
+  .mairo-core-glow { animation: mairo-core-glow 5.5s ease-in-out infinite; }
+}
+@keyframes mairo-core-spin { to { transform: rotate(360deg); } }
+@keyframes mairo-core-breathe { 0%, 100% { transform: scale(0.94); } 50% { transform: scale(1.06); } }
+@keyframes mairo-core-glow { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.34; } }
+
 /* The mark is drawn white; on the light theme it is shown dark. */
 :root[data-theme="light"] .mairo-mark {
   filter: invert(1);

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AmbientSky } from "@/components/ambient-sky";
 import { StartTourLink } from "@/components/tour";
+import { AppThemeScope, ThemeToggle } from "@/components/theme/theme";
 
-type NavItem = { href: string; label: string };
+// `section` starts a new labelled group in the sidebar.
+type NavItem = { href: string; label: string; section?: string };
 
 export function DashboardShell({
   navItems,
@@ -26,16 +28,17 @@ export function DashboardShell({
 
   const linkClass = (href: string) =>
     `rounded-lg px-3 py-2 text-sm transition ${
-      pathname === href
+      pathname === href || (href.split("/").length > 2 && pathname.startsWith(`${href}/`))
         ? "bg-white/[0.09] text-white"
         : "text-neutral-400 hover:bg-white/[0.04] hover:text-white"
     }`;
 
   const navList = (onNavigate?: () => void) => (
     <nav className="flex flex-1 flex-col gap-1">
-      {navItems.map((item) => (
+      {navItems.map((item, i) => (
+        <div key={item.href} className="contents">
+        {item.section && <p className={`mb-1 px-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-neutral-500 ${i === 0 ? "" : "mt-5"}`}>{item.section}</p>}
         <Link
-          key={item.href}
           href={item.href}
           onClick={onNavigate}
           // Lets the walkthrough point at a specific nav entry.
@@ -44,6 +47,7 @@ export function DashboardShell({
         >
           {item.label}
         </Link>
+        </div>
       ))}
     </nav>
   );
@@ -65,12 +69,15 @@ export function DashboardShell({
   return (
     <div className="relative flex min-h-screen flex-col md:flex-row">
       <AmbientSky />
+      <AppThemeScope />
 
       {/* Mobile top bar */}
       <div className="flex items-center justify-between border-b border-white/[0.07] bg-paper/85 backdrop-blur px-4 py-3 md:hidden">
         <Link href="/" className="text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>
+        <div className="flex items-center gap-2">
+        <ThemeToggle className="h-9 w-9" />
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -80,6 +87,7 @@ export function DashboardShell({
           <span className="block h-0.5 w-5 bg-white" />
           <span className="block h-0.5 w-5 bg-white" />
         </button>
+        </div>
       </div>
 
       {/* Mobile drawer */}
@@ -113,10 +121,13 @@ export function DashboardShell({
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/[0.07] bg-paper/70 p-6 md:flex">
-        <Link href="/" className="mb-1 text-sm font-light tracking-[0.28em]">
-          {brandLabel}
-        </Link>
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-white/[0.07] bg-paper/70 p-6 md:flex">
+        <div className="mb-1 flex items-center justify-between">
+          <Link href="/" className="text-sm font-light tracking-[0.28em]">
+            {brandLabel}
+          </Link>
+          <ThemeToggle className="h-8 w-8" />
+        </div>
         {subtitle && (
           <p className="mb-8 truncate text-xs uppercase tracking-[0.14em] text-neutral-500">
             {subtitle}

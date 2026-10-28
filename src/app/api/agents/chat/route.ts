@@ -1,4 +1,5 @@
-import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from "ai";
+import { streamText, convertToModelMessages, stepCountIs, type ToolSet, type UIMessage } from "ai";
+import { FOUNDER_ASSISTANT_PROMPT, founderAssistantTools } from "@/lib/aios/assistant";
 import { strategyEngineBrief } from "@/lib/engine";
 import { metaKnowledgeBrief } from "@/lib/meta-intelligence/knowledge-base/store";
 import { assistantTools, roleBrief, MISSION_BRIEF, AI_TEAM_BRIEF, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
@@ -62,7 +63,9 @@ export async function POST(req: Request) {
       );
     }
     await recordUserMessage(threadId, messages);
-    return stream(threadId, systemPromptFor("OWNER_COPILOT"), messages);
+    // Its tools read the platform's records and propose workspace changes;
+    // none of them saves — the person confirms each proposal on screen.
+    return stream(threadId, FOUNDER_ASSISTANT_PROMPT, messages, founderAssistantTools());
   }
 
   // Everything else is a customer's assistant, and it cannot be served without
@@ -157,7 +160,7 @@ function stream(
   threadId: string,
   system: string,
   messages: UIMessage[],
-  tools?: ReturnType<typeof assistantTools>,
+  tools?: ToolSet,
 ) {
   const result = streamText({
     model: agentModel,

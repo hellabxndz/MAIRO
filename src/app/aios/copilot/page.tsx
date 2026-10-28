@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
-import { AGENT_LABELS } from "@/lib/ai/agents";
-import { PageHeader } from "@/components/ui";
-import { ChatClient } from "./chat-client";
+import { Jarvis } from "./jarvis";
+
+// JARVIS, the AIOS assistant (URL kept as /aios/copilot). Staff only — the
+// layout checks, this page checks, and the chat route checks the thread's
+// type and the role again on every message.
+
+export const metadata = { title: "JARVIS" };
 
 export default async function CopilotPage() {
   const session = await auth();
@@ -13,13 +17,8 @@ export default async function CopilotPage() {
   const initialMessages = await loadThreadMessages(thread.id);
 
   return (
-    <div>
-      <PageHeader title={AGENT_LABELS.OWNER_COPILOT} />
-      <ChatClient
-        threadId={thread.id}
-        initialMessages={initialMessages}
-        agentLabel="AIOS Copilot"
-      />
+    <div className="mx-auto max-w-[980px]">
+      <Jarvis threadId={thread.id} initialMessages={initialMessages} />
     </div>
   );
 }

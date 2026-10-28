@@ -4064,3 +4064,73 @@ model MetaOperationStat {
   @@unique([operation, hour])
   @@index([hour])
 }
+
+// --- AIOS: the founder's own workspace ---------------------------------------
+//
+// MAIRO staff only (UserRole OWNER). Nothing here belongs to a customer
+// business, so none of it has an organizationId — and no customer page reads
+// it. Every change is written to FounderActivity, which is also where the
+// AIOS assistant's confirmed actions are recorded.
+
+enum FounderProjectStatus {
+  IDEA
+  ACTIVE
+  PAUSED
+  DONE
+}
+
+enum FounderItemKind {
+  TASK
+  MILESTONE
+  NOTE
+  DOC
+  IDEA
+}
+
+model FounderProject {
+  id              String               @id @default(cuid())
+  name            String
+  summary         String?              @db.Text
+  status          FounderProjectStatus @default(ACTIVE)
+  createdByUserId String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  items           FounderItem[]
+
+  @@index([status, updatedAt])
+}
+
+model FounderItem {
+  id              String          @id @default(cuid())
+  project         FounderProject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  /// Null: an inbox item not filed under a project yet.
+  projectId       String?
+  kind            FounderItemKind
+  title           String
+  body            String?         @db.Text
+  /// Tasks and milestones: when it was finished. Null while open.
+  doneAt          DateTime?
+  dueAt           DateTime?
+  createdByUserId String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([projectId, kind, createdAt])
+  @@index([kind, doneAt])
+}
+
+/// What MAIRO staff did in AIOS: projects and items changed, and actions the
+/// assistant proposed and a person confirmed. Platform-level, so it has no
+/// organizationId (AuditLog keeps the per-business record).
+model FounderActivity {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  target      String?
+  detail      String?  @db.Text
+  /// "assistant" when the assistant proposed it and a person confirmed.
+  via         String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}

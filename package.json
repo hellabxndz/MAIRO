@@ -51,6 +51,7 @@
     "check:meta-intelligence": "tsx scripts/check-meta-intelligence.ts",
     "check:meta-reliability": "tsx scripts/check-meta-reliability.ts",
     "check:simple-ui": "tsx scripts/check-simple-ui.ts",
+    "check:aios": "tsx scripts/check-aios.ts",
     "check:brain": "tsx scripts/check-brain.ts",
     "check:graph-cache": "tsx scripts/check-graph-cache.ts",
     "check:account-history": "tsx scripts/check-account-history.ts",

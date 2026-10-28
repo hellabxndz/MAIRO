@@ -53,6 +53,7 @@ const NO_ROLE_CHECK: Record<string, string> = {
   "aios-actions:*": "MAIRO staff only (requireOwner)",
   "meta-intelligence-actions:*": "MAIRO staff only (owner())",
   "success-actions:*": "MAIRO staff only (owner())",
+  "founder-actions:*": "MAIRO staff only (staffUser() re-reads the role)",
   "client-actions:*": "a freelancer's own workspace (workspaceId checks FREELANCER)",
   "team-actions:leaveTeamAction": "anyone may leave; the store keeps the last owner",
   "team-actions:switchWorkspaceAction": "only to a business you're on the team of",
