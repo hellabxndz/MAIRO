@@ -1,6 +1,7 @@
 "use client";
 
 import { Wordmark } from "@/components/wordmark";
+import { AppThemeScope, ThemeToggle } from "@/components/theme/theme";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useTransition, type ReactNode } from "react";
@@ -175,7 +176,7 @@ export const PRIMARY_NAV: NavEntry[] = [
   { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
   { href: "/dashboard/creatives", label: "Creative Studio", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
   { href: "/dashboard/analytics", label: "Performance", icon: <Icon d={I.analytics} />, also: ["/dashboard/activity"] },
-  { href: "/dashboard/team", label: "AI Team", icon: <Icon d={I.team} />, also: ["/dashboard/agents"] },
+  { href: "/dashboard/intelligence", label: "Intelligence", icon: <Icon d={I.team} />, also: ["/dashboard/team", "/dashboard/agents"] },
   // What the AI team found in the results and proposes — the Coach's findings.
   { href: "/dashboard/coach", label: "Recommendations", icon: <Icon d={I.coach} /> },
   { href: "/dashboard/decisions", label: "Approvals", icon: <Icon d={I.decisions} /> },
@@ -300,7 +301,8 @@ export function NavRowView({ item, active, locked = false, href }: { item: NavEn
 }
 
 /** The sidebar's background, shared with the website's demonstrations. */
-export const SIDEBAR_BACKGROUND = "linear-gradient(180deg, rgba(22,22,22,0.94) 0%, rgba(11,11,11,0.95) 60%, rgba(6,6,6,0.97) 100%)";
+/** A theme variable (globals.css), so the light theme turns the sidebar over with everything else. */
+export const SIDEBAR_BACKGROUND = "var(--mairo-sidebar)";
 
 /* -------------------------------------------------------------- the shell */
 
@@ -414,6 +416,7 @@ export function AppShell({
         </div>
       </aside>
 
+      <AppThemeScope />
       {/* ---- Mobile top bar. The name of the business, and the mode. ---- */}
       <header
         className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 lg:hidden"
@@ -427,6 +430,7 @@ export function AppShell({
           {/* The Overview has its own view switch (with Profit First) in its header. */}
           {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
+          <ThemeToggle className="h-9 w-9" />
           {/* Settings — and from there analytics' neighbours, billing, account
               and signing out — on a phone. */}
           <Link href="/dashboard/settings" aria-label="Settings" className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
@@ -451,6 +455,7 @@ export function AppShell({
           {/* The Overview has its own view switch (with Profit First) in its header. */}
           {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
+          <ThemeToggle />
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"

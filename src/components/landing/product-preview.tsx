@@ -134,7 +134,7 @@ function ResultsView() {
             type="button"
             aria-pressed={m === mode}
             onClick={() => setMode(m)}
-            className={`rounded-full px-3.5 py-1.5 text-[12.5px] transition ${m === mode ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:text-black"}`}
+            className={`rounded-full px-3.5 py-1.5 text-[12.5px] transition ${m === mode ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:text-white"}`}
           >
             {m}
           </button>
@@ -326,7 +326,7 @@ export function ProductPreview() {
                   aria-controls="pp-panel"
                   tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => setTab(t.id)}
-                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-[13px] transition ${tab === t.id ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:bg-white/[0.04] hover:text-black"}`}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-left text-[13px] transition ${tab === t.id ? "bg-[image:var(--mairo-ramp)] font-medium text-black" : "text-muted hover:bg-white/[0.04] hover:text-white"}`}
                 >
                   {t.label}
                 </button>

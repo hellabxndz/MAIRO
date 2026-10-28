@@ -56,7 +56,7 @@ export default async function WeeklyReportPage({ params, searchParams }: { param
               key={m.key}
               href={`?mode=${m.key}`}
               aria-current={mode === m.key ? "page" : undefined}
-              className={`min-h-[34px] rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition ${mode === m.key ? "bg-gradient-to-r from-[#ffffff] to-[#ffffff] text-black" : "text-muted hover:text-black"}`}
+              className={`min-h-[34px] rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition ${mode === m.key ? "bg-gradient-to-r from-[#ffffff] to-[#ffffff] text-black" : "text-muted hover:text-white"}`}
             >
               {m.label}
             </Link>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Sparkline } from "@/components/viz/sparkline";
 import { PANEL } from "./format";
 
 // One figure, how it moved against the period before, and whether that move
@@ -12,6 +13,8 @@ export function KpiCard({
   icon,
   hint,
   compact = false,
+  spark,
+  source,
 }: {
   label: string;
   value: string;
@@ -23,6 +26,10 @@ export function KpiCard({
   hint?: string;
   /** Nine across in Advanced: a little smaller so they fit on one row. */
   compact?: boolean;
+  /** The period day by day, when the network gives it; nulls are days with no reading. */
+  spark?: (number | null)[] | null;
+  /** Where the figure comes from and what it can't tell, e.g. "Meta-attributed". */
+  source?: string;
 }) {
   const up = change !== null && change > 0;
   const flat = change === null || Math.abs(change) < 0.005;
@@ -40,6 +47,12 @@ export function KpiCard({
         {change === null ? "—" : flat ? "No change" : `${up ? "↑" : "↓"} ${Math.abs(Math.round(change * 100))}%`}
       </p>
       <p className={`mt-0.5 truncate text-faint ${compact ? "text-[11px]" : "text-[11.5px]"}`}>{compact ? "vs. prior period" : "vs. previous period"}</p>
+      {spark && (
+        <div className="mt-2 -mx-0.5">
+          <Sparkline points={spark} width={140} height={28} tone={flat ? "muted" : good ? "signal" : "alert"} />
+        </div>
+      )}
+      {source && <p className="mt-1.5 truncate text-[10.5px] uppercase tracking-[0.12em] text-faint" title={source}>{source}</p>}
     </div>
   );
 }

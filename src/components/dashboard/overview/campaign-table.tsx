@@ -300,7 +300,7 @@ export function CampaignTable({
         ) : (
           <Link
             href="/dashboard/campaigns"
-            className="text-[13px] text-violet-bright hover:text-black"
+            className="text-[13px] text-violet-bright hover:text-white"
           >
             View all campaigns →
           </Link>
@@ -329,7 +329,7 @@ export function CampaignTable({
                   <button
                     type="button"
                     onClick={() => toggleSort("name")}
-                    className="hover:text-black"
+                    className="hover:text-white"
                   >
                     Campaign{arrow("name")}
                   </button>
@@ -343,7 +343,7 @@ export function CampaignTable({
                     <button
                       type="button"
                       onClick={() => toggleSort(c.key)}
-                      className="whitespace-nowrap hover:text-black"
+                      className="whitespace-nowrap hover:text-white"
                     >
                       {(!advanced && SIMPLE_LABEL[c.key]) || c.label}
                       {arrow(c.key)}

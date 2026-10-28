@@ -24,7 +24,7 @@ const KINDS: { value: FeedbackKind; label: string; placeholder: string }[] = [
 
 const chip = (on: boolean) =>
   `min-h-[38px] rounded-full border px-4 text-[13px] transition ${
-    on ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--mairo-line)] text-black/80 hover:border-[color:var(--mairo-line-lit)] hover:text-black"
+    on ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--mairo-line)] text-white/80 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
   }`;
 
 function FeedbackForm({ onDone }: { onDone?: () => void }) {

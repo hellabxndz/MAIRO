@@ -24,7 +24,8 @@ import { siteUrl } from "@/lib/site";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { viewMode } from "@/lib/view-mode";
 import { showsEnquiries } from "@/lib/leads/fields";
-import { CAMPAIGN_TABS, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
+import { BOARD_COLUMNS, CAMPAIGN_TABS, boardColumn, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
+import { CampaignBoard, type BoardColumnView } from "@/components/viz/campaign-board";
 import { PauseEverything } from "./pause-everything";
 
 // Each row's figures are live calls to Meta. See the note in
@@ -43,7 +44,7 @@ function cents(value: number | null): string {
   return value === null ? NO_VALUE : formatMoney(value / 100);
 }
 
-export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ tab?: string; view?: string }> }) {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
 
@@ -151,7 +152,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   // Running, or waiting on Meta to run: what "Pause everything" would pause
   // (the same test as protection/run.ts runningOrWaiting).
   const runningCount = campaigns.filter((c) => c.status !== "ARCHIVED" && c.platformCampaigns.some((p) => p.externalCampaignId && (p.status === "ACTIVE" || p.status === "PENDING_REVIEW"))).length;
-  const requested = (await searchParams).tab;
+  const params = await searchParams;
+  const requested = params.tab;
+  const board = params.view === "board";
   // "On Meta" — the campaigns already on the connected ad account that MAIRO
   // didn't make — once there is an account to read. The list itself is read
   // only on that tab, so the rest of this page never waits on Meta for it.
@@ -164,6 +167,41 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       ? (requested as CampaignTab | "meta")
       : (CAMPAIGN_TABS.find((t) => (buckets.get(t.key)?.length ?? 0) > 0)?.key ?? (metaConnected ? "meta" : "active"));
   const shown = tab === "meta" ? [] : (buckets.get(tab) ?? []);
+
+  // The board: every campaign in its column, with the recommendations waiting on each.
+  let boardColumns: BoardColumnView[] = [];
+  let boardGoals: { key: string; label: string }[] = [];
+  if (board) {
+    const waiting = await db.mairoDecision.groupBy({ by: ["mairoCampaignId"], where: { organizationId, status: "PENDING", mairoCampaignId: { not: null } }, _count: true });
+    const decisions = new Map(waiting.map((w) => [w.mairoCampaignId, w._count]));
+    const listed = campaigns.filter((c) => c.status !== "ARCHIVED" || (c.endDate && c.endDate < now));
+    boardColumns = BOARD_COLUMNS.map((col) => {
+      const inCol = listed.filter((c) => boardColumn(c, now) === col.key);
+      const daily = inCol.reduce((n, c) => n + c.totalDailyBudgetCents, 0);
+      return {
+        key: col.key,
+        label: col.label,
+        budget: col.key === "completed" || inCol.length === 0 ? null : cents(daily),
+        cards: inCol.map((c) => {
+          const report = byCampaign.get(c.id);
+          const result = report?.hasData ? primaryResult(c.objective, c.destinationType, report.total) : null;
+          return {
+            id: c.id,
+            name: c.name,
+            goal: goalLabel(c.objective),
+            goalKey: c.objective,
+            status: statusLabel(c, now),
+            budget: cents(c.totalDailyBudgetCents),
+            spent: report?.hasData ? cents(report.total.spendCents) : null,
+            result: result ? { label: result.label, value: result.value } : null,
+            attention: c.platformCampaigns.some((p) => p.lastError || p.adReviewState === "REJECTED" || p.adReviewState === "WITH_ISSUES") || (c.status === "PENDING_REVIEW" && !readiness.ready),
+            decisions: decisions.get(c.id) ?? 0,
+          };
+        }),
+      };
+    });
+    boardGoals = [...new Set(listed.map((c) => c.objective))].map((k) => ({ key: k, label: goalLabel(k) }));
+  }
 
   return (
     <div className="mx-auto max-w-[1180px]">
@@ -187,6 +225,23 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         </p>
       )}
 
+      <div className="mb-5 flex items-center gap-2" role="group" aria-label="View">
+        {[{ key: "list", label: "List", href: `/dashboard/campaigns${requested ? `?tab=${requested}` : ""}` }, { key: "board", label: "Board", href: "/dashboard/campaigns?view=board" }].map((v) => (
+          <Link key={v.key} href={v.href} aria-current={(v.key === "board") === board ? "page" : undefined}
+            className={`min-h-9 rounded-full border px-4 py-1.5 text-[13px] transition ${(v.key === "board") === board ? "border-[color:var(--mairo-line-lit)] bg-white/[0.06] text-white" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>
+            {v.label}
+          </Link>
+        ))}
+      </div>
+
+      {board ? (
+        campaigns.length === 0 ? (
+          <EmptyState title="No campaigns yet" description="Tell MAIRO what you want to achieve and it builds the campaign for you to confirm." />
+        ) : (
+          <CampaignBoard columns={boardColumns} goals={boardGoals} />
+        )
+      ) : (
+      <>
       <nav aria-label="Campaign status" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
         {CAMPAIGN_TABS.map((t) => {
           const n = buckets.get(t.key)?.length ?? 0;
@@ -256,6 +311,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             );
           })}
         </div>
+      )}
+
+      </>
       )}
 
       {/* The older one-screen campaign form, for people who want every setting

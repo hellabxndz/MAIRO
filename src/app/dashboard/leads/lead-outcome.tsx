@@ -116,7 +116,7 @@ export function LeadOutcome(props: LeadRecordProps) {
               className={`min-h-[34px] rounded-full border px-3.5 text-[12.5px] transition disabled:opacity-60 ${
                 on
                   ? "border-transparent bg-[image:var(--mairo-ramp)] text-black"
-                  : "border-[color:var(--mairo-line)] text-black/80 hover:border-[color:var(--mairo-line-lit)] hover:text-black"
+                  : "border-[color:var(--mairo-line)] text-white/80 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
               }`}
             >
               {labels[o.status]}

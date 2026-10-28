@@ -252,7 +252,7 @@ export function SocialStudio({
         <div role="tablist" aria-label="Post type" className="mt-3 inline-flex rounded-full border border-white/10 bg-white/[0.03] p-1">
           {(["IMAGE", "CAROUSEL", "REEL"] as MediaType[]).map((t) => (
             <button key={t} role="tab" aria-selected={t === type} onClick={() => switchType(t)}
-              className={`rounded-full px-4 py-1.5 text-[13px] ${t === type ? "bg-[#ffffff] text-black" : "text-black/65 hover:text-black"}`}>
+              className={`rounded-full px-4 py-1.5 text-[13px] ${t === type ? "bg-[#ffffff] text-black" : "text-white/65 hover:text-white"}`}>
               {mediaLabel(t, network)}
             </button>
           ))}

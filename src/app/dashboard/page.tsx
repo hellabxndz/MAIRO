@@ -393,6 +393,18 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     );
   }
 
+  // The period day by day for the cards' sparklines — only from Meta's daily
+  // split; a day with no reading stays a gap, never a zero.
+  const dailyPts = overview.daily ?? [];
+  const sparks = {
+    spend: dailyPts.length ? dailyPts.map((d) => (d.delivered ? d.spendCents : null)) : null,
+    revenue: dailyPts.length ? dailyPts.map((d) => (d.delivered ? d.revenueCents : null)) : null,
+    results: dailyPts.length ? dailyPts.map((d) => (d.delivered ? d.purchases || d.leads || 0 : null)) : null,
+    roas: dailyPts.length ? dailyPts.map((d) => (d.delivered && d.spendCents > 0 ? d.revenueCents / d.spendCents : null)) : null,
+  };
+  const runningDaily = (await db.mairoCampaign.aggregate({ where: { organizationId, status: "ACTIVE" }, _sum: { totalDailyBudgetCents: true } }))._sum.totalDailyBudgetCents ?? 0;
+  const budgetUse = runningDaily > 0 && t.spendCents !== null ? t.spendCents / (runningDaily * days) : null;
+
   // Advanced: the shared console on top, every figure underneath.
   const advancedBelow = (
     <>
@@ -412,17 +424,19 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Every figure</h2>
         <SourceChip />
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+        <KpiCard compact label="Amount spent" value={fmtMoney(t.spendCents)} change={change(t.spendCents, p?.spendCents)} icon={KPI_ICON.money} spark={sparks.spend} source="Meta Ads" />
+        <KpiCard compact label="Revenue from ads" value={fmtMoney(t.revenueCents)} change={change(t.revenueCents, p?.revenueCents)} icon={KPI_ICON.trend} spark={sparks.revenue} source="Meta-attributed" hint="Purchase value Meta credits to your ads, by its attribution settings. Not your store's total sales." />
         <KpiCard compact label="Impressions" value={count(t.impressions)} change={change(t.impressions, p?.impressions)} icon={KPI_ICON.eye} hint="How many times your ads were shown." />
         <KpiCard compact label="Reach" value={count(t.reach)} change={change(t.reach, p?.reach)} icon={KPI_ICON.users} hint="People who saw your ads, added across campaigns." />
         <KpiCard compact label="Clicks" value={count(t.clicks)} change={change(t.clicks, p?.clicks)} icon={KPI_ICON.cursor} />
         <KpiCard compact label="CTR" value={pct(t.ctr)} change={change(t.ctr, p?.ctr)} icon={KPI_ICON.percent} hint="Click-through rate: out of every 100 people who saw the ad, how many clicked it." />
         <KpiCard compact label="CPC" value={fmtMoney(t.cpcCents)} change={change(t.cpcCents, p?.cpcCents)} goodWhen="down" icon={KPI_ICON.coin} hint="What each click cost, on average." />
         <KpiCard compact label="CPM" value={fmtMoney(t.cpmCents)} change={change(t.cpmCents, p?.cpmCents)} goodWhen="down" icon={KPI_ICON.bars} hint="What it cost to show the ad 1,000 times." />
-        <KpiCard compact label="Conversions" value={count(t.purchases ?? t.conversions)} change={change(t.purchases ?? t.conversions, p?.purchases ?? p?.conversions)} icon={KPI_ICON.cart} />
+        <KpiCard compact label="Conversions" value={count(t.purchases ?? t.conversions)} change={change(t.purchases ?? t.conversions, p?.purchases ?? p?.conversions)} icon={KPI_ICON.cart} spark={sparks.results} source="Meta-attributed" />
         <KpiCard compact label="CPA" value={fmtMoney(t.costPerPurchaseCents)} change={change(t.costPerPurchaseCents, p?.costPerPurchaseCents)} goodWhen="down" icon={KPI_ICON.tag} hint="Cost per acquisition: what each purchase cost, on average." />
-        <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} hint="Return on ad spend: how many dollars came back for every $1 spent on ads." />
+        <KpiCard compact label="ROAS" value={roas(t.roas)} change={change(t.roas, p?.roas)} icon={KPI_ICON.trend} spark={sparks.roas} source="Meta-attributed" hint="Return on ad spend: how many dollars came back for every $1 spent on ads, by Meta's attribution." />
+        <KpiCard compact label="Budget used" value={budgetUse === null ? "—" : `${Math.round(budgetUse * 100)}%`} change={null} icon={KPI_ICON.bars} source="Estimate" hint="Spend this period against today's daily budgets of your running campaigns over the same days. An estimate: budgets change and campaigns start mid-period." />
       </div>
       {weeklyCard}
       {table}

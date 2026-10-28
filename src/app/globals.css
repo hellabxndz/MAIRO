@@ -65,6 +65,11 @@
   --color-warn: #ffdd00;
   --color-alert: #ff3d6e;
   --color-cyan: #00f0ff;
+  /* Signal: the analytics and AI-feedback accent — charts, a value that
+     moved, MAIRO thinking. Teal, quieter than the neons, and used only there. */
+  --color-signal: #2dd4bf;
+  --color-signal-bright: #5eead4;
+  --color-signal-deep: #0f766e;
 
   /* ---- Text ------------------------------------------------------------ */
   /* "white" is the primary type colour (text-white across the product).
@@ -157,6 +162,8 @@
   --mairo-glass: linear-gradient(170deg, rgba(24, 24, 24, 0.88) 0%, rgba(14, 14, 14, 0.88) 55%, rgba(9, 9, 9, 0.92) 100%);
   /* A raised panel: one step lighter, for the thing in front. */
   --mairo-glass-2: linear-gradient(170deg, rgba(34, 34, 34, 0.94) 0%, rgba(20, 20, 20, 0.94) 100%);
+  /* The app's sidebar. */
+  --mairo-sidebar: linear-gradient(180deg, rgba(22, 22, 22, 0.94) 0%, rgba(11, 11, 11, 0.95) 60%, rgba(6, 6, 6, 0.97) 100%);
 
   /* Three lifts, a scale rather than a palette: rest, interactive, and the
      one thing on the screen that matters most (the white glow, like the
@@ -179,6 +186,168 @@
 }
 
 /* ===========================================================================
+   PALETTE: deep blue and restrained purple (data-palette="blue" on <html>).
+
+   An alternative to black and white, switchable as one attribute so both can
+   be compared on the real product. Only the accent moves: the surfaces stay
+   black, the neons stay neon, and type on the accent turns white.
+   =========================================================================== */
+:root[data-palette="blue"] {
+  --color-blue: #4c6fff;
+  --color-blue-bright: #7b93ff;
+  --color-blue-deep: #2c47d9;
+  --color-violet: #8b7cf6;
+  --color-violet-bright: #b4abfa;
+  --color-violet-200: #ddd8fd;
+  --color-violet-300: #c4bcfb;
+  --color-violet-400: #a99df9;
+  --color-violet-500: #8b7cf6;
+  --color-sky-300: #b9c7ff;
+  --color-sky-400: #9db0ff;
+  --color-sky-500: #7b93ff;
+  --mairo-line-lit: rgba(140, 160, 255, 0.5);
+  --mairo-glow-lift: 0 0 0 1px rgba(124, 147, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 26px 60px -26px rgba(76, 111, 255, 0.3);
+  --mairo-glow-key: 0 0 0 1px rgba(124, 147, 255, 0.7), 0 0 30px -4px rgba(76, 111, 255, 0.55), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
+  --mairo-ramp: linear-gradient(120deg, #2c47d9 0%, #4c6fff 55%, #7b5cf0 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #9db0ff 0%, #c4bcfb 55%, #e6e9ff 100%);
+  --mairo-atmosphere:
+    radial-gradient(ellipse 70% 50% at 80% -10%, rgba(76, 111, 255, 0.16), transparent 70%),
+    radial-gradient(ellipse 50% 40% at -8% 16%, rgba(139, 124, 246, 0.08), transparent 70%),
+    linear-gradient(180deg, #05060d 0%, #000000 40%, #000000 100%);
+}
+
+/* ===========================================================================
+   THEME: light (data-theme="light" on <html>, signed-in app and AIOS only).
+
+   The design names colours by role, not by look: "white" is the type,
+   "black" what sits on the accent, the low neutrals are light type and the
+   high ones dark surfaces. So the light theme is those roles swapped — every
+   component that follows the system turns over with it. The neons darken,
+   because #22ff88 on white can't be read.
+   =========================================================================== */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-ink: #f4f5f7;
+  --color-ink-2: #eceef1;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f3f5;
+  --color-line: #e1e4e8;
+  --color-line-lit: #8d939b;
+  --color-field: #ffffff;
+  --color-field-2: #f6f7f9;
+  --color-field-3: #eceef1;
+  --color-blue: #0b0c0e;
+  --color-blue-bright: #1f2227;
+  --color-blue-deep: #34383f;
+  --color-violet: #0b0c0e;
+  --color-violet-bright: #0b0c0e;
+  --color-white: #0b0c0e;
+  --color-black: #ffffff;
+  --color-paper: #f4f5f7;
+  --color-muted: #50555d;
+  --color-faint: #636871;
+  --color-neutral-50: #0b0c0e;
+  --color-neutral-100: #15171a;
+  --color-neutral-200: #25282d;
+  --color-neutral-300: #373b41;
+  --color-neutral-400: #50555d;
+  --color-neutral-500: #636871;
+  --color-neutral-600: #858a92;
+  --color-neutral-700: #c3c7cc;
+  --color-neutral-800: #e1e4e8;
+  --color-neutral-900: #eceef1;
+  --color-neutral-950: #f4f5f7;
+  --color-sky-200: #15171a;
+  --color-sky-300: #25282d;
+  --color-sky-400: #373b41;
+  --color-sky-500: #0b0c0e;
+  --color-violet-200: #15171a;
+  --color-violet-300: #25282d;
+  --color-violet-400: #373b41;
+  --color-violet-500: #0b0c0e;
+  --color-blue-200: #25282d;
+  --color-live: #0a8f4a;
+  --color-warn: #8a6100;
+  --color-alert: #c8103f;
+  --color-cyan: #0e7490;
+  --color-signal: #0f766e;
+  --color-signal-bright: #0d9488;
+  --color-emerald-100: #064e2b;
+  --color-emerald-200: #06663a;
+  --color-emerald-300: #087a45;
+  --color-emerald-400: #0a8f4a;
+  --color-amber-100: #5c4000;
+  --color-amber-200: #704f00;
+  --color-amber-300: #7d5800;
+  --color-amber-400: #b07d00;
+  --color-red-200: #8f0c2e;
+  --color-red-300: #b00e38;
+  --color-red-400: #c8103f;
+  --color-cyan-200: #0b5466;
+  --color-cyan-300: #0e6a80;
+  --color-cyan-400: #0e7490;
+  --color-orange-200: #8a4b00;
+  --color-rose-300: #b0236a;
+  --mairo-fg-rgb: 11, 12, 14;
+  --mairo-bg-rgb: 255, 255, 255;
+  --mairo-line: rgba(11, 12, 14, 0.1);
+  --mairo-line-lit: rgba(11, 12, 14, 0.38);
+  --mairo-glass: linear-gradient(170deg, #ffffff 0%, #fbfbfc 100%);
+  --mairo-glass-2: linear-gradient(170deg, #ffffff 0%, #f6f7f9 100%);
+  --mairo-sidebar: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  --mairo-glow-soft: 0 0 0 1px rgba(11, 12, 14, 0.07), 0 1px 2px rgba(11, 12, 14, 0.05), 0 18px 40px -28px rgba(11, 12, 14, 0.25);
+  --mairo-glow-lift: 0 0 0 1px rgba(11, 12, 14, 0.16), 0 2px 4px rgba(11, 12, 14, 0.06), 0 26px 50px -26px rgba(11, 12, 14, 0.3);
+  --mairo-glow-key: 0 0 0 1px rgba(11, 12, 14, 0.9), 0 12px 30px -12px rgba(11, 12, 14, 0.45);
+  --mairo-ramp: linear-gradient(120deg, #15171a 0%, #2a2d32 55%, #15171a 100%);
+  --mairo-ramp-soft: linear-gradient(120deg, #0b0c0e 0%, #50555d 55%, #25282d 100%);
+  --mairo-atmosphere:
+    radial-gradient(ellipse 70% 50% at 80% -10%, rgba(45, 212, 191, 0.08), transparent 70%),
+    linear-gradient(180deg, #fbfbfc 0%, #f4f5f7 40%, #f4f5f7 100%);
+}
+/* The light theme with the blue palette: the accent is the blue again. */
+:root[data-theme="light"][data-palette="blue"] {
+  --color-blue: #2c47d9;
+  --color-violet: #5b46e0;
+  --color-violet-bright: #3d2fb8;
+  --mairo-ramp: linear-gradient(120deg, #2c47d9 0%, #3f5ff0 55%, #5b46e0 100%);
+  --mairo-glow-key: 0 0 0 1px rgba(44, 71, 217, 0.8), 0 12px 30px -12px rgba(44, 71, 217, 0.5);
+}
+
+/* In the light theme the white accent (pills, chips and buttons drawn in
+   hard white) turns dark, like every other accent, with white type. */
+:root[data-theme="light"] :is([class~="bg-[#ffffff]"], [class~="bg-[#fff]"], [class~="from-[#ffffff]"]) {
+  background-color: #15171a;
+  background-image: none;
+  color: #fff;
+}
+:root[data-theme="light"] :is([class~="bg-[#ffffff]"], [class~="bg-[#fff]"], [class~="from-[#ffffff]"]) :is(.text-black, [class~="text-[#111]"], [class~="text-[#121212]"], .text-black, [class*="text-black/"]) {
+  color: #fff;
+}
+
+/* The mark is drawn white; on the light theme it is shown dark. */
+:root[data-theme="light"] .mairo-mark {
+  filter: invert(1);
+}
+
+/* The theme changing: the new one is revealed in a circle from the switch
+   (--mairo-reveal-x/y, set by ThemeToggle). Only where the browser supports
+   view transitions and motion is welcome; otherwise it simply changes. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-new(root) {
+    animation: mairo-reveal 620ms var(--ease-mairo);
+  }
+}
+@keyframes mairo-reveal {
+  from { clip-path: circle(0 at var(--mairo-reveal-x, 50%) var(--mairo-reveal-y, 0%)); }
+  to { clip-path: circle(150% at var(--mairo-reveal-x, 50%) var(--mairo-reveal-y, 0%)); }
+}
+
+/* ===========================================================================
    ON THE WHITE ACCENT — black type.
 
    The primary action is white now, so whatever sits on it is black: the
@@ -197,6 +366,15 @@
 :is([class~="bg-[image:var(--mairo-ramp)]"], [style*="--mairo-ramp)"], [class~="bg-[#ffffff]"], [class~="bg-violet"], [class~="bg-violet-500"], [class~="bg-blue"])
   :is(.text-white, [class*="text-white/"], .text-violet, .text-violet-200, .text-violet-300, .text-muted) {
   color: rgb(0 0 0 / 0.72);
+}
+/* A coloured or dark accent (the blue palette, the light theme) carries white type. */
+:root:is([data-palette="blue"], [data-theme="light"]) :is([class~="bg-[image:var(--mairo-ramp)]"], [style*="--mairo-ramp)"], [class~="bg-violet"], [class~="bg-violet-500"], [class~="bg-blue"]) {
+  color: #fff;
+  color-scheme: dark;
+}
+:root:is([data-palette="blue"], [data-theme="light"]) :is([class~="bg-[image:var(--mairo-ramp)]"], [style*="--mairo-ramp)"], [class~="bg-violet"], [class~="bg-violet-500"], [class~="bg-blue"])
+  :is(.text-white, [class*="text-white/"], .text-violet, .text-violet-200, .text-violet-300, .text-muted) {
+  color: rgb(255 255 255 / 0.85);
 }
 
 /* Dark islands — Facebook's own colours in ad previews and the solid alert —
@@ -391,3 +569,34 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+/* Data in motion (components/viz): a sparkline drawing itself, a stage
+   timeline filling to where things are, and the current stage breathing.
+   Once, short, and not at all with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .mairo-spark-line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: mairo-draw 1.1s var(--ease-mairo) 0.15s forwards;
+  }
+  .mairo-spark-fill {
+    opacity: 0;
+    animation: mairo-fade 0.8s ease-out 0.7s forwards;
+  }
+  .mairo-stage-progress {
+    transform-origin: left;
+    animation: mairo-grow 1s var(--ease-mairo) 0.1s both;
+  }
+  .mairo-stage-now::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-signal);
+    animation: mairo-breathe 2.6s ease-in-out infinite;
+  }
+}
+@keyframes mairo-draw { to { stroke-dashoffset: 0; } }
+@keyframes mairo-fade { to { opacity: 1; } }
+@keyframes mairo-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes mairo-breathe { 0%, 100% { opacity: 0; transform: scale(0.85); } 50% { opacity: 0.6; transform: scale(1); } }

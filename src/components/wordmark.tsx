@@ -8,7 +8,7 @@ export function Wordmark({ href = "/", className = "text-[19px]" }: { href?: str
   const mark = (
     <span className={`inline-flex items-center gap-[0.55em] font-light tracking-[0.34em] text-white ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- a small mark sized in em; nothing for next/image to optimise */}
-      <img src="/brand/mairo-mark.png" alt="" aria-hidden width={192} height={192} className="h-[1.6em] w-[1.6em] shrink-0" />
+      <img src="/brand/mairo-mark.png" alt="" aria-hidden width={192} height={192} className="mairo-mark h-[1.6em] w-[1.6em] shrink-0" />
       MAIRO
     </span>
   );

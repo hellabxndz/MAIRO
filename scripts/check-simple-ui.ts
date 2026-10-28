@@ -9,7 +9,7 @@
 import assert from "node:assert/strict";
 import { EMPTY_METRICS, type PlatformMetrics } from "../src/lib/ad-platforms/types";
 import { dayLabel, money, performanceTiles, pickInsight, whatsNext } from "../src/lib/dashboard/home";
-import { campaignTab, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "../src/lib/dashboard/campaigns";
+import { boardColumn, campaignStages, campaignTab, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "../src/lib/dashboard/campaigns";
 import { goalResults, rankByGoal, resultPhrase, type HubAd } from "../src/lib/creatives/hub";
 import { DESTINATIONS } from "../src/lib/ai/assistant-tools";
 import { advancedSettingsSummary } from "../src/lib/dashboard/settings-summary";
@@ -94,6 +94,40 @@ async function main() {
     assert.equal(campaignTab({ status: "PAUSED", endDate: null }, NOW), "paused");
     assert.equal(campaignTab({ status: "ARCHIVED", endDate: null }, NOW), "completed");
     assert.equal(campaignTab({ status: "ACTIVE", endDate: new Date("2026-09-01") }, NOW), "completed", "an ended campaign is completed");
+  });
+  await check("the board puts each campaign in the column its records say", () => {
+    const later = new Date("2026-10-05T00:00:00Z");
+    assert.equal(boardColumn({ status: "DRAFT", endDate: null }, NOW), "draft");
+    assert.equal(boardColumn({ status: "PENDING_REVIEW", endDate: null }, NOW), "awaiting", "built but not approved waits for the owner");
+    assert.equal(boardColumn({ status: "PENDING_REVIEW", endDate: null, launchApprovedAt: NOW }, NOW), "scheduled", "approved, not yet on");
+    assert.equal(boardColumn({ status: "ACTIVE", endDate: null, startDate: later }, NOW), "scheduled", "on, but starts later");
+    assert.equal(boardColumn({ status: "ACTIVE", endDate: null }, NOW), "active");
+    assert.equal(boardColumn({ status: "PAUSED", endDate: null }, NOW), "paused");
+    assert.equal(boardColumn({ status: "ARCHIVED", endDate: null }, NOW), "completed");
+    assert.equal(boardColumn({ status: "ACTIVE", endDate: new Date("2026-09-01") }, NOW), "completed", "an ended campaign is completed");
+  });
+  await check("the timeline marks only what's recorded, and problems where they happened", () => {
+    const base = { createdAt: new Date("2026-09-20"), endDate: null };
+    const states = (r: ReturnType<typeof campaignStages>) => r.stages.map((s) => s.state);
+    const draft = campaignStages({ ...base, status: "DRAFT", platformCampaigns: [] }, NOW);
+    assert.deepEqual(states(draft), ["current", "upcoming", "upcoming", "upcoming", "upcoming", "upcoming"]);
+    assert.ok(draft.stages.slice(1).every((s) => s.when === null), "nothing upcoming carries a date");
+    const built = [{ externalCampaignId: "120", createdAt: new Date("2026-09-21") }];
+    const waiting = campaignStages({ ...base, status: "PENDING_REVIEW", platformCampaigns: built }, NOW);
+    assert.deepEqual(states(waiting), ["done", "current", "upcoming", "upcoming", "upcoming", "upcoming"], "built, and nothing after it until the owner approves");
+    const failed = campaignStages({ ...base, status: "PENDING_REVIEW", launchApprovedAt: NOW, platformCampaigns: [{ ...built[0], lastError: "boom" }] }, NOW);
+    assert.equal(failed.stages[2].state, "problem");
+    assert.equal(failed.stages[2].note, "Launch failed");
+    const rejected = campaignStages({ ...base, status: "ACTIVE", launchApprovedAt: NOW, platformCampaigns: [{ ...built[0], adReviewState: "REJECTED" }] }, NOW);
+    assert.equal(rejected.stages[3].state, "problem");
+    assert.equal(rejected.stages[3].label, "Meta's review");
+    assert.equal(rejected.stages[4].state, "upcoming", "a rejected ad is never shown as delivering");
+    const live = campaignStages({ ...base, status: "ACTIVE", launchApprovedAt: NOW, platformCampaigns: [{ ...built[0], adReviewState: "APPROVED" }] }, NOW);
+    assert.deepEqual(states(live), ["done", "done", "done", "done", "current", "upcoming"]);
+    const paused = campaignStages({ ...base, status: "PAUSED", launchApprovedAt: NOW, platformCampaigns: [{ ...built[0], adReviewState: "APPROVED" }] }, NOW);
+    assert.equal(paused.stages[4].label, "Delivering · paused");
+    const ended = campaignStages({ ...base, status: "ACTIVE", endDate: new Date("2026-09-30"), platformCampaigns: built }, NOW);
+    assert.ok(ended.stages.every((s) => s.state === "done"));
   });
   await check("goals and statuses in plain words", () => {
     assert.equal(goalLabel("SALES"), "Get More Sales");

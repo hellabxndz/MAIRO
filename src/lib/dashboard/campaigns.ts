@@ -134,3 +134,113 @@ export function optimizingFor(objective: AdGoal, destination: AdDestination | nu
 }
 
 export { money };
+
+// --- the campaign board -------------------------------------------------------
+
+/** The board's columns, in the order a campaign moves through them. */
+export const BOARD_COLUMNS = [
+  { key: "draft", label: "Draft" },
+  { key: "awaiting", label: "Awaiting approval" },
+  { key: "scheduled", label: "Scheduled" },
+  { key: "active", label: "Active" },
+  { key: "paused", label: "Paused" },
+  { key: "completed", label: "Completed" },
+] as const;
+export type BoardColumn = (typeof BOARD_COLUMNS)[number]["key"];
+
+/**
+ * Where a campaign sits on the board, from its own records only.
+ * "Awaiting approval" is built and waiting for the owner; "Scheduled" is
+ * approved and waiting — for its start date, or for Meta to switch it on —
+ * never "active" until MAIRO's record says Meta accepted it.
+ */
+export function boardColumn(c: { status: CampaignStatus; endDate: Date | null; startDate?: Date | null; launchApprovedAt?: Date | null }, now: Date): BoardColumn {
+  if (c.status === "ARCHIVED" || (c.endDate && c.endDate < now)) return "completed";
+  if (c.status === "PAUSED") return "paused";
+  if (c.status === "ACTIVE") return c.startDate && c.startDate > now ? "scheduled" : "active";
+  if (c.status === "PENDING_REVIEW") return c.launchApprovedAt ? "scheduled" : "awaiting";
+  return "draft";
+}
+
+// --- the campaign's life, as stages -----------------------------------------------
+
+export type CampaignStage = { id: string; label: string; state: "done" | "current" | "upcoming" | "problem"; when: string | null; note: string | null };
+
+const day = (d: Date | null | undefined) => (d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null);
+
+/**
+ * Where a campaign is in its life — created, built in Meta, approved by
+ * you, Meta's review, delivering, ended — from its records only: a stage is
+ * done when something recorded it, and the current one is where it is now.
+ * A rejected ad or a failed launch marks its stage as a problem rather than
+ * moving on.
+ */
+export function campaignStages(
+  c: {
+    status: CampaignStatus;
+    createdAt: Date;
+    endDate: Date | null;
+    launchApprovedAt?: Date | null;
+    platformCampaigns: { externalCampaignId?: string | null; createdAt?: Date | null; adReviewState?: string | null; adReviewCheckedAt?: Date | null; lastError?: string | null }[];
+  },
+  now: Date,
+): { stages: CampaignStage[]; summary: string } {
+  const pcs = c.platformCampaigns;
+  const built = pcs.find((p) => p.externalCampaignId) ?? null;
+  const review = (s: string) => pcs.some((p) => p.adReviewState === s);
+  const reviewedAt = pcs.map((p) => p.adReviewCheckedAt).filter((d): d is Date => Boolean(d)).sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+  const ended = c.status === "ARCHIVED" || Boolean(c.endDate && c.endDate < now);
+
+  let at: number;
+  let problem: string | null = null;
+  let summary: string;
+  if (ended) {
+    at = 6;
+    summary = c.status === "ARCHIVED" ? "Stopped. It no longer runs or spends." : `Ended on ${day(c.endDate)}.`;
+  } else if (c.status === "ACTIVE" || c.status === "PAUSED") {
+    if (review("REJECTED")) {
+      at = 3;
+      problem = "Ad rejected";
+      summary = "Meta didn't approve the ad, so it isn't delivering. The Performance tab says what to change.";
+    } else if (review("WITH_ISSUES")) {
+      at = 4;
+      problem = "Delivering with issues";
+      summary = "Delivering, but Meta flagged a problem with the ad.";
+    } else if (review("APPROVED")) {
+      at = 4;
+      summary = c.status === "PAUSED" ? "Paused. It doesn't spend until you switch it back on." : "Delivering — Meta approved the ad.";
+    } else {
+      at = 3;
+      summary = review("PENDING") ? "Switched on and in Meta's review — usually within a day." : "Switched on. MAIRO hasn't read Meta's review result yet.";
+    }
+  } else if (c.status === "PENDING_REVIEW") {
+    if (pcs.some((p) => p.lastError)) {
+      at = 2;
+      problem = "Launch failed";
+      summary = "Approved, but Meta refused the launch. Open Setup to see why.";
+    } else if (c.launchApprovedAt) {
+      at = 2;
+      summary = "Approved by you — MAIRO switches it on once Meta can run it.";
+    } else {
+      at = 1;
+      summary = "Built in Meta, switched off. It waits for your approval before anything spends.";
+    }
+  } else {
+    at = built ? 1 : 0;
+    summary = built ? "Built in Meta, switched off." : "A draft in MAIRO — nothing is in Meta yet.";
+  }
+
+  const defs: { id: string; label: string; when: Date | null | undefined }[] = [
+    { id: "created", label: "Created", when: c.createdAt },
+    { id: "built", label: "Built in Meta", when: built?.createdAt },
+    { id: "approved", label: "Approved by you", when: c.launchApprovedAt },
+    { id: "review", label: "Meta's review", when: reviewedAt },
+    { id: "delivering", label: c.status === "PAUSED" ? "Delivering · paused" : "Delivering", when: null },
+    { id: "ended", label: "Ended", when: c.endDate && c.endDate < now ? c.endDate : null },
+  ];
+  const stages = defs.map((d, i): CampaignStage => {
+    const state: CampaignStage["state"] = i < at ? "done" : i === at ? (problem ? "problem" : "current") : "upcoming";
+    return { id: d.id, label: d.label, state: at === 6 && i <= 5 ? "done" : state, when: state === "upcoming" ? null : day(d.when ?? null), note: i === at ? problem : null };
+  });
+  return { stages, summary };
+}

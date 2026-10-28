@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, siteUrl } from "@/lib/site";
 import { sitePixelId } from "@/lib/site-tracking";
 import { SitePixel } from "@/components/site-pixel";
+import { THEME_SCRIPT } from "@/components/theme/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -78,7 +79,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // The theme script sets data-theme / data-palette before React hydrates.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-neutral-950 text-white">
         {children}
         <SitePixel pixelId={pixelId} />

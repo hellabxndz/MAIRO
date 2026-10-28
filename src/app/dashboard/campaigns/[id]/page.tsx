@@ -44,7 +44,8 @@ import { toView } from "@/lib/decisions/store";
 import { MairoDecisionCard } from "@/components/decisions/decision-card";
 import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
 import { objectiveCapability, optimizationCapability } from "@/lib/meta-intelligence/capabilities";
-import { familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "@/lib/dashboard/campaigns";
+import { campaignStages, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "@/lib/dashboard/campaigns";
+import { StageTimeline } from "@/components/viz/stage-timeline";
 import { performanceTiles } from "@/lib/dashboard/home";
 import { EMPTY_METRICS } from "@/lib/ad-platforms/types";
 
@@ -117,6 +118,8 @@ export default async function CampaignPage({
             adReviewState: true,
             adReviewExplanation: true,
             adReviewAction: true,
+            adReviewCheckedAt: true,
+            createdAt: true,
           },
         },
         ads: { orderBy: { position: "asc" } },
@@ -232,6 +235,16 @@ export default async function CampaignPage({
           <RunControl campaignId={campaign.id} status={campaign.status} dailyBudgetLabel={money(campaign.totalDailyBudgetCents)} />
         )}
       </div>
+
+      {/* Where it is in its life, from its records — the reference's progress line. */}
+      {(() => {
+        const life = campaignStages(campaign, new Date());
+        return (
+          <section aria-label="Campaign stages" className="mb-6 rounded-[24px] border border-[color:var(--mairo-line)] px-5 py-5 sm:px-6">
+            <StageTimeline stages={life.stages} summary={life.summary} />
+          </section>
+        );
+      })()}
 
       <CampaignTabs active={tab} />
 
