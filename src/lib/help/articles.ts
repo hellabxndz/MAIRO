@@ -80,6 +80,7 @@ const CHECK_MEANS: Record<CheckStatus, string> = {
   NOT_SEEN: "Meta received none of that event in the period checked. Complete one yourself, then check again.",
   MISSING_PERMISSION: "Your Meta connection isn't allowed to ask. Connect Meta again and leave every permission switched on.",
   FAILED: "The check itself didn't work — a network or Meta error. It says nothing about your pixel; try again in a moment.",
+  UNAVAILABLE: "Nothing MAIRO can ask Meta answers this — for example whether Meta merged a browser and a server copy of the same event. MAIRO says where to see it in Events Manager instead.",
 };
 
 function scopeTerms(): { term: string; text: string }[] {
@@ -186,7 +187,7 @@ export function helpArticles(): HelpArticle[] {
         { kind: "h", text: "The stages" },
         { kind: "terms", items: STAGE_ORDER.map((s) => ({ term: STAGE_LABEL[s], text: STAGE_MEANS[s] })) },
         { kind: "h", text: "What a check can say" },
-        { kind: "terms", items: (["VERIFIED", "NOT_DETECTED", "NOT_SEEN", "MISSING_PERMISSION", "FAILED"] as CheckStatus[]).map((c) => ({ term: { VERIFIED: "Verified", NOT_DETECTED: "Not detected", NOT_SEEN: "Not seen", MISSING_PERMISSION: "Missing permission", FAILED: "Check failed" }[c], text: CHECK_MEANS[c] })) },
+        { kind: "terms", items: (["VERIFIED", "NOT_DETECTED", "NOT_SEEN", "MISSING_PERMISSION", "FAILED", "UNAVAILABLE"] as CheckStatus[]).map((c) => ({ term: ({ VERIFIED: "Verified", NOT_DETECTED: "Not detected", NOT_SEEN: "Not seen", MISSING_PERMISSION: "Missing permission", FAILED: "Check failed", UNAVAILABLE: "Can't be checked here" } satisfies Record<CheckStatus, string>)[c], text: CHECK_MEANS[c] })) },
         { kind: "p", text: "Only a failed check is a failure. The others are answers, and each comes with its next step." },
         { kind: "h", text: "Installing it" },
         { kind: "p", text: "MAIRO shows the steps for the way you choose:" },

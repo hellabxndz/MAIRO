@@ -86,7 +86,7 @@ export function StepGoal({
           <Note tone="warn">
             Your website may need additional tracking setup so we can measure purchases accurately. Until Meta sees
             purchases from your site, MAIRO optimizes this campaign for website visits instead.{" "}
-            <Link href="/dashboard/tracking" className="underline underline-offset-4">
+            <Link href="/dashboard/pixel" className="underline underline-offset-4">
               Set up tracking
             </Link>
           </Note>

@@ -110,7 +110,7 @@ export async function recordOrder(
     if (unsent.length === 0) {
       return { eventId: existing.eventId, created: false, forwarded: [] };
     }
-    const retried = await forwardAll(organizationId, existing.id, {
+    const retried = await forwardAll(organizationId, existing.source, existing.id, {
       ...order,
       consentBlocked: !allowed,
       eventId: existing.eventId,
@@ -141,7 +141,7 @@ export async function recordOrder(
     },
   });
 
-  const forwarded = await forwardAll(organizationId, event.id, {
+  const forwarded = await forwardAll(organizationId, source, event.id, {
     ...order,
     consentBlocked: !allowed,
     eventId,
@@ -172,6 +172,14 @@ function phoneCountryHint(country: string | null): string | null {
   return codes[country] ?? null;
 }
 
+/**
+ * The store platforms whose own Meta integration sends their orders to Meta
+ * server-side (lib/tracking/measurement.ts installPlan), by install route.
+ * Only orders from that platform are skipped: Shopify's app doesn't know about
+ * an order typed in by hand or posted from elsewhere.
+ */
+const NATIVE_SERVER_SOURCE: Record<string, OrderSource> = { shopify_app: "SHOPIFY", wordpress_plugin: "WOOCOMMERCE" };
+
 type ForwardInput = IncomingOrder & {
   /** The consent setting says this order mustn't be sent to an ad network. */
   consentBlocked?: boolean;
@@ -191,16 +199,29 @@ type ForwardInput = IncomingOrder & {
  */
 async function forwardAll(
   organizationId: string,
+  source: OrderSource,
   conversionEventId: string,
   order: ForwardInput
 ): Promise<{ platform: AdPlatform; status: string; message: string | null }[]> {
-  const pixels = await db.trackingPixel.findMany({ where: { organizationId } });
+  const [pixels, profile] = await Promise.all([
+    db.trackingPixel.findMany({ where: { organizationId } }),
+    db.trackingProfile.findUnique({ where: { organizationId }, select: { installRoute: true } }),
+  ]);
   const platforms: AdPlatform[] = ["META"];
   const out: { platform: AdPlatform; status: string; message: string | null }[] = [];
+  // The store's own Meta integration already sends each purchase from its
+  // server, with its own event ids: a second server copy from MAIRO would be
+  // counted as a second sale. The order is still kept for the owner's reports.
+  const nativeServer = Boolean(profile?.installRoute && NATIVE_SERVER_SOURCE[profile.installRoute] === source);
 
   for (const platform of platforms) {
     if (order.consentBlocked) {
       await upsertForward(conversionEventId, platform, "SKIPPED", "Not sent: your consent setting doesn't allow sending this order.");
+      out.push({ platform, status: "SKIPPED", message: null });
+      continue;
+    }
+    if (platform === "META" && nativeServer) {
+      await upsertForward(conversionEventId, platform, "SKIPPED", "Not sent: your store's own Meta integration sends purchases to Meta, so MAIRO doesn't send a second copy.");
       out.push({ platform, status: "SKIPPED", message: null });
       continue;
     }

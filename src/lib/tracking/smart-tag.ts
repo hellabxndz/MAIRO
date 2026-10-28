@@ -51,17 +51,30 @@ export function tagRule(a: ConversionAction): TagRule | null {
   }
 }
 
-export function tagRules(niche: Niche): TagRule[] {
-  return niche.actions.map(tagRule).filter((r): r is TagRule => r !== null);
+/**
+ * The rules the tag spots on its own. Never a Purchase: a page address or a
+ * click can't say an order was confirmed or what it was worth, so a purchase
+ * only ever comes from mairo('purchase', { value, currency, order_id }) on the
+ * confirmation page, or from the store itself. When the owner chose what to
+ * measure (lib/tracking/measurement.ts), only those events.
+ */
+export function tagRules(niche: Niche, only?: ReadonlySet<string> | null): TagRule[] {
+  return niche.actions
+    .map(tagRule)
+    .filter((r): r is TagRule => r !== null && r.e !== "Purchase" && (!only || only.has(r.e)));
 }
 
 /** Outcomes a site may also report itself with mairo('track', …), whatever its business type. */
 const ALWAYS_ACCEPTED = ["Lead", "Contact", "Schedule", "CompleteRegistration", "SubmitApplication"];
 
-/** The events MAIRO relays for this business: its catalogue's, plus the common lead events. */
-export function acceptedEvents(niche: Niche): Set<string> {
+/** The events MAIRO relays for this business: the ones the owner chose; before they've chosen, its catalogue's plus the common lead events. */
+export function acceptedEvents(niche: Niche, chosen?: ReadonlySet<string> | null): Set<string> {
+  if (chosen) return new Set(chosen);
   return new Set([...niche.actions.map((a) => a.metaEvent), ...ALWAYS_ACCEPTED]);
 }
+
+/** The id a purchase carries, from the store's order id: the same string the store relay derives (lib/tracking/hash.ts deriveEventId), so the browser and server copies are one sale to Meta. */
+export const PURCHASE_ID = /^mairo_[A-Za-z0-9_-]{1,64}$/;
 
 /** A tag id is a TrackingPixel id (a cuid). Anything else is refused before the database. */
 export function validTagId(id: string): boolean {
@@ -91,6 +104,10 @@ export type TagConfig = {
   rules: TagRule[];
   /** True when the business sends events only with the visitor's consent. */
   consentRequired: boolean;
+  /** The events the site may report itself with mairo('track', …). Purchase is never one: it has its own call. */
+  events: string[];
+  /** Whether mairo('purchase', …) is accepted (the owner chose to measure purchases, or hasn't chosen yet). */
+  purchase: boolean;
 };
 
 /** The tag's JavaScript. ES5, no dependencies, safe to load twice. */
@@ -122,9 +139,27 @@ export function tagScript(config: TagConfig): string {
     last[ev] = now;
     var id = rid();
     try { w.fbq("trackSingle", C.pixel, ev, {}, { eventID: id }); } catch (e) {}
-    var body = JSON.stringify({ e: ev, id: id, u: location.origin + location.pathname, fbp: cookie("_fbp"), fbc: cookie("_fbc"), c: granted ? 1 : 0 });
+    beacon({ e: ev, id: id, u: location.origin + location.pathname, fbp: cookie("_fbp"), fbc: cookie("_fbc"), c: granted ? 1 : 0 });
+  }
+  function beacon(o) {
+    var body = JSON.stringify(o);
     try { if (navigator.sendBeacon && navigator.sendBeacon(C.endpoint, body)) return; } catch (e) {}
     try { fetch(C.endpoint, { method: "POST", body: body, keepalive: true, mode: "no-cors" }); } catch (e) {}
+  }
+  // A confirmed order only: a number above zero, a 3-letter currency and the
+  // order's id. Anything less isn't sent — a purchase without its value can't
+  // be reported on. Once per order, even if the page is reloaded.
+  function purchase(p) {
+    if (!C.purchase || !p) return;
+    var v = Number(p.value), cur = String(p.currency || "").toUpperCase(), oid = String(p.order_id == null ? "" : p.order_id).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+    if (!(v > 0 && v < 1e7) || !/^[A-Z]{3}$/.test(cur) || !oid) return;
+    var id = "mairo_" + oid, seen = [];
+    try { seen = JSON.parse(w.localStorage.getItem("mairo_orders") || "[]"); } catch (e) {}
+    if (seen.indexOf(id) > -1) return;
+    try { w.localStorage.setItem("mairo_orders", JSON.stringify(seen.concat(id).slice(-20))); } catch (e) {}
+    v = Math.round(v * 100) / 100;
+    try { w.fbq("trackSingle", C.pixel, "Purchase", { value: v, currency: cur }, { eventID: id }); } catch (e) {}
+    beacon({ e: "Purchase", id: id, u: location.origin + location.pathname, fbp: cookie("_fbp"), fbc: cookie("_fbc"), c: granted ? 1 : 0, v: v, cur: cur });
   }
   function each(kind, fn) { for (var i = 0; i < C.rules.length; i++) if (C.rules[i].k === kind) fn(C.rules[i]); }
   function start() {
@@ -152,7 +187,8 @@ export function tagScript(config: TagConfig): string {
   }
   w.mairo = function (cmd, arg) {
     if (cmd === "consent" && (arg === true || arg === "granted")) { granted = true; start(); }
-    else if (cmd === "track" && typeof arg === "string" && granted) { start(); send(arg); }
+    else if (cmd === "track" && typeof arg === "string" && granted && C.events.indexOf(arg) > -1) { start(); send(arg); }
+    else if (cmd === "purchase" && granted) { start(); purchase(arg); }
   };
   if (granted) start();
 })(window, document);

@@ -77,6 +77,8 @@ export async function loadOnboardingFacts(organizationId: string, now = new Date
       decision: pixelState.decision,
       status: pixelStatus(pixelState),
       leadMeasurement: pixelState.leadMeasurement,
+      goalsSaved: pixelState.measurement?.goalsSaved ?? false,
+      deferred: pixelState.measurement?.deferred ?? false,
     },
     subscription: {
       paid,

@@ -12,11 +12,15 @@
 //   NOT_SEEN            Meta received none of that event in the window
 //   MISSING_PERMISSION  the connection isn't allowed to ask
 //   FAILED              the check itself didn't work (network, Meta error)
+//   UNAVAILABLE         nothing MAIRO can ask answers this (e.g. whether Meta
+//                       actually merged a browser and server copy) — said so,
+//                       with where the owner can see it instead
 // Only FAILED is a failure. The others are answers, and each has its own next
 // step.
 
-export type CheckStatus = "VERIFIED" | "NOT_SEEN" | "NOT_DETECTED" | "MISSING_PERMISSION" | "FAILED";
-export type CheckSource = "meta_stats" | "meta_last_fired" | "public_scan";
+export type CheckStatus = "VERIFIED" | "NOT_SEEN" | "NOT_DETECTED" | "MISSING_PERMISSION" | "FAILED" | "UNAVAILABLE";
+/** meta_stats: event counts; meta_params: the data fields an event carried; meta_sources: browser vs server counts. */
+export type CheckSource = "meta_stats" | "meta_last_fired" | "public_scan" | "meta_params" | "meta_sources";
 export type CheckRecord = { status: CheckStatus; source: CheckSource; detail: string | null; count: number | null; checkedAt: Date };
 
 export type TrackingStage = "no_asset" | "asset_selected" | "installation_pending" | "installation_detected" | "event_verification_pending" | "verified";
@@ -67,6 +71,7 @@ function nextForEvent(event: string, status: CheckStatus): string {
     case "MISSING_PERMISSION":
       return "Your Meta connection isn't allowed to read this pixel's events. Reconnect Meta and grant access to the pixel, or check it in Events Manager.";
     case "FAILED":
+    case "UNAVAILABLE":
       return "The check didn't finish. Try again in a minute.";
     default:
       return `Check the ${event} event.`;
@@ -115,7 +120,7 @@ export function consentAllows(policy: ConsentPolicy, consent: OrderConsent): boo
 
 // --- how to install, by website platform -------------------------------------
 
-export type InstallRoute = "shopify_app" | "wordpress_plugin" | "wix" | "squarespace" | "gtm" | "manual";
+export type InstallRoute = "shopify_app" | "wordpress_plugin" | "wix" | "squarespace" | "gtm" | "mairo_tag" | "manual";
 
 export const INSTALL_ROUTES: Record<InstallRoute, { label: string; steps: string[]; note?: string }> = {
   shopify_app: {
@@ -143,6 +148,15 @@ export const INSTALL_ROUTES: Record<InstallRoute, { label: string; steps: string
   gtm: {
     label: "Google Tag Manager — MAIRO's ready-made container",
     steps: ["Use the Tag Manager section below: MAIRO builds the tags for your business type.", "Import or publish the container.", "Complete the action yourself, then run the event check here."],
+  },
+  mairo_tag: {
+    label: "MAIRO's one-line tag",
+    steps: [
+      "Paste MAIRO's one line into your website's <head>, on every page.",
+      "It loads your Pixel and counts the events you chose; shopping steps and purchases need a short call on the right page (see the steps).",
+      "Do each action yourself once, then run the event check here.",
+    ],
+    note: "The tag sends each event from the browser and through MAIRO's server with the same event ID, so Meta counts it once.",
   },
   manual: {
     label: "Paste the code yourself",

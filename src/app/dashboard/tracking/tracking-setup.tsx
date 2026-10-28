@@ -52,8 +52,9 @@ const CHECK_TONE: Record<CheckStatus, { label: string; tone: "green" | "yellow" 
   NOT_SEEN: { label: "Not seen yet", tone: "yellow" },
   MISSING_PERMISSION: { label: "Missing permission", tone: "yellow" },
   FAILED: { label: "Check failed", tone: "red" },
+  UNAVAILABLE: { label: "Can't be checked here", tone: "neutral" },
 };
-const SOURCE: Record<string, string> = { meta_stats: "Meta's event counts", meta_last_fired: "Meta's last-received time", public_scan: "MAIRO's reading of your website" };
+const SOURCE: Record<string, string> = { meta_stats: "Meta's event counts", meta_last_fired: "Meta's last-received time", public_scan: "MAIRO's reading of your website", meta_params: "The data fields Meta received", meta_sources: "Meta's browser and server counts" };
 
 type Result = { ok: true; message: string } | { ok: false; error: string };
 

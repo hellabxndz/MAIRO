@@ -69,6 +69,9 @@ export type OnboardingFacts = {
     decision: "use" | "declined" | null;
     status: "not_set_up" | "declined" | "access_lost" | "selected_not_receiving" | "receiving" | "purchases_verified";
     leadMeasurement: string | null;
+    /** The guided setup (lib/tracking/measurement.ts): what to measure saved, or put off for later. */
+    goalsSaved?: boolean;
+    deferred?: boolean;
   };
   /** The suggested ads: how many directions, whether one is approved as it is now, and the owner's own videos. */
   creative?: { directions: number; approved: boolean; videos: number };
@@ -213,17 +216,21 @@ export function onboardingSteps(f: OnboardingFacts): OnboardingStep[] {
   const chosen = px.status !== "not_set_up" && px.status !== "declined";
   add({
     id: "pixel",
-    label: shop ? "Connect your Meta Pixel" : "Connect your Meta Pixel (optional)",
+    label: shop ? "Set up website tracking" : "Set up website tracking (optional)",
     why: shop
       ? "Needed to measure purchases on your website, and before MAIRO launches a campaign aimed at website purchases."
       : "Optional. Lets MAIRO count enquiries on your website. Calls, forms and leads you mark are counted without it.",
     who: "you",
     // Optional and not yet answered is fine to move past: it never holds up a
     // business that doesn't need it. A shop that hasn't answered is asked.
-    state: !connected ? "todo" : px.status === "access_lost" ? "attention" : chosen ? "done" : px.decision === "declined" || !shop ? "skipped" : "todo",
+    state: !connected ? "todo" : px.status === "access_lost" ? "attention" : px.deferred ? "skipped" : chosen ? "done" : px.decision === "declined" || !shop ? "skipped" : "todo",
     detail: !connected
       ? null
-      : px.status === "access_lost"
+      : px.deferred
+        ? shop
+          ? "Set up later — campaigns aimed at website purchases wait for it"
+          : "Set up later"
+        : px.status === "access_lost"
         ? "MAIRO can't reach the Pixel you chose — re-check access"
         : px.status === "selected_not_receiving"
           ? "Chosen — not receiving website events yet"

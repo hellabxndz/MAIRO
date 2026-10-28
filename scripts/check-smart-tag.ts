@@ -39,14 +39,15 @@ async function main() {
     const trades = tagRules(nicheById("home_services"));
     assert.deepEqual(trades.map((r) => `${r.k}:${r.e}`), ["tel:Contact", "form:Lead", "mail:Contact"]);
     const shop = tagRules(nicheById("ecommerce"));
-    assert.deepEqual(shop.map((r) => `${r.k}:${r.e}`), ["url:Purchase", "url:InitiateCheckout", "dl:AddToCart"]);
-    assert.ok(shop.some((r) => r.k === "url" && r.m === "/thank-you"));
+    // A page address can't confirm an order or say what it was worth: the tag never fires Purchase on its own.
+    assert.deepEqual(shop.map((r) => `${r.k}:${r.e}`), ["url:InitiateCheckout", "dl:AddToCart"]);
+    assert.ok(!shop.some((r) => r.e === "Purchase"));
   });
 
   await check("the tag file: numeric pixel only, and nothing in it can close the script", () => {
-    assert.throws(() => tagScript({ pixel: "123');alert(1)//", endpoint: "https://x/api/t/c1", rules: [], consentRequired: false }));
+    assert.throws(() => tagScript({ pixel: "123');alert(1)//", endpoint: "https://x/api/t/c1", rules: [], consentRequired: false, events: [], purchase: false }));
     const evil: Niche = { ...nicheById("general"), actions: [{ id: "x", label: "x", why: "", metaEvent: "Lead", detection: "url_contains", match: "</script><script>alert(1)</script>", hasValue: false }] };
-    const js = tagScript({ pixel: PIXEL, endpoint: "https://www.mairo.io/api/t/cabc", rules: tagRules(evil), consentRequired: false });
+    const js = tagScript({ pixel: PIXEL, endpoint: "https://www.mairo.io/api/t/cabc", rules: tagRules(evil), consentRequired: false, events: ["Lead"], purchase: true });
     assert.ok(!js.includes("</script>"), "no closing tag survives");
     assert.ok(js.includes("\\u003c/script\\u003e"));
     assert.ok(js.includes("globalPrivacyControl"), "honours Global Privacy Control");
@@ -84,9 +85,16 @@ async function main() {
   });
 
   await check("relayed only: an event this business counts, with consent when required, from its own website", () => {
-    const target: TagTarget = { organizationId: ORG, pixelId: PIXEL, nicheId: "home_services", consentRequired: false, website: "bobsplumbing.com" };
+    const target: TagTarget = { organizationId: ORG, pixelId: PIXEL, nicheId: "home_services", consentRequired: false, website: "bobsplumbing.com", chosen: null, storeRelaysOrders: false };
     assert.deepEqual(judgeHit(parseTagHit(hit())!, target), { send: true });
-    assert.deepEqual(judgeHit(parseTagHit(hit({ e: "Purchase" }))!, target), { send: false, why: "event" }, "a plumber's tag doesn't report sales");
+    assert.equal(parseTagHit(hit({ e: "Purchase" })), null, "a purchase without its order id, value and currency isn't one");
+    const sale = parseTagHit(hit({ e: "Purchase", id: "mairo_1001", v: 49.99, cur: "USD" }))!;
+    assert.deepEqual([sale.v, sale.cur], [49.99, "USD"]);
+    assert.deepEqual(judgeHit(sale, target), { send: true }, "before the owner chooses, a valid purchase is relayed");
+    assert.deepEqual(judgeHit(sale, { ...target, chosen: ["Lead"] }), { send: false, why: "event" }, "not when purchases weren't chosen");
+    assert.deepEqual(judgeHit(sale, { ...target, storeRelaysOrders: true }), { send: false, why: "store" }, "the store sends the server copy");
+    assert.equal(parseTagHit(hit({ e: "Purchase", id: "mairo_1001", v: 0, cur: "USD" })), null);
+    assert.equal(parseTagHit(hit({ e: "Purchase", id: "mairo_1001", v: 10, cur: "dollars" })), null);
     assert.deepEqual(judgeHit(parseTagHit(hit({ u: "https://evil.example/contact" }))!, target), { send: false, why: "site" });
     assert.deepEqual(judgeHit(parseTagHit(hit({ c: 0 }))!, { ...target, consentRequired: true }), { send: false, why: "consent" });
     assert.ok(onBusinessSite("https://shop.bobsplumbing.com/x", "https://www.bobsplumbing.com"), "subdomains count");

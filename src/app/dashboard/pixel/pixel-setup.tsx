@@ -39,7 +39,8 @@ const host = (url: string | null) => {
   }
 };
 
-export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetupView; returnTo: string | null; reconnectHref: string }) {
+/** embedded: inside the guided setup (measurement-setup.tsx), which explains why and leads on itself. */
+export function PixelSetup({ view, returnTo, reconnectHref, embedded = false }: { view: PixelSetupView; returnTo: string | null; reconnectHref: string; embedded?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -93,7 +94,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
   return (
     <div className="space-y-6">
       {/* 1. Why */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6" aria-labelledby="why-title">
+      {!embedded && <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6" aria-labelledby="why-title">
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="why-title" className="text-base font-medium text-white">Why MAIRO is asking</h2>
           {shop ? <Badge tone="yellow">Needed for purchase measurement</Badge> : <Badge tone="neutral">Optional for your business</Badge>}
@@ -111,7 +112,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
             ? "For an online shop, a working Pixel is needed to measure purchases, and before MAIRO launches a campaign aimed at website purchases. MAIRO doesn't need it to reach any of your other business data."
             : "For your business it's optional: calls, Meta's lead forms, MAIRO's forms and the leads you mark are counted without it. Connect one if people enquire or buy on your website."}
         </p>
-      </section>
+      </section>}
 
       {!view.connected && (
         <section className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.05] p-5 text-sm text-neutral-200">
@@ -170,8 +171,12 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
             {view.pixel && (
               <>
                 <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => run(recheckPixelAction)}>Re-check access</button>
-                <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => run(checkInstallationAction)}>Check my website</button>
-                <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => run(checkEventsAction)}>Check with Meta</button>
+                {!embedded && (
+                  <>
+                    <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => run(checkInstallationAction)}>Check my website</button>
+                    <button type="button" className={secondaryButtonClass} disabled={pending} onClick={() => run(checkEventsAction)}>Check with Meta</button>
+                  </>
+                )}
               </>
             )}
             {!choosing && (
@@ -183,7 +188,7 @@ export function PixelSetup({ view, returnTo, reconnectHref }: { view: PixelSetup
           {view.pixel && !receiving && (
             <p className="mt-4 text-sm leading-relaxed text-neutral-400">
               Choosing a Pixel in MAIRO doesn&rsquo;t put it on your website. MAIRO never adds code to your site by itself:{" "}
-              <Link href="/dashboard/tracking" className="text-violet-bright underline underline-offset-4">install it with the steps on the Tracking page</Link>, then check here.
+              {embedded ? "the next step shows how for your website." : <><Link href="/dashboard/tracking" className="text-violet-bright underline underline-offset-4">install it with the steps on the Tracking page</Link>, then check here.</>}
             </p>
           )}
         </section>

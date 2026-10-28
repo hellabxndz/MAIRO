@@ -71,6 +71,7 @@ const NO_ROLE_CHECK: Record<string, string> = {
   "tracking-actions:listPixelChoicesAction": "reads",
   "tracking-actions:checkInstallationAction": "reads",
   "tracking-actions:checkEventsAction": "reads",
+  "measurement-actions:verifyMeasurementAction": "reads",
   "tracking-actions:listGtmContainersAction": "reads",
   "sales-setup-actions:loadPagePostsAction": "reads",
   "sales-setup-actions:loadInstagramPostsAction": "reads",

@@ -65,7 +65,7 @@ export default async function AccountPage() {
       entries: [
         { href: "/dashboard/integrations", label: "Integrations", hint: "Where you advertise" },
         { href: "/dashboard/meta", label: "Meta connection", hint: "Your Page, ad account and permissions" },
-        { href: "/dashboard/tracking", label: "Measuring sales", hint: "Pixel and conversion tracking" },
+        { href: "/dashboard/pixel", label: "Tracking", hint: "What to measure, your Pixel, and checks with Meta" },
       ],
     },
     {

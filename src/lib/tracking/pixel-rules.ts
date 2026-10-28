@@ -92,6 +92,12 @@ export type PixelState = {
   } | null;
   /** Meta has received a Purchase event recently (the pixel's event stats). */
   purchaseVerified: boolean;
+  /**
+   * What the owner chose in the guided setup (lib/tracking/measurement.ts),
+   * when they've been through it. Absent for businesses that haven't: the
+   * rules then stand as they were.
+   */
+  measurement?: { goalsSaved: boolean; purchaseChosen: boolean; deferred: boolean };
 };
 
 /** Selected in MAIRO is not the same as receiving events — kept apart everywhere. */
@@ -115,7 +121,7 @@ export const PIXEL_STATUS_LABEL: Record<PixelStatus, string> = {
 };
 
 export type Fix = { label: string; href: string };
-export type LaunchGate = { ok: true } | { ok: false; code: "no_pixel" | "declined" | "access_lost" | "not_receiving"; title: string; reason: string; fixes: Fix[] };
+export type LaunchGate = { ok: true } | { ok: false; code: "no_pixel" | "declined" | "access_lost" | "not_receiving" | "deferred" | "purchase_not_chosen"; title: string; reason: string; fixes: Fix[] };
 
 const SETUP: Fix = { label: "Set up your Meta Pixel", href: "/dashboard/pixel" };
 // The wizard has no preset: the person picks "website visits" as the goal there.
@@ -127,6 +133,24 @@ const VISITS: Fix = { label: "Build a website-visits campaign instead", href: "/
  */
 export function launchGate(need: PixelNeed, s: PixelState): LaunchGate {
   if (need !== "required_for_purchases") return { ok: true };
+  if (s.measurement?.deferred) {
+    return {
+      ok: false,
+      code: "deferred",
+      title: "Tracking setup is on hold",
+      reason: "You chose to set up tracking later. This campaign is set up to get website purchases, which can't be measured until tracking is set up, so it won't launch yet. Finish setup, or run a campaign for website visits instead.",
+      fixes: [{ label: "Finish tracking setup", href: "/dashboard/pixel" }, VISITS],
+    };
+  }
+  if (s.measurement?.goalsSaved && !s.measurement.purchaseChosen) {
+    return {
+      ok: false,
+      code: "purchase_not_chosen",
+      title: "Purchases aren't among what you chose to measure",
+      reason: "This campaign is set up to get website purchases, but completed purchases aren't one of the things you chose to measure, so MAIRO can't report or optimise for them. Add “Completed purchases”, or run a campaign for website visits instead.",
+      fixes: [{ label: "Choose what to measure", href: "/dashboard/pixel" }, VISITS],
+    };
+  }
   const status = pixelStatus(s);
   switch (status) {
     case "receiving":

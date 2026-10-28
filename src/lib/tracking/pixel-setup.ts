@@ -5,6 +5,7 @@ import { ensureTrackingProfile } from "@/lib/tracking/profile";
 import { classifyMetaError, createPixel, listPixelChoices, selectPixel, type PixelChoice, type SetupResult } from "@/lib/tracking/setup";
 import { fetchMetaPixel, listMetaPixels } from "@/lib/tracking/meta-pixel";
 import { pixelStatusFrom } from "@/lib/tracking/pixels";
+import { goalsFrom } from "@/lib/tracking/measurement";
 import {
   businessPixelNeed,
   campaignPixelNeed,
@@ -61,6 +62,11 @@ export async function pixelStateFor(organizationId: string): Promise<PixelState 
         }
       : null,
     purchaseVerified: latest("event:Purchase")?.status === "VERIFIED",
+    measurement: {
+      goalsSaved: Boolean(profile.measurementGoalsSavedAt),
+      purchaseChosen: goalsFrom(profile.measurementGoals).includes("purchase"),
+      deferred: Boolean(profile.setupDeferredAt),
+    },
   };
 }
 

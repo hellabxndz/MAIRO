@@ -191,7 +191,7 @@ export const ASSISTANT_NAV: NavEntry | null = null;
 
 /** Bottom of the sidebar. */
 export const SECONDARY_NAV: NavEntry[] = [
-  { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} />, also: ["/dashboard/business", "/dashboard/integrations", "/dashboard/billing", "/dashboard/account", "/dashboard/meta", "/dashboard/tracking", "/dashboard/website", "/dashboard/notifications"] },
+  { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} />, also: ["/dashboard/business", "/dashboard/integrations", "/dashboard/billing", "/dashboard/account", "/dashboard/meta", "/dashboard/tracking", "/dashboard/pixel", "/dashboard/website", "/dashboard/notifications"] },
 ];
 
 /** The phone's bottom bar: four destinations around the Create button. */

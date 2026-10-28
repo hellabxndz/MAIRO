@@ -2116,6 +2116,21 @@ model TrackingProfile {
   /// is claimed as connected because of it.
   leadMeasurement  String?
 
+  /// What the owner chose to measure: a JSON array of goal ids from the fixed
+  /// list in src/lib/tracking/measurement.ts (e.g. ["view_content","purchase"]).
+  /// Anything not in that list is dropped on read, so a stored id can never
+  /// become an event name MAIRO didn't define.
+  measurementGoals        String?   @db.Text
+  measurementGoalsSavedAt DateTime?
+  measurementGoalsById    String?
+  /// The website platform the owner confirmed (shopify, woocommerce, wordpress,
+  /// wix, squarespace, webflow, custom, other). MAIRO's detection is only a
+  /// suggestion until this is set.
+  sitePlatform            String?
+  sitePlatformConfirmedAt DateTime?
+  /// "Set up later": nothing is measured, and features that depend on it say so.
+  setupDeferredAt         DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

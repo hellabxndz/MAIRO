@@ -149,7 +149,7 @@ export default async function TrackingPage() {
         description="What it takes for MAIRO to tell you whether the ads made you money — and for the ads to get better at it."
         action={
           <Link href="/dashboard/pixel" className="text-sm text-violet-bright underline underline-offset-4">
-            Which Pixel MAIRO uses
+            Guided setup: what to measure
           </Link>
         }
       />

@@ -112,11 +112,13 @@ export async function fetchMetaPixel(
 export async function fetchPixelEventCounts(
   pixelId: string,
   accessToken: string,
-  since: Date
+  since: Date,
+  opts: { eventSource?: "WEB_ONLY" | "SERVER_ONLY" } = {}
 ): Promise<Record<string, number>> {
+  // Meta keeps these stats for a limited window (about a week), so callers ask for 7 days at most.
   const res = await metaGraphRequest<{ data?: { start_time?: string; data?: { value?: string; count?: number }[] }[] }>(`/${pixelId}/stats`, {
     accessToken,
-    params: { aggregation: "event", start_time: Math.floor(since.getTime() / 1000) },
+    params: { aggregation: "event", start_time: Math.floor(since.getTime() / 1000), ...(opts.eventSource ? { event_source: opts.eventSource } : {}) },
   });
   const counts: Record<string, number> = {};
   for (const bucket of res.data ?? []) {
@@ -126,6 +128,21 @@ export async function fetchPixelEventCounts(
     }
   }
   return counts;
+}
+
+/**
+ * Which data fields arrived with one event (the stats edge's
+ * custom_data_field aggregation): for Purchase, whether Meta is getting a
+ * value and a currency at all. Names only — never the values themselves.
+ */
+export async function fetchPixelEventFields(pixelId: string, accessToken: string, event: string, since: Date): Promise<Set<string>> {
+  const res = await metaGraphRequest<{ data?: { data?: { value?: string; count?: number }[] }[] }>(`/${pixelId}/stats`, {
+    accessToken,
+    params: { aggregation: "custom_data_field", event, start_time: Math.floor(since.getTime() / 1000) },
+  });
+  const fields = new Set<string>();
+  for (const bucket of res.data ?? []) for (const row of bucket.data ?? []) if (row.value && (row.count ?? 0) > 0) fields.add(row.value.toLowerCase());
+  return fields;
 }
 
 function toPixel(node: PixelNode): MetaPixel {

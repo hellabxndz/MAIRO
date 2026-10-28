@@ -50,7 +50,7 @@ const GROUPS = {
     routes: [
       "/dashboard", "/dashboard/campaigns", "/dashboard/campaigns/zz-mobile-c0", "/dashboard/create", "/dashboard/creatives", "/dashboard/creatives/suggested",
       "/dashboard/creative-studio", "/dashboard/decisions", "/dashboard/analytics", "/dashboard/reports", "/dashboard/reports/monthly", "/dashboard/leads",
-      "/dashboard/coach", "/dashboard/team", "/dashboard/agents", "/dashboard/mission", "/dashboard/business", "/dashboard/tracking", "/dashboard/website",
+      "/dashboard/coach", "/dashboard/team", "/dashboard/agents", "/dashboard/mission", "/dashboard/business", "/dashboard/tracking", "/dashboard/pixel", "/dashboard/website",
       "/dashboard/meta", "/dashboard/integrations", "/dashboard/launch", "/dashboard/health", "/dashboard/activity", "/dashboard/notifications",
       "/dashboard/settings", "/dashboard/settings/team", "/dashboard/settings/business-brain", "/dashboard/settings/businesses", "/dashboard/settings/reports",
       "/dashboard/billing", "/dashboard/billing/change", "/dashboard/billing/cancel", "/dashboard/account", "/dashboard/guide", "/dashboard/plan", "/dashboard/sales-setup",

@@ -19,6 +19,8 @@ export const FREE_PAGES = [
   "/dashboard/website",
   // Tracking setup: free for the same reason — it has to be right before anything spends.
   "/dashboard/tracking",
+  // The guided tracking setup (what to measure, the Pixel, the checks) — an onboarding step.
+  "/dashboard/pixel",
   // Suggested ads: reading and editing the three directions is free; making a
   // picture, uploading a video and building the campaign are paid, and say so.
   "/dashboard/creatives/suggested",

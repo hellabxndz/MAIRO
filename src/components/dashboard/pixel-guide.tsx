@@ -40,9 +40,9 @@ export async function PixelGuide({ organizationId, className = "" }: { organizat
         <div className="mt-6 border-t border-white/10 pt-6">
           <SimplePixel view={view} heading={false} advancedHref="/dashboard/tracking#advanced" />
           <p className="mt-6 text-xs text-neutral-500">
-            Everything else about tracking — your shop&rsquo;s sales, Google Tag Manager, which pixel to use — is on the{" "}
-            <Link href="/dashboard/tracking" className="text-neutral-300 underline underline-offset-4 hover:text-white">
-              Tracking page
+            Choose what to measure and check each event in the{" "}
+            <Link href="/dashboard/pixel" className="text-neutral-300 underline underline-offset-4 hover:text-white">
+              guided tracking setup
             </Link>
             .
           </p>

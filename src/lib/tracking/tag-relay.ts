@@ -3,7 +3,8 @@ import { loadCredentials } from "@/lib/ad-platforms/connections";
 import { sendMetaConversions } from "@/lib/tracking/meta-pixel";
 import { nicheById } from "@/lib/tracking/niches";
 import { consentPolicyFrom } from "@/lib/tracking/state";
-import { acceptedEvents, tagRules, tagScript, validTagId } from "@/lib/tracking/smart-tag";
+import { PURCHASE_ID, acceptedEvents, tagRules, tagScript, validTagId } from "@/lib/tracking/smart-tag";
+import { eventsFor, goalsFrom } from "@/lib/tracking/measurement";
 
 // The server half of the MAIRO tag (lib/tracking/smart-tag.ts): building a
 // business's tag file, and relaying the outcomes it reports to Meta's
@@ -17,36 +18,60 @@ import { acceptedEvents, tagRules, tagScript, validTagId } from "@/lib/tracking/
 // below and a per-tag rate limit — and nothing else: the endpoint returns
 // nothing and reads nothing back.
 
-export type TagTarget = { organizationId: string; pixelId: string; nicheId: string; consentRequired: boolean; website: string | null };
+export type TagTarget = {
+  organizationId: string;
+  pixelId: string;
+  nicheId: string;
+  consentRequired: boolean;
+  website: string | null;
+  /** The Meta events the owner chose to measure; null before they've chosen. */
+  chosen: string[] | null;
+  /** The store sends its orders to MAIRO, which relays them: the server copy of a purchase comes from there. */
+  storeRelaysOrders: boolean;
+};
 
 export async function tagTarget(tagId: string): Promise<TagTarget | null> {
   if (!validTagId(tagId)) return null;
   const pixel = await db.trackingPixel.findUnique({
     where: { id: tagId },
-    select: { platform: true, externalPixelId: true, organizationId: true, organization: { select: { website: true, trackingProfile: { select: { nicheId: true, serverEventsConsent: true } } } } },
+    select: {
+      platform: true,
+      externalPixelId: true,
+      organizationId: true,
+      organization: { select: { website: true, trackingProfile: { select: { nicheId: true, serverEventsConsent: true, measurementGoals: true, measurementGoalsSavedAt: true } }, storeIngest: { select: { lastReceivedAt: true } } } },
+    },
   });
   if (!pixel || pixel.platform !== "META" || !/^\d{6,30}$/.test(pixel.externalPixelId)) return null;
   const profile = pixel.organization.trackingProfile;
+  const goals = profile?.measurementGoalsSavedAt ? goalsFrom(profile.measurementGoals) : null;
+  const lastOrder = pixel.organization.storeIngest?.lastReceivedAt;
   return {
     organizationId: pixel.organizationId,
     pixelId: pixel.externalPixelId,
     nicheId: profile?.nicheId ?? "general",
     consentRequired: consentPolicyFrom(profile?.serverEventsConsent) === "require_granted",
     website: pixel.organization.website,
+    chosen: goals ? eventsFor(goals) : null,
+    storeRelaysOrders: Boolean(lastOrder && Date.now() - lastOrder.getTime() < 14 * 864e5),
   };
 }
 
 /** The business's tag file. */
 export function buildTagFile(target: TagTarget, tagId: string, appUrl: string): string {
+  const only = target.chosen ? new Set(target.chosen) : null;
+  const accepted = acceptedEvents(nicheById(target.nicheId), only);
   return tagScript({
     pixel: target.pixelId,
     endpoint: `${appUrl.replace(/\/+$/, "")}/api/t/${tagId}`,
-    rules: tagRules(nicheById(target.nicheId)),
+    rules: tagRules(nicheById(target.nicheId), only),
     consentRequired: target.consentRequired,
+    events: [...accepted].filter((e) => e !== "Purchase").sort(),
+    purchase: !only || only.has("Purchase"),
   });
 }
 
-export type TagHit = { e: string; id: string; u: string; fbp: string | null; fbc: string | null; c: 0 | 1 };
+/** v and cur only on a Purchase: the order's total in whole currency units, and its currency. */
+export type TagHit = { e: string; id: string; u: string; fbp: string | null; fbc: string | null; c: 0 | 1; v: number | null; cur: string | null };
 
 const FB_COOKIE = /^fb\.\d\.\d{10,16}\.[A-Za-z0-9_.-]{1,500}$/;
 
@@ -62,7 +87,16 @@ export function parseTagHit(raw: string): TagHit | null {
   if (!v || typeof v !== "object") return null;
   const { e, id, u, fbp, fbc, c } = v;
   if (typeof e !== "string" || !/^[A-Za-z]{2,40}$/.test(e)) return null;
-  if (typeof id !== "string" || !/^m[a-z0-9]{8,30}$/.test(id)) return null;
+  // A purchase carries its order's id, value and currency, or it isn't one.
+  let value: number | null = null;
+  let currency: string | null = null;
+  if (e === "Purchase") {
+    if (typeof id !== "string" || !PURCHASE_ID.test(id)) return null;
+    if (typeof v.v !== "number" || !Number.isFinite(v.v) || v.v <= 0 || v.v >= 1e7) return null;
+    if (typeof v.cur !== "string" || !/^[A-Z]{3}$/.test(v.cur)) return null;
+    value = Math.round(v.v * 100) / 100;
+    currency = v.cur;
+  } else if (typeof id !== "string" || !/^m[a-z0-9]{8,30}$/.test(id)) return null;
   if (typeof u !== "string" || u.length > 500) return null;
   let url: URL;
   try {
@@ -79,6 +113,8 @@ export function parseTagHit(raw: string): TagHit | null {
     fbp: typeof fbp === "string" && FB_COOKIE.test(fbp) ? fbp : null,
     fbc: typeof fbc === "string" && FB_COOKIE.test(fbc) ? fbc : null,
     c: c === 1 ? 1 : 0,
+    v: value,
+    cur: currency,
   };
 }
 
@@ -99,13 +135,19 @@ export function onBusinessSite(pageUrl: string, website: string | null): boolean
   return page === site || page.endsWith(`.${site}`);
 }
 
-export type Verdict = { send: true } | { send: false; why: "event" | "consent" | "site" };
+export type Verdict = { send: true } | { send: false; why: "event" | "consent" | "site" | "store" };
 
 /** Whether a hit is relayed, and if not, why. Pure. */
 export function judgeHit(hit: TagHit, target: TagTarget): Verdict {
-  if (!acceptedEvents(nicheById(target.nicheId)).has(hit.e)) return { send: false, why: "event" };
+  const only = target.chosen ? new Set(target.chosen) : null;
+  if (hit.e === "Purchase") {
+    if (only && !only.has("Purchase")) return { send: false, why: "event" };
+    if (hit.v === null || hit.cur === null) return { send: false, why: "event" };
+  } else if (!acceptedEvents(nicheById(target.nicheId), only).has(hit.e)) return { send: false, why: "event" };
   if (target.consentRequired && hit.c !== 1) return { send: false, why: "consent" };
   if (!onBusinessSite(hit.u, target.website)) return { send: false, why: "site" };
+  // The store already sends this order (same mairo_<order id>), so a second server copy isn't sent.
+  if (hit.e === "Purchase" && target.storeRelaysOrders) return { send: false, why: "store" };
   return { send: true };
 }
 
@@ -136,8 +178,8 @@ export async function relayHit(target: TagTarget, hit: TagHit, visitor: { ip: st
         eventName: hit.e,
         eventId: hit.id,
         eventTime: new Date(),
-        valueCents: null,
-        currency: "usd",
+        valueCents: hit.e === "Purchase" && hit.v !== null ? Math.round(hit.v * 100) : null,
+        currency: hit.cur ?? "usd",
         fbp: hit.fbp,
         fbc: hit.fbc,
         clientIp: visitor.ip,

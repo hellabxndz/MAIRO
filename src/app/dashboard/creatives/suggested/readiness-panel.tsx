@@ -54,7 +54,7 @@ const MARK: Record<string, { sign: string; cls: string; word: string }> = {
 
 /** Links for fixes MAIRO can't make itself. */
 const ELSEWHERE: Partial<Record<string, { label: string; href: string }>> = {
-  tracking: { label: "Set up tracking", href: "/dashboard/tracking" },
+  tracking: { label: "Set up tracking", href: "/dashboard/pixel" },
   landing: { label: "Open your Business Brain", href: "/dashboard/settings/business-brain" },
 };
 

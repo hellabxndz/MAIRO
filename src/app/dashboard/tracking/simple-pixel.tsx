@@ -21,6 +21,7 @@ const STATUS: Record<CheckStatus, { label: string; tone: "green" | "yellow" | "r
   NOT_SEEN: { label: "Nothing yet", tone: "yellow" },
   MISSING_PERMISSION: { label: "Needs permission", tone: "yellow" },
   FAILED: { label: "Couldn't check", tone: "red" },
+  UNAVAILABLE: { label: "Can't be checked here", tone: "neutral" },
 };
 
 type Result = { ok: true; message: string } | { ok: false; error: string };
