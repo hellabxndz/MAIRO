@@ -102,7 +102,7 @@ export function Jarvis({ threadId, initialMessages }: { threadId: string; initia
           <p className="text-[14px] font-medium text-white">JARVIS</p>
           <p className="truncate text-[12px] text-neutral-500">{pending ? "Working…" : listening ? "Listening — press the mic to stop" : "Reads MAIRO's records. Asks before changing anything."}</p>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 text-[12px] text-neutral-400">
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[12px] text-neutral-400">
           <input
             type="checkbox"
             checked={speak}

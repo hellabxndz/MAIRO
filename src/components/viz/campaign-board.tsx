@@ -31,7 +31,8 @@ const TONE: Record<BoardCard["status"]["tone"], string> = {
   blue: "text-signal",
 };
 
-export function CampaignBoard({ columns, goals }: { columns: BoardColumnView[]; goals: { key: string; label: string }[] }) {
+/** `fit` wraps the columns into rows instead of scrolling sideways — for a frame that can't scroll (the public demo). */
+export function CampaignBoard({ columns, goals, fit = false }: { columns: BoardColumnView[]; goals: { key: string; label: string }[]; fit?: boolean }) {
   const [goal, setGoal] = useState<string | null>(null);
   const still = useReducedMotion();
   const shown = useMemo(() => columns.map((c) => ({ ...c, cards: goal ? c.cards.filter((k) => k.goalKey === goal) : c.cards })), [columns, goal]);
@@ -57,9 +58,9 @@ export function CampaignBoard({ columns, goals }: { columns: BoardColumnView[]; 
       )}
       <p className="sr-only" role="status">{total} campaigns shown</p>
       <LayoutGroup>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:thin] lg:mx-0 lg:px-0 min-[1800px]:grid min-[1800px]:snap-none min-[1800px]:grid-cols-6 min-[1800px]:overflow-visible">
+        <div className={fit ? "grid grid-cols-2 gap-3 @3xl/frame:grid-cols-3" : "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:thin] lg:mx-0 lg:px-0 min-[1800px]:grid min-[1800px]:snap-none min-[1800px]:grid-cols-6 min-[1800px]:overflow-visible"}>
           {shown.map((col, i) => (
-            <section key={col.key} aria-labelledby={`col-${col.key}`} className="w-[82vw] max-w-[300px] shrink-0 snap-start rounded-2xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-fg-rgb),0.02)] p-2.5 sm:w-[272px] min-[1800px]:w-auto min-[1800px]:max-w-none">
+            <section key={col.key} aria-labelledby={`col-${col.key}`} className={`${fit ? "" : "w-[82vw] max-w-[300px] shrink-0 snap-start sm:w-[272px] min-[1800px]:w-auto min-[1800px]:max-w-none"} rounded-2xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-fg-rgb),0.02)] p-2.5`}>
               <header className="px-1.5 pb-2.5 pt-1">
                 <div className="flex items-center gap-2">
                   <span aria-hidden className="grid h-5 w-5 place-items-center rounded-md bg-[rgba(var(--mairo-fg-rgb),0.06)] font-mono text-[10.5px] text-neutral-400">{i + 1}</span>
@@ -85,7 +86,7 @@ export function CampaignBoard({ columns, goals }: { columns: BoardColumnView[]; 
                         <span className="mt-2.5 flex items-end justify-between gap-2">
                           <span>
                             <span className="block text-[15px] font-medium tabular-nums text-white">{c.spent ?? "—"}</span>
-                            <span className="block text-[10.5px] text-neutral-500">spent · {c.budget}/day</span>
+                            <span className="block text-[10.5px] text-neutral-500">{c.spent ? `spent · ${c.budget}/day` : c.budget && c.budget !== "—" ? `${c.budget}/day once live` : "Nothing spent yet"}</span>
                           </span>
                           {c.result && (
                             <span className="text-right">

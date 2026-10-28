@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoFrame, DemoScreen, ScaledFrame } from "@/components/console/demo";
 import Link from "next/link";
 import { useState } from "react";
 import { DemoVideo } from "@/components/clips/demo-video";
@@ -78,6 +79,18 @@ export function DashboardTour() {
             <DemoVideo id={v.clip} title={v.title} />
           </div>
           <p className="mt-3 text-center text-[14px] text-white/60">{v.body}</p>
+        </div>
+
+        <div data-reveal className="mx-auto mt-16 max-w-[1120px]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">Campaigns, start to finish</p>
+          <p className="mt-2 max-w-[640px] text-[15px] leading-relaxed text-white/66">Every campaign on one board, and where each one is in its life — built, approved by you, reviewed by Meta, delivering. Shown here with the real components and a fictional business.</p>
+          <div className="mt-5">
+            <ScaledFrame width={1280} minScale={0.8} maxHeight={1100}>
+              <DemoFrame view="campaigns">
+                <DemoScreen view="campaigns" />
+              </DemoFrame>
+            </ScaledFrame>
+          </div>
         </div>
 
         <div data-reveal className="mx-auto mt-14 max-w-[1120px]">

@@ -96,6 +96,7 @@ export function ConceptShowcase() {
 
 const TABS: { id: DemoView; label: string; blurb: string }[] = [
   { id: "overview", label: "Overview", blurb: "The day's results, what needs you, and what your AI team is doing." },
+  { id: "campaigns", label: "Campaigns", blurb: "Every campaign on one board, and where each one is in its life." },
   { id: "creatives", label: "Creative Studio", blurb: "The ads running now and the directions MAIRO suggests next." },
   { id: "approvals", label: "Approvals", blurb: "Every launch and change waits here, with the budget shown." },
   { id: "results", label: "Performance", blurb: "What Meta reports and what you confirmed — never mixed." },

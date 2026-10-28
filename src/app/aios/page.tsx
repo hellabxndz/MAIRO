@@ -131,9 +131,9 @@ export default async function CommandCenterPage() {
             <div><dt className="text-[12px] text-neutral-400">Feedback open</dt><dd className="mt-1 text-[22px] tabular-nums text-white">{s.support.open + s.support.inProgress}</dd></div>
           </dl>
           <p className="mt-4 text-[12.5px] text-neutral-500">Decisions are the customers&rsquo; to approve — AIOS shows them, it doesn&rsquo;t approve for anyone.</p>
-          <div className="mt-3 flex gap-4 text-[13px]">
-            <Link href="/aios/operations" className="text-signal hover:underline">Operations →</Link>
-            <Link href="/aios/customers" className="text-signal hover:underline">Customers →</Link>
+          <div className="mt-1 flex gap-4 text-[13px]">
+            <Link href="/aios/operations" className="inline-flex min-h-11 items-center text-signal hover:underline">Operations →</Link>
+            <Link href="/aios/customers" className="inline-flex min-h-11 items-center text-signal hover:underline">Customers →</Link>
           </div>
         </section>
         <section aria-labelledby="work-title" className="rounded-[24px] border border-[color:var(--mairo-line)] p-5">

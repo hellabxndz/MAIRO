@@ -430,7 +430,10 @@ export function AppShell({
           {/* The Overview has its own view switch (with Profit First) in its header. */}
           {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
-          <ThemeToggle className="h-9 w-9" />
+          {/* Beside the view switch there's no room for it on the narrowest phones; the Overview keeps it. */}
+          <span className={pathname !== "/dashboard" ? "hidden min-[400px]:contents" : "contents"}>
+            <ThemeToggle className="h-9 w-9" />
+          </span>
           {/* Settings — and from there analytics' neighbours, billing, account
               and signing out — on a phone. */}
           <Link href="/dashboard/settings" aria-label="Settings" className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full">

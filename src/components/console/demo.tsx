@@ -11,6 +11,8 @@ import { CampaignsPanel } from "./campaigns";
 import { CreativesPanel, type CreativeTileData } from "./creatives";
 import { ResultsPanel } from "./results";
 import { TeamPanel } from "./team";
+import { CampaignBoard, type BoardColumnView } from "@/components/viz/campaign-board";
+import { StageTimeline, type Stage } from "@/components/viz/stage-timeline";
 import { DemoContext, Panel, Pill, SampleLabel, primaryAction, quietAction } from "./kit";
 
 // The website's product demonstrations: the real MAIRO shell — the same
@@ -20,9 +22,9 @@ import { DemoContext, Panel, Pill, SampleLabel, primaryAction, quietAction } fro
 // the demonstrations change with it. Links and buttons are inert, and every
 // frame carries the sample-data label.
 
-export type DemoView = "overview" | "creatives" | "approvals" | "results";
+export type DemoView = "overview" | "campaigns" | "creatives" | "approvals" | "results";
 
-const ACTIVE: Record<DemoView, string> = { overview: "/dashboard", creatives: "/dashboard/creatives", approvals: "/dashboard/decisions", results: "/dashboard/analytics" };
+const ACTIVE: Record<DemoView, string> = { overview: "/dashboard", campaigns: "/dashboard/campaigns", creatives: "/dashboard/creatives", approvals: "/dashboard/decisions", results: "/dashboard/analytics" };
 
 /**
  * Renders its children at a design width and scales them to fit — crisp at
@@ -71,7 +73,7 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
   const active = activeHref ?? ACTIVE[view];
   return (
     // A picture of the product to assistive technology — one label, nothing inside to tab to.
-    <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(236,236,236,0.16)", background: "#0a0a0a", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 60px 140px -60px rgba(255,255,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
+    <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "campaigns" ? "Campaigns board" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(236,236,236,0.16)", background: "#0a0a0a", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 60px 140px -60px rgba(255,255,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
       <div className="flex" inert>
         {sidebar && (
           <aside aria-hidden className="hidden w-[220px] shrink-0 flex-col border-r px-3 py-4 @4xl/frame:flex" style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}>
@@ -131,8 +133,38 @@ export const SAMPLE_CREATIVES: CreativeTileData[] = [
  * to the approval, and the campaign waits for Meta's review — it isn't shown
  * running until Meta would report it.
  */
+// The sample account's campaigns on the real board and timeline components —
+// the same two campaigns the Overview demo shows, nothing added.
+const SAMPLE_BOARD: BoardColumnView[] = [
+  { key: "draft", label: "Draft", budget: null, cards: [{ id: "c2", name: SAMPLE.campaigns[1].name, goal: "Get leads", goalKey: "leads", status: { dot: "", text: "Draft — not in Meta yet", tone: "neutral" }, budget: "—", spent: null, result: null, attention: false, decisions: 0 }] },
+  { key: "awaiting", label: "Awaiting approval", budget: null, cards: [] },
+  { key: "scheduled", label: "Scheduled", budget: null, cards: [] },
+  { key: "active", label: "Active", budget: "$20", cards: [{ id: "c1", name: SAMPLE.campaigns[0].name, goal: "Get leads", goalKey: "leads", status: { dot: "", text: "Delivering", tone: "green" }, budget: "$20", spent: "$140", result: { label: "leads", value: "11" }, attention: false, decisions: 2 }] },
+  { key: "paused", label: "Paused", budget: null, cards: [] },
+  { key: "completed", label: "Completed", budget: null, cards: [] },
+];
+const SAMPLE_STAGES: Stage[] = [
+  { id: "created", label: "Created", state: "done", when: "Day 1" },
+  { id: "built", label: "Built in Meta", state: "done", when: "Day 1" },
+  { id: "approved", label: "Approved by you", state: "done", when: "Day 1" },
+  { id: "review", label: "Meta's review", state: "done", when: "Day 2" },
+  { id: "delivering", label: "Delivering", state: "current" },
+  { id: "ended", label: "Ended", state: "upcoming" },
+];
+
 export function DemoScreen({ view, approved = false }: { view: DemoView; approved?: boolean }) {
   const points = sampleDaily();
+  if (view === "campaigns") {
+    return (
+      <div className="space-y-4">
+        <ConsoleTitle title="Campaigns" sub="Every campaign where its records put it. Changes happen on the campaign, with your approval." />
+        <CampaignBoard columns={SAMPLE_BOARD} goals={[]} fit />
+        <Panel title={SAMPLE.campaigns[0].name}>
+          <StageTimeline stages={SAMPLE_STAGES} summary="Delivering — Meta approved the ad." />
+        </Panel>
+      </div>
+    );
+  }
   if (view === "creatives") {
     return (
       <div className="space-y-4">
