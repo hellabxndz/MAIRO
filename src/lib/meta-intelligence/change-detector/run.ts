@@ -4,7 +4,7 @@ import { raiseAlert } from "../alerts";
 import { recordVersionFacts } from "../api-versioning";
 import { compatibilityFor } from "../compatibility";
 import { BASELINE_FEATURES, featuresMentioned } from "../feature-registry/baseline";
-import { fetchSource } from "../sources/fetch";
+import { fetchSource, type SourceFormat } from "../sources/fetch";
 import { authorityFor } from "../sources/catalog";
 import { classify, diffBlocks, groupChanges, hashOf, normalize, titleFor, versionFacts } from "./diff";
 
@@ -29,11 +29,14 @@ async function terms() {
 }
 
 /** Files the changed text of one source as updates. Used by both the fetcher and an admin pasting official text. */
-export async function ingestText(source: Source, html: string, now = new Date()): Promise<Omit<CheckResult, "source" | "ok">> {
-  const blocks = normalize(html);
+export async function ingestText(source: Source, html: string, now = new Date(), format: SourceFormat = "html"): Promise<Omit<CheckResult, "source" | "ok">> {
+  const blocks = normalize(html, format);
   const text = blocks.join("\n\n");
-  const hash = hashOf(text);
+  // The format rides on the hash ("md:…"), so a source that switches format
+  // is re-baselined instead of reporting its whole page as changed.
+  const hash = format === "markdown" ? `md:${hashOf(text)}` : hashOf(text);
   const last = await db.platformSourceSnapshot.findFirst({ where: { sourceId: source.id }, orderBy: { fetchedAt: "desc" } });
+  const sameFormat = !last || last.hash.startsWith("md:") === hash.startsWith("md:");
 
   // Versions are read from official pages every time, not only on a diff.
   if (source.authority === "OFFICIAL" && (source.kind === "VERSIONS" || source.kind === "CHANGELOG")) {
@@ -46,7 +49,7 @@ export async function ingestText(source: Source, html: string, now = new Date())
   }
   await db.platformSourceSnapshot.create({ data: { sourceId: source.id, hash, text: text.slice(0, 400_000), fetchedAt: now } });
   await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: now, lastSuccessAt: now, lastChangedAt: now, lastError: null } });
-  if (!last) return { changed: true, updates: 0, baseline: true };
+  if (!last || !sameFormat) return { changed: true, updates: 0, baseline: true };
 
   const { added, removed } = diffBlocks(last.text.split("\n\n"), blocks);
   const features = await terms();
@@ -101,7 +104,7 @@ export async function checkSource(source: Source, opts: { fetcher?: typeof fetch
     await db.platformSource.update({ where: { id: source.id }, data: { lastCheckedAt: opts.now ?? new Date(), lastError: got.error } });
     return { source: source.key, ok: false, changed: false, updates: 0, baseline: false, error: got.error };
   }
-  const r = await ingestText(source, got.html, opts.now);
+  const r = await ingestText(source, got.html, opts.now, got.format);
   return { source: source.key, ok: true, ...r };
 }
 

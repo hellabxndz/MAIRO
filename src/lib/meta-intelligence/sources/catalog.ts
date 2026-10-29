@@ -23,7 +23,7 @@ export const OFFICIAL_SOURCES: SourceDef[] = [
   { key: "meta.graph-api.changelog", name: "Graph API changelog", url: "https://developers.facebook.com/docs/graph-api/changelog/", kind: "CHANGELOG", authority: "OFFICIAL" },
   { key: "meta.graph-api.versions", name: "Graph API versions", url: "https://developers.facebook.com/docs/graph-api/changelog/versions/", kind: "VERSIONS", authority: "OFFICIAL" },
   { key: "meta.marketing-api.docs", name: "Marketing API documentation", url: "https://developers.facebook.com/docs/marketing-api/", kind: "DOCS", authority: "OFFICIAL" },
-  { key: "meta.advantage-plus.docs", name: "Advantage+ documentation", url: "https://developers.facebook.com/docs/marketing-api/advantage-plus/", kind: "DOCS", authority: "OFFICIAL" },
+  { key: "meta.advantage-plus.docs", name: "Advantage+ documentation", url: "https://developers.facebook.com/documentation/ads-commerce/marketing-api/advantage-campaigns", kind: "DOCS", authority: "OFFICIAL" },
   { key: "meta.instagram-platform.changelog", name: "Instagram Platform changelog", url: "https://developers.facebook.com/docs/instagram-platform/changelog/", kind: "CHANGELOG", authority: "OFFICIAL" },
   { key: "meta.pages-api.docs", name: "Facebook Pages API documentation", url: "https://developers.facebook.com/docs/pages-api/", kind: "DOCS", authority: "OFFICIAL" },
   { key: "meta.developers.blog", name: "Meta for Developers blog", url: "https://developers.facebook.com/blog/", kind: "ANNOUNCEMENTS", authority: "OFFICIAL" },

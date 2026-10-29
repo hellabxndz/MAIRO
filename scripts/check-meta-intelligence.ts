@@ -85,12 +85,49 @@ async function main() {
     assert.equal((await fetchSource("https://developers.facebook.com/docs/x/", binary)).ok, false);
     assert.equal((await fetchSource("https://evil.example/", okRedirect)).ok, false);
   });
+  await check("Meta's Markdown docs are read (October 2026: text/markdown); other types still refused", async () => {
+    const md = (async () => new Response("# Marketing API changelog\n\n## 05/04/2026\n\nSome change worth knowing about.", { status: 200, headers: { "content-type": "text/markdown; charset=utf-8" } })) as unknown as typeof fetch;
+    const r = await fetchSource("https://developers.facebook.com/docs/x/", md);
+    assert.ok(r.ok && r.format === "markdown", JSON.stringify(r));
+    const html = (async () => new Response("<p>hello</p>", { status: 200, headers: { "content-type": "text/html" } })) as unknown as typeof fetch;
+    const h = await fetchSource("https://developers.facebook.com/docs/x/", html);
+    assert.ok(h.ok && h.format === "html");
+    const json = (async () => new Response("{}", { status: 200, headers: { "content-type": "application/json" } })) as unknown as typeof fetch;
+    assert.equal((await fetchSource("https://developers.facebook.com/docs/x/", json)).ok, false);
+  });
 
   console.log("\n— detecting and classifying changes —");
   await check("pages become comparable text blocks, scripts and chrome removed", () => {
     const b = normalize(`<html><script>alert("x")</script><nav>Menu menu menu menu menu</nav><h2>Graph API v25.0 is now available today</h2><p>The <b>targeting_automation</b> field is required for all ad sets &amp; campaigns.</p></html>`);
     assert.deepEqual(b, ["Graph API v25.0 is now available today", "The targeting_automation field is required for all ad sets & campaigns."]);
     assert.deepEqual(diffBlocks(["a block that stays the same", "an old block that goes"], ["a block that stays the same", "a brand new block appears"]), { added: ["a brand new block appears"], removed: ["an old block that goes"] });
+  });
+  await check("Markdown pages: headings stay with their entry, links lose their targets, version tables give dates", () => {
+    const md = [
+      "# Marketing API changelog",
+      "The latest Graph API version is:",
+      "v26.0",
+      "## 05/04/2026",
+      "### Marketing API Access Tier &#123;#tier&#125;",
+      "- Renamed: &quot;Standard Access&quot; → &quot;Limited access&quot;",
+      "- See the [Upgrade Guide](https://developers.facebook.com/docs/upgrade) for **details**",
+      "## Available Marketing API versions",
+      [
+        "| Version | Date Introduced | Available Until |",
+        "| --- | --- | --- |",
+        "| [v26.0](https://developers.facebook.com/x/version26.0) | July 29, 2026 | TBD |",
+        "| [v24.0](https://developers.facebook.com/x/version24.0) | October 8, 2025 | November 10, 2026 |",
+      ].join("\n"),
+    ].join("\n\n");
+    const b = normalize(md, "markdown");
+    assert.equal(b[0], "Marketing API changelog — The latest Graph API version is: v26.0");
+    assert.equal(b[1], '05/04/2026 — Marketing API Access Tier — • Renamed: "Standard Access" → "Limited access"');
+    assert.equal(b[2], "• See the Upgrade Guide for details");
+    assert.ok(!b.join(" ").includes("](") && !b.join(" ").includes("{#"), "no link targets or anchors left");
+    assert.deepEqual(versionFacts(b.join("\n\n")), [
+      { version: "v26.0", releasedAt: "2026-07-29", retiresAt: null },
+      { version: "v24.0", releasedAt: "2025-10-08", retiresAt: "2026-11-10" },
+    ]);
   });
   await check("change types: deprecation, version release, version retirement, AI, permissions, new feature", () => {
     assert.equal(classify("The optimization_goal VALUE is deprecated and will be removed in a future release.").changeType, "DEPRECATED_FEATURE");
@@ -271,6 +308,17 @@ async function main() {
       assert.equal(second.updates, 1);
       const again = await ingestText(src, `<p>Graph API v24.0 was introduced on October 8, 2025.</p><p>Nothing else happened in this release at all.</p><p>The ${testFeature} option is deprecated and will be removed on March 3, 2027.</p>`, NOW);
       assert.equal(again.changed, false, "the same page twice is no change");
+      // Meta switching the page to Markdown is a new baseline, not a page of "changes".
+      // (Its own source: later checks read this test's newest update from the first.)
+      const mdSrc = await db.platformSource.create({ data: { platform: "META", key: `${TAG}.src-md`, name: "Test changelog (Markdown)", url: "https://developers.facebook.com/docs/zz-test-changelog-md/", kind: "CHANGELOG", authority: "OFFICIAL" } });
+      await ingestText(mdSrc, `<p>Graph API v24.0 was introduced on October 8, 2025.</p><p>Nothing else happened in this release at all.</p>`, NOW);
+      const updatesBefore = await db.platformUpdate.count({ where: { sourceId: mdSrc.id } });
+      const switched = await ingestText(mdSrc, `## Graph API\n\nGraph API v24.0 was introduced on October 8, 2025.\n\nNothing else happened in this release at all.`, NOW, "markdown");
+      assert.equal(switched.baseline, true);
+      assert.equal(await db.platformUpdate.count({ where: { sourceId: mdSrc.id } }), updatesBefore);
+      const mdAgain = await ingestText(mdSrc, `## Graph API\n\nGraph API v24.0 was introduced on October 8, 2025.\n\nNothing else happened in this release at all.\n\nThe ${testFeature} option is now available to every advertiser.`, NOW, "markdown");
+      assert.equal(mdAgain.baseline, false);
+      assert.equal(mdAgain.updates, 1, "after the new baseline, Markdown changes file updates as before");
     });
     await check("analysis → proposal; production blocked until tests pass; sensitive changes need sandbox", async () => {
       await upsertFeature(testFeature, { name: "Test option", category: "Test", description: "A feature only this check uses.", mairoSupport: "SUPPORTED", goalFit: ["sales"] }, { source: "check", changeNote: "test" });

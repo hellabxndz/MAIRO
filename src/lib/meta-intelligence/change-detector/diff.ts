@@ -14,21 +14,79 @@ const MAX_BLOCK = 1_200;
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", "#39": "'", mdash: "—", ndash: "–", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“" };
 
-/** HTML → plain text blocks (paragraph-ish), scripts, styles and chrome removed. */
-export function normalize(html: string): string[] {
-  const text = html
-    .slice(0, MAX_TEXT * 4)
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<(script|style|noscript|svg|nav|header|footer|form|iframe)[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<\/?(p|div|section|article|li|ul|ol|h[1-6]|tr|table|br|hr|pre|blockquote|dd|dt)[^>]*>/gi, "\n\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e] ?? (e.startsWith("#") && /^#\d+$/.test(e) ? String.fromCharCode(Number(e.slice(1))) : m))
-    .slice(0, MAX_TEXT);
-  return text
-    .split(/\n\s*\n/)
-    .map((b) => b.replace(/\s+/g, " ").trim())
-    .filter((b) => b.length >= MIN_BLOCK)
-    .map((b) => b.slice(0, MAX_BLOCK));
+const decode = (t: string) => t.replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e] ?? (e.startsWith("#") && /^#\d+$/.test(e) ? String.fromCharCode(Number(e.slice(1))) : m));
+
+/**
+ * A page → plain text blocks (paragraph-ish). HTML has scripts, styles and
+ * chrome removed; Markdown (Meta's developer docs since October 2026) has its
+ * link targets, anchors, emphasis and heading marks removed, keeping the words.
+ */
+export function normalize(page: string, format: "html" | "markdown" = "html"): string[] {
+  const raw = page.slice(0, MAX_TEXT * 4);
+  const text = (
+    format === "markdown"
+      ? decode(raw)
+          .replace(/<!--[\s\S]*?-->/g, " ")
+          .replace(/```[\s\S]*?```/g, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\{#[\w-]+\}/g, "")
+          .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+          .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+          .replace(/(^\|.*\|[ \t]*\n?)+/gm, tableToSentences)
+          .replace(/^[ \t]{0,3}#{1,6}[ \t]+(.*)$/gm, `\n\n${HEADING}$1\n\n`)
+          .replace(/^[ \t]*[-*+][ \t]+/gm, "• ")
+          .replace(/(\*\*|__|`)/g, "")
+      : decode(
+          raw
+            .replace(/<!--[\s\S]*?-->/g, " ")
+            .replace(/<(script|style|noscript|svg|nav|header|footer|form|iframe)[\s\S]*?<\/\1>/gi, " ")
+            .replace(/<\/?(p|div|section|article|li|ul|ol|h[1-6]|tr|table|br|hr|pre|blockquote|dd|dt)[^>]*>/gi, "\n\n")
+            .replace(/<[^>]+>/g, " "),
+        )
+  ).slice(0, MAX_TEXT);
+  const blocks = text.split(/\n\s*\n/).map((b) => b.replace(/\s+/g, " ").trim()).filter(Boolean);
+  return (format === "markdown" ? attachHeadings(blocks) : blocks).filter((b) => b.length >= MIN_BLOCK).map((b) => b.slice(0, MAX_BLOCK));
+}
+
+const HEADING = "\u0001";
+
+/**
+ * A Markdown table → one block per row, as sentences that name the row:
+ * "| v24.0 | October 8, 2025 | November 10, 2026 |" under "Version | Date
+ * Introduced | Available Until" becomes "v24.0 Date Introduced: October 8,
+ * 2025. v24.0 Available Until: November 10, 2026." — what versionFacts reads.
+ */
+function tableToSentences(table: string): string {
+  const rows = table.trim().split("\n").map((r) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim()));
+  const isRule = (r: string[]) => r.every((c) => /^:?-{3,}:?$/.test(c));
+  const header = rows.length > 1 && isRule(rows[1]) ? rows[0] : null;
+  const body = rows.filter((r, i) => !isRule(r) && !(header && i === 0));
+  const lines = body.map((r) => (header ? r.slice(1).map((c, i) => (c ? `${r[0]} ${header[i + 1] ?? ""}: ${c}.` : "")).filter(Boolean).join(" ") : r.join(" · ")));
+  return `\n\n${lines.join("\n\n")}\n\n`;
+}
+
+/**
+ * Markdown pages put the date and the title on their own lines ("05/04/2026",
+ * "Marketing API Access Tier"). Each heading is carried onto the text under
+ * it, and a short line ("v26.0") joins the one before, so nothing that dates
+ * or names a change is lost as too short to keep.
+ */
+function attachHeadings(blocks: string[]): string[] {
+  const out: string[] = [];
+  let heading: string[] = [];
+  for (const b of blocks) {
+    if (b.startsWith(HEADING)) {
+      heading.push(b.slice(1).trim());
+      continue;
+    }
+    if (heading.length) {
+      out.push(`${heading.join(" — ")} — ${b}`);
+      heading = [];
+    } else if (b.length < MIN_BLOCK && out.length) out[out.length - 1] = `${out[out.length - 1]} ${b}`;
+    else out.push(b);
+  }
+  if (heading.length) out.push(heading.join(" — "));
+  return out;
 }
 
 export function hashOf(text: string): string {

@@ -12,7 +12,13 @@ import { fetchable } from "./catalog";
 const MAX_BYTES = 3 * 1024 * 1024;
 const TIMEOUT_MS = 15_000;
 
-export type Fetched = { ok: true; url: string; html: string } | { ok: false; url: string; error: string };
+// Meta's developer docs moved under /documentation/ in October 2026 and now
+// answer with Markdown; the Business pages still serve HTML. Both are read.
+export type SourceFormat = "html" | "markdown";
+export type Fetched = { ok: true; url: string; html: string; format: SourceFormat } | { ok: false; url: string; error: string };
+
+const formatOf = (type: string): SourceFormat | null =>
+  /text\/(x-)?markdown/.test(type) ? "markdown" : !type || /text\/html|text\/plain|application\/xhtml/.test(type) ? "html" : null;
 
 export async function fetchSource(url: string, fetcher: typeof fetch = fetch): Promise<Fetched> {
   let current = url;
@@ -24,7 +30,7 @@ export async function fetchSource(url: string, fetcher: typeof fetch = fetch): P
         redirect: "manual",
         cache: "no-store",
         credentials: "omit",
-        headers: { "User-Agent": "MAIRO-MetaIntelligence/1.0 (+documentation monitor)", Accept: "text/html,text/plain" },
+        headers: { "User-Agent": "MAIRO-MetaIntelligence/1.0 (+documentation monitor)", Accept: "text/html,text/markdown,text/plain" },
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (error) {
@@ -38,9 +44,10 @@ export async function fetchSource(url: string, fetcher: typeof fetch = fetch): P
     }
     if (!res.ok) return { ok: false, url: current, error: `HTTP ${res.status}` };
     const type = res.headers.get("content-type") ?? "";
-    if (type && !/text\/html|text\/plain|application\/xhtml/.test(type)) return { ok: false, url: current, error: `Unexpected content type ${type}` };
+    const format = formatOf(type);
+    if (!format) return { ok: false, url: current, error: `Unexpected content type ${type}` };
     const reader = res.body?.getReader();
-    if (!reader) return { ok: true, url: current, html: (await res.text()).slice(0, MAX_BYTES) };
+    if (!reader) return { ok: true, url: current, html: (await res.text()).slice(0, MAX_BYTES), format };
     const chunks: Uint8Array[] = [];
     let size = 0;
     while (true) {
@@ -54,7 +61,7 @@ export async function fetchSource(url: string, fetcher: typeof fetch = fetch): P
       chunks.push(value);
     }
     const html = new TextDecoder("utf-8", { fatal: false }).decode(Buffer.concat(chunks.map((c) => Buffer.from(c))));
-    return { ok: true, url: current, html };
+    return { ok: true, url: current, html, format };
   }
   return { ok: false, url: current, error: "Too many redirects." };
 }

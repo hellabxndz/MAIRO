@@ -8,8 +8,13 @@ import { authorityFor, OFFICIAL_SOURCES, type SourceKind } from "./catalog";
 export async function seedSources(): Promise<number> {
   let added = 0;
   for (const s of OFFICIAL_SOURCES) {
-    const existing = await db.platformSource.findUnique({ where: { key: s.key }, select: { id: true } });
-    if (existing) continue;
+    const existing = await db.platformSource.findUnique({ where: { key: s.key }, select: { id: true, url: true, name: true } });
+    if (existing) {
+      // The catalog is the truth for official sources: when Meta moves a page
+      // (it moved its developer docs in October 2026), the stored address follows.
+      if (existing.url !== s.url || existing.name !== s.name) await db.platformSource.update({ where: { id: existing.id }, data: { url: s.url, name: s.name, lastError: null } });
+      continue;
+    }
     await db.platformSource.create({ data: { platform: "META", key: s.key, name: s.name, url: s.url, kind: s.kind, authority: s.authority } });
     added++;
   }
