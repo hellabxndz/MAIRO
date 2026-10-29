@@ -74,7 +74,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
 
 ## Remaining issues
 
-1. **Stripe Pro/Scale never purchased** (blocker; see the manual steps).
+1. ~~**Stripe Pro/Scale never purchased**~~ — **resolved 29 Oct 2026:** the owner bought MAIRO Scale live on production with their own card and reports checkout working end to end.
 2. **No real-account launch on the new flow** (blocker; see the manual steps).
 3. **Error monitoring is built but off until `SENTRY_DSN` is set.** Until then, a failing cron or checkout only reaches the Vercel logs. *Set it before public launch.*
 4. **No transactional email provider configured.** Until RESEND_API_KEY and EMAIL_FROM are set, password resets go through support by hand. *Recommended before beta; required before public launch.*
@@ -88,7 +88,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
 
 ## Readiness
 
-**Stripe — conditionally ready.** The code paths are tested in simulation and an earlier live Starter trial came back through the webhook (NEXT.md item 8). Pro and Scale haven't been bought.
+**Stripe — ready.** The code paths are tested in simulation, an earlier live Starter trial came back through the webhook (NEXT.md item 8), and on 29 Oct 2026 the owner completed a live MAIRO Scale purchase on production (owner-reported). Pro's trial flow hasn't been bought live.
 
 **Meta — conditionally ready.**
 - App Review is approved for the advertising permissions (NEXT.md item 2).
@@ -112,7 +112,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
    - cancel: access lasts to the period end;
    - use card 4000 0000 0000 0341 for a failed renewal: past_due shows, ads are not stopped until the rule says so;
    - resend a webhook event from the Stripe dashboard and confirm nothing changes twice.
-2. **Stripe live, once.** Buy Pro with your own card and cancel inside the trial. Confirm no charge, and that cancel looks right everywhere.
+2. **Stripe live, once.** ~~Buy Pro with your own card and cancel inside the trial.~~ Done another way on 29 Oct 2026: a live Scale purchase, owner-reported as working. Still worth confirming once: AIOS → Billing shows the paid invoice under "Collected, last 30 days", and cancelling shows correctly everywhere.
 3. **Meta, no spend.** On your own ad account, with a card on file:
    - let MAIRO build the first campaign and confirm it appears in Ads Manager **paused**;
    - before approving, set the campaign's daily budget in Ads Manager to the minimum, or approve and pause it within minutes;
