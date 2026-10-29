@@ -29,13 +29,13 @@ export async function logActivity(actorUserId: string, action: string, target: s
 // --- the shapes a change can take, checked on the server ---------------------
 
 const title = z.string().trim().min(1, "Give it a title.").max(200);
-const body = z.string().trim().max(20_000).optional().transform((v) => v || null);
-const day = z
-  .string()
-  .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-11-04.")
-  .optional()
-  .or(z.literal("").transform(() => undefined));
+// Both accept their own parsed output (null body, absent due): a proposal is
+// parsed when the assistant makes it and again when the person confirms it.
+const body = z.string().trim().max(20_000).nullish().transform((v) => v || null);
+const day = z.preprocess(
+  (v) => (v === "" || v === null ? undefined : v),
+  z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-11-04.").optional(),
+);
 
 export const projectInput = z.object({ name: title, summary: body });
 export const itemInput = z.object({ kind: z.enum(ITEM_KINDS), title, body, projectId: z.string().min(1).optional().nullable(), due: day });

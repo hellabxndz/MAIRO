@@ -84,6 +84,20 @@ async function main() {
     const ok = proposalInput.parse({ kind: "add_item", itemKind: "TASK", title: "Call Stripe", due: "2026-11-04" });
     assert.equal(describeProposal(ok), 'Add the task "Call Stripe" to your inbox, due 2026-11-04.');
   });
+  await check("a proposal still validates when it comes back to be confirmed", () => {
+    // The tool parses it, the browser holds it, and Confirm parses it again:
+    // whatever the first parse produces (null body, no due date) must pass the second.
+    for (const raw of [
+      { kind: "add_item", itemKind: "TASK", title: "Test a real Stripe checkout", due: "2026-10-30" },
+      { kind: "add_item", itemKind: "NOTE", title: "Idea", body: "  " },
+      { kind: "create_project", name: "Launch" },
+      { kind: "complete_item", itemId: "abc" },
+    ]) {
+      const once = proposalInput.parse(raw);
+      const back = JSON.parse(JSON.stringify(once));
+      assert.deepEqual(proposalInput.parse(back), once, JSON.stringify(raw));
+    }
+  });
   await check("the propose tool cannot write; only the staff-checked confirm action can", () => {
     const tools = readFileSync("src/lib/aios/assistant.ts", "utf8");
     assert.doesNotMatch(tools, /\.(create|update|delete|upsert)(Many)?\(/, "assistant tools only read");
