@@ -11,7 +11,7 @@ import { describeProposal, ITEM_KINDS, proposalInput } from "./workspace";
 // out (confirmProposalAction), logged as done "via assistant". Nothing it can
 // propose spends money, emails anyone or touches a customer's account.
 
-export const FOUNDER_ASSISTANT_PROMPT = `You are the AIOS assistant for the people who run MAIRO (an AI advertising platform for small businesses on Meta). You help the founder see what's happening across the platform and keep their own projects moving.
+const FOUNDER_ASSISTANT_RULES = `You are the AIOS assistant for the people who run MAIRO (an AI advertising platform for small businesses on Meta). You help the founder see what's happening across the platform and keep their own projects moving.
 
 Rules:
 - Facts come from your tools only. Call get_briefing for anything about subscriptions, revenue, sign-ups, Meta health, background jobs, errors, alerts, approvals or support. Call find_business for a specific customer, list_work for projects and tasks. If a tool doesn't return it, say you can't see it — never estimate or invent a figure. AI usage and cost are not measured yet; say so if asked.
@@ -19,6 +19,12 @@ Rules:
 - You never change anything yourself. To create a project, add a task, milestone, note, doc or idea, or tick something off, call propose_action. It does NOT save — the person sees a confirmation card and decides. After proposing, say in one line what the card will do and that it needs their confirmation. Never claim something was saved.
 - You can't change customers' campaigns, billing or settings. Point to the AIOS page that does it (Customers, Billing, Operations, Meta Intelligence).
 - Be brief and operational. Plain sentences; a short list only when there are several items.`;
+
+/** The rules, plus today's date — the model has no clock, so "due Friday" needs it. */
+export function founderAssistantPrompt(now = new Date()): string {
+  const today = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+  return `${FOUNDER_ASSISTANT_RULES}\n\nToday is ${today} (UTC, ${now.toISOString().slice(0, 10)}). Work out relative dates such as "Friday" or "next week" from this, and give due dates as YYYY-MM-DD.`;
+}
 
 export function founderAssistantTools(): ToolSet {
   return {

@@ -1,5 +1,5 @@
 import { streamText, convertToModelMessages, stepCountIs, type ToolSet, type UIMessage } from "ai";
-import { FOUNDER_ASSISTANT_PROMPT, founderAssistantTools } from "@/lib/aios/assistant";
+import { founderAssistantPrompt, founderAssistantTools } from "@/lib/aios/assistant";
 import { strategyEngineBrief } from "@/lib/engine";
 import { metaKnowledgeBrief } from "@/lib/meta-intelligence/knowledge-base/store";
 import { assistantTools, roleBrief, MISSION_BRIEF, AI_TEAM_BRIEF, ONE_CLICK_FIX_BRIEF } from "@/lib/ai/assistant-tools";
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     await recordUserMessage(threadId, messages);
     // Its tools read the platform's records and propose workspace changes;
     // none of them saves — the person confirms each proposal on screen.
-    return stream(threadId, FOUNDER_ASSISTANT_PROMPT, messages, founderAssistantTools());
+    return stream(threadId, founderAssistantPrompt(), messages, founderAssistantTools());
   }
 
   // Everything else is a customer's assistant, and it cannot be served without

@@ -94,7 +94,7 @@ export async function confirmProposalAction(proposal: unknown): Promise<FounderR
   const me = await staffUser();
   if (!me) return DENIED;
   const parsed = proposalInput.safeParse(proposal);
-  if (!parsed.success) return { ok: false, error: "That proposal isn't valid any more. Ask again." };
+  if (!parsed.success) return { ok: false, error: "That proposal couldn't be checked. Reload the page and ask again." };
   try {
     const message = await applyProposal(me.id, parsed.data);
     refresh(parsed.data.kind === "add_item" ? parsed.data.projectId : null);

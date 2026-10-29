@@ -37,13 +37,16 @@ const day = z.preprocess(
   z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-11-04.").optional(),
 );
 
+// An empty project id means the inbox, not a broken proposal.
+const projectId = z.preprocess((v) => (v === "" ? null : v), z.string().min(1).nullish());
+
 export const projectInput = z.object({ name: title, summary: body });
-export const itemInput = z.object({ kind: z.enum(ITEM_KINDS), title, body, projectId: z.string().min(1).optional().nullable(), due: day });
+export const itemInput = z.object({ kind: z.enum(ITEM_KINDS), title, body, projectId, due: day });
 
 /** What the assistant may propose. Nothing here spends, emails or touches a customer. */
 export const proposalInput = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("create_project"), name: title, summary: body }),
-  z.object({ kind: z.literal("add_item"), itemKind: z.enum(ITEM_KINDS), title, body, projectId: z.string().min(1).optional().nullable(), due: day }),
+  z.object({ kind: z.literal("add_item"), itemKind: z.enum(ITEM_KINDS), title, body, projectId, due: day }),
   z.object({ kind: z.literal("complete_item"), itemId: z.string().min(1) }),
 ]);
 export type Proposal = z.infer<typeof proposalInput>;

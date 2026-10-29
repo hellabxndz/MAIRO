@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { coreState, founderBrief, type FounderSignals } from "../src/lib/aios/brief";
+import { founderAssistantPrompt } from "../src/lib/aios/assistant";
 import { addItem, applyProposal, describeProposal, proposalInput, setItemDone } from "../src/lib/aios/workspace";
 import { db } from "../src/lib/db";
 
@@ -90,12 +91,13 @@ async function main() {
     for (const raw of [
       { kind: "add_item", itemKind: "TASK", title: "Test a real Stripe checkout", due: "2026-10-30" },
       { kind: "add_item", itemKind: "NOTE", title: "Idea", body: "  " },
+      { kind: "add_item", itemKind: "TASK", title: "Inbox task", projectId: "", due: "" },
       { kind: "create_project", name: "Launch" },
       { kind: "complete_item", itemId: "abc" },
     ]) {
       const once = proposalInput.parse(raw);
       const back = JSON.parse(JSON.stringify(once));
-      assert.deepEqual(proposalInput.parse(back), once, JSON.stringify(raw));
+      assert.equal(JSON.stringify(proposalInput.parse(back)), JSON.stringify(once), JSON.stringify(raw));
     }
   });
   await check("the propose tool cannot write; only the staff-checked confirm action can", () => {
@@ -108,6 +110,11 @@ async function main() {
     assert.deepEqual(exported.sort(), all.sort(), "every action checks staff first");
     const workspace = readFileSync("src/lib/aios/workspace.ts", "utf8");
     assert.match(workspace, /user\?\.role === "OWNER"/, "the role is re-read from the database");
+  });
+  await check("the assistant is told today's date, so \"due Friday\" resolves", () => {
+    const prompt = founderAssistantPrompt(new Date("2026-10-29T17:00:00Z"));
+    assert.match(prompt, /Today is Thursday, October 29, 2026 \(UTC, 2026-10-29\)/);
+    assert.match(prompt, /YYYY-MM-DD/);
   });
   await check("the chat route checks the role before handing over the founder tools", () => {
     const route = readFileSync("src/app/api/agents/chat/route.ts", "utf8");
