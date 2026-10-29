@@ -17,8 +17,15 @@ import type { AdDestination, AdGoal, MessageChannel, MetaPlacement } from "@/gen
 // is ever written from external content; changing it is a code change that
 // goes through review, tests and deployment.
 
-/** The Graph API version MAIRO builds against unless META_GRAPH_API_VERSION overrides it. */
-export const DEFAULT_GRAPH_API_VERSION = "v24.0";
+/**
+ * The Graph API version MAIRO builds against unless META_GRAPH_API_VERSION
+ * overrides it. v25.0 (October 2026): v24.0 retires on November 10, 2026.
+ * Reviewed against Meta's v25.0 changelogs — none of the endpoints, fields or
+ * metrics MAIRO uses changed (Advantage+ Shopping/App creation, async report
+ * errors, Page/Post/Video reach metrics and metadata=1 aren't used). v25.0 is
+ * available until February 23, 2027.
+ */
+export const DEFAULT_GRAPH_API_VERSION = "v25.0";
 
 export type Capability<T> = { value: T; featureKey: string };
 

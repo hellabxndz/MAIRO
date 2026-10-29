@@ -272,7 +272,7 @@ export const CONTRACT_TESTS: ContractTest[] = [
           json: (u: URL) =>
             u.searchParams.get("after") === "p2"
               ? { data: [{ id: "c3", name: "c", objective: "OUTCOME_SALES", status: "ACTIVE" }] }
-              : { data: [{ id: "c1" }, { id: "c2" }], paging: { cursors: { after: "p2" }, next: "https://graph.facebook.com/v24.0/act_1/campaigns?after=p2" } },
+              : { data: [{ id: "c1" }, { id: "c2" }], paging: { cursors: { after: "p2" }, next: "https://graph.facebook.com/v25.0/act_1/campaigns?after=p2" } },
         },
       ]);
       const all = await run(meta, () => listMetaCampaigns("act_1", "t"));
