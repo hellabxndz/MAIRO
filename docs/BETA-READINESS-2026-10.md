@@ -411,6 +411,40 @@ touched):
    Sign in with a known account and look at its plan and campaigns. Read only.
 5. Delete the branch.
 
+**Doing it in the Neon console only** (no connection string leaves Neon):
+
+1. Branches → Create branch → parent `production` → **"Branch data and schema
+   from a past point in time"**. The time picker is in the console's local
+   time zone, not UTC.
+2. Switch to the new branch with the **project/branch switcher at the top of
+   the sidebar**. The "Primary" dropdown in the SQL Editor is the compute, not
+   the branch — queries run on whatever the sidebar switcher shows.
+3. In the SQL Editor:
+
+   ```sql
+   select to_regclass('"FounderProject"') as founder_table,
+     (select count(*) from "Organization") as orgs,
+     (select count(*) from "User") as users,
+     (select count(*) from "MairoCampaign") as campaigns,
+     (select max(finished_at) from "_prisma_migrations") as last_migration;
+   ```
+
+   Pick a table and migration that the chosen moment shouldn't have yet, so
+   the result proves the copy is really from then.
+4. Switch the sidebar back to `production`, then delete the branch.
+
+**Drill log**
+
+| Date | Restored to | Result |
+| --- | --- | --- |
+| 29 Oct 2026 | 16:00 UTC, before the 16:36 UTC deploy | **Pass.** `FounderProject` absent (created by that deploy's migration); newest migration `20261129120000_meta_reliability` (27 Oct 19:45 UTC); 22 organisations, 22 users, 12 campaigns — the same as production. Branch `restore-drill-2026-10-29`, deleted afterwards. |
+
+The `pre-2026-10-29-deploy` branch taken for that deploy was never checked on
+the branch itself — the queries meant for it ran on production (the sidebar
+switcher still showed `production`). Next time: take the pre-deploy branch,
+switch the sidebar to it, confirm its newest `_prisma_migrations` row is the
+one before the deploy's, and only then push.
+
 Also keep a logical backup off Neon:
 
 - `pg_dump --format=custom "<prod url>" > mairo-YYYY-MM-DD.dump`, weekly, kept

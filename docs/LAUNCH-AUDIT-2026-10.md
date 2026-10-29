@@ -56,7 +56,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
 | Website | Titles, descriptions, one h1, alt text, links, phone width | PASS after fixes | /pricing had no h1; legal titles said "MAIRO" twice (`0d29861`) |
 | Reliability | Error pages | PASS after fix | Added a root-level error page (`0d29861`) |
 | Reliability | Error monitoring | **ADDED — needs SENTRY_DSN** | Server errors, browser crashes, failed cron steps, Stripe webhook failures, and missed or failed cron runs are reported to Sentry, scrubbed first. Tested against a local fake Sentry; never against real Sentry. Uptime checks are set up in Sentry's dashboard. |
-| Reliability | Database backups | **NOT TESTED** | Neon's backup and restore have not been checked |
+| Reliability | Database backups | **PASS (29 Oct 2026)** | Point-in-time restore drill in Neon: a branch restored to 16:00 UTC, before that day's deploy, had every row (22 orgs, 22 users, 12 campaigns) and the schema as of the previous migration. See BETA-READINESS-2026-10.md §6. History retention not yet recorded. |
 
 ## Problems found and fixed
 
@@ -125,7 +125,7 @@ Until both have been done once, by you, in a controlled way (see "Manual validat
    - After the next 09:00/09:30 UTC runs, confirm the monitors `cron-launch` and `cron-review` appear under Crons, and set their alert rules.
    - In Sentry, add uptime checks on `/` and `/sign-in`.
    - Set an alert rule for new issues to email you.
-7. **Backups.** In Neon, confirm point-in-time restore is on and do one test restore to a branch.
+7. **Backups.** ~~In Neon, confirm point-in-time restore is on and do one test restore to a branch.~~ Done 29 Oct 2026 — the restore drill passed (BETA-READINESS-2026-10.md §6). Still to note: the project's history retention period (Settings → Storage).
 8. **Legal.** Have the privacy policy and terms re-read. They now say MAIRO doesn't post to Pages or Instagram profiles, and they list Resend only when it's configured.
 
 ## Deployment note
