@@ -24,7 +24,7 @@ import { DemoContext, Panel, Pill, SampleLabel, primaryAction, quietAction } fro
 
 export type DemoView = "overview" | "campaigns" | "creatives" | "approvals" | "results";
 
-const ACTIVE: Record<DemoView, string> = { overview: "/dashboard", campaigns: "/dashboard/campaigns", creatives: "/dashboard/creatives", approvals: "/dashboard/decisions", results: "/dashboard/analytics" };
+const ACTIVE: Record<DemoView, string> = { overview: "/dashboard", campaigns: "/dashboard/campaigns", creatives: "/dashboard/creatives", approvals: "/dashboard/decisions", results: "/dashboard/results" };
 
 /**
  * Renders its children at a design width and scales them to fit — crisp at
@@ -69,7 +69,7 @@ export function ScaledFrame({ width, minScale, minWidth = 400, maxHeight, childr
 }
 
 /** The app's frame: sidebar and top bar exactly as the signed-in app draws them. */
-export function DemoFrame({ view, children, sidebar = true, label, sampleLabel = true, active: activeHref, owner = "Dana", advanced = false }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string; /** Off where the surrounding demo already carries the label (the walkthrough). */ sampleLabel?: boolean; /** The sidebar entry lit, when it isn't the view's own — a clip moving through the app. */ active?: string; /** The signed-in owner's first name in the top bar. */ owner?: string; /** Advanced mode lit in the top bar's switch. */ advanced?: boolean }) {
+export function DemoFrame({ view, children, sidebar = true, label, sampleLabel = true, active: activeHref, owner = "Dana" }: { view: DemoView; children: ReactNode; sidebar?: boolean; label?: string; /** Off where the surrounding demo already carries the label (the walkthrough). */ sampleLabel?: boolean; /** The sidebar entry lit, when it isn't the view's own — a clip moving through the app. */ active?: string; /** The signed-in owner's first name in the top bar. */ owner?: string; /** Advanced mode lit in the top bar's switch. */ advanced?: boolean }) {
   const active = activeHref ?? ACTIVE[view];
   return (
     // A picture of the product to assistive technology — one label, nothing inside to tab to.
@@ -78,12 +78,12 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
         {sidebar && (
           <aside aria-hidden className="hidden w-[220px] shrink-0 flex-col border-r px-3 py-4 @4xl/frame:flex" style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}>
             <span className="mb-4 px-2 text-[14px] font-light tracking-[0.3em] text-white">MAIRO</span>
-            <span className="mb-4 flex min-h-[38px] items-center justify-center gap-2 rounded-xl text-[13px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-lift)" }}>
-              <span aria-hidden>＋</span> Create
+            <span className="mb-4 flex min-h-[38px] items-center gap-2.5 rounded-xl border px-3 text-[13px] font-medium text-white" style={{ borderColor: "var(--mairo-line)" }}>
+              <span aria-hidden>+</span> New campaign
             </span>
             <nav data-nav className="flex flex-col gap-0.5">
               {PRIMARY_NAV.map((i) => (
-                <NavRowView key={i.href} item={i} active={i.href === active} />
+                <NavRowView key={i.href} item={i} active={i.href === active || Boolean(i.also?.includes(active))} />
               ))}
             </nav>
             <div className="mt-auto space-y-0.5 border-t pt-3" style={{ borderColor: "var(--mairo-line)" }}>
@@ -96,12 +96,8 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
         <div className="min-w-0 flex-1">
           <div aria-hidden className="flex items-center justify-end gap-3 px-4 pb-2 pt-12 @2xl/frame:px-7 @2xl/frame:pt-5">
             <span className="rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3 py-1.5 text-[12px] font-medium text-white">✨ Ask Alex</span>
-            <span className="flex rounded-full border p-0.5 text-[11px]" style={{ borderColor: "var(--mairo-line)" }}>
-              <span className={`rounded-full px-3 py-1 ${advanced ? "text-faint" : "text-white"}`} style={advanced ? undefined : { backgroundImage: "var(--mairo-ramp)" }}>Simple</span>
-              <span className={`rounded-full px-3 py-1 ${advanced ? "text-white" : "text-faint"}`} style={advanced ? { backgroundImage: "var(--mairo-ramp)" } : undefined}>Advanced</span>
-            </span>
             <span className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[12px] text-white" style={{ borderColor: "var(--mairo-line)" }}>
-              <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-medium" style={{ backgroundImage: "var(--mairo-ramp)" }}>{owner.charAt(0)}</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black">{owner.charAt(0)}</span>
               {owner}
             </span>
           </div>

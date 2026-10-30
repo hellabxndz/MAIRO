@@ -207,14 +207,14 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     <div className="mx-auto max-w-[1180px]">
       <PageHeader
         title="Campaigns"
-        description="Your ads, at a glance. Open one for its results, creatives, audience, budget and history."
+        description="Every campaign, its budget and how it's doing. Open one to pause it, change it or see its history."
         action={
           <div className="flex flex-wrap items-center gap-2">
             {runningCount > 0 && <PauseEverything count={runningCount} />}
             {showsEnquiries({ hasForm: Boolean(leadFormRow) }) && (
               <Link href="/dashboard/leads" className="inline-flex min-h-[38px] items-center rounded-full border border-[color:var(--mairo-line)] px-4 text-[13px] text-white/85 hover:text-white">Enquiries</Link>
             )}
-            <Link href="/dashboard/create" className={primaryButtonClass}>+ New campaign</Link>
+            <Link href="/dashboard/create" className={primaryButtonClass}>+ Create campaign</Link>
           </div>
         }
       />
@@ -292,7 +292,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-[16.5px] font-medium text-white">{campaign.name}</h2>
-                    <p className="mt-0.5 text-[13px] text-muted">{goalLabel(campaign.objective)}</p>
+                    <p className="mt-0.5 text-[13px] text-muted">
+                      {goalLabel(campaign.objective)} · {campaign.budgetType === "LIFETIME" && campaign.lifetimeBudgetCents ? `${cents(campaign.lifetimeBudgetCents)} in total` : `${cents(campaign.totalDailyBudgetCents)} a day`}
+                    </p>
                   </div>
                   <span className="shrink-0 text-[13px] text-white/85">{status.dot} {status.text}</span>
                 </div>

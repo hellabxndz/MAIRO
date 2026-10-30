@@ -37,6 +37,7 @@ export const LOCKED_NAV = [
   "/dashboard/campaigns",
   "/dashboard/creative-studio",
   "/dashboard/analytics",
+  "/dashboard/results",
   "/dashboard/reports",
   "/dashboard/activity",
   "/dashboard/agents",
@@ -50,6 +51,7 @@ export function isFreePage(pathname: string): boolean {
 
 const LOCKED: { prefix: string; title: string; text: string }[] = [
   { prefix: "/dashboard/analytics", title: "Analytics", text: "Activate MAIRO to see live campaign performance." },
+  { prefix: "/dashboard/results", title: "Results", text: "Activate MAIRO to see what your ads spent and what came back." },
   { prefix: "/dashboard/campaigns", title: "Campaigns", text: "Subscribe to turn your approved plan into a real campaign." },
   { prefix: "/dashboard/create", title: "Create", text: "Subscribe to turn your approved plan into a real campaign." },
   { prefix: "/dashboard/mission", title: "MAIRO Mission", text: "Your approved free plan becomes MAIRO's mission once you subscribe — then MAIRO runs it, measures it and improves it." },

@@ -252,38 +252,17 @@ export default async function SettingsPage() {
     </Card>
   );
 
+  // The list of everywhere else used to sit here; it's Account now, which
+  // this page is one row of.
   const header = (
     <>
+      <Link href="/dashboard/account" className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-[13.5px] text-muted hover:text-white">
+        <span aria-hidden>←</span> Account
+      </Link>
       <PageHeader
-        title="Settings"
-        description="Your business, your connections and your account — the things you set once and rarely touch."
+        title="Business profile"
+        description="Your business details, what MAIRO knows about you, and how it may act for you."
       />
-
-      {/* Everything that isn't a day-to-day destination lives here, one tap
-          away, instead of in the sidebar. */}
-      <nav aria-label="Everything else" className="mb-8 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {[
-          { href: "/dashboard/settings/business-brain", label: "Business Brain", hint: "What MAIRO knows about your business" },
-          { href: "/dashboard/mission", label: "Your goal & plan", hint: "The mission MAIRO is working toward" },
-          { href: "/dashboard/integrations", label: "Connected accounts", hint: "Facebook, Instagram and Meta" },
-          { href: "/dashboard/website", label: "Before you spend on ads", hint: "What your website needs, with evidence" },
-          { href: "/dashboard/pixel", label: "Tracking", hint: "What to measure, your Pixel, and checks with Meta" },
-          { href: "/dashboard/tracking", label: "Advanced tracking", hint: "Store orders, Tag Manager and consent" },
-          { href: "/dashboard/decisions", label: "MAIRO Decisions", hint: "Every recommendation and what happened" },
-          { href: "/dashboard/reports", label: "Reports", hint: "Weekly and monthly summaries" },
-          { href: "/dashboard/activity", label: "MAIRO Activity", hint: "Everything MAIRO did, in order" },
-          { href: "/dashboard/settings/team", label: "Team", hint: "Who's on the team and what each role can do" },
-          { href: "/dashboard/settings/businesses", label: "Your businesses", hint: "MAIRO Scale covers up to 3 Meta ad accounts, one per business" },
-          { href: "/dashboard/billing", label: "Billing & plan", hint: "Your subscription and invoices" },
-          { href: "/dashboard/account", label: "Account", hint: "Your login and more" },
-          { href: "/dashboard/guide", label: "Help", hint: "How MAIRO works, with search" },
-        ].map((e) => (
-          <Link key={e.href} href={e.href} className="group rounded-2xl px-4 py-3 transition hover:bg-white/[0.05]" style={{ background: "rgba(var(--mairo-fg-rgb),0.025)" }}>
-            <span className="block text-[14.5px] text-white">{e.label} <span aria-hidden className="text-faint transition group-hover:text-white">›</span></span>
-            <span className="block text-[12.5px] text-muted">{e.hint}</span>
-          </Link>
-        ))}
-      </nav>
     </>
   );
 
@@ -303,6 +282,7 @@ export default async function SettingsPage() {
       <div>
         {header}
         {businessCard}
+        {brainCard}
         {pixelCard}
         {billingCard}
         {assistantCard}

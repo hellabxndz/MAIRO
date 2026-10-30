@@ -24,14 +24,17 @@ import { SuggestedAdsPrompt } from "@/components/suggested-ads-prompt";
 
 export const maxDuration = 30;
 
+// Three tabs on screen — what's waiting for the owner, what's running, and
+// everything — with Top performing and Past one tap away beneath them.
 const TABS = [
-  { key: "active", label: "Active" },
-  { key: "new", label: "New" },
-  { key: "past", label: "Past" },
-  { key: "top", label: "Top Performing" },
+  { key: "new", label: "To review" },
+  { key: "active", label: "Running" },
   { key: "library", label: "Library" },
+  { key: "top", label: "Top performing" },
+  { key: "past", label: "Past" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
+const SHOWN: Tab[] = ["new", "active", "library"];
 
 const WORDS: Record<string, string> = { sales: "purchases", leads: "leads", bookings: "bookings", calls: "calls and messages", traffic: "website visits", awareness: "people reached", visits: "people reached", social: "engagement" };
 
@@ -43,26 +46,34 @@ export default async function CreativesPage({ searchParams }: { searchParams: Pr
   const requested = (await searchParams).tab;
   const library = await loadCreativeLibrary(organizationId, [...hub.active, ...hub.past]);
   const counts: Record<Tab, number> = { active: hub.active.length, new: hub.newItems.length, past: hub.past.length, top: hub.top.length, library: library.length };
-  const tab: Tab = TABS.some((t) => t.key === requested) ? (requested as Tab) : hub.active.length ? "active" : hub.newItems.length ? "new" : "active";
+  const tab: Tab = TABS.some((t) => t.key === requested) ? (requested as Tab) : hub.newItems.length ? "new" : hub.active.length ? "active" : "library";
 
   return (
     <div className="mx-auto max-w-[1180px]">
       <PageHeader
         title="Creatives"
-        description="Every ad picture and video: what's running, what's new, what ran before, and what works best for your goal."
-        action={<Link href="/dashboard/creative-studio" className={primaryButtonClass}>+ Create new creative</Link>}
+        description="Your ad pictures, videos and headlines. Approve them, ask for changes, or make new ones — approved ones can go into any campaign."
+        action={<Link href="/dashboard/creative-studio" className={primaryButtonClass}>+ Create ad</Link>}
       />
 
       <SuggestedAdsPrompt organizationId={organizationId} className="mb-6" />
 
-      <nav aria-label="Creatives" className="-mx-1 mb-6 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
-        {TABS.map((t) => (
+      <nav aria-label="Creatives" className="-mx-1 mb-2 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {TABS.filter((t) => SHOWN.includes(t.key) || t.key === tab).map((t) => (
           <Link key={t.key} href={`/dashboard/creatives?tab=${t.key}`} aria-current={t.key === tab ? "page" : undefined}
             className={`shrink-0 rounded-full px-4 py-2 text-[13.5px] transition ${t.key === tab ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
             {t.label}{counts[t.key] > 0 && t.key !== "top" && t.key !== "library" ? <span className="ml-1.5 text-faint">{counts[t.key]}</span> : null}
           </Link>
         ))}
       </nav>
+      <p className="mb-6 px-1 text-[13px] text-muted">
+        {TABS.filter((t) => !SHOWN.includes(t.key) && t.key !== tab).map((t, i) => (
+          <span key={t.key}>
+            {i > 0 && <span aria-hidden> · </span>}
+            <Link href={`/dashboard/creatives?tab=${t.key}`} className="hover:text-white hover:underline">{t.label}</Link>
+          </span>
+        ))}
+      </p>
 
       {tab === "active" && (hub.active.length === 0 ? (
         <EmptyState title="Nothing running right now" description="Creatives appear here while they're in a live campaign, with their results for your goal." />
@@ -71,7 +82,7 @@ export default async function CreativesPage({ searchParams }: { searchParams: Pr
       ))}
 
       {tab === "new" && (hub.newItems.length === 0 ? (
-        <EmptyState title="No new creatives" description="When MAIRO or Creative Studio makes something that isn't running yet, it waits here for you." />
+        <EmptyState title="Nothing to review" description="When MAIRO or Creative Studio makes an ad, it waits here for you to approve, change or regenerate." />
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">{hub.newItems.map((i) => <NewCard key={i.key} item={i} />)}</div>
       ))}

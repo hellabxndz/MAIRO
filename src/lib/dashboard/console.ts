@@ -134,6 +134,15 @@ export function consoleMetrics(input: {
   ];
 }
 
+/** The result this business's goal counts: the Overview's goal, else the one given at setup, else sales. */
+export async function goalFamilyOf(organizationId: string): Promise<MetricFamily> {
+  const mission = await activeMission(organizationId);
+  if (mission) return missionGoal(mission.primaryGoal).metrics;
+  const setupGoal = (await db.onboardingIntake.findUnique({ where: { organizationId }, select: { primaryGoal: true } }))?.primaryGoal ?? null;
+  const FROM_SETUP: Partial<Record<string, MetricFamily>> = { LEADS: "leads", SALES: "sales", TRAFFIC: "traffic", AWARENESS: "awareness" };
+  return (setupGoal && FROM_SETUP[setupGoal]) || "sales";
+}
+
 const KIND_BY_CATEGORY: Record<string, ActionKind> = {
   CREATIVE: "creative",
   AUDIENCE: "audience",

@@ -3,10 +3,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { touchActivity } from "@/lib/success/store";
-import { FeedbackButton } from "@/components/success/feedback";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { signOutAction } from "@/lib/actions/auth-actions";
 import { AppShell } from "@/components/mairo/app-shell";
 import { MairoAssistant } from "@/components/mairo/assistant";
 import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
@@ -56,6 +54,8 @@ const ALWAYS_REACHABLE = [
   "/dashboard/meta",
   "/dashboard/integrations",
   "/dashboard/settings",
+  // Account holds billing, help and signing out, so it has to open for anyone.
+  "/dashboard/account",
   // A paying customer can always see, change or cancel what they pay for.
   "/dashboard/billing",
   "/dashboard/guide",
@@ -175,26 +175,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <NotificationBell items={bellRows.map((n) => toBellItem(n))} unread={unread} />
       }
       switcher={workspaces.length > 1 ? <WorkspaceSwitcher workspaces={workspaces} current={organizationId} compact /> : undefined}
-      footer={
-        <>
-        <WorkspaceSwitcher workspaces={workspaces} current={organizationId} />
-        <Link
-          href="/dashboard/guide"
-          className="block w-full rounded-xl px-3 py-[7px] text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
-        >
-          Help
-        </Link>
-        <FeedbackButton />
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="w-full rounded-xl px-3 py-[7px] text-left text-[13px] text-faint transition-colors hover:bg-white/[0.04] hover:text-white"
-          >
-            Sign out
-          </button>
-        </form>
-        </>
-      }
+      // Help, feedback and signing out are in Account, behind the profile
+      // button, with everything else that isn't one of the four sections.
+      footer={<WorkspaceSwitcher workspaces={workspaces} current={organizationId} />}
     >
       {/* Offered on the first visit after setup, and on demand after that.
           Mounted in the layout so it works from whichever screen someone

@@ -16,71 +16,47 @@ export const OWNER_TOUR: Step[] = [
   {
     title: "Thirty seconds and you'll know your way around",
     body:
-      "Tell MAIRO what you want your business to achieve. It runs the marketing, shows you the results, and asks you only when it needs you.",
+      "Tell MAIRO what you want to advertise. It builds the campaign and the ads, shows you everything before it spends, and reports back on what worked.",
   },
   {
     target: "nav:/dashboard",
     title: "Overview",
     body:
-      "Your goal, how it's going this month, what MAIRO is working on, and anything that needs you. If you only open one screen a week, this is it.",
+      "How your ads are doing, anything waiting for your yes, and one box to tell MAIRO what you want. If you only open one screen, this is it.",
   },
   {
     target: "create",
-    title: "Create",
+    title: "New campaign",
     body:
-      "One button for everything you can start: a campaign, a creative, a promotion — or just tell MAIRO something new.",
+      "Start a campaign from here: a fresh one, something new to promote, or the same as one you ran before with a change or two.",
   },
   {
     target: "nav:/dashboard/campaigns",
     title: "Campaigns",
     body:
-      "Your ads, grouped as active, drafts, paused and completed. Open one for its results, creatives, audience, budget and history.",
+      "Every campaign with its status, daily budget and results. Open one to pause it, change it or see its history.",
   },
   {
     target: "nav:/dashboard/creatives",
-    title: "Creative Studio",
+    title: "Creatives",
     body:
-      "Every ad image and video in one place: what's running, what's new and waiting for you, what ran before, and what's working best for your goal.",
+      "Your ad pictures, videos and headlines. Approve them, ask for changes, or make new ones — approved ones can go into any campaign.",
   },
   {
-    target: "nav:/dashboard/analytics",
-    title: "Performance",
-    body:
-      "Your results in plain numbers — and an Advanced view with every advertising metric, for when you want to dig in.",
-  },
-  {
-    target: "nav:/dashboard/team",
-    title: "AI Team",
-    body:
-      "Eight AI specialties of one system, each with what it has really done and when it checks next. Ask them anything in plain English.",
-  },
-  {
-    target: "nav:/dashboard/coach",
-    title: "Recommendations",
-    body:
-      "What your AI team found in your results and what it proposes, with the evidence for each.",
-  },
-  {
-    target: "nav:/dashboard/decisions",
-    title: "Approvals",
-    body:
-      "Everything waiting for your say-so: launches, plans and the changes your AI team suggests, with the numbers behind them. Nothing changes until you approve.",
-  },
-  {
-    target: "nav:/dashboard/reports",
+    target: "nav:/dashboard/results",
     title: "Results",
     body:
-      "What your ads achieved, from Meta's figures to the sales and leads you confirm — with your weekly and monthly summaries.",
+      "What you spent and what came back, in plain numbers, with what's working and what MAIRO recommends. Every figure comes from Meta or from leads you confirmed.",
   },
   {
-    target: "nav:/dashboard/settings",
-    title: "Settings",
+    target: "nav:/dashboard/account",
+    title: "Account",
     body:
-      "Your business profile, connected accounts, billing and everything else you set once and rarely touch.",
+      "Your business profile, Meta connection, tracking, billing, notifications and help. Things you set once and rarely touch.",
   },
   {
     title: "That's it",
     body:
-      "Set your goal, approve what MAIRO asks you to, and get back to running your business.",
+      "Tell MAIRO what to advertise, approve what it shows you, and get back to running your business.",
   },
 ];

@@ -367,6 +367,7 @@ export const DESTINATIONS = {
   best_creative: { href: "/dashboard/creatives?tab=top", label: "See your best creatives" },
   new_creatives: { href: "/dashboard/creatives?tab=new", label: "See new creatives" },
   create_creative: { href: "/dashboard/creative-studio", label: "Create a creative" },
+  results: { href: "/dashboard/results", label: "See your results" },
   analytics: { href: "/dashboard/analytics", label: "Open Analytics" },
   analytics_advanced: { href: "/dashboard/analytics?view=advanced", label: "Open detailed analytics" },
   decisions: { href: "/dashboard/decisions", label: "Open your Approval Center" },
@@ -374,6 +375,8 @@ export const DESTINATIONS = {
   reports: { href: "/dashboard/reports", label: "Open your reports" },
   settings: { href: "/dashboard/settings", label: "Open Settings" },
   billing: { href: "/dashboard/billing", label: "Open Billing" },
+  account: { href: "/dashboard/account", label: "Open Account" },
+  tracking: { href: "/dashboard/pixel", label: "Open Pixel & tracking" },
 } as const;
 
 /** Added to the customer assistant's prompt alongside the tools. */

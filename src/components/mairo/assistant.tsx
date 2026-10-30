@@ -169,7 +169,8 @@ export function MairoAssistant({
   // Not on the assistant's own page. A floating button that opens a small
   // version of the screen somebody is already looking at is a button that
   // covers the real thing with a worse copy of it.
-  const onAssistantPage = pathname.startsWith("/dashboard/agents");
+  // The Overview has its own box for this, front and centre.
+  const onAssistantPage = pathname.startsWith("/dashboard/agents") || pathname === "/dashboard";
 
   return (
     <>

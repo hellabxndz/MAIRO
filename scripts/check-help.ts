@@ -156,7 +156,9 @@ check("every screen's help link points at an article that exists", () => {
     assert.ok(slugs.length > 0, f);
     for (const s of slugs) assert.ok(bySlug.has(s), `${f}: ${s}`);
   }
-  assert.match(read("src/app/dashboard/layout.tsx"), /href="\/dashboard\/guide"/);
+  // Help is in Account, which the profile button opens from every screen.
+  assert.match(read("src/app/dashboard/account/page.tsx"), /href: "\/dashboard\/guide"/);
+  assert.match(read("src/components/mairo/app-shell.tsx"), /href="\/dashboard\/account"/);
   assert.match(read("src/components/landing/site-footer.tsx"), /\["Help center", "\/help"\]/);
 });
 check("the old guide's out-of-date wording is gone", () => {

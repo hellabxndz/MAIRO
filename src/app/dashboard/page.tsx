@@ -28,6 +28,7 @@ import { InsightsList } from "@/components/dashboard/overview/insights";
 import { CampaignTable } from "@/components/dashboard/overview/campaign-table";
 import { count, money as fmtMoney, PANEL, pct, PUBLISHER_NAME, roas } from "@/components/dashboard/overview/format";
 import { ConsoleOverview } from "./console-overview";
+import { HomeOverview } from "./home-overview";
 import { loadConsole } from "@/lib/dashboard/console";
 import { DashboardModeToggle } from "@/components/dashboard/overview/mode-toggle";
 import { MairoDecisionCard } from "@/components/decisions/decision-card";
@@ -123,21 +124,17 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
     </Card>
   ) : null;
 
+  // Simple (the default): the chat-app-simple home — one box, one next step,
+  // a short summary, what's waiting, the campaigns. Advanced and Profit First
+  // below keep every figure for those who switch to them in Account.
   if (mode === "simple") {
     return (
-      <ConsoleOverview
+      <HomeOverview
         organizationId={organizationId}
         userName={session.user.name ?? ""}
         days={days}
-        mode="simple"
         askFeedback={query.feedback === "1"}
-        above={
-          <>
-            {launchedNotice}
-            {/* Until tracking works: how to set the pixel up, right here. */}
-            <PixelGuide organizationId={organizationId} />
-          </>
-        }
+        above={launchedNotice}
       />
     );
   }

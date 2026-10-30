@@ -195,7 +195,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         </p>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div id="plans" className="grid scroll-mt-24 gap-5 md:grid-cols-2">
         {PLANS.map((plan) => {
           const isCurrent = subscribed && plan.tier === tier;
           const canBuy = buyable.includes(plan.tier as (typeof buyable)[number]);

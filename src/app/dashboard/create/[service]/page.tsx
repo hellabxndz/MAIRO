@@ -19,6 +19,7 @@ import { canOptimizeTowards } from "@/lib/tracking/pixels";
 import { campaignLaunchGate } from "@/lib/tracking/pixel-setup";
 import { connectionSummaries } from "@/lib/ad-platforms/connections";
 import { brainFacts, loadBrain } from "@/lib/business/brain";
+import { planAbout, planFromCampaign, repeatStep } from "@/lib/campaigns/repeat";
 
 // The Create wizard's route.
 //
@@ -38,13 +39,13 @@ export default async function CreateServicePage({
   searchParams,
 }: {
   params: Promise<{ service: string }>;
-  searchParams: Promise<{ draft?: string | string[]; posts?: string; connected?: string }>;
+  searchParams: Promise<{ draft?: string | string[]; posts?: string; connected?: string; from?: string; about?: string; step?: string }>;
 }) {
   const { service: slug } = await params;
   if (RETIRED.has(slug)) redirect("/dashboard/create/meta");
   const service = SERVICES[slug];
   if (!service) notFound();
-  const { draft: draftParam, posts: postsParam, connected: connectedParam } = await searchParams;
+  const { draft: draftParam, posts: postsParam, connected: connectedParam, from: fromParam, about: aboutParam, step: stepParam } = await searchParams;
   const draftId = typeof draftParam === "string" ? draftParam.slice(0, 64) : null;
 
   const session = await auth();
@@ -124,9 +125,29 @@ export default async function CreateServicePage({
   const saved = draft && typeof draft.data === "object" && draft.data !== null && !Array.isArray(draft.data)
     ? (draft.data as Partial<CampaignPlan>)
     : null;
-  const initialPlan: CampaignPlan = saved ? { ...fresh, ...saved, service: fresh.service } : fresh;
+  // "Similar to my previous campaign" starts from one of this business's own
+  // campaigns (never another's: the read is scoped to the organization), and
+  // "Promote something different" from what they typed. A saved draft wins
+  // over both.
+  const previous = !saved && typeof fromParam === "string"
+    ? await db.mairoCampaign.findFirst({
+        where: { id: fromParam.slice(0, 64), organizationId },
+        select: {
+          name: true, objective: true, destinationType: true, destinationUrl: true, destinationPhone: true, messageChannel: true,
+          geoKey: true, geoLabel: true, geoRadius: true, ageMin: true, ageMax: true, genders: true, totalDailyBudgetCents: true,
+          budgetType: true, lifetimeBudgetCents: true, placements: true, specialAdCategory: true, metaAppId: true, promotes: true,
+        },
+      })
+    : null;
+  const initialPlan: CampaignPlan = saved
+    ? { ...fresh, ...saved, service: fresh.service }
+    : previous
+      ? planFromCampaign(fresh, previous)
+      : typeof aboutParam === "string"
+        ? planAbout(fresh, aboutParam)
+        : fresh;
   // A review is never saved — it's re-run against the account as it is now.
-  const savedStep: WizardStep = draft && isWizardStep(draft.step) ? draft.step : "business";
+  const savedStep: WizardStep = draft && isWizardStep(draft.step) ? draft.step : (previous && repeatStep(stepParam)) || "business";
   const initialStep: WizardStep = savedStep === "launch" ? "review" : savedStep;
 
   return (
@@ -136,9 +157,14 @@ export default async function CreateServicePage({
         className="mb-8 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-white"
       >
         <span aria-hidden>←</span>
-        All services
+        Create campaign
       </Link>
 
+      {previous && (
+        <p className="mb-6 rounded-xl border px-4 py-3 text-[13.5px] text-white/90" style={{ borderColor: "var(--mairo-line)" }}>
+          Started from &ldquo;{previous.name}&rdquo; — its goal, audience, budget and destination are filled in. Change what you like; you&rsquo;ll pick the ad and see the full review before anything launches or spends.
+        </p>
+      )}
       {fromPlan && (
         <p className="mb-6 rounded-xl border border-violet/30 bg-violet/[0.06] px-4 py-3 text-[13.5px] text-white/90">
           Prefilled from your approved plan. Check each step, confirm your location, and make your final creatives — the campaign is built switched off, and nothing spends until you press Launch Campaign.

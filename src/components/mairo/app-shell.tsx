@@ -1,32 +1,27 @@
 "use client";
 
 import { Wordmark } from "@/components/wordmark";
-import { AppThemeScope, ThemeToggle } from "@/components/theme/theme";
+import { AppThemeScope } from "@/components/theme/theme";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useTransition, type ReactNode } from "react";
 import { setViewMode } from "@/lib/actions/view-mode-actions";
 import type { ViewMode } from "@/lib/view-mode";
-import { AskMairoButton, CreateMenu } from "./create-menu";
+import { AskMairoButton } from "./create-menu";
 import { AmbientSky } from "@/components/ambient-sky";
 
 // The logged-in MAIRO shell.
 //
-// This replaces a sidebar of eleven feature names — Overview, Monthly plan,
-// Performance, Your social posts, Where you advertise, Measuring sales, AI
-// specialists — that on a phone opened as a full-screen list you had to dismiss
-// every single time you wanted to move. That is a table of contents, not
-// navigation.
+// Four places, the same four on every screen and every device: Overview,
+// Campaigns, Creatives and Results. Everything else a business sets once and
+// rarely touches is behind the profile button, in Account.
 //
-// What replaces it is the reference: eight destinations in a lit sidebar on
-// desktop, five in a persistent bottom bar on mobile. Nothing was deleted. Every
-// old page still exists and is still reachable — the ones that are not
-// day-to-day destinations moved into Account, which is a real screen rather
-// than a drawer.
-//
-// The naming changed with it. "AI specialists" is gone because MAIRO has one
-// assistant now, not three; "Where you advertise" is Integrations; "Measuring
-// sales" and "Performance" are both Analytics; "Monthly plan" is Billing.
+// It used to be eight sidebar destinations (Performance, Intelligence,
+// Recommendations, Approvals and Results among them) that each answered part
+// of the same two questions: how are my ads doing, and what does MAIRO want
+// me to say yes to. The first is Results now; the second is on the Overview,
+// where the owner already is. Nothing was deleted. Every route still exists,
+// still works and lights up the section it belongs to (`also` below).
 
 export type NavEntry = {
   href: string;
@@ -162,46 +157,41 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 /* ----------------------------------------------------------------- the map */
 
 /**
- * The day-to-day destinations: Overview, Campaigns, Creative Studio,
- * Performance, AI Team, Recommendations, Approvals, Results, (Social
- * Manager) — and Settings at the bottom. Everything else lives inside one of
- * them: leads inside Campaigns, the creative tools inside Creative Studio,
- * activity inside Performance, asking the team inside AI Team, the
- * Performance Coach's findings inside Recommendations, the weekly and
- * monthly reports inside Results, the business profile, integrations,
- * billing and account inside Settings. Every route still exists.
+ * The four sections. Each also owns the older pages that now live inside it,
+ * so arriving on one of them (from a link, a notification, a bookmark) still
+ * shows the owner where they are.
  */
 export const PRIMARY_NAV: NavEntry[] = [
-  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission"] },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
-  { href: "/dashboard/creatives", label: "Creative Studio", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
-  { href: "/dashboard/analytics", label: "Performance", icon: <Icon d={I.analytics} />, also: ["/dashboard/activity"] },
-  { href: "/dashboard/intelligence", label: "Intelligence", icon: <Icon d={I.team} />, also: ["/dashboard/team", "/dashboard/agents"] },
-  // What the AI team found in the results and proposes — the Coach's findings.
-  { href: "/dashboard/coach", label: "Recommendations", icon: <Icon d={I.coach} /> },
-  { href: "/dashboard/decisions", label: "Approvals", icon: <Icon d={I.decisions} /> },
-  { href: "/dashboard/reports", label: "Results", icon: <Icon d={I.reports} /> },
+  {
+    href: "/dashboard",
+    label: "Overview",
+    icon: <Icon d={I.home} />,
+    // Approvals and the AI's findings are answered from the Overview.
+    also: ["/dashboard/mission", "/dashboard/decisions", "/dashboard/coach", "/dashboard/intelligence", "/dashboard/team", "/dashboard/agents", "/dashboard/health"],
+  },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads", "/dashboard/launch"] },
+  { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
+  { href: "/dashboard/results", label: "Results", icon: <Icon d={I.analytics} />, also: ["/dashboard/analytics", "/dashboard/reports", "/dashboard/activity"] },
 ];
 
 /**
- * After Social Manager, which the layout adds for the plans that have it
- * (or locked). The assistant is part of the AI Team now — "Ask your AI
- * team" — so this is empty; kept as a slot so the layout's order holds.
+ * After the four, which the layout may extend (the free plan's two pages).
+ * Kept as a slot so the layout's order holds.
  */
 export const ASSISTANT_NAV: NavEntry | null = null;
 
-/** Bottom of the sidebar. */
+/** Bottom of the sidebar: Account, which holds everything else. */
 export const SECONDARY_NAV: NavEntry[] = [
-  { href: "/dashboard/settings", label: "Settings", icon: <Icon d={I.settings} />, also: ["/dashboard/business", "/dashboard/integrations", "/dashboard/billing", "/dashboard/account", "/dashboard/meta", "/dashboard/tracking", "/dashboard/pixel", "/dashboard/website", "/dashboard/notifications"] },
+  {
+    href: "/dashboard/account",
+    label: "Account",
+    icon: <Icon d={I.account} />,
+    also: ["/dashboard/settings", "/dashboard/business", "/dashboard/integrations", "/dashboard/billing", "/dashboard/meta", "/dashboard/tracking", "/dashboard/pixel", "/dashboard/website", "/dashboard/notifications", "/dashboard/guide", "/dashboard/sales-setup", "/dashboard/plan", "/dashboard/meta-capabilities"],
+  },
 ];
 
-/** The phone's bottom bar: four destinations around the Create button. */
-const MOBILE_NAV: NavEntry[] = [
-  { href: "/dashboard", label: "Overview", icon: <Icon d={I.home} />, also: ["/dashboard/mission"] },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: <Icon d={I.campaigns} />, also: ["/dashboard/create", "/dashboard/leads"] },
-  { href: "/dashboard/creatives", label: "Creatives", icon: <Icon d={I.creatives} />, also: ["/dashboard/creative-studio"] },
-  { href: "/dashboard/decisions", label: "Approvals", icon: <Icon d={I.decisions} />, also: ["/dashboard/coach", "/dashboard/team", "/dashboard/agents"] },
-];
+/** The phone's bottom bar: the same four, so the two never disagree. */
+const MOBILE_NAV: NavEntry[] = PRIMARY_NAV;
 
 /**
  * Whether a nav entry owns the current URL.
@@ -258,13 +248,15 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
  * change to the sidebar changes both.
  */
 export function NavRowView({ item, active, locked = false, href }: { item: NavEntry; active: boolean; locked?: boolean; href?: string }) {
-  const className = `group relative flex items-center gap-3 rounded-xl px-3 py-[7px] text-[13px] transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
-    active ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
+  // The current section is a quiet fill, not a lit gradient: the page is what
+  // should hold the eye, not the sidebar.
+  const className = `group relative flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-colors duration-200 ${
+    active ? "bg-white/[0.08] font-medium text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
   }`;
-  const style = active ? { backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-lift)" } : undefined;
+  const style = undefined;
   const inner = (
     <>
-      <span className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-faint group-hover:text-blue-bright"}`}>{item.icon}</span>
+      <span className={`h-[18px] w-[18px] shrink-0 ${active ? "text-white" : "text-faint group-hover:text-white"}`}>{item.icon}</span>
       <span className="truncate whitespace-nowrap">{item.label}</span>
       {item.badge && (
         // A locked feature's plan, with the lock inside the label.
@@ -304,11 +296,40 @@ export function NavRowView({ item, active, locked = false, href }: { item: NavEn
 /** A theme variable (globals.css), so the light theme turns the sidebar over with everything else. */
 export const SIDEBAR_BACKGROUND = "var(--mairo-sidebar)";
 
+/* ------------------------------------------------------- the profile button */
+
+/** The way into Account, top right, as in any app: an initial in a circle. */
+function ProfileButton({ userName, businessName, wide = false }: { userName: string; businessName: string; wide?: boolean }) {
+  const initial = (userName || businessName || "?").charAt(0).toUpperCase();
+  const dot = (
+    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black">
+      {initial}
+    </span>
+  );
+  if (!wide) {
+    return (
+      <Link href="/dashboard/account" aria-label="Account" className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+        {dot}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href="/dashboard/account"
+      className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"
+      style={{ borderColor: "var(--mairo-line)" }}
+    >
+      {dot}
+      <span className="max-w-[180px] truncate text-[13px] text-white">{userName || businessName}</span>
+      <span className="sr-only">— Account</span>
+    </Link>
+  );
+}
+
 /* -------------------------------------------------------------- the shell */
 
 export function AppShell({
   children,
-  mode,
   businessName,
   userName,
   showUpgrade = false,
@@ -324,6 +345,7 @@ export function AppShell({
   switcher?: ReactNode;
   /** Nav destinations shown with a lock: the account hasn't subscribed yet. */
   locked?: string[];
+  /** Simple or Advanced. The switch itself lives in Account now. */
   mode: ViewMode;
   businessName: string;
   /** Whose account this is, for the chip in the top right. */
@@ -367,8 +389,19 @@ export function AppShell({
         <div className="mb-4 shrink-0 px-2">
           <Wordmark href="/dashboard" className="text-[15px]" />
         </div>
+        {/* The one thing to start from anywhere, the way a chat app puts
+            "New chat" at the top. Promotions and "tell MAIRO something" are
+            the Overview's question box now. */}
         <div className="mb-4 shrink-0">
-          <CreateMenu />
+          <Link
+            href="/dashboard/create"
+            data-tour="create"
+            className="flex min-h-10 w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-[14px] font-medium text-white transition-colors hover:bg-white/[0.05]"
+            style={{ borderColor: "var(--mairo-line)" }}
+          >
+            <span aria-hidden className="flex h-[18px] w-[18px] items-center justify-center text-[18px] leading-none">+</span>
+            New campaign
+          </Link>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5">
@@ -417,30 +450,19 @@ export function AppShell({
       </aside>
 
       <AppThemeScope />
-      {/* ---- Mobile top bar. The name of the business, and the mode. ---- */}
+      {/* ---- Mobile top bar: whose account, MAIRO, the bell and the profile. ---- */}
       <header
-        className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
+        className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] lg:hidden"
+        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.94)" }}
       >
         <Wordmark href="/dashboard" className="text-[13px]" />
         {/* Someone on more than one team gets the switcher on a row of its own, so it never crowds the controls. */}
-        {switcher ? <div className="order-last min-w-0 basis-full">{switcher}</div> : <span className="min-w-0 truncate text-[12px] text-faint">{businessName}</span>}
-        <div className="ml-auto flex items-center gap-1.5">
+        {switcher ? <div className="order-last min-w-0 basis-full">{switcher}</div> : <span className="min-w-0 flex-1 truncate text-[12.5px] text-faint">{businessName}</span>}
+        <div className="ml-auto flex items-center gap-1">
           <AskMairoButton name={askName} compact />
-          {/* The Overview has its own view switch (with Profit First) in its header. */}
-          {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
-          {/* Beside the view switch there's no room for it on the narrowest phones; the Overview keeps it. */}
-          <span className={pathname !== "/dashboard" ? "hidden min-[400px]:contents" : "contents"}>
-            <ThemeToggle className="h-9 w-9" />
-          </span>
-          {/* Settings — and from there analytics' neighbours, billing, account
-              and signing out — on a phone. */}
-          <Link href="/dashboard/settings" aria-label="Settings" className="-mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-            <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
-              {(userName || businessName || "?").charAt(0).toUpperCase()}
-            </span>
-          </Link>
+          {/* Account: business, Meta, tracking, billing, help, log out. */}
+          <ProfileButton userName={userName} businessName={businessName} />
         </div>
       </header>
 
@@ -450,68 +472,32 @@ export function AppShell({
           control on the screen, which is the single most common way a bottom
           nav breaks a form. */}
       <main className="px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:ml-[248px] lg:px-10 lg:pb-16 lg:pt-8">
-        {/* Desktop keeps the toggle at the top of the content rather than in
-            the sidebar: it changes what this screen shows, so it belongs
-            beside the screen. */}
-        <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
+        <div className="mb-6 hidden items-center justify-end gap-3 lg:flex">
           <AskMairoButton name={askName} />
-          {/* The Overview has its own view switch (with Profit First) in its header. */}
-          {pathname !== "/dashboard" && <ViewToggle mode={mode} />}
           {notifications}
-          <ThemeToggle />
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"
-            style={{ borderColor: "var(--mairo-line)" }}
-          >
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-medium text-white"
-              style={{ backgroundImage: "var(--mairo-ramp)" }}
-              aria-hidden
-            >
-              {(userName || businessName || "?").charAt(0).toUpperCase()}
-            </span>
-            <span className="text-[12.5px] text-white">{userName || businessName}</span>
-          </Link>
+          <ProfileButton userName={userName} businessName={businessName} wide />
         </div>
         {children}
       </main>
 
-      {/* ---- Mobile bottom navigation ---- */}
+      {/* ---- Mobile bottom navigation: the same four sections ---- */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 items-end border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
         style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
         aria-label="Primary"
       >
-        {[...MOBILE_NAV.slice(0, 2), null, ...MOBILE_NAV.slice(2)].map((item) => {
-          if (!item) return <CreateMenu key="create" variant="bar" />;
+        {MOBILE_NAV.map((item) => {
           const active = isActive(pathname, item.href, item.also);
           return (
             <Link
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className="relative flex flex-col items-center gap-1 px-1 py-2.5"
+              className="relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2"
             >
-              {/* The lit rail over the active tab. An overlay rather than a
-                  background so the glow can feather. */}
-              {active && (
-                <span
-                  aria-hidden
-                  className="absolute inset-x-3 top-0 h-px"
-                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "0 0 12px 1px rgba(214,214,214,0.6)" }}
-                />
-              )}
-              <span
-                className={`flex h-5 w-5 items-center justify-center ${
-                  active ? "text-blue-bright" : "text-faint"
-                }`}
-              >
-                {item.icon}
-              </span>
-              <span className={`text-[10px] leading-none ${active ? "text-white" : "text-faint"}`}>
-                {item.label}
-              </span>
+              {active && <span aria-hidden className="absolute inset-x-5 top-0 h-[2px] rounded-full bg-white" />}
+              <span className={`flex h-5 w-5 items-center justify-center ${active ? "text-white" : "text-faint"}`}>{item.icon}</span>
+              <span className={`text-[11px] leading-none ${active ? "font-medium text-white" : "text-faint"}`}>{item.label}</span>
             </Link>
           );
         })}

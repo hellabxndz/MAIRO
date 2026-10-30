@@ -76,7 +76,7 @@ export function NewCard({ item }: { item: NewItem }) {
         <div className="mt-3 flex flex-wrap gap-2">
           {item.kind === "request" ? (
             <>
-              <Link href={`/dashboard/creatives/requests#req-${item.id}`} className={item.status === "Ready to review" ? actionClass : quietClass}>{item.status === "Ready to review" ? "Review & approve" : "Edit"}</Link>
+              <Link href={`/dashboard/creatives/requests#req-${item.id}`} className={item.status === "Ready to review" ? actionClass : quietClass}>{item.status === "Ready to review" ? "Review & approve" : "Make changes"}</Link>
               {item.status === "Approved" && <Link href="/dashboard/create" className={actionClass}>Use in campaign</Link>}
               {!item.hasConcept && (
                 <button type="button" disabled={pending} className={quietClass} onClick={() => start(async () => { const r = await regenerateConceptAction(item.id).catch(() => ({ error: "Something went wrong." })); setNote(r?.error ?? null); router.refresh(); })}>
@@ -89,7 +89,7 @@ export function NewCard({ item }: { item: NewItem }) {
               <button type="button" disabled={pending} className={actionClass} onClick={() => start(async () => { const r = await attachCreativeToCampaignAction(item.id).catch(() => ({ error: "Something went wrong." })); setNote(r && "error" in r && r.error ? r.error : "Ready — it's now available when you create a campaign."); router.refresh(); })}>
                 {pending ? "Working…" : "Use in campaign"}
               </button>
-              <Link href="/dashboard/creative-studio" className={quietClass}>Edit</Link>
+              <Link href="/dashboard/creative-studio" className={quietClass}>Make changes</Link>
             </>
           )}
         </div>
