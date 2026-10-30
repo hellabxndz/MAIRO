@@ -17,6 +17,7 @@ import { PresetGrid } from "./preset-grid";
 import { FormatGrid } from "./format-grid";
 import { CreditMeter } from "./credit-meter";
 import { GeneratingOverlay } from "./generating-overlay";
+import { useReportWhile } from "@/lib/cinematic/use-activity";
 import { Dropzone } from "./dropzone";
 import { inputClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui";
 import type { CreativeFormat, CreativeStylePreset } from "@/generated/prisma/enums";
@@ -128,6 +129,7 @@ export function StudioWorkspace({
   const [varState, variationsAction, varying] = useActionState(generateVariationsAction, undefined);
 
   const busy = generating || transforming || uploading || editing || varying;
+  useReportWhile(generating || transforming || editing || varying, "generating", "Making your ad…");
 
   // Four independent useActionState hooks — one per server action — each
   // keep their own result around once set, so a naive "whichever one has an

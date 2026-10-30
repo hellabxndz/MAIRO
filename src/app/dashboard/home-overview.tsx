@@ -14,6 +14,8 @@ import { DecisionControls } from "@/components/console/decision-controls";
 import { HomeComposer } from "@/components/dashboard/home/composer";
 import { PulseCard } from "@/components/success/feedback";
 import { ResultsNote } from "@/components/results-disclaimer";
+import { MairoCore } from "@/components/cinematic/core";
+import { CountUp } from "@/components/cinematic/count-up";
 
 // The Overview, as simple as a chat app's home: who you are, one box to say
 // what you want, the one thing to do next, a short summary of how the ads are
@@ -29,7 +31,6 @@ import { ResultsNote } from "@/components/results-disclaimer";
 type Next = { title: string; text: string; href: string; cta: string };
 
 const btn = "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-6 text-[15px] font-semibold text-black transition hover:bg-white/90 sm:w-auto";
-const surface = { borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" };
 
 function Section({ title, action, children }: { title: string; action?: { href: string; label: string }; children: ReactNode }) {
   return (
@@ -125,13 +126,24 @@ export async function HomeOverview({
     summary.push(trackingNeeded ? "Revenue isn't measured yet because tracking isn't set up." : "Revenue isn't shown because no sale values were reported.");
   }
 
+  const restingLabel = waiting.length > 0
+    ? `${waiting.length} ${waiting.length === 1 ? "thing waits" : "things wait"} for your approval`
+    : live > 0
+      ? `Watching ${live} live campaign${live === 1 ? "" : "s"}`
+      : noCampaigns
+        ? "Ready when you are"
+        : "Nothing needs you right now";
+
   return (
     <div className="mx-auto max-w-[760px]">
       {above && <div className="mb-6 space-y-4">{above}</div>}
 
-      <header className="mb-6 pt-2 sm:pt-6">
-        <h1 className="text-[clamp(26px,4vw,36px)] font-semibold leading-tight tracking-[-0.025em] text-white">{c.header.greeting}</h1>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14.5px] text-muted">
+      <header className="mb-7 flex flex-col items-center pt-1 text-center sm:pt-3">
+        {/* MAIRO itself: at rest it shows the account as it is; it moves
+            only when real work runs (lib/cinematic/activity.ts). */}
+        <MairoCore resting={waiting.length > 0 ? "attention" : "idle"} restingLabel={restingLabel} size={128} className="mb-3" />
+        <h1 className="text-[clamp(26px,4vw,38px)] font-semibold leading-tight tracking-[-0.03em] text-white">{c.header.greeting}</h1>
+        <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[14.5px] text-muted">
           <span>{c.header.business}</span>
           <span aria-hidden>·</span>
           <Pill tone={status.tone} dot>{status.text}</Pill>
@@ -146,7 +158,7 @@ export async function HomeOverview({
       <HomeComposer assistantName={name} />
 
       {/* The one thing to do next. */}
-      <section aria-labelledby="next-step" className="mt-8 rounded-[24px] border p-5 sm:p-6" style={surface}>
+      <section aria-labelledby="next-step" className="mt-8 rounded-[24px] p-5 sm:p-6 mairo-glass">
         <h2 id="next-step" className="text-[18px] font-semibold text-white">{next.title}</h2>
         <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">{next.text}</p>
         <div className="mt-4">
@@ -160,7 +172,7 @@ export async function HomeOverview({
 
       {/* How it's going, in a few words and the figures Meta reported. */}
       <Section title="MAIRO's summary" action={noCampaigns ? undefined : { href: "/dashboard/results", label: "Results" }}>
-        <div className="rounded-[24px] border p-5 sm:p-6" style={surface}>
+        <div className="rounded-[24px] p-5 sm:p-6 mairo-glass">
           <div className="space-y-2 text-[15px] leading-relaxed text-white/90">
             {summary.map((s) => (
               <p key={s}>{s}</p>
@@ -170,7 +182,7 @@ export async function HomeOverview({
             <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-5 sm:grid-cols-4" style={{ borderColor: "var(--mairo-line)" }}>
               {figures.map((f) => (
                 <div key={f.label} className="min-w-0">
-                  <dd className="truncate text-[22px] font-medium tabular-nums text-white">{f.value}</dd>
+                  <dd className="truncate text-[22px] font-medium tabular-nums text-white"><CountUp value={f.value} /></dd>
                   <dt className="text-[12.5px] text-muted">{f.label}</dt>
                 </div>
               ))}
@@ -187,7 +199,7 @@ export async function HomeOverview({
             {waiting.slice(0, 3).map((item) => {
               const decision = c.actions.decisions[item.key];
               return (
-                <li key={item.key} className="rounded-[24px] border p-5" style={surface}>
+                <li key={item.key} className="rounded-[24px] p-5 mairo-glass">
                   <p className="text-[11.5px] font-medium uppercase tracking-[0.12em] text-faint">MAIRO recommendation</p>
                   <p className="mt-1.5 text-[16px] font-medium text-white">{item.title}</p>
                   <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed text-muted">{item.why}</p>
@@ -211,7 +223,7 @@ export async function HomeOverview({
       {/* The campaigns, briefly. */}
       {c.campaigns.rows.length > 0 && (
         <Section title="Your campaigns" action={{ href: "/dashboard/campaigns", label: "All campaigns" }}>
-          <ul className="overflow-hidden rounded-[24px] border" style={surface}>
+          <ul className="overflow-hidden rounded-[24px] mairo-glass">
             {c.campaigns.rows.slice(0, 3).map((r, i) => (
               <li key={r.id} className={i > 0 ? "border-t" : undefined} style={i > 0 ? { borderColor: "var(--mairo-line)" } : undefined}>
                 <Link href={r.href ?? `/dashboard/campaigns/${r.id}`} className="flex min-h-[64px] items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]">

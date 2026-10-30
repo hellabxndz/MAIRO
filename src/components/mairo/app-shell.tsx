@@ -381,6 +381,8 @@ export function AppShell({
   return (
     <div className="relative isolate min-h-screen">
       <AmbientSky />
+      {/* Electric-blue light from above: still, CSS only, behind everything. */}
+      <div aria-hidden className="mairo-app-light pointer-events-none fixed inset-0 -z-[15]" />
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"

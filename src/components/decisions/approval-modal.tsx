@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { approveDecisionsAction } from "@/lib/actions/decision-actions";
+import { useReportWhile } from "@/lib/cinematic/use-activity";
 import { describeChange } from "@/lib/decisions/guardrails";
 import type { DecisionChange } from "@/lib/decisions/types";
 import type { DecisionView } from "@/lib/decisions/store";
@@ -55,6 +56,8 @@ export function ApprovalModal({
   function setChange(decisionId: string, index: number, next: DecisionChange) {
     setEdits((prev) => ({ ...prev, [decisionId]: prev[decisionId].map((c, i) => (i === index ? next : c)) }));
   }
+
+  useReportWhile(pending, "building", "Applying your approval…", () => (result?.error ? "error" : "success"));
 
   function approve() {
     start(async () => {

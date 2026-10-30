@@ -2,6 +2,8 @@
 
 import { ProblemCard } from "@/components/onboarding/problem-card";
 import { explainCampaignError } from "@/lib/onboarding/problems";
+import { MairoCore } from "@/components/cinematic/core";
+import { useReportWhile } from "@/lib/cinematic/use-activity";
 import { startTransition, useActionState, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -81,6 +83,14 @@ type Props = {
   openPosts: boolean;
 };
 
+/** The wizard's seven screens as the four things the owner is doing. */
+const PHASES = [
+  { label: "What you're advertising", steps: ["business"] },
+  { label: "Your goal and budget", steps: ["goal", "audience", "budget"] },
+  { label: "Your ad", steps: ["ad"] },
+  { label: "Review and launch", steps: ["review", "launch"] },
+] as const;
+
 export function CampaignWizard(props: Props) {
   const { orgName, platforms, defaultDestination, pixelActive, purchaseGate, businessPhone, autoLaunchHeld, mode, studio, connected } = props;
   const missing = platforms.filter((p) => !connected.includes(p));
@@ -115,6 +125,11 @@ export function CampaignWizard(props: Props) {
   const showAnalysis = attempt > 0 && (pending || !state?.error) && !state?.upgradeNeeded;
 
   const current = STEPS[stepIndex].id;
+  // The MAIRO core reacts to the two real operations on this screen: the AI
+  // review of the plan, and building the campaign in Meta.
+  useReportWhile(checking, "analyzing", "Reviewing your campaign…", () => "idle");
+  useReportWhile(pending, "building", "Building your campaign in Meta…", () => (state?.error ? "error" : "success"));
+  const phase = PHASES.findIndex((p) => (p.steps as readonly string[]).includes(current));
   // Which score areas the owner chose to keep is a note on the review, not a
   // change to what launches, so it doesn't make the review stale.
   const planKey = reviewKey(plan);
@@ -258,6 +273,24 @@ export function CampaignWizard(props: Props) {
     <>
       {showAnalysis && <AnalysisScan businessName={plan.businessName || orgName} platforms={platforms} />}
 
+      {/* Four phases, whatever the screen: what you're advertising, goal and
+          budget, the ad, review and launch. The detailed steps are the rail. */}
+      {!showAnalysis && (
+        <div className="mairo-glass mb-8 flex items-center gap-4 rounded-[24px] px-4 py-3 sm:px-5">
+          <MairoCore size={60} caption={false} className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[12.5px] text-muted" aria-live="polite">
+              {checking ? "MAIRO is reviewing your campaign…" : pending ? "Building your campaign in Meta…" : `Step ${phase + 1} of ${PHASES.length}`}
+            </p>
+            <p className="truncate text-[16px] font-semibold text-white">{PHASES[phase]?.label}</p>
+            <div className="mt-2 grid grid-cols-4 gap-1.5" aria-hidden>
+              {PHASES.map((p, i) => (
+                <span key={p.label} className="h-1 rounded-full transition-colors duration-500" style={{ background: i < phase ? "#8fb4ff" : i === phase ? "#2f6bff" : "var(--mairo-line)" }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div className={showAnalysis ? "hidden" : "grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_minmax(0,1fr)_290px]"}>
         {/* Steps. A rail on the left on desktop; a compact line on phones. */}
         <nav aria-label="Campaign steps" className="lg:sticky lg:top-8 lg:self-start">
@@ -297,20 +330,6 @@ export function CampaignWizard(props: Props) {
               );
             })}
           </ol>
-          <div className="lg:hidden">
-            <p className="text-[12px] text-muted">
-              Step {stepIndex + 1} of {STEPS.length} · <span className="text-white">{STEPS[stepIndex].label}</span>
-            </p>
-            <div className="mt-2 flex gap-1.5" aria-hidden>
-              {STEPS.map((s, i) => (
-                <span
-                  key={s.id}
-                  className="h-0.5 flex-1 rounded-full"
-                  style={i <= stepIndex ? { backgroundImage: "var(--mairo-ramp)" } : { background: "var(--mairo-line)" }}
-                />
-              ))}
-            </div>
-          </div>
           <div className="mt-6 hidden lg:block">
             <ViewToggle mode={mode} />
             <p className="mt-2 text-[11px] leading-relaxed text-faint">
@@ -352,6 +371,7 @@ export function CampaignWizard(props: Props) {
             </div>
           )}
 
+          <div key={current} className="mairo-page-in">
           {current === "business" && <StepBusiness plan={plan} update={update} orgName={orgName} />}
           {current === "goal" && (
             <StepGoal plan={plan} update={update} recommended={recommended} pixelActive={pixelActive} purchaseGate={purchaseGate} businessPhone={businessPhone} mode={mode} />
@@ -498,6 +518,7 @@ export function CampaignWizard(props: Props) {
               </div>
             </details>
             <AskMairo name={studio.assistantName} step={current} plan={plan} />
+          </div>
           </div>
         </section>
 

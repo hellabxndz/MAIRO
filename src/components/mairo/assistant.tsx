@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
+import { useReportWhile } from "@/lib/cinematic/use-activity";
 import { FixThisForMe, proposedFixIds } from "@/components/decisions/fix-this-for-me";
 import { DefaultChatTransport, type UIMessage } from "ai";
 
@@ -132,6 +133,7 @@ export function MairoAssistant({
   });
 
   const busy = status === "submitted" || status === "streaming";
+  useReportWhile(busy, "thinking", `${assistantName} is answering…`, () => (status === "error" ? "error" : "idle"));
 
   // Follow the conversation as it streams. Scrolling the container rather than
   // the page, so opening the panel never moves the screen behind it.

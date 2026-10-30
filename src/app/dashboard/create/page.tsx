@@ -32,8 +32,7 @@ function staleBuildCutoff(): Date {
 }
 
 const choice =
-  "flex min-h-[76px] w-full items-center gap-4 rounded-[22px] border px-5 py-4 text-left transition-colors hover:bg-white/[0.04]";
-const surface = { borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" };
+  "mairo-glass flex min-h-[76px] w-full items-center gap-4 rounded-[22px] px-5 py-4 text-left transition-transform duration-200 hover:-translate-y-px";
 
 export default async function CreatePage({ searchParams }: { searchParams: Promise<{ start?: string; about?: string; from?: string }> }) {
   const session = await auth();
@@ -103,7 +102,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
         <ul className="space-y-2.5">
           {REPEAT_CHANGES.map((c) => (
             <li key={c.key}>
-              <Link href={`/dashboard/create/meta?from=${picked.id}&step=${c.step}`} className={choice} style={surface}>
+              <Link href={`/dashboard/create/meta?from=${picked.id}&step=${c.step}`} className={choice}>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[16px] font-medium text-white">{c.label}</span>
                   <span className="block text-[13px] text-muted">{c.hint}</span>
@@ -123,14 +122,14 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
       <div className="mx-auto max-w-[680px]">
         {header("Which campaign should MAIRO start from?", "Its goal, audience, budget and destination are copied into a new campaign. The original isn't changed.", "/dashboard/create")}
         {previous.length === 0 ? (
-          <p className="rounded-[22px] border p-5 text-[14.5px] text-muted" style={surface}>
+          <p className="rounded-[22px] p-5 text-[14.5px] text-muted mairo-glass">
             You haven&rsquo;t made a campaign yet. <Link href="/dashboard/create/meta" className="text-white underline underline-offset-4">Start your first one</Link>.
           </p>
         ) : (
           <ul className="space-y-2.5">
             {previous.map((c) => (
               <li key={c.id}>
-                <Link href={`/dashboard/create?from=${c.id}`} className={choice} style={surface}>
+                <Link href={`/dashboard/create?from=${c.id}`} className={choice}>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[16px] font-medium text-white">{c.name}</span>
                     <span className="block text-[13px] text-muted">
@@ -160,7 +159,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
 
       <div className="space-y-2.5">
         {previous.length > 0 && (
-          <Link href="/dashboard/create?start=similar" className={choice} style={surface}>
+          <Link href="/dashboard/create?start=similar" className={choice}>
             <span className="min-w-0 flex-1">
               <span className="block text-[16px] font-medium text-white">Similar to my previous campaign</span>
               <span className="block text-[13px] text-muted">Run one again with a change or two</span>
@@ -170,7 +169,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
         )}
 
         {/* What they want to promote, typed here, starts the wizard on it. */}
-        <form action="/dashboard/create/meta" method="get" className="rounded-[22px] border px-5 py-4" style={surface}>
+        <form action="/dashboard/create/meta" method="get" className="rounded-[22px] px-5 py-4 mairo-glass">
           <label htmlFor="about" className="block text-[16px] font-medium text-white">Promote something different</label>
           <span className="block text-[13px] text-muted">A product, a service, an offer — in a few words</span>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -187,7 +186,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
           </div>
         </form>
 
-        <Link href="/dashboard/create/meta" className={choice} style={surface}>
+        <Link href="/dashboard/create/meta" className={choice}>
           <span className="min-w-0 flex-1">
             <span className="block text-[16px] font-medium text-white">Start fresh</span>
             <span className="block text-[13px] text-muted">Answer a few questions: goal, what you&rsquo;re promoting, budget</span>

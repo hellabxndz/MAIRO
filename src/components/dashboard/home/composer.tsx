@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { intentOf } from "@/lib/dashboard/intent";
+import { reportActivity } from "@/lib/cinematic/activity";
 
 // "What would you like to advertise today?" — the Overview's one box.
 //
@@ -28,7 +29,9 @@ export function HomeComposer({ assistantName }: { assistantName: string }) {
     const t = value.trim();
     if (!t) return;
     const intent = intentOf(t);
-    setGoing(intent.kind === "ask" ? `Asking ${assistantName}…` : `${intent.label}…`);
+    const words = intent.kind === "ask" ? `Asking ${assistantName}…` : `${intent.label}…`;
+    setGoing(words);
+    reportActivity("thinking", words);
     router.push(intent.href);
   };
 

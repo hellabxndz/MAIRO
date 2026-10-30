@@ -12,6 +12,7 @@ import { toView } from "@/lib/decisions/store";
 import { loadPixelSetup } from "@/lib/tracking/pixel-setup";
 import { DecisionControls } from "@/components/console/decision-controls";
 import { ResultsNote } from "@/components/results-disclaimer";
+import { CountUp } from "@/components/cinematic/count-up";
 
 // Results: what the ads cost and what came back, for one period.
 //
@@ -51,11 +52,10 @@ function change(now: number | null, before: number | null | undefined, goodWhen:
   return { text: `${up ? "▲" : "▼"} ${Math.abs(pct)}% vs the period before`, good: goodWhen === "none" ? null : goodWhen === "up" ? up : !up };
 }
 
-const surface = { borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" };
 
 function Block({ title, children, empty }: { title: string; children?: ReactNode; empty?: string | null }) {
   return (
-    <section className="rounded-[24px] border p-5 sm:p-6" style={surface}>
+    <section className="rounded-[24px] p-5 sm:p-6 mairo-glass">
       <h2 className="text-[16px] font-semibold text-white">{title}</h2>
       {empty ? <p className="mt-2 text-[14px] leading-relaxed text-muted">{empty}</p> : <div className="mt-3">{children}</div>}
     </section>
@@ -118,6 +118,14 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   for (const problem of now.problems) improve.unshift({ key: `p:${problem.platform}`, text: problem.message });
   const decisions = pending.map(toView);
 
+  const compared = now.campaigns
+    .filter((c) => c.hasData && (c.total.spendCents ?? 0) > 0)
+    .map((c) => ({ id: c.mairoCampaignId, name: c.name, spend: c.total.spendCents ?? 0, results: resultFor(family, c.total).value }))
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 6);
+  const maxSpend = Math.max(1, ...compared.map((c) => c.spend));
+  const maxResults = Math.max(1, ...compared.map((c) => c.results ?? 0));
+
   const details: { label: string; value: string | null }[] = [
     { label: "Impressions", value: whole(m.impressions) },
     { label: "Reach", value: whole(m.reach) },
@@ -165,11 +173,11 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       {/* The five figures. */}
       <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {figures.map((f, i) => (
-          <div key={f.key} className={`rounded-[22px] border p-4 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`} style={surface}>
+          <div key={f.key} className={`mairo-glass rounded-[22px] p-4 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`}>
             <dt className="text-[13px] text-muted">{f.label}</dt>
             {f.value ? (
               <>
-                <dd className="mt-1 truncate text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-white">{f.value}</dd>
+                <dd className="mt-1 truncate text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-white"><CountUp value={f.value} /></dd>
                 {f.change && (
                   <dd className={`mt-1 text-[12px] ${f.change.good === null ? "text-faint" : f.change.good ? "text-emerald-300" : "text-amber-200"}`}>{f.change.text}</dd>
                 )}
@@ -187,6 +195,36 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           </div>
         ))}
       </dl>
+
+      {/* Campaigns side by side: what each spent and what it brought, as Meta reported. */}
+      {compared.length > 1 && (
+        <section className="mairo-glass mt-6 rounded-[24px] p-5 sm:p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[16px] font-semibold text-white">Campaigns compared</h2>
+            <p className="text-[12.5px] text-faint">Spend and {r.label.toLowerCase()}, {period.label.toLowerCase()}</p>
+          </div>
+          <ul className="mt-4 space-y-4">
+            {compared.map((c, i) => (
+              <li key={c.id}>
+                <div className="flex items-baseline justify-between gap-3 text-[13.5px]">
+                  <Link href={`/dashboard/campaigns/${c.id}`} className="min-w-0 truncate text-white hover:underline">{c.name}</Link>
+                  <span className="shrink-0 tabular-nums text-muted">
+                    {usd(c.spend)} · {c.results === null ? "—" : `${whole(c.results)} ${r.label.toLowerCase()}`}
+                  </span>
+                </div>
+                <div className="mt-1.5 grid gap-1">
+                  <span className="mairo-grow block h-1.5 rounded-full bg-[#2f6bff]" style={{ width: `${Math.max(2, (c.spend / maxSpend) * 100)}%`, "--i": i } as React.CSSProperties} aria-hidden />
+                  <span className="mairo-grow block h-1.5 rounded-full bg-[#9cc0ff]" style={{ width: `${c.results ? Math.max(2, (c.results / maxResults) * 100) : 0}%`, "--i": i + 0.5 } as React.CSSProperties} aria-hidden />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 flex gap-4 text-[12px] text-faint">
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[#2f6bff]" aria-hidden /> Spend</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[#9cc0ff]" aria-hidden /> {r.label}</span>
+          </p>
+        </section>
+      )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Block title="What's working" empty={working.length ? null : reported ? "Nothing has brought results yet in this period." : missing}>
@@ -232,7 +270,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-1 text-[14px] text-muted hover:text-white [&::-webkit-details-marker]:hidden">
           <span aria-hidden className="transition group-open:rotate-90">›</span> More details
         </summary>
-        <div className="mt-3 rounded-[24px] border p-5" style={surface}>
+        <div className="mt-3 rounded-[24px] p-5 mairo-glass">
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {details.map((d) => (
               <div key={d.label}>
