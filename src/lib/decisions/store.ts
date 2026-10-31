@@ -144,10 +144,11 @@ export async function expireStale(organizationId: string, keep: string[]): Promi
  */
 export async function effectiveLevel(organizationId: string): Promise<AutomationLevel> {
   const [settings, ent] = await Promise.all([
-    db.autoOptimizeSettings.findUnique({ where: { organizationId }, select: { level: true, enabled: true } }),
+    db.autoOptimizeSettings.findUnique({ where: { organizationId }, select: { level: true, enabled: true, pausedAt: true } }),
     entitlementsFor(organizationId),
   ]);
-  if (!settings?.enabled) return "MANUAL";
+  // Paused: nothing automatic until the owner resumes (lib/actions/autopilot-actions.ts).
+  if (!settings?.enabled || settings.pausedAt) return "MANUAL";
   if (settings.level === "AUTOPILOT" && ent.autopilot) return "AUTOPILOT";
   if ((settings.level === "AUTOPILOT" || settings.level === "ASSISTED") && ent.auto_optimize) return "ASSISTED";
   return "MANUAL";

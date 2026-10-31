@@ -6,6 +6,7 @@ import { syncAllMetaLeads } from "@/lib/leads/meta-form";
 import { reportUnsentLeads } from "@/lib/leads/report";
 import { sweepSmsNotifications } from "@/lib/sms/sweep";
 import { detectAll } from "@/lib/notifications/detect";
+import { monitorAllTracking } from "@/lib/tracking/monitor";
 import { announceMonthlyReports } from "@/lib/reports/monthly";
 import { refreshAllDecisions } from "@/lib/decisions/run";
 import { checkAllExperiments } from "@/lib/experiments/store";
@@ -108,6 +109,14 @@ async function review(checkIn: (status: "ok" | "error") => Promise<void>) {
   // that sweep may end up texting about.
   const insights = await detectAll(50, Math.min(20_000, left())).catch((error) => {
     stepFailed("Insight detection cron", error);
+    return null;
+  });
+
+  // Tracking health: each business's Pixel re-checked with Meta, and the
+  // owner told when it starts working, stops or recovers (lib/tracking/
+  // monitor.ts). Before the text sweep, which carries "tracking stopped".
+  const tracking = await monitorAllTracking(60, Math.min(15_000, left())).catch((error) => {
+    stepFailed("Tracking health cron", error);
     return null;
   });
 
@@ -216,5 +225,5 @@ async function review(checkIn: (status: "ok" | "error") => Promise<void>) {
       : null;
 
   await checkIn(failed.length > 0 ? "error" : "ok");
-  return NextResponse.json({ failed: failed.length > 0 ? failed : undefined, reviews, leads, leadsReported, insights, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, resetLinks, ms: Date.now() - startedAt });
+  return NextResponse.json({ failed: failed.length > 0 ? failed : undefined, reviews, leads, leadsReported, insights, tracking, reports, texts, experiments, decisions, weekly, unpaid, socialPaused, brands, platformIntelligence, stuckRuns, orphanedFiles, unclaimedPlans, usageCounters, resetLinks, ms: Date.now() - startedAt });
 }

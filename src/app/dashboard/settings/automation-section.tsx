@@ -28,6 +28,8 @@ import {
 // enforced server-side in src/lib/budget/optimizer.ts. This screen is where
 // they are chosen; it is not what makes them true.
 
+import { AutopilotToggle } from "@/components/dashboard/home/autopilot-toggle";
+
 export type AutoOptimizeValues = {
   level: AutomationLevel;
   maxDailyBudget: number;
@@ -49,6 +51,7 @@ export function AutomationSection({
   allowed,
   autopilotAllowed,
   upgradePlanName,
+  pausedAt = null,
 }: {
   values: AutoOptimizeValues;
   /** False on plans without Assisted — the form renders locked. */
@@ -56,6 +59,8 @@ export function AutomationSection({
   /** False on plans without Autopilot — that one card renders locked. */
   autopilotAllowed: boolean;
   upgradePlanName: string;
+  /** Autopilot paused from Home or here: the level is kept, nothing automatic happens. */
+  pausedAt?: Date | null;
 }) {
   const [state, formAction, pending] = useActionState(saveAutoOptimizeAction, undefined);
   const [level, setLevel] = useState<AutomationLevel>(values.level);
@@ -98,6 +103,16 @@ export function AutomationSection({
             Pick how much you want to be involved. Whichever you choose, you can see every
             change MAIRO makes and why it made it.
           </p>
+          {values.level !== "MANUAL" && allowed && (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--mairo-line)" }}>
+              <p className="text-sm text-white/85">
+                {pausedAt
+                  ? "Autopilot is paused. MAIRO checks and recommends, but changes nothing on its own until you resume."
+                  : "Autopilot is running inside the limits below. Pause it any time — your choices here are kept."}
+              </p>
+              <AutopilotToggle paused={Boolean(pausedAt)} />
+            </div>
+          )}
         </div>
 
         {/* The level itself. Radio cards rather than a select: the difference

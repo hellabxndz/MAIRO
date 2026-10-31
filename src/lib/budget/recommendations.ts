@@ -121,7 +121,7 @@ export async function runAutoOptimize(organizationId: string): Promise<{
   refused: { campaign: string; reason: string }[];
 }> {
   const settings = await db.autoOptimizeSettings.findUnique({ where: { organizationId } });
-  if (!settings?.enabled) return { applied: 0, refused: [] };
+  if (!settings?.enabled || settings.pausedAt) return { applied: 0, refused: [] };
   if (!(await can(organizationId, "auto_optimize"))) return { applied: 0, refused: [] };
 
   const recommendations = await buildRecommendations(organizationId);

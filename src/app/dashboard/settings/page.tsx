@@ -188,6 +188,7 @@ export default async function SettingsPage() {
         allowed={entitlements.auto_optimize}
         autopilotAllowed={entitlements.autopilot}
         upgradePlanName={upgradeTarget.name}
+        pausedAt={autoOptimize?.pausedAt ?? null}
         values={{
           // Defaults chosen to be safe rather than useful: Manual, a ceiling
           // of twice what they spend now, and small steps. Someone who turns

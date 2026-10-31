@@ -103,6 +103,20 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     severity: "WARNING",
     sms: "needs-attention",
   },
+  TRACKING_WORKING: {
+    kind: "TRACKING_WORKING",
+    label: "Tracking",
+    severity: "INFO",
+    sms: null,
+  },
+  // Urgent: a broken Pixel means live campaigns are spending without
+  // learning who converts. Texted under "needs attention".
+  TRACKING_PROBLEM: {
+    kind: "TRACKING_PROBLEM",
+    label: "Tracking",
+    severity: "WARNING",
+    sms: "needs-attention",
+  },
 
 };
 

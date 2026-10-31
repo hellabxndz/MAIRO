@@ -6,6 +6,7 @@ import { activeOrganizationId } from "@/lib/active-org";
 import { deniedFor } from "@/lib/members/authorize";
 import { accessiblePixels, choosePixel, createPixelForBusiness, declinePixel, recheckPixelAccess, setLeadMeasurement } from "@/lib/tracking/pixel-setup";
 import { leadMeasurementFrom } from "@/lib/tracking/pixel-rules";
+import { checkTrackingHealth } from "@/lib/tracking/monitor";
 
 // The Meta Pixel setup page's presses (app/dashboard/pixel). Each checks who's
 // asking and acts on their own business only; tokens never leave the server.
@@ -112,6 +113,7 @@ export async function recheckPixelAction(): Promise<PixelActionResult> {
   const ctx = await context();
   if (!ctx) return { ok: false, reason: "auth", error: "Sign in again to continue." };
   const r = await recheckPixelAccess(ctx.organizationId);
+  await checkTrackingHealth(ctx.organizationId).catch(() => undefined);
   refresh();
   if (!r.ok) return { ok: false, reason: r.reason, error: r.message };
   return r.data.accessible ? { ok: true, message: r.data.message } : { ok: false, reason: "access", error: r.data.message };

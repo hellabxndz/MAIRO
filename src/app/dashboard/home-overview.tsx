@@ -16,6 +16,8 @@ import { PulseCard } from "@/components/success/feedback";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { MairoCore } from "@/components/cinematic/core";
 import { CountUp } from "@/components/cinematic/count-up";
+import { loadManagerStatus } from "@/lib/dashboard/manager";
+import { AutopilotToggle } from "@/components/dashboard/home/autopilot-toggle";
 
 // The Overview, as simple as a chat app's home: who you are, one box to say
 // what you want, the one thing to do next, a short summary of how the ads are
@@ -61,13 +63,14 @@ export async function HomeOverview({
   above?: ReactNode;
   askFeedback?: boolean;
 }) {
-  const [c, org, pixel, setup, pulseWanted, pulseLater] = await Promise.all([
+  const [c, org, pixel, setup, pulseWanted, pulseLater, manager] = await Promise.all([
     loadConsole(organizationId, userName, days),
     db.organization.findUnique({ where: { id: organizationId }, select: { assistantName: true } }),
     loadSimplePixel(organizationId).catch(() => null),
     loadPixelSetup(organizationId).catch(() => null),
     pulseDue(organizationId).catch(() => false),
     cookies().then((k) => k.get(PULSE_LATER_COOKIE)?.value === "1"),
+    loadManagerStatus(organizationId).catch(() => null),
   ]);
   const showPulse = askFeedback || (pulseWanted && !pulseLater);
   const name = assistantNameOf(org?.assistantName);
@@ -169,6 +172,68 @@ export async function HomeOverview({
           )}
         </div>
       </section>
+
+      {/* What MAIRO is doing for this business: tracking, what it may do on
+          its own, and what it last did — each from a stored record. */}
+      {manager && (
+        <Section title="MAIRO is managing" action={{ href: "/dashboard/activity", label: "Everything MAIRO did" }}>
+          <ul className="overflow-hidden rounded-[24px] mairo-glass">
+            <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start">
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-faint">Tracking</span>
+                <span className="mt-1 flex items-center gap-2 text-[15.5px] font-medium text-white">
+                  <span aria-hidden className={manager.tracking.status === "working" ? "v3-dot" : manager.tracking.status === "attention" || manager.tracking.status === "broken" ? "h-[7px] w-[7px] shrink-0 rounded-full bg-amber-300" : "h-[7px] w-[7px] shrink-0 rounded-full bg-white/40"} />
+                  {manager.tracking.headline}
+                </span>
+                <span className="mt-1 block text-[13.5px] leading-relaxed text-muted">{manager.tracking.detail}</span>
+              </span>
+              <Link href="/dashboard/pixel" className="shrink-0 text-[13.5px] text-white/80 underline decoration-white/25 underline-offset-4 hover:text-white">
+                {manager.tracking.status === "working" ? "Details" : manager.tracking.status === "not_needed" ? "Tracking" : "Fix tracking"}
+              </Link>
+            </li>
+            <li className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-start" style={{ borderColor: "var(--mairo-line)" }}>
+              <span className="min-w-0 flex-1">
+                <span className="text-[12px] font-medium uppercase tracking-[0.12em] text-faint">What MAIRO may do</span>
+                <span className="mt-1 flex items-center gap-2 text-[15.5px] font-medium text-white">
+                  {manager.mode.key === "autopilot" && <span aria-hidden className="v3-dot" />}
+                  {manager.mode.label}
+                </span>
+                <span className="mt-1 block text-[13.5px] leading-relaxed text-muted">{manager.mode.detail}</span>
+              </span>
+              {manager.mode.canToggle ? (
+                <AutopilotToggle paused={manager.mode.key === "paused"} />
+              ) : (
+                <Link href="/dashboard/settings#automation" className="shrink-0 text-[13.5px] text-white/80 underline decoration-white/25 underline-offset-4 hover:text-white">
+                  Autopilot settings
+                </Link>
+              )}
+            </li>
+            <li className="border-t px-5 py-4" style={{ borderColor: "var(--mairo-line)" }}>
+              <span className="text-[12px] font-medium uppercase tracking-[0.12em] text-faint">Lately</span>
+              {manager.recent.length === 0 ? (
+                <p className="mt-1 text-[14px] text-muted">Nothing changed in the last two weeks.</p>
+              ) : (
+                <ul className="mt-1.5 space-y-2">
+                  {manager.recent.map((a) => (
+                    <li key={a.id} className="text-[14px] leading-relaxed">
+                      <span className="text-white">{a.summary}</span>{" "}
+                      <span className="text-faint">
+                        · {a.automatic ? "by MAIRO" : "approved"} · {a.at.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {manager.failed > 0 && (
+                <p className="mt-2 text-[13.5px] text-amber-200">
+                  {manager.failed} change{manager.failed === 1 ? "" : "s"} MAIRO tried this week didn&rsquo;t go through.{" "}
+                  <Link href="/dashboard/decisions" className="underline underline-offset-4">See why</Link>
+                </p>
+              )}
+            </li>
+          </ul>
+        </Section>
+      )}
 
       {/* How it's going, in a few words and the figures Meta reported. */}
       <Section title="MAIRO's summary" action={noCampaigns ? undefined : { href: "/dashboard/results", label: "Results" }}>

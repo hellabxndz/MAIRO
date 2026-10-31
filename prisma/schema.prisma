@@ -158,6 +158,10 @@ enum NotificationKind {
   /// The MAIRO subscription was cancelled or ended. Says what that means for
   /// the Meta campaigns still running, which it doesn't change.
   SUBSCRIPTION_CHANGE
+  /// Tracking was verified working by Meta's own counts (first time, or again after a problem).
+  TRACKING_WORKING
+  /// Tracking that was working stopped, or MAIRO lost access to the Pixel.
+  TRACKING_PROBLEM
 }
 
 enum NotificationSeverity {
@@ -1424,6 +1428,11 @@ model AutoOptimizeSettings {
   requireApprovalAudience      Boolean @default(true)
   requireApprovalPlatformShift Boolean @default(true)
 
+  /// Autopilot paused by a person: no automatic change while set, whatever
+  /// the level. Resuming clears it and the chosen level applies again.
+  pausedAt   DateTime?
+  pausedById String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -2130,6 +2139,16 @@ model TrackingProfile {
   sitePlatformConfirmedAt DateTime?
   /// "Set up later": nothing is measured, and features that depend on it say so.
   setupDeferredAt         DateTime?
+
+  /// The daily tracking-health check (lib/tracking/monitor.ts): the last
+  /// definite verdict — working, attention, broken, not_set_up, not_needed —
+  /// in the owner's words, when it was last checked and when it last changed.
+  /// A check that couldn't reach Meta updates healthCheckedAt only.
+  healthStatus    String?
+  healthHeadline  String?
+  healthDetail    String?   @db.Text
+  healthCheckedAt DateTime?
+  healthChangedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

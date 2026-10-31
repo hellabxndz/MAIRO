@@ -18,6 +18,7 @@ import {
   verifyMeasurement,
 } from "@/lib/tracking/measurement-store";
 import { db } from "@/lib/db";
+import { checkTrackingHealth } from "@/lib/tracking/monitor";
 
 // The guided tracking setup's presses (app/dashboard/pixel). Each one checks
 // who's asking and acts on their own business only; changing anything needs
@@ -129,6 +130,8 @@ export async function verifyMeasurementAction(): Promise<MeasurementResult> {
   const ctx = await context();
   if (!ctx) return { ok: false, error: "Sign in again to continue." };
   const r = await verifyMeasurement(ctx.organizationId);
+  // Home's tracking line follows straight away rather than at tomorrow's check.
+  await checkTrackingHealth(ctx.organizationId).catch(() => undefined);
   refresh();
   return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
 }
