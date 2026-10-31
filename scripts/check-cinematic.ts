@@ -19,7 +19,7 @@ function check(name: string, fn: () => void) {
 }
 const read = (p: string) => readFileSync(p, "utf8");
 
-const SHAPES: Exclude<ShapeKey, "wordmark">[] = ["void", "chaos", "core", "brief", "creative", "network", "results"];
+const SHAPES: Exclude<ShapeKey, "wordmark">[] = ["void", "chaos", "core", "brief", "creative", "network", "results", "ribbon", "field"];
 
 check("every shape is the same number of finite points, and the same every time", () => {
   for (const n of [1400, 7000]) {
@@ -45,21 +45,25 @@ check("shapes fit the frame: nothing but the dark is far from the centre", () =>
   assert.ok(min > 6, "the dark stays behind the camera's subject");
 });
 
-check("the story's sequence matches its scenes, hero first and final last", () => {
-  const scenes = [...read("src/components/cinematic/home/scenes.tsx").matchAll(/(?:scene|data-scene)="(\d+):(\d+)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
+check("the story's sequence matches its scenes: the ribbon, then Analyze · Create · Track, then the ribbon", () => {
+  const scenes = [...read("src/components/cinematic/home/scenes.tsx").matchAll(/data-scene="(\d+):(\d+)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
   const hero = read("src/components/cinematic/home/hero.tsx").match(/data-scene="(\d+):(\d+)"/);
   assert.ok(hero);
-  assert.equal(SEQ[Number(hero![1])], "core");
+  assert.equal(SEQ[Number(hero![1])], "ribbon");
   for (const [a, b] of scenes) {
     assert.ok(a >= 0 && b < SEQ.length && a <= b, `${a}:${b}`);
   }
-  // Business → analysis → creatives → campaign, in that order.
-  const creates = scenes.find(([a, b]) => b - a === 3)!;
-  assert.deepEqual(SEQ.slice(creates[0], creates[1] + 1), ["brief", "core", "creative", "network"]);
-  assert.equal(SEQ[SEQ.length - 1], "core");
+  const how = scenes.find(([a, b]) => b - a === 2)!;
+  assert.deepEqual(SEQ.slice(how[0], how[1] + 1), ["field", "creative", "results"]);
+  assert.equal(SEQ[SEQ.length - 1], "ribbon");
+  // No sphere: the Field is the only form (docs/DESIGN-SPEC-v3.md §5).
+  assert.ok(!(SEQ as readonly string[]).includes("core"));
+  assert.match(read("src/components/cinematic/core.tsx"), /const SEQ = \["ribbon", "field", "creative", "network"\]/);
 });
 
 check("scrolling a scene holds on each shape and moves between them", () => {
+  assert.equal(positionIn(2, 4, 0), 2);
+  assert.ok(Math.abs(positionIn(2, 4, 0.999) - 4) < 0.01);
   assert.equal(positionIn(6, 9, 0), 6);
   assert.ok(Math.abs(positionIn(6, 9, 0.999) - 9) < 0.01);
   // Early in a stretch it holds, late in it it has arrived.
@@ -112,15 +116,26 @@ check("the core moves only for real operations: each report sits on a real pendi
 check("the pages read without the particles: real headings, decorative canvas, a fallback", () => {
   const hero = read("src/components/cinematic/home/hero.tsx");
   assert.match(hero, /<h1 id="hero-title"/);
-  assert.match(hero, /Your business\./);
-  assert.match(hero, /Powered by AI\./);
-  assert.match(hero, /Build My Free Plan/);
-  assert.match(hero, /See How MAIRO Works/);
+  assert.match(hero, /Your ads,/);
+  assert.match(hero, /<WebsiteStart id="hero-website" \/>/);
+  // The website box is a plain GET form into the free plan: it works before script.
+  const start = read("src/components/cinematic/home/website-start.tsx");
+  assert.match(start, /action="\/preview" method="get"/);
+  assert.match(start, /name="website"/);
   const stage = read("src/components/cinematic/stage.tsx");
   assert.match(stage, /aria-hidden=\{label \? undefined : true\}/);
   assert.match(stage, /if \(failed\) return <>\{fallback\}<\/>/);
   assert.match(stage, /prefers-reduced-motion/);
-  assert.match(read("src/components/cinematic/home/scenes.tsx"), /Sample data · fictional business/);
+  const scenes = read("src/components/cinematic/home/scenes.tsx");
+  assert.match(scenes, /Example · fictional business/);
+  assert.match(scenes, /Sample figures for a fictional brand/);
+});
+
+check("Signal: no blue anywhere in the Field, the core or the homepage — white lines and one lime", () => {
+  const files = ["src/components/cinematic/engine.ts", "src/components/cinematic/stage.tsx", "src/components/cinematic/core.tsx", "src/components/cinematic/fallback.tsx", "src/components/cinematic/home/director.tsx", "src/components/cinematic/home/hero.tsx", "src/components/cinematic/home/scenes.tsx", "src/components/cinematic/home/nav.tsx", "src/components/cinematic/home/website-start.tsx", "src/components/landing/console-home.tsx"];
+  for (const f of files) assert.doesNotMatch(read(f), /#2f6bff|#8fb4ff|#9cc0ff|ELECTRIC|rgba\((?:40|50|60), ?1[0-4]0, ?255/, f);
+  assert.match(read("src/components/cinematic/engine.ts"), /SIGNAL[^\n]*b: \[0\.83, 1\.0, 0\.23\]/);
+  assert.match(read("src/app/globals.css"), /--v3-signal: #d4ff3a;/);
 });
 
 check("no new 3D dependency: the engine is plain WebGL2", () => {

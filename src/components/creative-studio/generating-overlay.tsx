@@ -39,7 +39,7 @@ export function GeneratingOverlay({ label = "Generating" }: { label?: string }) 
     >
       {/* The MAIRO core, shaped as an ad while one is being made — shown
           only while the request is actually running (this overlay's lifetime). */}
-      <MairoCore resting="generating" caption={false} size={132} />
+      <MairoCore resting="generating" caption={false} size={110} />
       <p className="px-6 text-center text-[13.5px] text-white/90">{MESSAGES[index]}</p>
       <p className="text-[11px] text-faint">{label} usually takes 10–30 seconds</p>
 

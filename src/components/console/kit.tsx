@@ -94,11 +94,11 @@ export function Panel({
 }
 
 const PILL_TONE = {
-  live: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
+  live: "border-white/15 bg-white/[0.04] text-[color:var(--v3-signal)]",
   warn: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   alert: "border-red-400/35 bg-red-400/[0.08] text-red-300",
-  violet: "border-violet-400/35 bg-violet-500/[0.10] text-violet-200",
-  blue: "border-[#d2d2d2]/35 bg-[#d2d2d2]/[0.10] text-sky-200",
+  violet: "border-white/20 bg-white/[0.06] text-white",
+  blue: "border-white/20 bg-white/[0.06] text-white/85",
   muted: "border-white/10 bg-white/[0.04] text-muted",
 } as const;
 export type PillTone = keyof typeof PILL_TONE;

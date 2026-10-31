@@ -21,11 +21,14 @@ function check(name: string, fn: () => void) {
   console.log(`  ok  ${name}`);
 }
 
-check("the navigation is exactly Overview, Campaigns, Creatives, Results — on desktop and phone", () => {
+check("the navigation is exactly Home, Campaigns, Creatives, Results — on desktop and phone", () => {
   const shell = readFileSync("src/components/mairo/app-shell.tsx", "utf8");
   const primary = shell.slice(shell.indexOf("export const PRIMARY_NAV"), shell.indexOf("export const ASSISTANT_NAV"));
   const labels = [...primary.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(labels, ["Overview", "Campaigns", "Creatives", "Results"]);
+  assert.deepEqual(labels, ["Home", "Campaigns", "Creatives", "Results"]);
+  // Ask MAIRO is in the sidebar on every screen, and on ⌘K / Ctrl+K.
+  assert.match(shell, /<AskMairoButton name=\{askName\} variant="sidebar" \/>/);
+  assert.match(readFileSync("src/components/mairo/assistant.tsx", "utf8"), /\(e\.metaKey \|\| e\.ctrlKey\) && e\.key\.toLowerCase\(\) === "k"/);
   assert.match(shell, /const MOBILE_NAV: NavEntry\[\] = PRIMARY_NAV;/);
   assert.match(shell, /grid-cols-4/);
   const secondary = shell.slice(shell.indexOf("export const SECONDARY_NAV"), shell.indexOf("const MOBILE_NAV"));

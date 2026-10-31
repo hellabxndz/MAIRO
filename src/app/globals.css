@@ -613,104 +613,125 @@ html {
 @keyframes mairo-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes mairo-breathe { 0%, 100% { opacity: 0; transform: scale(0.85); } 50% { opacity: 0.6; transform: scale(1); } }
 
-/* ------------------------------------------------------------------ cinema */
-/* The cinematic layer shared by the website and the app: massive type that
-   arrives word by word, electric-blue light, and glass that lets the
-   particles show through. Motion is off under reduce-motion; everything is
+/* ------------------------------------------------------------------ signal */
+/* MAIRO v3, "Signal" (docs/DESIGN-SPEC-v3.md): near-black and white, huge
+   sentence-case type, and one neon lime used only where MAIRO is working or
+   something is live. Motion is off under reduce-motion; everything is
    visible before script runs. */
 
-.cine-title {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: -0.045em;
-  line-height: 0.9;
-  text-wrap: balance;
+:root {
+  --v3-ink: #050505;
+  --v3-ink-2: #0d0d0d;
+  --v3-line: rgba(255, 255, 255, 0.1);
+  --v3-line-strong: rgba(255, 255, 255, 0.22);
+  --v3-text: #ffffff;
+  --v3-text-2: rgba(255, 255, 255, 0.62);
+  --v3-text-3: rgba(255, 255, 255, 0.4);
+  --v3-signal: #d4ff3a;
+  --v3-signal-ink: #0a0a0a;
 }
-.cine-title .cine-w {
-  display: inline-block;
-}
-.cine-glow {
-  text-shadow: 0 0 42px rgba(60, 130, 255, 0.35), 0 0 2px rgba(180, 210, 255, 0.4);
-}
-.cine-ink {
-  background: linear-gradient(180deg, #ffffff 30%, #9cc0ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.js-reveal [data-reveal].cine-title {
-  opacity: 1;
-  transform: none;
-}
-.js-reveal [data-reveal].cine-title .cine-w {
-  opacity: 0;
-  transform: translateY(0.4em);
-  filter: blur(10px);
-  transition:
-    opacity 1s var(--ease-mairo) calc(var(--i, 0) * 70ms),
-    transform 1s var(--ease-mairo) calc(var(--i, 0) * 70ms),
-    filter 1s var(--ease-mairo) calc(var(--i, 0) * 70ms);
-}
-.js-reveal [data-reveal][data-shown].cine-title .cine-w {
-  opacity: 1;
-  transform: none;
-  filter: none;
+:root[data-theme="light"] {
+  --v3-ink: #ffffff;
+  --v3-ink-2: #f6f6f6;
+  --v3-line: rgba(0, 0, 0, 0.1);
+  --v3-line-strong: rgba(0, 0, 0, 0.22);
+  --v3-text: #050505;
+  --v3-text-2: rgba(0, 0, 0, 0.62);
+  --v3-text-3: rgba(0, 0, 0, 0.45);
+  /* Lime is unreadable on white; a deep olive carries the same signal. */
+  --v3-signal: #5a7a00;
 }
 
-/* The opening: the hero's words arrive once the particles have. */
+/* The signal itself: a headline's full stop, a live dot. */
+.v3-signal {
+  color: var(--v3-signal);
+}
+.v3-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--v3-signal);
+}
+
+.v3-display {
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+.v3-label {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--v3-text-3);
+}
+
+/* Keyboard focus is the signal too. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--v3-signal);
+  outline-offset: 2px;
+}
+
+/* Lines that rise into place, once. */
+.js-reveal [data-reveal].v3-lines > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.8s var(--ease-mairo) calc(var(--i, 0) * 60ms),
+    transform 0.8s var(--ease-mairo) calc(var(--i, 0) * 60ms);
+}
+.js-reveal [data-reveal][data-shown].v3-lines > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* The opening: the hero's words arrive with the Field, never after it. */
 @media (prefers-reduced-motion: no-preference) {
   .cine-intro {
-    animation: cine-intro 1.2s var(--ease-mairo) both;
+    animation: cine-intro 0.9s var(--ease-mairo) both;
     animation-delay: calc(var(--d, 0) * 1ms);
   }
 }
 @keyframes cine-intro {
   from {
     opacity: 0;
-    transform: translateY(24px);
-    filter: blur(12px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 
-/* Glass: frosted, edged in blue light, the particles visible behind it. */
+/* A raised surface: flat, a hairline edge, no blur and no glow. */
 .mairo-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.02));
-  border: 1px solid rgba(140, 180, 255, 0.16);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 30px 80px -44px rgba(20, 80, 255, 0.5);
+  background: var(--v3-ink-2);
+  border: 1px solid var(--v3-line);
 }
 :root[data-theme="light"] .mairo-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65));
-  border-color: rgba(40, 90, 220, 0.16);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 24px 60px -40px rgba(20, 80, 255, 0.35);
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
-/* The primary action on a cinematic surface: white, ringed in electric light. */
+/* The primary action: solid white; the lime edge only on hover. */
 .cine-cta {
   background: #fff;
   color: #000;
-  box-shadow:
-    0 0 0 1px rgba(140, 185, 255, 0.55),
-    0 18px 50px -14px rgba(50, 120, 255, 0.8);
   transition:
-    transform 0.25s var(--ease-mairo),
-    box-shadow 0.25s var(--ease-mairo);
+    transform 0.2s var(--ease-mairo),
+    box-shadow 0.2s var(--ease-mairo);
 }
 .cine-cta:hover {
   transform: translateY(-1px);
-  box-shadow:
-    0 0 0 1px rgba(160, 200, 255, 0.8),
-    0 22px 60px -12px rgba(60, 130, 255, 0.95);
+  box-shadow: 0 0 0 2px var(--v3-signal);
+}
+:root[data-theme="light"] .cine-cta {
+  background: #050505;
+  color: #fff;
 }
 @media (prefers-reduced-motion: reduce) {
   .cine-cta,
@@ -718,16 +739,6 @@ html {
     transform: none;
     transition: none;
   }
-}
-
-/* The app's light: a still electric-blue glow from above, behind everything. */
-.mairo-app-light {
-  background:
-    radial-gradient(70% 45% at 50% -8%, rgba(40, 110, 255, 0.16), transparent 70%),
-    radial-gradient(40% 30% at 95% 10%, rgba(60, 140, 255, 0.06), transparent 70%);
-}
-:root[data-theme="light"] .mairo-app-light {
-  background: radial-gradient(70% 45% at 50% -8%, rgba(40, 110, 255, 0.08), transparent 70%);
 }
 
 /* Moving between the app's screens: a short rise, never a wait. */
@@ -755,11 +766,16 @@ html {
     animation-delay: calc(var(--i, 0) * 80ms);
   }
 }
-@keyframes mairo-grow {
-  from {
-    transform: scaleX(0);
+
+/* A picture that develops: revealed top to bottom, once, as MAIRO makes it. */
+@media (prefers-reduced-motion: no-preference) {
+  .js-reveal [data-reveal] .v3-develop,
+  .js-reveal [data-reveal].v3-develop {
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 1.2s var(--ease-mairo) 0.2s;
   }
-  to {
-    transform: scaleX(1);
+  .js-reveal [data-reveal][data-shown] .v3-develop,
+  .js-reveal [data-reveal][data-shown].v3-develop {
+    clip-path: inset(0 0 0 0);
   }
 }

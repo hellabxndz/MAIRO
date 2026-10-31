@@ -15,6 +15,8 @@ export type ShapeKey =
   | "creative" // an ad: a frame, a picture, a headline
   | "network" // campaigns, connected
   | "results" // rising columns
+  | "ribbon" // a twisted band of fine lines: MAIRO at rest
+  | "field" // an open plane of lines being scanned: MAIRO analysing
   | "wordmark"; // M A I R O
 
 export type Points = Float32Array;
@@ -188,12 +190,36 @@ const SHAPES: Record<Exclude<ShapeKey, "wordmark">, (n: number) => Points> = {
       const h = 0.5 + (c / (cols - 1)) * 1.9 + Math.sin(c * 1.7) * 0.2;
       const base = -1.1;
       if (r() < 0.12) {
-        o[0] = -2 + r() * 4; o[1] = base - 0.08; o[2] = (r() - 0.5) * 0.4;
+        o[0] = -1.7 + r() * 3.4; o[1] = base - 0.08; o[2] = (r() - 0.5) * 0.4;
       } else {
-        o[0] = -1.8 + c * 0.6 + (r() - 0.5) * 0.32;
+        o[0] = -1.5 + c * 0.5 + (r() - 0.5) * 0.28;
         o[1] = base + r() * h;
         o[2] = (r() - 0.5) * 0.32;
       }
+    }),
+
+  // A long band, twisted half a turn along its length, drawn as 16 fine
+  // strands: it reads as lines, not dots, and as an instrument, not a planet.
+  ribbon: (n) =>
+    fill(n, 61, (_, r, o) => {
+      const u = r() * 2 - 1;
+      const strands = 16;
+      const v = (Math.floor(r() * strands) / (strands - 1)) * 2 - 1;
+      const twist = u * Math.PI * 0.5 + 0.35;
+      const w = 0.62 * (0.75 + 0.25 * Math.cos(u * Math.PI));
+      o[0] = u * 2.9;
+      o[1] = Math.sin(u * Math.PI * 1.1) * 0.32 + Math.cos(twist) * v * w;
+      o[2] = Math.cos(u * Math.PI * 0.8) * 0.55 + Math.sin(twist) * v * w;
+    }),
+
+  // An open plane of lines, slightly tilted toward the viewer.
+  field: (n) =>
+    fill(n, 67, (_, r, o) => {
+      const rows = 22;
+      const row = Math.floor(r() * rows);
+      o[0] = (r() * 2 - 1) * 2.2;
+      o[2] = (row / (rows - 1)) * 2.8 - 1.4;
+      o[1] = -0.35 + Math.sin(o[0] * 0.9 + row * 0.35) * 0.06;
     }),
 };
 

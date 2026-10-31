@@ -1,26 +1,31 @@
 // What shows where the particles can't: no WebGL2, or the GPU let go of the
-// context. Drawn with SVG and CSS only — the same core, still and lit — so
-// the page looks intended rather than broken.
+// context. The ribbon of lines, still, in SVG — so the page looks intended
+// rather than broken (docs/DESIGN-SPEC-v3.md §5).
 
-export function CoreFallback({ className = "", size = "min(70vmin, 620px)" }: { className?: string; size?: string }) {
+export function FieldFallback({ className = "", size = "min(92vw, 1100px)" }: { className?: string; size?: string }) {
+  const lines = Array.from({ length: 18 }, (_, i) => i);
   return (
     <div aria-hidden className={`flex items-center justify-center ${className}`}>
-      <svg viewBox="-100 -100 200 200" style={{ width: size, height: size }} className="mairo-core-fallback">
-        <defs>
-          <radialGradient id="cf-heart">
-            <stop offset="0" stopColor="#dbe8ff" stopOpacity="0.95" />
-            <stop offset="0.25" stopColor="#3b7bff" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#0a1a4a" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <circle r="70" fill="url(#cf-heart)" />
-        <g fill="none" stroke="#5b92ff" strokeOpacity="0.55" strokeWidth="0.6">
-          <circle r="46" strokeDasharray="1 3" />
-          <circle r="28" strokeDasharray="1 2.4" strokeOpacity="0.7" />
-          <ellipse rx="78" ry="20" transform="rotate(-18)" strokeOpacity="0.4" />
-          <ellipse rx="86" ry="24" transform="rotate(32)" strokeOpacity="0.28" />
-        </g>
+      <svg viewBox="0 0 600 240" style={{ width: size }} className="mairo-field-fallback" fill="none">
+        {lines.map((i) => {
+          const off = (i - 8.5) * 5.2;
+          return (
+            <path
+              key={i}
+              d={`M0 ${120 + off} C 150 ${40 + off * 1.8}, 260 ${200 - off * 1.6}, 380 ${118 + off * 0.4} S 560 ${70 - off}, 600 ${120 + off * 0.6}`}
+              stroke="#ffffff"
+              strokeOpacity={0.12 + (i % 4) * 0.05}
+              strokeWidth="0.8"
+            />
+          );
+        })}
+        <path d="M0 122 C 150 50, 260 190, 380 120 S 560 74, 600 122" stroke="#d4ff3a" strokeOpacity="0.85" strokeWidth="1" strokeDasharray="2 10" />
       </svg>
     </div>
   );
+}
+
+/** The MAIRO core's still form, for the app (same ribbon, smaller). */
+export function CoreFallback({ className = "", size = "100%" }: { className?: string; size?: string }) {
+  return <FieldFallback className={className} size={size} />;
 }

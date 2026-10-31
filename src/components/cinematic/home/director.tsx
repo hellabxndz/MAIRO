@@ -2,21 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DEFAULT_TARGET, ParticleStage, prefersReducedMotion, wakeStages, type StageTarget } from "../stage";
-import { particleBudget, shape, textShape } from "@/lib/cinematic/shapes";
-import { CoreFallback } from "../fallback";
+import { particleBudget, shape } from "@/lib/cinematic/shapes";
+import { FieldFallback } from "../fallback";
 
-// The homepage's one particle stage, fixed behind the page, and the director
-// that tells it what to be.
+// The homepage's one particle stage — the Field (docs/DESIGN-SPEC-v3.md §5) —
+// fixed behind the page, and the director that tells it what to be.
 //
 // The whole story is one sequence of shapes. Each scene on the page marks
 // the stretch of it that belongs to it (data-scene="2:4" — from the third
 // shape to the fifth); as a scene scrolls through the middle of the screen,
-// the particles move along its stretch, holding on each shape and moving
-// between them. Off every scene (pricing, the FAQ), the stage fades out and
-// stops drawing. The hero also has an opening, three seconds long: the particles arrive from the
-// dark as the wordmark, then become the core.
+// the lines move along its stretch, holding on each shape and moving between
+// them. Off every scene (the example, pricing, the footer) the stage fades
+// out and stops drawing. The hero opens in about a second and a half: the
+// lines arrive from the dark as the ribbon.
 
-export const SEQ = ["void", "wordmark", "core", "chaos", "void", "core", "brief", "core", "creative", "network", "results", "core"] as const;
+export const SEQ = ["void", "ribbon", "field", "creative", "results", "ribbon"] as const;
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -47,11 +47,13 @@ export function deviceBudget(kind: "stage" | "core" = "stage"): { count: number;
   };
 }
 
-/** Shapes that face the viewer don't spin. */
-const FACING = new Set(["wordmark", "brief", "creative", "results"]);
+/** Shapes that face the viewer don't turn. */
+const FACING = new Set<string>(["creative", "results"]);
+/** Shapes that are surfaces: they undulate and carry the scan line. */
+const SURFACE = new Set<string>(["ribbon", "field"]);
 
 export function CinematicBackdrop() {
-  const target = useRef<StageTarget>({ ...DEFAULT_TARGET, seq: [...SEQ], pos: 0, gain: 1, visible: true });
+  const target = useRef<StageTarget>({ ...DEFAULT_TARGET, seq: [...SEQ], pos: 0, gain: 0.9, size: 0.05, visible: true, wave: 1, scan: 1, spin: 0.35 });
   // Read once, in the browser; the server's guess is never drawn.
   const [device] = useState(deviceBudget);
 
@@ -61,28 +63,28 @@ export function CinematicBackdrop() {
     let scenes: { el: HTMLElement; from: number; to: number }[] = [];
     const collect = () => {
       scenes = [...document.querySelectorAll<HTMLElement>("[data-scene]")].map((el) => {
-        const [a, b] = (el.dataset.scene ?? "2:2").split(":").map(Number);
+        const [a, b] = (el.dataset.scene ?? "1:1").split(":").map(Number);
         return { el, from: a, to: Number.isFinite(b) ? b : a };
       });
     };
     collect();
 
-    // The opening: from the dark to the wordmark, then the core.
+    // The opening: from the dark into the ribbon. Quick, so the words never wait for it.
     const start = performance.now();
     let opening = !reduced && window.scrollY < 40;
-    // Quick: the words arrive while it happens, never after it (hero.tsx).
-    const introPos = (ms: number) => (ms < 150 ? 0 : ms < 1150 ? smooth(150, 1150, ms) : ms < 1900 ? 1 : 1 + smooth(1900, 2900, ms));
 
     let raf = 0;
     const update = () => {
       raf = 0;
       const vh = window.innerHeight;
       const mid = vh * 0.5;
+      const aspect = window.innerWidth / vh;
+      const wide = aspect > 1;
       const t = target.current;
-      t.distance = fitDistance(window.innerWidth / vh);
+      t.distance = fitDistance(aspect);
       t.focus = t.distance;
       // Farther away on a phone, so each point is drawn a little larger to keep its light.
-      t.size = 0.068 * Math.pow(t.distance / 6, 0.6);
+      t.size = 0.05 * Math.pow(t.distance / 6, 0.6);
       let active: (typeof scenes)[number] | null = null;
       let l = 0;
       for (const s of scenes) {
@@ -93,50 +95,36 @@ export function CinematicBackdrop() {
           break;
         }
       }
-      if (opening) {
-        const ms = performance.now() - start;
-        if (ms > 3000 || window.scrollY > 40) opening = false;
-        else {
-          const hero = scenes[0]?.el.dataset;
-          const halfH = t.distance * Math.tan((20 * Math.PI) / 180);
-          t.offsetX = 0;
-          // The wordmark forms where the core will be, above the headline, so
-          // the words can be on screen from the start.
-          t.distance *= Number(hero?.sceneZoom ?? 1);
-          t.offsetY = Number((window.innerWidth > window.innerHeight ? hero?.sceneY : hero?.sceneYm) ?? 0) * halfH;
-          t.pos = introPos(ms);
-          t.visible = true;
-          t.spin = t.pos < 1.5 ? 0 : 1;
-          t.turbulence = 0.6;
-          raf = requestAnimationFrame(update);
-          wakeStages();
-          return;
-        }
-      }
-      if (active) {
-        t.visible = true;
-        // Where the particles sit beside the scene's words: data-scene-x/y on
-        // wide screens, data-scene-ym on phones, as fractions of half the screen.
-        const aspect = window.innerWidth / vh;
-        const halfH = t.distance * Math.tan((20 * Math.PI) / 180);
-        const ds = active.el.dataset;
-        const wide = aspect > 1;
-        t.offsetX = wide ? Number(ds.sceneX ?? 0) * halfH * aspect : 0;
-        t.offsetY = Number((wide ? ds.sceneY : ds.sceneYm) ?? 0) * halfH;
-        t.distance *= Number((wide ? ds.sceneZoom : (ds.sceneZoomM ?? ds.sceneZoom)) ?? 1);
-        t.pos = positionIn(active.from, active.to, l);
-        const shapeNow = SEQ[Math.round(t.pos)];
-        t.spin = FACING.has(shapeNow) ? 0 : 1;
-        t.yaw = FACING.has(shapeNow) ? 0 : t.yaw;
-        t.turbulence = 0.4;
-        // Brighter in the middle of a scene, dimmer at its edges.
-        t.gain = 0.55 + 0.45 * Math.sin(Math.PI * Math.min(1, Math.max(0, l)));
-        if (active.el.dataset.sceneDim) t.gain *= Number(active.el.dataset.sceneDim);
-        root.style.setProperty("--scene-glow", t.gain.toFixed(3));
-      } else {
+      // Off every scene the stage fades and sleeps.
+      if (!active) {
         t.visible = false;
         root.style.setProperty("--scene-glow", "0");
+        wakeStages();
+        return;
       }
+      const ds = active.el.dataset;
+      const halfH = t.distance * Math.tan((20 * Math.PI) / 180);
+      t.visible = true;
+      // Where the lines sit beside the scene's words: data-scene-x/y on wide
+      // screens, data-scene-ym on phones, as fractions of half the screen.
+      t.offsetX = wide ? Number(ds.sceneX ?? 0) * halfH * aspect : 0;
+      t.offsetY = Number((wide ? ds.sceneY : ds.sceneYm) ?? 0) * halfH;
+      t.distance *= Number((wide ? ds.sceneZoom : (ds.sceneZoomM ?? ds.sceneZoom)) ?? 1);
+      if (opening) {
+        const ms = performance.now() - start;
+        if (ms > 1500 || window.scrollY > 40) opening = false;
+        t.pos = opening ? smooth(100, 1400, ms) : positionIn(active.from, active.to, l);
+        if (opening) raf = requestAnimationFrame(update);
+      } else {
+        t.pos = positionIn(active.from, active.to, l);
+      }
+      const now = SEQ[Math.round(t.pos)];
+      t.spin = FACING.has(now) ? 0 : 0.35;
+      t.wave = SURFACE.has(now) ? 1 : 0.15;
+      t.scan = SURFACE.has(now) ? 1 : 0.35;
+      t.turbulence = 0.3;
+      t.gain = 0.9 * Number(ds.sceneDim ?? 1);
+      root.style.setProperty("--scene-glow", "1");
       wakeStages();
     };
     const onScroll = () => {
@@ -159,23 +147,22 @@ export function CinematicBackdrop() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
-      {/* Light behind the particles: an electric-blue bloom that follows the scene. */}
-      <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: "var(--scene-glow, 1)", background: "radial-gradient(60% 55% at 50% 48%, rgba(40,110,255,0.20), rgba(20,60,200,0.06) 45%, transparent 72%)" }} />
-      <ParticleStage
-        target={target}
-        count={device.count}
-        weak={device.weak}
-        className="absolute inset-0 h-full w-full"
-        shapes={(n) => {
-          const out: Record<string, Float32Array> = {};
-          for (const k of SEQ) if (k !== "wordmark" && !out[k]) out[k] = shape(k, n);
-          out.wordmark = textShape("MAIRO", n, window.innerWidth < 768 ? 3.3 : 4.8);
-          return out;
-        }}
-        fallback={<CoreFallback className="absolute inset-0" />}
-      />
-      {/* Edges fall away to black, like a lens. */}
-      <div className="absolute inset-0" style={{ background: "radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,0.65))" }} />
+      <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: "var(--scene-glow, 1)" }}>
+        <ParticleStage
+          target={target}
+          count={device.count}
+          weak={device.weak}
+          className="absolute inset-0 h-full w-full"
+          shapes={(n) => {
+            const out: Record<string, Float32Array> = {};
+            for (const k of SEQ) if (!out[k]) out[k] = shape(k, n);
+            return out;
+          }}
+          fallback={<FieldFallback className="absolute inset-0" />}
+        />
+      </div>
+      {/* The edges fall away to the page's black. */}
+      <div className="absolute inset-0" style={{ background: "radial-gradient(130% 95% at 50% 50%, transparent 60%, rgba(5,5,5,0.7))" }} />
     </div>
   );
 }

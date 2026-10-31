@@ -138,7 +138,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   return (
     <div className="mx-auto max-w-[960px]">
       <header className="mb-5">
-        <h1 className="text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.025em] text-white">Results</h1>
+        <h1 className="text-[clamp(30px,4.4vw,48px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white">Results</h1>
         <p className="mt-1 text-[14.5px] text-muted">{period.label}, as Meta reports it.</p>
       </header>
 
@@ -213,15 +213,15 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                   </span>
                 </div>
                 <div className="mt-1.5 grid gap-1">
-                  <span className="mairo-grow block h-1.5 rounded-full bg-[#2f6bff]" style={{ width: `${Math.max(2, (c.spend / maxSpend) * 100)}%`, "--i": i } as React.CSSProperties} aria-hidden />
-                  <span className="mairo-grow block h-1.5 rounded-full bg-[#9cc0ff]" style={{ width: `${c.results ? Math.max(2, (c.results / maxResults) * 100) : 0}%`, "--i": i + 0.5 } as React.CSSProperties} aria-hidden />
+                  <span className="mairo-grow block h-1.5 rounded-full bg-white" style={{ width: `${Math.max(2, (c.spend / maxSpend) * 100)}%`, "--i": i } as React.CSSProperties} aria-hidden />
+                  <span className="mairo-grow block h-1.5 rounded-full bg-[color:var(--v3-signal)]" style={{ width: `${c.results ? Math.max(2, (c.results / maxResults) * 100) : 0}%`, "--i": i + 0.5 } as React.CSSProperties} aria-hidden />
                 </div>
               </li>
             ))}
           </ul>
           <p className="mt-4 flex gap-4 text-[12px] text-faint">
-            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[#2f6bff]" aria-hidden /> Spend</span>
-            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[#9cc0ff]" aria-hidden /> {r.label}</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-white" aria-hidden /> Spend</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[color:var(--v3-signal)]" aria-hidden /> {r.label}</span>
           </p>
         </section>
       )}

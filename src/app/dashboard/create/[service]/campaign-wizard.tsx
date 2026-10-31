@@ -277,7 +277,7 @@ export function CampaignWizard(props: Props) {
           budget, the ad, review and launch. The detailed steps are the rail. */}
       {!showAnalysis && (
         <div className="mairo-glass mb-8 flex items-center gap-4 rounded-[24px] px-4 py-3 sm:px-5">
-          <MairoCore size={60} caption={false} className="shrink-0" />
+          <MairoCore size={40} caption={false} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[12.5px] text-muted" aria-live="polite">
               {checking ? "MAIRO is reviewing your campaign…" : pending ? "Building your campaign in Meta…" : `Step ${phase + 1} of ${PHASES.length}`}
@@ -285,7 +285,7 @@ export function CampaignWizard(props: Props) {
             <p className="truncate text-[16px] font-semibold text-white">{PHASES[phase]?.label}</p>
             <div className="mt-2 grid grid-cols-4 gap-1.5" aria-hidden>
               {PHASES.map((p, i) => (
-                <span key={p.label} className="h-1 rounded-full transition-colors duration-500" style={{ background: i < phase ? "#8fb4ff" : i === phase ? "#2f6bff" : "var(--mairo-line)" }} />
+                <span key={p.label} className="h-1 rounded-full transition-colors duration-500" style={{ background: i < phase ? "rgba(255,255,255,0.7)" : i === phase ? "var(--v3-signal)" : "var(--mairo-line)" }} />
               ))}
             </div>
           </div>

@@ -128,7 +128,7 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.02em] text-white">Account</h1>
+      <h1 className="text-[clamp(30px,4.4vw,48px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white">Account</h1>
       <p className="mt-1 text-[14px] text-muted">
         {organization?.name ?? "Your business"} · {plan.name}
         {session.user.email ? ` · ${session.user.email}` : ""}

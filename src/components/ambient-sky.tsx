@@ -1,7 +1,7 @@
 // The environment behind the signed-in app, the auth screens and the legal
-// pages: MAIRO's night (#090909) with electric-blue light falling from above,
-// a faint cyan from the side, a hairline of light along the top edge, and a
-// faint grain so the dark reads as a material rather than a flat fill.
+// pages: MAIRO's night (#090909) with a faint white light falling from above
+// (--mairo-atmosphere), a hairline of light along the top edge, and a faint
+// grain so the dark reads as a material rather than a flat fill.
 //
 // The restraint is the point. A dashboard is somewhere you work, and a
 // backdrop that moves competes with the numbers someone is trying to read.

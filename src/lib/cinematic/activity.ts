@@ -42,15 +42,15 @@ export const ACTIVITY_LABEL: Record<Activity, string> = {
 };
 
 /** How the particles move in each state. */
-export const ACTIVITY_LOOK: Record<Activity, { shape: "core" | "creative" | "network"; energy: number; pulse: number; turbulence: number; gain: number; spin: number }> = {
-  idle: { shape: "core", energy: 0.05, pulse: 0, turbulence: 0.3, gain: 0.85, spin: 1 },
-  attention: { shape: "core", energy: 0.15, pulse: 0.55, turbulence: 0.3, gain: 0.95, spin: 1 },
-  thinking: { shape: "core", energy: 0.6, pulse: 0.35, turbulence: 0.5, gain: 1.05, spin: 1.8 },
-  analyzing: { shape: "core", energy: 1, pulse: 0.25, turbulence: 0.9, gain: 1.15, spin: 2.6 },
+export const ACTIVITY_LOOK: Record<Activity, { shape: "ribbon" | "field" | "creative" | "network"; energy: number; pulse: number; turbulence: number; gain: number; spin: number }> = {
+  idle: { shape: "ribbon", energy: 0.05, pulse: 0, turbulence: 0.3, gain: 0.85, spin: 1 },
+  attention: { shape: "ribbon", energy: 0.15, pulse: 0.2, turbulence: 0.3, gain: 0.95, spin: 1 },
+  thinking: { shape: "ribbon", energy: 0.6, pulse: 0.35, turbulence: 0.5, gain: 1.05, spin: 1.8 },
+  analyzing: { shape: "field", energy: 1, pulse: 0.25, turbulence: 0.9, gain: 1.15, spin: 2.6 },
   generating: { shape: "creative", energy: 0.7, pulse: 0.2, turbulence: 0.7, gain: 1.1, spin: 0 },
   building: { shape: "network", energy: 0.7, pulse: 0.3, turbulence: 0.6, gain: 1.1, spin: 1.4 },
-  success: { shape: "core", energy: 0.2, pulse: 1, turbulence: 0.3, gain: 1.35, spin: 1 },
-  error: { shape: "core", energy: 0.05, pulse: 0, turbulence: 0.2, gain: 0.55, spin: 0.5 },
+  success: { shape: "ribbon", energy: 0.2, pulse: 1, turbulence: 0.3, gain: 1.35, spin: 1 },
+  error: { shape: "ribbon", energy: 0.05, pulse: 0, turbulence: 0.2, gain: 0.55, spin: 0.5 },
 };
 
 /** How long a finish is shown before the core settles back to resting. */

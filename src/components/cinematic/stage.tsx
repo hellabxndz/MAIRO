@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
-import { ELECTRIC, ELECTRIC_ON_LIGHT, ParticleEngine, webgl2Available } from "./engine";
+import { SIGNAL, SIGNAL_ON_LIGHT, ParticleEngine, webgl2Available } from "./engine";
 import type { Points } from "@/lib/cinematic/shapes";
 
 // The canvas the particles live on, and the loop that moves them.
@@ -38,6 +38,10 @@ export type StageTarget = {
   focus: number;
   offsetX: number;
   offsetY: number;
+  /** The Field's undulation, 0..1 (surfaces only). */
+  wave: number;
+  /** The lime scan line, 0..1. */
+  scan: number;
   /** Whether it should be drawn at all. */
   visible: boolean;
 };
@@ -58,11 +62,13 @@ export const DEFAULT_TARGET: StageTarget = {
   focus: 6,
   offsetX: 0,
   offsetY: 0,
+  wave: 0,
+  scan: 0,
   visible: true,
 };
 
 type Num = Exclude<keyof StageTarget, "seq" | "visible">;
-const EASED: Num[] = ["energy", "pulse", "turbulence", "disperse", "spin", "yaw", "pitch", "distance", "size", "gain", "focus", "offsetX", "offsetY"];
+const EASED: Num[] = ["energy", "pulse", "turbulence", "disperse", "spin", "yaw", "pitch", "distance", "size", "gain", "focus", "offsetX", "offsetY", "wave", "scan"];
 
 export function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -108,7 +114,7 @@ export function ParticleStage({
     const light = document.documentElement.dataset.theme === "light";
     let engine: ParticleEngine;
     try {
-      engine = new ParticleEngine(el, count, { ...(light ? ELECTRIC_ON_LIGHT : ELECTRIC), additive: !light });
+      engine = new ParticleEngine(el, count, { ...(light ? SIGNAL_ON_LIGHT : SIGNAL), additive: !light });
       for (const [k, p] of Object.entries(shapes(count))) engine.addShape(k, p);
     } catch (error) {
       // Said once in the console, so a broken GPU path is diagnosable.
@@ -207,6 +213,8 @@ export function ParticleStage({
         focus: cur.focus,
         offsetX: cur.offsetX,
         offsetY: cur.offsetY,
+        wave: reduced ? 0 : cur.wave,
+        scan: reduced ? 0 : cur.scan,
       };
       const key = `${frame.from}${frame.to}${morph.toFixed(3)}${cur.gain.toFixed(3)}${cur.distance.toFixed(2)}${cur.offsetY.toFixed(2)}`;
       if (!reduced || key !== lastKey) {

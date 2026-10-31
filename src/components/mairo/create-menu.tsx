@@ -84,16 +84,40 @@ export function CreateMenu({ variant = "sidebar" }: { variant?: "sidebar" | "bar
 }
 
 /** "✨ Ask MAIRO": opens the assistant panel from anywhere. */
-export function AskMairoButton({ name, compact = false }: { name: string; compact?: boolean }) {
+export function AskMairoButton({ name, compact = false, variant = "pill" }: { name: string; compact?: boolean; variant?: "pill" | "sidebar" }) {
+  const open = () => window.dispatchEvent(new CustomEvent("mairo:open-assistant"));
+  if (variant === "sidebar") {
+    return (
+      <button
+        type="button"
+        onClick={open}
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-[14px] font-medium text-white transition-colors hover:bg-white/[0.04]"
+        style={{ borderColor: "var(--mairo-line)" }}
+      >
+        <span aria-hidden className="v3-dot" />
+        <span className="min-w-0 flex-1 truncate">Ask {name}</span>
+        <kbd className="rounded-md border px-1.5 py-px font-mono text-[10.5px] text-white/55" style={{ borderColor: "var(--mairo-line)" }}>
+          ⌘K
+        </kbd>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
-      onClick={() => window.dispatchEvent(new CustomEvent("mairo:open-assistant"))}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "min-h-10 min-w-10 justify-center px-2.5" : ""}`}
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(255,255,255,0.12)" }}
+      onClick={open}
+      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "px-3" : ""}`}
+      style={{ borderColor: "var(--mairo-line)" }}
     >
-      <span aria-hidden>✨</span>
-      {compact ? <span className="sr-only">Ask {name}</span> : <>Ask {name}</>}
+      <span aria-hidden className="v3-dot" />
+      {compact ? (
+        <>
+          <span aria-hidden>Ask</span>
+          <span className="sr-only">Ask {name}</span>
+        </>
+      ) : (
+        <>Ask {name}</>
+      )}
     </button>
   );
 }

@@ -1,5 +1,6 @@
 // MAIRO's particle renderer: thousands of points on the GPU, morphing from
-// one shape to another, lit like light rather than drawn like dots.
+// one shape to another — the Field of docs/DESIGN-SPEC-v3.md §5: white
+// lines, slowly undulating, with one lime scan line.
 //
 // Written directly on WebGL2 rather than with three.js: the whole job is one
 // draw call of point sprites, and a 3D library would add hundreds of
@@ -44,6 +45,10 @@ export type Frame = {
   /** Where on screen the shape sits, in scene units from the centre. */
   offsetX: number;
   offsetY: number;
+  /** The Field's slow undulation, 0..1. */
+  wave: number;
+  /** The lime scan line, 0..1. */
+  scan: number;
 };
 
 const VERT = `#version 300 es
@@ -52,7 +57,7 @@ in vec3 aB;
 in vec4 aSeed;
 uniform mat4 uProj;
 uniform mat4 uView;
-uniform float uMorph, uTime, uEnergy, uPulse, uDisperse, uTurb, uSize, uDpr, uFocus;
+uniform float uMorph, uTime, uEnergy, uPulse, uDisperse, uTurb, uSize, uDpr, uFocus, uWave, uScan;
 uniform vec2 uOffset;
 out float vAlpha;
 out float vHot;
@@ -63,8 +68,10 @@ void main() {
   vec3 p = mix(aA, aB, t);
   float mid = sin(3.14159265 * t);
   p += vec3(sin(s * 91.0 + uTime * 0.9), cos(aSeed.y * 77.0 + uTime * 0.8), sin(aSeed.z * 63.0 + uTime * 0.7)) * mid * uTurb;
-  float drift = 0.018 + uEnergy * 0.05;
+  float drift = 0.006 + uEnergy * 0.05;
   p += drift * vec3(sin(uTime * 0.7 + s * 40.0), cos(uTime * 0.6 + aSeed.y * 40.0), sin(uTime * 0.5 + aSeed.z * 40.0));
+  // The Field's slow undulation, strongest on the open shapes.
+  p.y += uWave * (sin(p.x * 1.7 + uTime * 0.9) * 0.16 + sin(p.z * 2.3 - uTime * 0.7) * 0.1);
   float r = length(p);
   p *= 1.0 + uPulse * 0.06 * sin(uTime * 5.0 - r * 4.0);
   if (r > 0.0001) p += (p / r) * uDisperse * (0.4 + aSeed.w * 2.2);
@@ -77,7 +84,10 @@ void main() {
   gl_PointSize = clamp(size * uDpr * 260.0 / max(depth, 0.1), 1.0, 72.0);
   vAlpha = (0.5 + 0.5 * aSeed.y) / (1.0 + blur * blur * 0.22);
   vAlpha *= smoothstep(22.0, 7.0, depth);
-  vHot = step(0.9, aSeed.z) * 0.8 + uEnergy * 0.25 + uPulse * 0.2;
+  // The signal: one lime line scanning across, and lime while working.
+  float band = fract((p.x + 3.0) / 6.0 - uTime * 0.05);
+  float scan = smoothstep(0.028, 0.0, abs(band - 0.5));
+  vHot = scan * uScan + uEnergy * 0.12 * step(0.94, aSeed.z) + uPulse * 0.55;
 }`;
 
 const FRAG = `#version 300 es
@@ -146,7 +156,7 @@ export class ParticleEngine {
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) ?? "link");
     this.program = p;
-    for (const n of ["uProj", "uView", "uMorph", "uTime", "uEnergy", "uPulse", "uDisperse", "uTurb", "uSize", "uDpr", "uFocus", "uColA", "uColB", "uGain", "uOffset"]) this.u[n] = gl.getUniformLocation(p, n);
+    for (const n of ["uProj", "uView", "uMorph", "uTime", "uEnergy", "uPulse", "uDisperse", "uTurb", "uSize", "uDpr", "uFocus", "uColA", "uColB", "uGain", "uOffset", "uWave", "uScan"]) this.u[n] = gl.getUniformLocation(p, n);
     this.loc = { a: gl.getAttribLocation(p, "aA"), b: gl.getAttribLocation(p, "aB"), seed: gl.getAttribLocation(p, "aSeed") };
     this.vao = gl.createVertexArray()!;
     gl.bindVertexArray(this.vao);
@@ -225,6 +235,8 @@ export class ParticleEngine {
     gl.uniform3fv(this.u.uColB, this.look.b);
     gl.uniform1f(this.u.uGain, f.gain);
     gl.uniform2f(this.u.uOffset, f.offsetX, f.offsetY);
+    gl.uniform1f(this.u.uWave, f.wave);
+    gl.uniform1f(this.u.uScan, f.scan);
     gl.drawArrays(gl.POINTS, 0, this.count);
   }
 
@@ -251,7 +263,7 @@ export function webgl2Available(): boolean {
   }
 }
 
-/** Electric blue, and the white-blue of its hottest points. */
-export const ELECTRIC: { a: [number, number, number]; b: [number, number, number] } = { a: [0.16, 0.45, 1.0], b: [0.78, 0.9, 1.0] };
-/** On a light page: deeper blue, drawn over rather than added as light. */
-export const ELECTRIC_ON_LIGHT: { a: [number, number, number]; b: [number, number, number] } = { a: [0.05, 0.25, 0.85], b: [0.1, 0.45, 1.0] };
+/** Signal: white lines, and the neon lime of the scan and of MAIRO working. */
+export const SIGNAL: { a: [number, number, number]; b: [number, number, number] } = { a: [0.9, 0.9, 0.9], b: [0.83, 1.0, 0.23] };
+/** On a light page: near-black lines and a deeper lime, drawn over rather than added as light. */
+export const SIGNAL_ON_LIGHT: { a: [number, number, number]; b: [number, number, number] } = { a: [0.08, 0.08, 0.08], b: [0.35, 0.48, 0.0] };

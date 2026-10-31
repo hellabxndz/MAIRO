@@ -117,7 +117,6 @@ export function MairoAssistant({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const pathname = usePathname();
   const ctx = useScreenContext();
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -162,36 +161,28 @@ export function MairoAssistant({
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // ⌘K / Ctrl+K opens (and closes) it from any screen in the app.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen((o) => !o);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   const ask = (text: string) => {
     const body = ctx.hint ? `${text}\n\n(Context: ${ctx.hint})` : text;
     sendMessage({ text: body });
     setInput("");
   };
 
-  // Not on the assistant's own page. A floating button that opens a small
-  // version of the screen somebody is already looking at is a button that
-  // covers the real thing with a worse copy of it.
-  // The Overview has its own box for this, front and centre.
-  const onAssistantPage = pathname.startsWith("/dashboard/agents") || pathname === "/dashboard";
-
+  // The way in is the sidebar's Ask button (and the top bar's on a phone)
+  // and ⌘K — no floating launcher covering the page.
   return (
     <>
-      {/* The launcher, on wide screens. A phone already has Ask in the top bar
-          and Assistant in the bottom bar, and a floating pill there covers the
-          cards it sits over. */}
-      {!open && !onAssistantPage && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label={`Ask ${assistantName}`}
-          className="fixed bottom-6 right-6 z-40 hidden h-12 items-center lg:inline-flex gap-2 rounded-full px-4 text-[14px] font-medium text-white transition-transform duration-300 [transition-timing-function:var(--ease-mairo)] hover:scale-[1.03]"
-          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
-        >
-          <span aria-hidden>✨</span>
-          Ask {assistantName}
-        </button>
-      )}
-
       {open && (
         <>
           <div
@@ -279,7 +270,7 @@ export function MairoAssistant({
                         <div
                           className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
                             m.role === "user"
-                              ? "bg-blue/20 text-white ring-1 ring-blue/30"
+                              ? "bg-white/[0.08] text-white ring-1 ring-white/20"
                               : "text-white/90"
                           }`}
                           style={
@@ -289,7 +280,7 @@ export function MairoAssistant({
                           }
                         >
                           {text}
-                          {learned && <span className="mt-2 block text-[12px] text-emerald-300">✨ Added to Business Brain</span>}
+                          {learned && <span className="mt-2 block text-[12px] text-[color:var(--v3-signal)]">Added to Business Brain</span>}
                           {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                           {links.map((l) => (
                             <a key={l.href} href={l.href} className="mt-3 mr-2 inline-flex rounded-lg bg-[#ffffff] px-3.5 py-2 text-[13px] font-medium text-black hover:brightness-110">
@@ -338,7 +329,7 @@ export function MairoAssistant({
                   type="submit"
                   disabled={busy || !input.trim()}
                   aria-label="Send"
-                  className="shrink-0 text-blue-bright transition-colors hover:text-white disabled:opacity-40"
+                  className="shrink-0 text-white transition-colors hover:text-white disabled:opacity-40"
                 >
                   <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden>
                     <path

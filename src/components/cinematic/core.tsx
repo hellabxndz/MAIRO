@@ -7,8 +7,9 @@ import { shape } from "@/lib/cinematic/shapes";
 import { ACTIVITY_EVENT, ACTIVITY_LABEL, ACTIVITY_LOOK, SETTLE_MS, type Activity, type ActivityDetail } from "@/lib/cinematic/activity";
 import { deviceBudget } from "./home/director";
 
-// The MAIRO core in the app: the same particles as the website, small, and
-// showing what MAIRO is actually doing (lib/cinematic/activity.ts).
+// The MAIRO core in the app: the same Field as the website — a ribbon of
+// white lines — small, and showing what MAIRO is actually doing
+// (lib/cinematic/activity.ts). The lime scan runs only while it works.
 //
 // At rest it shows the account's state as the page found it — calm, or a
 // slow pulse when something waits for the owner. When a real operation
@@ -18,7 +19,7 @@ import { deviceBudget } from "./home/director";
 // settles. A short line under it says the same in words, for anyone who
 // can't see the animation, and it never sits in front of anything.
 
-const SEQ = ["core", "creative", "network"];
+const SEQ = ["ribbon", "field", "creative", "network"];
 
 export function MairoCore({
   resting = "idle",
@@ -29,7 +30,7 @@ export function MairoCore({
 }: {
   /** The state when nothing is running, from the page's own data. */
   resting?: Activity;
-  /** Pixels across. */
+  /** Height in pixels; the ribbon is drawn 2.5 times as wide. */
   size?: number;
   caption?: boolean;
   /** What to say at rest, e.g. "2 things waiting for you". */
@@ -37,7 +38,7 @@ export function MairoCore({
   className?: string;
 }) {
   const [state, setState] = useState<{ activity: Activity; label?: string } | null>(null);
-  const target = useRef<StageTarget>({ ...DEFAULT_TARGET, seq: SEQ, distance: 6.6, size: 0.095, pitch: 0.28 });
+  const target = useRef<StageTarget>({ ...DEFAULT_TARGET, seq: SEQ, distance: 4.6, size: 0.032, pitch: 0.22, wave: 1, scan: 1 });
   const [device] = useState(() => deviceBudget("core"));
   const now = state?.activity ?? resting;
 
@@ -65,8 +66,11 @@ export function MairoCore({
     t.energy = look.energy;
     t.pulse = look.pulse;
     t.turbulence = look.turbulence;
-    t.gain = look.gain;
-    t.spin = look.spin;
+    t.gain = look.gain * 0.75;
+    t.spin = look.shape === "creative" ? 0 : look.spin * 0.4;
+    // The surfaces undulate and carry the lime scan; it shows only while MAIRO works.
+    t.wave = look.shape === "ribbon" || look.shape === "field" ? 1 : 0.15;
+    t.scan = now === "idle" || now === "attention" ? 0.25 : 1;
     wakeStages();
   }, [now]);
 
@@ -74,20 +78,20 @@ export function MairoCore({
 
   return (
     <div className={`flex flex-col items-center ${className}`}>
-      <div className="relative" style={{ width: size, height: size }}>
-        <div aria-hidden className="absolute inset-[18%] rounded-full" style={{ background: "radial-gradient(circle, rgba(50,120,255,0.28), transparent 70%)", filter: "blur(10px)" }} />
+      <div className="relative max-w-full" style={{ width: size * 2.5, height: size }}>
         <ParticleStage
           target={target}
           count={device.count}
           weak={device.weak}
           pointer={false}
           className="absolute inset-0 h-full w-full"
-          shapes={(n) => ({ core: shape("core", n), creative: shape("creative", n), network: shape("network", n) })}
-          fallback={<CoreFallback className="absolute inset-0" size={`${size}px`} />}
+          shapes={(n) => ({ ribbon: shape("ribbon", n), field: shape("field", n), creative: shape("creative", n), network: shape("network", n) })}
+          fallback={<CoreFallback className="absolute inset-0" size={`${size * 2.5}px`} />}
         />
       </div>
       {caption && (
-        <p aria-live="polite" className="mt-1 text-center text-[12.5px] font-medium tracking-[0.02em] text-[#9cc0ff]">
+        <p aria-live="polite" className="mt-1 inline-flex items-center gap-2 text-center text-[12.5px] font-medium text-white/70">
+          {state && state.activity !== "error" && <span aria-hidden className="v3-dot" />}
           {words}
         </p>
       )}

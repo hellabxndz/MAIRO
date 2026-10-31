@@ -164,7 +164,7 @@ function Icon({ d, className = "" }: { d: ReactNode; className?: string }) {
 export const PRIMARY_NAV: NavEntry[] = [
   {
     href: "/dashboard",
-    label: "Overview",
+    label: "Home",
     icon: <Icon d={I.home} />,
     // Approvals and the AI's findings are answered from the Overview.
     also: ["/dashboard/mission", "/dashboard/decisions", "/dashboard/coach", "/dashboard/intelligence", "/dashboard/team", "/dashboard/agents", "/dashboard/health"],
@@ -248,10 +248,10 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
  * change to the sidebar changes both.
  */
 export function NavRowView({ item, active, locked = false, href }: { item: NavEntry; active: boolean; locked?: boolean; href?: string }) {
-  // The current section is a quiet fill, not a lit gradient: the page is what
-  // should hold the eye, not the sidebar.
+  // The current section is a quiet fill and one lime marker (the signal,
+  // docs/DESIGN-SPEC-v3.md §2): the page is what should hold the eye.
   const className = `group relative flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-colors duration-200 ${
-    active ? "bg-white/[0.08] font-medium text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"
+    active ? "bg-white/[0.06] font-medium text-white" : "text-white/55 hover:bg-white/[0.04] hover:text-white"
   }`;
   const style = undefined;
   const inner = (
@@ -260,7 +260,7 @@ export function NavRowView({ item, active, locked = false, href }: { item: NavEn
       <span className="truncate whitespace-nowrap">{item.label}</span>
       {item.badge && (
         // A locked feature's plan, with the lock inside the label.
-        <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium ${active ? "border-white/60 text-white" : "border-violet-400/40 text-violet-bright"}`}>
+        <span className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-px text-[10px] font-medium ${active ? "border-white/60 text-white" : "border-white/25 text-white/70"}`}>
           {locked && (
             <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-label="Locked">
               <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
@@ -270,6 +270,7 @@ export function NavRowView({ item, active, locked = false, href }: { item: NavEn
           {item.badge}
         </span>
       )}
+      {active && !item.badge && !locked && <span aria-hidden className="v3-dot ml-auto" />}
       {!item.badge && locked && (
         <svg viewBox="0 0 16 16" className="ml-auto h-3.5 w-3.5 shrink-0 text-faint" fill="none" stroke="currentColor" strokeWidth="1.5" aria-label="Locked">
           <rect x="3.5" y="7" width="9" height="6.5" rx="1.5" />
@@ -381,8 +382,6 @@ export function AppShell({
   return (
     <div className="relative isolate min-h-screen">
       <AmbientSky />
-      {/* Electric-blue light from above: still, CSS only, behind everything. */}
-      <div aria-hidden className="mairo-app-light pointer-events-none fixed inset-0 -z-[15]" />
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
@@ -418,6 +417,11 @@ export function AppShell({
           ))}
         </nav>
 
+        {/* Ask MAIRO, from every screen (and ⌘K / Ctrl+K, assistant.tsx). */}
+        <div className="mt-3 shrink-0">
+          <AskMairoButton name={askName} variant="sidebar" />
+        </div>
+
         {/* One slim row rather than a card: on a short screen a tall card is
             what pushed Billing, Settings and Sign out out of reach. */}
         {showUpgrade && (
@@ -426,7 +430,7 @@ export function AppShell({
             className="mt-3 flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
             style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
           >
-            <span className="h-4 w-4 shrink-0 text-blue-bright">
+            <span className="h-4 w-4 shrink-0 text-white/70">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden>
                 <path d="M3 14l1.6-8 4 3.4L10 4l1.4 5.4 4-3.4L17 14H3z" />
               </svg>
@@ -435,11 +439,7 @@ export function AppShell({
               <span className="block text-[12.5px] font-medium text-white">Upgrade plan</span>
               <span className="block truncate text-[10.5px] text-faint">More features, higher limits</span>
             </span>
-            <span
-              className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium text-white"
-              style={{ backgroundImage: "var(--mairo-ramp)" }}
-              aria-hidden
-            >
+            <span className="shrink-0 px-1 text-[13px] text-white/70" aria-hidden>
               →
             </span>
           </Link>
@@ -475,7 +475,6 @@ export function AppShell({
           nav breaks a form. */}
       <main className="px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 lg:ml-[248px] lg:px-10 lg:pb-16 lg:pt-8">
         <div className="mb-6 hidden items-center justify-end gap-3 lg:flex">
-          <AskMairoButton name={askName} />
           {notifications}
           <ProfileButton userName={userName} businessName={businessName} wide />
         </div>
