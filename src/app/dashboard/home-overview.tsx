@@ -218,7 +218,7 @@ export async function HomeOverview({
                     <li key={a.id} className="text-[14px] leading-relaxed">
                       <span className="text-white">{a.summary}</span>{" "}
                       <span className="text-faint">
-                        · {a.automatic ? "by MAIRO" : "approved"} · {a.at.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        · {a.by} · {a.at.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </span>
                     </li>
                   ))}

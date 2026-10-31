@@ -24,6 +24,13 @@ export type KindInfo = {
    * report is worth a card and is not worth a phone buzzing.
    */
   sms: SmsKind | null;
+  /**
+   * Emailed to the owners and admins too (notify.ts), when an email provider
+   * is configured and the business hasn't turned email off. Only the kinds
+   * somebody should act on or would want in their inbox: a fatigue hint or a
+   * budget idea stays in the app.
+   */
+  email: boolean;
 };
 
 export const KINDS: Record<NotificationKind, KindInfo> = {
@@ -32,36 +39,42 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "Campaign live",
     severity: "INFO",
     sms: "campaign-live",
+    email: true,
   },
   NEEDS_ATTENTION: {
     kind: "NEEDS_ATTENTION",
     label: "Needs attention",
     severity: "WARNING",
     sms: "needs-attention",
+    email: true,
   },
   BUDGET_OPPORTUNITY: {
     kind: "BUDGET_OPPORTUNITY",
     label: "Opportunity",
     severity: "OPPORTUNITY",
     sms: "budget-change",
+    email: false,
   },
   CREATIVE_FATIGUE: {
     kind: "CREATIVE_FATIGUE",
     label: "Creative fatigue",
     severity: "WARNING",
     sms: "needs-attention",
+    email: false,
   },
   CREATIVES_READY: {
     kind: "CREATIVES_READY",
     label: "New creatives",
     severity: "INFO",
     sms: null,
+    email: true,
   },
   MONTHLY_REPORT: {
     kind: "MONTHLY_REPORT",
     label: "Monthly report",
     severity: "INFO",
     sms: null,
+    email: true,
   },
   // The one report worth a text: short, weekly, and only for businesses that
   // switched weekly texts on.
@@ -70,30 +83,35 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "Weekly report",
     severity: "INFO",
     sms: "weekly-summary",
+    email: true,
   },
   PAYMENT_ISSUE: {
     kind: "PAYMENT_ISSUE",
     label: "Payment",
     severity: "WARNING",
     sms: null,
+    email: true,
   },
   ACCOUNT_DISCONNECTED: {
     kind: "ACCOUNT_DISCONNECTED",
     label: "Account disconnected",
     severity: "WARNING",
     sms: "needs-attention",
+    email: true,
   },
   MAIRO_ACTED: {
     kind: "MAIRO_ACTED",
     label: "MAIRO made a change",
     severity: "INFO",
     sms: "budget-change",
+    email: true,
   },
   COACH_ALERT: {
     kind: "COACH_ALERT",
     label: "Performance Coach",
     severity: "WARNING",
     sms: null,
+    email: false,
   },
   // Cancelling MAIRO doesn't stop Meta spending. Worth a text when campaigns
   // are still running, because that's the money that keeps moving.
@@ -102,12 +120,14 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "Subscription",
     severity: "WARNING",
     sms: "needs-attention",
+    email: true,
   },
   TRACKING_WORKING: {
     kind: "TRACKING_WORKING",
     label: "Tracking",
     severity: "INFO",
     sms: null,
+    email: true,
   },
   // Urgent: a broken Pixel means live campaigns are spending without
   // learning who converts. Texted under "needs attention".
@@ -116,6 +136,7 @@ export const KINDS: Record<NotificationKind, KindInfo> = {
     label: "Tracking",
     severity: "WARNING",
     sms: "needs-attention",
+    email: true,
   },
 
 };

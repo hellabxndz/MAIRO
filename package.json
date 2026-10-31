@@ -75,6 +75,7 @@
     "check:onboarding-db": "tsx scripts/check-onboarding-db.ts",
     "check:measurement": "tsx scripts/check-measurement.ts",
     "check:tracking-health": "tsx scripts/check-tracking-health.ts",
+    "check:notify-email": "tsx scripts/check-notify-email.ts",
     "check:pricing": "tsx scripts/check-pricing.ts",
     "check:price-mapping": "tsx scripts/check-price-mapping.ts",
     "check:plans-v2": "tsx scripts/check-plans-v2.ts",

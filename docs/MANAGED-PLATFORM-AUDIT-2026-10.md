@@ -50,3 +50,31 @@ This audit reads the code as it is on `claude/myro-ad-platform-u3ynfe` (7bf0442)
 - **Nothing reaches Meta in tests.** Every new check runs against the local database with Meta replaced by a stub, as the existing suites do.
 - **Migrations:** adding notification kinds and tracking-health columns needs a migration (flagged in the commit and the report). It only adds; nothing is dropped or rewritten.
 - **Meta App Review:** `ads_management`, `ads_read` and `business_management` are needed for the actions above; which ones the live app has is on `/aios/setup`. Nothing here asks for a new permission.
+
+## Status after this round (branch `feature/managed-platform`)
+
+### Built and tested (simulated Meta, local database)
+
+| Gap | What now exists | Tests |
+|---|---|---|
+| 1–2 | Daily tracking-health check (`lib/tracking/monitor.ts`, in `/api/cron/review`): re-reads the Pixel and each chosen event from Meta, stores the verdict on `TrackingProfile`, notifies on change only — `TRACKING_WORKING` (first time, and "working again") and `TRACKING_PROBLEM` (stopped, access lost, permission removed). A day Meta doesn't answer changes nothing. Manual checks on the Pixel page refresh it too. | `check:tracking-health` (21) |
+| 3, 6 | Home → "MAIRO is managing": tracking health with its fix, Approval mode / Autopilot / Autopilot paused in plain words, the last actions with who did them, and failed changes shown with a link. | `check:tracking-health`; browser check at 1440 and 390 |
+| 4 | AIOS → Customers: tracking health, MAIRO mode and approvals waiting per customer, and a "Tracking problems" count. Read from records; AIOS never calls Meta from that page. | `check:aios` |
+| 5 | Pause / resume Autopilot from Home and Settings. Keeps the chosen level; while paused both automatic paths act as Manual. Role-checked (`budget.change`), written to the activity history and the audit log. | `check:tracking-health` |
+| 7 | Email copies of the notifications worth acting on, to owners and admins only, when Resend is configured; one switch on the Notifications page. Never lost when an email fails. | `check:notify-email` (6) |
+
+All 101 suites pass; lint, typecheck and the production build are clean.
+
+### Needs the owner (external setup or a decision)
+
+- **Run the migrations on Neon** before (or as) this deploys: `20261210120000_tracking_health` and `20261210130000_notify_email`. Both only add.
+- **Email:** set `RESEND_API_KEY` and `EMAIL_FROM` in Vercel (and verify the sending domain in Resend). Until then, notifications stay in the app and SMS, exactly as today.
+- **Hourly monitoring:** Vercel Hobby allows daily crons only. On Vercel Pro the review cron can run more often with no code change.
+- **Verify with a real account:** the tracking check uses the same Meta calls as the Pixel page (`/{pixel}`, `/{act}/adspixels`, `/{pixel}/stats`). Confirm once on a connected test account (AIOS → Live Meta check shows the Pixel's last fire).
+
+### Not built in this round (and not claimed)
+
+- **CRM and booking integrations** (HubSpot, Calendly, GoHighLevel…): each needs an app registration, OAuth and per-provider webhooks. Leads are still marked in MAIRO or come from Meta lead forms.
+- **Phone-call conversion tracking:** needs a call-tracking number provider and its webhooks.
+- **A listed Shopify app:** needs Shopify Partner registration and review. Order webhooks (HMAC-validated, deduplicated, relayed through the Conversions API) work today with a per-store link.
+- **A daily Morning Brief by email:** the Daily Brief exists in the app from records; emailing it every day was left out on purpose (the weekly report is emailed; the brief would be daily inbox noise). Easy to add if wanted.

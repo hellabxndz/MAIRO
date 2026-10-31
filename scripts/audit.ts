@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const QUESTIONS: { n: number; q: string; suites: string[]; production: string }[] = [
-  { n: 1, q: "Connects to a real Meta account", suites: ["account-history", "graph-cache", "live-meta", "meta-contract", "onboarding", "onboarding-db", "hardening-db", "notifications", "domain"], production: "Live Meta check: token, permissions, ad account, Page." },
+  { n: 1, q: "Connects to a real Meta account", suites: ["account-history", "graph-cache", "live-meta", "meta-contract", "onboarding", "onboarding-db", "hardening-db", "notifications", "notify-email", "domain"], production: "Live Meta check: token, permissions, ad account, Page." },
   { n: 2, q: "Understands the business and builds a strategy", suites: ["business", "brain", "strategy-plan", "plan-guide", "safe-fetch", "website", "preview", "strategy", "plan-writing", "refine", "report", "engine", "mission", "memory", "onboarding-db"], production: "Needs ANTHROPIC_API_KEY for the AI reading; without it, the literal page reading still runs." },
   { n: 3, q: "Specialists coordinate on real work", suites: ["team", "decisions", "coach-db", "command-center", "command-center-db", "onboarding-db"], production: "AI Team activity shows each recorded run." },
   { n: 4, q: "Builds campaigns and submits them for approval", suites: ["campaign-wizard", "ads", "ad-score", "readiness", "schedule", "creative-studio", "suggested-ads", "creative-readiness", "experiments", "onboarding", "onboarding-db", "page-token"], production: "A first campaign built (switched off) on a real account." },

@@ -19,7 +19,7 @@ import { withGraphTransport } from "../src/lib/meta/client";
 import { encryptSecret } from "../src/lib/crypto/secret-box";
 import { STALE_DAYS, trackingHealth, transition, type HealthInput } from "../src/lib/tracking/health";
 import { checkTrackingHealth, monitorAllTracking } from "../src/lib/tracking/monitor";
-import { modeView } from "../src/lib/dashboard/manager";
+import { byWhom, modeView } from "../src/lib/dashboard/manager";
 import { effectiveLevel } from "../src/lib/decisions/store";
 import { runAutoOptimize } from "../src/lib/budget/recommendations";
 
@@ -242,6 +242,11 @@ async function main() {
     assert.equal(v.key, "approval");
     assert.match(v.detail, /isn't part of your plan/);
     assert.equal(modeView(null, { assist: true, autopilot: true }).key, "approval");
+  });
+  await check("'Lately' says who: MAIRO on its own, a person's setting, or a change someone approved", () => {
+    assert.equal(byWhom("decision.applied", true), "by MAIRO");
+    assert.equal(byWhom("autopilot.paused", false), "by your team");
+    assert.equal(byWhom("decision.applied", false), "you approved");
   });
   await check("the pause action is role-checked, recorded and audited (source)", async () => {
     const { readFileSync } = await import("node:fs");

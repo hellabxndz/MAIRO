@@ -38,6 +38,18 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     // AI Team work that failed or never finished, so it gets looked at.
     recentFailedRuns(),
   ]);
+  // Tracking health (the daily check), what MAIRO may do, and what waits on
+  // each customer — read from the records, never by calling Meta from here.
+  const ids = accounts.map((a) => a.id);
+  const [profiles, autos, pending] = await Promise.all([
+    db.trackingProfile.findMany({ where: { organizationId: { in: ids } }, select: { organizationId: true, healthStatus: true, healthHeadline: true, healthCheckedAt: true } }),
+    db.autoOptimizeSettings.findMany({ where: { organizationId: { in: ids } }, select: { organizationId: true, level: true, enabled: true, pausedAt: true } }),
+    db.mairoDecision.groupBy({ by: ["organizationId"], where: { organizationId: { in: ids }, status: "PENDING" }, _count: { _all: true } }),
+  ]);
+  const tracking = new Map(profiles.map((p) => [p.organizationId, p]));
+  const auto = new Map(autos.map((x) => [x.organizationId, x]));
+  const waiting = new Map(pending.map((x) => [x.organizationId, x._count._all]));
+  const trackingProblems = profiles.filter((p) => p.healthStatus === "attention" || p.healthStatus === "broken").length;
 
   return (
     <div>
@@ -61,6 +73,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           ["Active in last 7 days", pct(metrics.activeLast7Pct)],
           ['"MAIRO is easier": yes', metrics.pulseAnswers ? `${pct(metrics.easierPct)} of ${metrics.pulseAnswers}` : "—"],
           ["Cancelled", String(metrics.cancelled)],
+          ["Tracking problems", String(trackingProblems)],
         ].map(([label, value]) => (
           <Card key={label} className="!p-4">
             <p className="text-xl font-medium text-white">{value}</p>
@@ -81,6 +94,8 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 <th className="px-4 py-3 font-medium">First 30 days</th>
                 <th className="px-4 py-3 font-medium">Plan</th>
                 <th className="px-4 py-3 font-medium">Meta</th>
+                <th className="px-4 py-3 font-medium">Tracking</th>
+                <th className="px-4 py-3 font-medium">MAIRO</th>
                 <th className="px-4 py-3 font-medium">Last visit</th>
                 <th className="px-4 py-3 font-medium">Why</th>
               </tr>
@@ -111,6 +126,32 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                     <td className="px-4 py-3 text-neutral-400">
                       <Badge tone={META_TONE[a.meta]}>{META_LABEL[a.meta]}</Badge>
                       <div className="mt-1 text-[12px] text-neutral-500">{a.runningCampaigns} running</div>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-400">
+                      {(() => {
+                        const t = tracking.get(a.id);
+                        if (!t?.healthStatus) return <span className="text-neutral-500">Not checked</span>;
+                        const tone = t.healthStatus === "working" ? "green" : t.healthStatus === "attention" || t.healthStatus === "broken" ? "yellow" : "neutral";
+                        return (
+                          <>
+                            <Badge tone={tone}>{t.healthStatus.replace("_", " ")}</Badge>
+                            <div className="mt-1 max-w-[220px] text-[12px] text-neutral-500">{t.healthHeadline}{t.healthCheckedAt ? ` · ${ago(t.healthCheckedAt)}` : ""}</div>
+                          </>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-400">
+                      {(() => {
+                        const x = auto.get(a.id);
+                        const mode = !x || x.level === "MANUAL" || !x.enabled ? "Approval" : x.pausedAt ? "Autopilot paused" : x.level === "AUTOPILOT" ? "Full Autopilot" : "AI Assist";
+                        const n = waiting.get(a.id) ?? 0;
+                        return (
+                          <>
+                            {mode}
+                            <div className="mt-1 text-[12px] text-neutral-500">{n ? `${n} waiting for approval` : "Nothing waiting"}</div>
+                          </>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-neutral-400">{ago(a.lastActiveAt)}</td>
                     <td className="px-4 py-3 text-[13px] text-neutral-300">

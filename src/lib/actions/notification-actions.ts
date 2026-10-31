@@ -69,7 +69,7 @@ export async function saveNotificationPrefsAction(formData: FormData): Promise<v
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
   await db.organization.update({
     where: { id: organizationId },
-    data: { notifyOpportunities: formData.get("opportunities") === "on", notifyReports: formData.get("reports") === "on", notifyCoachAlerts: formData.get("coach") === "on" },
+    data: { notifyOpportunities: formData.get("opportunities") === "on", notifyReports: formData.get("reports") === "on", notifyCoachAlerts: formData.get("coach") === "on", notifyEmail: formData.get("email") === "on" },
   });
   revalidatePath("/dashboard/notifications");
 }

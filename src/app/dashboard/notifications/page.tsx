@@ -9,6 +9,7 @@ import { kindInfo } from "@/lib/notifications/kinds";
 import { whenLabel } from "@/lib/notifications/present";
 import { markAllReadAction, dismissNotificationAction, saveNotificationPrefsAction } from "@/lib/actions/notification-actions";
 import type { NotificationSeverity } from "@/generated/prisma/enums";
+import { emailConfigured } from "@/lib/email/send";
 
 // Everything MAIRO has told this business, in one place.
 //
@@ -39,7 +40,7 @@ export default async function NotificationsPage() {
       orderBy: { createdAt: "desc" },
       take: 60,
     }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { notifyOpportunities: true, notifyReports: true, notifyCoachAlerts: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { notifyOpportunities: true, notifyReports: true, notifyCoachAlerts: true, notifyEmail: true } }),
   ]);
   const unread = rows.filter((r) => r.readAt === null).length;
   const now = new Date();
@@ -160,6 +161,17 @@ export default async function NotificationsPage() {
             <span>
               Performance Coach alerts
               <span className="block text-[12.5px] text-muted">Leads waiting for a reply, good leads getting more expensive, fewer bookings, tracking that stopped — only when your records show it</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 border-t pt-3 text-[14px] text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            <input type="checkbox" name="email" defaultChecked={prefs?.notifyEmail ?? true} className="mt-1 h-4 w-4" />
+            <span>
+              Email me too
+              <span className="block text-[12.5px] text-muted">
+                {emailConfigured()
+                  ? "Owners and admins get an email for what needs them: tracking that stopped, a campaign live or rejected, new ads ready, a change MAIRO made, your weekly report."
+                  : "Email isn't set up for MAIRO yet, so for now everything arrives here (and by text, if you turned that on)."}
+              </span>
             </span>
           </label>
           <MairoButton type="submit" tone="ghost">Save</MairoButton>

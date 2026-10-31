@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { NotificationKind } from "@/generated/prisma/enums";
 import { kindInfo, optionalGroup } from "./kinds";
 import { sendSms } from "@/lib/sms/send";
+import { emailConfigured, sendEmail } from "@/lib/email/send";
 
 // Writing a notification, once.
 //
@@ -89,8 +90,51 @@ export async function notify(input: NotifyInput): Promise<NotifyResult> {
       console.error("Notification text failed:", error);
     }
   }
+  // An email to the people who run the business, for the kinds worth one.
+  // Wrapped for the same reason: the row is what matters, the email is a copy.
+  if (info.email) {
+    try {
+      await emailNotification(input);
+    } catch (error) {
+      console.error("Notification email failed:", error instanceof Error ? error.message : error);
+    }
+  }
 
   return { created: true, id: row.id };
+}
+
+/**
+ * The email copy of a notification: to the business's owners and admins,
+ * only when an email provider is configured and the business hasn't turned
+ * email off. Plain text, the same words as the app, one link back in.
+ */
+async function emailNotification(input: NotifyInput): Promise<number> {
+  if (!emailConfigured()) return 0;
+  const org = await db.organization.findUnique({ where: { id: input.organizationId }, select: { name: true, notifyEmail: true } });
+  if (!org?.notifyEmail) return 0;
+  const people = await db.organizationMember.findMany({
+    where: { organizationId: input.organizationId, role: { in: ["OWNER", "ADMIN"] } },
+    select: { user: { select: { email: true } } },
+  });
+  const to = [...new Set(people.map((p) => p.user.email).filter(Boolean))];
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://www.mairo.io").replace(/\/$/, "");
+  const link = input.actionHref ? `${base}${input.actionHref.startsWith("/") ? input.actionHref : `/${input.actionHref}`}` : `${base}/dashboard`;
+  const text = [
+    input.title,
+    "",
+    input.body,
+    "",
+    `${input.actionLabel ?? "Open MAIRO"}: ${link}`,
+    "",
+    "— MAIRO",
+    `You're getting this because you manage ${org.name} in MAIRO. Choose which emails you get: ${base}/dashboard/notifications`,
+  ].join("\n");
+  let sent = 0;
+  for (const address of to) {
+    const r = await sendEmail({ to: address, subject: `MAIRO · ${input.title}`, text });
+    if (r.sent) sent++;
+  }
+  return sent;
 }
 
 /** Everything unread, newest first. */

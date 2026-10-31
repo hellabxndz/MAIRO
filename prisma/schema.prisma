@@ -430,6 +430,9 @@ model Organization {
   /// Performance Coach alerts: slower follow-up, rising cost per good lead,
   /// tracking that stopped, lead quality slipping. Optional, like the above.
   notifyCoachAlerts   Boolean                @default(true)
+  /// Email the owners and admins the notifications they should act on
+  /// (KindInfo.email), when an email provider is configured.
+  notifyEmail         Boolean                @default(true)
   /// The business's own names for its lead stages (JSON: stage → label), e.g.
   /// "Inspection booked" for an appointment. Null uses MAIRO's defaults.
   leadStagesJson      String?                @db.Text

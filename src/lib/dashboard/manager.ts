@@ -48,12 +48,18 @@ export function modeView(
   };
 }
 
+/** Who did it, in the owner's words: MAIRO on its own, or a person (a setting, or an approved change). */
+export function byWhom(action: string, automatic: boolean): string {
+  if (automatic) return "by MAIRO";
+  return action.startsWith("autopilot.") ? "by your team" : "you approved";
+}
+
 export type TrackingLine = { status: HealthStatus | "pending"; headline: string; detail: string; checkedAt: Date | null };
 
 export type ManagerStatus = {
   tracking: TrackingLine;
   mode: ModeView;
-  recent: { id: string; summary: string; reason: string; at: Date; automatic: boolean }[];
+  recent: { id: string; summary: string; reason: string; at: Date; automatic: boolean; by: string }[];
   /** Changes MAIRO tried to make in the last week that Meta refused. Shown, never hidden. */
   failed: number;
 };
@@ -67,7 +73,7 @@ export async function loadManagerStatus(organizationId: string, now = new Date()
       where: { organizationId, createdAt: { gte: new Date(now.getTime() - 14 * 864e5) } },
       orderBy: { createdAt: "desc" },
       take: 3,
-      select: { id: true, summary: true, reason: true, createdAt: true, automatic: true },
+      select: { id: true, action: true, summary: true, reason: true, createdAt: true, automatic: true },
     }),
     db.mairoDecision.count({ where: { organizationId, status: "FAILED", updatedAt: { gte: new Date(now.getTime() - 7 * 864e5) } } }),
   ]);
@@ -77,7 +83,7 @@ export async function loadManagerStatus(organizationId: string, now = new Date()
   return {
     tracking,
     mode: modeView(settings, { assist: ent.auto_optimize, autopilot: ent.autopilot }),
-    recent: recent.map((r) => ({ id: r.id, summary: r.summary, reason: r.reason, at: r.createdAt, automatic: r.automatic })),
+    recent: recent.map((r) => ({ id: r.id, summary: r.summary, reason: r.reason, at: r.createdAt, automatic: r.automatic, by: byWhom(r.action, r.automatic) })),
     failed,
   };
 }
