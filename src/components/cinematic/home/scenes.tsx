@@ -19,6 +19,38 @@ const STEPS = [
   { n: "03", title: "Track", text: "It runs them on Facebook and Instagram, reads the results from Meta and tells you what's working." },
 ];
 
+/** What each step looks like in MAIRO — an example readout beside the Field (fictional business). */
+const READOUT: { title: string; rows: [string, string][] }[] = [
+  { title: "Reading lumenskin.com", rows: [["Sells", "Skincare · 12 products"], ["Best seller", "Hydrating serum"], ["Customers", "Women 25–45, Austin"], ["Different", "Small-batch, local"]] },
+  { title: "Making your ads", rows: [["Headline", "Skin that drinks it in."], ["Picture", "Serum on a pale pink set"], ["Placements", "Instagram feed · Stories"], ["Status", "Waiting for your approval"]] },
+  { title: "Last 30 days", rows: [["Spent", "$600"], ["Purchases", "42"], ["Revenue (Meta)", "$2,310"], ["Tracking", "Working"]] },
+];
+
+function StepReadout({ step }: { step: number }) {
+  const r = READOUT[step];
+  return (
+    <div className="pointer-events-none absolute bottom-[9svh] right-5 hidden w-[300px] sm:right-10 sm:block lg:right-16" aria-hidden>
+      <div key={step} className="v3-tick rounded-[20px] border border-[color:var(--v3-line)] bg-[color:var(--v3-ink)]/85 p-4">
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-2 text-[12.5px] font-medium text-white">
+            <span className="v3-dot v3-breathe" />
+            {r.title}
+          </p>
+          <span className="v3-label !text-[9.5px]">Example</span>
+        </div>
+        <dl className="mt-3 space-y-1.5">
+          {r.rows.map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-3 text-[12.5px]">
+              <dt className="text-white/45">{k}</dt>
+              <dd className="truncate text-white/85">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+  );
+}
+
 /** Which step is in the middle of the screen, from where the scene is. */
 function useStep(ref: React.RefObject<HTMLElement | null>, count: number) {
   const [step, setStep] = useState(0);
@@ -61,13 +93,17 @@ export function HowItWorks() {
       className="relative h-[300vh] scroll-mt-0"
     >
       <div className="sticky top-0 flex min-h-[100svh] items-end pb-[8svh] sm:items-center sm:pb-0">
+        <StepReadout step={step} />
         <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
           <div className="max-w-[520px]">
             <p className="v3-label">How it works</p>
             <h2 id="how-title" className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
               Three things<span className="v3-signal">.</span>
             </h2>
-            <ol className="mt-8 border-t border-[color:var(--v3-line)] sm:mt-10">
+            <div aria-hidden className="mt-8 h-px w-full bg-[color:var(--v3-line)] sm:mt-10">
+              <div className="h-px bg-[color:var(--v3-signal)] transition-[width] duration-500 [transition-timing-function:var(--ease-mairo)]" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
+            </div>
+            <ol>
               {STEPS.map((s, i) => {
                 const on = i === step;
                 return (
@@ -143,6 +179,34 @@ export function ExampleRun() {
             </p>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/** What stays in the owner's hands, as big as the headline says it. */
+export function ControlBand() {
+  const lines = [
+    { t: "You approve every dollar", s: "Nothing launches or spends more without your yes." },
+    { t: "Your own Meta account", s: "Campaigns run in your ad account. You can see and stop everything." },
+    { t: "Inside your limits", s: "Daily maximum, your area, your rules — checked before every change." },
+    { t: "Pause any time", s: "One tap stops Autopilot. MAIRO keeps watching and recommending." },
+  ];
+  return (
+    <section aria-labelledby="control-title" className="relative border-y border-[color:var(--v3-line)] bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
+      <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
+        <h2 id="control-title" data-reveal className="v3-label">MAIRO runs your ads. You stay in control.</h2>
+        <ul className="mt-10 divide-y divide-[color:var(--v3-line)]">
+          {lines.map((l, i) => (
+            <li key={l.t} data-reveal className="v3-row grid gap-2 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,380px)] sm:items-baseline sm:gap-10 sm:py-8">
+              <p className="v3-display text-[clamp(32px,5vw,76px)] text-white">
+                {l.t}
+                {i === 0 && <span className="v3-signal">.</span>}
+              </p>
+              <p className="text-[15px] leading-relaxed text-[color:var(--v3-text-2)]">{l.s}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

@@ -110,3 +110,31 @@ Rules:
 - **Home:** greeting, the MAIRO core (ribbon), the question box, one next step, the summary, approvals and campaigns.
 - **Contextual, not in the navigation:** pixel and tracking, Meta connection, billing, business settings, the AI specialists' activity, all approvals and advanced analytics. They live in Account, in flows, and as "More".
 - **Phones:** a four-tab bottom bar, Ask MAIRO in the top bar, safe areas, and no horizontal scrolling.
+
+## 9. v3.1: the same Signal, pushed further (November 2026)
+
+Same identity, nothing new to learn: black and white, one lime, huge type, the Field. What changed is that the page now answers the visitor and shows the product working.
+
+**Audit of v3, and what was elevated.** The hero's type was strong but the Field only decorated it. "How it works" was abstract shapes with no product in it. The site never showed the one thing MAIRO is — one AI managing a business. There was no sense of progress while scrolling, and phones lost the call to action after the hero.
+
+1. **Hero.**
+   - The headline lines rise out of their own masks, like a title card.
+   - A live readout beside the label ("● MAIRO / Reading your business → Making your ads → Running them on Meta → Reporting what worked") says what MAIRO does in four beats.
+   - Typing a website does two things: the readout says "Reading lumenskin.com…", and the Field quickens with the lime scan sweeping it (`FIELD_EVENT`). Nothing is sent until the button is pressed.
+   - A scroll cue sits at the bottom: a drop of lime running down a hairline.
+2. **How it works.**
+   - A lime progress rail across the three steps.
+   - An example readout card beside the Field for each step (what MAIRO read, the ad it made, the 30-day figures), labelled "Example".
+3. **One MAIRO** (new, the "wow" scene).
+   - A framed MAIRO window plays a conversation once as it scrolls in: "I want more customers." → typing → an answer from figures that says what it can't see → a change prepared for approval, inside the 20-mile rule → status chips (tracking, budget against its maximum, Autopilot) → the ⌘K box.
+   - Labelled "Example · fictional business"; the buttons are inert.
+4. **Control band** (new). Four statements at display size — You approve every dollar / Your own Meta account / Inside your limits / Pause any time — each brightening as it's read. Trust, said as loudly as the headline.
+5. **Conversion.**
+   - A lime scroll-progress hairline.
+   - On phones, a sticky "Build my free plan" bar between the hero's box and the closing one.
+   - The CTA arrow nudges on hover.
+
+**Rules kept.**
+- Every animation lives inside `prefers-reduced-motion: no-preference`; under reduced motion everything shows in its final state (`.v3-beat`).
+- No new dependencies. About +12 KB of JavaScript (uncompressed) on the homepage.
+- Every sample is labelled; no figure is presented as a customer's.

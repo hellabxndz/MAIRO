@@ -8,7 +8,9 @@ import { brandFont } from "@/lib/fonts";
 import { CinematicBackdrop } from "@/components/cinematic/home/director";
 import { CinematicHero } from "@/components/cinematic/home/hero";
 import { HomeNav } from "@/components/cinematic/home/nav";
-import { Closing, ExampleRun, HowItWorks, PricingSimple } from "@/components/cinematic/home/scenes";
+import { Closing, ControlBand, ExampleRun, HowItWorks, PricingSimple } from "@/components/cinematic/home/scenes";
+import { AskMairoScene } from "@/components/cinematic/home/conversation";
+import { MobileCta, ScrollProgress } from "@/components/cinematic/home/live";
 
 // The homepage, v3 "Signal" (docs/DESIGN-SPEC-v3.md §7). Six things, once each:
 //
@@ -16,8 +18,10 @@ import { Closing, ExampleRun, HowItWorks, PricingSimple } from "@/components/cin
 //      into the free plan.
 //   2. The Field — MAIRO's one form — behind the page.
 //   3. How it works: Analyze, Create, Track.
-//   4. One example: a sentence in, an ad and its 30 days out — a fictional
-//      business with sample figures, and labelled as such.
+//   4. One MAIRO, shown: a conversation where it answers from figures and
+//      prepares a change for approval; then one example — a sentence in, an
+//      ad and its 30 days out. Both a fictional business, labelled as such.
+//      Then what stays in the owner's hands (ControlBand).
 //   5. Two plans, from lib/plans only.
 //   6. The closing line and the website box again.
 //
@@ -44,11 +48,14 @@ export function ConsoleHome() {
     <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-[color:var(--v3-ink)] text-white`}>
       <CinematicBackdrop />
       <RevealOnScroll />
+      <ScrollProgress />
       <HomeNav />
       <main className="relative z-10">
         <CinematicHero />
         <HowItWorks />
+        <AskMairoScene />
         <ExampleRun />
+        <ControlBand />
         <PricingSimple plans={plans} />
         <Closing />
         <nav aria-label="Built for" className="mx-auto flex w-full max-w-[1320px] flex-wrap items-center gap-x-6 gap-y-2 px-5 pb-16 sm:px-10 lg:px-16">
@@ -60,6 +67,7 @@ export function ConsoleHome() {
           ))}
         </nav>
       </main>
+      <MobileCta />
       <SiteFooter toolsLive={toolsLive} />
       <LandingBeacon variant="story" />
     </div>

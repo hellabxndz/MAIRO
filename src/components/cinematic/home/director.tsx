@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { DEFAULT_TARGET, ParticleStage, prefersReducedMotion, wakeStages, type StageTarget } from "../stage";
 import { particleBudget, shape } from "@/lib/cinematic/shapes";
 import { FieldFallback } from "../fallback";
+import { FIELD_EVENT } from "@/lib/cinematic/field-event";
 
 // The homepage's one particle stage — the Field (docs/DESIGN-SPEC-v3.md §5) —
 // fixed behind the page, and the director that tells it what to be.
@@ -73,6 +74,22 @@ export function CinematicBackdrop() {
     const start = performance.now();
     let opening = !reduced && window.scrollY < 40;
 
+    // A visitor typing their website: the Field quickens and the scan sweeps
+    // while they type, then settles (FIELD_EVENT, website-start.tsx).
+    let boost = 0;
+    let settle: ReturnType<typeof setTimeout> | null = null;
+    const onField = (e: Event) => {
+      if (reduced) return;
+      boost = Math.max(0, Math.min(1, (e as CustomEvent<{ energy?: number }>).detail?.energy ?? 0.6));
+      if (settle) clearTimeout(settle);
+      settle = setTimeout(() => {
+        boost = 0;
+        onScroll();
+      }, 1400);
+      onScroll();
+    };
+    window.addEventListener(FIELD_EVENT, onField);
+
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -122,8 +139,11 @@ export function CinematicBackdrop() {
       t.spin = FACING.has(now) ? 0 : 0.35;
       t.wave = SURFACE.has(now) ? 1 : 0.15;
       t.scan = SURFACE.has(now) ? 1 : 0.35;
-      t.turbulence = 0.3;
-      t.gain = 0.9 * Number(ds.sceneDim ?? 1);
+      t.turbulence = 0.3 + boost * 0.25;
+      t.energy = boost;
+      t.pulse = boost * 0.35;
+      if (boost) t.scan = 1;
+      t.gain = (0.9 + boost * 0.2) * Number(ds.sceneDim ?? 1);
       root.style.setProperty("--scene-glow", "1");
       wakeStages();
     };
@@ -139,6 +159,8 @@ export function CinematicBackdrop() {
     update();
     return () => {
       cancelAnimationFrame(raf);
+      if (settle) clearTimeout(settle);
+      window.removeEventListener(FIELD_EVENT, onField);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       root.style.removeProperty("--scene-glow");

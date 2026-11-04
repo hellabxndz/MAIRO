@@ -138,6 +138,30 @@ check("Signal: no blue anywhere in the Field, the core or the homepage — white
   assert.match(read("src/app/globals.css"), /--v3-signal: #d4ff3a;/);
 });
 
+check("v3.1: the live touches are honest, labelled, and still under reduced motion", () => {
+  const convo = read("src/components/cinematic/home/conversation.tsx");
+  assert.match(convo, /Example · fictional business/, "the MAIRO conversation is labelled as an example");
+  assert.match(convo, /inert/, "its buttons do nothing");
+  assert.match(convo, /prefers-reduced-motion: reduce\)"\)\.matches\) return/, "it doesn't animate under reduced motion");
+  assert.doesNotMatch(convo, /useState\(\(\) =>/, "no browser-only first render (hydration)");
+  const css = read("src/app/globals.css");
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.v3-beat \{/);
+  // Each animation is declared only inside the "motion is welcome" block.
+  const block = css.slice(css.indexOf("/* ---- signal, v3.1"));
+  const welcome = block.indexOf("@media (prefers-reduced-motion: no-preference)");
+  const welcomeEnd = block.indexOf("@keyframes", welcome);
+  for (const name of ["v3-rise", "v3-breathe", "v3-tick", "v3-typing", "v3-cue"]) {
+    const at = block.indexOf(`animation: ${name}`);
+    assert.ok(at > welcome && at < welcomeEnd, `${name} only animates when motion is welcome`);
+  }
+  const scenes = read("src/components/cinematic/home/scenes.tsx");
+  assert.match(scenes, /<span className="v3-label !text-\[9\.5px\]">Example<\/span>/, "the step readouts are labelled as examples");
+  // Typing stirs the Field and nothing else: the form is still a plain GET to /preview.
+  const start = read("src/components/cinematic/home/website-start.tsx");
+  assert.match(start, /window\.dispatchEvent\(new CustomEvent\(FIELD_EVENT/);
+  assert.doesNotMatch(start, /fetch\(/);
+});
+
 check("no new 3D dependency: the engine is plain WebGL2", () => {
   const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
   for (const dep of ["three", "@react-three/fiber", "gsap"]) assert.ok(!pkg.dependencies[dep], dep);
