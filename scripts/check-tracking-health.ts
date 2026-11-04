@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import { db } from "../src/lib/db";
 import { withGraphTransport } from "../src/lib/meta/client";
 import { encryptSecret } from "../src/lib/crypto/secret-box";
-import { STALE_DAYS, trackingHealth, transition, type HealthInput } from "../src/lib/tracking/health";
+import { baselineFrom, MAX_STALE_DAYS, STALE_DAYS, staleAfterDays, trackingHealth, transition, type HealthInput } from "../src/lib/tracking/health";
 import { checkTrackingHealth, monitorAllTracking } from "../src/lib/tracking/monitor";
 import { byWhom, modeView } from "../src/lib/dashboard/manager";
 import { effectiveLevel } from "../src/lib/decisions/store";
@@ -54,7 +54,7 @@ const fakeMeta: typeof fetch = async (input) => {
   if (path === "/me/permissions") return json({ data: [{ permission: "ads_management", status: "granted" }] });
   const list = path.match(/^\/(act_\d+)\/adspixels$/);
   if (list) {
-    const id = list[1] === ACT_A ? PIX_A : PIX_B;
+    const id = list[1] === ACT_A ? PIX_A : list[1] === ACT_B ? PIX_B : "770000000000003";
     return json({ data: [{ id, name: "Pixel", last_fired_time: world.lastFired[id] }] });
   }
   const stats = path.match(/^\/(\d+)\/stats$/);
@@ -84,10 +84,11 @@ const base: HealthInput = {
   accessible: true,
   lastFiredAt: new Date(NOW.getTime() - 3600_000),
   events: [
-    { event: "Purchase", status: "VERIFIED", count: 18, everVerified: true },
-    { event: "AddToCart", status: "VERIFIED", count: 120, everVerified: true },
+    { event: "Purchase", status: "VERIFIED", count: 18, everVerified: true, typicalWeekly: 16 },
+    { event: "AddToCart", status: "VERIFIED", count: 120, everVerified: true, typicalWeekly: 110 },
   ],
   liveCampaigns: 1,
+  typicalPageViewsWeekly: 900,
 };
 
 async function main() {
@@ -106,15 +107,52 @@ async function main() {
     assert.equal(h.status, "attention");
     assert.match(h.headline, /hasn't received any events yet/);
   });
-  await check(`a Pixel silent for more than ${STALE_DAYS} days has stopped, with the date`, () => {
+  await check(`a busy site's Pixel silent for more than ${STALE_DAYS} days has stopped, with the date`, () => {
     const h = trackingHealth({ ...base, lastFiredAt: new Date(NOW.getTime() - 5 * day) });
     assert.equal(h.status, "attention");
     assert.match(h.headline, /stopped sending events on Nov 15/);
+    assert.match(h.detail, /about 900 page views a week/);
     assert.match(h.detail, /live campaigns/);
   });
-  await check("purchases that stopped are worded honestly: no sales and broken tracking look the same", () => {
-    const h = trackingHealth({ ...base, events: [{ event: "Purchase", status: "NOT_SEEN", count: 0, everVerified: true }, base.events[1]] });
+  await check("usual volume: the median of earlier weeks, and nothing until there are at least three", () => {
+    assert.equal(baselineFrom([]), null);
+    assert.equal(baselineFrom([4, 9]), null);
+    assert.equal(baselineFrom([2, 9, 4]), 4);
+    assert.equal(baselineFrom([1, 0, 2, 1]), 1);
+  });
+  await check("how long silence must last scales with traffic: 3 days busy, a week unknown, up to 2 weeks quiet", () => {
+    assert.equal(staleAfterDays(900), STALE_DAYS);
+    assert.equal(staleAfterDays(null), 7);
+    assert.equal(staleAfterDays(4), 6);
+    assert.equal(staleAfterDays(1), MAX_STALE_DAYS);
+    assert.equal(staleAfterDays(0), MAX_STALE_DAYS);
+  });
+  await check("LOW TRAFFIC: a quiet site's Pixel silent for days is not called stopped", () => {
+    const quiet = { ...base, typicalPageViewsWeekly: 4, lastFiredAt: new Date(NOW.getTime() - 5 * day), events: [] };
+    assert.equal(trackingHealth(quiet).status, "working");
+    // Unknown traffic: a week's grace, then conditional wording.
+    assert.equal(trackingHealth({ ...quiet, typicalPageViewsWeekly: null }).status, "working");
+    const late = trackingHealth({ ...quiet, typicalPageViewsWeekly: null, lastFiredAt: new Date(NOW.getTime() - 8 * day) });
+    assert.equal(late.status, "attention");
+    assert.match(late.headline, /^No website events since/);
+    assert.match(late.detail, /If people visited your site in that time/);
+    // Even a very quiet site is asked about after two weeks of nothing.
+    assert.equal(trackingHealth({ ...quiet, typicalPageViewsWeekly: 1, lastFiredAt: new Date(NOW.getTime() - 15 * day) }).status, "attention");
+  });
+  await check("LOW TRAFFIC: a week with no purchases is a quiet week for a shop that sells one or two a week", () => {
+    const h = trackingHealth({ ...base, events: [{ event: "Purchase", status: "NOT_SEEN", count: 0, everVerified: true, typicalWeekly: 1 }] });
+    assert.equal(h.status, "working");
+    assert.equal(h.headline, "Your Pixel is working — a quiet week");
+    assert.match(h.detail, /No purchase events this week — normal for your volume \(usually about 1 purchase a week\)/);
+    assert.equal(transition("working", h.status, "Tracking is working", h.headline), null, "no notification");
+    const unknownVolume = trackingHealth({ ...base, events: [{ event: "Purchase", status: "NOT_SEEN", count: 0, everVerified: true, typicalWeekly: null }] });
+    assert.equal(unknownVolume.status, "working");
+    assert.match(unknownVolume.detail, /doesn't know your usual volume yet/);
+  });
+  await check("purchases that stop at a shop that usually sells several a week: attention, worded honestly", () => {
+    const h = trackingHealth({ ...base, events: [{ event: "Purchase", status: "NOT_SEEN", count: 0, everVerified: true, typicalWeekly: 6 }, base.events[1]] });
     assert.equal(h.status, "attention");
+    assert.match(h.detail, /usually get about 6 a week/);
     assert.match(h.detail, /If you made sales in that time/);
   });
   await check("an event never seen on a new setup is 'waiting for your first', not 'stopped'", () => {
@@ -146,12 +184,17 @@ async function main() {
     assert.equal(transition("attention", "working", "a", "Tracking is working")?.kind, "recovered");
     assert.equal(transition(null, "attention", null, "Your Pixel hasn't received any events yet"), null);
     assert.equal(transition("not_set_up", "attention", null, "Waiting for your first purchase event"), null);
+    assert.equal(transition("working", "attention", "Tracking is working", "Waiting for your first add-to-cart event"), null, "never seen isn't a regression");
   });
 
   console.log("\n— the daily check, against the database —");
   await shop(A, ACT_A, PIX_A);
   await shop(B, ACT_B, PIX_B);
-  await db.trackingVerification.create({ data: { organizationId: A, pixelId: PIX_A, check: "event:Purchase", status: "VERIFIED", source: "meta_stats", checkedAt: new Date(NOW.getTime() - 20 * day) } });
+  // Shop A's history: it usually sells 15–20 a week, and gets hundreds of visits.
+  for (const [n, d] of [[16, 20], [19, 13], [15, 6]] as const) {
+    await db.trackingVerification.create({ data: { organizationId: A, pixelId: PIX_A, check: "event:Purchase", status: "VERIFIED", source: "meta_stats", count: n, checkedAt: new Date(NOW.getTime() - d * day) } });
+    await db.trackingVerification.create({ data: { organizationId: A, pixelId: PIX_A, check: "event:PageView", status: "VERIFIED", source: "meta_stats", count: 800, checkedAt: new Date(NOW.getTime() - d * day) } });
+  }
 
   await check("working: stored on the profile, and the owner told once", async () => {
     world.lastFired[PIX_A] = new Date(NOW.getTime() - 3600_000).toISOString();
@@ -217,6 +260,24 @@ async function main() {
     assert.equal(out.failed, 0);
   });
 
+  await check("LOW TRAFFIC, end to end: a shop selling about one a week has a sale-free week — no alarm, no notification", async () => {
+    const C = `${TAG}-tiny`;
+    await shop(C, "act_7003", "770000000000003");
+    for (const [n, d] of [[1, 21], [0, 14], [2, 7], [1, 3]] as const) {
+      await db.trackingVerification.create({ data: { organizationId: C, pixelId: "770000000000003", check: "event:Purchase", status: n ? "VERIFIED" : "NOT_SEEN", source: "meta_stats", count: n, checkedAt: new Date(NOW.getTime() - d * day) } });
+      await db.trackingVerification.create({ data: { organizationId: C, pixelId: "770000000000003", check: "event:PageView", status: "VERIFIED", source: "meta_stats", count: 6, checkedAt: new Date(NOW.getTime() - d * day) } });
+      await db.trackingVerification.create({ data: { organizationId: C, pixelId: "770000000000003", check: "event:AddToCart", status: "VERIFIED", source: "meta_stats", count: n + 1, checkedAt: new Date(NOW.getTime() - d * day) } });
+    }
+    await db.trackingProfile.update({ where: { organizationId: C }, data: { healthStatus: "working", healthHeadline: "Tracking is working" } });
+    // Last visit four days ago; no purchases and no add-to-carts this week.
+    world.lastFired["770000000000003"] = new Date(NOW.getTime() - 4 * day).toISOString();
+    world.stats["770000000000003"] = { PageView: 3 };
+    const r = await viaMeta(() => checkTrackingHealth(C, NOW));
+    assert.equal(r.health.status, "working", `${r.health.headline} — ${r.health.detail}`);
+    assert.equal(r.transition, null);
+    assert.equal(await db.notification.count({ where: { organizationId: C } }), 0);
+  });
+
   console.log("\n— Autopilot: pause keeps the level, and MAIRO acts as Manual while paused —");
   await db.organization.update({ where: { id: A }, data: { subscriptionTier: "SCALE_V2", subscriptionStatus: "active", hasPaid: true } });
   await db.autoOptimizeSettings.create({ data: { organizationId: A, level: "ASSISTED", enabled: true, maxDailyBudgetCents: 10_000 } });
@@ -250,10 +311,10 @@ async function main() {
   });
   await check("the pause action is role-checked, recorded and audited (source)", async () => {
     const { readFileSync } = await import("node:fs");
+    // The action resolves the role on the server; the rules live in lib/automation/pause.ts (check:autopilot).
     const src = readFileSync("src/lib/actions/autopilot-actions.ts", "utf8");
-    assert.match(src, /deniedFor\("budget\.change"\)/);
-    assert.match(src, /mairoActivity\.create/);
-    assert.match(src, /audit\(ctx\.organizationId/);
+    assert.match(src, /currentMember\(\)/);
+    assert.match(src, /setAutopilotPaused\(member\.organizationId/);
     assert.match(readFileSync("src/lib/decisions/store.ts", "utf8"), /settings\.pausedAt\) return "MANUAL"/);
   });
 

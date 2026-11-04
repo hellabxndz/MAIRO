@@ -13,6 +13,27 @@
 
 import { spawn } from "node:child_process";
 
+// Only a production build migrates.
+//
+// Vercel builds every pushed branch as a Preview with this same script, and
+// a Preview uses the Preview environment's DATABASE_URL — which, when a
+// variable is set for "all environments", is the production database. So a
+// push to a feature branch could change production's schema before anyone
+// approved it. VERCEL_ENV is set by Vercel on every build: "production",
+// "preview" or "development". Off Vercel (a local run, CI) it's unset and
+// migrations run as before.
+//
+// A Preview with its own database (a Neon branch set as the Preview
+// DATABASE_URL) can opt in with MIGRATE_PREVIEW_DATABASE=1.
+const vercelEnv = process.env.VERCEL_ENV;
+if (vercelEnv && vercelEnv !== "production" && process.env.MIGRATE_PREVIEW_DATABASE !== "1") {
+  console.log(
+    `Skipping database migrations: this is a ${vercelEnv} build. Only production builds migrate ` +
+      "(set MIGRATE_PREVIEW_DATABASE=1 on a Preview that has its own database)."
+  );
+  process.exit(0);
+}
+
 const ATTEMPT_DELAYS_MS = [5000, 10000, 20000, 30000];
 
 // Failures worth retrying: the database is unreachable or slow to wake, not

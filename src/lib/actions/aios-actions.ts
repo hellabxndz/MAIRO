@@ -271,3 +271,20 @@ export async function turnOffSitePixelAction(): Promise<SitePixelState> {
   revalidatePath("/privacy");
   return { ok: true, message: "Off. The public pages stop loading it within about five minutes. The pixel stays in your Meta account." };
 }
+
+/**
+ * Run one business's tracking-health check now (lib/tracking/monitor.ts),
+ * from AIOS. Staff only. It only reads from Meta (the Pixel, its ad account's
+ * Pixels and its event counts) — it never changes anything in Meta, on the
+ * website or in campaigns. It stores the verdict and, exactly as the daily
+ * check would, notifies the business only if the verdict changed. Logged in
+ * the founder activity log.
+ */
+export async function runTrackingCheckAction(organizationId: string): Promise<void> {
+  const session = await requireOwner();
+  const { checkTrackingHealth } = await import("@/lib/tracking/monitor");
+  const { logActivity } = await import("@/lib/aios/workspace");
+  const r = await checkTrackingHealth(organizationId);
+  await logActivity(session.user.id!, "tracking.check", organizationId, `${r.health.status}: ${r.health.headline}${r.checkedMeta ? "" : " (Meta not asked: no Pixel or not connected)"}`);
+  revalidatePath(`/aios/organizations/${organizationId}`);
+}

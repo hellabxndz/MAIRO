@@ -106,6 +106,34 @@ async function main() {
     assert.ok(await db.notification.findFirst({ where: { organizationId: A, dedupeKey: "ready:1" } }));
   });
 
+  await check("the provider unreachable (a network error): the notification is kept, nothing throws", async () => {
+    const r = await withEmailTransport(async () => {
+      throw new Error("ECONNRESET");
+    }, () => notify({ organizationId: A, kind: "NEEDS_ATTENTION", dedupeKey: "down:1", title: "x", body: "y" }));
+    assert.equal(r.created, true);
+  });
+  await check("one address refused doesn't stop the others", async () => {
+    sent.length = 0;
+    failNext = true;
+    await run(() => notify({ organizationId: A, kind: "MAIRO_ACTED", dedupeKey: "acted:1", title: "MAIRO paused an ad", body: "It spent $48 with no leads." }));
+    assert.equal(sent.length, 1, "the second recipient still got it");
+  });
+  await check("a business from before teams (no memberships yet) still reaches its owner", async () => {
+    sent.length = 0;
+    const C = `${TAG}-old`;
+    await db.organization.create({ data: { id: C, name: "Old Business" } });
+    await db.user.create({ data: { email: `${TAG}-old-owner@test.invalid`, name: "old", passwordHash: "x", organizationId: C } });
+    await run(() => notify({ organizationId: C, kind: "TRACKING_PROBLEM", dedupeKey: "t:old", title: "x", body: "y" }));
+    assert.deepEqual(sent.map((m) => m.to), [`${TAG}-old-owner@test.invalid`]);
+  });
+  await check("only EMAIL_FROM missing counts as not configured too", async () => {
+    sent.length = 0;
+    delete process.env.EMAIL_FROM;
+    await run(() => notify({ organizationId: A, kind: "CAMPAIGN_LIVE", dedupeKey: "live:3", title: "Live", body: "y" }));
+    process.env.EMAIL_FROM = "MAIRO <hello@test.invalid>";
+    assert.equal(sent.length, 0);
+  });
+
   process.env.RESEND_API_KEY = env.key;
   process.env.EMAIL_FROM = env.from;
   if (env.key === undefined) delete process.env.RESEND_API_KEY;

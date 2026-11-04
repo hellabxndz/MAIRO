@@ -116,7 +116,14 @@ async function emailNotification(input: NotifyInput): Promise<number> {
     where: { organizationId: input.organizationId, role: { in: ["OWNER", "ADMIN"] } },
     select: { user: { select: { email: true } } },
   });
-  const to = [...new Set(people.map((p) => p.user.email).filter(Boolean))];
+  // A business with nobody on its team yet (a login from before teams, whose
+  // membership is made at next sign-in — members/workspace.ts) belongs to the
+  // people whose home it is, exactly as signing in treats it.
+  const fallback =
+    people.length === 0 && (await db.organizationMember.count({ where: { organizationId: input.organizationId } })) === 0
+      ? await db.user.findMany({ where: { organizationId: input.organizationId }, select: { email: true } })
+      : [];
+  const to = [...new Set([...people.map((p) => p.user.email), ...fallback.map((u) => u.email)].filter(Boolean))];
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "https://www.mairo.io").replace(/\/$/, "");
   const link = input.actionHref ? `${base}${input.actionHref.startsWith("/") ? input.actionHref : `/${input.actionHref}`}` : `${base}/dashboard`;
   const text = [

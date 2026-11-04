@@ -9,6 +9,7 @@ import {
   updateCreativeStatusAction,
   updatePlanStatusAction,
   updateSubscriptionTierAction,
+  runTrackingCheckAction,
 } from "@/lib/actions/aios-actions";
 import { formatMonthKey, currentMonthKey } from "@/lib/utils/month";
 import { campaignLimitText, shownPlanFor } from "@/lib/plans";
@@ -48,6 +49,7 @@ export default async function OrganizationDetailPage({
 
   if (!org) notFound();
 
+  const tracking = await db.trackingProfile.findUnique({ where: { organizationId: org.id }, select: { healthStatus: true, healthHeadline: true, healthDetail: true, healthCheckedAt: true, healthChangedAt: true } });
   const plan = shownPlanFor(org.subscriptionTier, org.paymentRequired);
   const month = currentMonthKey();
   const creativesThisMonth = org.creativeRequests.filter((r) => r.month === month).length;
@@ -69,6 +71,35 @@ export default async function OrganizationDetailPage({
       />
 
       <SuccessPanel organizationId={org.id} />
+
+      {/* Tracking health, as the daily check last found it, and a way to run it now. */}
+      <Card className="mb-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div className="min-w-0">
+            <h2 className="font-medium">Tracking health</h2>
+            {tracking?.healthStatus ? (
+              <>
+                <p className="mt-1 text-sm text-white">
+                  <Badge tone={tracking.healthStatus === "working" ? "green" : tracking.healthStatus === "attention" || tracking.healthStatus === "broken" ? "yellow" : "neutral"}>{tracking.healthStatus.replace("_", " ")}</Badge>{" "}
+                  {tracking.healthHeadline}
+                </p>
+                <p className="mt-1 max-w-2xl text-sm text-neutral-400">{tracking.healthDetail}</p>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Checked {tracking.healthCheckedAt?.toLocaleString() ?? "—"} · last changed {tracking.healthChangedAt?.toLocaleString() ?? "—"}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-neutral-400">Not checked yet. The daily check runs with the morning cron.</p>
+            )}
+            <p className="mt-2 max-w-2xl text-xs text-neutral-500">
+              Running it reads from Meta only — the Pixel and its event counts. Nothing changes in Meta, on the website or in campaigns. The business is notified only if the verdict changes, as with the daily check.
+            </p>
+          </div>
+          <form action={runTrackingCheckAction.bind(null, org.id)}>
+            <button className="shrink-0 rounded-full border border-white/20 px-4 py-2 text-sm text-white/85 hover:text-white">Check tracking now</button>
+          </form>
+        </div>
+      </Card>
 
       <Card className="mb-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

@@ -7,7 +7,7 @@ import { recheckPixelAccess } from "./pixel-setup";
 import { businessPixelNeed, leadMeasurementFrom, pixelDecisionFrom } from "./pixel-rules";
 import { checkEvents, requiredEventFor } from "./setup";
 import { eventsFor, goalsFrom } from "./measurement";
-import { transition, trackingHealth, type EventCheck, type Health, type HealthInput, type Transition } from "./health";
+import { baselineFrom, transition, trackingHealth, type EventCheck, type Health, type HealthInput, type Transition } from "./health";
 import type { CheckStatus } from "./state";
 
 // The daily tracking-health check: MAIRO asks Meta about each business's
@@ -22,6 +22,9 @@ import type { CheckStatus } from "./state";
 //
 // A day Meta doesn't answer leaves the last verdict in place (only
 // healthCheckedAt moves): a failed check is not news, good or bad.
+
+/** How far back "usual" is read from: about two months of daily checks. */
+const BASELINE_DAYS = 60;
 
 export type HealthRun = { health: Health; transition: Transition; checkedMeta: boolean };
 
@@ -47,6 +50,7 @@ export async function checkTrackingHealth(organizationId: string, now = new Date
   let accessible: boolean | null = null;
   let lastFiredAt: Date | null = pixel?.lastFiredAt ?? null;
   let events: EventCheck[] = [];
+  let typicalPageViewsWeekly: number | null = null;
   let checkedMeta = false;
 
   if (pixel && connected) {
@@ -58,19 +62,36 @@ export async function checkTrackingHealth(organizationId: string, now = new Date
     } else if (access.reason === "missing_permission") {
       accessible = false;
     }
-    if (accessible !== false && chosen.length) {
-      // Whether each event was ever verified before today, so "stopped" and "not yet" stay apart.
-      const before = await db.trackingVerification.findMany({
-        where: { organizationId, pixelId: pixel.externalPixelId, check: { in: chosen.map((e) => `event:${e}`) }, status: "VERIFIED", checkedAt: { lt: now } },
-        select: { check: true },
-        distinct: ["check"],
+    if (accessible !== false) {
+      // Earlier checks, before today: whether each event was ever verified
+      // ("stopped" vs "not yet") and what a usual week looks like (quiet
+      // businesses aren't alarmed by a quiet week). PageView is counted on
+      // every check so a site's traffic has a baseline too.
+      const watched = [...new Set([...chosen, "PageView"])];
+      const history = await db.trackingVerification.findMany({
+        where: {
+          organizationId,
+          pixelId: pixel.externalPixelId,
+          check: { in: watched.map((e) => `event:${e}`) },
+          status: { in: ["VERIFIED", "NOT_SEEN"] },
+          count: { not: null },
+          checkedAt: { lt: now, gte: new Date(now.getTime() - BASELINE_DAYS * 864e5) },
+        },
+        select: { check: true, status: true, count: true },
       });
-      const ever = new Set(before.map((b) => b.check.slice("event:".length)));
-      const counted = await checkEvents(organizationId, chosen);
+      const of = (e: string) => history.filter((h) => h.check === `event:${e}`);
+      const counted = await checkEvents(organizationId, watched);
       events = chosen.map((e) => {
         const r = counted.ok ? counted.data[e] : null;
-        return { event: e, status: (r?.status ?? "FAILED") as CheckStatus, count: r?.count ?? null, everVerified: ever.has(e) };
+        return {
+          event: e,
+          status: (r?.status ?? "FAILED") as CheckStatus,
+          count: r?.count ?? null,
+          everVerified: of(e).some((h) => h.status === "VERIFIED"),
+          typicalWeekly: baselineFrom(of(e).map((h) => h.count ?? 0)),
+        };
       });
+      typicalPageViewsWeekly = baselineFrom(of("PageView").map((h) => h.count ?? 0));
     }
   }
 
@@ -84,6 +105,7 @@ export async function checkTrackingHealth(organizationId: string, now = new Date
     lastFiredAt,
     events,
     liveCampaigns: live,
+    typicalPageViewsWeekly,
   });
 
   const before = (profile.healthStatus ?? null) as Health["status"] | null;

@@ -12,6 +12,16 @@ the restore drill are in [BETA-READINESS-2026-10.md §6](BETA-READINESS-2026-10.
   migrations (`scripts/migrate-deploy.mjs`), the Meta contract tests
   (`check:meta-contract` — a critical failure stops the deploy), then `next build`.
   A failed step leaves the previous deployment serving.
+- **Every other branch builds as a Vercel Preview, and Previews never
+  migrate** (since November 2026: `scripts/migrate-deploy.mjs` exits early
+  unless `VERCEL_ENV` is `production`; pinned by `check:release-safety`).
+  Before that, a feature-branch push ran `prisma migrate deploy` against the
+  Preview environment's `DATABASE_URL` — production's, if the variable is set
+  for all environments. A Preview still *reads and writes* whatever database
+  its `DATABASE_URL` names, so give Preview its own Neon branch (Vercel →
+  Settings → Environment Variables → `DATABASE_URL`/`DIRECT_URL`, Preview
+  only) and set `MIGRATE_PREVIEW_DATABASE=1` there if it should migrate.
+  Scheduled jobs (vercel.json crons) only ever run on production.
 - Migrations are written to be additive (new tables and columns, backfills),
   so the previous deployment keeps working against the new schema. A migration
   that drops or renames anything must say so in its commit message, and gets a

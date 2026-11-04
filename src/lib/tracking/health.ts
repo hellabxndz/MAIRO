@@ -18,9 +18,13 @@ import type { CheckStatus } from "./state";
 //   - "Stopped" and "not yet" are told apart: an event that used to arrive
 //     and no longer does is a problem; one that has never arrived on a new
 //     setup is the next step.
-//   - A shop can have a week without sales. When purchases stop but the
-//     Pixel is still firing, the words say "if you made sales…" rather than
-//     claiming tracking broke.
+//   - Quiet isn't broken. Silence is judged against this business's own
+//     usual volume (baselineFrom, from earlier checks): a Pixel is "stopped"
+//     only after long enough that several page views would normally have
+//     arrived, and a week without purchases is a problem only for a shop
+//     that usually gets several. Otherwise it's "a quiet week", said plainly.
+//     Even then the words say "if you made sales…": no sales and broken
+//     tracking look the same from Meta's side.
 
 export type HealthStatus = "working" | "attention" | "broken" | "not_set_up" | "not_needed" | "unknown";
 
@@ -29,8 +33,15 @@ export type EventCheck = {
   status: CheckStatus;
   /** Meta's count in the window, when it gave one. */
   count: number | null;
-  /** This event was verified at some earlier check: missing now means it stopped. */
+  /** This event was verified at some earlier check: missing now can mean it stopped. */
   everVerified: boolean;
+  /**
+   * How many of this event a week is usual for this business: the median of
+   * Meta's weekly counts at earlier checks, or null when there are too few
+   * to say (see baselineFrom). A quiet week only counts as "stopped" when
+   * this says several were expected.
+   */
+  typicalWeekly?: number | null;
 };
 
 export type HealthInput = {
@@ -50,6 +61,8 @@ export type HealthInput = {
   events: EventCheck[];
   /** How many campaigns are live: a stopped Pixel matters more while money is being spent. */
   liveCampaigns: number;
+  /** Usual page views a week (baselineFrom over earlier PageView counts), or null when unknown. */
+  typicalPageViewsWeekly?: number | null;
 };
 
 export type Health = {
@@ -61,8 +74,43 @@ export type Health = {
   fix: { label: string; href: string } | null;
 };
 
-/** The Pixel should have fired within this many days on a site with any traffic. */
+/** The shortest silence that can mean "stopped", for a busy website. */
 export const STALE_DAYS = 3;
+/** The longest MAIRO waits before saying a quiet Pixel may have stopped. */
+export const MAX_STALE_DAYS = 14;
+/** Silence is only unusual once this many events would normally have arrived (Poisson: under a 5% chance of none). */
+export const EXPECTED_BEFORE_ALARM = 3;
+/** Earlier weekly counts needed before MAIRO knows what's usual. */
+export const BASELINE_MIN_SAMPLES = 3;
+
+/**
+ * What's usual: the median of earlier weekly counts. Null with too few to
+ * go on — a new business, or one MAIRO has only checked once or twice.
+ */
+export function baselineFrom(counts: number[]): number | null {
+  const xs = counts.filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b);
+  if (xs.length < BASELINE_MIN_SAMPLES) return null;
+  const mid = Math.floor(xs.length / 2);
+  return xs.length % 2 ? xs[mid] : (xs[mid - 1] + xs[mid]) / 2;
+}
+
+/**
+ * How many days of silence mean the Pixel may have stopped, for this
+ * business's traffic: long enough that EXPECTED_BEFORE_ALARM page views
+ * would normally have arrived. Busy sites: 3 days. Unknown traffic: a week.
+ * Very quiet sites: up to two weeks.
+ */
+export function staleAfterDays(typicalPageViewsWeekly: number | null | undefined): number {
+  if (typicalPageViewsWeekly === null || typicalPageViewsWeekly === undefined) return 7;
+  if (typicalPageViewsWeekly <= 0) return MAX_STALE_DAYS;
+  const perDay = typicalPageViewsWeekly / 7;
+  return Math.min(MAX_STALE_DAYS, Math.max(STALE_DAYS, Math.ceil(EXPECTED_BEFORE_ALARM / perDay)));
+}
+
+/** A week with none of an event is unusual only if several were expected. */
+export function silenceIsUnusual(e: Pick<EventCheck, "everVerified" | "typicalWeekly">): boolean {
+  return e.everVerified && (e.typicalWeekly ?? 0) >= EXPECTED_BEFORE_ALARM;
+}
 /** Event counts are read over this window (lib/tracking/setup.ts EVENT_WINDOW_DAYS). */
 export const EVENT_WINDOW_DAYS = 7;
 
@@ -113,16 +161,22 @@ export function trackingHealth(i: HealthInput): Health {
       fix: { label: "Finish installing", href: SETUP.href },
     };
   }
-  if (ageDays > STALE_DAYS) {
+  const staleAfter = staleAfterDays(i.typicalPageViewsWeekly);
+  if (ageDays > staleAfter) {
+    const known = i.typicalPageViewsWeekly !== null && i.typicalPageViewsWeekly !== undefined;
     return {
       status: "attention",
-      headline: `Your Pixel stopped sending events on ${day(i.lastFiredAt!)}`,
-      detail: `Meta hasn't received anything from your website since ${day(i.lastFiredAt!)}. A theme change, a new website or a removed plugin usually causes this.${i.liveCampaigns > 0 ? " Your live campaigns can't learn who converts until it's fixed." : ""}`,
+      headline: known ? `Your Pixel stopped sending events on ${day(i.lastFiredAt!)}` : `No website events since ${day(i.lastFiredAt!)}`,
+      detail: known
+        ? `Meta hasn't received anything from your website since ${day(i.lastFiredAt!)} — unusual for a site that normally gets about ${Math.round(i.typicalPageViewsWeekly!)} page views a week. A theme change, a new website or a removed plugin usually causes this.${i.liveCampaigns > 0 ? " Your live campaigns can't learn who converts until it's fixed." : ""}`
+        : `Meta hasn't received anything from your website since ${day(i.lastFiredAt!)}. If people visited your site in that time, the Pixel has probably been removed or broken — a theme change or a removed plugin usually causes this.${i.liveCampaigns > 0 ? " Your live campaigns can't learn who converts until it's fixed." : ""}`,
       fix: FIX,
     };
   }
 
-  const stopped = i.events.filter((e) => e.status === "NOT_SEEN" && e.everVerified);
+  // A week without an event is "stopped" only if this business usually gets several.
+  const stopped = i.events.filter((e) => e.status === "NOT_SEEN" && silenceIsUnusual(e));
+  const quiet = i.events.filter((e) => e.status === "NOT_SEEN" && e.everVerified && !silenceIsUnusual(e));
   const notYet = i.events.filter((e) => (e.status === "NOT_SEEN" || e.status === "NOT_DETECTED") && !e.everVerified);
   const unknown = failed.map((e) => e.event);
   if (stopped.length) {
@@ -132,8 +186,8 @@ export function trackingHealth(i: HealthInput): Health {
       status: "attention",
       headline: `No ${names} events in the last ${EVENT_WINDOW_DAYS} days`,
       detail: purchaseOnly
-        ? `Your Pixel is still firing, but Meta received no purchases in the last ${EVENT_WINDOW_DAYS} days. If you made sales in that time, purchase tracking has stopped and needs fixing.`
-        : `They used to arrive and haven't for ${EVENT_WINDOW_DAYS} days, while the rest of your Pixel still works — usually a changed checkout or form.`,
+        ? `Your Pixel is still firing, but Meta received no purchases in the last ${EVENT_WINDOW_DAYS} days, when you usually get about ${Math.round(stopped[0].typicalWeekly ?? 0)} a week. If you made sales in that time, purchase tracking has stopped and needs fixing.`
+        : `You usually get several a week; none arrived in the last ${EVENT_WINDOW_DAYS} days while the rest of your Pixel still works — usually a changed checkout or form.`,
       fix: FIX,
     };
   }
@@ -146,12 +200,16 @@ export function trackingHealth(i: HealthInput): Health {
     };
   }
   const counted = i.events.filter((e) => e.status === "VERIFIED");
+  // A quiet week on a quiet business: the Pixel works; there just weren't any. Said plainly, no alarm.
+  const quietNote = quiet.length
+    ? ` No ${list(quiet.map((e) => label(e.event)))} events this week — ${quiet.every((e) => e.typicalWeekly !== null && e.typicalWeekly !== undefined) ? `normal for your volume (usually about ${list(quiet.map((e) => `${Math.round(e.typicalWeekly ?? 0)} ${label(e.event)}`))} a week)` : "MAIRO doesn't know your usual volume yet, so it isn't treating this as a problem"}.`
+    : "";
   return {
     status: "working",
-    headline: "Tracking is working",
+    headline: quiet.length && !counted.length ? "Your Pixel is working — a quiet week" : "Tracking is working",
     detail: counted.length
-      ? `In the last ${EVENT_WINDOW_DAYS} days Meta received ${list(counted.map((e) => `${(e.count ?? 0).toLocaleString("en-US")} ${label(e.event)} event${e.count === 1 ? "" : "s"}`))}, and your Pixel last fired on ${day(i.lastFiredAt!)}.${unknown.length ? ` Meta didn't report ${list(unknown.map(label))} counts this time.` : ""}`
-      : `Meta is receiving events from your Pixel (last on ${day(i.lastFiredAt!)}).`,
+      ? `In the last ${EVENT_WINDOW_DAYS} days Meta received ${list(counted.map((e) => `${(e.count ?? 0).toLocaleString("en-US")} ${label(e.event)} event${e.count === 1 ? "" : "s"}`))}, and your Pixel last fired on ${day(i.lastFiredAt!)}.${quietNote}${unknown.length ? ` Meta didn't report ${list(unknown.map(label))} counts this time.` : ""}`
+      : `Meta is receiving events from your Pixel (last on ${day(i.lastFiredAt!)}).${quietNote}`,
     fix: null,
   };
 }
@@ -177,8 +235,10 @@ export function transition(before: HealthStatus | null, after: HealthStatus, hea
   if (isProblem(after)) {
     // A new problem, or a different one (e.g. purchases stopped, then the whole Pixel).
     if (before === after && headlineBefore === headlineAfter) return null;
-    // Setting up for the first time isn't an alarm: "waiting for your first…" is the next step.
-    if ((before === null || before === "not_set_up") && after === "attention" && /^(Waiting for|Your Pixel hasn't received)/.test(headlineAfter)) return null;
+    // Something that has never arrived isn't a regression: "waiting for your first…" is a next
+    // step shown on Home, never an alert. A Pixel that never fired is only news on a new setup.
+    if (after === "attention" && /^Waiting for your first/.test(headlineAfter)) return null;
+    if ((before === null || before === "not_set_up") && after === "attention" && /^Your Pixel hasn't received/.test(headlineAfter)) return null;
     return { kind: "problem", situation: `problem:${after}` };
   }
   return null;
