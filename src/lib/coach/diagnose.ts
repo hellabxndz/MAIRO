@@ -159,14 +159,14 @@ function clicksNotConverting(input: CoachInput): Finding[] {
         ...campaignOf(c),
         title: none ? `Clicks on "${c.name}" aren't turning into ${word}s` : `Fewer clicks on "${c.name}" are turning into ${word}s`,
         plain: none
-          ? `People are clicking this ad, but none has gone on to ${c.objective === "LEADS" ? "send an enquiry" : "buy"} yet. Your AI team is looking at what happens after the click.`
+          ? `People are clicking this ad, but none has gone on to ${c.objective === "LEADS" ? "send an enquiry" : "buy"} yet. MAIRO is looking at what happens after the click.`
           : `People still click this ad, but fewer of them go on to ${c.objective === "LEADS" ? "send an enquiry" : "buy"} than before.`,
         noticed: none
           ? `${n(clicks, "click")} in the last two weeks and no ${word}s${attributed ? " on your form" : " reported"}.`
           : `${share(rate)} of clicks became ${word}s in the last two weeks, against ${share(prevRate!)} the two weeks before.`,
         explanations,
         recommendation: measurementDoubt ? "Check your tracking first — the ad may be working better than the numbers show." : `Open the ad's ${c.objective === "LEADS" ? "form" : "page"} on your phone and go through it as a customer would.`,
-        alternatives: ["Compare what the ad says with what the page shows, and make them match.", "Ask your Creative Agent for a version of the ad that sets clearer expectations."],
+        alternatives: ["Compare what the ad says with what the page shows, and make them match.", "Ask MAIRO for a version of the ad that sets clearer expectations."],
         evidence: [
           { label: "Clicks (2 weeks)", value: String(clicks) },
           { label: `${word[0].toUpperCase()}${word.slice(1)}s (2 weeks)`, value: String(resultsNow) },
@@ -178,7 +178,7 @@ function clicksNotConverting(input: CoachInput): Finding[] {
         steps: [
           ...(measurementDoubt ? [step({ title: "Check your tracking", detail: "Make sure Meta is told about every result.", kind: "tracking", priority: 1, risk: "LOW", approval: "Nothing to approve.", benefit: "The numbers you see become complete.", verify: "Results appear when you test the page yourself.", href: "/dashboard/tracking" })] : []),
           step({ title: `Try the ${c.objective === "LEADS" ? "form" : "page"} on your phone`, detail: "Tap the ad's link and finish it as a customer would. Note anything slow, confusing or broken.", kind: "review", priority: 2, risk: "LOW", approval: "Nothing to approve.", benefit: "May uncover a problem no report can show.", verify: "You complete it without trouble.", href: c.hostedForm ? "/dashboard/leads" : `/dashboard/campaigns/${c.mairoCampaignId}` }),
-          step({ title: "Prepare a clearer version of the ad", detail: "Your Creative Agent writes a version that says exactly what happens after the click. Nothing runs until you approve it.", kind: "creative", priority: 3, risk: "LOW", approval: "Your approval before it runs. Your budget doesn't change.", benefit: "May bring clicks from people more ready to act.", verify: "The share of clicks that convert, over the following week.", href: "/dashboard/creatives" }),
+          step({ title: "Prepare a clearer version of the ad", detail: "MAIRO writes a version that says exactly what happens after the click. Nothing runs until you approve it.", kind: "creative", priority: 3, risk: "LOW", approval: "Your approval before it runs. Your budget doesn't change.", benefit: "May bring clicks from people more ready to act.", verify: "The share of clicks that convert, over the following week.", href: "/dashboard/creatives" }),
           MONITOR("the share of clicks that convert"),
         ],
         agents: ["ANALYST", "OPTIMIZER", "CREATIVE"],
@@ -202,13 +202,13 @@ const REASON_HINTS: Record<string, { explain: (k: number, of: number) => string;
   "wrong-service": {
     explain: (k, of) => `${k} of the ${of} leads you marked not a fit wanted something you don't offer.`,
     recommend: "Make the ads say exactly what you do — and what you don't.",
-    step: { title: "Prepare ad wording that names your service plainly", detail: "Your Creative Agent writes a version that sets clear expectations.", kind: "creative", risk: "LOW", approval: "Your approval before it runs.", benefit: "May mean fewer enquiries for things you don't do.", verify: "Fewer leads marked as wanting something else.", href: "/dashboard/creatives" },
+    step: { title: "Prepare ad wording that names your service plainly", detail: "MAIRO writes a version that sets clear expectations.", kind: "creative", risk: "LOW", approval: "Your approval before it runs.", benefit: "May mean fewer enquiries for things you don't do.", verify: "Fewer leads marked as wanting something else.", href: "/dashboard/creatives" },
     agent: "CREATIVE",
   },
   price: {
     explain: (k, of) => `${k} of the ${of} leads you marked not a fit stopped over price.`,
     recommend: "Consider showing a starting price, so people who can't afford it don't enquire.",
-    step: { title: "Decide whether to show a starting price", detail: "Your Strategy Agent can rework the offer around it.", kind: "review", risk: "LOW", approval: "Nothing changes on Meta without your approval.", benefit: "May mean fewer enquiries that end on price.", verify: "Fewer leads lost over price.", href: "/dashboard/mission" },
+    step: { title: "Decide whether to show a starting price", detail: "MAIRO can rework the offer around it.", kind: "review", risk: "LOW", approval: "Nothing changes on Meta without your approval.", benefit: "May mean fewer enquiries that end on price.", verify: "Fewer leads lost over price.", href: "/dashboard/mission" },
     agent: "STRATEGIST",
   },
 };
@@ -262,7 +262,7 @@ function leadQuality(input: CoachInput): Finding[] {
   }
   const recommendation = alternatives.shift() ?? "Look through the leads you marked not a fit and note what they had in common, before changing any targeting.";
   if (!steps.length) steps.push(step({ title: "Review the leads that weren't a fit", detail: "Mark why each wasn't a fit — MAIRO then knows which change to suggest.", kind: "review", priority: 1, risk: "LOW", approval: "Nothing to approve.", benefit: "Tells MAIRO whether it's the area, the service, the price or the audience.", verify: "Reasons recorded for most lost leads.", href: "/dashboard/leads" }));
-  steps.push(step({ title: "Hold off on more budget", detail: "Your Growth Advisor won't suggest more spend while most leads aren't good ones.", kind: "monitor", priority: 8, risk: "LOW", approval: "Nothing to approve.", benefit: "Keeps money from buying more of the same leads.", verify: "The share of good leads recovers.", href: "/dashboard/decisions" }));
+  steps.push(step({ title: "Hold off on more budget", detail: "MAIRO won't suggest more spend while most leads aren't good ones.", kind: "monitor", priority: 8, risk: "LOW", approval: "Nothing to approve.", benefit: "Keeps money from buying more of the same leads.", verify: "The share of good leads recovers.", href: "/dashboard/decisions" }));
   agents.add("GROWTH");
   steps.push(MONITOR("the share of good leads"));
 
@@ -273,7 +273,7 @@ function leadQuality(input: CoachInput): Finding[] {
       severity: "ATTENTION",
       title: declined ? "Your leads have been less often the right ones lately" : "Most leads aren't turning out to be good ones",
       plain: declined
-        ? "You've been marking fewer of your new leads as good ones than before. Your AI team is looking at what changed before suggesting anything."
+        ? "You've been marking fewer of your new leads as good ones than before. MAIRO is looking at what changed before suggesting anything."
         : "Your ads are bringing enquiries, but most of the ones you've marked weren't right for your business. That's worth fixing before spending more.",
       noticed: declined
         ? `${share(now!.rate)} of the leads you marked in the last two weeks were good ones, against ${share(before!.rate)} the two weeks before.`
@@ -406,7 +406,7 @@ function sales(input: CoachInput, slowerFollowUp: boolean): Finding[] {
           category: "SALES",
           severity: "ATTENTION",
           title: "Fewer good leads are booking an appointment",
-          plain: "You're getting good leads, but fewer of them are booking than before. That happens after the ad, so your AI team recommends looking at follow-up before changing the ads or the budget.",
+          plain: "You're getting good leads, but fewer of them are booking than before. That happens after the ad, so MAIRO recommends looking at follow-up before changing the ads or the budget.",
           noticed: `${share(now.rate)} of good leads booked in the last two weeks, against ${share(before.rate)} the two weeks before (leads at least a week old).`,
           explanations,
           recommendation: "Look at the good leads that didn't book, and offer a couple of specific times when you reply.",
@@ -419,7 +419,7 @@ function sales(input: CoachInput, slowerFollowUp: boolean): Finding[] {
           limitations: `Counts leads at least ${MATURE_DAYS.appointment} days old, so newer ones have time to book. ${LIMIT_CAUSE}`,
           steps: [
             step({ title: "Review the good leads that didn't book", detail: "Look for a pattern: slow reply, price, timing.", kind: "review", priority: 1, risk: "LOW", approval: "Nothing to approve.", benefit: "Shows what's stopping bookings.", verify: "Reasons noted on most of them.", href: "/dashboard/leads" }),
-            step({ title: "Hold off on more ad spend", detail: "Your Growth Advisor won't suggest more budget until bookings recover.", kind: "monitor", priority: 2, risk: "LOW", approval: "Nothing to approve.", benefit: "Avoids paying for more leads that don't book.", verify: "The booking rate recovers.", href: "/dashboard/decisions" }),
+            step({ title: "Hold off on more ad spend", detail: "MAIRO won't suggest more budget until bookings recover.", kind: "monitor", priority: 2, risk: "LOW", approval: "Nothing to approve.", benefit: "Avoids paying for more leads that don't book.", verify: "The booking rate recovers.", href: "/dashboard/decisions" }),
             MONITOR("the share of good leads that book", 14),
           ],
           agents: ["ANALYST", "STRATEGIST", "GROWTH"],
@@ -480,7 +480,7 @@ function costTrend(input: CoachInput, cur: Funnel, prev: Funnel): Finding[] {
         category: "OPPORTUNITY",
         severity: "OPPORTUNITY",
         title: `Each ${what} is costing less than before`,
-        plain: `Your ads are getting you ${what}s more cheaply than two weeks ago. Your Growth Advisor is watching whether it holds before suggesting more budget.`,
+        plain: `Your ads are getting you ${what}s more cheaply than two weeks ago. MAIRO is watching whether it holds before suggesting more budget.`,
         noticed: `About ${usd(costNow)} per ${what} in the last two weeks, against ${usd(costBefore)} before.`,
         explanations: [{ text: "Recent changes, a better-performing ad, or a quieter time for competitors.", basis: "possibility" }],
         recommendation: "Keep things as they are for now. If it holds for another week, MAIRO may suggest more budget — with the numbers, and only with your approval.",
@@ -510,9 +510,9 @@ function costTrend(input: CoachInput, cur: Funnel, prev: Funnel): Finding[] {
   const b = agg(allPrev);
   if (a.impressions >= MIN.impressions && b.impressions >= MIN.impressions) {
     const cpmCh = change(a.spend / a.impressions, b.spend / b.impressions)!;
-    if (cpmCh >= 0.15) contributions.push({ text: `Showing your ads cost ${pctText(cpmCh)} more per thousand views.`, size: cpmCh, agent: "AUDIENCE", rec: "Ask your Audience Agent to check whether the audience is getting saturated.", step: { title: "Check the audience", detail: "Your Audience Agent looks at reach and how often people see the ads.", kind: "review", risk: "LOW", approval: "Any change to who sees the ads needs your approval.", benefit: "May bring the cost of reaching people down.", verify: "Cost per thousand views settles.", href: "/dashboard/team?agent=AUDIENCE#activity" } });
+    if (cpmCh >= 0.15) contributions.push({ text: `Showing your ads cost ${pctText(cpmCh)} more per thousand views.`, size: cpmCh, agent: "AUDIENCE", rec: "Ask MAIRO to check whether the audience is getting saturated.", step: { title: "Check the audience", detail: "MAIRO looks at reach and how often people see the ads.", kind: "review", risk: "LOW", approval: "Any change to who sees the ads needs your approval.", benefit: "May bring the cost of reaching people down.", verify: "Cost per thousand views settles.", href: "/dashboard/team?agent=AUDIENCE#activity" } });
     const ctrCh = change(a.clicks / a.impressions, b.clicks / b.impressions)!;
-    if (ctrCh <= -0.15) contributions.push({ text: `People clicked the ads ${pctText(ctrCh)} less often.`, size: -ctrCh, agent: "CREATIVE", rec: "Test a fresh ad alongside the current one, without raising your budget.", step: { title: "Test a fresh ad", detail: "Your Creative Agent prepares a new version to run alongside the current one.", kind: "creative", risk: "LOW", approval: "Your approval before it runs. Your total budget stays the same.", benefit: "May win back clicks if the current ad has gone stale.", verify: "The new ad's clicks against the old one's, same week.", href: "/dashboard/creatives" } });
+    if (ctrCh <= -0.15) contributions.push({ text: `People clicked the ads ${pctText(ctrCh)} less often.`, size: -ctrCh, agent: "CREATIVE", rec: "Test a fresh ad alongside the current one, without raising your budget.", step: { title: "Test a fresh ad", detail: "MAIRO prepares a new version to run alongside the current one.", kind: "creative", risk: "LOW", approval: "Your approval before it runs. Your total budget stays the same.", benefit: "May win back clicks if the current ad has gone stale.", verify: "The new ad's clicks against the old one's, same week.", href: "/dashboard/creatives" } });
   }
   if (a.clicks >= MIN.clicks && b.clicks >= MIN.clicks && leadsNow && leadsBefore) {
     const convCh = change(leadsNow / a.clicks, leadsBefore / b.clicks)!;
@@ -527,7 +527,7 @@ function costTrend(input: CoachInput, cur: Funnel, prev: Funnel): Finding[] {
   const explanations: Explanation[] = contributions.map((c) => ({ text: c.text, basis: "evidence" }));
   if (!explanations.length) explanations.push({ text: "No single step moved enough to say which one is responsible yet.", basis: "possibility" });
   const steps = contributions.map((c, i) => step({ ...c.step, priority: i + 1 }));
-  steps.push(step({ title: "Hold off on more budget", detail: "Your Growth Advisor won't suggest more spend while costs are rising.", kind: "monitor", priority: 8, risk: "LOW", approval: "Nothing to approve.", benefit: "Keeps money from buying leads at the higher cost.", verify: `The cost per ${what} comes back down.`, href: "/dashboard/decisions" }));
+  steps.push(step({ title: "Hold off on more budget", detail: "MAIRO won't suggest more spend while costs are rising.", kind: "monitor", priority: 8, risk: "LOW", approval: "Nothing to approve.", benefit: "Keeps money from buying leads at the higher cost.", verify: `The cost per ${what} comes back down.`, href: "/dashboard/decisions" }));
   steps.push(MONITOR(`the cost per ${what}`));
   const agents = new Set<AgentRole>(["ANALYST", "OPTIMIZER", "GROWTH", ...contributions.map((c) => c.agent)]);
   out.push(
@@ -536,7 +536,7 @@ function costTrend(input: CoachInput, cur: Funnel, prev: Funnel): Finding[] {
       category: "BUDGET",
       severity: "ATTENTION",
       title: `Each ${what} is costing more than before`,
-      plain: `Your advertising is getting more expensive at bringing in ${what}s. Your AI team looked at each step to see where it changed${contributions.length ? "" : ", and nothing stands out yet"}.`,
+      plain: `Your advertising is getting more expensive at bringing in ${what}s. MAIRO looked at each step to see where it changed${contributions.length ? "" : ", and nothing stands out yet"}.`,
       noticed: `About ${usd(costNow)} per ${what} in the last two weeks, against ${usd(costBefore)} before (${pctText(ch)} more).`,
       explanations,
       recommendation: contributions[0]?.rec ?? "Keep the budget as it is and watch another week before changing anything.",
@@ -574,14 +574,14 @@ function noGoodLeads(input: CoachInput): Finding[] {
         severity: "ATTENTION",
         ...campaignOf(c),
         title: `None of the leads from "${c.name}" have been good ones`,
-        plain: `This campaign has brought leads, but you haven't marked any of them as a good one. Your AI team recommends looking at them before spending more on it.`,
+        plain: `This campaign has brought leads, but you haven't marked any of them as a good one. MAIRO recommends looking at them before spending more on it.`,
         noticed: `${judged.length} leads from "${c.name}" marked in the last four weeks, none good; ${usd(spend)} spent.`,
         explanations: [
           { text: "The campaign may be reaching people outside the customers you want.", basis: "possibility" },
           { text: "Its ad may promise something different from what you offer.", basis: "possibility" },
         ],
         recommendation: "Review its leads, and consider pausing it until you know why.",
-        alternatives: ["Ask your Creative Agent for a version that states your service and area plainly."],
+        alternatives: ["Ask MAIRO for a version that states your service and area plainly."],
         evidence: [{ label: "Its leads you marked", value: String(judged.length) }, { label: "Good ones", value: "0" }, { label: "Spent (4 weeks)", value: usd(spend) }],
         confidence: confidenceFrom(judged.length, 6),
         limitations: `Only leads known to come from this campaign. ${LIMIT_CAUSE}`,
@@ -659,7 +659,7 @@ function reallocateByQuality(input: CoachInput): Finding[] {
       mairoCampaignId: best.c.mairoCampaignId,
       campaignName: best.c.name,
       title: draft.title,
-      plain: `Judged by the leads you marked good, "${best.c.name}" gets them for less. Your AI team prepared a budget move that keeps your total the same — it waits for your approval.`,
+      plain: `Judged by the leads you marked good, "${best.c.name}" gets them for less. MAIRO prepared a budget move that keeps your total the same — it waits for your approval.`,
       noticed: draft.noticed,
       explanations: [{ text: "The cheaper campaign's audience or ad may simply suit your customers better.", basis: "possibility" }],
       recommendation: draft.recommendation,
@@ -708,7 +708,7 @@ function creativeAndAudience(input: CoachInput): Finding[] {
           severity: "ATTENTION",
           ...campaignOf(c),
           title: `People are clicking "${c.name}" less often`,
-          plain: "Fewer of the people who see this ad are clicking it than two weeks ago. Your Creative Agent can prepare a fresh version to test — nothing runs without your approval.",
+          plain: "Fewer of the people who see this ad are clicking it than two weeks ago. MAIRO can prepare a fresh version to test — nothing runs without your approval.",
           noticed: `${(ctrNow! * 100).toFixed(2)}% of views became clicks in the last two weeks, against ${(ctrBefore! * 100).toFixed(2)}% before.`,
           explanations,
           recommendation: adGap && adGap >= 1.6 ? `Put more weight on ${bestAd!.label}, and test a fresh ad in place of ${worstAd!.label}.` : "Test a fresh ad alongside the current one, without raising your budget.",
@@ -721,7 +721,7 @@ function creativeAndAudience(input: CoachInput): Finding[] {
           confidence: confidenceFrom(Math.min(c.current!.clicks ?? 0, c.previous!.clicks ?? 0), 50),
           limitations: `${LIMIT_META} ${LIMIT_CAUSE}`,
           steps: [
-            step({ title: "Test a fresh ad", detail: "Your Creative Agent prepares it; it runs alongside the current one so the two can be compared fairly in the same weeks.", kind: "creative", priority: 1, risk: "LOW", approval: "Your approval before it runs. Your total budget stays the same.", benefit: "May win back clicks.", verify: "The new ad's clicks per view against the current ad's, same period.", href: "/dashboard/creatives" }),
+            step({ title: "Test a fresh ad", detail: "MAIRO prepares it; it runs alongside the current one so the two can be compared fairly in the same weeks.", kind: "creative", priority: 1, risk: "LOW", approval: "Your approval before it runs. Your total budget stays the same.", benefit: "May win back clicks.", verify: "The new ad's clicks per view against the current ad's, same period.", href: "/dashboard/creatives" }),
             MONITOR("clicks per view"),
           ],
           agents: ["ANALYST", "CREATIVE", "OPTIMIZER"],
@@ -742,7 +742,7 @@ function creativeAndAudience(input: CoachInput): Finding[] {
           severity: "WATCH",
           ...campaignOf(c),
           title: `"${c.name}" keeps reaching the same people, at a rising cost`,
-          plain: "The same people are seeing this ad again and again, and reaching them is getting more expensive. Your Audience Agent suggests widening who can see it, with your approval.",
+          plain: "The same people are seeing this ad again and again, and reaching them is getting more expensive. MAIRO suggests widening who can see it, with your approval.",
           noticed: `Each person saw the ads ${f.toFixed(1)} times on average; showing them cost ${pctText(cpmCh)} more per thousand views than before.`,
           explanations: [
             { text: `The audience may be too small for the budget — the average of ${f.toFixed(1)} views per person points that way.`, basis: "evidence" },
@@ -758,7 +758,7 @@ function creativeAndAudience(input: CoachInput): Finding[] {
           limitations: `Meta doesn't break this down by placement or by person for MAIRO. ${LIMIT_CAUSE}`,
           missing: ["How results differ by placement (Feed, Stories, Reels) — MAIRO doesn't read that breakdown yet."],
           steps: [
-            step({ title: "Widen the audience", detail: "Your Audience Agent prepares the change; it waits for your approval on the Recommendations page.", kind: "meta-change", priority: 1, risk: "MEDIUM", approval: "Your approval before anything changes on Meta.", benefit: "May bring the cost of reaching people down.", verify: "Views per person and cost per thousand views, a week after.", href: "/dashboard/decisions" }),
+            step({ title: "Widen the audience", detail: "MAIRO prepares the change; it waits for your approval on the Recommendations page.", kind: "meta-change", priority: 1, risk: "MEDIUM", approval: "Your approval before anything changes on Meta.", benefit: "May bring the cost of reaching people down.", verify: "Views per person and cost per thousand views, a week after.", href: "/dashboard/decisions" }),
             MONITOR("the cost per thousand views"),
           ],
           agents: ["ANALYST", "AUDIENCE"],

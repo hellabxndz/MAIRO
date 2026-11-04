@@ -84,6 +84,8 @@ export type Guardrails = {
   maxBudgetShiftPercent: number;
   minRoas: number | null;
   maxCpaCents: number | null;
+  /** The business's own rule (Business Brain → maxRadiusMiles): no audience change beyond it. */
+  maxRadiusMiles?: number | null;
 };
 
 export type DecisionInput = {

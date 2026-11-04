@@ -48,7 +48,7 @@ export function dailyBrief(i: BriefInput): Brief {
         { label: "Tell MAIRO your goal", done: i.setup.goal, href: "/dashboard/mission" },
         { label: "Connect your Meta ad account", done: i.setup.meta, href: "/dashboard/meta" },
         { label: "Approve your advertising plan", done: i.setup.plan, href: "/dashboard/mission" },
-        { label: "Let your Campaign Agent build your first campaign", done: i.setup.built, href: "/dashboard/create" },
+        { label: "Let MAIRO build your first campaign", done: i.setup.built, href: "/dashboard/create" },
         { label: "Approve the launch, with the budget shown", done: i.setup.launchApproved, href: "/dashboard/decisions" },
       ],
     };

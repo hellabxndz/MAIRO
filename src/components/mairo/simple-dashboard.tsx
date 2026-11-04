@@ -250,7 +250,7 @@ export type SimpleDashboardProps = {
   health: CampaignHealth;
   /** What MAIRO has changed by itself, newest first. Real rows only. */
   actions: ActionEntry[];
-  /** What this business calls its assistant. Default "Alex". */
+  /** What this business calls its assistant. Default "MAIRO". */
   assistantName: string;
   /** Money out, and the ceilings around it. */
   spend: SpendFigures;

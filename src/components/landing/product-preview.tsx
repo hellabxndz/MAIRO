@@ -14,7 +14,7 @@ import { AgentIcon } from "@/components/team/agent-ui";
 type Tab = "team" | "results" | "recs" | "coach" | "brief";
 
 const TABS: { id: Tab; label: string; about: string }[] = [
-  { id: "team", label: "Your AI Team", about: "What each specialty is doing, and what's waiting for you. In your own account every line is something that really ran — and when there's nothing to do, it says so." },
+  { id: "team", label: "MAIRO", about: "What each specialty is doing, and what's waiting for you. In your own account every line is something that really ran — and when there's nothing to do, it says so." },
   { id: "results", label: "Campaign Results", about: "Your results, read three ways: Simple for a quick answer, Advanced for every metric Meta reports, Profit First for what your ads earn after costs, using the values you record." },
   { id: "recs", label: "AI Recommendations", about: "Every recommendation shows what was noticed, the numbers behind it and how sure MAIRO is. Nothing changes until you approve it." },
   { id: "coach", label: "Performance Coach", about: "Follows results past the click — leads, follow-up, bookings, customers — and says where things slow down, keeping what it saw apart from what might explain it." },
@@ -62,7 +62,7 @@ const TEAM: { role: AgentRole; state: keyof typeof STATE; line: string }[] = [
 
 function TeamView() {
   return (
-    <Pane title="Your AI Team" sub="Last reviewed today at 7:42 AM · 1 recommendation waiting for your approval">
+    <Pane title="MAIRO" sub="Last reviewed today at 7:42 AM · 1 recommendation waiting for your approval">
       <ul className="grid gap-2 md:grid-cols-2">
         {TEAM.map((t) => (
           <li key={t.role} className="flex items-start gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
@@ -173,7 +173,7 @@ function RecsView() {
       <div className="rounded-2xl border border-[color:var(--mairo-line-lit)] bg-paper p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
           <AgentIcon role="OPTIMIZER" size={26} />
-          <span className="text-[12px] text-muted">From your Optimization Agent</span>
+          <span className="text-[12px] text-muted">From MAIRO</span>
           <span className="ml-auto rounded-full bg-live/10 px-2.5 py-0.5 text-[11px] font-medium text-live">High confidence</span>
         </div>
         <p className="mt-3 text-[17px] font-semibold leading-snug text-white">Move $10/day from Creative #2 to Creative #4.</p>

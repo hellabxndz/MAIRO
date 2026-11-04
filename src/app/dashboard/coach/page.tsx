@@ -65,14 +65,14 @@ export default async function CoachPage() {
   return (
     <div className="mx-auto max-w-[1100px]">
       <header className="mb-6">
-        <p className={eyebrow}>Your MAIRO AI Team</p>
+        <p className={eyebrow}>MAIRO</p>
         <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">Your AI Performance Coach</h1>
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">
           Follows your results from the ad all the way to paying customers, finds where things slow down, and says what may help — with the numbers behind it, and what it can&rsquo;t be sure of.
         </p>
         {!coachOn && (
           <p className="mt-4 max-w-[720px] rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13.5px] leading-relaxed text-white/75">
-            {COACH_LOCKED} Your AI team&rsquo;s daily recommendations carry on as usual{active.length + past.length > 0 ? ", and earlier findings stay below" : ""}.{" "}
+            {COACH_LOCKED} MAIRO&rsquo;s daily recommendations carry on as usual{active.length + past.length > 0 ? ", and earlier findings stay below" : ""}.{" "}
             <Link href="/dashboard/billing" className="text-blue-bright hover:text-white">See plans</Link>
           </p>
         )}
@@ -96,16 +96,16 @@ export default async function CoachPage() {
 
       <section aria-labelledby="insights" className="mb-6">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="insights" className={eyebrow}>What your AI team found</h2>
+          <h2 id="insights" className={eyebrow}>What MAIRO found</h2>
           <Link href="/dashboard/team#activity" className="text-[12.5px] text-muted hover:text-white">
-            See every step your AI team took →
+            See every step MAIRO took →
           </Link>
         </div>
         {active.length === 0 ? (
           <div className="rounded-[24px] p-6 text-[14px] text-muted" style={panel}>
             {lastReviewedAt
-              ? "Nothing needs your attention right now. Your AI team looks again every day and tells you when something changes."
-              : "Nothing yet. Your AI team investigates once your campaigns have run long enough to compare — and once leads come in, marking what happens to them lets it follow results all the way to customers."}
+              ? "Nothing needs your attention right now. MAIRO looks again every day and tells you when something changes."
+              : "Nothing yet. MAIRO investigates once your campaigns have run long enough to compare — and once leads come in, marking what happens to them lets it follow results all the way to customers."}
           </div>
         ) : (
           <div className="grid gap-4">

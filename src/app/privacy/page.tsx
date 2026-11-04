@@ -77,9 +77,9 @@ export default async function PrivacyPage() {
               version you or MAIRO make of them, the pictures MAIRO makes, the photos and videos you upload
               for your ads, the edits you make to a video, and what you approved and when.</>,
             <><strong className="text-neutral-200">Your conversations.</strong> Messages you exchange
-              with the AI specialists inside the app.</>,
-            <><strong className="text-neutral-200">What your AI team did.</strong> A record of the work
-              MAIRO&apos;s AI specialists do for you — what each one checked, recommended or changed, the
+              with MAIRO&apos;s AI inside the app.</>,
+            <><strong className="text-neutral-200">What MAIRO did.</strong> A record of the work
+              MAIRO&apos;s AI does for you — what it checked, recommended or changed, the
               figures it used, and what you approved or turned down, and when — along with your Daily
               Brief, reports and Performance Coach findings. It&apos;s kept so you can always see what
               happened and why.</>,
@@ -150,7 +150,7 @@ export default async function PrivacyPage() {
             "To build your monthly advertising plan from the goal and budget you gave us.",
             "To create, run, and adjust campaigns on the ad account you connected.",
             "To show you how those campaigns are performing, and which of them bring in leads and sales.",
-            "To answer your questions through the AI specialists.",
+            "To answer your questions through MAIRO's AI.",
             "To contact you about your account or a problem with your campaigns.",
           ]}
         />
@@ -188,7 +188,7 @@ export default async function PrivacyPage() {
             <><strong className="text-neutral-200">Meta Platforms</strong> — to create and read the ads
               we run for you.{pixel ? " Also to measure MAIRO's own advertising, as described above." : ""}</>,
             <><strong className="text-neutral-200">Anthropic</strong> — powers the AI that writes your
-              plans, ad copy, and specialist replies. Your prompts and business context are sent to
+              plans, ad copy, and MAIRO&apos;s replies. Your prompts and business context are sent to
               generate those responses.</>,
             <><strong className="text-neutral-200">OpenAI</strong> — makes ad images in the Creative
               Studio. Your image requests, and any picture you upload to change, are sent to make them.</>,

@@ -112,7 +112,7 @@ export default async function ResultsPage({
     <div>
       <PageHeader
         title={`Results · ${report.label}`}
-        description="What your advertising achieved — from the ad all the way to paying customers — what your AI team found, and what it did about it."
+        description="What your advertising achieved — from the ad all the way to paying customers — what MAIRO found, and what it did about it."
         action={
           /* A plain anchor, not next/link. Link prefetches, and prefetching a
              route that streams a file attachment meant every visit to this
@@ -208,10 +208,10 @@ export default async function ResultsPage({
             </p>
           </GlassPanel>
 
-          {/* What the AI team found. */}
+          {/* What MAIRO found. */}
           <GlassPanel className="mt-6 p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-              <HudLabel>What your AI team found — right now</HudLabel>
+              <HudLabel>What MAIRO found — right now</HudLabel>
               <Link href="/dashboard/coach" className="text-[12.5px] text-muted hover:text-white">Open your Performance Coach →</Link>
             </div>
             {actionable.length === 0 ? (
@@ -245,10 +245,10 @@ export default async function ResultsPage({
             )}
           </GlassPanel>
 
-          {/* What the AI team did. */}
+          {/* What MAIRO did. */}
           <GlassPanel className="mt-6 p-5 sm:p-6">
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-              <HudLabel>What your AI team did {periodLabel}</HudLabel>
+              <HudLabel>What MAIRO did {periodLabel}</HudLabel>
               <Link href="/dashboard/activity" className="text-[12.5px] text-muted hover:text-white">Every change, with the reason →</Link>
             </div>
             <TeamWork items={report.team} sinceStart={sinceStart} periodLabel={periodLabel} />

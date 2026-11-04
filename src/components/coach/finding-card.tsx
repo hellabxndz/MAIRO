@@ -111,7 +111,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
           </p>
         </section>
         <section>
-          <h4 className={h}>What your AI team recommends</h4>
+          <h4 className={h}>What MAIRO recommends</h4>
           <p className="mt-1.5 text-[14px] font-medium leading-relaxed text-white">{f.shownRecommendation}</p>
           {f.hasAnother && f.status !== "DISMISSED" && (
             <button type="button" disabled={pending} onClick={() => act(() => anotherRecommendationAction(f.id))} className="mt-1.5 text-[12.5px] text-violet-bright hover:underline disabled:opacity-60">
@@ -203,7 +203,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
             </button>
           )}
           <Link href={`/dashboard/agents?ask=${encodeURIComponent(ask)}`} className="rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white hover:border-[color:var(--mairo-line-lit)]">
-            Investigate with your AI team
+            Investigate with MAIRO
           </Link>
           <button type="button" disabled={pending} onClick={() => act(() => dismissFindingAction(f.id))} className="rounded-full px-3 py-2 text-[13px] text-muted hover:text-white disabled:opacity-60">
             Dismiss

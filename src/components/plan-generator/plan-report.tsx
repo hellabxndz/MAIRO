@@ -495,7 +495,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         </h2>
         <p className="mt-3 max-w-[720px] text-[15.5px] leading-relaxed text-white/72">
           {actions
-            ? "Go from recommendations to advertising campaigns with your AI team managing the workflow."
+            ? "Go from recommendations to advertising campaigns with MAIRO managing the workflow."
             : "Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free."}
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">

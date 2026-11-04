@@ -111,7 +111,7 @@ export function ApprovalsPreview({ decisions, others }: { decisions: DecisionVie
               <AgentIcon role={r.role} size={28} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-medium text-white">{r.title}</span>
-                <span className="mt-0.5 block text-[12px] text-faint">From your {AGENT[r.role].name}{r.risk ? ` · ${r.risk}` : ""}</span>
+                <span className="mt-0.5 block text-[12px] text-faint">From {AGENT[r.role].name}{r.risk ? ` · ${r.risk}` : ""}</span>
                 <span className={`mt-1 block text-[12.5px] ${r.money ? "text-warn" : "text-muted"}`}>{r.budget}</span>
               </span>
               <span className="shrink-0 self-center text-[12.5px] text-violet-bright">Review →</span>

@@ -51,7 +51,7 @@ export default async function IntelligencePage() {
     <div className="mx-auto max-w-[1180px] space-y-8">
       <header>
         <p className={eyebrow}>MAIRO Intelligence</p>
-        <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">What your AI team sees, and what it needs from you</h1>
+        <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">What MAIRO sees, and what it needs from you</h1>
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">
           Strategy, audience, creative, campaigns, optimization, budget, analytics and growth — in one place, from your account&rsquo;s own records. Ask one assistant about any of it; nothing changes without your approval.
         </p>
@@ -81,7 +81,7 @@ export default async function IntelligencePage() {
 
       <section aria-labelledby="specialists">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="specialists" className={eyebrow}>The eight specialties</h2>
+          <h2 id="specialists" className={eyebrow}>The kinds of work MAIRO does</h2>
           <Link href="/dashboard/team" className="text-[12.5px] text-muted hover:text-white">Everything they did →</Link>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

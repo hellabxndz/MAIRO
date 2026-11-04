@@ -13,7 +13,7 @@ export type TeamMemberData = { role: AgentRole; state: string; tone: PillTone; l
 
 export function TeamPanel({ members, intro, allHref }: { members: TeamMemberData[]; intro: string; allHref?: string | null }) {
   return (
-    <Panel id="team-panel" title="Your AI advertising team" action={{ href: allHref, label: "Open AI Team" }}>
+    <Panel id="team-panel" title="What MAIRO is working on" action={{ href: allHref, label: "Everything MAIRO did" }}>
       <p className="-mt-1 max-w-[720px] text-[13.5px] leading-relaxed text-white/75">{intro}</p>
       <ul className="mt-4 grid grid-cols-1 gap-2 @md:grid-cols-2 @4xl:grid-cols-4">
         {members.map((m) => (

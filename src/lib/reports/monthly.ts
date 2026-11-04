@@ -438,7 +438,7 @@ export function reportAsText(report: MonthlyReport, businessName: string): strin
     ...(report.outcomes.extra ? ["", report.outcomes.extra.title, ...report.outcomes.extra.metrics.map(figure)] : []),
     ...(report.metaProblem ? [`Meta couldn't be read: ${report.metaProblem}`] : []),
     "",
-    "What your AI team did",
+    "What MAIRO did",
     line("Ads running this month", String(report.creativesTested)),
     line("Campaigns paused", String(report.adsPaused)),
     line("Changes MAIRO made", String(report.changesMade)),

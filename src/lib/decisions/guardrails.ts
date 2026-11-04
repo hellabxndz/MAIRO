@@ -2,6 +2,7 @@ import type { AutomationLevel } from "@/generated/prisma/enums";
 import { mayDoAutomatically, type AutomationAction } from "@/lib/automation/levels";
 import { usd } from "@/lib/protection/rules";
 import type { DecisionChange, Guardrails } from "./types";
+import { ruleProblem } from "@/lib/brain/customer-rules";
 
 // What a change counts as, and whether MAIRO may make it without asking.
 //
@@ -56,6 +57,9 @@ export function limitProblem(
   g: Guardrails,
   currentDailyTotalCents: number,
 ): string | null {
+  // The business's own rules first: no approval or automation level gets past them.
+  const broken = ruleProblem(changes, { maxRadiusMiles: g.maxRadiusMiles ?? null });
+  if (broken) return broken;
   for (const c of changes) {
     if (c.type !== "set-budget") continue;
     if (c.toCents < 100) return `${c.campaignName} can't go below $1 a day.`;

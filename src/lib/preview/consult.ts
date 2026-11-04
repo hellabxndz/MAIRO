@@ -102,7 +102,7 @@ export function growthActions(f: PreviewFacts, p: Preview, findings: Finding[]):
       ? { title: "Count real orders, not just Meta's", priority: "Low", why: "Meta reports purchases it attributes to ads; your store knows the orders that happened.", mairo: "If your store runs on Shopify, counts its orders (through a webhook you add) and keeps them apart from Meta's figure." }
       : { title: "Follow every enquiry to a job", priority: "Medium", why: "A lead is only worth what it becomes — a booking, a customer.", mairo: "Lists each enquiry on the Leads page for you to mark good, booked or customer, and shows where people drop out." },
   );
-  out.push({ title: "Refresh ads before they wear out", priority: "Low", why: "People stop noticing an ad they've seen many times.", mairo: "Your AI team reads your results every day and proposes a fresh version when an ad stops working — you approve it." });
+  out.push({ title: "Refresh ads before they wear out", priority: "Low", why: "People stop noticing an ad they've seen many times.", mairo: "MAIRO reads your results every day and proposes a fresh version when an ad stops working — you approve it." });
   return out.slice(0, 5);
 }
 

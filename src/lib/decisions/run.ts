@@ -6,6 +6,7 @@ import { allDrafts, decide } from "./rules";
 import { effectiveLevel, expireStale, parseChanges, persistDrafts } from "./store";
 import { campaignsUnderTest } from "@/lib/experiments/store";
 import { limitProblem, mayAutoApply } from "./guardrails";
+import { ruleProblem } from "@/lib/brain/customer-rules";
 import { applyDecision } from "./apply";
 import type { DataStatus } from "./types";
 import { purchaseDataFrom, withDataBasis } from "./data-basis";
@@ -108,7 +109,9 @@ export async function refreshDecisions(
     if (r.holdAutomatic) heldForData.add(d.dedupeKey);
     return r.draft;
   });
-  const ids = await persistDrafts(organizationId, based, "daily", { reviewRunId: review });
+  // Nothing that breaks the business's own rules is even recommended (lib/brain/customer-rules.ts).
+  const allowed = based.filter((d) => !ruleProblem(d.changes, { maxRadiusMiles: input.guardrails.maxRadiusMiles ?? null }));
+  const ids = await persistDrafts(organizationId, allowed, "daily", { reviewRunId: review });
 
   // Who proposed what. The Optimization Agent always reports, even when it
   // found nothing; the others only when they had something to say.

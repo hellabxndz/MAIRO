@@ -25,7 +25,7 @@ import { MemoryPanel } from "@/components/mairo/memory-panel";
 // reports on your money is the last place to put a number that is not yours.
 // When there is nothing to show, the tile says so.
 
-export const metadata = { title: "Ask your AI team — MAIRO" };
+export const metadata = { title: "Ask MAIRO — MAIRO" };
 
 export default async function AssistantPage({
   searchParams,
@@ -185,16 +185,15 @@ function AssistantHero({
 
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-faint">
-            Ask your AI team
+            Ask MAIRO
           </p>
           <h1 className="mt-2.5 text-[32px] font-medium leading-[1.05] tracking-tight text-white sm:text-[42px]">
             {name}
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-[14px] leading-relaxed text-muted lg:mx-0">
-            One place to ask your whole AI team — strategy, audience, creative, campaigns,
-            optimization, budget, analytics and growth — about {businessName}&rsquo;s advertising.
-            It reads your real account, not a general idea of advertising, and sends each question
-            to the right specialty for you.
+            One MAIRO for {businessName}&rsquo;s advertising — strategy, creatives, campaigns,
+            budget, tracking and results, in one conversation. It reads your real account and your
+            business profile, not a general idea of advertising, and remembers what you tell it.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:justify-start">

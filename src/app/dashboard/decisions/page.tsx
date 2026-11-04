@@ -127,7 +127,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
     <div>
       <PageHeader
         title="Approval Center"
-        description="Everything your AI team needs your say-so on, in one place. Launches and anything that raises what you spend always wait for you, and nothing is reported as done until Meta confirms it."
+        description="Everything MAIRO needs your say-so on, in one place. Launches and anything that raises what you spend always wait for you, and nothing is reported as done until Meta confirms it."
         action={<RefreshDecisionsButton />}
       />
       <HelpLinks className="-mt-5 mb-6" links={[{ slug: "approvals", label: "What waits for you, and what MAIRO may do on its own" }]} />
@@ -174,7 +174,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
         </section>
       )}
 
-      <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Changes your AI team recommends</h2>
+      <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Changes MAIRO recommends</h2>
       <nav className="mb-6 flex gap-2 overflow-x-auto pb-1" aria-label="Filter decisions">
         {FILTERS.map((x) => (
           <Link

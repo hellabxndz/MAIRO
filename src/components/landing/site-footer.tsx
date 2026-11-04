@@ -14,7 +14,7 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
         ["How it works", "/#how-it-works"],
         ["Creative showcase", "/#showcase"],
         ["Dashboard & results", "/#dashboard"],
-        ["Your AI team & approvals", "/#ai-team"],
+        ["MAIRO & approvals", "/#ai-team"],
         ["Pricing", "/pricing"],
       ],
     },

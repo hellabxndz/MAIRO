@@ -145,7 +145,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-[clamp(24px,3vw,30px)] font-semibold tracking-[-0.02em] text-white">{greeting}</h1>
-          <p className="mt-1 text-[14.5px] text-muted">Your advertising, and the AI team working on it, at a glance.</p>
+          <p className="mt-1 text-[14.5px] text-muted">Your advertising, and MAIRO working on it, at a glance.</p>
         </div>
         <DashboardModeToggle mode="simple" />
       </header>
@@ -156,7 +156,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
 
         <PerformanceCard heading="Business results" tiles={performanceTiles(family, m)} note={perfNote} outcome={outcomeSummary(leadFunnel(monthLeads), m.spendCents)} goal={goal} href="/dashboard/reports/monthly?m=current" />
 
-        <HomeSection id="home-team" title="Your AI advertising team" action={{ href: "/dashboard/team", label: "Open your AI Team" }}>
+        <HomeSection id="home-team" title="Your AI advertising team" action={{ href: "/dashboard/team", label: "Open MAIRO" }}>
           <TeamStrip team={team} />
         </HomeSection>
 
@@ -169,7 +169,7 @@ export async function SimpleOverview({ organizationId, userName, launched, askFe
           </HomeSection>
         </div>
 
-        <HomeSection id="home-brief" title="Your Daily Brief" tint action={{ href: "/dashboard/team#brief", label: "Open on your AI Team" }}>
+        <HomeSection id="home-brief" title="Your Daily Brief" tint action={{ href: "/dashboard/team#brief", label: "Open on MAIRO" }}>
           <DailyBrief brief={brief} now={now} timeZone={team.timeZone} compact />
         </HomeSection>
 

@@ -65,7 +65,7 @@ export async function nextBestSteps(organizationId: string, now = new Date()): P
   if (coach) out.push({ title: coach.title, why: coach.plain, href: `/dashboard/coach#${coach.id}`, from: "Your Performance Coach" });
   for (const d of decisions.filter((x) => !x.urgent)) out.push({ title: d.title, why: d.noticed, href: `/dashboard/decisions#d-${d.id}`, from: "Your Approval Center" });
   for (const s of team?.statuses.filter((x) => x.state === "ATTENTION" || x.state === "ERROR" || x.state === "CONNECT") ?? []) {
-    out.push({ title: `${AGENT[s.role].name}: ${s.label.toLowerCase()}`, why: s.line, href: s.state === "CONNECT" ? "/dashboard/meta" : `/dashboard/team?agent=${s.role}#activity`, from: "Your AI Team" });
+    out.push({ title: `${AGENT[s.role].name}: ${s.label.toLowerCase()}`, why: s.line, href: s.state === "CONNECT" ? "/dashboard/meta" : `/dashboard/team?agent=${s.role}#activity`, from: "MAIRO" });
   }
   if (unmarked > 0) out.push({ title: `Mark what happened to ${unmarked} lead${unmarked === 1 ? "" : "s"}`, why: "Only you know which were good, booked or became customers. Until they're marked, MAIRO can only judge your ads by form fills.", href: "/dashboard/leads", from: "Your leads" });
   for (const o of others.filter((x) => x.kind !== "launch")) out.push({ title: o.title, why: o.text, href: o.href, from: "Your Approval Center" });

@@ -34,7 +34,7 @@ export async function runCoachNowAction(): Promise<{ ok: boolean; message: strin
   if (denied) return { ok: false, message: denied };
   const ctx = await context();
   if (!ctx) return { ok: false, message: "Not signed in." };
-  if (!(await mayRunNow(ctx.organizationId))) return { ok: false, message: "Your AI team reviewed your results a few minutes ago. Try again in a little while." };
+  if (!(await mayRunNow(ctx.organizationId))) return { ok: false, message: "MAIRO reviewed your results a few minutes ago. Try again in a little while." };
   const r = await runCoach(ctx.organizationId);
   done();
   if (!r.ok) return { ok: false, message: r.reason };

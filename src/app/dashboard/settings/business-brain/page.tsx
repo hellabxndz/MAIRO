@@ -156,6 +156,7 @@ export default async function BusinessBrainPage() {
         {renderSection("customers")}
         {renderSection("different")}
         {renderSection("brand")}
+        {renderSection("rules")}
 
         {/* Temporary: true until it ends, never a permanent fact. */}
         <section className={card} style={surface} aria-labelledby="brain-now">

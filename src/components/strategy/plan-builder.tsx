@@ -46,8 +46,8 @@ export function PlanBuilder({ website }: { website: string | null }) {
   // (goal, budget, audience and ad ideas come back together). A line is
   // "in progress" only while its request is actually running.
   const steps = [
-    ...(website ? [{ key: "website", label: `Your Strategy Agent reads ${website.replace(/^https?:\/\//, "").replace(/\/$/, "")}` }] : []),
-    { key: "plan", label: "Your Strategy, Audience and Creative Agents write your plan: goal, budget, who to reach and first ad ideas" },
+    ...(website ? [{ key: "website", label: `MAIRO reads ${website.replace(/^https?:\/\//, "").replace(/\/$/, "")}` }] : []),
+    { key: "plan", label: "MAIRO writes your plan: goal, budget, who to reach and first ad ideas" },
   ];
   const at = stage === "error" ? -1 : stage === "done" ? steps.length : steps.findIndex((s) => s.key === stage);
 

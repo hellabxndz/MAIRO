@@ -116,7 +116,7 @@ export async function ConsoleOverview({
           total={c.actions.total}
           controls={controls}
           allHref="/dashboard/decisions"
-          emptyText="Nothing needs you right now. When your AI team recommends a change — a better ad, an audience, a budget — it waits here with the reason, and nothing changes in your ad account until you approve it."
+          emptyText="Nothing needs you right now. When MAIRO recommends a change — a better ad, an audience, a budget — it waits here with the reason, and nothing changes in your ad account until you approve it."
         />
 
         <div className="grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
@@ -126,7 +126,7 @@ export async function ConsoleOverview({
 
         <div className="grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <ResultsPanel points={c.results.points} empty={c.results.empty} insights={c.results.insights} count={c.results.count} allHref="/dashboard/analytics" period={c.period.toLowerCase()} />
-          <Panel id="brief" title="Your Daily Brief" action={{ href: "/dashboard/team#brief", label: "AI Team" }}>
+          <Panel id="brief" title="Your Daily Brief" action={{ href: "/dashboard/team#brief", label: "What MAIRO did" }}>
             <DailyBrief brief={brief} now={now} timeZone={c.teamView.timeZone} compact />
           </Panel>
         </div>

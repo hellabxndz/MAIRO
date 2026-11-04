@@ -165,9 +165,9 @@ export function teamWelcome(input: { now: Date; statuses: AgentStatus[]; pending
   const tz = input.timeZone;
   const today = input.statuses.filter((s) => s.lastDone && dayNumber(s.lastDone.at, tz) === dayNumber(input.now, tz)).length;
   const parts: string[] = [];
-  if (input.lastReviewAt) parts.push(`Your MAIRO AI Team last reviewed your campaigns ${when(input.lastReviewAt, input.now, tz)}.`);
-  else parts.push("Your MAIRO AI Team is ready.");
-  if (today > 0) parts.push(`${today} ${today === 1 ? "specialist" : "specialists"} finished work today`);
+  if (input.lastReviewAt) parts.push(`MAIRO last reviewed your campaigns ${when(input.lastReviewAt, input.now, tz)}.`);
+  else parts.push("MAIRO is ready.");
+  if (today > 0) parts.push(`MAIRO finished ${today} ${today === 1 ? "piece" : "pieces"} of work today`);
   if (input.pending > 0) parts.push(`${input.pending} recommendation${input.pending === 1 ? " is" : "s are"} waiting for your approval`);
   if (parts.length === 1) {
     return input.lastReviewAt ? `${parts[0]} Nothing needs you right now.` : `${parts[0]} It starts reviewing results once a campaign is live.`;

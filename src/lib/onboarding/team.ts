@@ -30,20 +30,20 @@ export function nextUp(focus: StepId | null): { agent: AgentRole; text: string }
   switch (focus) {
     case "business":
     case "learn":
-      return { agent: "STRATEGIST", text: "Your Strategy Agent reads your website (if you have one) to learn what you sell and who buys it." };
+      return { agent: "STRATEGIST", text: "MAIRO reads your website (if you have one) to learn what you sell and who buys it." };
     case "goal":
     case "plan":
-      return { agent: "STRATEGIST", text: "Your Strategy Agent writes your free plan; your Audience Agent chooses who it reaches; your Creative Agent drafts the first ad ideas." };
+      return { agent: "STRATEGIST", text: "MAIRO writes your free plan, chooses who it reaches and drafts the first ad ideas." };
     case "edit":
     case "approve":
-      return { agent: "STRATEGIST", text: "Ask for any change in your own words and your Strategy Agent rewrites that part of the plan, explaining why." };
+      return { agent: "STRATEGIST", text: "Ask for any change in your own words and MAIRO rewrites that part of the plan, explaining why." };
     case "connect":
     case "subscribe":
-      return { agent: "ARCHITECT", text: "Once Meta is connected and your plan is active, your Campaign Agent builds the campaign in your ad account — switched off." };
+      return { agent: "ARCHITECT", text: "Once Meta is connected and your plan is active, MAIRO builds the campaign in your ad account — switched off." };
     case "prepare":
-      return { agent: "ARCHITECT", text: "Your Campaign Agent builds it in your ad account, switched off, and your Budget Guardian checks the budget against your limits." };
+      return { agent: "ARCHITECT", text: "MAIRO builds it in your ad account, switched off, and its Budget Guardian checks the budget against your limits." };
     case "launch":
-      return { agent: "ARCHITECT", text: "After you approve, your Campaign Agent switches it on once Meta has approved the ad. Your Analytics Agent then reads the first results." };
+      return { agent: "ARCHITECT", text: "After you approve, MAIRO switches it on once Meta has approved the ad, then reads the first results." };
     default:
       return null;
   }

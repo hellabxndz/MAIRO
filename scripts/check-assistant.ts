@@ -57,8 +57,8 @@ check("the rest of the digits are gone", !masked.includes("555123"));
 check("a short string does not throw or expose", maskPhone("12") === "•••");
 
 console.log("\n— the assistant's name —");
-check("nothing stored means Alex", assistantNameOf(null) === DEFAULT_ASSISTANT_NAME);
-check("an empty name means Alex", assistantNameOf("   ") === DEFAULT_ASSISTANT_NAME);
+check("nothing stored means MAIRO — one AI, the product's own name", assistantNameOf(null) === DEFAULT_ASSISTANT_NAME && DEFAULT_ASSISTANT_NAME === "MAIRO");
+check("an empty name means MAIRO", assistantNameOf("   ") === DEFAULT_ASSISTANT_NAME);
 check("a real name is kept, trimmed", assistantNameOf("  Jess  ") === "Jess");
 check("a silly long name is cut rather than rejected", assistantNameOf("x".repeat(200)).length === 24);
 
@@ -74,7 +74,7 @@ const c = systemPromptFor("SUPPORT", { assistantName: "Jess", businessName: "Bel
 check("all three old types now produce the same prompt", a === b && b === c);
 check("the prompt answers to the chosen name", a.includes("You are Jess"));
 check("and knows whose business it is", a.includes("Bell Plumbing"));
-check("with no name stored it answers to Alex",
+check("with no name stored it answers to MAIRO",
   systemPromptFor("SUPPORT", { businessName: "Bell Plumbing" }).includes(`You are ${DEFAULT_ASSISTANT_NAME}`));
 
 console.log("\n— the prompt keeps the product's promises —");

@@ -25,8 +25,8 @@ export function AskTeam({ name }: { name: string }) {
   };
   return (
     <section aria-labelledby="ask-team" className="rounded-[28px] border border-[color:var(--mairo-line-lit)] p-5 sm:p-6" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(var(--mairo-fg-rgb),0.01) 70%)" }}>
-      <h2 id="ask-team" className="text-[15px] font-semibold text-white">Ask your AI team</h2>
-      <p className="mt-1 text-[13px] text-muted">Ask in your own words. {name} answers from your real campaigns and business, and brings in the right specialist.</p>
+      <h2 id="ask-team" className="text-[15px] font-semibold text-white">Ask MAIRO</h2>
+      <p className="mt-1 text-[13px] text-muted">Ask in your own words. {name} answers from your real campaigns and what it knows about your business.</p>
       <form
         className="mt-3 flex flex-col gap-2 sm:flex-row"
         onSubmit={(e) => {

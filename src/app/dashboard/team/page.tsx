@@ -17,7 +17,7 @@ import { TrailCard } from "@/components/team/trail";
 // decisions and connections. An agent with nothing to do says it's idle;
 // nothing spins to suggest work that isn't happening.
 
-export const metadata = { title: "Your AI Team — MAIRO" };
+export const metadata = { title: "MAIRO — MAIRO" };
 export const dynamic = "force-dynamic";
 
 const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright";
@@ -50,12 +50,12 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   return (
     <div className="mx-auto max-w-[1180px]">
       <header className="mb-6">
-        <p className={eyebrow}>Your MAIRO AI Team</p>
-        <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">Eight AI specialties working on your advertising</h1>
+        <p className={eyebrow}>MAIRO</p>
+        <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">What MAIRO is working on</h1>
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">{team.welcome}</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium text-black shadow-[var(--mairo-glow-key)]">
-            Ask your AI team
+            Ask MAIRO
           </Link>
           {team.pending > 0 && (
             <Link href="/dashboard/decisions" className="rounded-full border border-[color:var(--mairo-line-lit)] px-5 py-2.5 text-[13.5px] text-white">
@@ -65,7 +65,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         </div>
       </header>
 
-      <section aria-label="Your AI team" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="MAIRO" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {team.statuses.map((s) => (
           <AgentCard key={s.role} status={s} pending={team.pendingByAgent[s.role] ?? 0} contribution={team.contribution[s.role] ?? null} now={now} timeZone={team.timeZone} />
         ))}
@@ -76,7 +76,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           <h2 id="together" className={eyebrow}>How your team worked together</h2>
           <Link href="/dashboard/decisions" className="text-[12.5px] text-muted hover:text-white">Approval Center →</Link>
         </div>
-        <p className="mt-2 max-w-[760px] text-[13px] text-muted">Each recommendation, and every specialist that took part in it — from the records of your daily reviews, your answer, and what Meta confirmed.</p>
+        <p className="mt-2 max-w-[760px] text-[13px] text-muted">Each recommendation, and every part of MAIRO&rsquo;s work that went into it — from the records of your daily reviews, your answer, and what Meta confirmed.</p>
         {trails.length === 0 ? (
           <p className="mt-4 text-[14px] text-muted">No recommendations yet. Once a campaign has run long enough to judge, the team&rsquo;s work on each one shows here.</p>
         ) : (
@@ -97,10 +97,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
       <section id="activity" aria-labelledby="activity-title" className="mt-8 scroll-mt-24 rounded-[28px] p-5 sm:p-7" style={panel}>
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 id="activity-title" className={eyebrow}>AI Team activity</h2>
+          <h2 id="activity-title" className={eyebrow}>What MAIRO did</h2>
           <p className="text-[12px] text-faint">The last 30 days. Every line is something that really ran.</p>
         </div>
-        <nav aria-label="Filter by specialist" className="-mx-1 mt-4 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <nav aria-label="Filter by kind of work" className="-mx-1 mt-4 flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none]">
           <Link href="/dashboard/team#activity" aria-current={!filter ? "page" : undefined} className={`shrink-0 rounded-full px-3.5 py-1.5 text-[12.5px] ${!filter ? "bg-white/[0.1] text-white" : "text-muted hover:text-white"}`}>
             Everyone
           </Link>
@@ -124,7 +124,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       </section>
 
       <details className="mt-6 rounded-[28px] p-5 sm:p-7" style={panel}>
-        <summary className="cursor-pointer text-[14px] text-white">How your AI team works</summary>
+        <summary className="cursor-pointer text-[14px] text-white">How MAIRO works</summary>
         <ol className="mt-4 space-y-2.5">
           {WORKFLOW.map(([role, text], i) => (
             <li key={i} className="flex items-start gap-3 text-[13.5px] text-white/85">
@@ -136,7 +136,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
           ))}
         </ol>
         <p className="mt-5 max-w-3xl text-[12.5px] leading-relaxed text-muted">
-          The eight specialties are parts of one AI system, not eight people or eight separate programs. They check on a schedule —
+          This is one MAIRO, doing different kinds of work — not separate AIs, and not people. It checks on a schedule —
           once a day and when you open MAIRO — not every second. Nothing that launches a campaign, raises what you spend or changes
           who a running campaign reaches happens without your approval, unless you&rsquo;ve chosen an automation level in Settings that
           allows small changes; even then, never above your limits. MAIRO can&rsquo;t promise sales, leads or a particular return.

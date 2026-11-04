@@ -20,6 +20,7 @@ import { confirmationQuestion, requiresConfirmation, type FactChange } from "@/l
 import { BRAIN_FIELDS } from "@/lib/brain/catalog";
 import { displayValue, hasValue } from "@/lib/brain/rules";
 import { can, ROLE_LABEL, type Permission, type Role } from "@/lib/members/roles";
+import { customerRulesFrom } from "@/lib/brain/customer-rules";
 
 // What the assistant can look at and propose — One-Click Fix.
 //
@@ -146,7 +147,7 @@ function allTools(organizationId: string) {
 
     get_ai_team: tool({
       description:
-        "Read what the business's MAIRO AI Team is really doing: each of the eight specialties (Strategy, Audience, Creative, Campaign, Optimization, Budget Guardian, Analytics, Growth), its current state, the last thing it finished, recommendations waiting for approval, and the team's recent activity. Use it when the person asks what MAIRO or the team is working on, what happened recently, or why something was done.",
+        "Read what MAIRO is working on for this business, by kind of work (strategy, audience, creatives, campaign setup, optimization, Budget Guardian, analytics, growth): the state of each, the last thing finished, recommendations waiting for approval, and recent work. Use it when the person asks what MAIRO is working on or why something was done. Speak as one MAIRO.",
       inputSchema: z.object({}),
       execute: async () => {
         const team = await loadTeam(organizationId);
@@ -154,7 +155,7 @@ function allTools(organizationId: string) {
           summary: team.welcome,
           waitingForApproval: team.pending,
           nextScheduledReview: team.nextReview?.toISOString() ?? null,
-          specialists: team.statuses.map((st) => ({
+          work: team.statuses.map((st) => ({
             name: AGENT[st.role].name,
             state: st.label,
             now: st.line,
@@ -170,7 +171,7 @@ function allTools(organizationId: string) {
 
     get_performance_coach: tool({
       description:
-        "Read the business's Performance Coach: its results from ad to customer over the last two weeks against the two before (spend from Meta, leads MAIRO stored, and what the business marked — good leads, appointments, customers, confirmed sales), where people drop out, what the AI team found with the evidence and possible explanations, what MAIRO can't see yet, and what followed earlier changes. Use it for \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\", \"should I increase my budget\" and \"what is my AI team doing to improve my campaigns\".",
+        "Read the business's Performance Coach: its results from ad to customer over the last two weeks against the two before (spend from Meta, leads MAIRO stored, and what the business marked — good leads, appointments, customers, confirmed sales), where people drop out, what MAIRO found with the evidence and possible explanations, what MAIRO can't see yet, and what followed earlier changes. Use it for \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\", \"should I increase my budget\" and \"what is my AI team doing to improve my campaigns\".",
       inputSchema: z.object({}),
       execute: async () => {
         const [findings, history] = await Promise.all([loadFindings(organizationId), loadChangeHistory(organizationId)]);
@@ -210,7 +211,7 @@ function allTools(organizationId: string) {
             evidenceStrength: x.confidence,
             limitations: x.limitations,
             missing: x.missing,
-            specialists: x.agents.map((a) => AGENT[a as keyof typeof AGENT]?.name ?? a),
+            workedOnBy: x.agents.map((a) => AGENT[a as keyof typeof AGENT]?.name ?? a),
             planStatus: x.status,
           })),
           cantSeeYet: (live?.gaps ?? []).map((g) => `${g.title}: ${g.why}`),
@@ -272,6 +273,8 @@ function allTools(organizationId: string) {
           temporary: s.temporary.map((t) => ({ text: t.text, state: t.state, ends: t.endsAt?.toISOString().slice(0, 10) ?? null })),
           learned: s.learned.filter((l) => l.active).map((l) => l.said),
           unknownButUseful: s.questions.map((q) => q.text),
+          // The business's rules for MAIRO: maxRadiusMiles is enforced on every change; follow the instructions always.
+          rules: customerRulesFrom(s.profile as unknown as Record<string, unknown>),
         };
       },
     }),
@@ -299,6 +302,38 @@ function allTools(organizationId: string) {
         if (requiresConfirmation(change) && !confirmed) return { ok: false, needsConfirmation: true, ask: confirmationQuestion(change) };
         const r = await changeBrain(organizationId, change, "assistant");
         return r.ok ? { ok: true, learned: r.changed, message: r.text } : { ok: false, message: r.error };
+      },
+    }),
+
+    get_tracking_health: tool({
+      description:
+        "Read whether this business's tracking works, as MAIRO's daily check with Meta last found it: the verdict (working, needs attention, broken, not set up, not needed, or not checked yet), what Meta reported, when it was checked, and the fix. Use it for \"is my tracking working\", \"fix my tracking\" or before explaining missing sales. Never say tracking works unless this says working.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const p = await db.trackingProfile.findUnique({ where: { organizationId }, select: { healthStatus: true, healthHeadline: true, healthDetail: true, healthCheckedAt: true, healthChangedAt: true } });
+        if (!p?.healthStatus) return { verdict: "not_checked_yet", message: "MAIRO hasn't run its tracking check for this business yet. It runs every day.", fixAt: "/dashboard/pixel" };
+        return { verdict: p.healthStatus, headline: p.healthHeadline, detail: p.healthDetail, checkedAt: p.healthCheckedAt?.toISOString() ?? null, sinceThisVerdict: p.healthChangedAt?.toISOString() ?? null, fixAt: "/dashboard/pixel" };
+      },
+    }),
+
+    get_recent_activity: tool({
+      description:
+        "Read what MAIRO actually did for this business recently, from its records: changes made in Meta (automatically or after approval), what failed and why, settings changed, and recommendations prepared and waiting. Use it for \"what did you do for my business today/this week?\". Report only what this returns.",
+      inputSchema: z.object({ days: z.number().int().min(1).max(30).default(1).describe("How many days back; 1 means today and last night") }),
+      execute: async ({ days }) => {
+        const since = new Date(Date.now() - days * 864e5);
+        const [done, failed, prepared] = await Promise.all([
+          db.mairoActivity.findMany({ where: { organizationId, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 20, select: { summary: true, reason: true, automatic: true, createdAt: true } }),
+          db.mairoDecision.findMany({ where: { organizationId, status: "FAILED", updatedAt: { gte: since } }, take: 10, select: { title: true, resultJson: true, updatedAt: true } }),
+          db.mairoDecision.findMany({ where: { organizationId, status: "PENDING", createdAt: { gte: since } }, take: 10, select: { title: true, recommendation: true, createdAt: true } }),
+        ]);
+        return {
+          since: since.toISOString(),
+          changesMade: done.map((d) => ({ what: d.summary, why: d.reason, by: d.automatic ? "MAIRO, within the owner's Autopilot limits" : "a person (approved or set by the team)", at: d.createdAt.toISOString() })),
+          failed: failed.map((f) => ({ what: f.title, result: f.resultJson ? safeJson(f.resultJson) : null, at: f.updatedAt.toISOString() })),
+          preparedForApproval: prepared.map((p) => ({ what: p.title, recommendation: p.recommendation, at: p.createdAt.toISOString() })),
+          note: done.length + failed.length + prepared.length === 0 ? "Nothing was changed, failed or prepared in this period." : null,
+        };
       },
     }),
 
@@ -394,12 +429,13 @@ export const MISSION_BRIEF = [
 ].join("\n");
 
 export const AI_TEAM_BRIEF = [
-  "Your MAIRO AI Team:",
-  "- You speak for the business's MAIRO AI Team: eight specialties of one AI system — Strategy Agent, Audience Agent, Creative Agent, Campaign Agent, Optimization Agent, Budget Guardian, Analytics Agent and Growth Advisor. They are not people and not separate programs; never imply otherwise.",
-  "- Route each question to the right specialty's tools and say who looked (\"Your Analytics Agent checked: …\"): performance and \"why did leads drop\" → diagnose_campaigns (Analytics/Optimization); \"why am I spending more\" → diagnose_campaigns and the budget figures (Budget Guardian); \"make a better ad\" → propose_fix or Creative Studio (Creative); \"what is my team working on\" → get_ai_team.",
-  "- \"How much money have I spent?\" → get_spend (ad spend from Meta, not the subscription). \"What's the next best thing to improve?\" or \"what should I do next?\" → next_best_step, then explain the first item plainly and say where it came from. \"How are my ads doing?\" or \"should I change my campaign?\" → diagnose_campaigns, and get_performance_coach when leads or customers matter. \"What is my team working on?\" → get_ai_team. Pick the tools yourself; never ask the person which specialist to use.",
-  "- Only describe work get_ai_team or another tool shows actually happened. If nothing has run, say so. The team checks once a day and when the business opens MAIRO — never say it watches continuously.",
-  "- Recommendations wait for the owner's approval unless their automation settings allow small changes within their limits. Never say a change was made unless a tool confirms it.",
+  "One MAIRO:",
+  "- You are the one MAIRO for this business — its advertising manager. There are no specialists, agents or teams to hand off to, and you never present yourself as several AIs. Inside, MAIRO's work is recorded by kind (strategy, audience, creatives, campaign setup, optimization, Budget Guardian, analytics, growth); you may say which part of the job something was (\"MAIRO's Budget Guardian checked it against your limits\"), always as MAIRO.",
+  "- Pick the tools yourself; never ask the person which part of MAIRO should look. Performance and \"why did leads drop\" → diagnose_campaigns; \"why am I spending more\" → diagnose_campaigns and the budget figures; \"make a better ad\" → propose_fix or Creative Studio; \"what are you working on\" → get_ai_team; \"what did you do for my business today\" → get_recent_activity; \"is my tracking working\" or \"fix my tracking\" → get_tracking_health.",
+  "- \"How much money have I spent?\" → get_spend (ad spend from Meta, not the subscription). \"What's the next best thing to improve?\" or \"what should I do next?\" → next_best_step, then explain the first item plainly and say where it came from. \"How are my ads doing?\" or \"should I change my campaign?\" → diagnose_campaigns, and get_performance_coach when leads or customers matter.",
+  "- Only describe work get_ai_team, get_recent_activity or another tool shows actually happened. If nothing has run, say so. MAIRO checks once a day and when the business opens MAIRO — never say it watches continuously.",
+  "- Recommendations wait for the owner's approval unless their automation settings allow small changes within their limits. Never say a change was made unless a tool confirms it, and say plainly when one failed.",
+  "- The business's rules (get_business_brain → rules: e.g. the furthest from its area to advertise) bind every recommendation. Never suggest or prepare something that breaks one; if the owner wants it, they change the rule in their business profile first.",
   "- For \"why am I not getting customers\", \"are my ads working\", \"why are my leads expensive\", \"what should I change\", \"are my ads wasting money\" or \"should I increase my budget\", call get_performance_coach and answer from it, in plain words first, numbers after. Keep what MAIRO observed apart from possible explanations; never state a cause as certain. If the drop is after the lead (follow-up, booking, closing), say so — don't blame the ads. If something important isn't tracked (leads not marked, no pixel, no sale values), say exactly what's missing and ask only for that. Never suggest more budget while the coach says to hold off.",
 ].join("\n");
 
@@ -411,3 +447,11 @@ export const ONE_CLICK_FIX_BRIEF = [
   "- Only MAIRO's own recommended fixes can be proposed. For anything else (their website, a new campaign), say what to do and where.",
   "- If the data status is \"learning\", say MAIRO needs more campaign data before making this recommendation. Never promise results or revenue.",
 ].join("\n");
+
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}

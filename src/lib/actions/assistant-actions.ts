@@ -68,7 +68,7 @@ export async function renameAssistantAction(
   return { saved: `Your assistant is now called ${name}.` };
 }
 
-/** Back to Alex. */
+/** Back to the default name, MAIRO. */
 export async function resetAssistantNameAction(): Promise<void> {
   // Role check: business.edit (lib/members/roles.ts).
   if (await deniedFor("business.edit")) return;

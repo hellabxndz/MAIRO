@@ -59,7 +59,7 @@ const LOCKED: { prefix: string; title: string; text: string }[] = [
   { prefix: "/dashboard/creative-studio", title: "Creative Studio", text: "Creative generation is part of your MAIRO plan." },
   { prefix: "/dashboard/reports", title: "Reports", text: "Weekly Reports start once a real campaign is running." },
   { prefix: "/dashboard/activity", title: "MAIRO Activity", text: "See everything MAIRO does for you once it's running your ads." },
-  { prefix: "/dashboard/intelligence", title: "MAIRO Intelligence", text: "Your AI team's brief, decisions and early warnings start once a real campaign is running." },
+  { prefix: "/dashboard/intelligence", title: "MAIRO Intelligence", text: "MAIRO's brief, decisions and early warnings start once a real campaign is running." },
   { prefix: "/dashboard/agents", title: "MAIRO AI", text: "Chat with MAIRO about your live ads after activating. You can already ask MAIRO to change your free plan." },
   { prefix: "/dashboard/health", title: "Business Health", text: "Business Health appears after a real campaign has run long enough to measure." },
 ];

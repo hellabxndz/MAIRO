@@ -65,7 +65,7 @@ export default async function NotificationsPage() {
         <GlassPanel className="px-6 py-14 text-center">
           <h2 className="text-[16px] font-medium text-white">Nothing to tell you yet</h2>
           <p className="mx-auto mt-2.5 max-w-md text-[13px] leading-relaxed text-muted">
-            Your AI team checks your campaigns once a day, and when you open MAIRO, and writes
+            MAIRO checks your campaigns once a day, and when you open MAIRO, and writes
             here when something is worth your attention — a campaign spending without results,
             an ad account that has disconnected. Quiet means nothing needs you.
           </p>

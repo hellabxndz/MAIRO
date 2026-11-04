@@ -30,7 +30,7 @@ export function ConversionBlock() {
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">
               <dt className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/50">Your MAIRO subscription</dt>
               <dd className="mt-1.5 text-[14.5px] leading-relaxed text-white/80">
-                From ${starter.priceMonthly} a month — {PRO_TRIAL_DAYS}-day free trial on {starter.name}. It pays for your AI team: planning, building, daily checks, recommendations and reports.
+                From ${starter.priceMonthly} a month — {PRO_TRIAL_DAYS}-day free trial on {starter.name}. It pays for MAIRO: planning, building, daily checks, recommendations and reports.
               </dd>
             </div>
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5">

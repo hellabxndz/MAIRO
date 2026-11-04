@@ -5,6 +5,7 @@ import type { DateRange, PlatformMetrics } from "@/lib/ad-platforms/types";
 import { probeLandingPage } from "@/lib/campaigns/landing-probe";
 import { resultsFor } from "@/lib/protection/rules";
 import type { AdSnapshot, CampaignSnapshot, DecisionInput, Guardrails } from "./types";
+import { customerRulesFrom } from "@/lib/brain/customer-rules";
 
 // Reads what MAIRO Decisions needs from the ad networks: every running
 // campaign's figures over three windows, and the same per ad.
@@ -30,6 +31,16 @@ export function windows(now: Date): { recent: DateRange; prior: DateRange; week:
   };
 }
 
+function parseProfileJson(raw: string | null | undefined): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return v && typeof v === "object" ? (v as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 export const DEFAULT_GUARDRAILS: Guardrails = {
   maxDailyBudgetCents: null,
   maxDailyIncreasePercent: 20,
@@ -40,9 +51,15 @@ export const DEFAULT_GUARDRAILS: Guardrails = {
 };
 
 export async function guardrailsFor(organizationId: string): Promise<Guardrails> {
-  const s = await db.autoOptimizeSettings.findUnique({ where: { organizationId } });
-  if (!s) return DEFAULT_GUARDRAILS;
+  const [s, brain] = await Promise.all([
+    db.autoOptimizeSettings.findUnique({ where: { organizationId } }),
+    db.businessBrain.findUnique({ where: { organizationId }, select: { profileJson: true } }),
+  ]);
+  // The business's own rules hold whatever its automation settings are.
+  const { maxRadiusMiles } = customerRulesFrom(parseProfileJson(brain?.profileJson));
+  if (!s) return { ...DEFAULT_GUARDRAILS, maxRadiusMiles };
   return {
+    maxRadiusMiles,
     maxDailyBudgetCents: s.maxDailyBudgetCents,
     maxDailyIncreasePercent: s.maxDailyIncreasePercent,
     maxDailyDecreasePercent: s.maxDailyDecreasePercent,

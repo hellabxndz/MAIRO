@@ -158,7 +158,7 @@ check("too early and nothing to change are said plainly", () => {
 
 check("the welcome line counts only what really happened", () => {
   const statuses = [agentStatus(base({ runs: [run("DONE", 30)] })), agentStatus(base({ role: "ANALYST", runs: [run("DONE", 40)] })), agentStatus(base({ role: "GROWTH", runs: [] }))];
-  assert.equal(teamWelcome({ now, statuses, pending: 1, lastReviewAt: ago(30) }), "Your MAIRO AI Team last reviewed your campaigns today at 2:30 PM. 2 specialists finished work today, and 1 recommendation is waiting for your approval.");
+  assert.equal(teamWelcome({ now, statuses, pending: 1, lastReviewAt: ago(30) }), "MAIRO last reviewed your campaigns today at 2:30 PM. MAIRO finished 2 pieces of work today, and 1 recommendation is waiting for your approval.");
   assert.match(teamWelcome({ now, statuses: [], pending: 0, lastReviewAt: null }), /ready\. It starts reviewing results once a campaign is live\./);
   assert.match(teamWelcome({ now, statuses: [], pending: 0, lastReviewAt: ago(30) }), /Nothing needs you right now/);
 });

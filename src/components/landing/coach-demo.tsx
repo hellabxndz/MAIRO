@@ -101,7 +101,7 @@ function Finding({ view }: { view: ExampleView }) {
           <p className="mt-1.5 text-[11.5px] text-faint">{evidenceBased ? "Seen in the owner's records — still not proof it's the cause." : "Possible reasons only. The cause isn't confirmed."}</p>
         </section>
         <section>
-          <h4 className={h}>What your AI team recommends</h4>
+          <h4 className={h}>What MAIRO recommends</h4>
           <p className="mt-1.5 text-[13.5px] font-medium leading-relaxed text-white">{f.recommendation}</p>
           <ol className="mt-2 space-y-1 text-[12.5px] text-white/80">
             {f.steps.map((s, i) => (
@@ -135,7 +135,7 @@ function Finding({ view }: { view: ExampleView }) {
           <h4 className={h}>Approve or investigate</h4>
           <div className="mt-2 flex flex-wrap gap-2" aria-hidden>
             <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3.5 py-1.5 text-[12.5px] font-medium text-black">Approve the plan</span>
-            <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[12.5px] text-white/85">Investigate with your AI team</span>
+            <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[12.5px] text-white/85">Investigate with MAIRO</span>
           </div>
           <p className="mt-2 text-[11.5px] leading-relaxed text-faint">In MAIRO, approving a plan changes nothing on Meta. Any change to a campaign shows what will change and waits for its own approval.</p>
         </section>

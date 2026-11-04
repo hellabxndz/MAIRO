@@ -60,7 +60,7 @@ export async function otherApprovals(organizationId: string, now = new Date()): 
     out.push({ key: "plan", kind: "plan", agent: "STRATEGIST", title: "Your advertising plan is ready", text: "Read it, ask for changes, then approve it.", budget: "Nothing is spent by approving a plan.", authorization: "Your approval.", href: "/plan", launch: null });
   }
   if (mission) {
-    out.push({ key: `mission-${mission.id}`, kind: "mission", agent: "STRATEGIST", title: `New plan: ${mission.title}`, text: "Your Strategy Agent proposed a new mission for your advertising.", budget: "Nothing is spent by approving a plan.", authorization: "Your approval.", href: "/dashboard/mission", launch: null });
+    out.push({ key: `mission-${mission.id}`, kind: "mission", agent: "STRATEGIST", title: `New plan: ${mission.title}`, text: "MAIRO proposed a new mission for your advertising.", budget: "Nothing is spent by approving a plan.", authorization: "Your approval.", href: "/dashboard/mission", launch: null });
   }
   for (const f of coach) {
     let agent: AgentRole = "ANALYST";

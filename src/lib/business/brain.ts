@@ -112,6 +112,11 @@ export const profileSchema = z.object({
   declinedQuestions: list,
   /** Gross margin, when the business tells MAIRO. Used for profit on the dashboard. */
   profitMarginPercent: z.number().min(0).max(100).nullable().default(null),
+  // The business's rules for MAIRO (lib/brain/customer-rules.ts).
+  /** The furthest from its area to advertise, as the owner said it ("20 miles"). Enforced in code. */
+  maxRadiusMiles: text,
+  /** Always/never instructions in the owner's words, given to MAIRO's AI with every request. */
+  standingInstructions: list,
 });
 
 export type BrainProfile = z.infer<typeof profileSchema>;
@@ -386,6 +391,8 @@ export function brainBrief(p: BrainProfile): string {
     line("Main goals", p.mainGoals),
     line("Offers that worked", p.successfulOffers),
     line("Offers that didn't", p.unsuccessfulOffers),
+    ...(p.maxRadiusMiles.trim() ? [`- RULE — never advertise further than ${p.maxRadiusMiles.trim().replace(/\s*(mi|miles?)$/i, "")} miles from their area (enforced: changes beyond it are refused)`] : []),
+    ...p.standingInstructions.map((x) => `- RULE from the owner — always follow: ${x.slice(0, 300)}`),
   ].join("\n");
 }
 
@@ -455,7 +462,8 @@ export function sanitizeProfile(input: Partial<Record<BrainField, unknown>>): Pa
       case "purchaseConsiderations":
       case "fonts":
       case "preferredWording":
-      case "avoidClaims": {
+      case "avoidClaims":
+      case "standingInstructions": {
         const list = strs(v);
         if (list) out[k] = list;
         break;

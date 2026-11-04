@@ -17,7 +17,7 @@ export function CoachCard({ top, count }: { top: { id: string; title: string; pl
           <p className="mt-3 text-[15.5px] font-medium text-white">{top.title}</p>
           <p className="mt-1.5 max-w-[760px] text-[14px] leading-relaxed text-white/80">{top.plain}</p>
           <Link href={`/dashboard/coach#${top.id}`} className="mt-4 inline-block rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[13px] font-medium text-black">
-            See what your AI team recommends
+            See what MAIRO recommends
           </Link>
         </>
       ) : (

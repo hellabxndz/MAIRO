@@ -166,7 +166,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         </div>
       )}
 
-      <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">AI Team tasks that failed or got stuck (48 hours)</h2>
+      <h2 className="mb-3 mt-10 text-sm font-medium text-neutral-300">MAIRO tasks that failed or got stuck (48 hours)</h2>
       {failedRuns.length === 0 ? (
         <p className="text-[13px] text-neutral-500">None.</p>
       ) : (

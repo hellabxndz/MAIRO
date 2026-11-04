@@ -142,7 +142,7 @@ export function HelpContact({ signedIn }: { signedIn: boolean }) {
       </h2>
       {signedIn ? (
         <p className="mt-2 text-[14px] leading-relaxed text-white/75">
-          Ask your AI team — it can see your account and explain what&rsquo;s happening in it. For anything about MAIRO itself, use <strong className="font-medium text-white">Feedback</strong> in the sidebar: it goes to the MAIRO team. Or email{" "}
+          Ask MAIRO — it can see your account and explain what&rsquo;s happening in it. For anything about MAIRO itself, use <strong className="font-medium text-white">Feedback</strong> in the sidebar: it goes to the MAIRO team. Or email{" "}
           <a href={`mailto:${LEGAL.contactEmail}`} className="text-violet-bright underline underline-offset-4 hover:text-white">
             {LEGAL.contactEmail}
           </a>
@@ -159,7 +159,7 @@ export function HelpContact({ signedIn }: { signedIn: boolean }) {
       )}
       {signedIn && (
         <Link href="/dashboard/agents" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-          Ask your AI team <span aria-hidden>→</span>
+          Ask MAIRO <span aria-hidden>→</span>
         </Link>
       )}
     </section>

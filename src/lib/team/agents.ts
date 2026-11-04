@@ -1,6 +1,13 @@
 import type { AgentRole } from "@/generated/prisma/enums";
 
-// The MAIRO AI Team: eight specialties, one system.
+// The kinds of work one MAIRO does — never separate AI personas.
+//
+// The customer talks to one MAIRO (docs/UNIFIED-AI-ARCHITECTURE.md). Inside,
+// its work is still split eight ways because the services are: each kind of
+// work is a set of MAIRO's existing services and is recorded as its own
+// AgentRun, so "what MAIRO did" can say which part of the job it was
+// ("MAIRO · Budget Guardian checked the budget"). The names say MAIRO first
+// for that reason: one AI, different jobs.
 //
 // Each specialty is a set of MAIRO's existing services, not a separately
 // running model or a person. The Strategist's work is the Business Analyzer,
@@ -43,7 +50,7 @@ export type AgentInfo = {
 export const AGENTS: AgentInfo[] = [
   {
     role: "STRATEGIST",
-    name: "Strategy Agent",
+    name: "MAIRO · Strategy",
     specialty: "Your advertising plan",
     purpose: "The brain behind your advertising",
     does: [
@@ -62,7 +69,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "AUDIENCE",
-    name: "Audience Agent",
+    name: "MAIRO · Audience",
     specialty: "Finding customers",
     purpose: "Finds people likely to be interested",
     does: [
@@ -80,7 +87,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "CREATIVE",
-    name: "Creative Agent",
+    name: "MAIRO · Creatives",
     specialty: "Ads people want to see",
     purpose: "Creates and tests your ads",
     does: [
@@ -98,7 +105,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "ARCHITECT",
-    name: "Campaign Agent",
+    name: "MAIRO · Campaign setup",
     specialty: "Building campaigns",
     purpose: "Builds and launches campaigns",
     does: [
@@ -117,7 +124,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "OPTIMIZER",
-    name: "Optimization Agent",
+    name: "MAIRO · Optimization",
     specialty: "Better results",
     purpose: "Improves results over time",
     does: [
@@ -136,7 +143,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "GUARDIAN",
-    name: "Budget Guardian",
+    name: "MAIRO · Budget Guardian",
     specialty: "Protecting your money",
     purpose: "Protects your budget",
     does: [
@@ -155,7 +162,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "ANALYST",
-    name: "Analytics Agent",
+    name: "MAIRO · Analytics",
     specialty: "What's working",
     purpose: "Explains your results",
     does: [
@@ -174,7 +181,7 @@ export const AGENTS: AgentInfo[] = [
   },
   {
     role: "GROWTH",
-    name: "Growth Advisor",
+    name: "MAIRO · Growth",
     specialty: "Room to grow",
     purpose: "Helps the business grow",
     does: [

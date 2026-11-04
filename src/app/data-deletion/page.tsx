@@ -64,7 +64,7 @@ export default async function DataDeletionPage() {
               login; your business profile, onboarding answers and what {LEGAL.productName} learned about your
               business; your Meta connection and its access token, and any Google Tag Manager connection or
               phone number for texts; every plan, campaign record, ad, creative and social post; your
-              conversations with the AI team and its activity history; your leads and what you marked about
+              conversations with MAIRO and its activity history; your leads and what you marked about
               them; store orders and tracking settings; and feedback you sent us.</>,
             <><strong className="text-neutral-200">Pictures and videos</strong> you uploaded or {LEGAL.productName}{" "}
               made are deleted at the same time. If our file storage can&apos;t be reached at that moment, a daily

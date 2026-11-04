@@ -62,7 +62,7 @@ export function DailyBrief({ brief, now, timeZone, compact = false }: { brief: B
           <Items items={brief.changes} empty="No important changes in the last day." now={now} timeZone={timeZone} />
         </section>
         <section>
-          <h3 className={h}>Completed by your AI team</h3>
+          <h3 className={h}>Completed by MAIRO</h3>
           <Items items={brief.completed} empty="Nothing finished in the last day." now={now} timeZone={timeZone} tone="text-white/80" />
         </section>
         <section>

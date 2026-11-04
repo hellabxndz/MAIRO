@@ -107,7 +107,7 @@ export const EVERY_PLAN: { title: string; body: string }[] = [
   { title: "Campaigns built in your Meta ad account", body: "Facebook and Instagram campaigns, built switched off for your review. You can see every one in Meta Ads Manager." },
   { title: "Ad text and images", body: "AI-written ad text with versions to choose from, AI images, or your own pictures, videos and past posts." },
   { title: "A check before anything launches", body: "Every campaign is reviewed before launch, and you see the budget, audience, ads and costs before you approve it." },
-  { title: "Daily checks and recommendations", body: "Your AI team reads your results every day and explains what it would change, with the numbers behind it." },
+  { title: "Daily checks and recommendations", body: "MAIRO reads your results every day and explains what it would change, with the numbers behind it." },
   { title: "Spend Protection", body: "Spending limits that warn you — or, if you choose, pause a campaign. It never raises a budget." },
   { title: "Reports in plain English", body: "A Daily Brief, a weekly report and monthly results — what Meta reports kept apart from what you confirmed." },
 ];

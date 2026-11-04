@@ -41,7 +41,7 @@ export const CONFIRMING_SOURCES: FactSource[] = ["customer", "assistant", "admin
 
 export type FactMeta = { source: FactSource; status: FactStatus; updatedAt: string; verifiedAt: string };
 
-export type BrainSection = "business" | "products" | "customers" | "different" | "brand";
+export type BrainSection = "business" | "products" | "customers" | "different" | "brand" | "rules";
 
 export const SECTION_LABEL: Record<BrainSection, string> = {
   business: "Your Business",
@@ -49,6 +49,7 @@ export const SECTION_LABEL: Record<BrainSection, string> = {
   customers: "Your Customers",
   different: "What Makes You Different",
   brand: "Brand",
+  rules: "Your Rules for MAIRO",
 };
 
 export type FieldDef = {
@@ -109,6 +110,11 @@ export const BRAIN_FIELDS: FieldDef[] = [
   f("avoidClaims", "Words and claims to avoid", "brand", true, "MAIRO never writes these."),
   f("brandGuidelines", "Brand guidelines", "brand", false, "Rules every creative follows."),
   f("creativeAssets", "Material you have for ads", "brand", true, "Lets MAIRO recommend real photos and videos over generated ones."),
+  // Your rules for MAIRO — standing instructions. maxRadiusMiles is enforced in code
+  // (lib/brain/customer-rules.ts → every budget and audience change); the
+  // instructions are given to MAIRO's AI with every request.
+  f("maxRadiusMiles", "Furthest from your area to advertise (miles)", "rules", false, "MAIRO never recommends or makes an audience change beyond it.", true),
+  f("standingInstructions", "Standing instructions", "rules", true, "Things MAIRO always does or never does for you, in your words.", true),
 ];
 
 export const FIELD_BY_KEY: Record<string, FieldDef> = Object.fromEntries(BRAIN_FIELDS.map((d) => [d.key, d]));

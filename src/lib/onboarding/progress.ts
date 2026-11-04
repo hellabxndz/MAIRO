@@ -112,7 +112,7 @@ export function onboardingSteps(f: OnboardingFacts): OnboardingStep[] {
   add({
     id: "learn",
     label: "MAIRO learns about your business",
-    why: "Your Strategy Agent reads your website to see what you sell and who it's for.",
+    why: "MAIRO reads your website to see what you sell and who it's for.",
     who: "mairo",
     state: !f.business ? "todo" : !f.website ? "skipped" : f.learned.state === "read" ? "done" : f.learned.state === "failed" || laterDone ? "skipped" : "todo",
     detail: !f.business

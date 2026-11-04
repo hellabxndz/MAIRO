@@ -174,7 +174,7 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
             <Field label="What does your business do?" required why="So your plan and ads talk about what you actually sell.">
               <input className={input} value={business.offering} maxLength={200} onChange={(e) => setBusiness({ ...business, offering: e.target.value })} placeholder="e.g. Family dentistry and teeth whitening" />
             </Field>
-            <Field label="Your website" why="Your Strategy Agent reads it to learn your products, prices and what makes you different. Nothing is posted or changed.">
+            <Field label="Your website" why="MAIRO reads it to learn your products, prices and what makes you different. Nothing is posted or changed.">
               <input className={input} value={business.website} inputMode="url" onChange={(e) => setBusiness({ ...business, website: e.target.value })} placeholder="yourbusiness.com — or leave empty if you don't have one" />
             </Field>
             <div className="grid gap-5 sm:grid-cols-2">
@@ -220,11 +220,11 @@ export function OnboardingForm({ initialScreen, business: initialBusiness, goal:
           <h1 id="s-learn" className="text-[24px] font-semibold tracking-[-0.02em] text-white">MAIRO learns about your business</h1>
           {learning ? (
             <p role="status" className="mt-3 text-[14px] text-white/85">
-              Your Strategy Agent is reading {business.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}. This usually takes 10 to 30 seconds.
+              MAIRO is reading {business.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}. This usually takes 10 to 30 seconds.
             </p>
           ) : learnt?.read ? (
             <>
-              <p className="mt-2 text-[14px] text-muted">Here&rsquo;s what your Strategy Agent found on your website. Confirm it, fix it or remove it — your word always wins over the website.</p>
+              <p className="mt-2 text-[14px] text-muted">Here&rsquo;s what MAIRO found on your website. Confirm it, fix it or remove it — your word always wins over the website.</p>
               {learnt.pagesRead.length > 0 && (
                 <p className="mt-2 text-[12.5px] text-faint">
                   Read: {learnt.pagesRead.slice(0, 4).map((u, i) => (
@@ -483,7 +483,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
           {saved === "saving" ? "Saving…" : saved === "saved" ? "Saved — you can close this page and come back." : saved === "failed" ? "Couldn't save just now — your answers are still here." : "Saved as you go."}
         </span>
       </div>
-      <p className="mt-3 text-[12.5px] text-muted">Next, your Strategy Agent writes your free plan. It&rsquo;s free and builds nothing on Meta.</p>
+      <p className="mt-3 text-[12.5px] text-muted">Next, MAIRO writes your free plan. It&rsquo;s free and builds nothing on Meta.</p>
     </form>
   );
 }

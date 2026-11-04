@@ -34,7 +34,7 @@ type Props = {
   initialMessages: UIMessage[];
   /** What this account is called, for the opening line. */
   businessName: string;
-  /** What this business calls its assistant. Default "Alex". */
+  /** What this business calls its assistant. Default "MAIRO". */
   assistantName: string;
 };
 

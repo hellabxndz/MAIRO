@@ -218,7 +218,7 @@ export async function loadConsole(organizationId: string, userName: string, days
           : { label: "Ready", tone: "blue", running: false, detail: team.statuses.find((s) => s.lastDone)?.lastDone?.summary ?? null, href: "/dashboard/team" };
   const header: ConsoleHeaderData = {
     greeting,
-    subline: mission ? `Working toward: ${missionGoal(mission.primaryGoal).label}.` : "Your advertising, and the AI team working on it.",
+    subline: mission ? `Working toward: ${missionGoal(mission.primaryGoal).label}.` : "Your advertising, and MAIRO working on it.",
     business: org?.name ?? "Your business",
     adAccount: meta
       ? { label: meta.pageName ? `${meta.pageName} · ${meta.metaAdAccountId}` : meta.metaAdAccountId, state: meta.status === "CONNECTED" ? "connected" : "attention", href: "/dashboard/integrations" }
@@ -334,7 +334,7 @@ export async function loadConsole(organizationId: string, userName: string, days
     const best = [...overview.campaigns].filter((c) => (resultFor(family, c.metrics).value ?? 0) > 0).sort((a, b) => (resultFor(family, b.metrics).value ?? 0) - (resultFor(family, a.metrics).value ?? 0))[0];
     if (best) insights.push({ key: "best", text: `Most ${resultFor(family, best.metrics).label.toLowerCase()} came from “${best.name}”.`, href: `/dashboard/campaigns/${best.id}` });
   }
-  if (overview.pendingCount > 0) insights.push({ key: "pending", text: `${overview.pendingCount} recommendation${overview.pendingCount === 1 ? "" : "s"} from your AI team ${overview.pendingCount === 1 ? "is" : "are"} waiting for you.`, href: "/dashboard/decisions" });
+  if (overview.pendingCount > 0) insights.push({ key: "pending", text: `${overview.pendingCount} recommendation${overview.pendingCount === 1 ? "" : "s"} from MAIRO ${overview.pendingCount === 1 ? "is" : "are"} waiting for you.`, href: "/dashboard/decisions" });
 
   // ---- Team
   const members: TeamMemberData[] = team.statuses.map((s) => ({ role: s.role, state: s.label, tone: STATE_TONE[s.state] ?? "muted", line: s.current ?? s.line, href: `/dashboard/team?agent=${s.role}#activity` }));

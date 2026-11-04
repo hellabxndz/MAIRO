@@ -104,7 +104,7 @@ export const PLANS: Plan[] = [
     cta: "Get Started with Pro",
     features: [
       "Connect 1 Meta advertising account",
-      "All 8 AI advertising specialists",
+      "MAIRO AI: one advertising manager for strategy, creatives, campaigns and results",
       "AI campaign strategy and creation",
       "AI-generated ad creatives",
       "AI audience recommendations",

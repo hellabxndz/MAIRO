@@ -14,9 +14,9 @@ export function SetupTeam({ work, focus, timeZone }: { work: SetupWork[]; focus:
   const next = nextUp(focus);
   return (
     <section aria-labelledby="setup-team" className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <h2 id="setup-team" className="text-[15px] font-semibold text-white">Your AI team so far</h2>
+      <h2 id="setup-team" className="text-[15px] font-semibold text-white">MAIRO so far</h2>
       {work.length === 0 ? (
-        <p className="mt-2 text-[13px] text-muted">Nothing yet. Each specialist&rsquo;s work on your setup shows here as it happens.</p>
+        <p className="mt-2 text-[13px] text-muted">Nothing yet. MAIRO&rsquo;s work on your setup shows here as it happens.</p>
       ) : (
         <ul className="mt-3 space-y-3">
           {work.map((w) => (

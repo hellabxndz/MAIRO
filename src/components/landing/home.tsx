@@ -107,7 +107,7 @@ function Check({ children }: { children: ReactNode }) {
 const STEPS = [
   { n: "01", title: "Tell MAIRO about your business", body: "Your goal, your budget and your website. MAIRO writes a personalized advertising plan for you — free, no credit card.", icon: "M12 21a9 9 0 100-18 9 9 0 000 18zm0-5a4 4 0 100-8 4 4 0 000 8zm0-3a1 1 0 100-2 1 1 0 000 2z" },
   { n: "02", title: "Edit and approve your plan", body: "Change the audience, budget or ad ideas with MAIRO or by hand, and approve the plan when it's right.", icon: "M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h7" },
-  { n: "03", title: "Subscribe and approve the launch", body: "Connect your Meta ad account and choose a plan. MAIRO builds the campaign, you approve it with the budget shown, and your AI team checks it every day.", icon: "M5 20V10M11 20V4M17 20v-8" },
+  { n: "03", title: "Subscribe and approve the launch", body: "Connect your Meta ad account and choose a plan. MAIRO builds the campaign, you approve it with the budget shown, and MAIRO checks it every day.", icon: "M5 20V10M11 20V4M17 20v-8" },
 ];
 
 const TRUST = [
@@ -135,7 +135,7 @@ const SOURCE_TONE: Record<Source, string> = {
   Confirmed: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
 };
 const COACH_RULES: { title: string; body: string }[] = [
-  { title: "Follows every lead past the click", body: "You mark which enquiries were good, which booked and which paid. Your AI team follows each one from the ad to the sale." },
+  { title: "Follows every lead past the click", body: "You mark which enquiries were good, which booked and which paid. MAIRO follows each one from the ad to the sale." },
   { title: "Reported and confirmed stay apart", body: "What Meta estimates is never added to what you confirmed. Every number says where it came from." },
   { title: "Says what it knows — and what it doesn't", body: "Every finding shows the figures behind it. If a step isn't tracked yet, MAIRO says so rather than guessing, and a possible reason is never presented as the cause." },
   { title: "Changes are compared, not credited", body: "Two weeks after a change, MAIRO compares before and after. Results improving afterwards isn't proof the change caused it, and MAIRO says so." },
@@ -213,7 +213,7 @@ const FAQ = [
   },
   {
     q: "What's the difference between the plans?",
-    a: `There are two. MAIRO Pro ($139.99 a month) is the whole AI advertising team for one business: all 8 specialists, strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299.99 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, your team, the Performance Coach and priority support.`,
+    a: `There are two. MAIRO Pro ($139.99 a month) is one AI advertising manager for one business: strategy, campaigns, creatives, audiences, daily recommendations you approve, the AI Daily Brief and monthly reports, with ${DEFAULT_ENTITLEMENTS.PRO.studio_credits_monthly} AI creative credits a month and one Meta ad account. MAIRO Scale ($299.99 a month) adds up to ${DEFAULT_ENTITLEMENTS.SCALE_V2.ad_account_limit} Meta ad accounts, ${DEFAULT_ENTITLEMENTS.SCALE_V2.studio_credits_monthly} credits, optional AI Assist and Full Autopilot, advanced analytics and lead tracking, your team, the Performance Coach and priority support.`,
   },
   {
     q: "Which platforms and tools does MAIRO work with?",
@@ -277,7 +277,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
                 </p>
                 <p className="mt-5 flex items-start gap-3 text-[15px] font-semibold leading-snug text-white">
                   <span aria-hidden className="mt-[0.7em] h-px w-8 shrink-0 bg-[image:var(--mairo-ramp)]" />
-                  <span>You run the business. Your AI team handles the advertising.</span>
+                  <span>You run the business. MAIRO handles the advertising.</span>
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
@@ -329,7 +329,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <SectionHead
               badge="HOW IT WORKS"
               title={story ? "Three steps, and you decide at each one." : "Three steps from your goal to a live campaign."}
-              sub={story ? "Your preview and your plan are free. You subscribe only when you want MAIRO to build and run the campaign." : "Your advertising plan is free. You subscribe only when you want your AI team to build and run it."}
+              sub={story ? "Your preview and your plan are free. You subscribe only when you want MAIRO to build and run the campaign." : "Your advertising plan is free. You subscribe only when you want MAIRO to build and run it."}
             />
             <ol className="relative mt-14 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
               {/* The timeline line on phones. */}
@@ -391,7 +391,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             />
             <TeamExplorer />
             <p className="mx-auto mt-8 max-w-[820px] text-center text-[13px] leading-relaxed text-white/55">
-              Eight AI specialties of one AI system — not eight people, and not eight separate programs. Every line on your AI Team screen is
+              Eight AI specialties of one AI system — not eight people, and not eight separate programs. Every line on MAIRO screen is
               something that really ran, and every recommendation shows the numbers it&rsquo;s based on. MAIRO can&rsquo;t promise sales or a
               particular return.
             </p>
@@ -414,7 +414,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <SectionHead
               badge="SEE MAIRO AT WORK"
               title={<><span className="inline-block">One dashboard.</span> <span className={`inline-block ${GRADIENT_TEXT}`}>Your whole advertising team.</span></>}
-              sub="Click through the screens you'd use: your AI team, your results, recommendations waiting for you, your Performance Coach and your Daily Brief."
+              sub="Click through the screens you'd use: MAIRO, your results, recommendations waiting for you, your Performance Coach and your Daily Brief."
             />
             <div className="mx-auto mt-12 max-w-[1120px]">
               <ProductPreview />
@@ -433,10 +433,10 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <div className="mx-auto max-w-[820px] text-center">
               <Badge>PERFORMANCE COACH &amp; REAL RESULTS</Badge>
               <h2 id="coach-title" className="mt-4 text-[clamp(30px,4.2vw,50px)] font-bold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">
-                Clicks aren&rsquo;t customers. <span className={GRADIENT_TEXT}>Your AI team tracks the difference.</span>
+                Clicks aren&rsquo;t customers. <span className={GRADIENT_TEXT}>MAIRO tracks the difference.</span>
               </h2>
               <p className="mx-auto mt-4 max-w-[660px] text-[16.5px] leading-relaxed text-white/65">
-                Meta reports what happened on the ad. You mark what happened next. The Performance Coach follows each lead to a booking and a sale — and when results slip, it shows where, what might explain it, and what your AI team would do about it.
+                Meta reports what happened on the ad. You mark what happened next. The Performance Coach follows each lead to a booking and a sale — and when results slip, it shows where, what might explain it, and what MAIRO would do about it.
               </p>
             </div>
             <div className="mx-auto mt-10 max-w-[1120px]">
@@ -477,7 +477,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <SectionHead
               badge="WHAT YOUR AI TEAM DOES"
               title="What MAIRO actually does for you."
-              sub="Running ads well is six jobs that never stop. Your AI team does each one for your business, every day, in your own Meta ad account — and asks you before anything that matters."
+              sub="Running ads well is six jobs that never stop. MAIRO does each one for your business, every day, in your own Meta ad account — and asks you before anything that matters."
             />
             <ol className="mx-auto mt-12 grid max-w-[1180px] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {WHY.map((w, i) => (
@@ -550,14 +550,14 @@ export function Home({ hero }: { hero: HeroVariant }) {
                   </>
                 ) : (
                   <>
-                    <span className="inline-block">You run the business.</span> <span className={`inline-block ${GRADIENT_TEXT}`}>Your AI team handles the advertising.</span>
+                    <span className="inline-block">You run the business.</span> <span className={`inline-block ${GRADIENT_TEXT}`}>MAIRO handles the advertising.</span>
                   </>
                 )}
               </h2>
               <p className="mx-auto mt-5 max-w-xl text-[16px] leading-relaxed text-white/70">
                 {story
                   ? "Give MAIRO your website and see a first campaign built around your business — free, and nothing runs until you approve it."
-                  : "Start with a free, personalized advertising plan. See exactly how your AI team would approach your advertising before you subscribe."}
+                  : "Start with a free, personalized advertising plan. See exactly how MAIRO would approach your advertising before you subscribe."}
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link href={cta.href} className={`${PRIMARY} inline-flex min-h-[58px] items-center gap-2 rounded-full px-9 text-[16px] font-semibold`}>

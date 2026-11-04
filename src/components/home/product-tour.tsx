@@ -23,7 +23,7 @@ const VIEWS: { key: string; label: string; clip: ClipId; title: string; body: st
     label: "Your dashboard",
     clip: "dashboard",
     title: "Moving through the MAIRO dashboard of a fictional shop",
-    body: "Overview, campaigns, creatives, performance, your AI team, recommendations, approvals and results — one sidebar, plain words.",
+    body: "Overview, campaigns, creatives, performance, MAIRO, recommendations, approvals and results — one sidebar, plain words.",
   },
   {
     key: "decisions",
@@ -117,7 +117,7 @@ export function TeamSection() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:gap-16">
           <div className="min-w-0">
             <div data-reveal>
-              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">Your AI team</p>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">MAIRO</p>
               <h2 id="team-title" className="mt-3 text-[clamp(32px,4.2vw,54px)] font-semibold leading-[1.02] tracking-[-0.045em] text-white [text-wrap:balance]">
                 Eight specialties. One workflow. Your approval.
               </h2>

@@ -38,14 +38,14 @@ export function isClientAgent(type: AgentType): boolean {
 }
 
 /**
- * What the assistant is called before anybody renames it.
+ * What the assistant is called before anybody renames it: MAIRO.
  *
- * A name rather than a product noun, because "ask Alex" is a sentence people
- * already know how to say and "engage the assistant" is not. Businesses can
- * change it in Settings — some want it to be their own brand, some want it to
- * be a person on their team.
+ * One AI, one name — the product's (docs/UNIFIED-AI-ARCHITECTURE.md). It used
+ * to be "Alex", a persona standing beside MAIRO, which made the customer
+ * wonder who they were talking to. Businesses can still give it their own
+ * name in Settings; a name they chose is kept.
  */
-export const DEFAULT_ASSISTANT_NAME = "Alex";
+export const DEFAULT_ASSISTANT_NAME = "MAIRO";
 
 /** Keep a stored name sane before it reaches a prompt or a heading. */
 export function assistantNameOf(raw: string | null | undefined): string {
