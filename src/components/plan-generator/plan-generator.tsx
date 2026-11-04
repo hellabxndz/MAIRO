@@ -587,7 +587,7 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
             <IconSparkle className="h-3.5 w-3.5 text-cyan-300" /> Free AI Meta ad plan
           </p>
           <h1 className="mt-5 text-[clamp(32px,5.5vw,58px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white [text-wrap:balance]">
-            Your next ad strategy, <span className="bg-gradient-to-r from-[#ffffff] via-[#f7f7f7] to-[#e6e6e6] bg-clip-text text-transparent">built by AI.</span>
+            Your next ad strategy, <span className="bg-gradient-to-r from-[#ffffff] via-[#f7f7f7] to-[#e6e6e6] bg-clip-text text-transparent">built by AI</span>
           </h1>
           <p className="mx-auto mt-4 max-w-[640px] text-[16px] leading-relaxed text-white/72">Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free.</p>
         </div>

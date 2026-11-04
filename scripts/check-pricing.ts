@@ -244,7 +244,7 @@ check("the landing page says what MAIRO does, and has no fake urgency or testimo
   assert.doesNotMatch(page, /limited time|only \d+ (spots|left)|hurry|act now|testimonial|★★★★★/i);
 });
 check("the pricing section is two large cards, Pro then Scale, with ad spend separate", () => {
-  assert.match(page, /Two plans\. One AI advertising team\./);
+  assert.match(page, /Two plans, one MAIRO/);
   assert.match(page, /md:grid-cols-2/);
   assert.match(page, /Most Popular/);
   assert.match(page, /Ad spend is separate/);

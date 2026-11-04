@@ -66,7 +66,7 @@ export default async function Image() {
             }}
           >
             <span>Your next ad strategy,&nbsp;</span>
-            <span style={{ color: "#f7f7f7" }}>built by AI.</span>
+            <span style={{ color: "#f7f7f7" }}>built by AI</span>
           </div>
           <div
             style={{

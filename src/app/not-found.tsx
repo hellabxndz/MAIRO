@@ -30,7 +30,7 @@ export default function NotFound() {
         <div className="mx-auto w-full max-w-[640px] text-center">
           <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-cyan-300/90">404</p>
           <h1 className="mt-3 text-[clamp(30px,4.4vw,48px)] font-semibold leading-[1.05] tracking-[-0.04em] [text-wrap:balance]">
-            This page isn&rsquo;t here.
+            This page isn&rsquo;t here
           </h1>
           <p className="mx-auto mt-4 max-w-[480px] text-[16px] leading-relaxed text-white/65">
             The address may be mistyped, or the page has moved. Nothing about your account or your ads has changed.

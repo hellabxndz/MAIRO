@@ -628,7 +628,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
           <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
             <SectionHead
               badge="PRICING"
-              title="Two plans. One AI advertising team."
+              title="Two plans, one MAIRO"
               sub="Start with a free AI plan for your business — no card. When you're happy with it, choose MAIRO Pro or MAIRO Scale and MAIRO builds and runs it, with your approval before anything launches or spends."
             />
             <div className="mx-auto mt-12 grid max-w-[1120px] grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
@@ -885,7 +885,7 @@ export function FaqBlock() {
     <>
     {/* ── FAQ ──────────────────────────────────────────────────────── */}
           <section id="faq" className="relative mx-auto max-w-[1100px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
-            <SectionHead badge="FAQ" title="Questions, answered." />
+            <SectionHead badge="FAQ" title="Questions, answered" />
             <div className="mt-10">
               <Faq items={FAQ} />
             </div>

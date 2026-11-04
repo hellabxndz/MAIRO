@@ -195,7 +195,7 @@ export function ControlBand() {
   return (
     <section aria-labelledby="control-title" className="relative border-y border-[color:var(--v3-line)] bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
       <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
-        <h2 id="control-title" data-reveal className="v3-label">MAIRO runs your ads. You stay in control.</h2>
+        <h2 id="control-title" data-reveal className="v3-label">MAIRO runs your ads, you stay in control</h2>
         <ul className="mt-10 divide-y divide-[color:var(--v3-line)]">
           {lines.map((l) => (
             <li key={l.t} data-reveal className="v3-row grid gap-2 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,380px)] sm:items-baseline sm:gap-10 sm:py-8">

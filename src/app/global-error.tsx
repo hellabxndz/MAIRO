@@ -18,7 +18,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
         <title>Something went wrong · MAIRO</title>
         <main style={{ maxWidth: 520, textAlign: "center" }}>
           <p style={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.3em", color: "rgba(255,255,255,0.8)" }}>MAIRO</p>
-          <h1 style={{ marginTop: 32, fontSize: 32, lineHeight: 1.1, letterSpacing: "-0.03em", fontWeight: 600 }}>This page didn&rsquo;t load.</h1>
+          <h1 style={{ marginTop: 32, fontSize: 32, lineHeight: 1.1, letterSpacing: "-0.03em", fontWeight: 600 }}>This page didn&rsquo;t load</h1>
           <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.6, color: "rgba(255,255,255,0.65)" }}>
             Something went wrong on our side while showing it. Showing a page never changes your ads. If you had just pressed a button, check whether it went through before pressing it again.
           </p>

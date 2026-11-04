@@ -19,7 +19,7 @@ export default function ToolsPage() {
       <LandingNav toolsLive />
       <main className="mx-auto max-w-[1200px] px-4 pb-20 pt-[110px] sm:px-8 sm:pt-[130px]">
         <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free tools</p>
-        <h1 className="mt-3 max-w-[760px] text-[34px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[46px]">Work out your numbers and your first ads — free.</h1>
+        <h1 className="mt-3 max-w-[760px] text-[34px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[46px]">Work out your numbers and your first ads — free</h1>
         <p className="mt-4 max-w-[680px] text-[16px] leading-relaxed text-white/75">
           Calculators and copy tools for Facebook and Instagram advertising. No account, no email. The calculators run in your browser: what you type stays on your device.
         </p>

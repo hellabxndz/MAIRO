@@ -25,7 +25,7 @@ export function ConsoleHero() {
             Free AI Meta ad plan
           </p>
           <h1 id="hero-title" className="mt-5 text-[clamp(36px,5.6vw,68px)] font-semibold leading-[1.0] tracking-[-0.045em] text-white [text-wrap:balance]">
-            Your next ad strategy, <span className="bg-gradient-to-r from-[#ffffff] via-[#f7f7f7] to-[#e6e6e6] bg-clip-text pb-[0.06em] text-transparent">built by AI.</span>
+            Your next ad strategy, <span className="bg-gradient-to-r from-[#ffffff] via-[#f7f7f7] to-[#e6e6e6] bg-clip-text pb-[0.06em] text-transparent">built by AI</span>
           </h1>
           <p className="mt-4 max-w-[560px] text-[clamp(15.5px,1.35vw,18px)] leading-relaxed text-white/70 sm:mt-5">
             Tell MAIRO about your business. Get a personalized Meta advertising strategy, creative ideas, audience recommendations, and a budget plan — free.
