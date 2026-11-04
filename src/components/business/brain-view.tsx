@@ -20,6 +20,10 @@ export type FactRowData = {
   source: string;
   inferred: boolean;
   purpose: string;
+  /** When it was last told, confirmed or re-read ("3 days ago"). */
+  freshness?: string;
+  /** Not confirmed for over six months. */
+  stale?: boolean;
 };
 
 const input = "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]";
@@ -68,6 +72,8 @@ export function FactRow({ fact }: { fact: FactRowData }) {
           <p className="mt-1.5 text-[11.5px] text-faint">
             {fact.inferred ? <span className="text-amber-200/80">MAIRO&rsquo;s best guess · </span> : null}
             {fact.source}
+            {fact.freshness ? <> · {fact.freshness}</> : null}
+            {fact.stale ? <span className="text-amber-200/80"> · may be out of date</span> : null}
           </p>
         </div>
         {!editing && (

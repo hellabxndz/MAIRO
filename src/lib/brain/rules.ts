@@ -74,6 +74,24 @@ export function factToVerify(profile: ProfileLike, meta: (key: string) => FactMe
   return { key: due.d.key, label: due.d.label, value, question: `Is “${value.length > 80 ? `${value.slice(0, 77)}…` : value}” still right for “${due.d.label.toLowerCase()}”?`, reason: "stale" };
 }
 
+/**
+ * How fresh a fact is, from when it was last told, confirmed or re-read:
+ * "today", "3 days ago", "Mar 2026". Past STALE_AFTER_DAYS it is stale —
+ * still used, but shown as possibly out of date, and the AI is told to
+ * check before relying on it.
+ */
+export function freshnessOf(meta: FactMeta, now: Date, days = STALE_AFTER_DAYS): { words: string; stale: boolean } {
+  const at = Date.parse(meta.verifiedAt || meta.updatedAt);
+  if (!Number.isFinite(at)) return { words: "date unknown", stale: true };
+  const age = Math.max(0, Math.floor((now.getTime() - at) / DAY));
+  const words =
+    age === 0 ? "today"
+      : age === 1 ? "yesterday"
+        : age < 30 ? `${age} days ago`
+          : new Date(at).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+  return { words, stale: age > days };
+}
+
 // --- How much MAIRO understands --------------------------------------------------------
 
 export type UnderstandingArea = { key: "business" | "customer" | "offer" | "brand" | "products" | "performance"; label: string; percent: number; missing: string[] };

@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hasActivePlan, readinessBrief, readinessFor } from "@/lib/readiness";
 import { agentModel } from "@/lib/ai/model";
+import { recentTurns } from "@/lib/ai/threads";
 import { systemPromptFor } from "@/lib/ai/agents";
 import { memoryBrief, memoryProfile } from "@/lib/memory/profile";
 import type { AgentType } from "@/generated/prisma/enums";
@@ -165,7 +166,7 @@ function stream(
   const result = streamText({
     model: agentModel,
     system,
-    messages: convertToModelMessages(messages, { ignoreIncompleteToolCalls: true }),
+    messages: convertToModelMessages(recentTurns(messages), { ignoreIncompleteToolCalls: true }),
     ...(tools ? { tools, stopWhen: stepCountIs(4) } : {}),
     onFinish: async ({ text }) => {
       // An empty completion isn't worth a row, and storing one makes the

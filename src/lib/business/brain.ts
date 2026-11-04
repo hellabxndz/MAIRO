@@ -211,7 +211,7 @@ function parseLoose<T>(raw: string | null | undefined, fallback: T): T {
 export async function loadBrain(organizationId: string): Promise<BrainRecord> {
   const [row, org, intake] = await Promise.all([
     db.businessBrain.findUnique({ where: { organizationId } }),
-    db.organization.findUnique({ where: { id: organizationId }, select: { name: true, industry: true, website: true } }),
+    db.organization.findUnique({ where: { id: organizationId }, select: { name: true, industry: true, website: true, createdAt: true } }),
     db.onboardingIntake.findUnique({ where: { organizationId } }),
   ]);
   const stored = parseJson(row?.profileJson, profileSchema);
@@ -231,7 +231,9 @@ export async function loadBrain(organizationId: string): Promise<BrainRecord> {
     editedFields: row?.editedFields ?? [],
     meta: parseLoose<Record<string, FactMeta>>(row?.factsJson, {}),
     history: parseLoose<HistoricalFact[]>(row?.historyJson, []),
-    updatedAt: row?.updatedAt ?? new Date(0),
+    // With no Brain saved yet, the facts are the sign-up answers, as of when
+    // they were given — not 1970, which made every one look years stale.
+    updatedAt: row?.updatedAt ?? intake?.completedAt ?? org?.createdAt ?? new Date(),
     analysis: parseJson(row?.analysisJson, analysisSchema),
     analyzedUrl: row?.analyzedUrl ?? null,
     analyzedAt: row?.analyzedAt ?? null,
