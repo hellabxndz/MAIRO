@@ -14,6 +14,7 @@ import {
   carefulWording,
   confidenceWords,
   factToVerify,
+  freshnessOf,
   hasValue,
   insightMark,
   metaFor,
@@ -225,6 +226,12 @@ export function brainPrompt(s: BrainState): string {
   const lines: string[] = [brainBrief(s.profile)];
   const inferred = BRAIN_FIELDS.filter((d) => hasValue((s.profile as unknown as Record<string, unknown>)[d.key]) && s.meta(d.key).status === "inferred").map((d) => d.label);
   if (inferred.length) lines.push(`Inferred (from the website or results, not yet confirmed by the business — use carefully): ${inferred.join(", ")}.`);
+  // Freshness: an old fact is still used, but never presented as current
+  // without saying so. Campaign figures never come from here — they're read
+  // live from Meta through the tools.
+  const now = new Date();
+  const stale = BRAIN_FIELDS.filter((d) => hasValue((s.profile as unknown as Record<string, unknown>)[d.key]) && freshnessOf(s.meta(d.key), now).stale).map((d) => `${d.label} (last confirmed ${freshnessOf(s.meta(d.key), now).words})`);
+  if (stale.length) lines.push(`Not confirmed in over 6 months — may be out of date; check with the owner before relying on it: ${stale.join(", ")}.`);
   if (s.goals.current) lines.push(`Current goal: ${s.goals.current.label}${s.goals.current.secondary ? ` (also: ${s.goals.current.secondary})` : ""}, since ${s.goals.current.from.toISOString().slice(0, 10)}.`);
   const promos = s.temporary.filter((t) => t.kind === "promotion" && t.state !== "ended");
   if (promos.length) lines.push("Temporary — true only until it ends, never a permanent fact:", ...promos.map((p) => `- ${p.text}${p.code ? ` (code ${p.code})` : ""}${p.endsAt ? `, ends ${p.endsAt.toISOString().slice(0, 10)}` : ""}${p.state === "scheduled" ? " (scheduled)" : ""}`));

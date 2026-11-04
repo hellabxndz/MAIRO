@@ -54,6 +54,12 @@ The customer talks to one AI — MAIRO — that knows their business, remembers 
   - **Standing instructions** (`standingInstructions`): "always / never" in the owner's words, given to the AI with every request. These can't be enforced in code, so nothing that spends or launches relies on them alone.
 - **New tools:** `get_tracking_health` (the daily check's verdict, or "not checked yet") and `get_recent_activity` (changes made, what failed and why, what's waiting).
 
+### Follow-up round (November 2026)
+
+- **Conversations are per business.** A person's MAIRO thread was looked up by person only, so someone with two businesses got the first one's conversation — and its Business Brain — while working in the second. Threads are now keyed by business (`lib/ai/threads.ts`).
+- **Freshness is visible.** Each fact on the Business Brain page says where it came from and when it was last confirmed ("You told MAIRO · 3 days ago"); one older than six months is marked "may be out of date", and the AI is told to check it before relying on it. Facts from sign-up answers are dated to sign-up (they read as 1970 before).
+- **Bounded context.** The model gets the last 40 messages of the thread, starting at something the person said. Long-term memory is the Business Brain, which every request carries in full.
+
 ## 4. Still incomplete (not claimed)
 
 - **The team page still exists** (`/dashboard/team`, now "What MAIRO is working on"), and the classic landing page and video clips still show the old specialist design. The rendered product film's captions must match the video, so `lib/demo/*` is unchanged until the film is re-rendered.
@@ -64,4 +70,4 @@ The customer talks to one AI — MAIRO — that knows their business, remembers 
 
 ## 5. Tests
 
-`npm run check:unified-ai`: one AI (names, prompts, copy); memory (stored with source, survives reload, in every request, correctable and deletable, an inference never overwrites the owner); isolation (no fact, rule, tracking or activity crosses businesses); rules (refused when approved or automatic, dropped from recommendations); tool permissions by role; grounding (not-checked vs checked, nothing vs something, failures shown). Alongside `check:assistant`, `check:brain`, `check:members`, `check:autopilot`, `check:decisions` and the rest of `npm run audit`.
+`npm run check:unified-ai` (17 checks): one AI (names, prompts, copy); memory (stored with source, survives reload, in every request, correctable and deletable, an inference never overwrites the owner); isolation (no fact, rule, tracking, activity or conversation crosses businesses); context (recent turns, starting with the person) and freshness (dated facts, stale ones flagged to the owner and the AI); rules (refused when approved or automatic, dropped from recommendations); tool permissions by role; grounding (not-checked vs checked, nothing vs something, failures shown). Alongside `check:assistant`, `check:brain`, `check:members`, `check:autopilot`, `check:decisions` and the rest of `npm run audit`.

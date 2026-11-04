@@ -27,6 +27,8 @@ import { AI_TEAM_BRIEF, assistantTools } from "../src/lib/ai/assistant-tools";
 import { AGENTS } from "../src/lib/team/agents";
 import { DEFAULT_ASSISTANT_NAME, systemPromptFor } from "../src/lib/ai/agents";
 import type { DecisionChange } from "../src/lib/decisions/types";
+import { findOrCreateThread, recentTurns } from "../src/lib/ai/threads";
+import { freshnessOf } from "../src/lib/brain/rules";
 
 let passed = 0;
 async function check(name: string, fn: () => void | Promise<void>) {
@@ -44,6 +46,7 @@ type Exec = { execute: (args: unknown, opts: unknown) => Promise<unknown> };
 const run = async (tools: Record<string, unknown>, name: string, args: unknown = {}) => (tools[name] as Exec).execute(args, { toolCallId: "t", messages: [] });
 
 async function cleanup() {
+  await db.user.deleteMany({ where: { email: { startsWith: TAG } } });
   await db.organization.deleteMany({ where: { id: { startsWith: TAG } } });
 }
 
@@ -103,6 +106,42 @@ async function main() {
     assert.equal(((await run(tools, "get_business_brain")) as { rules: { maxRadiusMiles: number | null } }).rules.maxRadiusMiles, null);
     assert.doesNotMatch(brainPrompt(await loadBrainState(B)), /Miami/);
     assert.equal((await guardrailsFor(B)).maxRadiusMiles, null);
+  });
+
+  await check("one conversation per person per business: switching business never brings the other's thread", async () => {
+    const u = await db.user.create({ data: { email: `${TAG}-owner@example.test`, organizationId: A } });
+    const ta = await findOrCreateThread(u.id, A, "SUPPORT");
+    const tb = await findOrCreateThread(u.id, B, "SUPPORT");
+    assert.notEqual(ta.id, tb.id);
+    assert.equal(tb.organizationId, B);
+    assert.equal((await findOrCreateThread(u.id, A, "SUPPORT")).id, ta.id, "and coming back finds A's own thread");
+    await db.agentMessage.create({ data: { threadId: ta.id, role: "USER", content: "We only work in Miami." } });
+    assert.equal(await db.agentMessage.count({ where: { threadId: tb.id } }), 0);
+  });
+
+  console.log("\n— context and freshness —");
+  await check("the model gets the recent conversation, starting with the person; the Brain carries the rest", () => {
+    const long = Array.from({ length: 101 }, (_, i) => ({ role: i % 2 ? "assistant" : "user", i }));
+    const r = recentTurns(long);
+    assert.ok(r.length <= 40 && r.length > 0);
+    assert.equal(r[0].role, "user");
+    assert.equal(r.at(-1)!.i, 100, "the newest message is always kept");
+    assert.deepEqual(recentTurns([{ role: "assistant" }]), []);
+  });
+  await check("every fact says when it was last confirmed; one older than six months is flagged, to the owner and to the AI", async () => {
+    const now = new Date("2026-11-04T12:00:00Z");
+    const meta = (iso: string) => ({ source: "customer" as const, status: "confirmed" as const, updatedAt: iso, verifiedAt: iso });
+    assert.deepEqual(freshnessOf(meta("2026-11-04T08:00:00Z"), now), { words: "today", stale: false });
+    assert.deepEqual(freshnessOf(meta("2026-11-01T08:00:00Z"), now), { words: "3 days ago", stale: false });
+    assert.deepEqual(freshnessOf(meta("2026-03-01T08:00:00Z"), now), { words: "Mar 2026", stale: true });
+    await changeBrain(A, { op: "set", field: "industry", value: "Landscaping" }, "customer", new Date(Date.now() - 400 * 864e5));
+    const prompt = brainPrompt(await loadBrainState(A));
+    assert.match(prompt, /Not confirmed in over 6 months — may be out of date; check with the owner[^\n]*Industry/);
+    assert.doesNotMatch(prompt.split("\n").find((l) => l.startsWith("Not confirmed")) ?? "", /Service area/, "a fresh fact isn't flagged");
+    // A new business whose facts are still its sign-up answers (no Brain saved yet) is fresh, not "1970".
+    const fresh = await loadBrainState(B);
+    assert.equal(freshnessOf(fresh.meta("businessName"), new Date()).stale, false);
+    assert.doesNotMatch(brainPrompt(fresh), /Not confirmed in over 6 months/);
   });
 
   console.log("\n— the owner's rules bind, in code —");

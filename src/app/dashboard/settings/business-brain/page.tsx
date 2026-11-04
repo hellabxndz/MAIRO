@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { activeOrganizationId } from "@/lib/active-org";
 import { BRAIN_FIELDS, SECTION_LABEL, SOURCE_LABEL, type BrainSection } from "@/lib/brain/catalog";
-import { displayValue, hasValue } from "@/lib/brain/rules";
+import { displayValue, freshnessOf, hasValue } from "@/lib/brain/rules";
 import { brainTimeline, loadBrainState } from "@/lib/brain/store";
 import { missionGoal } from "@/lib/mission/goals";
 import { BusinessBrain as BrainEditor } from "@/components/business/brain-editor";
@@ -28,13 +28,15 @@ export default async function BusinessBrainPage() {
   const session = await auth();
   if (!session?.user?.organizationId) redirect("/sign-in");
   const organizationId = (await activeOrganizationId()) ?? session.user.organizationId;
-  const [s, timeline] = await Promise.all([loadBrainState(organizationId, new Date(), { accountHistory: true }), brainTimeline(organizationId, 24)]);
+  const now = new Date();
+  const [s, timeline] = await Promise.all([loadBrainState(organizationId, now, { accountHistory: true }), brainTimeline(organizationId, 24)]);
   const p = s.profile as unknown as Record<string, unknown>;
 
   const rows = (section: BrainSection): FactRowData[] =>
     BRAIN_FIELDS.filter((d) => d.section === section && hasValue(p[d.key])).map((d) => {
       const m = s.meta(d.key);
-      return { key: d.key, label: d.label, list: d.list, value: d.list ? (p[d.key] as string[]) : displayValue(p[d.key]), source: SOURCE_LABEL[m.source], inferred: m.status === "inferred", purpose: d.purpose };
+      const fresh = freshnessOf(m, now);
+      return { key: d.key, label: d.label, list: d.list, value: d.list ? (p[d.key] as string[]) : displayValue(p[d.key]), source: SOURCE_LABEL[m.source], inferred: m.status === "inferred", purpose: d.purpose, freshness: fresh.words, stale: fresh.stale };
     });
   const missing = (section: BrainSection) =>
     BRAIN_FIELDS.filter((d) => d.section === section && !hasValue(p[d.key]) && d.key !== "logoUrl" && d.key !== "presence").map((d) => ({ key: d.key, label: d.label, list: d.list, purpose: d.purpose }));
