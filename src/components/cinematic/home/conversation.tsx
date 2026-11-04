@@ -46,7 +46,7 @@ export function AskMairoScene() {
         <div>
           <p data-reveal className="v3-label">One AI · one conversation</p>
           <h2 id="one-mairo-title" data-reveal className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
-            Say what you want<span className="v3-signal">.</span>
+            Say what you want
           </h2>
           <p data-reveal className="mt-6 max-w-[460px] text-[clamp(16px,1.3vw,18px)] leading-relaxed text-[color:var(--v3-text-2)]">
             One MAIRO that knows your business, remembers what you told it and reads your real results. It does the work, and asks before anything spends.

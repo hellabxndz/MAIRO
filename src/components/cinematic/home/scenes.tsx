@@ -98,7 +98,7 @@ export function HowItWorks() {
           <div className="max-w-[520px]">
             <p className="v3-label">How it works</p>
             <h2 id="how-title" className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
-              Three things<span className="v3-signal">.</span>
+              Three things
             </h2>
             <div aria-hidden className="mt-8 h-px w-full bg-[color:var(--v3-line)] sm:mt-10">
               <div className="h-px bg-[color:var(--v3-signal)] transition-[width] duration-500 [transition-timing-function:var(--ease-mairo)]" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} />
@@ -138,8 +138,8 @@ export function ExampleRun() {
       <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
         <p data-reveal className="v3-label">Example · fictional business</p>
         <h2 id="example-title" data-reveal className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
-          One sentence in.
-          <br />A campaign out<span className="v3-signal">.</span>
+          One sentence in,
+          <br />a campaign out
         </h2>
         <div className="mt-14 grid gap-4 lg:grid-cols-[1fr_1.1fr_1fr]">
           <div data-reveal className="flex flex-col rounded-[24px] border border-[color:var(--v3-line)] bg-[color:var(--v3-ink-2)] p-6">
@@ -197,11 +197,10 @@ export function ControlBand() {
       <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
         <h2 id="control-title" data-reveal className="v3-label">MAIRO runs your ads. You stay in control.</h2>
         <ul className="mt-10 divide-y divide-[color:var(--v3-line)]">
-          {lines.map((l, i) => (
+          {lines.map((l) => (
             <li key={l.t} data-reveal className="v3-row grid gap-2 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,380px)] sm:items-baseline sm:gap-10 sm:py-8">
               <p className="v3-display text-[clamp(32px,5vw,76px)] text-white">
                 {l.t}
-                {i === 0 && <span className="v3-signal">.</span>}
               </p>
               <p className="text-[15px] leading-relaxed text-[color:var(--v3-text-2)]">{l.s}</p>
             </li>
@@ -222,7 +221,7 @@ export function PricingSimple({ plans }: { plans: PricePlan[] }) {
           <div>
             <p data-reveal className="v3-label">Pricing</p>
             <h2 id="pricing-title" data-reveal className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
-              Two plans<span className="v3-signal">.</span>
+              Two plans
             </h2>
           </div>
           <p data-reveal className="max-w-[420px] text-[15.5px] leading-relaxed text-[color:var(--v3-text-2)]">
@@ -275,7 +274,7 @@ export function Closing() {
         <h2 id="close-title" data-reveal className="v3-display text-[clamp(48px,9vw,160px)] text-white">
           Start with
           <br />
-          your website<span className="v3-signal">.</span>
+          your website
         </h2>
         <div data-reveal className="mt-10 max-w-[620px]">
           <WebsiteStart id="close-website" />

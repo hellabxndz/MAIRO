@@ -145,7 +145,7 @@ export async function HomeOverview({
         {/* MAIRO itself: at rest it shows the account as it is; it moves
             only when real work runs (lib/cinematic/activity.ts). */}
         <MairoCore resting={waiting.length > 0 ? "attention" : "idle"} restingLabel={restingLabel} size={96} className="mb-3" />
-        <h1 className="v3-display text-[clamp(34px,5vw,60px)] text-white">{c.header.greeting.replace(/\.$/, "")}<span className="v3-signal">.</span></h1>
+        <h1 className="v3-display text-[clamp(34px,5vw,60px)] text-white">{c.header.greeting.replace(/\.$/, "")}</h1>
         <p className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[14.5px] text-muted">
           <span>{c.header.business}</span>
           <span aria-hidden>·</span>

@@ -14,7 +14,7 @@ import { MobileCta, ScrollProgress } from "@/components/cinematic/home/live";
 
 // The homepage, v3 "Signal" (docs/DESIGN-SPEC-v3.md §7). Six things, once each:
 //
-//   1. The hero: "Your ads, handled." and the business's website, straight
+//   1. The hero: "Your ads, handled" and the business's website, straight
 //      into the free plan.
 //   2. The Field — MAIRO's one form — behind the page.
 //   3. How it works: Analyze, Create, Track.

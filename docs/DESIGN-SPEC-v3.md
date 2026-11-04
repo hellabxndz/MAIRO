@@ -29,7 +29,6 @@ This replaces the v2 cinematic layer (electric blue, the particle sphere, glass 
 
 Where the signal may appear:
 
-- the final full stop of a headline;
 - the Field's scan line;
 - live and working status dots;
 - the keyboard focus ring;
@@ -48,6 +47,7 @@ Warnings (amber) and errors (red) remain for safety-relevant states only, at low
 - **Body:** 16–18px, weight 400, leading 1.55, `--v3-text-2`.
 - **Labels:** mono 11–12px, uppercase, tracking 0.18em, `--v3-text-3`, with numbered indices ("01 — Analyze").
 - No uppercase display type and no gradient text.
+- Short display headlines carry no full stop, lime or white (November 2026).
 
 ## 4. Space, layout and components
 
@@ -96,11 +96,11 @@ Rules:
 
 ## 7. Homepage
 
-1. **Hero:** headline "Your ads, handled." with a lime full stop, one line of explanation, a website input with "Build my free plan" (→ `/preview?website=`), and a note: free, no card, nothing launches without approval. The Field behind it.
+1. **Hero:** headline "Your ads, handled" (no full stop), one line of explanation, a website input with "Build my free plan" (→ `/preview?website=`), and a note: free, no card, nothing launches without approval. The Field behind it.
 2. **How it works:** three numbered steps (Analyze, Create, Track) beside a sticky Field that morphs `field` → `creative` → `results`.
 3. **Demonstration:** an example ad being made (prompt → picture → headline), then the example's results. Both are labelled as a fictional business.
 4. **Pricing:** Pro $139.99 and Scale $299.99, from `lib/plans` only, with a link to full pricing.
-5. **Closing:** "Start with your website." and the input again.
+5. **Closing:** "Start with your website" and the input again.
 6. **Footer:** legal, privacy, security, help, solutions and status, all accessible but quiet.
 
 ## 8. App workspace

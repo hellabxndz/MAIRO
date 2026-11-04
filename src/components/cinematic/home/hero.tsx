@@ -31,7 +31,7 @@ export function CinematicHero() {
           </span>
           <span className="v3-mask">
             <span className="v3-rise" style={{ "--d": 320 } as React.CSSProperties}>
-              handled<span className="v3-signal">.</span>
+              handled
             </span>
           </span>
         </h1>
