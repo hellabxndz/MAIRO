@@ -161,7 +161,9 @@ export default async function SetupPage() {
   const addresses = addressesToRegister(site);
 
   const results = CHECKS.map((c) => ({ ...c, ok: present(c.name) }));
-  const missing = results.filter((r) => !r.ok);
+  // Only what MAIRO needs counts as missing; optional extras are listed apart.
+  const missing = results.filter((r) => !r.ok && !r.optional);
+  const optionalUnset = results.filter((r) => !r.ok && r.optional);
 
   // What Stripe would actually charge, next to what the site advertises. This
   // is the one mismatch nothing else in the app can catch, and its symptom is
@@ -355,11 +357,18 @@ export default async function SetupPage() {
           ))}
         </div>
 
-        {missing.length > 0 && (
+        {missing.length > 0 ? (
           <p className="mt-6 border-t border-white/10 pt-4 text-sm leading-relaxed text-amber-300">
-            {missing.length} value{missing.length === 1 ? "" : "s"} still missing. Add{" "}
+            {missing.length} required value{missing.length === 1 ? "" : "s"} still missing. Add{" "}
             {missing.map((m) => m.name).join(", ")} in Vercel under Settings → Environment
             Variables, then redeploy — environment changes only apply to a new build.
+          </p>
+        ) : (
+          <p className="mt-6 border-t border-white/10 pt-4 text-sm leading-relaxed text-white/80">Everything MAIRO needs is set.</p>
+        )}
+        {optionalUnset.length > 0 && (
+          <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+            Optional, not set: {optionalUnset.map((m) => m.name).join(", ")}. Nothing depends on them; each row above says what it adds.
           </p>
         )}
       </Card>
