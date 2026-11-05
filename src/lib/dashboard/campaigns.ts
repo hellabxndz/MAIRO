@@ -3,6 +3,7 @@ import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import type { MetricFamily } from "@/lib/mission/goals";
 import { goalOption } from "@/lib/campaigns/objectives";
 import { money, num } from "./home";
+import { approvalState } from "@/lib/campaigns/approval-terms";
 
 // Campaigns, simply: which tab a campaign belongs in, its goal and status in
 // plain words, and the one result that matters for it. Pure; pinned by
@@ -24,10 +25,17 @@ export function campaignTab(c: { status: CampaignStatus; endDate: Date | null },
 }
 
 /**
- * Status in plain words, with the dot that says it at a glance — kept apart
- * the way Meta keeps them apart: a campaign MAIRO switched on (Meta accepted
- * the change) isn't "delivering" until Meta's ad review approved the ad, and
- * a rejected ad or a failed launch says so instead of "Active".
+ * Status in plain words, with the dot that says it at a glance. Four things
+ * are kept apart, because they are four different facts:
+ *
+ *   - the owner approved it (MAIRO's record, with what was approved);
+ *   - Meta accepted MAIRO switching it on (the campaign is ACTIVE);
+ *   - Meta's ad review approved the ad (adReviewState, read from Meta);
+ *   - it actually delivered (Meta reported impressions — `delivered`).
+ *
+ * "Running" needs the last one. Until Meta reports impressions it says what
+ * is known instead, and a failure or a rejection says so with "see why".
+ * `delivered` is null when Meta's figures couldn't be read: unknown, not no.
  */
 export function statusLabel(
   c: {
@@ -35,8 +43,10 @@ export function statusLabel(
     endDate: Date | null;
     launchApprovedAt?: Date | null;
     platformCampaigns?: { adReviewState?: string | null; lastError?: string | null; [field: string]: unknown }[];
+    [field: string]: unknown;
   },
   now: Date,
+  opts: { delivered?: boolean | null } = {},
 ): { dot: string; text: string; tone: "green" | "yellow" | "neutral" | "blue" } {
   if (c.status === "ARCHIVED") return { dot: "⚪", text: "Stopped", tone: "neutral" };
   if (c.endDate && c.endDate < now) return { dot: "⚪", text: "Completed", tone: "neutral" };
@@ -45,21 +55,35 @@ export function statusLabel(
   const failed = pcs.some((p) => p.lastError);
   switch (c.status) {
     case "ACTIVE":
-      if (review("REJECTED")) return { dot: "🔴", text: "Ad rejected by Meta", tone: "yellow" };
-      if (review("WITH_ISSUES")) return { dot: "🟡", text: "Delivering with issues", tone: "yellow" };
-      if (review("PENDING")) return { dot: "🟡", text: "Switched on — in Meta's review", tone: "yellow" };
-      if (review("APPROVED")) return { dot: "🟢", text: "Delivering", tone: "green" };
+      if (review("REJECTED")) return { dot: "🔴", text: "Rejected by Meta — see why", tone: "yellow" };
+      if (failed) return { dot: "🟠", text: "Needs attention — see why", tone: "yellow" };
+      if (review("WITH_ISSUES")) return { dot: "🟠", text: opts.delivered ? "Running with issues — see why" : "Meta flagged issues — see why", tone: "yellow" };
+      if (review("PENDING")) return { dot: "🟡", text: "Under Meta review", tone: "yellow" };
+      if (review("APPROVED")) {
+        if (opts.delivered) return { dot: "🟢", text: "Running", tone: "green" };
+        return { dot: "🟡", text: opts.delivered === false ? "Approved by Meta — no delivery yet" : "Approved by Meta — delivery not confirmed yet", tone: "yellow" };
+      }
       // Meta accepted "switch it on"; its review hasn't been read yet.
-      return { dot: "🟢", text: "Switched on", tone: "green" };
+      return { dot: "🟡", text: "Switched on — waiting for Meta's review", tone: "yellow" };
     case "PENDING_REVIEW":
       if (failed) return { dot: "🔴", text: "Launch failed — see why", tone: "yellow" };
-      if (c.launchApprovedAt) return { dot: "🟡", text: "Approved — waiting for Meta", tone: "yellow" };
-      return { dot: "🟡", text: "Built — waiting for your approval", tone: "yellow" };
+      if (c.launchApprovedAt && "launchApprovalHash" in c && "totalDailyBudgetCents" in c && approvalState(c as unknown as Parameters<typeof approvalState>[0]) === "changed") {
+        return { dot: "🟠", text: "Changed since you approved — approve again", tone: "yellow" };
+      }
+      if (c.launchApprovedAt) return { dot: "🟡", text: "Approved by you — waiting for Meta", tone: "yellow" };
+      return { dot: "🟡", text: "Waiting for your approval", tone: "yellow" };
     case "PAUSED":
       return { dot: "⏸", text: "Paused", tone: "yellow" };
     default:
       return { dot: "📝", text: failed ? "Draft — last build failed" : "Draft", tone: "blue" };
   }
+}
+
+/** Whether Meta has reported this campaign delivering: impressions > 0, or null when its figures weren't read. */
+export function deliveredFrom(report: { hasData: boolean; total: { impressions: number | null } } | null | undefined): boolean | null {
+  if (!report) return null;
+  if (!report.hasData) return false;
+  return (report.total.impressions ?? 0) > 0;
 }
 
 /** The goal in the customer's words ("Get More Sales"), never "OUTCOME_SALES". */

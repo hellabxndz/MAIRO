@@ -11,6 +11,7 @@ import { describeStart, isDue } from "@/lib/campaigns/schedule";
 import { finishHalfBuilt } from "@/lib/campaigns/launch";
 import { sendSms } from "@/lib/sms/send";
 import { metaOperationPaused } from "@/lib/meta-intelligence/operations";
+import { approvalCoversNow } from "@/lib/campaigns/approval";
 
 // Putting the ads live without asking.
 //
@@ -206,6 +207,7 @@ export async function maybeGoLive(
   // working Pixel (tracking/pixel-rules.ts) — asked once per campaign.
   const gates = new Map<string, Awaited<ReturnType<typeof campaignLaunchGate>>>();
   let heldForPixel: string | null = null;
+  const approvals = new Map<string, "none" | "covers" | "changed">();
 
   for (const child of due) {
     if (budget === 0) break;
@@ -215,6 +217,15 @@ export async function maybeGoLive(
     const gate = gates.get(mc.id)!;
     if (!gate.ok) {
       heldForPixel ??= `${mc.name}: ${gate.title}. ${gate.reason}`;
+      continue;
+    }
+
+    // The approval covers the terms it was given (lib/campaigns/approval.ts).
+    // Changed since — budget, dates, audience, destination — and it waits for
+    // the owner to approve what it is now. Asked once per campaign.
+    if (!approvals.has(mc.id)) approvals.set(mc.id, await approvalCoversNow(organizationId, mc.id));
+    if (approvals.get(mc.id) === "changed") {
+      heldForPixel ??= `${mc.name} changed after you approved it (budget, dates, audience or where the ad sends people). Approve it again to launch it as it is now.`;
       continue;
     }
 

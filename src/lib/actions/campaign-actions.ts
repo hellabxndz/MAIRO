@@ -51,6 +51,8 @@ import { appStoreUrl, META_APP_ID } from "@/lib/campaigns/destination";
 import { siteUrl } from "@/lib/site";
 import { linkBuiltCampaign } from "@/lib/strategy/campaign";
 import { deniedFor } from "@/lib/members/authorize";
+import { recordLaunchApproval } from "@/lib/campaigns/approval";
+import { claimOnce, finishOnce, releaseOnce } from "@/lib/requests/once";
 
 // MAIRO runs Meta only. Anything else arriving from a form is refused here.
 const PLATFORM_VALUES = ["META"] as const;
@@ -444,7 +446,21 @@ export async function createCampaignAction(
     claimedDraft = parsed.data.draftId;
   }
 
-  const outcome = await createMairoCampaign({
+  // Without a draft to claim (the form on the Campaigns page, or a wizard
+  // whose draft couldn't be saved), the form's one-time key does the same
+  // job: a repeat of this submit is refused before anything reaches Meta.
+  let onceKey: string | null = null;
+  if (!claimedDraft) {
+    const once = await claimOnce(organizationId, "create-campaign", formData.get("submissionKey"));
+    if (!once.ok && once.reason === "duplicate") {
+      return { error: once.resultId ? "This campaign was already created. You'll find it on the Campaigns page." : "This campaign is already being built. Check Campaigns in a moment." };
+    }
+    if (once.ok) onceKey = once.key;
+  }
+
+  let outcome: Awaited<ReturnType<typeof createMairoCampaign>>;
+  try {
+  outcome = await createMairoCampaign({
     organizationId,
     name,
     objective,
@@ -479,6 +495,15 @@ export async function createCampaignAction(
       genders: parsed.data.genders ?? undefined,
     },
   });
+  } catch (error) {
+    // Nothing was built: the same form may try again.
+    if (onceKey) await releaseOnce(onceKey).catch(() => undefined);
+    throw error;
+  }
+  if (onceKey) {
+    if (outcome.results.some((r) => r.launched)) await finishOnce(onceKey, outcome.mairoCampaignId);
+    else await releaseOnce(onceKey);
+  }
 
   revalidatePath("/dashboard/campaigns");
   revalidatePath("/dashboard");
@@ -515,7 +540,9 @@ export async function createCampaignAction(
     // starts a campaign without this on record.
     const held = (await db.organization.findUnique({ where: { id: organizationId }, select: { autoLaunchHeld: true } }))?.autoLaunchHeld ?? true;
     const agreed = formData.get("spendAgreed") === "1" && !held;
-    if (agreed) await db.mairoCampaign.updateMany({ where: { id: outcome.mairoCampaignId, organizationId }, data: { launchApprovedAt: new Date() } });
+    // Recorded with what was agreed (lib/campaigns/approval.ts): a later change to the budget,
+    // dates, audience or destination means this approval no longer covers it.
+    if (agreed) await recordLaunchApproval(organizationId, outcome.mairoCampaignId);
     // The Campaign Agent's record, once Meta has the campaign. Built paused.
     await recordRun({
       organizationId,
@@ -911,7 +938,8 @@ export async function approveCampaignAction(
 
   // Recorded, so a campaign still in Meta's review goes live when it clears
   // even on an account that asked MAIRO to hold.
-  await db.mairoCampaign.update({ where: { id: owned.id }, data: { launchApprovedAt: new Date() } });
+  // With what was approved, so a later change needs approving again.
+  await recordLaunchApproval(organizationId, owned.id);
 
   const outcome = await maybeGoLive(organizationId, {
     onlyCampaignId: mairoCampaignId,

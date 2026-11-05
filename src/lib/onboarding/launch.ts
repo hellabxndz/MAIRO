@@ -4,6 +4,7 @@ import { maybeGoLive } from "@/lib/campaigns/auto-launch";
 import { launchGateForCampaign } from "@/lib/tracking/pixel-setup";
 import { recordRun } from "@/lib/team/runs";
 import { UNEXPECTED, explainCampaignError, type Problem } from "./problems";
+import { approvalCoversNow, recordLaunchApproval } from "@/lib/campaigns/approval";
 
 // Approving and cancelling the first campaign's launch. The server actions in
 // strategy-actions.ts check who's asking and call these; the tests call them
@@ -47,11 +48,10 @@ export async function launchPlanCampaign(organizationId: string): Promise<Launch
     const gate = await launchGateForCampaign(ctx.organizationId, row.campaignId);
     if (!gate.ok) return { ok: false, error: `${gate.title}. ${gate.reason}` };
 
-    // Recorded once. A second press finds it already there.
-    const first = await db.mairoCampaign.updateMany({
-      where: { id: row.campaignId, organizationId: ctx.organizationId, launchApprovedAt: null },
-      data: { launchApprovedAt: new Date() },
-    });
+    // Recorded with what was approved. A second press finds it already there;
+    // a press after the campaign changed records the new terms.
+    const already = (await approvalCoversNow(ctx.organizationId, row.campaignId)) === "covers";
+    if (!already) await recordLaunchApproval(ctx.organizationId, row.campaignId);
 
     const outcome = await maybeGoLive(ctx.organizationId, { onlyCampaignId: row.campaignId, approvedByPerson: true });
     if (outcome.launched) {
@@ -74,7 +74,7 @@ export async function launchPlanCampaign(organizationId: string): Promise<Launch
       live: false,
       message:
         outcome.heldBecause ??
-        (first.count === 0
+        (already
           ? "You'd already approved this, so it wasn't approved twice. MAIRO switches it on as soon as Meta clears the ad."
           : "Approved. Meta is still reviewing the ad — MAIRO switches it on as soon as the review clears, because you've already said yes."),
       problem: null,

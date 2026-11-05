@@ -44,7 +44,7 @@ import { toView } from "@/lib/decisions/store";
 import { MairoDecisionCard } from "@/components/decisions/decision-card";
 import { PLACEMENT_OPTIONS } from "@/lib/campaigns/placements";
 import { objectiveCapability, optimizationCapability } from "@/lib/meta-intelligence/capabilities";
-import { campaignStages, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel } from "@/lib/dashboard/campaigns";
+import { campaignStages, familyFor, goalLabel, optimizingFor, primaryResult, statusLabel, deliveredFrom } from "@/lib/dashboard/campaigns";
 import { StageTimeline } from "@/components/viz/stage-timeline";
 import { performanceTiles } from "@/lib/dashboard/home";
 import { EMPTY_METRICS } from "@/lib/ad-platforms/types";
@@ -161,9 +161,10 @@ export default async function CampaignPage({
   const atLimit = Number.isFinite(entitlements.campaign_limit) && campaignCount >= entitlements.campaign_limit;
   const hasTracking = pixel ? canOptimizeTowards(pixel.status) : false;
   const family = familyFor(campaign.objective, campaign.destinationType);
-  const status = statusLabel(campaign, new Date());
+
   const report = performance.campaigns.find((c) => c.mairoCampaignId === campaign.id) ?? null;
   const metrics = report?.total ?? null;
+  const status = statusLabel(campaign, new Date(), { delivered: deliveredFrom(report) });
   const live = campaign.status === "ACTIVE";
   const health = campaignHealth(metrics, { live });
   const advice = campaignAdvice({

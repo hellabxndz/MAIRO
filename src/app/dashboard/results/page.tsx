@@ -140,6 +140,14 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
       <header className="mb-5">
         <h1 className="text-[clamp(30px,4.4vw,48px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white">Results</h1>
         <p className="mt-1 text-[14.5px] text-muted">{period.label}, as Meta reports it.</p>
+        {/* Where the figures came from and how fresh they are: read from Meta as this page loaded. */}
+        <p className="mt-1 text-[12.5px] text-faint">
+          {campaignCount === 0
+            ? "Source: your Meta ad account, once a campaign runs."
+            : unreadable
+              ? "Source: your Meta ad account — it couldn't be read just now, so missing figures are unknown, not zero."
+              : "Source: your Meta ad account, read just now. Meta can take a few hours to report the latest activity."}
+        </p>
       </header>
 
       <nav aria-label="Period" className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">

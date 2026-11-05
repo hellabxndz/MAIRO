@@ -144,9 +144,10 @@ async function approvedCampaign(organizationId: string, objective: "SALES" | "LE
 }
 
 type PixelFacts = NonNullable<PixelState["pixel"]>;
-const state = (over: { decision?: PixelState["decision"]; purchaseVerified?: boolean; pixel?: Partial<PixelFacts> | null } = {}): PixelState => ({
+const state = (over: { decision?: PixelState["decision"]; purchaseVerified?: boolean; purchaseParams?: PixelState["purchaseParams"]; pixel?: Partial<PixelFacts> | null } = {}): PixelState => ({
   decision: over.decision ?? null,
   purchaseVerified: over.purchaseVerified ?? false,
+  purchaseParams: over.purchaseParams,
   pixel: over.pixel ? { id: "1", name: "P", lastFiredAt: null, installDetected: false, accessLost: false, otherAdAccount: false, ...over.pixel } : null,
 });
 
@@ -182,11 +183,12 @@ async function main() {
     assert.equal(pixelStatus(state({ pixel: { lastFiredAt: new Date(), accessLost: true } })), "access_lost");
     assert.equal(pixelStatus(state({ pixel: { lastFiredAt: new Date(), otherAdAccount: true } })), "access_lost");
   });
-  await check("a purchase campaign launches only with a Pixel receiving events; each refusal says why and how to fix it", () => {
+  await check("a purchase campaign launches only once Meta has seen a purchase; each refusal says why and how to fix it", () => {
     const need = "required_for_purchases" as const;
-    assert.equal(launchGate(need, state({ pixel: { lastFiredAt: new Date() } })).ok, true);
     assert.equal(launchGate(need, state({ pixel: {}, purchaseVerified: true })).ok, true);
     for (const [s, code] of [
+      [state({ pixel: { lastFiredAt: new Date() } }), "no_purchase_seen"],
+      [state({ pixel: {}, purchaseVerified: true, purchaseParams: "missing" }), "purchase_no_value"],
       [state(), "no_pixel"],
       [state({ decision: "declined" }), "declined"],
       [state({ pixel: {} }), "not_receiving"],
@@ -317,6 +319,13 @@ async function main() {
       const r = await viaMeta(() => recheckPixelAccess(SHOP));
       assert.ok(r.ok && r.data.accessible && r.data.lastFiredAt, JSON.stringify(r));
       assert.equal((await loadPixelSetup(SHOP)).status, "receiving");
+      // Receiving isn't purchases: a purchase campaign still waits for one.
+      const waiting = await campaignLaunchGate(SHOP, { objective: "SALES", destinationType: "WEBSITE" });
+      assert.ok(!waiting.ok && waiting.code === "no_purchase_seen", JSON.stringify(waiting));
+      // Meta counts a purchase, with its value and currency: now it may launch.
+      const pixelId = (await db.trackingPixel.findFirstOrThrow({ where: { organizationId: SHOP } })).externalPixelId;
+      await db.trackingVerification.create({ data: { organizationId: SHOP, pixelId, check: "event:Purchase", status: "VERIFIED", source: "meta_stats", count: 1 } });
+      await db.trackingVerification.create({ data: { organizationId: SHOP, pixelId, check: "params:Purchase", status: "VERIFIED", source: "meta_params" } });
       assert.equal((await campaignLaunchGate(SHOP, { objective: "SALES", destinationType: "WEBSITE" })).ok, true);
     });
     await check("access removed in Meta (no longer shared with the ad account) is recorded, and holds the launch again", async () => {
@@ -347,9 +356,9 @@ async function main() {
       await db.metaAdAccount.update({ where: { organizationId: SHOP }, data: { metaAdAccountId: "act_999" } });
       assert.equal(pixelStatus(await pixelStateFor(SHOP)), "access_lost");
       await db.metaAdAccount.update({ where: { organizationId: SHOP }, data: { metaAdAccountId: ACT } });
-      assert.equal(pixelStatus(await pixelStateFor(SHOP)), "receiving");
+      assert.equal(pixelStatus(await pixelStateFor(SHOP)), "purchases_verified");
     });
-    await check("with a working Pixel the purchase campaign is no longer held for it", async () => {
+    await check("with a working Pixel that Meta has seen a purchase on, the purchase campaign is no longer held for it", async () => {
       const before = writes.length;
       const r = await viaMeta(() => maybeGoLive(SHOP));
       assert.doesNotMatch(r.heldBecause ?? "", /Pixel/);

@@ -216,7 +216,7 @@ export function AutomationSection({
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
               label="Maximum daily budget"
-              hint="Across all your campaigns. MAIRO will never take total spend above this."
+              hint="The most MAIRO will set your campaigns’ combined daily budgets to. Meta treats a daily budget as an average: one day can spend up to 75% more, but no more than seven days’ worth in a week. For a hard ceiling, set an account spending limit in Meta."
             >
               <div className="relative">
                 <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-500">

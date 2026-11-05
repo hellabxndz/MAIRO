@@ -42,9 +42,9 @@ export async function pixelStateFor(organizationId: string): Promise<PixelState 
   ]);
   const checks = pixel
     ? await db.trackingVerification.findMany({
-        where: { organizationId, pixelId: pixel.externalPixelId, check: { in: ["install", "event:Purchase"] } },
+        where: { organizationId, pixelId: pixel.externalPixelId, check: { in: ["install", "event:Purchase", "params:Purchase"] } },
         orderBy: { checkedAt: "desc" },
-        take: 10,
+        take: 15,
       })
     : [];
   const latest = (check: string) => checks.find((c) => c.check === check) ?? null;
@@ -62,6 +62,7 @@ export async function pixelStateFor(organizationId: string): Promise<PixelState 
         }
       : null,
     purchaseVerified: latest("event:Purchase")?.status === "VERIFIED",
+    purchaseParams: latest("params:Purchase")?.status === "VERIFIED" ? "verified" : latest("params:Purchase")?.status === "NOT_SEEN" ? "missing" : "unknown",
     measurement: {
       goalsSaved: Boolean(profile.measurementGoalsSavedAt),
       purchaseChosen: goalsFrom(profile.measurementGoals).includes("purchase"),
@@ -121,7 +122,7 @@ export async function loadPixelSetup(organizationId: string): Promise<PixelSetup
     pixelStateFor(organizationId),
   ]);
   const checks = pixel
-    ? await db.trackingVerification.findMany({ where: { organizationId, pixelId: pixel.externalPixelId, check: { in: ["install", "event:Purchase"] } }, orderBy: { checkedAt: "desc" }, take: 10 })
+    ? await db.trackingVerification.findMany({ where: { organizationId, pixelId: pixel.externalPixelId, check: { in: ["install", "event:Purchase", "params:Purchase"] } }, orderBy: { checkedAt: "desc" }, take: 10 })
     : [];
   const latest = (check: string) => checks.find((c) => c.check === check) ?? null;
   const install = latest("install");

@@ -24,7 +24,7 @@ import { siteUrl } from "@/lib/site";
 import { asDefaultDestination } from "@/lib/campaigns/destination";
 import { viewMode } from "@/lib/view-mode";
 import { showsEnquiries } from "@/lib/leads/fields";
-import { BOARD_COLUMNS, CAMPAIGN_TABS, boardColumn, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
+import { BOARD_COLUMNS, CAMPAIGN_TABS, boardColumn, campaignTab, goalLabel, primaryResult, statusLabel, deliveredFrom, type CampaignTab } from "@/lib/dashboard/campaigns";
 import { CampaignBoard, type BoardColumnView } from "@/components/viz/campaign-board";
 import { PauseEverything } from "./pause-everything";
 import { StatusDot } from "@/components/site/status-dot";
@@ -191,7 +191,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             name: c.name,
             goal: goalLabel(c.objective),
             goalKey: c.objective,
-            status: statusLabel(c, now),
+            status: statusLabel(c, now, { delivered: deliveredFrom(report) }),
             budget: cents(c.totalDailyBudgetCents),
             spent: report?.hasData ? cents(report.total.spendCents) : null,
             result: result ? { label: result.label, value: result.value } : null,
@@ -281,7 +281,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         <div className="grid gap-3 md:grid-cols-2">
           {shown.map((campaign) => {
             const report = byCampaign.get(campaign.id);
-            const status = statusLabel(campaign, now);
+            const status = statusLabel(campaign, now, { delivered: deliveredFrom(report) });
             const result = primaryResult(campaign.objective, campaign.destinationType, report?.total ?? null);
             const attention =
               campaign.platformCampaigns.some((c) => c.lastError || c.adReviewState === "REJECTED" || c.adReviewState === "WITH_ISSUES") ||

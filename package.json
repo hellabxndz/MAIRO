@@ -79,6 +79,7 @@
     "check:release-safety": "tsx scripts/check-release-safety.ts",
     "check:autopilot": "tsx scripts/check-autopilot.ts",
     "check:unified-ai": "tsx scripts/check-unified-ai.ts",
+    "check:controlled-beta": "tsx scripts/check-controlled-beta.ts",
     "check:pricing": "tsx scripts/check-pricing.ts",
     "check:price-mapping": "tsx scripts/check-price-mapping.ts",
     "check:plans-v2": "tsx scripts/check-plans-v2.ts",

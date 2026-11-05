@@ -74,7 +74,17 @@ export function NewCampaignForm({ plan }: { plan: PlanContext }) {
 
   return (
     <>
-      <form action={formAction} className="space-y-7">
+      <form
+        action={formAction}
+        // One key per open form, made on the first submit and kept for any
+        // repeat, so a second submit is refused (lib/requests/once.ts).
+        onSubmit={(e) => {
+          const el = e.currentTarget.elements.namedItem("submissionKey") as HTMLInputElement | null;
+          if (el && !el.value) el.value = crypto.randomUUID();
+        }}
+        className="space-y-7"
+      >
+        <input type="hidden" name="submissionKey" defaultValue="" />
         {/* The whole budget goes to Meta. The server re-derives the money
             rather than trusting any amount the client computed. */}
         <input type="hidden" name="platforms" value="META" />

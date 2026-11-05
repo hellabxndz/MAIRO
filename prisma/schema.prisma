@@ -1068,6 +1068,12 @@ model MairoCampaign {
   /// MAIRO to hold before going live still has this one switched on once the
   /// network finishes reviewing it — they already said yes to it.
   launchApprovedAt DateTime?
+  /// What was approved: a fingerprint of the budget, schedule, audience,
+  /// destination and ads at the moment of approval (lib/campaigns/approval.ts).
+  /// Launch compares it with the campaign as it is now; any material change
+  /// since means the approval no longer covers it and the owner approves again.
+  /// Null on approvals recorded before this existed.
+  launchApprovalHash String?
 
   /// Where this campaign's ad sends people, and the value it needs.
   ///
@@ -4155,4 +4161,18 @@ model FounderActivity {
   createdAt   DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// A request that must run at most once (a "Create campaign" submit, retried or
+/// sent from two tabs). The key is made by the form; the first request records
+/// it and any repeat is refused before anything reaches Meta.
+model IdempotencyKey {
+  key            String   @id
+  organizationId String
+  scope          String
+  /// What the first request produced, when it finished (e.g. a campaign id).
+  resultId       String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
 }

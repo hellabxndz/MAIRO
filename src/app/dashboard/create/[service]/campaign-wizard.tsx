@@ -226,6 +226,8 @@ export function CampaignWizard(props: Props) {
   // Set before the first await, so a second click can't start a second launch
   // while the first is still saving the draft.
   const launching = useRef(false);
+  // Made on the first launch press and kept for any repeat of it.
+  const submissionKey = useRef<string | null>(null);
   async function launch() {
     if (!confirmed || pending || launching.current) return;
     launching.current = true;
@@ -240,6 +242,9 @@ export function CampaignWizard(props: Props) {
     // Not for the plan's first campaign: that approval is given on the review
     // screen it goes to next.
     if (!finalReviewLater) fd.append("spendAgreed", "1");
+    // Without a saved draft, this key keeps a retry from building it twice.
+    submissionKey.current ??= crypto.randomUUID();
+    fd.append("submissionKey", submissionKey.current);
     setAttempt((n) => n + 1);
     startTransition(() => formAction(fd));
   }

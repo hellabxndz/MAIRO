@@ -59,11 +59,11 @@ export function SpendProtectionSection({
         <div>
           <label className="flex items-center gap-2.5 text-sm text-white">
             <input type="checkbox" name="capOn" checked={capOn} onChange={(e) => setCapOn(e.target.checked)} className="h-4 w-4 accent-white" />
-            Set a monthly limit on ad spend
+            Pause everything when monthly spend reaches an amount
           </label>
           {capOn && (
             <div className="mt-3 flex flex-wrap items-center gap-2 pl-6 text-sm text-neutral-400">
-              <span>Don&rsquo;t spend more than</span>
+              <span>Pause my campaigns once spend reaches</span>
               <span className="text-neutral-500">$</span>
               <input type="number" name="monthlyCap" min={10} step={10} defaultValue={values.monthlyCapCents ? values.monthlyCapCents / 100 : 1000} className={input} aria-label="Monthly limit in dollars" />
               <span>a month. Warn me at</span>
@@ -72,8 +72,9 @@ export function SpendProtectionSection({
             </div>
           )}
           <p className="mt-2 pl-6 text-xs text-neutral-500">
-            When it&rsquo;s reached, MAIRO pauses every running campaign until next month or until you raise it. Because it&rsquo;s checked
-            periodically rather than continuously, the networks can spend a little past it before the pause lands.
+            A check MAIRO runs, not a cap Meta enforces. MAIRO reads your spend at least once a day and whenever you open MAIRO, and pauses
+            every running campaign when it&rsquo;s reached — so spend can go past it before the pause lands. For a hard ceiling Meta itself
+            enforces, set an account spending limit in Meta Ads Manager → Billing &amp; payments.
           </p>
         </div>
 

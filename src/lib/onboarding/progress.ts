@@ -223,7 +223,9 @@ export function onboardingSteps(f: OnboardingFacts): OnboardingStep[] {
     who: "you",
     // Optional and not yet answered is fine to move past: it never holds up a
     // business that doesn't need it. A shop that hasn't answered is asked.
-    state: !connected ? "todo" : px.status === "access_lost" ? "attention" : px.deferred ? "skipped" : chosen ? "done" : px.decision === "declined" || !shop ? "skipped" : "todo",
+    // A shop's purchase campaign launches only once Meta has seen a purchase
+    // (tracking/pixel-rules.ts launchGate): page views alone point here.
+    state: !connected ? "todo" : px.status === "access_lost" ? "attention" : px.deferred ? "skipped" : shop && px.status === "receiving" ? "attention" : chosen ? "done" : px.decision === "declined" || !shop ? "skipped" : "todo",
     detail: !connected
       ? null
       : px.deferred
@@ -234,8 +236,12 @@ export function onboardingSteps(f: OnboardingFacts): OnboardingStep[] {
         ? "MAIRO can't reach the Pixel you chose — re-check access"
         : px.status === "selected_not_receiving"
           ? "Chosen — not receiving website events yet"
-          : px.status === "receiving" || px.status === "purchases_verified"
-            ? "Chosen and receiving website events"
+          : px.status === "purchases_verified"
+            ? "Receiving purchase events"
+            : px.status === "receiving"
+            ? shop
+              ? "Receiving website events — waiting for a first purchase before a purchase campaign can launch"
+              : "Chosen and receiving website events"
             : px.decision === "declined"
               ? shop
                 ? "Not connected — purchase campaigns can't launch without it"

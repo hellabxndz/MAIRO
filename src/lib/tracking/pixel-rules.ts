@@ -93,6 +93,13 @@ export type PixelState = {
   /** Meta has received a Purchase event recently (the pixel's event stats). */
   purchaseVerified: boolean;
   /**
+   * Whether those purchases carried an order value and a currency, as Meta
+   * reported the fields (measurement-store "params:Purchase"): "missing" only
+   * when Meta said they were absent; "unknown" when it wasn't checked or Meta
+   * couldn't say.
+   */
+  purchaseParams?: "verified" | "missing" | "unknown";
+  /**
    * What the owner chose in the guided setup (lib/tracking/measurement.ts),
    * when they've been through it. Absent for businesses that haven't: the
    * rules then stand as they were.
@@ -121,7 +128,7 @@ export const PIXEL_STATUS_LABEL: Record<PixelStatus, string> = {
 };
 
 export type Fix = { label: string; href: string };
-export type LaunchGate = { ok: true } | { ok: false; code: "no_pixel" | "declined" | "access_lost" | "not_receiving" | "deferred" | "purchase_not_chosen"; title: string; reason: string; fixes: Fix[] };
+export type LaunchGate = { ok: true } | { ok: false; code: "no_pixel" | "declined" | "access_lost" | "not_receiving" | "deferred" | "purchase_not_chosen" | "no_purchase_seen" | "purchase_no_value"; title: string; reason: string; fixes: Fix[] };
 
 const SETUP: Fix = { label: "Set up your Meta Pixel", href: "/dashboard/pixel" };
 // The wizard has no preset: the person picks "website visits" as the goal there.
@@ -153,9 +160,30 @@ export function launchGate(need: PixelNeed, s: PixelState): LaunchGate {
   }
   const status = pixelStatus(s);
   switch (status) {
-    case "receiving":
     case "purchases_verified":
+      // Purchases arrive; they must also say what each order was worth, or
+      // Meta can't value them and MAIRO can't report revenue or ROAS.
+      if (s.purchaseParams === "missing") {
+        return {
+          ok: false,
+          code: "purchase_no_value",
+          title: "Your purchase events don't carry an order value and currency",
+          reason:
+            "Meta receives your website's purchases, but without the order total and its currency. This campaign is set up to get purchases, so it won't launch until each purchase says what it was worth — otherwise revenue and return on ad spend can't be measured. Add the value and currency to the Purchase event, then run the check.",
+          fixes: [{ label: "Fix the purchase event", href: "/dashboard/pixel" }, VISITS],
+        };
+      }
       return { ok: true };
+    case "receiving":
+      // Page views prove the Pixel is installed, not that purchases are counted.
+      return {
+        ok: false,
+        code: "no_purchase_seen",
+        title: "Meta hasn't seen a purchase from your website yet",
+        reason:
+          "Your Pixel is sending website events, but Meta hasn't received a Purchase event, so MAIRO can't confirm purchases (with their value and currency) would be counted. This campaign is set up to get purchases, so it waits until one arrives. Place a test order — or send one from Meta Events Manager → Test events — then run the check. Or run a campaign for website visits now.",
+        fixes: [{ label: "Check purchase tracking", href: "/dashboard/pixel" }, VISITS],
+      };
     case "declined":
       return {
         ok: false,

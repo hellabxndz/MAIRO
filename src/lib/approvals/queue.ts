@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { AgentRole } from "@/generated/prisma/enums";
 import { usd } from "@/lib/protection/rules";
 import { socialAccess } from "@/lib/social/access";
+import { APPROVAL_TERMS_SELECT, approvalState } from "@/lib/campaigns/approval";
 
 // Everything waiting for the business's say-so, beyond the recommended
 // changes on the Approval Center's main list: campaigns built and waiting to
@@ -26,12 +27,16 @@ const DAY = 86_400_000;
 
 export async function otherApprovals(organizationId: string, now = new Date()): Promise<OtherApproval[]> {
   const [launches, plan, mission, coach, social] = await Promise.all([
-    db.mairoCampaign.findMany({
-      where: { organizationId, launchApprovedAt: null, status: { not: "ARCHIVED" }, platformCampaigns: { some: { status: "PENDING_REVIEW", externalCampaignId: { not: null } } } },
-      select: { id: true, name: true, totalDailyBudgetCents: true, budgetType: true, lifetimeBudgetCents: true },
-      orderBy: { createdAt: "asc" },
-      take: 10,
-    }),
+    // Built and waiting: never approved, or approved and then changed (the
+    // approval no longer covers what it is now — lib/campaigns/approval.ts).
+    db.mairoCampaign
+      .findMany({
+        where: { organizationId, status: { not: "ARCHIVED" }, platformCampaigns: { some: { status: "PENDING_REVIEW", externalCampaignId: { not: null } } } },
+        select: { id: true, name: true, ...APPROVAL_TERMS_SELECT },
+        orderBy: { createdAt: "asc" },
+        take: 20,
+      })
+      .then((rows) => rows.map((r) => ({ ...r, approval: approvalState(r) })).filter((r) => r.approval !== "covers").slice(0, 10)),
     db.strategyPlan.findUnique({ where: { organizationId }, select: { status: true } }),
     db.marketingMission.findFirst({ where: { organizationId, status: "PROPOSED" }, orderBy: { createdAt: "desc" }, select: { id: true, title: true } }),
     db.coachFinding.findMany({ where: { organizationId, status: "OPEN", severity: { in: ["ATTENTION", "OPPORTUNITY"] } }, orderBy: [{ priority: "desc" }, { firstSeenAt: "asc" }], take: 5, select: { id: true, title: true, plain: true, agentsJson: true } }),
@@ -49,7 +54,9 @@ export async function otherApprovals(organizationId: string, now = new Date()): 
       kind: "launch",
       agent: "ARCHITECT",
       title: `Launch “${c.name}”`,
-      text: "Built on Meta and switched off. It starts spending only after you approve, once Meta has approved the ads.",
+      text: c.approval === "changed"
+        ? "Changed after you approved it — the budget, dates, audience or destination aren't what you said yes to. It stays switched off until you approve it as it is now."
+        : "Built on Meta and switched off. It starts spending only after you approve, once Meta has approved the ads.",
       budget: `Starts spending: ${budget}.`,
       authorization: "Your explicit approval. A campaign never goes live without it.",
       href: `/dashboard/campaigns/${c.id}`,

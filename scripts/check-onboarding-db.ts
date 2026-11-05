@@ -31,6 +31,7 @@ import { approve, activateIfPaid, createStrategy } from "../src/lib/strategy/sto
 import { draftFromApprovedPlan } from "../src/lib/strategy/campaign";
 import { loadJourney } from "../src/lib/strategy/journey";
 import { maybeGoLive } from "../src/lib/campaigns/auto-launch";
+import { recordLaunchApproval } from "../src/lib/campaigns/approval";
 import { syncAdReviews } from "../src/lib/campaigns/ad-review-sync";
 import { executionBlock } from "../src/lib/billing/execution";
 
@@ -334,6 +335,21 @@ async function main() {
       assert.equal(await db.agentRun.count({ where: { organizationId: ORG, task: "cancel-launch" } }), 1);
       const again = await cancelPlanLaunch(ORG);
       assert.ok(again.ok && /wasn't approved/.test(again.message));
+    });
+
+    await check("approved, then the budget raised before it went live: nothing is switched on until the new terms are approved", async () => {
+      await recordLaunchApproval(ORG, campaignId);
+      await db.mairoCampaign.update({ where: { id: campaignId }, data: { totalDailyBudgetCents: 8_000 } });
+      await db.platformCampaign.updateMany({ where: { mairoCampaignId: campaignId }, data: { dailyBudgetCents: 8_000 } });
+      const before = writes.length;
+      const r = await viaMeta(() => maybeGoLive(ORG, { onlyCampaignId: campaignId }));
+      assert.equal(r.launched, false);
+      assert.match(r.heldBecause ?? "", /changed after you approved it/);
+      assert.equal(writes.length, before, "nothing sent to Meta");
+      assert.notEqual((await db.mairoCampaign.findUniqueOrThrow({ where: { id: campaignId } })).status, "ACTIVE");
+      // Back to what was approved, and the approval is cleared as the test found it.
+      await db.mairoCampaign.update({ where: { id: campaignId }, data: { totalDailyBudgetCents: 4_000, launchApprovedAt: null, launchApprovalHash: null } });
+      await db.platformCampaign.updateMany({ where: { mairoCampaignId: campaignId }, data: { dailyBudgetCents: 4_000 } });
     });
 
     await check("the final approval, pressed twice at once: approved once, switched on once, live only when Meta confirmed", async () => {
