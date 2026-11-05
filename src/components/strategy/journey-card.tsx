@@ -21,7 +21,7 @@ export function FirstCampaignCard({ state }: { state: { launched: boolean; launc
   }
   if (state.welcomed && !state.learning) return null;
   return (
-    <div className="mb-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-5">
+    <div className="mb-6 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           {!state.welcomed && <p className="text-[15px] font-semibold text-white">Welcome to your full MAIRO dashboard.</p>}
@@ -30,7 +30,7 @@ export function FirstCampaignCard({ state }: { state: { launched: boolean; launc
           </p>
           {state.learning && (
             <p className="mt-1 text-[12.5px] text-muted">
-              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 align-middle" />
+              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--v3-signal)] align-middle" />
               Collecting data — MAIRO is learning from your campaign. Numbers fill in as Meta reports them, usually within a few hours; anything empty below is waiting on real results, not hidden.
             </p>
           )}

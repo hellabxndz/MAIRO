@@ -33,7 +33,7 @@ function Steps({ at }: { at: number }) {
   return (
     <ol aria-label="Getting started" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {STEPS.map((s, i) => (
-        <li key={s} aria-current={i === at ? "step" : undefined} className={`rounded-xl border px-3 py-2.5 text-[12.5px] leading-snug ${i < at ? "border-emerald-400/25 bg-emerald-400/[0.05] text-emerald-200" : i === at ? "border-violet-400/50 bg-violet-500/[0.10] text-white" : "border-white/10 text-white/45"}`}>
+        <li key={s} aria-current={i === at ? "step" : undefined} className={`rounded-xl border px-3 py-2.5 text-[12.5px] leading-snug ${i < at ? "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90" : i === at ? "border-white/[0.22] bg-white/[0.04] text-white" : "border-white/10 text-white/45"}`}>
           <span className="mr-1.5 font-semibold">{i < at ? "✓" : `${i + 1}.`}</span>
           {s}
         </li>
@@ -80,13 +80,13 @@ export default async function StartPage() {
         <div className="mx-auto max-w-[860px] space-y-6 py-4">
           <Steps at={1} />
           <section aria-labelledby="strategy-title" className={card}>
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-200">Your strategy is ready</p>
+            <p className="v3-label">Your strategy is ready</p>
             <h1 id="strategy-title" className="mt-2 text-[clamp(24px,3.4vw,32px)] font-semibold leading-tight tracking-[-0.02em] text-white">Approve your strategy for {org.name}</h1>
             <p className="mt-2 text-[14.5px] leading-relaxed text-white/65">Written from your free plan. Check it, then approve it to choose your MAIRO plan.</p>
             <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
               {facts.map(([k, v]) => (
                 <div key={k}>
-                  <dt className="text-[11.5px] uppercase tracking-[0.14em] text-white/45">{k}</dt>
+                  <dt className="v3-label">{k}</dt>
                   <dd className="mt-1 text-[14.5px] text-white">{v}</dd>
                 </div>
               ))}
@@ -94,10 +94,10 @@ export default async function StartPage() {
             {p.summary && <p className="mt-6 border-t border-white/10 pt-5 text-[14px] leading-relaxed text-white/75">{p.summary}</p>}
             {p.concepts.length > 0 && (
               <div className="mt-5">
-                <p className="text-[11.5px] uppercase tracking-[0.14em] text-white/45">First ad ideas</p>
+                <p className="v3-label">First ad ideas</p>
                 <ul className="mt-2 space-y-1.5 text-[14px] text-white/85">
                   {p.concepts.slice(0, 3).map((c) => (
-                    <li key={c.title} className="flex gap-2"><span aria-hidden className="text-violet-300">✦</span>{c.title}</li>
+                    <li key={c.title} className="flex gap-2"><span aria-hidden className="text-white/90">✦</span>{c.title}</li>
                   ))}
                 </ul>
               </div>
@@ -151,13 +151,13 @@ export default async function StartPage() {
       <div className="mx-auto max-w-[860px] space-y-6 py-4">
         <Steps at={1} />
         <section aria-labelledby="confirm-title" className={card}>
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Account created ✓</p>
+          <p className="v3-label">Account created ✓</p>
           <h1 id="confirm-title" className="mt-2 text-[clamp(24px,3.4vw,32px)] font-semibold leading-tight tracking-[-0.02em] text-white">Confirm your setup</h1>
           <p className="mt-2 text-[14.5px] leading-relaxed text-white/65">From the free plan you liked. One question, then MAIRO writes your strategy for you to approve.</p>
           <dl className="mt-6 grid gap-x-6 gap-y-4 sm:grid-cols-2">
             {known.map(([k, v]) => (
               <div key={k}>
-                <dt className="text-[11.5px] uppercase tracking-[0.14em] text-white/45">{k}</dt>
+                <dt className="v3-label">{k}</dt>
                 <dd className="mt-1 text-[14.5px] text-white">{v}</dd>
               </div>
             ))}

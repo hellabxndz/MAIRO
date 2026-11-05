@@ -27,7 +27,7 @@ export function CopyField({ value }: { value: string }) {
       <button
         type="button"
         onClick={copy}
-        className="shrink-0 rounded border border-[color:var(--mairo-line)] px-3 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white"
+        className="shrink-0 rounded border border-[color:var(--v3-line)] px-3 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white v3-label"
       >
         {copied ? "Copied" : "Copy"}
       </button>

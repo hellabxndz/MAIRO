@@ -53,7 +53,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
   return (
     <div className="mx-auto max-w-[1180px]">
       <header className="mb-8 max-w-3xl">
-        <p className="text-[12.5px] font-medium uppercase tracking-[0.08em] text-violet-bright">Your first ads</p>
+        <p className="v3-label">Your first ads</p>
         <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-white sm:text-[28px]">Review your suggested ads</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-white/85">{data.intro}</p>
         <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
@@ -65,7 +65,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       </header>
 
       {data.directions.length === 0 ? (
-        <div className="rounded-[var(--radius-panel)] border border-dashed p-8 text-center" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="rounded-[var(--radius-panel)] border border-dashed p-8 text-center" style={{ borderColor: "var(--v3-line)" }}>
           <p className="text-[15px] font-medium text-white">MAIRO needs a little more before it can suggest ads</p>
           <p className="mx-auto mt-2 max-w-md text-[13px] text-muted">Confirm what you sell and who it&apos;s for in your Business Brain, then come back.</p>
           <Link href="/dashboard/settings/business-brain" className={`${actionClass} mt-4`}>Open your Business Brain</Link>
@@ -79,7 +79,7 @@ export function SuggestedAds({ organizationId, data, test, paid, imagesAvailable
       )}
 
       {data.missing.length > 0 && data.directions.length > 0 && (
-        <aside className="mt-6 rounded-2xl border px-5 py-4" style={{ borderColor: "var(--mairo-line)" }}>
+        <aside className="mt-6 rounded-2xl border px-5 py-4" style={{ borderColor: "var(--v3-line)" }}>
           <p className="text-[13.5px] font-medium text-white">Tell MAIRO more to get other kinds of ad</p>
           <ul className="mt-2 space-y-1">
             {data.missing.map((m) => (
@@ -156,7 +156,7 @@ function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType
   const titleId = `dir-${d.id}`;
   const own = img?.source === "upload";
   return (
-    <li className={`flex flex-col overflow-hidden rounded-[22px] border ${d.recommended ? "border-violet/50" : ""}`} style={{ borderColor: d.recommended ? undefined : "var(--mairo-line)", background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }} aria-labelledby={titleId}>
+    <li className={`flex flex-col overflow-hidden rounded-[22px] border ${d.recommended ? "border-violet/50" : ""}`} style={{ borderColor: d.recommended ? undefined : "var(--v3-line)", background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }} aria-labelledby={titleId}>
       {/* Shorter on a phone while there's nothing to show yet. */}
       <div className={`relative w-full ${hasMedia ? "aspect-[4/5]" : "aspect-[4/3] sm:aspect-[4/5]"}`}>
         {img?.url ? (
@@ -187,29 +187,29 @@ function DirectionCard({ d, readiness, onOpen }: { d: Dir; readiness: ReturnType
         </p>
         <dl className="mt-2 space-y-2.5 text-[13px] leading-relaxed">
           <div>
-            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Headline</dt>
+            <dt className="v3-label">Headline</dt>
             <dd id={titleId} className="mt-0.5 text-[16px] font-semibold leading-snug text-white">{d.headline ?? d.words?.hook}</dd>
           </div>
           <div>
-            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Primary text</dt>
+            <dt className="v3-label">Primary text</dt>
             <dd className="mt-0.5 text-white/85">
               {d.words?.hook}
               {d.words?.body ? ` ${d.words.body}` : ""}
             </dd>
           </div>
           <div>
-            <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Visual direction</dt>
+            <dt className="v3-label">Visual direction</dt>
             <dd className="mt-0.5 text-white/70">{d.visual}</dd>
           </div>
           <div>
-            <dt className="inline text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Button </dt>
+            <dt className="inline v3-label">Button </dt>
             <dd className="inline">
               <span className="rounded-md bg-white/[0.08] px-2 py-0.5 text-[12px] font-medium text-white/90">{d.words?.cta}</span>
             </dd>
           </div>
           {d.words?.why && (
             <div>
-              <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Why MAIRO recommends it</dt>
+              <dt className="v3-label">Why MAIRO recommends it</dt>
               <dd className="mt-0.5 text-white/75">{d.words.why}</dd>
             </div>
           )}
@@ -300,7 +300,7 @@ function CreateDialog({ d, paid, available, onClose, onMade, onVideo }: { d: Dir
           <button type="button" onClick={onVideo} className="mt-2 block text-violet-bright underline-offset-4 hover:underline">Use your own video instead</button>
         </div>
       ) : !paid ? (
-        <div className="mt-4 rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="mt-4 rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--v3-line)" }}>
           Making pictures is part of a MAIRO plan. You can still change the words now and make the picture after.
           <Link href="/plan/activate" className="mt-2 block text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link>
         </div>
@@ -310,7 +310,7 @@ function CreateDialog({ d, paid, available, onClose, onMade, onVideo }: { d: Dir
             <legend className="text-[13px] font-medium text-white">Quality</legend>
             <div className="mt-2 flex gap-2">
               {(["standard", "premium"] as const).map((v) => (
-                <label key={v} className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-[13px] ${quality === v ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+                <label key={v} className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-[13px] ${quality === v ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
                   <input type="radio" name="quality" value={v} checked={quality === v} onChange={() => setQuality(v)} className="sr-only" />
                   {v === "standard" ? "Standard" : "Premium"}
                 </label>
@@ -401,7 +401,7 @@ function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { 
   return (
     <Modal open onClose={onClose} title={mode === "refine" ? `Refine with MAIRO: ${d.title}` : `Edit the words: ${d.title}`}>
       <div className="space-y-4">
-        <section aria-labelledby={`ask-${d.id}`} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+        <section aria-labelledby={`ask-${d.id}`} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
           <h3 id={`ask-${d.id}`} className="text-[13px] font-medium text-white">Ask MAIRO to rewrite it</h3>
           {!aiAvailable ? (
             <p className="mt-1 text-[12.5px] text-muted">Rewriting with AI isn&apos;t switched on for this deployment yet. You can still change the words yourself below.</p>
@@ -409,12 +409,12 @@ function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { 
             <>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {REWRITE_CHIPS.map((c) => (
-                  <button key={c} type="button" disabled={asking} onClick={() => { setInstruction(c); ask(c); }} className="rounded-full border border-[color:var(--mairo-line)] px-3 py-1 text-[12px] text-muted hover:text-white disabled:opacity-50">{c}</button>
+                  <button key={c} type="button" disabled={asking} onClick={() => { setInstruction(c); ask(c); }} className="rounded-full border border-[color:var(--v3-line)] px-3 py-1 text-[12px] text-muted hover:text-white disabled:opacity-50">{c}</button>
                 ))}
               </div>
               <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (instruction.trim().length >= 3) ask(instruction); }}>
                 <label className="sr-only" htmlFor={`ins-${d.id}`}>What to change</label>
-                <input id={`ins-${d.id}`} data-autofocus={mode === "refine" ? "" : undefined} value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. Focus more on our new product" className="min-w-0 flex-1 rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+                <input id={`ins-${d.id}`} data-autofocus={mode === "refine" ? "" : undefined} value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. Focus more on our new product" className="min-w-0 flex-1 rounded-xl border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
                 <button type="submit" disabled={asking || instruction.trim().length < 3} className={`${quietClass} disabled:opacity-50`}>{asking ? "Writing…" : "Ask"}</button>
               </form>
               <p className="mt-1.5 text-[11.5px] text-faint">MAIRO uses only what you&apos;ve confirmed. Nothing is saved until you choose to keep it.</p>
@@ -423,13 +423,13 @@ function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { 
           {proposal && (
             <div className="mt-3 grid gap-2 sm:grid-cols-2" aria-live="polite">
               <div className="rounded-xl bg-white/[0.03] px-3 py-2.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Now</p>
+                <p className="v3-label">Now</p>
                 <p className="mt-1 text-[13px] font-medium text-white">{hook}</p>
                 {body && <p className="mt-1 text-[12.5px] text-white/75">{body}</p>}
                 <p className="mt-1.5 text-[12px] text-muted">Button: {cta}</p>
               </div>
               <div className="rounded-xl border border-violet/40 bg-violet/[0.06] px-3 py-2.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-bright">MAIRO&apos;s proposal</p>
+                <p className="v3-label">MAIRO&apos;s proposal</p>
                 <p className="mt-1 text-[13px] font-medium text-white">{proposal.hook}</p>
                 {proposal.body && <p className="mt-1 text-[12.5px] text-white/75">{proposal.body}</p>}
                 <p className="mt-1.5 text-[12px] text-muted">Button: {proposal.cta}</p>
@@ -447,15 +447,15 @@ function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { 
         <label className="block text-[13px] text-white">
           Opening line <span className="text-faint">({hook.length}/160)</span>
           <span className="mt-0.5 block text-[11.5px] text-faint">{hook.length <= 40 ? "Short enough to be the headline too." : "Over 40 characters, so the headline becomes what you offer — the opening line stays first in the text."}</span>
-          <textarea data-autofocus={mode === "edit" ? "" : undefined} value={hook} onChange={(e) => setHook(e.target.value)} rows={2} maxLength={160} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
+          <textarea data-autofocus={mode === "edit" ? "" : undefined} value={hook} onChange={(e) => setHook(e.target.value)} rows={2} maxLength={160} className="mt-1 w-full rounded-xl border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
         </label>
         <label className="block text-[13px] text-white">
           The rest of the text <span className="text-faint">({body.length}/600)</span>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={600} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={600} className="mt-1 w-full rounded-xl border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[14px] text-white" />
         </label>
         <label className="block text-[13px] text-white">
           The button
-          <select value={cta} onChange={(e) => setCta(e.target.value)} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-[color:var(--mairo-bg)] px-3 py-2 text-[14px] text-white">
+          <select value={cta} onChange={(e) => setCta(e.target.value)} className="mt-1 w-full rounded-xl border border-[color:var(--v3-line)] bg-[color:var(--mairo-bg)] px-3 py-2 text-[14px] text-white">
             {[...new Set([cta, ...CTA_CHOICES])].map((c) => <option key={c}>{c}</option>)}
           </select>
         </label>
@@ -468,7 +468,7 @@ function EditDialog({ d, avoid, brand, aiAvailable, mode = "edit", onClose }: { 
           <button type="button" onClick={onClose} className={quietClass}>Cancel</button>
         </div>
         {d.history.length > 1 && (
-          <section aria-labelledby={`hist-${d.id}`} className="border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+          <section aria-labelledby={`hist-${d.id}`} className="border-t pt-4" style={{ borderColor: "var(--v3-line)" }}>
             <h3 id={`hist-${d.id}`} className="text-[13px] font-medium text-white">Earlier versions</h3>
             <ol className="mt-2 space-y-2">
               {d.history.map((h) => (
@@ -511,7 +511,7 @@ function RejectDialog({ d, onClose, onDone }: { d: Dir; onClose: () => void; onD
         <legend className="text-[13px] font-medium text-white">Why? <span className="font-normal text-muted">(helps MAIRO suggest better)</span></legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {REASONS.map((x) => (
-            <label key={x} className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] ${reason === x ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+            <label key={x} className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] ${reason === x ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
               <input type="radio" name={`why-${d.id}`} value={x} checked={reason === x} onChange={() => setReason(x)} className="sr-only" />
               {x}
             </label>
@@ -520,7 +520,7 @@ function RejectDialog({ d, onClose, onDone }: { d: Dir; onClose: () => void; onD
       </fieldset>
       <label className="mt-3 block text-[13px] text-white">
         Anything else <span className="text-faint">(optional)</span>
-        <input value={more} onChange={(e) => setMore(e.target.value)} maxLength={200} className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+        <input value={more} onChange={(e) => setMore(e.target.value)} maxLength={200} className="mt-1 w-full rounded-xl border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
       </label>
       {error && <p role="alert" className="mt-3 text-[12.5px] text-warn">{error}</p>}
       <div className="mt-5 flex flex-wrap gap-2">
@@ -535,7 +535,7 @@ function Rejected({ items, onNotice }: { items: Data["rejected"]; onNotice: (m: 
   const router = useRouter();
   const [busy, start] = useTransition();
   return (
-    <details className="mt-4 rounded-2xl border px-5 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+    <details className="mt-4 rounded-2xl border px-5 py-3" style={{ borderColor: "var(--v3-line)" }}>
       <summary className="cursor-pointer text-[13px] text-white/85">Turned down ({items.length})</summary>
       <ul className="mt-2 space-y-2">
         {items.map((x) => (
@@ -615,7 +615,7 @@ function PhotoDialog({ d, organizationId, paid, available, onClose, onReview }: 
       {!available ? (
         <p className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-4 py-3 text-[13px] text-white/85">Photo uploads aren&apos;t switched on for this deployment yet.</p>
       ) : !paid ? (
-        <p className="mt-4 rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>Using your own photo is part of a MAIRO plan. <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link></p>
+        <p className="mt-4 rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--v3-line)" }}>Using your own photo is part of a MAIRO plan. <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link></p>
       ) : saved ? (
         <div className="mt-4 space-y-3">
           <p role="status" className="text-[13.5px] text-live">✓ Your photo is saved as this ad&apos;s picture.</p>
@@ -631,7 +631,7 @@ function PhotoDialog({ d, organizationId, paid, available, onClose, onReview }: 
               e.target.value = "";
               if (f) void choose(f);
             }} />
-          <button type="button" disabled={progress !== null} onClick={() => input.current?.click()} className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60" style={{ borderColor: "var(--mairo-line)" }}>
+          <button type="button" disabled={progress !== null} onClick={() => input.current?.click()} className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60" style={{ borderColor: "var(--v3-line)" }}>
             {progress !== null ? `Uploading… ${progress}%` : "Choose a photo — JPG or PNG"}
           </button>
           <p className="text-[11.5px] text-faint">Use a photo you have the right to use. If people appear, MAIRO doesn&apos;t present them as customers.</p>
@@ -691,7 +691,7 @@ function VideoDialog({ d, organizationId, paid, available, rendering, onClose, o
   const uploader = !available ? (
     <p className="rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-4 py-3 text-[13px] text-white/85">Video uploads aren&apos;t switched on for this deployment yet.</p>
   ) : !paid ? (
-    <p className="rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>Using your own video is part of a MAIRO plan. <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link></p>
+    <p className="rounded-xl border px-4 py-3 text-[13px] text-white/85" style={{ borderColor: "var(--v3-line)" }}>Using your own video is part of a MAIRO plan. <Link href="/plan/activate" className="text-violet-bright underline-offset-4 hover:underline">Choose a plan</Link></p>
   ) : (
     <div className="space-y-3">
       <input ref={input} type="file" accept={VIDEO_TYPES.join(",")} className="hidden" onChange={(e) => {
@@ -699,7 +699,7 @@ function VideoDialog({ d, organizationId, paid, available, rendering, onClose, o
           e.target.value = "";
           if (f) void choose(f);
         }} />
-      <button type="button" disabled={progress !== null} onClick={() => input.current?.click()} className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60" style={{ borderColor: "var(--mairo-line)" }}>
+      <button type="button" disabled={progress !== null} onClick={() => input.current?.click()} className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60" style={{ borderColor: "var(--v3-line)" }}>
         {progress !== null ? `Uploading… ${progress}%` : "Choose a video — MP4 or MOV, up to 500MB"}
       </button>
       <p className="text-[11.5px] text-faint">Your file is kept exactly as uploaded. Every edit you make here is saved as a new version alongside it.</p>
@@ -714,7 +714,7 @@ function VideoDialog({ d, organizationId, paid, available, rendering, onClose, o
       {video && !replacing ? (
         <>
           <VideoEditor key={`${video.videoId}-${video.version}`} video={video} words={{ hook: d.words?.hook ?? "", cta: d.words?.cta ?? "" }} onBusy={setEditing} rendering={rendering} organizationId={organizationId} uploadsAvailable={available} />
-          <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: "var(--v3-line)" }}>
             <button type="button" onClick={onReview} disabled={editing} className={`${actionClass} disabled:opacity-50`}>Review and approve</button>
             <button type="button" onClick={() => setReplacing(true)} className={quietClass}>Upload a different video</button>
             {editing && <p className="text-[12px] text-muted">Save or discard your edits first.</p>}

@@ -40,7 +40,7 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
 
   if (!test || test.status === "CANCELED") {
     return (
-      <section aria-labelledby="test-h" className="mt-10 rounded-[var(--radius-panel)] border px-6 py-5" style={{ borderColor: "var(--mairo-line)" }}>
+      <section aria-labelledby="test-h" className="mt-10 rounded-[var(--radius-panel)] border px-6 py-5" style={{ borderColor: "var(--v3-line)" }}>
         <h2 id="test-h" className="text-[16px] font-semibold text-white">Your first test</h2>
         {test?.conclusion && <p className="mt-2 text-[13px] text-white/80">{test.conclusion}</p>}
         <p className="mt-2 text-[13px] leading-relaxed text-muted">
@@ -55,7 +55,7 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
   const verdict = result?.verdict ?? null;
 
   return (
-    <section aria-labelledby="test-h" className="mt-10 rounded-[var(--radius-panel)] border px-6 py-5" style={{ borderColor: "var(--mairo-line)" }}>
+    <section aria-labelledby="test-h" className="mt-10 rounded-[var(--radius-panel)] border px-6 py-5" style={{ borderColor: "var(--v3-line)" }}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id="test-h" className="text-[16px] font-semibold text-white">Your first test</h2>
@@ -76,8 +76,8 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
           const f = result?.figures[i];
           const winner = verdict?.kind === "winner" && verdict.winner === i;
           return (
-            <div key={`${v.label}-${i}`} className={`min-w-0 rounded-2xl border px-4 py-3 ${winner ? "border-live/50" : ""}`} style={winner ? undefined : { borderColor: "var(--mairo-line)" }}>
-              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+            <div key={`${v.label}-${i}`} className={`min-w-0 rounded-2xl border px-4 py-3 ${winner ? "border-live/50" : ""}`} style={winner ? undefined : { borderColor: "var(--v3-line)" }}>
+              <p className="flex items-center gap-2 v3-label">
                 Version {String.fromCharCode(65 + i)}
                 {winner && <span className="rounded-full bg-live/15 px-2 py-0.5 text-[10.5px] normal-case tracking-normal text-live">Better per {result!.word}</span>}
               </p>
@@ -103,7 +103,7 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
             <p className="text-[13.5px] text-white/90">MAIRO wrote this test down; it isn&rsquo;t running. Approve it and MAIRO makes a campaign draft with both versions on the same picture. You check the budget and launch it in the campaign builder as usual.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" disabled={pending} className={primary} onClick={() => run(() => approveExperimentAction(test.id), "Test approved. Next, build its campaign.")}>Approve this test</button>
-              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--mairo-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Not now</button>
+              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--v3-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Not now</button>
             </div>
           </>
         )}
@@ -112,7 +112,7 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
             <p className="text-[13.5px] text-white/90">Approved. Next: the test&rsquo;s campaign — both versions as separate ads in one campaign, so they share the budget and audience. Nothing is built in your ad account until you launch it.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" disabled={pending || !paid} className={primary} onClick={() => run(() => buildExperimentCampaignAction(test.id))}>{test.campaignDraftId ? "Open the test campaign" : "Build the test campaign"}</button>
-              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--mairo-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Stop the test</button>
+              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--v3-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Stop the test</button>
             </div>
             {!paid && <p className="mt-2 text-[12px] text-muted">Running campaigns needs an active subscription. <Link href="/plan/activate" className="underline underline-offset-4">See plans</Link></p>}
           </>
@@ -128,8 +128,8 @@ export function ExperimentPanel({ test, approved, paid }: { test: ExperimentView
             )}
             {!result && <p className="mt-1 text-[12.5px] text-white/75">MAIRO reads each ad&rsquo;s results from Meta every day and says when there&rsquo;s enough to call it.</p>}
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--mairo-line)" }} onClick={() => run(() => checkExperimentAction(test.id), "Figures updated from Meta.")}>{pending ? "Reading Meta…" : "Check now"}</button>
-              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--mairo-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Stop the test</button>
+              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--v3-line)" }} onClick={() => run(() => checkExperimentAction(test.id), "Figures updated from Meta.")}>{pending ? "Reading Meta…" : "Check now"}</button>
+              <button type="button" disabled={pending} className={quiet} style={{ borderColor: "var(--v3-line)" }} onClick={() => run(() => cancelExperimentAction(test.id))}>Stop the test</button>
             </div>
           </>
         )}

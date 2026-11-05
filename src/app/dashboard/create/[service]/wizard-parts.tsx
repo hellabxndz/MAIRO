@@ -60,7 +60,7 @@ export function Choice({
       disabled={disabled}
       className="rounded-xl border p-4 text-left transition-all duration-300 [transition-timing-function:var(--ease-mairo)] disabled:cursor-not-allowed disabled:opacity-45"
       style={{
-        borderColor: selected ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+        borderColor: selected ? "rgba(238,238,238,0.5)" : "var(--v3-line)",
         background: selected ? "rgba(214,214,214,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
         boxShadow: selected ? "0 0 24px rgba(214,214,214,0.18)" : "none",
       }}
@@ -145,7 +145,7 @@ export function DateChoice({
   return (
     <div>
       <p className="text-[13px] text-white">{label}</p>
-      <div className="mt-2 inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="mt-2 inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--v3-line)" }}>
         {[
           { on: false, text: defaultLabel },
           { on: true, text: pickLabel },
@@ -182,7 +182,7 @@ export function Note({ children, tone = "neutral" }: { children: React.ReactNode
     <div
       className={`rounded-xl border p-4 text-[12.5px] leading-relaxed ${tone === "warn" ? "text-amber-200/90" : "text-muted"}`}
       style={{
-        borderColor: tone === "warn" ? "rgba(255,221,0,0.25)" : "var(--mairo-line)",
+        borderColor: tone === "warn" ? "rgba(255,221,0,0.25)" : "var(--v3-line)",
         background: tone === "warn" ? "rgba(255,221,0,0.04)" : "rgba(var(--mairo-bg-rgb),0.5)",
       }}
     >

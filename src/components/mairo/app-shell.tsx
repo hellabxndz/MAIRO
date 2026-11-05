@@ -8,7 +8,7 @@ import { Fragment, useTransition, type ReactNode } from "react";
 import { setViewMode } from "@/lib/actions/view-mode-actions";
 import type { ViewMode } from "@/lib/view-mode";
 import { AskMairoButton } from "./create-menu";
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 
 // The logged-in MAIRO shell.
 //
@@ -214,7 +214,7 @@ export function ViewToggle({ mode }: { mode: ViewMode }) {
   return (
     <div
       className="inline-flex items-center rounded-full border p-0.5"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.7)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.7)" }}
       role="group"
       aria-label="Interface detail"
     >
@@ -317,8 +317,8 @@ function ProfileButton({ userName, businessName, wide = false }: { userName: str
   return (
     <Link
       href="/dashboard/account"
-      className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--mairo-line-lit)]"
-      style={{ borderColor: "var(--mairo-line)" }}
+      className="flex items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5 transition-colors hover:border-[color:var(--v3-line-strong)]"
+      style={{ borderColor: "var(--v3-line)" }}
     >
       {dot}
       <span className="max-w-[180px] truncate text-[13px] text-white">{userName || businessName}</span>
@@ -381,11 +381,11 @@ export function AppShell({
 
   return (
     <div className="relative isolate min-h-screen">
-      <AmbientSky />
+      <SiteBackdrop />
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto overscroll-contain border-r px-3.5 py-4 [scrollbar-width:thin] lg:flex"
-        style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}
+        style={{ borderColor: "var(--v3-line)", background: SIDEBAR_BACKGROUND }}
       >
         <div className="mb-4 shrink-0 px-2">
           <Wordmark href="/dashboard" className="text-[15px]" />
@@ -398,7 +398,7 @@ export function AppShell({
             href="/dashboard/create"
             data-tour="create"
             className="flex min-h-10 w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-[14px] font-medium text-white transition-colors hover:bg-white/[0.05]"
-            style={{ borderColor: "var(--mairo-line)" }}
+            style={{ borderColor: "var(--v3-line)" }}
           >
             <span aria-hidden className="flex h-[18px] w-[18px] items-center justify-center text-[18px] leading-none">+</span>
             New campaign
@@ -410,7 +410,7 @@ export function AppShell({
             // Two entries can share an address (before a plan is approved, Pricing opens the plan too).
             <Fragment key={`${i.href}:${i.label}`}>
               {i.group && i.group !== primary[n - 1]?.group && (
-                <p className="mt-3 px-3 pb-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-faint">{i.group}</p>
+                <p className="mt-3 px-3 pb-1 v3-label">{i.group}</p>
               )}
               {row(i, i.exact ? pathname === i.href : isActive(pathname, i.href, i.also))}
             </Fragment>
@@ -427,8 +427,8 @@ export function AppShell({
         {showUpgrade && (
           <Link
             href="/dashboard/billing"
-            className="mt-3 flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)]"
-            style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
+            className="mt-3 flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--v3-line-strong)]"
+            style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}
           >
             <span className="h-4 w-4 shrink-0 text-white/70">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden>
@@ -445,7 +445,7 @@ export function AppShell({
           </Link>
         )}
 
-        <div className="mt-3 space-y-0.5 border-t pt-3" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="mt-3 space-y-0.5 border-t pt-3" style={{ borderColor: "var(--v3-line)" }}>
           {SECONDARY_NAV.map((i) => row(i, isActive(pathname, i.href, i.also)))}
           {footer}
         </div>
@@ -455,7 +455,7 @@ export function AppShell({
       {/* ---- Mobile top bar: whose account, MAIRO, the bell and the profile. ---- */}
       <header
         className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.94)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.94)" }}
       >
         <Wordmark href="/dashboard" className="text-[13px]" />
         {/* Someone on more than one team gets the switcher on a row of its own, so it never crowds the controls. */}
@@ -484,7 +484,7 @@ export function AppShell({
       {/* ---- Mobile bottom navigation: the same four sections ---- */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
         aria-label="Primary"
       >
         {MOBILE_NAV.map((item) => {

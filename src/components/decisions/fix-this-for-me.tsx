@@ -27,7 +27,7 @@ export function FixThisForMe({ decisionIds, label = "Fix This For Me" }: { decis
           })
         }
         className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white disabled:opacity-60"
-        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
       >
         {pending ? "Opening…" : label}
       </button>

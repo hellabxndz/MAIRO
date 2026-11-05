@@ -20,7 +20,7 @@ function Row({ k, v, note }: { k: string; v: React.ReactNode; note?: string | nu
 }
 
 const STATE = {
-  done: { icon: "✓", cls: "text-emerald-300", sr: "done" },
+  done: { icon: "✓", cls: "text-white/90", sr: "done" },
   pending: { icon: "○", cls: "text-violet-bright", sr: "waiting" },
   problem: { icon: "!", cls: "text-alert", sr: "needs attention" },
   unknown: { icon: "?", cls: "text-amber-300", sr: "not confirmed yet" },
@@ -70,7 +70,7 @@ export function PreLaunchReview({ review, campaignHref }: { review: PreLaunch; c
                   <div className="flex aspect-square w-full items-center justify-center bg-white/[0.03] px-4 text-center text-[12.5px] text-faint">{a.text ?? "Picture shown by Meta"}</div>
                 )}
                 <div className="p-3">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-faint">{a.label}</p>
+                  <p className="v3-label">{a.label}</p>
                   {a.primaryText && <p className="mt-1 line-clamp-3 text-[13px] text-white/85">{a.primaryText}</p>}
                   {a.headline && <p className="mt-1.5 text-[13.5px] font-semibold text-white">{a.headline}</p>}
                   {a.callToAction && <p className="mt-1 inline-block rounded-md border border-white/12 px-2 py-0.5 text-[11.5px] text-white/80">{a.callToAction.replace(/_/g, " ").toLowerCase()}</p>}
@@ -93,7 +93,7 @@ export function PreLaunchReview({ review, campaignHref }: { review: PreLaunch; c
         <h2 id="pl-pay" className={eyebrow}>What you pay — two separate bills</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-violet/30 bg-violet/[0.05] p-4">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">Ad budget · paid to Meta</p>
+            <p className="v3-label">Ad budget · paid to Meta</p>
             <p className="mt-1 text-[22px] font-semibold text-white">{review.budget.headline}</p>
             {review.budget.per30 && <p className="text-[13px] text-muted">About {review.budget.per30} every 30 days, at most</p>}
             <dl className="mt-3 space-y-1.5 text-[13px]">
@@ -103,7 +103,7 @@ export function PreLaunchReview({ review, campaignHref }: { review: PreLaunch; c
             <p className="mt-3 text-[12.5px] text-muted">Meta charges your ad account directly. MAIRO never handles this money and never raises it without asking you.</p>
           </div>
           <div className="rounded-xl border border-white/[0.08] p-4">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-faint">MAIRO subscription · paid to MAIRO</p>
+            <p className="v3-label">MAIRO subscription · paid to MAIRO</p>
             <p className="mt-1 text-[22px] font-semibold text-white">{review.subscription.price}</p>
             <p className="text-[13px] text-muted">{review.subscription.name} plan · {review.subscription.status}</p>
             <p className="mt-3 text-[12.5px] text-muted">Billed by Stripe. It isn&rsquo;t ad spend and doesn&rsquo;t change your ad budget. Launching doesn&rsquo;t add anything to it.</p>

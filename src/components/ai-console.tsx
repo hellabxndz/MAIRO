@@ -168,17 +168,17 @@ export function AiConsole({ className = "" }: { className?: string }) {
       <div className="flex items-center gap-3 border-b border-white/[0.07] px-5 py-3.5">
         <span className="relative flex h-1.5 w-1.5">
           {!settled && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/50" />
           )}
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white/50" />
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+        <span className="font-mono v3-label">
           mairo
         </span>
         <span className="font-mono text-[10px] tracking-[0.12em] text-neutral-600">
           {settled ? "plan ready" : "building the plan"}
         </span>
-        <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.16em] text-neutral-700">
+        <span className="ml-auto font-mono v3-label">
           example
         </span>
       </div>
@@ -199,7 +199,7 @@ export function AiConsole({ className = "" }: { className?: string }) {
                   sure — the two states the whole panel is about. */}
               <span className="mt-[3px] flex h-3.5 w-3.5 items-center justify-center">
                 {state === "done" ? (
-                  <svg viewBox="0 0 12 12" className="h-3 w-3 text-emerald-400/80" aria-hidden>
+                  <svg viewBox="0 0 12 12" className="h-3 w-3 text-white/80" aria-hidden>
                     <path
                       d="M2 6.4l2.6 2.6L10 3.6"
                       fill="none"
@@ -217,7 +217,7 @@ export function AiConsole({ className = "" }: { className?: string }) {
               </span>
 
               <div className="min-w-0">
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                <p className="font-mono v3-label">
                   {s.id}
                   <span className="ml-2 tracking-[0.04em] text-neutral-600 normal-case">
                     {s.label}

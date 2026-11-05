@@ -29,7 +29,7 @@ export function ProblemSection() {
     <section id="the-problem" className="relative px-6 py-32 sm:px-10 sm:py-44">
       <div className="mx-auto max-w-[1200px]">
         <Reveal>
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-bright/80">
+          <p className="font-mono text-blue-bright/80 v3-label">
             What it takes today
           </p>
           <h2 className="mt-5 max-w-3xl text-[clamp(28px,4.8vw,52px)] font-semibold leading-[1.08] tracking-[-0.03em] text-white">
@@ -55,7 +55,7 @@ export function ProblemSection() {
                   background: "rgba(var(--mairo-fg-rgb),0.015)",
                 }}
               >
-                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/25">
+                <p className="font-mono v3-label">
                   {item.kind}
                 </p>
                 <p className="mt-2 text-[13.5px] leading-snug text-white/55">{item.name}</p>
@@ -94,7 +94,7 @@ export function ProblemSection() {
               style={{ background: "radial-gradient(circle, rgba(214,214,214,0.55), transparent 70%)" }}
             />
             <div className="relative">
-              <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-blue-bright/90">
+              <p className="font-mono text-blue-bright/90 v3-label">
                 One system
               </p>
               <h3 className="mt-4 max-w-2xl text-[clamp(20px,2.6vw,30px)] font-medium leading-[1.2] tracking-[-0.02em] text-white">

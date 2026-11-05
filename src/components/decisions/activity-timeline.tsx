@@ -25,7 +25,7 @@ export function ActivityTimeline({ entries, compact = false }: { entries: Activi
   }
   const days = entries.map((e) => when(e.at));
   return (
-    <ol className="relative space-y-4 border-l pl-5" style={{ borderColor: "var(--mairo-line)" }}>
+    <ol className="relative space-y-4 border-l pl-5" style={{ borderColor: "var(--v3-line)" }}>
       {entries.map((e, i) => {
         const w = days[i];
         const showDay = i === 0 || days[i - 1].day !== w.day;
@@ -36,7 +36,7 @@ export function ActivityTimeline({ entries, compact = false }: { entries: Activi
               className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full"
               style={{ background: e.automatic ? "var(--mairo-ramp)" : "#dedede", backgroundImage: e.automatic ? "var(--mairo-ramp)" : undefined }}
             />
-            {showDay && !compact && <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{w.day}</p>}
+            {showDay && !compact && <p className="mb-1 font-mono v3-label">{w.day}</p>}
             <p className="text-[11.5px] text-faint">
               {compact ? `${w.day}, ${w.time}` : w.time} · {e.automatic ? "MAIRO, within your limits" : e.source === "protection" ? "You" : "You approved"}
             </p>

@@ -21,7 +21,7 @@ export function AutopilotToggle({ paused }: { paused: boolean }) {
           })
         }
         className="inline-flex min-h-10 items-center rounded-full border px-4 text-[13.5px] font-medium text-white transition hover:bg-white/[0.05] disabled:opacity-50"
-        style={{ borderColor: "var(--mairo-line-lit)" }}
+        style={{ borderColor: "var(--v3-line-strong)" }}
       >
         {pending ? (paused ? "Resuming…" : "Pausing…") : paused ? "Resume Autopilot" : "Pause Autopilot"}
       </button>

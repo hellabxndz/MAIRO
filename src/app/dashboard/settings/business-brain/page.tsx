@@ -19,7 +19,7 @@ import { AddFact, AddProduct, BrainQuestion, FactRow, InsightRow, ProductCard, V
 
 export const dynamic = "force-dynamic";
 
-const card = "rounded-[22px] border border-[color:var(--mairo-line)] p-5 sm:p-6";
+const card = "rounded-[22px] border border-[color:var(--v3-line)] p-5 sm:p-6";
 const surface = { background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.03), rgba(var(--mairo-fg-rgb),0.012))" };
 const eyebrow = "text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright";
 const date = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -48,7 +48,7 @@ export default async function BusinessBrainPage() {
         <h2 id={`brain-${section}`} className={eyebrow}>{SECTION_LABEL[section]}</h2>
         {children}
         {r.length > 0 ? (
-          <ul className="mt-1 divide-y divide-[color:var(--mairo-line)]">{r.map((f) => <FactRow key={f.key} fact={f} />)}</ul>
+          <ul className="mt-1 divide-y divide-[color:var(--v3-line)]">{r.map((f) => <FactRow key={f.key} fact={f} />)}</ul>
         ) : (
           !children && <p className="mt-3 text-[13.5px] text-muted">MAIRO doesn&rsquo;t know anything here yet.</p>
         )}
@@ -134,7 +134,7 @@ export default async function BusinessBrainPage() {
             <p className="mt-3 text-[13.5px] text-muted">No goal yet. <Link href="/dashboard/mission" className="text-violet-bright hover:text-white">Tell MAIRO what you want to achieve</Link>.</p>
           )}
           {s.goals.history.length > 1 && (
-            <ol className="mt-4 space-y-1 border-t border-[color:var(--mairo-line)] pt-3 text-[13px]">
+            <ol className="mt-4 space-y-1 border-t border-[color:var(--v3-line)] pt-3 text-[13px]">
               {s.goals.history.map((g) => (
                 <li key={g.from.toISOString()} className="flex justify-between gap-3">
                   <span className={g.to ? "text-white/60" : "text-white"}>{g.label}</span>
@@ -186,7 +186,7 @@ export default async function BusinessBrainPage() {
           {learned.length === 0 && learning.length === 0 ? (
             <p className="mt-3 text-[13.5px] text-muted">💡 MAIRO is still learning. Patterns appear here once your campaigns have run long enough to compare.</p>
           ) : (
-            <ul className="mt-2 divide-y divide-[color:var(--mairo-line)]">
+            <ul className="mt-2 divide-y divide-[color:var(--v3-line)]">
               {[...learned, ...learning].map((i) => (
                 <InsightRow key={i.id} i={{ id: i.id, said: i.said, mark: i.mark, confidence: i.confidence, detail: i.detail, evidence: i.evidence, goal: i.goal ? missionGoal(i.goal).label : null, sampleSize: i.sampleSize, discovered: date(i.discoveredAt), validated: date(i.validatedAt), active: i.active }} />
               ))}

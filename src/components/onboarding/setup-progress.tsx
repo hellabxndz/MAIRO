@@ -10,8 +10,8 @@ import { ProblemCard } from "./problem-card";
 // leaving and coming back picks up here.
 
 const SEG: Record<StepState, string> = {
-  done: "bg-emerald-400/80",
-  skipped: "bg-emerald-400/40",
+  done: "bg-white/50",
+  skipped: "bg-white/[0.04]",
   current: "bg-violet",
   attention: "bg-alert",
   waiting: "bg-amber-400/80",
@@ -19,8 +19,8 @@ const SEG: Record<StepState, string> = {
 };
 
 const MARK: Record<StepState, { icon: string; cls: string; sr: string }> = {
-  done: { icon: "✓", cls: "border-emerald-400/40 text-emerald-300", sr: "done" },
-  skipped: { icon: "–", cls: "border-emerald-400/25 text-emerald-300/80", sr: "not needed" },
+  done: { icon: "✓", cls: "border-[color:var(--v3-line)] text-white/90", sr: "done" },
+  skipped: { icon: "–", cls: "border-[color:var(--v3-line)] text-white/80", sr: "not needed" },
   current: { icon: "", cls: "border-violet/60 bg-violet/15 text-white", sr: "next" },
   attention: { icon: "!", cls: "border-alert/50 text-alert", sr: "needs attention" },
   waiting: { icon: "…", cls: "border-amber-400/40 text-amber-300", sr: "waiting" },
@@ -74,7 +74,7 @@ export function SetupProgress({ steps, here, showProblem = true }: { steps: Onbo
           </Link>
         </p>
       ) : (
-        <Link href={other.href!} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black shadow-[var(--mairo-glow-key)]">
+        <Link href={other.href!} className="mt-3 inline-flex min-h-[38px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black">
           Continue: {other.label} →
         </Link>
       ))}

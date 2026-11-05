@@ -49,9 +49,9 @@ export function TeamManager({ me, manages, grantable, members, invites, log, rol
 
       <Card>
         <h2 className="text-[15px] font-semibold text-white">People</h2>
-        <ul className="mt-4 divide-y" style={{ borderColor: "var(--mairo-line)" }}>
+        <ul className="mt-4 divide-y" style={{ borderColor: "var(--v3-line)" }}>
           {members.map((m) => (
-            <li key={m.id} className="flex flex-wrap items-center gap-3 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <li key={m.id} className="flex flex-wrap items-center gap-3 py-3" style={{ borderColor: "var(--v3-line)" }}>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] text-white">{m.name || m.email}{m.userId === me.userId && <span className="ml-2 text-[12px] text-muted">(you)</span>}</p>
                 <p className="truncate text-[12.5px] text-muted">{m.email} · since {day(m.since)}</p>

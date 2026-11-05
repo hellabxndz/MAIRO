@@ -13,7 +13,7 @@ const card = "rounded-2xl border border-white/[0.08] bg-field/80 p-5";
 const h = "text-[11.5px] font-semibold uppercase tracking-[0.16em] text-faint";
 
 const STATUS_TONE: Record<string, string> = {
-  "in place": "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
+  "in place": "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90",
   needed: "border-amber-400/35 bg-amber-400/[0.08] text-amber-200",
   "not needed": "border-white/15 bg-white/[0.04] text-white/70",
 };

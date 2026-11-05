@@ -90,7 +90,7 @@ export function ImageUpload({
       {images.length > 0 && (
         <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           {images.map((img, i) => (
-            <li key={img.url} className="relative overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
+            <li key={img.url} className="relative overflow-hidden rounded-xl border" style={{ borderColor: "var(--v3-line)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL */}
               <img src={img.url} alt={`Your picture ${i + 1}`} className="aspect-square w-full object-cover" />
               <button
@@ -112,7 +112,7 @@ export function ImageUpload({
           disabled={busy}
           onClick={() => input.current?.click()}
           className="w-full rounded-xl border border-dashed p-6 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60"
-          style={{ borderColor: "var(--mairo-line)" }}
+          style={{ borderColor: "var(--v3-line)" }}
         >
           {busy ? "Uploading…" : images.length ? `Add more pictures (${room} more)` : `Choose pictures — JPG or PNG, up to ${MAX_OWN_IMAGES}`}
         </button>

@@ -161,7 +161,7 @@ export default async function CreateServicePage({
       </Link>
 
       {previous && (
-        <p className="mb-6 rounded-xl border px-4 py-3 text-[13.5px] text-white/90" style={{ borderColor: "var(--mairo-line)" }}>
+        <p className="mb-6 rounded-xl border px-4 py-3 text-[13.5px] text-white/90" style={{ borderColor: "var(--v3-line)" }}>
           Started from &ldquo;{previous.name}&rdquo; — its goal, audience, budget and destination are filled in. Change what you like; you&rsquo;ll pick the ad and see the full review before anything launches or spends.
         </p>
       )}

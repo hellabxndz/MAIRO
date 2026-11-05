@@ -59,7 +59,7 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
               <li key={p.id} className="rounded-2xl border border-white/[0.07] bg-field/80 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{promotionLabel(p.kind)}</p>
+                    <p className="v3-label">{promotionLabel(p.kind)}</p>
                     <p className="mt-0.5 text-[15px] font-semibold text-white">{p.title}</p>
                     <p className="text-[12.5px] text-muted">
                       {p.startsAt ? fmt(p.startsAt) : ""}{p.endsAt ? ` – ${fmt(p.endsAt)}` : ""} · {p.status === "ACTIVE" ? "Running" : p.status === "CANCELLED" ? "Stopped" : "Ended"}

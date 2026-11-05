@@ -32,14 +32,14 @@ export function ConsoleHeader({ data, right }: { data: ConsoleHeaderData; right?
         {right}
       </div>
       <dl className="mt-5 flex flex-wrap items-center gap-2.5">
-        <div className="flex min-w-0 items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
+        <div className="flex min-w-0 items-center gap-2.5 rounded-full border py-1 pl-1 pr-3.5" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
           <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold text-white" style={{ backgroundImage: "var(--mairo-ramp)" }}>
             {initial}
           </span>
           <dt className="sr-only">Business</dt>
           <dd className="truncate text-[13px] font-medium text-white">{data.business}</dd>
         </div>
-        <div className="flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-2" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
+        <div className="flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-2" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
           <span aria-hidden className="h-4 w-4 shrink-0">
             <MetaMark />
           </span>
@@ -53,7 +53,7 @@ export function ConsoleHeader({ data, right }: { data: ConsoleHeaderData; right?
             </Pill>
           </dd>
         </div>
-        <div className="flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
+        <div className="flex min-w-0 items-center gap-2 rounded-full border py-1.5 pl-2.5 pr-3" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.03)" }}>
           <dt className="text-[12px] text-faint">MAIRO AI</dt>
           <dd className="flex min-w-0 items-center gap-2">
             <Pill tone={data.ai.tone} dot>

@@ -45,8 +45,8 @@ export function HomeComposer({ assistantName }: { assistantName: string }) {
           e.preventDefault();
           go(text);
         }}
-        className="rounded-[26px] border p-2 pl-4 transition-colors focus-within:border-[color:var(--mairo-line-lit)]"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.035)" }}
+        className="rounded-[26px] border p-2 pl-4 transition-colors focus-within:border-[color:var(--v3-line-strong)]"
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.035)" }}
       >
         <label htmlFor="home-composer" className="sr-only">
           What would you like to advertise today?
@@ -99,8 +99,8 @@ export function HomeComposer({ assistantName }: { assistantName: string }) {
                 setText(s.fill ?? "");
                 box.current?.focus();
               }}
-              className="min-h-10 rounded-full border px-3.5 text-[13px] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-              style={{ borderColor: "var(--mairo-line)" }}
+              className="min-h-10 rounded-full border px-3.5 text-[13px] text-white/85 transition hover:border-[color:var(--v3-line-strong)] hover:text-white"
+              style={{ borderColor: "var(--v3-line)" }}
             >
               {s.label}
             </button>

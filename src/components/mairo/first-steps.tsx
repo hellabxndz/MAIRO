@@ -39,7 +39,7 @@ export function FirstSteps({
   return (
     <div data-tour="checklist">
     <GlassPanel lit className="p-6 sm:p-7">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Your first campaign</p>
+      <p className="font-mono v3-label">Your first campaign</p>
       <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.02em] text-white">
         {readiness.remaining === 1 ? "One step left before your ads can run" : `${readiness.remaining} steps before your ads can run`}
       </h2>
@@ -52,7 +52,7 @@ export function FirstSteps({
               <span
                 className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full border text-[11px]"
                 style={{
-                  borderColor: step.done ? "rgba(34,255,136,0.4)" : isNext ? "rgba(238,238,238,0.6)" : "var(--mairo-line)",
+                  borderColor: step.done ? "rgba(34,255,136,0.4)" : isNext ? "rgba(238,238,238,0.6)" : "var(--v3-line)",
                   background: step.done ? "rgba(34,255,136,0.1)" : isNext ? "rgba(214,214,214,0.15)" : "transparent",
                   color: step.done ? "var(--color-emerald-300)" : isNext ? "var(--color-white)" : undefined,
                 }}
@@ -77,7 +77,7 @@ export function FirstSteps({
                         <a
                           href={hrefFor(step.id, step.href)}
                           className="mt-3 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-medium text-white transition hover:brightness-110"
-                          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+                          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
                         >
                           {ACTION_LABEL[step.id]} →
                         </a>
@@ -94,7 +94,7 @@ export function FirstSteps({
         })}
       </ol>
 
-      <div className="mt-6 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
+      <div className="mt-6 rounded-xl border p-4" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
         <p className="text-[13px] text-white">You can plan now</p>
         <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
           Your monthly plan and your campaigns can be worked out before anything is connected. MAIRO only makes a campaign

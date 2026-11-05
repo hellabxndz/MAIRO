@@ -175,12 +175,12 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
 
           {/* The ad account */}
           {connected && connectionOk && (
-            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-5">
-              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Account connected ✓</p>
+            <div className="rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-5">
+              <p className="v3-label">Account connected ✓</p>
               <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Meta Ads</dt><dd className="text-[14px] text-white">Connected</dd></div>
-                <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Ad account</dt><dd className="text-[14px] text-white">{meta?.metaAdAccountId}{meta?.pageName ? ` · ${meta.pageName}` : ""}</dd></div>
-                <div><dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">Status</dt><dd className="text-[14px] text-white">Ready for MAIRO</dd></div>
+                <div><dt className="v3-label">Meta Ads</dt><dd className="text-[14px] text-white">Connected</dd></div>
+                <div><dt className="v3-label">Ad account</dt><dd className="text-[14px] text-white">{meta?.metaAdAccountId}{meta?.pageName ? ` · ${meta.pageName}` : ""}</dd></div>
+                <div><dt className="v3-label">Status</dt><dd className="text-[14px] text-white">Ready for MAIRO</dd></div>
               </dl>
               {justConnected === "1" && <p className="mt-3 text-[12.5px] text-muted">Nothing was created in your account and nothing was spent.</p>}
             </div>
@@ -188,7 +188,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
 
           {showPlans && (
             <section id="plans" className="scroll-mt-6">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Choose your MAIRO plan</p>
+              <p className="v3-label">Choose your MAIRO plan</p>
               <h1 className="mt-1 text-[clamp(26px,3.4vw,34px)] font-semibold leading-tight tracking-[-0.02em]">
                 Your strategy is ready.
                 <br />
@@ -257,7 +257,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
                         <dl className="mt-4 flex-1 space-y-2.5">
                           {rows.map(([k, v]) => (
                             <div key={k}>
-                              <dt className="text-[11px] uppercase tracking-[0.14em] text-faint">{k}</dt>
+                              <dt className="v3-label">{k}</dt>
                               <dd className="text-[13px] text-white/90">{v}</dd>
                             </div>
                           ))}
@@ -302,7 +302,7 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             <p className="mt-1 text-[13px] text-muted">Your subscription unlocks:</p>
             <ul className="mt-3 space-y-1.5 text-[13px] text-white/85">
               {UNLOCKS.map((u) => (
-                <li key={u} className="flex gap-2"><span aria-hidden className="text-emerald-300">✓</span>{u}</li>
+                <li key={u} className="flex gap-2"><span aria-hidden className="text-white/90">✓</span>{u}</li>
               ))}
             </ul>
           </div>

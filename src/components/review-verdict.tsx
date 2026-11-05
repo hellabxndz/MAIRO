@@ -25,7 +25,7 @@ export function ReviewVerdict({
   if (status === "BLOCKED") {
     return (
       <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
-        <p className="text-xs uppercase tracking-[0.12em] text-red-300/80">
+        <p className="text-red-300/80 v3-label">
           Blocked by the safety check{reviewCategory ? ` · ${reviewCategory}` : ""}
           {when ? ` · ${when}` : ""}
         </p>
@@ -37,7 +37,7 @@ export function ReviewVerdict({
   if (status === "IN_REVIEW") {
     return (
       <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3">
-        <p className="text-xs uppercase tracking-[0.12em] text-amber-300/80">
+        <p className="text-amber-300/80 v3-label">
           The check couldn&apos;t run
         </p>
         <p className="mt-1.5 text-sm text-neutral-300">

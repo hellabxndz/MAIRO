@@ -54,7 +54,7 @@ export function AutoLaunchSection({
         </div>
 
         <label className="flex cursor-pointer items-center gap-3">
-          <span className="text-xs uppercase tracking-[0.16em] text-neutral-400">
+          <span className="v3-label">
             {on ? "On" : "Held"}
           </span>
           <span className="relative inline-block h-6 w-11">
@@ -65,7 +65,7 @@ export function AutoLaunchSection({
               onChange={(e) => toggle(e.target.checked)}
               className="peer sr-only"
             />
-            <span className="block h-6 w-11 rounded-full bg-white/10 transition peer-checked:bg-sky-400/70" />
+            <span className="block h-6 w-11 rounded-full bg-white/10 transition peer-checked:bg-white/50" />
             <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-paper shadow-sm transition peer-checked:translate-x-5" />
           </span>
         </label>

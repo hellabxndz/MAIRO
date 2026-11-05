@@ -67,8 +67,8 @@ export default async function IntegrationsPage({
         </div>
       )}
       {params.connected && (
-        <div className="mb-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.05] p-4">
-          <p className="text-sm text-emerald-300">
+        <div className="mb-6 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-4">
+          <p className="text-sm text-white/90">
             Account connected.
           </p>
         </div>
@@ -135,7 +135,7 @@ export default async function IntegrationsPage({
                   {!meta.implemented ? null : !permitted ? (
                     <Link
                       href="/dashboard/billing"
-                      className="rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20"
+                      className="rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-2 text-xs text-white/90 transition hover:bg-white/[0.04]"
                     >
                       Included in {upgradeTarget.name}
                     </Link>
@@ -149,7 +149,7 @@ export default async function IntegrationsPage({
                   ) : (
                     <a
                       href={meta.platform === "META" ? "/dashboard/meta" : meta.connectPath}
-                      className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-black transition hover:brightness-110"
+                      className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-xs font-medium text-black transition hover:brightness-110"
                     >
                       Connect {meta.name}
                     </a>

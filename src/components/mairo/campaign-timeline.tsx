@@ -24,9 +24,9 @@ import type { TimelineStep } from "@/lib/campaigns/timeline";
 
 const DOT: Record<TimelineStep["state"], string> = {
   done: "border-live/50 bg-live/15 text-live",
-  current: "border-[color:var(--mairo-line-lit)] bg-blue/15 text-blue-bright",
+  current: "border-[color:var(--v3-line-strong)] bg-blue/15 text-blue-bright",
   blocked: "border-warn/50 bg-warn/12 text-warn",
-  upcoming: "border-[color:var(--mairo-line)] text-faint",
+  upcoming: "border-[color:var(--v3-line)] text-faint",
 };
 
 function Mark({ state, index }: { state: TimelineStep["state"]; index: number }) {
@@ -64,7 +64,7 @@ export function CampaignTimeline({ steps }: { steps: TimelineStep[] }) {
       <span
         aria-hidden
         className="pointer-events-none absolute bottom-6 left-[15px] top-4 w-px"
-        style={{ background: "var(--mairo-line)" }}
+        style={{ background: "var(--v3-line)" }}
       />
       <span
         aria-hidden

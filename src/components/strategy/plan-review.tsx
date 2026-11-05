@@ -204,7 +204,7 @@ export function PlanReview(props: {
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free plan · {props.businessName}</p>
+          <p className="v3-label">Free plan · {props.businessName}</p>
           <h1 className="mt-1 text-[clamp(26px,3.4vw,36px)] font-semibold tracking-[-0.02em]">Your MAIRO Advertising Plan</h1>
           <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
             Review the strategy MAIRO created for your business. You can change anything before moving forward.
@@ -218,7 +218,7 @@ export function PlanReview(props: {
 
       {plan.summary && (
         <div className={`${card} mt-6 p-5`}>
-          {version > 0 && <p className="mb-1.5 text-[11.5px] uppercase tracking-[0.14em] text-faint">MAIRO&rsquo;s overview of the Original Plan · the sections below are current</p>}
+          {version > 0 && <p className="mb-1.5 v3-label">MAIRO&rsquo;s overview of the Original Plan · the sections below are current</p>}
           <p className="text-[15px] leading-relaxed text-white/90">{plan.summary}</p>
         </div>
       )}
@@ -356,7 +356,7 @@ export function PlanReview(props: {
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {plan.concepts.map((c, i) => (
                 <li key={i} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-faint">{c.format}</p>
+                  <p className="v3-label">{c.format}</p>
                   <p className="mt-1 text-[14px] font-medium text-white">{c.title}</p>
                   <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{c.description}</p>
                 </li>
@@ -411,7 +411,7 @@ export function PlanReview(props: {
             <ul className="space-y-2">
               {plan.structure.map((s, i) => (
                 <li key={i} className={`border-l-2 pl-3 ${s.level === "Campaign" ? "border-violet/60" : s.level === "Ad set" ? "ml-3 border-white/20" : "ml-6 border-white/10"}`}>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-faint">{s.level}</p>
+                  <p className="v3-label">{s.level}</p>
                   <p className="text-[13.5px] text-white">{s.name}</p>
                   <p className="text-[12px] text-muted">{s.detail}</p>
                 </li>
@@ -458,7 +458,7 @@ export function PlanReview(props: {
 
           {outcome?.kind === "answer" && (
             <div className={`${card} p-5`}>
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO</p>
+              <p className="v3-label">MAIRO</p>
               <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-white/90">{outcome.text}</p>
               <button type="button" onClick={focusAsk} className={`${secondary} mt-3`}>Ask MAIRO Something Else</button>
             </div>
@@ -471,7 +471,7 @@ export function PlanReview(props: {
               <ul className="mt-3 space-y-3">
                 {outcome.changes.map((c) => (
                   <li key={c.section} className="rounded-lg bg-white/[0.03] p-3">
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-bright">
+                    <p className="v3-label">
                       {SECTION_LABEL[c.section]}{c.dependent ? " · updated to match" : ""}
                     </p>
                     <p className="mt-1.5 text-[12.5px] text-faint">Previous: <span className="text-white/70 line-through decoration-white/30">{c.previous}</span></p>
@@ -491,7 +491,7 @@ export function PlanReview(props: {
 
           {suggestion && (
             <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-5">
-              <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-amber-200">MAIRO Suggestion</p>
+              <p className="text-amber-200 v3-label">MAIRO Suggestion</p>
               <p className="mt-2 text-[13.5px] leading-relaxed text-white/90">{suggestion.message}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" disabled={pending} onClick={() => takeSuggestion(suggestion)} className={primary}>
@@ -512,11 +512,11 @@ export function PlanReview(props: {
       <div className={`${card} mt-8 p-6 sm:p-8`}>
         {status === "APPROVED" ? (
           <div>
-            <p className="text-[22px] font-semibold text-emerald-300">Plan Approved ✓</p>
+            <p className="text-[22px] font-semibold text-white/90">Plan Approved ✓</p>
             <p className="mt-1 text-[15px] text-white/90">Your advertising strategy is ready.</p>
             {props.creativesNext ? (
               <>
-                <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
+                <p className="mt-4 v3-label">Next step</p>
                 <p className="mt-1 text-[14px] text-white/90">See your first ads: three directions written from your business, one marked as the best first test. Free — nothing to connect or pay for first.</p>
                 <Link href="/dashboard/creatives/suggested" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
                   Review My First Ads
@@ -536,7 +536,7 @@ export function PlanReview(props: {
               </>
             ) : (
               <>
-                <p className="mt-4 text-[13px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
+                <p className="mt-4 v3-label">Next step</p>
                 <p className="mt-1 text-[14px] text-white/90">Connect your advertising account so MAIRO knows where your campaign will eventually run.</p>
                 {/* A full page load: this hands off to Facebook's sign-in. */}
                 <a href="/api/meta/connect?returnTo=%2Fplan%2Factivate%3Fconnected%3D1" className={`${primary} mt-4 inline-flex min-h-[48px] items-center px-7 text-[15px]`}>
@@ -568,7 +568,7 @@ export function PlanReview(props: {
 
 function StatusBadge({ status, version }: { status: Status; version: number }) {
   const label = status === "APPROVED" ? "Approved ✓" : status === "REVISING" ? "Updating…" : "Draft";
-  const tone = status === "APPROVED" ? "border-emerald-400/30 text-emerald-300" : status === "REVISING" ? "animate-pulse border-violet/50 text-violet-bright" : "border-white/15 text-white/80";
+  const tone = status === "APPROVED" ? "border-[color:var(--v3-line)] text-white/90" : status === "REVISING" ? "animate-pulse border-violet/50 text-violet-bright" : "border-white/15 text-white/80";
   return (
     <div className="flex items-center gap-2 text-[12.5px]">
       <span className={`rounded-full border px-3 py-1 ${tone}`}>{label}</span>
@@ -582,11 +582,11 @@ function Section({ k, lit, onEdit, editing, wide = false, children }: { k: Secti
     <section
       id={`plan-${k}`}
       className={`${card} min-w-0 p-5 transition-[box-shadow,background-color] duration-700 ${wide ? "md:col-span-2" : ""} ${
-        lit ? "bg-violet/[0.08] shadow-[0_0_0_2px_rgba(255,255,255,0.55)]" : ""
+        lit ? "bg-violet/[0.08]" : ""
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-faint">{SECTION_LABEL[k]}</h2>
+        <h2 className="v3-label">{SECTION_LABEL[k]}</h2>
         {onEdit && (
           <button type="button" onClick={onEdit} className="rounded-md border border-white/10 px-2.5 py-1 text-[12px] text-white/80 hover:border-white/30" aria-expanded={editing}>
             {editing ? "Close" : "Edit"}
@@ -647,7 +647,7 @@ function History({ revisions, current, pending, onRestore }: { revisions: Revisi
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[13.5px] font-medium text-white">
                 {r.version === 0 ? "Original Plan" : `Revision ${r.version}`}
-                {r.version === current && <span className="ml-2 text-[11.5px] font-normal text-emerald-300">current</span>}
+                {r.version === current && <span className="ml-2 text-[11.5px] font-normal text-white/90">current</span>}
               </p>
               <p className="text-[11.5px] text-faint">
                 {r.requestedBy === "you" ? "Requested by you" : "Written by MAIRO"} · {new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}

@@ -230,7 +230,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </p>
           <Link
             href="/dashboard/meta"
-            className="shrink-0 rounded-lg border border-amber-400/40 px-4 py-2 text-xs uppercase tracking-[0.1em] text-amber-100 transition hover:bg-amber-400 hover:text-black"
+            className="shrink-0 rounded-lg border border-amber-400/40 px-4 py-2 text-amber-100 transition hover:bg-amber-400 hover:text-black v3-label"
           >
             Connect Meta
           </Link>

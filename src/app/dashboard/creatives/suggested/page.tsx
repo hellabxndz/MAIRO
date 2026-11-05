@@ -37,7 +37,7 @@ export default async function SuggestedAdsPage() {
           <Step done={gate.profileConfirmed} label="Confirm what you sell in your Business Brain" href="/dashboard/settings/business-brain" />
         </ol>
         {gate.next && (
-          <Link href={gate.next.href} className="mt-6 inline-flex min-h-[40px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-medium text-black shadow-[var(--mairo-glow-key)]">
+          <Link href={gate.next.href} className="mt-6 inline-flex min-h-[40px] items-center rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[14px] font-medium text-black">
             {gate.next.label}
           </Link>
         )}
@@ -65,7 +65,7 @@ export default async function SuggestedAdsPage() {
 
 function Step({ done, label, href }: { done: boolean; label: string; href: string }) {
   return (
-    <li className="flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+    <li className="flex items-center gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
       <span aria-hidden className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] ${done ? "bg-live/20 text-live" : "bg-white/[0.06] text-muted"}`}>{done ? "✓" : "·"}</span>
       <span className="flex-1 text-[14px] text-white">{label}</span>
       <span className="text-[12.5px] text-muted">{done ? "Done" : <Link href={href} className="underline underline-offset-4 hover:text-white">Do this</Link>}</span>

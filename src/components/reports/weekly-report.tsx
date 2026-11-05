@@ -12,13 +12,13 @@ import { PlanActions, ReportSection } from "./report-client";
 export type ReportMode = "simple" | "advanced" | "profit";
 
 const CONF: Record<DecisionConfidence, { label: string; tone: string }> = {
-  HIGH: { label: "High confidence", tone: "bg-emerald-400/12 text-emerald-300" },
-  MEDIUM: { label: "Medium confidence", tone: "bg-sky-400/12 text-sky-300" },
+  HIGH: { label: "High confidence", tone: "bg-white/[0.04] text-white/90" },
+  MEDIUM: { label: "Medium confidence", tone: "bg-white/[0.04] text-white/90" },
   EARLY: { label: "Early signal", tone: "bg-amber-400/12 text-amber-300" },
 };
 
 function Confidence({ c }: { c: DecisionConfidence }) {
-  return <span className={`inline-flex rounded-md px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] ${CONF[c].tone}`}>{CONF[c].label}</span>;
+  return <span className={`inline-flex rounded-md px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${CONF[c].tone}`}>{CONF[c].label}</span>;
 }
 
 /** One figure and its move against last week. `good` says which way is good; spend has no good direction. */
@@ -82,7 +82,7 @@ function Glance({ c, p, mode, profitKnown, word }: { c: Figures; p: Figures | nu
 const BY: Record<ChangeBy, { label: string; tone: string }> = {
   you: { label: "You approved", tone: "bg-white/[0.07] text-white/75" },
   "ai-assist": { label: "AI Assist", tone: "bg-violet/20 text-violet-bright" },
-  autopilot: { label: "Autopilot", tone: "bg-sky-400/12 text-sky-300" },
+  autopilot: { label: "Autopilot", tone: "bg-white/[0.04] text-white/90" },
   "spend-protection": { label: "Spend Protection", tone: "bg-amber-400/12 text-amber-300" },
 };
 
@@ -114,7 +114,7 @@ export function WeeklyReport({
 
       {data.mission && (
         <section className="rounded-2xl border border-violet/30 bg-violet/[0.05] p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your week with MAIRO</p>
+          <p className="v3-label">Your week with MAIRO</p>
           <h2 className="mt-1 text-[19px] font-semibold text-white">🎯 Goal: {data.mission.goal}</h2>
           <div className="mt-4 grid gap-5 md:grid-cols-2">
             <div>
@@ -144,7 +144,7 @@ export function WeeklyReport({
       </ReportSection>
 
       <section className="rounded-2xl border border-violet/30 bg-[radial-gradient(120%_140%_at_100%_0%,rgba(255,255,255,0.16),transparent_55%),var(--color-field)] p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO summary</p>
+        <p className="v3-label">MAIRO summary</p>
         <p className="mt-2 text-[15.5px] leading-relaxed text-white/90">{mode === "advanced" ? data.summary.advanced : data.summary.simple}</p>
       </section>
 
@@ -160,7 +160,7 @@ export function WeeklyReport({
                 <div className="rounded-lg bg-white/[0.03] px-3 py-2"><dt className="text-faint">Cost per {word}</dt><dd className="font-semibold tabular-nums text-white">{usd(data.win.costPerResultCents)}</dd></div>
                 <div className="rounded-lg bg-white/[0.03] px-3 py-2"><dt className="text-faint">ROAS</dt><dd className="font-semibold tabular-nums text-white">{data.win.roas === null ? "—" : `${data.win.roas.toFixed(1)}x`}</dd></div>
               </dl>
-              <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-violet-bright">Why it worked</p>
+              <p className="mt-3 v3-label">Why it worked</p>
               <ul className="mt-1 space-y-1 text-[13.5px] text-white/85">
                 {data.win.why.map((w) => <li key={w}>• {w}</li>)}
               </ul>
@@ -220,7 +220,7 @@ export function WeeklyReport({
           <ol className="space-y-3">
             {data.changes.map((c, i) => (
               <li key={`${c.at}-${i}`} className="flex gap-4">
-                <span className="w-20 shrink-0 pt-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-faint">
+                <span className="w-20 shrink-0 pt-0.5 v3-label">
                   {new Date(c.at).toLocaleDateString("en-US", { weekday: "long" })}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -273,7 +273,7 @@ export function WeeklyReport({
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {data.platforms.rows.map((r) => (
                   <div key={r.name} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{r.name}</p>
+                    <p className="v3-label">{r.name}</p>
                     <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[13px]">
                       <dt className="text-faint">Spend</dt><dd className="text-right tabular-nums text-white">{usd(r.spendCents, true)}</dd>
                       <dt className="text-faint">Revenue</dt><dd className="text-right tabular-nums text-white">{usd(r.revenueCents, true)}</dd>
@@ -293,7 +293,7 @@ export function WeeklyReport({
             <Empty>{data.creatives.note}</Empty>
           ) : (
             <ul className="space-y-2.5">
-              {([["Top creative", data.creatives.top, "text-emerald-300"], ["Emerging creative", data.creatives.emerging, "text-sky-300"], ["Losing momentum", data.creatives.losing, "text-amber-300"]] as const).map(([k, v, tone]) => (
+              {([["Top creative", data.creatives.top, "text-white/90"], ["Emerging creative", data.creatives.emerging, "text-white/90"], ["Losing momentum", data.creatives.losing, "text-amber-300"]] as const).map(([k, v, tone]) => (
                 <li key={k} className="flex items-start justify-between gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5">
                   <span className={`text-[12px] font-semibold uppercase tracking-[0.08em] ${tone}`}>{k}</span>
                   <span className="text-right text-[13px]">
@@ -381,7 +381,7 @@ export function WeeklyReport({
             {data.plan.map((p, i) => (
               <li key={`${p.title}-${i}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.08em] ${p.priority === "High" ? "bg-alert/12 text-alert" : p.priority === "Medium" ? "bg-amber-400/12 text-amber-300" : "bg-white/[0.07] text-white/70"}`}>
+                  <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] ${p.priority === "High" ? "bg-alert/12 text-alert" : p.priority === "Medium" ? "bg-amber-400/12 text-amber-300" : "bg-white/[0.07] text-white/70"}`}>
                     {p.priority} priority
                   </span>
                   <Confidence c={p.confidence} />
@@ -415,7 +415,7 @@ export function ReportHeader({ data, brandName, brandLogoUrl, clientName }: { da
           {brandName && <span className="text-[14px] font-semibold text-white">{brandName}</span>}
         </div>
       )}
-      <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{clientName ? `${clientName} · ` : ""}{data.period.label}</p>
+      <p className="v3-label">{clientName ? `${clientName} · ` : ""}{data.period.label}</p>
       <h1 className="mt-1.5 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{clientName ? `${clientName}'s weekly report` : "Your MAIRO Weekly Report"}</h1>
       <p className="mt-1 text-[14.5px] text-muted">Here&rsquo;s what happened with your advertising this week.</p>
     </header>

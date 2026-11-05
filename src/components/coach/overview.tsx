@@ -60,7 +60,7 @@ export function CoachTiles({ result }: { result: CoachResult }) {
           <dd className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${SOURCE_CLASS[t.source]}`}>{t.source}</span>
           </dd>
-          {t.before && <dd className={`mt-1.5 text-[11.5px] ${t.tone === "good" ? "text-emerald-400" : t.tone === "bad" ? "text-red-300" : "text-faint"}`}>{t.before}</dd>}
+          {t.before && <dd className={`mt-1.5 text-[11.5px] ${t.tone === "good" ? "text-white/70" : t.tone === "bad" ? "text-red-300" : "text-faint"}`}>{t.before}</dd>}
         </div>
       ))}
     </dl>
@@ -135,7 +135,7 @@ export async function CoachLive({ organizationId }: { organizationId: string }) 
           <h3 className="text-[13px] font-semibold text-white">What MAIRO can&rsquo;t see yet</h3>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {result.gaps.map((g) => (
-              <li key={g.key} className="rounded-2xl border border-[color:var(--mairo-line)] px-4 py-3">
+              <li key={g.key} className="rounded-2xl border border-[color:var(--v3-line)] px-4 py-3">
                 <Link href={g.href} className="text-[13.5px] font-medium text-white hover:underline">
                   {g.title} →
                 </Link>

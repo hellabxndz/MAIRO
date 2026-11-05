@@ -26,8 +26,8 @@ export type FactRowData = {
   stale?: boolean;
 };
 
-const input = "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]";
-const small = "rounded-full border border-[color:var(--mairo-line)] px-3 py-1 text-[12px] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white disabled:opacity-50";
+const input = "w-full rounded-xl border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--v3-line-strong)]";
+const small = "rounded-full border border-[color:var(--v3-line)] px-3 py-1 text-[12px] text-white/85 transition hover:border-[color:var(--v3-line-strong)] hover:text-white disabled:opacity-50";
 
 function useChange() {
   const router = useRouter();
@@ -93,7 +93,7 @@ export function FactRow({ fact }: { fact: FactRowData }) {
           </div>
         </form>
       )}
-      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{note.text}</p>}
+      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-white/90" : "text-amber-200/90"}`}>{note.text}</p>}
     </li>
   );
 }
@@ -111,7 +111,7 @@ export function AddFact({ missing }: { missing: { key: string; label: string; li
         <label className="flex flex-wrap items-center gap-2 text-[12.5px] text-muted">
           <span>+ Tell MAIRO about</span>
           <select value="" onChange={(e) => setKey(e.target.value)} aria-label="Add something MAIRO doesn't know yet"
-            className="min-h-11 min-w-0 max-w-full rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-1 text-[12.5px] text-white sm:pointer-fine:min-h-0">
+            className="min-h-11 min-w-0 max-w-full rounded-full border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3 py-1 text-[12.5px] text-white sm:pointer-fine:min-h-0">
             <option value="">choose…</option>
             {missing.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
           </select>
@@ -129,7 +129,7 @@ export function AddFact({ missing }: { missing: { key: string; label: string; li
           </div>
         </form>
       )}
-      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{note.text}</p>}
+      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-white/90" : "text-amber-200/90"}`}>{note.text}</p>}
     </div>
   );
 }
@@ -148,9 +148,9 @@ export type ProductData = {
 export function ProductCard({ product: p }: { product: ProductData }) {
   const { run, pending, note } = useChange();
   const patch = (x: Partial<ProductData>) => run({ op: "product", name: p.name, patch: x as never });
-  const chip = (on: boolean) => `${small} ${on ? "border-[color:var(--mairo-line-lit)] bg-violet/[0.15] text-white" : ""}`;
+  const chip = (on: boolean) => `${small} ${on ? "border-[color:var(--v3-line-strong)] bg-violet/[0.15] text-white" : ""}`;
   return (
-    <li className="rounded-2xl border border-[color:var(--mairo-line)] p-4">
+    <li className="rounded-2xl border border-[color:var(--v3-line)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[15px] font-medium text-white">{p.name}</p>
@@ -176,7 +176,7 @@ export function ProductCard({ product: p }: { product: ProductData }) {
         </button>
         <button type="button" disabled={pending} onClick={() => run({ op: "remove-product", name: p.name })} className={small}>Remove</button>
       </div>
-      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{note.text}</p>}
+      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-white/90" : "text-amber-200/90"}`}>{note.text}</p>}
     </li>
   );
 }
@@ -189,7 +189,7 @@ export function AddProduct() {
   const [kind, setKind] = useState<"product" | "service">("product");
   if (!open) return <button type="button" onClick={() => setOpen(true)} className="mt-3 text-[12.5px] text-violet-bright hover:text-white">+ Add a product or service</button>;
   return (
-    <form className="mt-3 rounded-2xl border border-[color:var(--mairo-line)] p-4" onSubmit={(e) => { e.preventDefault(); run({ op: "product", name, patch: { kind, price: price.trim() || null } }, () => { setOpen(false); setName(""); setPrice(""); }); }}>
+    <form className="mt-3 rounded-2xl border border-[color:var(--v3-line)] p-4" onSubmit={(e) => { e.preventDefault(); run({ op: "product", name, patch: { kind, price: price.trim() || null } }, () => { setOpen(false); setName(""); setPrice(""); }); }}>
       <div className="grid gap-2 sm:grid-cols-[1fr_140px_150px]">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Ceramic coating" aria-label="Product or service name" className={input} autoFocus />
         <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price (optional)" aria-label="Price" className={input} />
@@ -202,7 +202,7 @@ export function AddProduct() {
         <button type="submit" disabled={pending || !name.trim()} className={actionClass}>{pending ? "Saving…" : "Add"}</button>
         <button type="button" onClick={() => setOpen(false)} className={quietClass}>Cancel</button>
       </div>
-      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{note.text}</p>}
+      {note && <p className={`mt-1.5 text-[12px] ${note.ok ? "text-white/90" : "text-amber-200/90"}`}>{note.text}</p>}
     </form>
   );
 }
@@ -214,7 +214,7 @@ export function VerifyFact({ field, question, list }: { field: string; question:
   const [text, setText] = useState("");
   return (
     <section className="rounded-2xl border p-5" style={{ borderColor: "rgba(255,221,0,0.3)", background: "rgba(255,221,0,0.05)" }}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">Quick check</p>
+      <p className="text-amber-200 v3-label">Quick check</p>
       <p className="mt-2 text-[15px] text-white">{question}</p>
       {!changing ? (
         <div className="mt-3 flex gap-2">
@@ -227,7 +227,7 @@ export function VerifyFact({ field, question, list }: { field: string; question:
           <button type="submit" disabled={pending || !text.trim()} className={actionClass}>Save</button>
         </form>
       )}
-      {note && <p className={`mt-2 text-[12px] ${note.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{note.text}</p>}
+      {note && <p className={`mt-2 text-[12px] ${note.ok ? "text-white/90" : "text-amber-200/90"}`}>{note.text}</p>}
     </section>
   );
 }
@@ -248,11 +248,11 @@ export function BrainQuestion({ q }: { q: QuestionData }) {
       if (r.ok) setTimeout(() => router.refresh(), 900);
     });
   return (
-    <div className="rounded-2xl border border-[color:var(--mairo-line)] p-4">
+    <div className="rounded-2xl border border-[color:var(--v3-line)] p-4">
       <p className="text-[14.5px] text-white">{q.text}</p>
       <p className="mt-1 text-[12px] text-faint"><span className="text-white/70">Why MAIRO is asking: </span>{q.why}</p>
       {state ? (
-        <p className={`mt-3 text-[13px] ${state.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{state.text}</p>
+        <p className={`mt-3 text-[13px] ${state.ok ? "text-white/90" : "text-amber-200/90"}`}>{state.text}</p>
       ) : q.choices ? (
         <div className="mt-3">
           <div className="flex flex-wrap gap-1.5">
@@ -260,7 +260,7 @@ export function BrainQuestion({ q }: { q: QuestionData }) {
               const on = picked.includes(c);
               return (
                 <button key={c} type="button" aria-pressed={on} onClick={() => setPicked((x) => (on ? x.filter((y) => y !== c) : [...x, c]))}
-                  className={`${small} ${on ? "border-[color:var(--mairo-line-lit)] bg-violet/[0.15] text-white" : ""}`}>{on ? "✓ " : ""}{c}</button>
+                  className={`${small} ${on ? "border-[color:var(--v3-line-strong)] bg-violet/[0.15] text-white" : ""}`}>{on ? "✓ " : ""}{c}</button>
               );
             })}
           </div>

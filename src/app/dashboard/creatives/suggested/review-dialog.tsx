@@ -146,7 +146,7 @@ export function ReviewDialog({
               <p className="text-[12.5px] text-muted">Meta&apos;s own preview — drawn by Meta, nothing is created in your ad account:</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PREVIEW_FORMATS.map((f) => (
-                  <button key={f.value} type="button" onClick={() => metaPreview(f.value)} aria-pressed={meta?.format === f.value} className={`rounded-full border px-3 py-1 text-[12px] ${meta?.format === f.value ? "border-white/70 text-white" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>{f.label}</button>
+                  <button key={f.value} type="button" onClick={() => metaPreview(f.value)} aria-pressed={meta?.format === f.value} className={`rounded-full border px-3 py-1 text-[12px] ${meta?.format === f.value ? "border-white/70 text-white" : "border-[color:var(--v3-line)] text-muted hover:text-white"}`}>{f.label}</button>
                 ))}
               </div>
               {meta?.loading && <p className="mt-2 text-[12.5px] text-muted">Asking Meta…</p>}

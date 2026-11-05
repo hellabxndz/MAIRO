@@ -56,7 +56,7 @@ export function MorningBrief({
     <section className="relative overflow-hidden rounded-2xl border border-violet/30 bg-[radial-gradient(120%_120%_at_100%_0%,rgba(255,255,255,0.18),transparent_55%),linear-gradient(180deg,var(--color-field),var(--color-field-2))] p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your morning brief</p>
+          <p className="v3-label">Your morning brief</p>
           <h2 className="mt-1.5 text-[22px] font-semibold tracking-tight text-white">{greeting}</h2>
           <p className="mt-0.5 text-[14px] text-muted">Here&rsquo;s what happened with your advertising {when}.</p>
         </div>
@@ -92,8 +92,8 @@ export function MorningBrief({
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-4">
           {brief?.winner && (
-            <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] px-4 py-3">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-emerald-300">Your winner {frequency === "WEEKLY" ? "this week" : "yesterday"}</p>
+            <div className="rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3">
+              <p className="v3-label">Your winner {frequency === "WEEKLY" ? "this week" : "yesterday"}</p>
               <p className="mt-1 text-[15px] font-semibold text-white">
                 {brief.winner.label} <span className="font-normal text-muted">in {brief.winner.campaignName}</span>
               </p>
@@ -111,7 +111,7 @@ export function MorningBrief({
               {actions.map((a, i) => (
                 <li key={a.id} className="flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3.5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-faint">Action {i + 1}</p>
+                    <p className="v3-label">Action {i + 1}</p>
                     <p className="text-[14px] font-medium text-white">{a.title}</p>
                     <p className="mt-0.5 text-[13px] text-muted">
                       <span className="text-violet-bright">Recommendation:</span> {a.recommendation}

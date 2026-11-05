@@ -88,7 +88,7 @@ export function GtmConnect({
   }
 
   return (
-    <div className="rounded-xl border border-sky-400/20 bg-sky-400/[0.04] p-4">
+    <div className="rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -113,7 +113,7 @@ export function GtmConnect({
             </p>
           )}
           {summary.lastPublishedAt && (
-            <p className="mt-0.5 text-xs text-emerald-300/80">
+            <p className="mt-0.5 text-xs text-white/80">
               {summary.publishedTagCount ?? 0} tags published{" "}
               {new Date(summary.lastPublishedAt).toLocaleString()}
             </p>
@@ -128,7 +128,7 @@ export function GtmConnect({
           className={
             summary.connected
               ? "rounded-full border border-white/15 px-4 py-2 text-xs text-neutral-300 transition hover:border-white/30 hover:text-white"
-              : "rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-xs font-medium text-black transition hover:brightness-110"
+              : "rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-xs font-medium text-black transition hover:brightness-110"
           }
         >
           {summary.connected ? "Reconnect" : "Connect Google"}
@@ -242,7 +242,7 @@ export function GtmConnect({
       )}
 
       {result && (
-        <p className={`mt-3 text-xs ${result.ok ? "text-emerald-300" : "text-red-400"}`}>
+        <p className={`mt-3 text-xs ${result.ok ? "text-white/90" : "text-red-400"}`}>
           {result.message}
         </p>
       )}

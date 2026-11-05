@@ -10,7 +10,7 @@ import { PASSWORD_MIN, passwordProblem } from "@/lib/auth-rules/password";
 // smaller and iOS zooms the page in the moment you tap the field.
 
 export const authInputClass =
-  "block min-h-[44px] w-full rounded-lg border bg-field px-3 py-2 text-base text-white placeholder-neutral-500 outline-none transition focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 sm:text-sm";
+  "block min-h-[44px] w-full rounded-lg border bg-field px-3 py-2 text-base text-white placeholder-neutral-500 outline-none transition focus:border-white/[0.22] focus:ring-2 focus:ring-[color:var(--v3-line)] sm:text-sm";
 
 export function AuthField({
   name,
@@ -112,12 +112,12 @@ export function PasswordField({
           onClick={() => setShown((v) => !v)}
           aria-pressed={shown}
           aria-controls={id}
-          className="absolute inset-y-0 right-1.5 my-auto h-8 rounded-md px-2.5 text-[12.5px] font-medium text-neutral-400 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500"
+          className="absolute inset-y-0 right-1.5 my-auto h-8 rounded-md px-2.5 text-[12.5px] font-medium text-neutral-400 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/[0.22]"
         >
           {shown ? "Hide" : "Show"}
         </button>
       </div>
-      <p id={`${id}-help`} aria-live="polite" className={`text-[12.5px] ${error ? "text-red-400" : ok ? "text-emerald-400" : "text-neutral-500"}`}>
+      <p id={`${id}-help`} aria-live="polite" className={`text-[12.5px] ${error ? "text-red-400" : ok ? "text-white/70" : "text-neutral-500"}`}>
         {message ?? (ok ? "Good password." : isNew ? `At least ${PASSWORD_MIN} characters. A short phrase is easy to remember and hard to guess.` : "")}
       </p>
     </div>

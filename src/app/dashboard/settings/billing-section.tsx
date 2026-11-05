@@ -100,7 +100,7 @@ export function BillingSection({
         </p>
       ) : (
         <div className="mt-8">
-          <p className="mb-4 text-xs uppercase tracking-[0.12em] text-neutral-600">
+          <p className="mb-4 v3-label">
             {subscribed ? "Change plan" : "Plans"}
           </p>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -121,7 +121,7 @@ export function BillingSection({
                       {plan.tagline}
                     </p>
                     {isCurrent ? (
-                      <p className="mt-4 text-center text-xs uppercase tracking-[0.1em] text-emerald-300">
+                      <p className="mt-4 text-center v3-label">
                         Current plan
                       </p>
                     ) : subscribed ? (

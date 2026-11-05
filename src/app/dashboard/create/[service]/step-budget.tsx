@@ -31,7 +31,7 @@ export function StepBudget({
             <button key={a} type="button" aria-pressed={plan.dailyAmount === a} onClick={() => update({ dailyAmount: a })}
               className="rounded-full border px-4 py-2 text-[13px] transition"
               style={{
-                borderColor: plan.dailyAmount === a ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                borderColor: plan.dailyAmount === a ? "rgba(238,238,238,0.5)" : "var(--v3-line)",
                 background: plan.dailyAmount === a ? "rgba(214,214,214,0.1)" : "transparent",
                 color: plan.dailyAmount === a ? "var(--color-white)" : undefined,
               }}>
@@ -78,7 +78,7 @@ export function StepBudget({
 
       <div className="mt-8 grid gap-3">
         <div className="rounded-xl border p-4" style={{ borderColor: "rgba(238,238,238,0.35)", background: "rgba(214,214,214,0.05)" }}>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Planned spend</p>
+          <p className="font-mono v3-label">Planned spend</p>
           <p className="mt-1.5 text-[15px] text-white">
             {spend.maxCents !== null
               ? `Up to ${dollars(spend.maxCents)} in total${spend.days ? ` over ${spend.days} day${spend.days === 1 ? "" : "s"}` : ""} — about ${dollars(spend.perDayCents)} a day.`

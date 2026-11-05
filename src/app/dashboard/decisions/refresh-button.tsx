@@ -20,7 +20,7 @@ export function RefreshDecisionsButton() {
           })
         }
         className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white disabled:opacity-50"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         {pending ? "Checking your campaigns…" : "Check again now"}
       </button>

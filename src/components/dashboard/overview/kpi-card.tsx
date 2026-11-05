@@ -52,7 +52,7 @@ export function KpiCard({
           <Sparkline points={spark} width={140} height={28} tone={flat ? "muted" : good ? "signal" : "alert"} />
         </div>
       )}
-      {source && <p className="mt-1.5 truncate text-[10.5px] uppercase tracking-[0.12em] text-faint" title={source}>{source}</p>}
+      {source && <p className="mt-1.5 truncate v3-label" title={source}>{source}</p>}
     </div>
   );
 }

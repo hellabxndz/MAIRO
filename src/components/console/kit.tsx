@@ -69,7 +69,7 @@ export function Panel({
       data-panel={id}
       aria-labelledby={title && id && !demo ? `${id}-title` : undefined}
       className={`relative overflow-hidden rounded-[22px] border ${pad ? "p-5 sm:p-6" : ""} ${className}`}
-      style={{ borderColor: tone === "warn" ? "rgba(255,221,0,0.28)" : tone === "lit" ? "rgba(255,255,255,0.34)" : "var(--mairo-line)", backgroundImage: bg, boxShadow: "var(--mairo-glow-soft)", ...style }}
+      style={{ borderColor: tone === "warn" ? "rgba(255,221,0,0.28)" : tone === "lit" ? "rgba(255,255,255,0.34)" : "var(--v3-line)", backgroundImage: bg, boxShadow: "none", ...style }}
     >
       {/* A hairline of light along the top edge: depth without a drop shadow. */}
       <span aria-hidden className="pointer-events-none absolute inset-x-6 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(248,249,255,0.14),transparent)]" />
@@ -126,6 +126,6 @@ export function SampleLabel({ children = "Product demo · sample data" }: { chil
 
 /** A primary action: the violet-blue ramp, the one glow on the screen. */
 export const primaryAction =
-  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
+  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60";
 export const quietAction =
-  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 text-[13px] font-medium text-white/90 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white disabled:opacity-60";
+  "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 text-[13px] font-medium text-white/90 transition hover:border-[color:var(--v3-line-strong)] hover:text-white disabled:opacity-60";

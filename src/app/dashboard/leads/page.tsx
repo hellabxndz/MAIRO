@@ -122,8 +122,8 @@ export default async function LeadsPage({
         </p>
 
         {form.metaFormId ? (
-          <div className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] px-3 py-3">
-            <p className="text-xs leading-relaxed text-emerald-200/80">
+          <div className="mt-4 rounded-lg border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-3">
+            <p className="text-xs leading-relaxed text-white/80">
               This form is also on your Facebook Page, so ads can open it inside the app with
               people&apos;s details already filled in. Facebook holds those answers until MAIRO
               asks for them, which happens overnight — or now, if you&apos;re waiting on one.
@@ -139,7 +139,7 @@ export default async function LeadsPage({
         ) : null}
 
         <div className="mt-5">
-          <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-500">
+          <p className="mb-2 v3-label">
             Where the ad sends people
           </p>
           <CopyField value={url ?? ""} />
@@ -150,7 +150,7 @@ export default async function LeadsPage({
         </div>
 
         <div className="mt-6 border-t border-white/10 pt-5">
-          <p className="mb-1 text-xs uppercase tracking-[0.12em] text-neutral-500">
+          <p className="mb-1 v3-label">
             What it asks
           </p>
           <p className="mb-4 max-w-2xl text-xs leading-relaxed text-neutral-600">
@@ -229,7 +229,7 @@ export default async function LeadsPage({
             return (
               <Card key={lead.id}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-xs uppercase tracking-[0.12em] text-neutral-500">
+                  <p className="v3-label">
                     {lead.createdAt.toLocaleString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -248,17 +248,17 @@ export default async function LeadsPage({
                       <span className="text-[11px] text-muted">From &ldquo;{lead.mairoCampaign.name}&rdquo;</span>
                     )}
                     {(lead.source === "MANUAL" || lead.source === "CSV_IMPORT") && (
-                      <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                      <span className="v3-label">
                         {lead.source === "MANUAL" ? "added by you" : "imported"}
                       </span>
                     )}
                     {lead.source === "META_INSTANT" && (
-                      <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                      <span className="v3-label">
                         instant form
                       </span>
                     )}
                     {lead.clickId && (
-                      <span className="text-[11px] uppercase tracking-[0.12em] text-emerald-300/70">
+                      <span className="v3-label">
                         came from an ad
                       </span>
                     )}

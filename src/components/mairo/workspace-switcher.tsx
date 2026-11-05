@@ -32,8 +32,8 @@ export function WorkspaceSwitcher({ workspaces, current, compact = false }: { wo
             router.refresh();
           });
         }}
-        className={`${compact ? "w-full text-[12.5px]" : "mt-1 w-full text-[13px]"} truncate rounded-lg border bg-transparent px-2 py-1 text-white outline-none focus:ring-2 focus:ring-violet-400/30`}
-        style={{ borderColor: "var(--mairo-line)" }}
+        className={`${compact ? "w-full text-[12.5px]" : "mt-1 w-full text-[13px]"} truncate rounded-lg border bg-transparent px-2 py-1 text-white outline-none focus:ring-2 focus:ring-[color:var(--v3-line)]`}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         {workspaces.map((w) => (
           <option key={w.id} value={w.id} className="bg-[#1c1c1c] text-white">{w.name}</option>

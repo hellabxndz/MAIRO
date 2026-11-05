@@ -102,7 +102,7 @@ export function StepAudience({
                     onClick={() => update({ genders: g.v })}
                     className="rounded-lg border px-3 py-2 text-[13px] transition disabled:opacity-40"
                     style={{
-                      borderColor: plan.genders === g.v ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                      borderColor: plan.genders === g.v ? "rgba(238,238,238,0.5)" : "var(--v3-line)",
                       background: plan.genders === g.v ? "rgba(214,214,214,0.08)" : "transparent",
                       color: plan.genders === g.v ? "var(--color-white)" : undefined,
                     }}>
@@ -197,7 +197,7 @@ function PlaceSearch({ plan, update }: { plan: CampaignPlan; update: (patch: Par
           {plan.geoLabel}
         </span>
         <select value={plan.geoRadius} onChange={(e) => update({ geoRadius: Number(e.target.value) })}
-          className="rounded-lg border bg-transparent px-2 py-2 text-[13px] text-white outline-none" style={{ borderColor: "var(--mairo-line)" }}>
+          className="rounded-lg border bg-transparent px-2 py-2 text-[13px] text-white outline-none" style={{ borderColor: "var(--v3-line)" }}>
           {RADIUS_CHOICES.map((r) => (
             <option key={r} value={r} className="bg-neutral-900">within {r} miles</option>
           ))}
@@ -217,14 +217,14 @@ function PlaceSearch({ plan, update }: { plan: CampaignPlan; update: (patch: Par
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); search(); } }}
           placeholder="Your town or city" aria-label="Town or city" className={`${inputClass} max-w-xs`} />
         <button type="button" onClick={search} disabled={pending || query.trim().length < 2}
-          className="rounded-lg border px-3 py-2 text-[13px] text-white/85 transition hover:text-white disabled:opacity-40" style={{ borderColor: "var(--mairo-line)" }}>
+          className="rounded-lg border px-3 py-2 text-[13px] text-white/85 transition hover:text-white disabled:opacity-40" style={{ borderColor: "var(--v3-line)" }}>
           {pending ? "Looking…" : "Find it"}
         </button>
       </div>
       {error && <p className="mt-2 text-[12px] text-amber-200/90">{error}</p>}
       {places && places.length === 0 && <p className="mt-2 text-[12px] text-amber-200/90">Meta doesn&rsquo;t know that one. Try the nearest bigger town.</p>}
       {places && places.length > 0 && (
-        <ul className="mt-2 max-w-md overflow-hidden rounded-lg border" style={{ borderColor: "var(--mairo-line)" }}>
+        <ul className="mt-2 max-w-md overflow-hidden rounded-lg border" style={{ borderColor: "var(--v3-line)" }}>
           {places.map((p) => (
             <li key={p.key}>
               <button type="button" onClick={() => update({ geoKey: p.key, geoLabel: p.label })}

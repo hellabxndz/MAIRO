@@ -32,7 +32,7 @@ import { Drawer } from "@/components/mairo/overlay";
 
 const tone = (score: number) => (score >= 85 ? "#22ff88" : score >= 70 ? "#eeeeee" : score >= 55 ? "#ffdd00" : "#ff3d6e");
 const ramp = { backgroundImage: "var(--mairo-ramp)" } as const;
-const line = { borderColor: "var(--mairo-line)" } as const;
+const line = { borderColor: "var(--v3-line)" } as const;
 const primaryBtn = "rounded-full px-4 py-2 text-[12.5px] font-medium text-white disabled:opacity-50";
 const quietBtn = "rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white disabled:opacity-50";
 const eyebrow = "font-mono text-[10px] uppercase tracking-[0.18em]";
@@ -83,7 +83,7 @@ export function CampaignReviewPanel({
   return (
     <div className="space-y-5">
       {/* --- the score ------------------------------------------------------------ */}
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "none" }}>
         {comparison && <ComparisonBanner c={comparison} learned={learned} />}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
@@ -110,7 +110,7 @@ export function CampaignReviewPanel({
           </p>
         )}
         {score.blocking === 0 && (count > 0 || review.questions.learn.length > 0) && (
-          <button type="button" onClick={improve} className={`${primaryBtn} mt-4 px-5 py-2.5 text-[13.5px]`} style={{ ...ramp, boxShadow: "var(--mairo-glow-key)" }}>
+          <button type="button" onClick={improve} className={`${primaryBtn} mt-4 px-5 py-2.5 text-[13.5px]`} style={{ ...ramp, boxShadow: "none" }}>
             Improve My Score
           </button>
         )}
@@ -297,11 +297,11 @@ function useCountUp(from: number | null, to: number): number {
 function ComparisonBanner({ c, learned }: { c: Comparison; learned: number }) {
   const up = c.delta > 0;
   return (
-    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(34,255,136,0.35)" : "var(--mairo-line)", background: up ? "rgba(34,255,136,0.06)" : "rgba(var(--mairo-fg-rgb),0.02)" }}>
+    <div className="mb-5 rounded-xl border p-4" style={{ borderColor: up ? "rgba(34,255,136,0.35)" : "var(--v3-line)", background: up ? "rgba(34,255,136,0.06)" : "rgba(var(--mairo-fg-rgb),0.02)" }}>
       <p className="text-[14.5px] font-medium text-white">{c.headline}</p>
       <p className="mt-0.5 text-[13px] text-white/85">
         {c.from} → {c.to}
-        {c.delta !== 0 && <span className={up ? "text-emerald-300" : "text-amber-200"}> · {up ? "+" : ""}{c.delta} MAIRO preparation point{Math.abs(c.delta) === 1 ? "" : "s"}</span>}
+        {c.delta !== 0 && <span className={up ? "text-white/90" : "text-amber-200"}> · {up ? "+" : ""}{c.delta} MAIRO preparation point{Math.abs(c.delta) === 1 ? "" : "s"}</span>}
       </p>
       {(c.improved.length > 0 || learned > 0) && (
         <>
@@ -538,13 +538,13 @@ function OptionsPicker({ result, onApply, onCancel }: { result: OptionsResult; o
     );
   }
   return (
-    <div className="mt-5 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line-lit)" }}>
+    <div className="mt-5 rounded-xl border p-4" style={{ borderColor: "var(--v3-line-strong)" }}>
       <p className="text-[12px] text-faint">{result.label} — current</p>
       {result.before && <p className="mt-1 text-[13px] text-muted">&ldquo;{result.before}&rdquo;</p>}
       <fieldset className="mt-4 space-y-2">
         <legend className="text-[12px] text-faint">Choose one</legend>
         {result.options.map((o, i) => (
-          <label key={i} className="flex cursor-pointer gap-3 rounded-xl border p-3 text-[13px]" style={{ borderColor: picked === i ? "var(--mairo-line-lit)" : "var(--mairo-line)" }}>
+          <label key={i} className="flex cursor-pointer gap-3 rounded-xl border p-3 text-[13px]" style={{ borderColor: picked === i ? "var(--v3-line-strong)" : "var(--v3-line)" }}>
             <input type="radio" name="improve-option" checked={picked === i} onChange={() => setPicked(i)} className="mt-1" />
             <span>
               <span className="text-[11px] text-faint">Option {String.fromCharCode(65 + i)}{o.recommended && <span className="ml-1.5 rounded-full px-2 py-0.5 text-[10.5px] text-white" style={ramp}>Recommended</span>}</span>
@@ -573,7 +573,7 @@ function SingleFix({ result, onApply, onCancel }: { result: FixResult; onApply: 
     );
   }
   return (
-    <div className="mt-5 rounded-xl border p-4 text-[12.5px]" style={{ borderColor: "var(--mairo-line-lit)" }}>
+    <div className="mt-5 rounded-xl border p-4 text-[12.5px]" style={{ borderColor: "var(--v3-line-strong)" }}>
       <p className="text-faint">{result.label}</p>
       {result.before && <p className="mt-1 text-muted line-through decoration-white/20">{result.before}</p>}
       <p className="mt-1 text-white">{result.after}</p>
@@ -653,7 +653,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
     return (
       <div className="rounded-xl border p-4" style={line}>
         <p className="text-[13.5px] text-white">{q.text}</p>
-        <p className={`mt-2 text-[13px] ${state.ok ? "text-emerald-300" : "text-amber-200/90"}`}>{state.text}</p>
+        <p className={`mt-2 text-[13px] ${state.ok ? "text-white/90" : "text-amber-200/90"}`}>{state.text}</p>
         {state.ok && q.scope === "business" && <p className="mt-1 text-[11.5px] text-faint">The score only changes if the campaign changes — use Recheck Campaign after MAIRO improves it.</p>}
       </div>
     );
@@ -680,7 +680,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
               const on = chosen.includes(c);
               return (
                 <button key={c} type="button" aria-pressed={on} onClick={() => setChosen((x) => (on ? x.filter((y) => y !== c) : [...x, c]))}
-                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: on ? "rgba(255,255,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
+                  className="rounded-full border px-3 py-1.5 text-[12px]" style={{ borderColor: on ? "var(--v3-line-strong)" : "var(--v3-line)", background: on ? "rgba(255,255,255,0.18)" : undefined, color: on ? "var(--color-white)" : "rgba(var(--mairo-fg-rgb),0.8)" }}>
                   {on ? "✓ " : ""}{c}
                 </button>
               );
@@ -694,7 +694,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
       ) : q.yesNo ? (
         <div className="mt-3">
           <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Add detail (optional), e.g. what's included"
-            className="w-full rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
+            className="w-full rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--v3-line-strong)]" style={line} />
           <div className="mt-3 flex flex-wrap gap-2">
             <button type="button" disabled={pending} onClick={() => submit(`yes ${answer}`)} className={primaryBtn} style={ramp}>{pending ? "Saving…" : "Yes"}</button>
             <button type="button" disabled={pending} onClick={() => submit("no")} className={quietBtn} style={line}>No</button>
@@ -704,7 +704,7 @@ function QuestionCard({ q, h, onSaved, onDone }: { q: ReviewQuestion; h: ReviewH
         <form className="mt-3" onSubmit={(e) => { e.preventDefault(); submit(answer, updating); }}>
           <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} rows={2} maxLength={300} aria-label={q.text}
             placeholder={updating ? `What should MAIRO use instead?` : (q.placeholder ?? "In your own words")}
-            className="w-full resize-none rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" style={line} />
+            className="w-full resize-none rounded-xl border bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 text-[13.5px] text-white placeholder-faint outline-none focus:border-[color:var(--v3-line-strong)]" style={line} />
           <button type="submit" disabled={pending || !answer.trim()} className={`${primaryBtn} mt-2`} style={ramp}>{pending ? "Saving…" : "Save answer"}</button>
         </form>
       )}

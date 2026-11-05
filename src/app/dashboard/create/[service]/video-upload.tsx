@@ -88,7 +88,7 @@ export function VideoUpload({
         disabled={progress !== null}
         onClick={() => input.current?.click()}
         className="w-full rounded-xl border border-dashed p-8 text-center text-[13px] text-muted transition hover:text-white disabled:opacity-60"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         {progress !== null ? `Uploading… ${progress}%` : "Choose a video — MP4 or MOV, up to 500MB"}
       </button>

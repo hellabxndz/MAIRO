@@ -33,7 +33,7 @@ import { economicsFacts, economicsFitGoal, type ConfirmedEconomics } from "@/lib
 const input =
   "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-[14px] text-white placeholder-neutral-500 outline-none focus:border-white/30";
 const card = "rounded-2xl border border-white/[0.07] bg-field/80 p-5 sm:p-7";
-const primary = "min-h-[46px] rounded-lg bg-[image:var(--mairo-ramp)] px-6 text-[14.5px] font-medium text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60";
+const primary = "min-h-[46px] rounded-lg bg-[image:var(--mairo-ramp)] px-6 text-[14.5px] font-medium text-black transition hover:brightness-110 disabled:opacity-60";
 const secondary = "min-h-[46px] rounded-lg border border-white/12 px-5 text-[14px] text-white/85 hover:border-white/30 disabled:opacity-60";
 
 // How a business wants leads to reach it. Three of the four finish somewhere
@@ -373,7 +373,7 @@ function GoalScreen({ business, initial, suggestion, defaultDestination, onBack 
           ))}
         </div>
         <input type="hidden" name="destinationType" value={chosen} />
-        <p className={`mt-3 rounded-lg border px-3 py-2 text-[12.5px] leading-relaxed ${needsSiteTracking(chosen) ? "border-amber-400/25 bg-amber-400/[0.05] text-amber-200" : "border-emerald-400/25 bg-emerald-400/[0.05] text-emerald-200"}`}>
+        <p className={`mt-3 rounded-lg border px-3 py-2 text-[12.5px] leading-relaxed ${needsSiteTracking(chosen) ? "border-amber-400/25 bg-amber-400/[0.05] text-amber-200" : "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90"}`}>
           {needsSiteTracking(chosen)
             ? "To count what happens on your website, MAIRO will need a small piece of tracking code there. It walks you through that later — or does it for you with Google Tag Manager. Your ads can still run without it."
             : "Nothing to install. MAIRO and Meta can count these on their own."}

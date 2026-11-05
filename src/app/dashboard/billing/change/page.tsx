@@ -91,11 +91,11 @@ export default async function ChangePlanPage({ searchParams }: PageProps<"/dashb
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {gains.length > 0 && (
-          <section className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.04] p-5">
+          <section className="rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-5">
             <h2 className="text-[14px] font-semibold text-white">What you get</h2>
             <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-neutral-300">
               {gains.map((g) => (
-                <li key={g} className="flex gap-2"><span aria-hidden className="text-emerald-300">+</span>{g}</li>
+                <li key={g} className="flex gap-2"><span aria-hidden className="text-white/90">+</span>{g}</li>
               ))}
             </ul>
           </section>

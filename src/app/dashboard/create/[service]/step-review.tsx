@@ -64,7 +64,7 @@ export function StepReview({
       sub="MAIRO checks the whole campaign against your account, your page and Meta's rules before any money is spent — and tells you exactly what would make it stronger."
     >
       {checking && (
-        <div className="rounded-2xl border p-6 text-center" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
+        <div className="rounded-2xl border p-6 text-center" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
           {before && <p className="text-[40px] font-semibold tabular-nums text-white/60">{before.overall}</p>}
           {before && <p aria-hidden className="text-white/30">↓</p>}
           <p className="text-[14px] text-muted"><span className="mairo-think">{before ? "Analyzing…" : "Checking your campaign…"}</span></p>
@@ -118,10 +118,10 @@ export function StepReview({
 function FindingList({ title, findings, onFix }: { title: string; findings: Finding[]; onFix: (step: ReviewStep) => void }) {
   return (
     <div className={title ? "" : "mt-3"}>
-      {title && <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">{title}</p>}
+      {title && <p className="font-mono v3-label">{title}</p>}
       <ul className="mt-3 space-y-2.5">
         {findings.map((f) => (
-          <li key={f.id} className="rounded-xl border p-4" style={{ borderColor: f.severity === "blocking" ? "rgba(255,61,110,0.3)" : "var(--mairo-line)" }}>
+          <li key={f.id} className="rounded-xl border p-4" style={{ borderColor: f.severity === "blocking" ? "rgba(255,61,110,0.3)" : "var(--v3-line)" }}>
             <p className="text-[11px] text-faint">{f.area}</p>
             <p className="mt-0.5 text-[14px] text-white">{f.title}</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-muted">{f.detail}</p>

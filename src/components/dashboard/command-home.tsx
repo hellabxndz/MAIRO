@@ -40,7 +40,7 @@ export function TeamStrip({ team }: { team: TeamView }) {
       <ul className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {team.statuses.map((s) => (
           <li key={s.role}>
-            <Link href={`/dashboard/team?agent=${s.role}#activity`} className="flex h-full items-start gap-3 rounded-2xl border border-[color:var(--mairo-line)] p-3 transition hover:border-[color:var(--mairo-line-lit)]">
+            <Link href={`/dashboard/team?agent=${s.role}#activity`} className="flex h-full items-start gap-3 rounded-2xl border border-[color:var(--v3-line)] p-3 transition hover:border-[color:var(--v3-line-strong)]">
               <AgentIcon role={s.role} size={32} />
               <span className="min-w-0">
                 <span className="block text-[13.5px] font-medium text-white">{AGENT[s.role].name}</span>
@@ -107,7 +107,7 @@ export function ApprovalsPreview({ decisions, others }: { decisions: DecisionVie
       <ul className="space-y-2.5">
         {rows.map((r) => (
           <li key={r.key}>
-            <Link href={r.href} className="flex items-start gap-3 rounded-2xl border border-[color:var(--mairo-line)] p-3.5 transition hover:border-[color:var(--mairo-line-lit)]">
+            <Link href={r.href} className="flex items-start gap-3 rounded-2xl border border-[color:var(--v3-line)] p-3.5 transition hover:border-[color:var(--v3-line-strong)]">
               <AgentIcon role={r.role} size={28} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-medium text-white">{r.title}</span>

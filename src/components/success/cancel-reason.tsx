@@ -46,7 +46,7 @@ export function CancelReason({ onCancelPage = false }: { onCancelPage?: boolean 
             aria-pressed={reason === r}
             onClick={() => setReason(r)}
             className={`min-h-[36px] rounded-full border px-3.5 text-[12.5px] transition ${
-              reason === r ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--mairo-line)] text-white/80 hover:text-white"
+              reason === r ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--v3-line)] text-white/80 hover:text-white"
             }`}
           >
             {r}
@@ -60,7 +60,7 @@ export function CancelReason({ onCancelPage = false }: { onCancelPage?: boolean 
         maxLength={2000}
         aria-label="Anything else?"
         placeholder="Anything else? (optional)"
-        className="mt-3 w-full rounded-xl border border-[color:var(--mairo-line)] bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none placeholder:text-faint"
+        className="mt-3 w-full rounded-xl border border-[color:var(--v3-line)] bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none placeholder:text-faint"
       />
       {error && <p className="mt-2 text-[12.5px] text-red-300">{error}</p>}
       <button
@@ -73,7 +73,7 @@ export function CancelReason({ onCancelPage = false }: { onCancelPage?: boolean 
             setSent(true);
           })
         }
-        className="mt-3 rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white/85 hover:text-white disabled:opacity-50"
+        className="mt-3 rounded-full border border-[color:var(--v3-line)] px-4 py-2 text-[13px] text-white/85 hover:text-white disabled:opacity-50"
       >
         {pending ? "Sending…" : "Send"}
       </button>

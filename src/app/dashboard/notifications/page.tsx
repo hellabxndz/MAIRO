@@ -163,7 +163,7 @@ export default async function NotificationsPage() {
               <span className="block text-[12.5px] text-muted">Leads waiting for a reply, good leads getting more expensive, fewer bookings, tracking that stopped — only when your records show it</span>
             </span>
           </label>
-          <label className="flex items-start gap-3 border-t pt-3 text-[14px] text-white" style={{ borderColor: "var(--mairo-line)" }}>
+          <label className="flex items-start gap-3 border-t pt-3 text-[14px] text-white" style={{ borderColor: "var(--v3-line)" }}>
             <input type="checkbox" name="email" defaultChecked={prefs?.notifyEmail ?? true} className="mt-1 h-4 w-4" />
             <span>
               Email me too

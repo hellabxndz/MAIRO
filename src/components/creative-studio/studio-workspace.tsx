@@ -163,7 +163,7 @@ export function StudioWorkspace({
       {!embedded && <CreditMeter balance={creditBalance} estimatedCost={cost || undefined} />}
 
       {/* Tabs — the three options in the brief. */}
-      <div className="flex gap-2 border-b" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="flex gap-2 border-b" style={{ borderColor: "var(--v3-line)" }}>
         {(
           [
             ["generate", "Generate with AI"],
@@ -180,7 +180,7 @@ export function StudioWorkspace({
               setVersions([]);
             }}
             className={`px-3.5 py-2.5 text-[13px] transition-colors ${
-              tab === key ? "border-b-2 border-sky-400 text-white" : "text-neutral-400 hover:text-white"
+              tab === key ? "border-b-2 border-white/[0.22] text-white" : "text-neutral-400 hover:text-white"
             }`}
           >
             {label}
@@ -228,7 +228,7 @@ export function StudioWorkspace({
                         type="button"
                         onClick={() => setQuality(q)}
                         className={`rounded-full border px-4 py-1.5 text-[12px] transition-colors ${
-                          quality === q ? "border-sky-400/50 bg-sky-400/[0.08] text-white" : "border-white/10 text-neutral-400 hover:text-white"
+                          quality === q ? "border-white/[0.22] bg-white/[0.04] text-white" : "border-white/10 text-neutral-400 hover:text-white"
                         }`}
                       >
                         {q === "standard" ? `Standard · ${costs.standard} credits` : `Premium · ${costs.premium} credits`}
@@ -355,7 +355,7 @@ export function StudioWorkspace({
           {!busy && !result && (
             <div
               className="flex aspect-square w-full flex-col items-center justify-center rounded-[var(--radius-panel)] border border-dashed px-6 text-center"
-              style={{ borderColor: "var(--mairo-line)" }}
+              style={{ borderColor: "var(--v3-line)" }}
             >
               <p className="text-[13px] text-neutral-500">Your creative will appear here</p>
             </div>
@@ -363,7 +363,7 @@ export function StudioWorkspace({
 
           {result && (
             <div className="space-y-4">
-              <div className="relative overflow-hidden rounded-[var(--radius-panel)] border" style={{ borderColor: "var(--mairo-line)" }}>
+              <div className="relative overflow-hidden rounded-[var(--radius-panel)] border" style={{ borderColor: "var(--v3-line)" }}>
                 <img src={result.imageUrl} alt="Generated creative" className="w-full" />
                 {busy && (
                   <div data-palette="classic" className="absolute inset-0 flex items-center justify-center bg-black/60">
@@ -380,7 +380,7 @@ export function StudioWorkspace({
                       type="button"
                       onClick={() => setResult({ ...result, imageUrl: v.imageUrl })}
                       className={`overflow-hidden rounded-lg border ${
-                        v.imageUrl === result.imageUrl ? "border-sky-400/60" : "border-white/10"
+                        v.imageUrl === result.imageUrl ? "border-white/[0.22]" : "border-white/10"
                       }`}
                       title={v.instruction ?? `Version ${v.version}`}
                     >

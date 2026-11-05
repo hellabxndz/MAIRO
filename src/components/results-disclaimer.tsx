@@ -54,14 +54,14 @@ export function ResultsDisclaimer({ className = "" }: { className?: string }) {
     <section
       className={`rounded-[var(--radius-panel)] border p-5 sm:p-6 ${className}`}
       style={{
-        borderColor: "var(--mairo-line)",
+        borderColor: "var(--v3-line)",
         background: "rgba(var(--mairo-bg-rgb),0.5)",
       }}
       aria-labelledby="results-disclaimer-heading"
     >
       <h2
         id="results-disclaimer-heading"
-        className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint"
+        className="font-mono v3-label"
       >
         What MAIRO can and can&rsquo;t promise
       </h2>

@@ -35,7 +35,7 @@ export function Metric({
 }) {
   return (
     <div className="border-l border-white/15 pl-4">
-      <p className="text-xs uppercase tracking-[0.12em] text-neutral-500">{label}</p>
+      <p className="v3-label">{label}</p>
       <p className="mt-1.5 text-2xl font-medium tabular-nums text-white">{value}</p>
       {hint && <p className="mt-1 text-xs text-neutral-600">{hint}</p>}
     </div>

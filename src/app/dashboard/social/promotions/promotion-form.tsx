@@ -60,7 +60,7 @@ export function PromotionForm({ initialKind }: { initialKind: PromotionKind | nu
           </button>
         </div>
       )}
-      {result && <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-[13px] ${result.ok ? "bg-emerald-400/10 text-emerald-300" : "bg-alert/10 text-alert"}`}>{result.ok ? result.message : result.error}</p>}
+      {result && <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-[13px] ${result.ok ? "bg-white/[0.04] text-white/90" : "bg-alert/10 text-alert"}`}>{result.ok ? result.message : result.error}</p>}
     </section>
   );
 }

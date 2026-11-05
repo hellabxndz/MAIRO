@@ -147,7 +147,7 @@ export function SimplePixel({ view, advancedHref = "#advanced", heading = true }
 
       {view.counts.length > 0 && (
         <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-          <p className="text-xs uppercase tracking-[0.14em] text-neutral-500">What it counts · {view.nicheLabel}</p>
+          <p className="v3-label">What it counts · {view.nicheLabel}</p>
           <ul className="mt-2 space-y-1 text-sm text-neutral-300">
             {view.counts.map((c) => (
               <li key={c.label}>
@@ -162,7 +162,7 @@ export function SimplePixel({ view, advancedHref = "#advanced", heading = true }
       )}
 
       {note && (
-        <p role="status" className={`text-sm ${note.ok ? "text-emerald-300" : "text-red-300"}`}>
+        <p role="status" className={`text-sm ${note.ok ? "text-white/90" : "text-red-300"}`}>
           {note.text}
         </p>
       )}
@@ -175,7 +175,7 @@ function Step({ n, title, done, locked, children }: { n: number; title: string; 
     <div className={`flex gap-4 ${locked ? "opacity-50" : ""}`}>
       <span
         aria-hidden
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${done ? "bg-emerald-400/15 text-emerald-300" : "bg-white/[0.06] text-white"}`}
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-medium ${done ? "bg-white/[0.04] text-white/90" : "bg-white/[0.06] text-white"}`}
       >
         {done ? "✓" : n}
       </span>

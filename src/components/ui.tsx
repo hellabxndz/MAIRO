@@ -33,8 +33,8 @@ export function Card({
       className={`rounded-[var(--radius-panel)] border p-6 ${className}`}
       style={{
         backgroundImage: "var(--mairo-glass)",
-        borderColor: "var(--mairo-line)",
-        boxShadow: "var(--mairo-glow-soft)",
+        borderColor: "var(--v3-line)",
+        boxShadow: "none",
       }}
     >
       {children}
@@ -104,7 +104,7 @@ export function EmptyState({ title, description }: { title: string; description?
   return (
     <div
       className="rounded-[var(--radius-panel)] border border-dashed p-10 text-center"
-      style={{ borderColor: "var(--mairo-line)" }}
+      style={{ borderColor: "var(--v3-line)" }}
     >
       <p className="text-[15px] font-medium text-white">{title}</p>
       {description && (
@@ -115,9 +115,9 @@ export function EmptyState({ title, description }: { title: string; description?
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 " +
+  "w-full rounded-xl border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-3.5 py-2.5 " +
   "text-sm text-white placeholder-faint outline-none transition-colors " +
-  "focus:border-[color:var(--mairo-line-lit)]";
+  "focus:border-[color:var(--v3-line-strong)]";
 
 // The ramp and the key glow, exactly as the hero and the sidebar use them — so
 // "Generate creatives" on an inner page is recognisably the same button as
@@ -128,13 +128,13 @@ export const inputClass =
 // into a component would have meant touching every one of those call sites.
 export const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white " +
-  "bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] " +
+  "bg-[image:var(--mairo-ramp)] " +
   "transition-all duration-300 [transition-timing-function:var(--ease-mairo)] " +
   "hover:brightness-110 disabled:pointer-events-none disabled:opacity-50";
 
 export const secondaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--mairo-line)] " +
+  "inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--v3-line)] " +
   "bg-white/[0.02] px-5 py-2.5 text-sm font-medium text-white/85 " +
   "transition-all duration-300 [transition-timing-function:var(--ease-mairo)] " +
-  "hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.05] hover:text-white " +
+  "hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.05] hover:text-white " +
   "disabled:pointer-events-none disabled:opacity-50";

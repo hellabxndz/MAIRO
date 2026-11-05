@@ -35,7 +35,7 @@ export default async function HelpCenterPage({ searchParams }: PageProps<"/dashb
 
       <HelpSearch entries={helpIndex()} categories={HELP_CATEGORIES} basePath="/dashboard/guide" initialQuery={typeof q === "string" ? q : ""} />
 
-      <section aria-labelledby="your-plan" className="mt-10 rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] p-5">
+      <section aria-labelledby="your-plan" className="mt-10 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] p-5">
         <h2 id="your-plan" className="text-[13px] font-semibold text-white">
           Your plan
         </h2>

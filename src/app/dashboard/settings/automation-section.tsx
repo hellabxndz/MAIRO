@@ -84,7 +84,7 @@ export function AutomationSection({
         </p>
         <a
           href="#billing"
-          className="mt-4 inline-block rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20"
+          className="mt-4 inline-block rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-2 text-xs text-white/90 transition hover:bg-white/[0.04]"
         >
           Part of {upgradePlanName}
         </a>
@@ -104,7 +104,7 @@ export function AutomationSection({
             change MAIRO makes and why it made it.
           </p>
           {values.level !== "MANUAL" && allowed && (
-            <div className="mt-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--v3-line)" }}>
               <p className="text-sm text-white/85">
                 {pausedAt
                   ? "Autopilot is paused. MAIRO checks and recommends, but changes nothing on its own until you resume."
@@ -137,7 +137,7 @@ export function AutomationSection({
                 aria-pressed={on}
                 className={`rounded-2xl border p-4 text-left transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
                   on
-                    ? "border-sky-400/50 bg-sky-400/[0.07]"
+                    ? "border-white/[0.22] bg-white/[0.04]"
                     : "border-white/[0.07] hover:border-white/20"
                 } ${needsPlan ? "cursor-not-allowed opacity-45" : ""}`}
               >
@@ -145,7 +145,7 @@ export function AutomationSection({
                   <span
                     aria-hidden
                     className={`h-3.5 w-3.5 rounded-full border ${
-                      on ? "border-sky-300 bg-sky-400" : "border-white/25"
+                      on ? "border-white/[0.22] bg-[image:var(--mairo-ramp)]" : "border-white/25"
                     }`}
                   />
                   <span className="text-sm font-medium text-white">{l.label}</span>
@@ -154,7 +154,7 @@ export function AutomationSection({
                   {l.summary}
                 </span>
                 {needsPlan && (
-                  <span className="mt-2 block text-[11px] text-sky-200/80">
+                  <span className="mt-2 block text-[11px] text-white/80">
                     Part of {upgradePlanName}
                   </span>
                 )}
@@ -350,7 +350,7 @@ export function AutomationSection({
                     key={platform}
                     className={`flex cursor-pointer items-center gap-2.5 rounded-full border px-4 py-2 text-xs transition ${
                       on
-                        ? "border-sky-400/40 bg-sky-400/[0.08] text-white"
+                        ? "border-[color:var(--v3-line)] bg-white/[0.04] text-white"
                         : "border-white/[0.07] text-neutral-400 hover:border-white/20"
                     }`}
                   >
@@ -406,7 +406,7 @@ export function AutomationSection({
           <button type="submit" disabled={pending} className={primaryButtonClass}>
             {pending ? "Saving…" : "Save limits"}
           </button>
-          {state?.saved && <p className="text-sm text-emerald-400">Saved.</p>}
+          {state?.saved && <p className="text-sm text-white/70">Saved.</p>}
           {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
         </div>
       </form>
@@ -448,7 +448,7 @@ export function GuardrailSettings({ values }: { values: AutoOptimizeValues }) {
       <legend className="px-1 text-xs font-medium text-neutral-400">Guardrails — always ask me first</legend>
       <ul className="mt-2 space-y-3">
         <li className="flex items-start gap-3">
-          <input type="checkbox" checked disabled className="mt-0.5 h-4 w-4 accent-sky-400" aria-label="Require approval for new campaigns (always on)" />
+          <input type="checkbox" checked disabled className="mt-0.5 h-4 w-4 accent-white" aria-label="Require approval for new campaigns (always on)" />
           <span>
             <span className="text-sm text-white">Require approval for new campaigns</span>
             <span className="mt-0.5 block text-xs text-neutral-500">Always on. MAIRO never starts spending on a new campaign without you.</span>
@@ -457,7 +457,7 @@ export function GuardrailSettings({ values }: { values: AutoOptimizeValues }) {
         {rows.map((r) => (
           <li key={r.name}>
             <label className="flex cursor-pointer items-start gap-3">
-              <input type="checkbox" name={r.name} defaultChecked={Boolean(values[r.name])} className="mt-0.5 h-4 w-4 accent-sky-400" />
+              <input type="checkbox" name={r.name} defaultChecked={Boolean(values[r.name])} className="mt-0.5 h-4 w-4 accent-white" />
               <span>
                 <span className="text-sm text-white">{r.label}</span>
                 <span className="mt-0.5 block text-xs text-neutral-500">{r.hint}</span>

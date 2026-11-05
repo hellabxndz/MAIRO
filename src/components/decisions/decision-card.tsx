@@ -61,7 +61,7 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
 
   if (gone) {
     return (
-      <div className="rounded-2xl border px-5 py-4 text-[13px] text-muted" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="rounded-2xl border px-5 py-4 text-[13px] text-muted" style={{ borderColor: "var(--v3-line)" }}>
         {gone} — “{decision.title}”
       </div>
     );
@@ -71,7 +71,7 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
     <article
       id={`d-${decision.id}`}
       className="scroll-mt-24 rounded-2xl border p-5 sm:p-6"
-      style={{ borderColor: decision.urgent ? "rgba(255,61,110,0.35)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
+      style={{ borderColor: decision.urgent ? "rgba(255,61,110,0.35)" : "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
     >
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
         <span className="rounded-full px-2.5 py-0.5 font-medium" style={{ color: tone, border: `1px solid ${tone}55` }}>
@@ -96,11 +96,11 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
 
       <dl className="mt-4 space-y-3 text-[13px] leading-relaxed">
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">What it noticed</dt>
+          <dt className="font-mono v3-label">What it noticed</dt>
           <dd className="mt-1 text-white/90">{advanced ? decision.noticedAdvanced : decision.noticed}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Proposed change</dt>
+          <dt className="font-mono v3-label">Proposed change</dt>
           <dd className="mt-1 text-white/90">{decision.recommendation}</dd>
           {changeRows.length > 0 && (
             <dd className="mt-2 space-y-1">
@@ -115,14 +115,14 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
           )}
         </div>
         <div>
-          <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Reason</dt>
+          <dt className="font-mono v3-label">Reason</dt>
           <dd className="mt-1 text-white/85">{decision.whyItMatters}</dd>
           {decision.impact && <dd className="mt-1 text-[12.5px] text-muted">What it&rsquo;s for: {decision.impact}</dd>}
         </div>
       </dl>
 
       {decision.evidence.length > 0 && (
-        <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Supporting evidence</p>
+        <p className="mt-4 font-mono v3-label">Supporting evidence</p>
       )}
       {decision.evidence.length > 0 && (
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -130,7 +130,7 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
             const label = advanced && e.advancedLabel ? e.advancedLabel : e.label;
             const help = advanced ? termHelp(label) : null;
             return (
-              <div key={label} className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--mairo-line)" }}>
+              <div key={label} className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--v3-line)" }}>
                 <p className="flex items-center gap-1 text-[11px] text-faint">
                   {label}
                   {help && (
@@ -187,7 +187,7 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
               {guide.label}
             </Link>
             <button type="button" disabled={pending} onClick={() => act(markDecisionDoneAction, "Marked as done")}
-              className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+              className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
               I dealt with it
             </button>
           </>
@@ -197,35 +197,35 @@ export function MairoDecisionCard({ decision, advanced, facts, trail, timeZone }
             disabled={pending}
             onClick={() => setOpen("approve")}
             className="rounded-full px-4 py-2 text-[12.5px] font-medium text-white"
-            style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+            style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
           >
             {creative ? "Create replacement" : "Approve"}
           </button>
         )}
         {metaTry?.type === "try-meta-feature" && (
-          <Link href={metaTry.learnMoreHref} className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+          <Link href={metaTry.learnMoreHref} className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Learn more
           </Link>
         )}
         {modifiable && (
           <button type="button" disabled={pending} onClick={() => setOpen("modify")}
-            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Modify
           </button>
         )}
         {metaTry ? (
           <button type="button" disabled={pending} onClick={() => act(ignoreDecisionAction, "Not now")}
-            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Not now
           </button>
         ) : creative || guideOnly ? (
           <button type="button" disabled={pending} onClick={() => act(ignoreDecisionAction, "Ignored")}
-            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Ignore
           </button>
         ) : (
           <button type="button" disabled={pending} onClick={() => act(rejectDecisionAction, "Rejected")}
-            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Reject
           </button>
         )}

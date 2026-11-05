@@ -226,7 +226,7 @@ export function CreativeRequestForm() {
           {path === "photo" && (
             <div className="space-y-3 rounded-xl border border-dashed border-white/15 p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <label className="cursor-pointer rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white">
+                <label className="cursor-pointer rounded-lg border border-[color:var(--v3-line)] px-4 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white v3-label">
                   {preview ? "Change picture" : "Choose a picture"}
                   <input
                     ref={fileInput}
@@ -437,10 +437,10 @@ function SuggestionPanel({
       : "Not sure what to say? Want my suggestion? I’ll come up with something from what I know about your business.";
 
   return (
-    <div className="rounded-xl border border-sky-400/20 bg-sky-400/[0.04] p-4">
+    <div className="rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] p-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border border-sky-400/30 bg-sky-400/10 text-[10px] font-medium tracking-[0.08em] text-sky-200">
+          <span className="mt-0.5 flex h-7 w-7 flex-none items-center justify-center rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] text-[10px] font-medium tracking-[0.08em] text-white/90">
             M
           </span>
           <p className="max-w-xl text-sm leading-relaxed text-neutral-300">
@@ -451,7 +451,7 @@ function SuggestionPanel({
           type="button"
           onClick={onAsk}
           disabled={thinking || !canSuggest}
-          className="rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-xs text-sky-200 transition hover:bg-sky-400/20 disabled:opacity-50"
+          className="rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-2 text-xs text-white/90 transition hover:bg-white/[0.04] disabled:opacity-50"
         >
           {thinking ? "Thinking…" : idea ? "Suggest another" : "Yes, suggest something"}
         </button>
@@ -473,7 +473,7 @@ function SuggestionPanel({
               type="button"
               onClick={onUse}
               disabled={ideaUsed}
-              className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-1.5 text-xs font-medium text-black transition hover:brightness-110 disabled:opacity-50"
+              className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-xs font-medium text-black transition hover:brightness-110 disabled:opacity-50"
             >
               {ideaUsed ? "Added above" : "Use this idea"}
             </button>

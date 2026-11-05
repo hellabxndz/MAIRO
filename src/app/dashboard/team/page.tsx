@@ -54,11 +54,11 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <h1 className="mt-2 text-[clamp(26px,3.4vw,34px)] font-semibold tracking-[-0.02em] text-white">What MAIRO is working on</h1>
         <p className="mt-3 max-w-[720px] text-[15px] leading-relaxed text-white/80">{team.welcome}</p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium text-black shadow-[var(--mairo-glow-key)]">
+          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium text-black">
             Ask MAIRO
           </Link>
           {team.pending > 0 && (
-            <Link href="/dashboard/decisions" className="rounded-full border border-[color:var(--mairo-line-lit)] px-5 py-2.5 text-[13.5px] text-white">
+            <Link href="/dashboard/decisions" className="rounded-full border border-[color:var(--v3-line-strong)] px-5 py-2.5 text-[13.5px] text-white">
               {team.pending} recommendation{team.pending === 1 ? "" : "s"} to review
             </Link>
           )}

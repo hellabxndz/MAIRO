@@ -71,7 +71,7 @@ export function GoalSetup({
             aria-checked={goal === g.key}
             onClick={() => setGoal(g.key)}
             className={`min-h-[48px] rounded-xl border px-4 py-2.5 text-left text-[14px] transition ${
-              goal === g.key ? "border-violet-400 bg-violet/[0.18] text-white" : "border-white/10 bg-white/[0.02] text-white/85 hover:border-white/25"
+              goal === g.key ? "border-white/[0.22] bg-violet/[0.18] text-white" : "border-white/10 bg-white/[0.02] text-white/85 hover:border-white/25"
             }`}
           >
             {g.label}

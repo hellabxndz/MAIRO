@@ -43,7 +43,7 @@ function Row({ l }: { l: LearningRow }) {
 export function LearningMemory({ items }: { items: LearningRow[] }) {
   return (
     <section className="mt-8 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO Learning Memory</p>
+      <p className="v3-label">MAIRO Learning Memory</p>
       <p className="mt-1 text-[13.5px] text-muted">What MAIRO has learned from your own results. MAIRO&rsquo;s assistant and new ad versions use these; weak signals are never saved.</p>
       {items.length === 0 ? (
         <p className="mt-4 text-[13.5px] text-muted">Nothing yet — lessons are added from your Weekly Report once the numbers clearly support them.</p>

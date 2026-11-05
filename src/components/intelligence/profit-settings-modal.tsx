@@ -64,7 +64,7 @@ export function ProfitSettingsModal({ values, products }: { values: ProfitSettin
       </button>
       {open &&
         createPortal(
-          <div role="dialog" aria-modal="true" aria-label="Profit settings" className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-label="Profit settings" className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4" onClick={() => setOpen(false)}>
             <form
               action={action}
               onClick={(e) => e.stopPropagation()}

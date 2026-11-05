@@ -18,7 +18,7 @@ export async function SuggestedAdsPrompt({ organizationId, className = "" }: { o
           <h2 id="suggested-ads-prompt" className="text-[15px] font-semibold text-white">Review your suggested ads</h2>
           <p className="mt-0.5 text-[13px] text-muted">Three ways to start, written from what you confirmed about your business. One is marked as the best first test.</p>
         </div>
-        <Link href="/dashboard/creatives/suggested" className="inline-flex min-h-[38px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black shadow-[var(--mairo-glow-key)]">
+        <Link href="/dashboard/creatives/suggested" className="inline-flex min-h-[38px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-4 text-[13px] font-medium text-black">
           See your suggested ads
         </Link>
       </div>

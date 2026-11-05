@@ -70,7 +70,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 export function TrailCard({ trail, now, timeZone }: { trail: DecisionTrail; now: Date; timeZone?: string }) {
   const st = STATUS[trail.status] ?? { label: trail.status, cls: "bg-white/[0.07] text-muted" };
   return (
-    <article className="rounded-[22px] border border-[color:var(--mairo-line)] p-4 sm:p-5">
+    <article className="rounded-[22px] border border-[color:var(--v3-line)] p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${st.cls}`}>{st.label}</span>
         <span className="text-[11.5px] text-faint">{timeIn(trail.createdAt, now, timeZone)}</span>

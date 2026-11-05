@@ -48,6 +48,7 @@ import { campaignStages, familyFor, goalLabel, optimizingFor, primaryResult, sta
 import { StageTimeline } from "@/components/viz/stage-timeline";
 import { performanceTiles } from "@/lib/dashboard/home";
 import { EMPTY_METRICS } from "@/lib/ad-platforms/types";
+import { StatusDot } from "@/components/site/status-dot";
 
 // One campaign, end to end.
 //
@@ -227,7 +228,7 @@ export default async function CampaignPage({
           <h1 className="text-[clamp(22px,3vw,28px)] font-semibold tracking-[-0.02em] text-white">{campaign.name}</h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-muted">
             <span>{goalLabel(campaign.objective)}</span>
-            <span className="text-white/85">{status.dot} {status.text}</span>
+            <StatusDot dot={status.dot} text={status.text} className="text-white/85" />
             <span>{money(campaign.totalDailyBudgetCents)} a day</span>
           </p>
         </div>
@@ -240,7 +241,7 @@ export default async function CampaignPage({
       {(() => {
         const life = campaignStages(campaign, new Date());
         return (
-          <section aria-label="Campaign stages" className="mb-6 rounded-[24px] border border-[color:var(--mairo-line)] px-5 py-5 sm:px-6">
+          <section aria-label="Campaign stages" className="mb-6 rounded-[24px] border border-[color:var(--v3-line)] px-5 py-5 sm:px-6">
             <StageTimeline stages={life.stages} summary={life.summary} />
           </section>
         );
@@ -323,7 +324,7 @@ export default async function CampaignPage({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={preview} alt="" className="mb-4 aspect-[4/5] w-full rounded-lg object-cover" />
                     ) : (
-                      <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--mairo-line)" }}>
+                      <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--v3-line)" }}>
                         {ad.kind === "EXISTING_AD" ? ad.sourceAdName ?? "Existing ad" : "Words only"}
                       </div>
                     )}
@@ -340,7 +341,7 @@ export default async function CampaignPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.mediaUrl} alt="" className="mb-4 aspect-[4/5] w-full rounded-lg object-cover" />
                   ) : (
-                    <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--mairo-line)" }}>Words only</div>
+                    <div className="mb-4 flex aspect-[4/5] w-full items-center justify-center rounded-lg border border-dashed text-[12px] text-faint" style={{ borderColor: "var(--v3-line)" }}>Words only</div>
                   )}
                   <p className="text-[14px] font-medium text-white">{c.headline}</p>
                   <p className="mt-1.5 line-clamp-4 flex-1 text-[12.5px] leading-relaxed text-muted">{c.primaryText}</p>
@@ -445,7 +446,7 @@ export default async function CampaignPage({
               ))}
             </dl>
             {metaAccountId && metaCampaignId && (
-              <a href={metaAdsManagerUrl(metaAccountId, metaCampaignId)} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white/90 hover:text-white">
+              <a href={metaAdsManagerUrl(metaAccountId, metaCampaignId)} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--v3-line)] px-4 py-2 text-[13px] text-white/90 hover:text-white">
                 Open in Ads Manager <span aria-hidden>↗</span>
               </a>
             )}

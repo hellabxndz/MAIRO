@@ -117,7 +117,7 @@ export function MemoryPanel({
       {profile.nextStep ? (
         <div
           className="mt-6 rounded-xl border p-4"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
         >
           <p className="text-[12px] text-faint">Most useful thing you could tell it next</p>
           <Link

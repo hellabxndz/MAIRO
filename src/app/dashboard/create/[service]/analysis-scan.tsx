@@ -78,7 +78,7 @@ export function AnalysisScan({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col justify-center py-10">
-      <p className="font-mono text-[10px] uppercase tracking-[0.26em] text-blue-bright/85">
+      <p className="font-mono text-blue-bright/85 v3-label">
         MAIRO is working
       </p>
       <h1 className="mt-4 text-[24px] font-semibold tracking-[-0.02em] text-white sm:text-[28px]">
@@ -92,7 +92,7 @@ export function AnalysisScan({
         <span
           aria-hidden
           className="pointer-events-none absolute bottom-4 left-[7px] top-4 w-px"
-          style={{ background: "var(--mairo-line)" }}
+          style={{ background: "var(--v3-line)" }}
         />
         {lines.map((line, i) => {
           const done = i < at;
@@ -105,8 +105,8 @@ export function AnalysisScan({
                   done
                     ? "border-live/60 bg-live/20 text-live"
                     : working
-                      ? "border-[color:var(--mairo-line-lit)] bg-blue/20"
-                      : "border-[color:var(--mairo-line)]"
+                      ? "border-[color:var(--v3-line-strong)] bg-blue/20"
+                      : "border-[color:var(--v3-line)]"
                 } ${working && !reduced ? "mairo-scan-dot" : ""}`}
                 style={{ background: done || working ? undefined : "rgba(var(--mairo-bg-rgb),0.9)" }}
               >

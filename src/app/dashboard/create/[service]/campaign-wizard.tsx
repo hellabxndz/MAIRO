@@ -285,7 +285,7 @@ export function CampaignWizard(props: Props) {
             <p className="truncate text-[16px] font-semibold text-white">{PHASES[phase]?.label}</p>
             <div className="mt-2 grid grid-cols-4 gap-1.5" aria-hidden>
               {PHASES.map((p, i) => (
-                <span key={p.label} className="h-1 rounded-full transition-colors duration-500" style={{ background: i < phase ? "rgba(255,255,255,0.7)" : i === phase ? "var(--v3-signal)" : "var(--mairo-line)" }} />
+                <span key={p.label} className="h-1 rounded-full transition-colors duration-500" style={{ background: i < phase ? "rgba(255,255,255,0.7)" : i === phase ? "var(--v3-signal)" : "var(--v3-line)" }} />
               ))}
             </div>
           </div>
@@ -294,7 +294,7 @@ export function CampaignWizard(props: Props) {
       <div className={showAnalysis ? "hidden" : "grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[190px_minmax(0,1fr)_290px]"}>
         {/* Steps. A rail on the left on desktop; a compact line on phones. */}
         <nav aria-label="Campaign steps" className="lg:sticky lg:top-8 lg:self-start">
-          <p className="mb-3 hidden font-mono text-[10px] uppercase tracking-[0.18em] text-faint lg:block">
+          <p className="mb-3 hidden font-mono lg:block v3-label">
             {NETWORK[plan.service]} campaign
           </p>
           <ol className="hidden space-y-1 lg:block">
@@ -316,7 +316,7 @@ export function CampaignWizard(props: Props) {
                     <span
                       className="flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px]"
                       style={{
-                        borderColor: here ? "rgba(238,238,238,0.6)" : "var(--mairo-line)",
+                        borderColor: here ? "rgba(238,238,238,0.6)" : "var(--v3-line)",
                         backgroundImage: here ? "var(--mairo-ramp)" : undefined,
                         color: here ? "white" : undefined,
                       }}
@@ -431,8 +431,8 @@ export function CampaignWizard(props: Props) {
                 </label>
               )}
 
-              <div className="mt-6 rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What happens next</p>
+              <div className="mt-6 rounded-xl border p-4 text-[13px] leading-relaxed text-muted" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
+                <p className="font-mono v3-label">What happens next</p>
                 <p className="mt-2">
                   MAIRO builds the campaign in your own {NETWORK[plan.service]} ad account, switched off.{" "}
                   {finalReviewLater
@@ -445,7 +445,7 @@ export function CampaignWizard(props: Props) {
 
               {!finalReviewLater && (
               <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4"
-                style={{ borderColor: agreedHere ? "rgba(238,238,238,0.5)" : "var(--mairo-line)", background: agreedHere ? "rgba(214,214,214,0.06)" : "transparent" }}>
+                style={{ borderColor: agreedHere ? "rgba(238,238,238,0.5)" : "var(--v3-line)", background: agreedHere ? "rgba(214,214,214,0.06)" : "transparent" }}>
                 <input type="checkbox" checked={agreedHere} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#eeeeee]" />
                 <span className="text-[13px] leading-relaxed text-white/90">
                   {spend.maxCents !== null
@@ -478,7 +478,7 @@ export function CampaignWizard(props: Props) {
           )}
 
           {/* Moving on. */}
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t pt-6" style={{ borderColor: "var(--mairo-line)" }}>
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t pt-6" style={{ borderColor: "var(--v3-line)" }}>
             <button type="button" onClick={() => goTo(Math.max(0, stepIndex - 1))}
               className={`text-[13px] text-muted transition-colors hover:text-white ${stepIndex === 0 ? "invisible" : ""}`}>
               ← Back
@@ -486,21 +486,21 @@ export function CampaignWizard(props: Props) {
             <div className="flex flex-wrap items-center gap-3">
               <SaveNote state={saveState} />
               <button type="button" onClick={() => void saveDraft(current, plan)} disabled={pending}
-                className="rounded-full border px-4 py-2.5 text-[12.5px] text-white/85 transition hover:text-white disabled:opacity-40" style={{ borderColor: "var(--mairo-line)" }}>
+                className="rounded-full border px-4 py-2.5 text-[12.5px] text-white/85 transition hover:text-white disabled:opacity-40" style={{ borderColor: "var(--v3-line)" }}>
                 Save draft
               </button>
               {/* Keyed apart so a Continue click can never land on Launch. */}
               {stepIndex < LAUNCH_INDEX ? (
                 <button key="next" type="button" onClick={() => goTo(stepIndex + 1)} disabled={blocked !== null}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
-                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}>
                   {current === "review" ? "Continue to launch" : "Continue"}
                   <span aria-hidden>→</span>
                 </button>
               ) : (
                 <button key="launch" type="button" onClick={() => void launch()} disabled={blocked !== null || pending}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
-                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+                  style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}>
                   {pending ? "Building…" : finalReviewLater ? "Build it for my final review" : "Launch campaign"}
                   <span aria-hidden>→</span>
                 </button>
@@ -511,7 +511,7 @@ export function CampaignWizard(props: Props) {
 
           {/* Phones: the summary and the assistant after the question. */}
           <div className="mt-10 xl:hidden">
-            <details className="rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
+            <details className="rounded-xl border" style={{ borderColor: "var(--v3-line)" }}>
               <summary className="cursor-pointer px-4 py-3 text-[13px] text-white">Your campaign so far</summary>
               <div className="px-4 pb-4">
                 <PlanSummary plan={plan} mode={mode} />
@@ -524,8 +524,8 @@ export function CampaignWizard(props: Props) {
 
         {/* What's decided so far, and help. Desktop only; phones get it inline. */}
         <aside className="hidden xl:sticky xl:top-8 xl:block xl:self-start">
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Your campaign so far</p>
+          <div className="rounded-xl border p-4" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
+            <p className="font-mono v3-label">Your campaign so far</p>
             <div className="mt-3">
               <PlanSummary plan={plan} mode={mode} />
             </div>
@@ -677,7 +677,7 @@ export function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPl
 
   return (
     <dl className={detailed ? "grid gap-x-6 gap-y-3 rounded-xl border p-5 sm:grid-cols-[150px_minmax(0,1fr)]" : "space-y-2.5"}
-      style={detailed ? { borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" } : undefined}>
+      style={detailed ? { borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" } : undefined}>
       {rows.map(([k, v]) =>
         detailed ? (
           <div key={k} className="contents">
@@ -695,7 +695,7 @@ export function PlanSummary({ plan, mode, detailed = false }: { plan: CampaignPl
         <div className="contents">
           <dt className="text-[12px] text-faint">Preview</dt>
           {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL, see studio-workspace.tsx */}
-          <dd><img src={plan.attachedPreview} alt="Your advertisement" className="max-w-[220px] rounded-lg border" style={{ borderColor: "var(--mairo-line)" }} /></dd>
+          <dd><img src={plan.attachedPreview} alt="Your advertisement" className="max-w-[220px] rounded-lg border" style={{ borderColor: "var(--v3-line)" }} /></dd>
         </div>
       )}
     </dl>
@@ -714,13 +714,13 @@ const TIPS: Record<StepId, string> = {
 
 function AskMairo({ name, step, plan }: { name: string; step: StepId; plan: CampaignPlan }) {
   return (
-    <div className="mt-4 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+    <div className="mt-4 rounded-xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
       <p className="text-[12.5px] leading-relaxed text-muted">{TIPS[step]}</p>
       <button
         type="button"
         onClick={() => window.dispatchEvent(new CustomEvent(OPEN_ASSISTANT_EVENT))}
         className="mt-3 rounded-full border px-4 py-2 text-[12px] text-white/85 transition hover:text-white"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         Ask {name} about {plan.goal && step !== "business" ? "this campaign" : "this step"}
       </button>

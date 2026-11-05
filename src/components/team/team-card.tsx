@@ -13,7 +13,7 @@ export function TeamCard({ team }: { team: TeamView }) {
   return (
     <section aria-labelledby="ai-team" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="ai-team" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">MAIRO</h2>
+        <h2 id="ai-team" className="v3-label">MAIRO</h2>
         <Link href="/dashboard/team" className="text-[13px] text-muted hover:text-white">Meet your team →</Link>
       </div>
       <p className="mt-3 text-[14.5px] leading-relaxed text-white/85">{team.welcome}</p>

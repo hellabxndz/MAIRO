@@ -76,7 +76,7 @@ function CornerLabel({
     <div className={right ? "text-right" : ""}>
       <div className={`flex items-center gap-2.5 ${right ? "justify-end" : ""}`}>
         {glyph && !right && <BarGlyph />}
-        <p className="font-mono text-[9px] uppercase leading-[1.8] tracking-[0.26em] text-faint">
+        <p className="font-mono leading-[1.8] v3-label">
           {children}
         </p>
         {glyph && right && <BarGlyph />}
@@ -99,7 +99,7 @@ function CardChip({ children, icon }: { children: ReactNode; icon?: ReactNode })
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-muted"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
     >
       {icon}
       {children}
@@ -112,7 +112,7 @@ function PlatformTile({ children }: { children: ReactNode }) {
   return (
     <span
       className="flex h-9 w-9 items-center justify-center rounded-full border p-2 text-white/80"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.08)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(214,214,214,0.08)" }}
     >
       {children}
     </span>
@@ -142,7 +142,7 @@ function CapabilityCard({
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(214,214,214,0.10)" }}
         >
           {icon}
         </span>
@@ -222,7 +222,7 @@ function CampaignCard() {
         </PlatformTile>
         <span
           className="flex h-9 w-9 items-center justify-center rounded-full border text-[15px] leading-none text-faint"
-          style={{ borderColor: "var(--mairo-line)" }}
+          style={{ borderColor: "var(--v3-line)" }}
           aria-hidden
         >
           +
@@ -232,13 +232,13 @@ function CampaignCard() {
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div
           className="flex items-end rounded-lg border p-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <Sparkline className="h-8" />
         </div>
         <div
           className="rounded-lg border px-3 py-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <p className="text-[11px] leading-tight text-white/85">Campaigns live</p>
           <p className="mt-1 flex items-center gap-1 text-[11px] text-blue-bright">
@@ -308,7 +308,7 @@ function AudienceCard() {
       <div className="mt-4 grid grid-cols-[1.35fr_1fr] gap-2">
         <div
           className="flex items-center rounded-lg border p-2"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <AudiencePlot />
         </div>
@@ -339,7 +339,7 @@ function OptimizationCard() {
       <div className="mt-4 grid grid-cols-[1.5fr_1fr] gap-2">
         <div
           className="flex items-center rounded-lg border px-2.5 py-2"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}
         >
           <RisingLine className="h-11" />
         </div>
@@ -354,7 +354,7 @@ function OptimizationCard() {
             in words, rather than handing you a chart to interpret. */}
         <div
           className="flex flex-col justify-center rounded-lg border px-3 py-2.5 text-center"
-          style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(214,214,214,0.10)" }}
+          style={{ borderColor: "var(--v3-line-strong)", background: "rgba(214,214,214,0.10)" }}
         >
           <p className="text-[13px] font-semibold leading-tight text-white">Plain English</p>
           <p className="mt-1.5 text-[9.5px] leading-tight text-muted">Not just charts</p>
@@ -370,7 +370,7 @@ function OptimizationCard() {
           <span
             key={s.label}
             className="inline-flex items-center justify-center gap-1 rounded-md border px-1.5 py-1 text-[9.5px] text-muted"
-            style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
+            style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.025)" }}
           >
             <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 shrink-0 text-blue-bright" fill="none" aria-hidden>
               {s.dir === "up" ? (
@@ -448,7 +448,7 @@ export function MairoHero() {
           {/* ---- Centre: the statement, then the core. ---- */}
           <div className="order-1 lg:order-2">
             <div className="relative z-10 mx-auto max-w-2xl text-center">
-              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-blue-bright/85 sm:text-[11px] sm:tracking-[0.34em]">
+              <p className="font-mono text-blue-bright/85 sm:tracking-[0.34em] v3-label">
                 Automate <span className="text-faint">|</span> Amplify{" "}
                 <span className="text-faint">|</span> Grow Beyond
               </p>
@@ -527,7 +527,7 @@ export function MairoHero() {
             <div className="mt-5 flex justify-center lg:mt-7">
               <span
                 className="rounded-full border px-5 py-2.5 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-muted sm:text-[10px] sm:tracking-[0.24em]"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.65)" }}
+                style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.65)" }}
               >
                 Ads performance compounded by AI
               </span>

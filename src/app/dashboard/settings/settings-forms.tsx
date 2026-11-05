@@ -19,7 +19,7 @@ const GOALS = [
 function Status({ state, pending }: { state: SettingsActionState; pending: boolean }) {
   if (pending) return null;
   if (state?.error) return <p className="text-sm text-red-300">{state.error}</p>;
-  if (state?.saved) return <p className="text-sm text-emerald-300">Saved.</p>;
+  if (state?.saved) return <p className="text-sm text-white/90">Saved.</p>;
   return null;
 }
 

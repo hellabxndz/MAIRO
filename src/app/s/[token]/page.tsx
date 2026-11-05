@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { SiteFooter } from "@/components/landing/site-footer";
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 import { PlanReportView } from "@/components/plan-generator/plan-report";
 import { brandFont } from "@/lib/fonts";
 import { readSharedPlan } from "@/lib/preview/saved-plan-store";
@@ -25,12 +25,12 @@ export default async function SharedPlanPage({ params }: { params: Promise<{ tok
   if (!shared || !report) notFound();
   return (
     <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-paper text-white`}>
-      <AmbientSky />
+      <SiteBackdrop />
       <LandingNav toolsLive={USABLE_TOOLS().length > 0} />
       <main className="mp-print-root px-4 pb-20 pt-[104px] sm:px-8 sm:pt-[124px]">
         <p className="mp-noprint mx-auto mb-6 max-w-[1180px] rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/65">
           A plan made with MAIRO&rsquo;s free AI ad strategy generator and shared by its owner. It&rsquo;s a recommendation built from what they told MAIRO — no ads were launched and nothing was spent.{" "}
-          <Link href="/preview" className="text-violet-200 underline underline-offset-2 hover:text-white">Make one for your business</Link>
+          <Link href="/preview" className="text-white/90 underline underline-offset-2 hover:text-white">Make one for your business</Link>
         </p>
         <PlanReportView report={report} actions={null} savedAt={shared.createdAt.toISOString()} />
       </main>

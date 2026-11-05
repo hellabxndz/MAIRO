@@ -108,7 +108,7 @@ export function LockedArea({ pathname, approved }: { pathname: string; approved:
             <LockIcon />
           </span>
           <p className="mt-3 text-[18px] font-semibold text-white">{info.title}</p>
-          <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.16em] text-faint">Locked</p>
+          <p className="mt-1 v3-label">Locked</p>
           <p className="mt-2 text-[14px] text-muted">{info.text}</p>
           <div className="mt-4">
             <ChooseButton approved={approved} />
@@ -163,14 +163,14 @@ export function FreeHome({
           <p className="mt-1 text-[13.5px] text-white/85">{stoppedReason}</p>
         </div>
       )}
-      <p className="mt-8 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{businessName}</p>
+      <p className="mt-8 v3-label">{businessName}</p>
       <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{approved ? "Your strategy is ready." : "Your free plan is ready to review."}</h1>
       <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
         Your free plan shows you how MAIRO would advertise your business. A subscription is required before MAIRO builds or launches the real campaign.
       </p>
 
       <div className="mt-6 rounded-2xl border border-violet/30 bg-violet/[0.06] p-6">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-faint">Next step</p>
+        <p className="v3-label">Next step</p>
         <p className="mt-1 text-[18px] font-semibold text-white">{next.title}</p>
         <p className="mt-1 text-[14px] text-muted">{next.text}</p>
         {next.external ? (
@@ -195,7 +195,7 @@ export function FreeHome({
           <div key={l.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
             <div className="flex items-center justify-between">
               <p className="text-[14.5px] font-medium text-white">{l.title}</p>
-              <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-faint">
+              <span className="inline-flex items-center gap-1 v3-label">
                 <LockIcon className="h-3.5 w-3.5" /> Locked
               </span>
             </div>

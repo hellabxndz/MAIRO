@@ -24,7 +24,7 @@ export function AskTeam({ name }: { name: string }) {
     if (t) router.push(`/dashboard/agents?ask=${encodeURIComponent(t)}`);
   };
   return (
-    <section aria-labelledby="ask-team" className="rounded-[28px] border border-[color:var(--mairo-line-lit)] p-5 sm:p-6" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(var(--mairo-fg-rgb),0.01) 70%)" }}>
+    <section aria-labelledby="ask-team" className="rounded-[28px] border border-[color:var(--v3-line-strong)] p-5 sm:p-6" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(var(--mairo-fg-rgb),0.01) 70%)" }}>
       <h2 id="ask-team" className="text-[15px] font-semibold text-white">Ask MAIRO</h2>
       <p className="mt-1 text-[13px] text-muted">Ask in your own words. {name} answers from your real campaigns and what it knows about your business.</p>
       <form
@@ -42,7 +42,7 @@ export function AskTeam({ name }: { name: string }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="e.g. Why am I not getting customers?"
-          className="min-h-[44px] min-w-0 flex-1 rounded-full border border-[color:var(--mairo-line)] bg-paper px-4 text-[14px] text-white placeholder:text-faint focus:border-[color:var(--mairo-line-lit)] focus:outline-none"
+          className="min-h-[44px] min-w-0 flex-1 rounded-full border border-[color:var(--v3-line)] bg-paper px-4 text-[14px] text-white placeholder:text-faint focus:border-[color:var(--v3-line-strong)] focus:outline-none"
         />
         <button type="submit" className="min-h-[44px] rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[13.5px] font-medium text-black disabled:opacity-60" disabled={!q.trim()}>
           Ask
@@ -51,7 +51,7 @@ export function AskTeam({ name }: { name: string }) {
       <ul className="mt-3 flex flex-wrap gap-2" aria-label="Questions you can ask">
         {SUGGESTED.map((s) => (
           <li key={s}>
-            <button type="button" onClick={() => ask(s)} className="rounded-full border border-[color:var(--mairo-line)] px-3 py-1.5 text-[12.5px] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:text-white">
+            <button type="button" onClick={() => ask(s)} className="rounded-full border border-[color:var(--v3-line)] px-3 py-1.5 text-[12.5px] text-white/85 transition hover:border-[color:var(--v3-line-strong)] hover:text-white">
               {s}
             </button>
           </li>

@@ -39,7 +39,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
     return (
       <div className="mx-auto max-w-[860px]">
         <div className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-6 sm:p-8">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-amber-200/90">Social Manager</p>
+          <p className="text-amber-200/90 v3-label">Social Manager</p>
           <h1 className="mt-2 text-[26px] font-semibold text-white">Social posting has ended</h1>
           <p className="mt-2 max-w-[620px] text-[15px] leading-relaxed text-white/80">{SOCIAL_PAUSED_MESSAGE}</p>
           <p className="mt-3 text-[13px] text-muted">
@@ -57,7 +57,7 @@ export async function socialGate(organizationId: string): Promise<React.ReactNod
             <ul className="space-y-2">
               {published.map((p) => (
                 <li key={p.id} className="rounded-xl border border-white/[0.07] bg-field/80 px-4 py-3 text-[13px] text-white/80">
-                  <span className="text-[11.5px] uppercase tracking-[0.12em] text-faint">
+                  <span className="v3-label">
                     {p.network === "FACEBOOK" ? "Facebook" : "Instagram"} · {p.postedAt?.toLocaleDateString() ?? ""}
                   </span>
                   <p className="mt-1 line-clamp-2">{p.caption}</p>

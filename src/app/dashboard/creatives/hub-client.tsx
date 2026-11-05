@@ -66,7 +66,7 @@ export function NewCard({ item }: { item: NewItem }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [note, setNote] = useState<string | null>(null);
-  const tone = item.status === "Ready to review" || item.status === "Ready to use" ? "text-emerald-300" : item.status === "Being checked" ? "text-amber-200" : "text-white/70";
+  const tone = item.status === "Ready to review" || item.status === "Ready to use" ? "text-white/90" : item.status === "Being checked" ? "text-amber-200" : "text-white/70";
   return (
     <div className={tile} style={surface}>
       <Preview src={item.preview} label={item.title} />
@@ -109,9 +109,9 @@ export function PastList({ ads }: { ads: HubAd[] }) {
     <div>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search creatives or campaigns" aria-label="Search past creatives"
-          className="min-h-[42px] flex-1 rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)]" />
+          className="min-h-[42px] flex-1 rounded-full border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--v3-line-strong)]" />
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status"
-          className="min-h-[42px] rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white">
+          className="min-h-[42px] rounded-full border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white">
           <option value="all">All statuses</option>
           {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>

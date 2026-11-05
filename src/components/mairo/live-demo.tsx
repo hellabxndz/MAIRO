@@ -86,20 +86,20 @@ export function LiveDemo() {
     <div
       className="relative overflow-hidden rounded-[var(--radius-panel)] border"
       style={{
-        borderColor: "var(--mairo-line-lit)",
+        borderColor: "var(--v3-line-strong)",
         backgroundImage: "var(--mairo-glass)",
         boxShadow: "var(--mairo-glow-lift)",
       }}
     >
       <div
         className="flex items-center gap-2.5 border-b px-5 py-3.5"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         <span className="relative flex h-1.5 w-1.5" aria-hidden>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live/60" />
           <span className="relative h-1.5 w-1.5 rounded-full bg-live" />
         </span>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">MAIRO</p>
+        <p className="font-mono v3-label">MAIRO</p>
         {done && (
           <button
             type="button"
@@ -148,7 +148,7 @@ export function LiveDemo() {
 
         {step >= 3 && (
           <div className="mairo-in">
-            <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-faint">
+            <p className="font-mono v3-label">
               Strategy
             </p>
             <ul className="mt-2.5 space-y-1.5">
@@ -163,14 +163,14 @@ export function LiveDemo() {
         )}
 
         {step >= 4 && (
-          <div className="mairo-in flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--mairo-line)" }}>
+          <div className="mairo-in flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--v3-line)" }}>
             <span className="text-[13px] text-muted">8 creatives prepared</span>
             <span aria-hidden className="text-faint">·</span>
             <span className="text-[13px] text-muted">3 campaigns prepared</span>
             <Link
               href="/sign-up"
               className="ml-auto inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-white transition-all duration-300 hover:brightness-110"
-              style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+              style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
             >
               Review campaign
               <span aria-hidden>→</span>
@@ -198,9 +198,9 @@ function Cell({ label, value }: { label: string; value: string }) {
   return (
     <div
       className="rounded-xl border px-3.5 py-3"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
     >
-      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-faint">{label}</p>
+      <p className="font-mono v3-label">{label}</p>
       <p className="mt-1.5 text-[14px] text-white">{value}</p>
     </div>
   );

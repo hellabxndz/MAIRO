@@ -27,6 +27,7 @@ import { showsEnquiries } from "@/lib/leads/fields";
 import { BOARD_COLUMNS, CAMPAIGN_TABS, boardColumn, campaignTab, goalLabel, primaryResult, statusLabel, type CampaignTab } from "@/lib/dashboard/campaigns";
 import { CampaignBoard, type BoardColumnView } from "@/components/viz/campaign-board";
 import { PauseEverything } from "./pause-everything";
+import { StatusDot } from "@/components/site/status-dot";
 
 // Each row's figures are live calls to Meta. See the note in
 // src/app/dashboard/page.tsx — same reason, same budget.
@@ -212,7 +213,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
           <div className="flex flex-wrap items-center gap-2">
             {runningCount > 0 && <PauseEverything count={runningCount} />}
             {showsEnquiries({ hasForm: Boolean(leadFormRow) }) && (
-              <Link href="/dashboard/leads" className="inline-flex min-h-[38px] items-center rounded-full border border-[color:var(--mairo-line)] px-4 text-[13px] text-white/85 hover:text-white">Enquiries</Link>
+              <Link href="/dashboard/leads" className="inline-flex min-h-[38px] items-center rounded-full border border-[color:var(--v3-line)] px-4 text-[13px] text-white/85 hover:text-white">Enquiries</Link>
             )}
             <Link href="/dashboard/create" className={primaryButtonClass}>+ Create campaign</Link>
           </div>
@@ -228,7 +229,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       <div className="mb-5 flex items-center gap-2" role="group" aria-label="View">
         {[{ key: "list", label: "List", href: `/dashboard/campaigns${requested ? `?tab=${requested}` : ""}` }, { key: "board", label: "Board", href: "/dashboard/campaigns?view=board" }].map((v) => (
           <Link key={v.key} href={v.href} aria-current={(v.key === "board") === board ? "page" : undefined}
-            className={`min-h-9 rounded-full border px-4 py-1.5 text-[13px] transition ${(v.key === "board") === board ? "border-[color:var(--mairo-line-lit)] bg-white/[0.06] text-white" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>
+            className={`min-h-9 rounded-full border px-4 py-1.5 text-[13px] transition ${(v.key === "board") === board ? "border-[color:var(--v3-line-strong)] bg-white/[0.06] text-white" : "border-[color:var(--v3-line)] text-muted hover:text-white"}`}>
             {v.label}
           </Link>
         ))}
@@ -296,7 +297,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
                       {goalLabel(campaign.objective)} · {campaign.budgetType === "LIFETIME" && campaign.lifetimeBudgetCents ? `${cents(campaign.lifetimeBudgetCents)} in total` : `${cents(campaign.totalDailyBudgetCents)} a day`}
                     </p>
                   </div>
-                  <span className="shrink-0 text-[13px] text-white/85">{status.dot} {status.text}</span>
+                  <StatusDot dot={status.dot} text={status.text} className="shrink-0 text-[13px] text-white/85" />
                 </div>
                 <dl className="mt-5 grid grid-cols-2 gap-4">
                   <div>

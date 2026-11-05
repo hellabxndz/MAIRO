@@ -53,7 +53,7 @@ export function PlanBuilder({ website }: { website: string | null }) {
 
   return (
     <div className="mx-auto max-w-[560px] rounded-2xl border border-white/[0.07] bg-field/80 p-6 sm:p-8">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Free plan</p>
+      <p className="v3-label">Free plan</p>
       <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.02em]">MAIRO is building your advertising plan</h1>
       <p className="mt-2 text-[14px] text-muted">This takes under a minute. You&rsquo;ll review everything and can change any part before moving on.</p>
       <ul className="mt-6 space-y-3">
@@ -65,7 +65,7 @@ export function PlanBuilder({ website }: { website: string | null }) {
               <span
                 aria-hidden
                 className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] ${
-                  done ? "border-emerald-400/40 text-emerald-300" : active ? "border-violet/60 text-violet-bright" : "border-white/10 text-faint"
+                  done ? "border-[color:var(--v3-line)] text-white/90" : active ? "border-violet/60 text-violet-bright" : "border-white/10 text-faint"
                 }`}
               >
                 {done ? "✓" : i + 1}

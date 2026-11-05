@@ -26,7 +26,7 @@ export function ReportSection({ title, eyebrow, children, detail = false, id }: 
     <section id={id} className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-field/80">
       <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
         <span>
-          {eyebrow && <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{eyebrow}</span>}
+          {eyebrow && <span className="block v3-label">{eyebrow}</span>}
           <span className="block text-[17px] font-semibold text-white">{title}</span>
         </span>
         <span aria-hidden className={`text-faint transition ${open ? "rotate-90" : ""}`}>›</span>

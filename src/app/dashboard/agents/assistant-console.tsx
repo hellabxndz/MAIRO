@@ -101,9 +101,9 @@ export function AssistantConsole({
       id="talk"
       className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[var(--radius-panel)] border lg:min-h-[600px]"
       style={{
-        borderColor: "var(--mairo-line)",
+        borderColor: "var(--v3-line)",
         backgroundImage: "var(--mairo-glass)",
-        boxShadow: "var(--mairo-glow-soft)",
+        boxShadow: "none",
       }}
     >
       {/* Centred while empty, top-aligned once there is a conversation. A
@@ -129,8 +129,8 @@ export function AssistantConsole({
                   key={q}
                   type="button"
                   onClick={() => ask(q)}
-                  className="rounded-xl border px-4 py-3 text-left text-[13px] leading-snug text-white/85 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-0.5 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-                  style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+                  className="rounded-xl border px-4 py-3 text-left text-[13px] leading-snug text-white/85 transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-0.5 hover:border-[color:var(--v3-line-strong)] hover:text-white"
+                  style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
                 >
                   {q}
                 </button>
@@ -166,13 +166,13 @@ export function AssistantConsole({
                 <div key={m.id} className="flex gap-3">
                   <AssistantMark />
                   <div className="min-w-0 flex-1">
-                    <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-faint">
+                    <p className="mb-1.5 font-mono v3-label">
                       {name}
                     </p>
                     <div className="whitespace-pre-wrap text-[14px] leading-relaxed text-white/90">
                       {text}
                     </div>
-                    {brainLearned(m.parts) && <p className="mt-2 text-[12px] text-emerald-300">✨ Added to Business Brain</p>}
+                    {brainLearned(m.parts) && <p className="mt-2 text-[12px] text-white/90">✨ Added to Business Brain</p>}
                     {fixIds.length > 0 && <FixThisForMe decisionIds={fixIds} />}
                     {links.map((l) => (
                       <a key={l.href} href={l.href} className="mr-2 mt-3 inline-flex rounded-lg bg-[#ffffff] px-3.5 py-2 text-[13px] font-medium text-black hover:brightness-110">{l.label} →</a>
@@ -213,11 +213,11 @@ export function AssistantConsole({
           ask(input);
         }}
         className="border-t px-4 py-4 sm:px-7"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         <div
-          className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border px-4 py-2.5 transition-colors duration-300 focus-within:border-[color:var(--mairo-line-lit)]"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
+          className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border px-4 py-2.5 transition-colors duration-300 focus-within:border-[color:var(--v3-line-strong)]"
+          style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
         >
           <textarea
             ref={composer}
@@ -275,7 +275,7 @@ function AssistantMark() {
     <span
       aria-hidden
       className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-      style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+      style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
     >
       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="none">
         <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.6" />

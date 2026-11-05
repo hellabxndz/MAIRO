@@ -10,7 +10,7 @@ import { saveSpendProtectionAction, type ProtectionFormState } from "@/lib/actio
 
 type Event = { id: string; at: string; campaignName: string | null; kind: string; action: string; message: string };
 
-const input = "w-28 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-sky-400/50";
+const input = "w-28 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-white/[0.22]";
 
 export function SpendProtectionSection({
   values,
@@ -36,7 +36,7 @@ export function SpendProtectionSection({
       <form action={action} className="mt-6 space-y-6">
         <div>
           <label className="flex items-center gap-2.5 text-sm text-white">
-            <input type="checkbox" name="stopLossOn" checked={stopLossOn} onChange={(e) => setStopLossOn(e.target.checked)} className="h-4 w-4 accent-sky-400" />
+            <input type="checkbox" name="stopLossOn" checked={stopLossOn} onChange={(e) => setStopLossOn(e.target.checked)} className="h-4 w-4 accent-white" />
             Watch for campaigns spending with no results
           </label>
           {stopLossOn && (
@@ -58,7 +58,7 @@ export function SpendProtectionSection({
 
         <div>
           <label className="flex items-center gap-2.5 text-sm text-white">
-            <input type="checkbox" name="capOn" checked={capOn} onChange={(e) => setCapOn(e.target.checked)} className="h-4 w-4 accent-sky-400" />
+            <input type="checkbox" name="capOn" checked={capOn} onChange={(e) => setCapOn(e.target.checked)} className="h-4 w-4 accent-white" />
             Set a monthly limit on ad spend
           </label>
           {capOn && (
@@ -81,7 +81,7 @@ export function SpendProtectionSection({
           <button type="submit" disabled={pending} className="rounded-full bg-white px-5 py-2 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200 disabled:opacity-50">
             {pending ? "Saving…" : "Save limits"}
           </button>
-          {state?.saved && <span className="text-xs text-emerald-300">Saved.</span>}
+          {state?.saved && <span className="text-xs text-white/90">Saved.</span>}
           {state?.error && <span className="text-xs text-amber-200">{state.error}</span>}
         </div>
       </form>

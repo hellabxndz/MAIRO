@@ -19,7 +19,7 @@ export function ConceptReply({ creativeRequestId }: { creativeRequestId: string 
 
   return (
     <form action={formAction} className="mt-5 space-y-2 border-t border-white/10 pt-4">
-      <label className="block text-xs uppercase tracking-[0.12em] text-neutral-600">
+      <label className="block v3-label">
         Not quite right? Tell the AI
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -32,7 +32,7 @@ export function ConceptReply({ creativeRequestId }: { creativeRequestId: string 
         <button
           type="submit"
           disabled={pending}
-          className="shrink-0 rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60"
+          className="shrink-0 rounded-lg border border-[color:var(--v3-line)] px-4 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60 v3-label"
         >
           {pending ? "Rewriting…" : "Rewrite it"}
         </button>

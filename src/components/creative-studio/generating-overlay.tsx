@@ -32,7 +32,7 @@ export function GeneratingOverlay({ label = "Generating" }: { label?: string }) 
       aria-live="polite"
       className="flex aspect-square w-full flex-col items-center justify-center gap-5 rounded-[var(--radius-panel)] border"
       style={{
-        borderColor: "var(--mairo-line-lit)",
+        borderColor: "var(--v3-line-strong)",
         backgroundImage:
           "radial-gradient(circle at 50% 40%, rgba(238,238,238,0.16), transparent 65%), var(--mairo-glass)",
       }}

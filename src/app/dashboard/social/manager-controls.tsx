@@ -14,7 +14,7 @@ const secondary = "min-h-[42px] rounded-lg border border-white/12 px-4 text-[13.
 
 function Note({ r }: { r: ManagerResult | null }) {
   if (!r) return null;
-  return <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-[13px] ${r.ok ? "bg-emerald-400/10 text-emerald-300" : "bg-alert/10 text-alert"}`}>{r.ok ? r.message : r.error}</p>;
+  return <p role="status" className={`mt-3 rounded-lg px-3 py-2 text-[13px] ${r.ok ? "bg-white/[0.04] text-white/90" : "bg-alert/10 text-alert"}`}>{r.ok ? r.message : r.error}</p>;
 }
 
 function useRun() {
@@ -46,7 +46,7 @@ export function ApprovalModePicker({ mode, approvedSoFar, minForAutopilot }: { m
         {APPROVAL_MODES.map((m) => (
           <button key={m.key} type="button" role="radio" aria-checked={mode === m.key} disabled={pending}
             onClick={() => m.key !== mode && run(() => setApprovalModeAction(m.key))}
-            className={`rounded-xl border p-3.5 text-left transition disabled:opacity-60 ${mode === m.key ? "border-violet-400 bg-violet/[0.14]" : "border-white/10 hover:border-white/25"}`}>
+            className={`rounded-xl border p-3.5 text-left transition disabled:opacity-60 ${mode === m.key ? "border-white/[0.22] bg-violet/[0.14]" : "border-white/10 hover:border-white/25"}`}>
             <span className="flex items-center justify-between gap-2">
               <span className="text-[14px] font-medium text-white">{m.label}</span>
               {m.key === "APPROVAL_REQUIRED" && <span className="text-[11px] text-faint">Default</span>}

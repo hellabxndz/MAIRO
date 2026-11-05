@@ -146,7 +146,7 @@ export function SalesSourcePicker({
           between their own posts recognises the picture, not "17841...". */}
       {source === "EXISTING_POST" && posts && posts.length > 0 && (
         <div>
-          <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-500">
+          <p className="mb-2 v3-label">
             Which post should MAIRO run?
           </p>
           <ul className="grid gap-3 sm:grid-cols-2">
@@ -233,7 +233,7 @@ export function SalesSourcePicker({
               items and prices; "47 products" proves nothing. */}
           {found && (
             <div>
-              <p className="mb-2 text-sm text-emerald-300">
+              <p className="mb-2 text-sm text-white/90">
                 Found {found.found} {found.found === 1 ? "product" : "products"}.
               </p>
               <ul className="grid gap-2 sm:grid-cols-2">
@@ -290,7 +290,7 @@ export function SalesSourcePicker({
         <button type="button" onClick={save} disabled={pending} className={primaryButtonClass}>
           {pending ? "Saving…" : "Save"}
         </button>
-        {saved && <span className="text-xs text-emerald-300">Saved.</span>}
+        {saved && <span className="text-xs text-white/90">Saved.</span>}
         {saveError && <span className="text-xs text-amber-300">{saveError}</span>}
       </div>
     </div>

@@ -31,7 +31,7 @@ export function DecisionHistory({
         const s = STATUS[d.status] ?? { label: d.status, color: "var(--color-faint)" };
         const rows = d.result ?? d.changes.filter((c) => c.type !== "guide").map((c) => ({ ...describeChange(c), ok: false, error: null }));
         return (
-          <li key={d.id} id={`d-${d.id}`} className="scroll-mt-24 rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+          <li key={d.id} id={`d-${d.id}`} className="scroll-mt-24 rounded-xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-faint">
               <span>{whenText(d.decidedAt ?? d.createdAt, undefined, timeZone)}</span>
               <span>·</span>

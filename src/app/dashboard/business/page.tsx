@@ -65,13 +65,13 @@ export default async function BusinessPage() {
         title="MAIRO Business Analyzer"
         description="Paste your website and MAIRO works out what you sell, who to reach and how to advertise it — then remembers it in your Business Brain, so every campaign starts from it."
         action={
-          <Link href="/dashboard/settings/business-brain" className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--mairo-line)" }}>
+          <Link href="/dashboard/settings/business-brain" className="rounded-full border px-4 py-2 text-[12.5px] text-white/85 hover:text-white" style={{ borderColor: "var(--v3-line)" }}>
             Edit Business Brain
           </Link>
         }
       />
 
-      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.55)" }}>
+      <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.55)" }}>
         <BusinessAnalyzer defaultUrl={brain.analyzedUrl ?? p.website} analyzed={Boolean(brain.analyzedAt)} />
         {brain.analyzedAt && (
           <p className="mt-3 text-[12px] text-faint">
@@ -114,7 +114,7 @@ export default async function BusinessPage() {
                 <Fact label="Recommended creative" value={a.strategy.creative} />
               </div>
               <form action={buildCampaignFromBrainAction} className="mt-6">
-                <button type="submit" className="rounded-full px-6 py-3 text-[13.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+                <button type="submit" className="rounded-full px-6 py-3 text-[13.5px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}>
                   Build This Campaign
                 </button>
                 <p className="mt-2 text-[12px] text-faint">
@@ -153,7 +153,7 @@ export default async function BusinessPage() {
 
           <Section title="What you sell">
             {p.products.length ? (
-              <ul className="divide-y" style={{ borderColor: "var(--mairo-line)" }}>
+              <ul className="divide-y" style={{ borderColor: "var(--v3-line)" }}>
                 {p.products.map((x) => (
                   <li key={x.name} className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-[13px]">
                     <span className="text-white">
@@ -199,8 +199,8 @@ export default async function BusinessPage() {
             {a?.conversionIssues.length ? (
               <ul className="space-y-3">
                 {a.conversionIssues.map((i) => (
-                  <li key={i.issue} className="rounded-xl border p-4" style={{ borderColor: i.severity === "high" ? "rgba(255,61,110,0.35)" : "var(--mairo-line)" }}>
-                    <p className="text-[11px] uppercase tracking-[0.14em]" style={{ color: i.severity === "high" ? "#ff3d6e" : i.severity === "medium" ? "#ffdd00" : "#dedede" }}>
+                  <li key={i.issue} className="rounded-xl border p-4" style={{ borderColor: i.severity === "high" ? "rgba(255,61,110,0.35)" : "var(--v3-line)" }}>
+                    <p className="v3-label" style={{ color: i.severity === "high" ? "#ff3d6e" : i.severity === "medium" ? "#ffdd00" : "#dedede" }}>
                       {i.severity} impact
                     </p>
                     <p className="mt-1 text-[14px] text-white">{i.issue}</p>
@@ -248,8 +248,8 @@ export default async function BusinessPage() {
 
 function Section({ title, children, lit = false }: { title: string; children: ReactNode; lit?: boolean }) {
   return (
-    <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: lit ? "var(--mairo-line-lit)" : "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}>
-      <h2 className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-blue-bright">{title}</h2>
+    <section className="rounded-2xl border p-5 sm:p-6" style={{ borderColor: lit ? "var(--v3-line-strong)" : "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}>
+      <h2 className="mb-4 font-mono text-blue-bright v3-label">{title}</h2>
       {children}
     </section>
   );

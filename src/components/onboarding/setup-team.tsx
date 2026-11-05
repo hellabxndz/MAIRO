@@ -36,7 +36,7 @@ export function SetupTeam({ work, focus, timeZone }: { work: SetupWork[]; focus:
       )}
       {next && (
         <div className="mt-4 border-t border-white/[0.06] pt-3">
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-faint">What happens next</p>
+          <p className="v3-label">What happens next</p>
           <p className="mt-1 text-[13px] text-white/85">{next.text}</p>
         </div>
       )}

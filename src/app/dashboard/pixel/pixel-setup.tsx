@@ -397,7 +397,7 @@ export function PixelSetup({ view, returnTo, reconnectHref, embedded = false }: 
       )}
 
       {note && (
-        <p role="status" className={`text-sm ${note.ok ? "text-emerald-300" : "text-red-300"}`}>
+        <p role="status" className={`text-sm ${note.ok ? "text-white/90" : "text-red-300"}`}>
           {note.text}
         </p>
       )}
@@ -414,7 +414,7 @@ export function PixelSetup({ view, returnTo, reconnectHref, embedded = false }: 
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">{label}</dt>
+      <dt className="v3-label">{label}</dt>
       <dd className="mt-0.5 break-words text-neutral-200">{value}</dd>
     </div>
   );

@@ -39,7 +39,7 @@ export default async function MissionPage() {
       {proposal && (
         <section className="mb-8">
           <div className="mb-4 rounded-2xl border border-violet/35 bg-violet/[0.07] p-5">
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO created a plan</p>
+            <p className="v3-label">MAIRO created a plan</p>
             <h2 className="mt-1 text-[22px] font-semibold text-white">🎯 {proposal.title}</h2>
             <p className="mt-1 text-[14px] text-white/80">{proposal.plan.mission}</p>
             {mission && mission.primaryGoal !== proposal.primaryGoal && (
@@ -83,7 +83,7 @@ export default async function MissionPage() {
               <ul className="mt-4 space-y-2">
                 {notes.map((n) => (
                   <li key={n.id} className="flex items-start justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2 text-[13px]">
-                    <span className="min-w-0 text-white/85"><span className="mr-2 text-[11px] uppercase tracking-[0.12em] text-faint">{NOTE_LABEL[n.kind] ?? "Note"}</span>{n.text}</span>
+                    <span className="min-w-0 text-white/85"><span className="mr-2 v3-label">{NOTE_LABEL[n.kind] ?? "Note"}</span>{n.text}</span>
                     <EndNote id={n.id} label={n.kind === "UNAVAILABLE" ? "Back in stock" : n.kind === "PROMOTION" ? "It's over" : "No longer true"} />
                   </li>
                 ))}

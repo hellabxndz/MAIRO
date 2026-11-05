@@ -23,8 +23,8 @@ const input = "w-full rounded-lg border border-white/10 bg-field-2 px-3 py-2 tex
 export const TONE_CLASS: Record<CalendarPost["tone"], string> = {
   muted: "bg-white/[0.06] text-white/60",
   attention: "bg-amber-400/15 text-amber-200",
-  info: "bg-sky-400/15 text-sky-200",
-  good: "bg-emerald-400/15 text-emerald-300",
+  info: "bg-white/[0.04] text-white/90",
+  good: "bg-white/[0.04] text-white/90",
   bad: "bg-red-400/15 text-red-300",
 };
 
@@ -54,7 +54,7 @@ export function PlatformMark({ network, className = "h-4 w-4" }: { network: Cale
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-faint">{label}</dt>
+      <dt className="v3-label">{label}</dt>
       <dd className="mt-0.5 truncate text-[13px] text-white/90">{children}</dd>
     </div>
   );
@@ -85,9 +85,9 @@ function Picker({ post, library, onDone }: { post: CalendarPost; library: MediaI
             return (
               <button key={m.ref} type="button" title={m.label}
                 onClick={() => setPicked((p) => type === "CAROUSEL" ? (at >= 0 ? p.filter((r) => r !== m.ref) : p.length >= CAROUSEL_MAX ? p : [...p, m.ref]) : [m.ref])}
-                className={`relative aspect-square overflow-hidden rounded-lg border-2 ${at >= 0 ? "border-violet-400" : "border-transparent"}`}>
+                className={`relative aspect-square overflow-hidden rounded-lg border-2 ${at >= 0 ? "border-white/[0.22]" : "border-transparent"}`}>
                 {m.previewUrl && <Image src={m.previewUrl} alt="" fill unoptimized sizes="90px" className="object-cover" />}
-                {at >= 0 && <span className="absolute right-1 top-1 rounded-full bg-violet-500 px-1.5 text-[10px] text-black">{type === "CAROUSEL" ? at + 1 : "✓"}</span>}
+                {at >= 0 && <span className="absolute right-1 top-1 rounded-full bg-[image:var(--mairo-ramp)] px-1.5 text-[10px] text-black">{type === "CAROUSEL" ? at + 1 : "✓"}</span>}
               </button>
             );
           })}
@@ -181,7 +181,7 @@ export function PostCard({
 
       {post.rationale && (
         <div className="mt-3 rounded-xl bg-violet/[0.08] px-3.5 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-bright">Why MAIRO created this</p>
+          <p className="v3-label">Why MAIRO created this</p>
           <p className="mt-1 text-[13px] leading-relaxed text-white/85">{post.rationale}</p>
         </div>
       )}
@@ -228,7 +228,7 @@ export function PostCard({
         )}
       </div>
       {result && (
-        <p className={`mt-2 rounded-lg px-3 py-2 text-[12.5px] ${result.ok ? "bg-emerald-400/10 text-emerald-300" : "bg-alert/10 text-alert"}`}>
+        <p className={`mt-2 rounded-lg px-3 py-2 text-[12.5px] ${result.ok ? "bg-white/[0.04] text-white/90" : "bg-alert/10 text-alert"}`}>
           {result.ok ? result.message : result.error}
         </p>
       )}

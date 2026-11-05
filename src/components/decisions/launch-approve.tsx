@@ -42,7 +42,7 @@ export function LaunchApprove({ campaignId, name, budget }: { campaignId: string
           <button type="button" disabled={pending} onClick={approve} className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-1.5 text-[12.5px] font-medium text-black disabled:opacity-60">
             {pending ? "Asking Meta…" : "Yes, approve the launch"}
           </button>
-          <button type="button" disabled={pending} onClick={() => setStep("idle")} className="rounded-full border border-[color:var(--mairo-line)] px-4 py-1.5 text-[12.5px] text-white/85">
+          <button type="button" disabled={pending} onClick={() => setStep("idle")} className="rounded-full border border-[color:var(--v3-line)] px-4 py-1.5 text-[12.5px] text-white/85">
             Cancel
           </button>
         </div>

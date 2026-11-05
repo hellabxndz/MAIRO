@@ -103,7 +103,7 @@ export function SpendControls({
 
       <div
         className="mt-5 rounded-xl border p-4"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
       >
         <div className="flex flex-wrap items-center gap-2.5">
           <span

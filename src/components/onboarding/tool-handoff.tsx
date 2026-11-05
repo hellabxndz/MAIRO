@@ -75,7 +75,7 @@ export function ToolHandoff({ kinds, onUse }: { kinds: Handoff["kind"][]; onUse:
       </ul>
       {used.length > 0 && (
         <ul className="mt-2 space-y-1" aria-live="polite">
-          {used.map((u) => <li key={u} className="text-[12.5px] text-emerald-300">✓ {u}</li>)}
+          {used.map((u) => <li key={u} className="text-[12.5px] text-white/90">✓ {u}</li>)}
         </ul>
       )}
       <p className="mt-2 text-[11.5px] text-white/45">

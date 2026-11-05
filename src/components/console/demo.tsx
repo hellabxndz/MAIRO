@@ -76,9 +76,9 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
     <div role="img" aria-label={label ?? `Product demo with sample data: the MAIRO ${view === "overview" ? "Overview" : view === "campaigns" ? "Campaigns board" : view === "creatives" ? "Creative Studio" : view === "approvals" ? "Approvals screen" : "Performance screen"} for a fictional business, ${SAMPLE.business}.`} className="@container/frame relative overflow-hidden rounded-[22px] border text-left" style={{ borderColor: "rgba(236,236,236,0.16)", background: "#0a0a0a", backgroundImage: "var(--mairo-atmosphere)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 60px 140px -60px rgba(255,255,255,0.55), 0 40px 80px -40px rgba(0,0,0,0.9)" }}>
       <div className="flex" inert>
         {sidebar && (
-          <aside aria-hidden className="hidden w-[220px] shrink-0 flex-col border-r px-3 py-4 @4xl/frame:flex" style={{ borderColor: "var(--mairo-line)", background: SIDEBAR_BACKGROUND }}>
+          <aside aria-hidden className="hidden w-[220px] shrink-0 flex-col border-r px-3 py-4 @4xl/frame:flex" style={{ borderColor: "var(--v3-line)", background: SIDEBAR_BACKGROUND }}>
             <span className="mb-4 px-2 text-[14px] font-light tracking-[0.3em] text-white">MAIRO</span>
-            <span className="mb-4 flex min-h-[38px] items-center gap-2.5 rounded-xl border px-3 text-[13px] font-medium text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            <span className="mb-4 flex min-h-[38px] items-center gap-2.5 rounded-xl border px-3 text-[13px] font-medium text-white" style={{ borderColor: "var(--v3-line)" }}>
               <span aria-hidden>+</span> New campaign
             </span>
             <nav data-nav className="flex flex-col gap-0.5">
@@ -86,7 +86,7 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
                 <NavRowView key={i.href} item={i} active={i.href === active || Boolean(i.also?.includes(active))} />
               ))}
             </nav>
-            <div className="mt-auto space-y-0.5 border-t pt-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="mt-auto space-y-0.5 border-t pt-3" style={{ borderColor: "var(--v3-line)" }}>
               {SECONDARY_NAV.map((i) => (
                 <NavRowView key={i.href} item={i} active={false} />
               ))}
@@ -95,8 +95,8 @@ export function DemoFrame({ view, children, sidebar = true, label, sampleLabel =
         )}
         <div className="min-w-0 flex-1">
           <div aria-hidden className="flex items-center justify-end gap-3 px-4 pb-2 pt-12 @2xl/frame:px-7 @2xl/frame:pt-5">
-            <span className="rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3 py-1.5 text-[12px] font-medium text-white">✨ Ask Alex</span>
-            <span className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[12px] text-white" style={{ borderColor: "var(--mairo-line)" }}>
+            <span className="rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-1.5 text-[12px] font-medium text-white">✨ Ask Alex</span>
+            <span className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-[12px] text-white" style={{ borderColor: "var(--v3-line)" }}>
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-black">{owner.charAt(0)}</span>
               {owner}
             </span>
@@ -181,7 +181,7 @@ export function DemoScreen({ view, approved = false }: { view: DemoView; approve
         <ConsoleTitle title="Approvals" sub="Nothing changes in your ad account until you approve it." />
         <Panel id="demo-launch" title="Launch review" tone="lit">
           <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 @xl:grid-cols-[150px_minmax(0,1fr)] @xl:gap-5">
-            <div className="aspect-[4/5] overflow-hidden rounded-2xl border" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="aspect-[4/5] overflow-hidden rounded-2xl border" style={{ borderColor: "var(--v3-line)" }}>
               {ART("demo")}
             </div>
             <div>

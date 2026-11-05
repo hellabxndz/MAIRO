@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 import { StartTourLink } from "@/components/tour";
 import { AppThemeScope, ThemeToggle } from "@/components/theme/theme";
 
@@ -68,11 +68,11 @@ export function DashboardShell({
 
   return (
     <div className="relative flex min-h-screen flex-col md:flex-row">
-      <AmbientSky />
+      <SiteBackdrop />
       <AppThemeScope />
 
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between border-b border-white/[0.07] bg-paper/85 backdrop-blur px-4 py-3 md:hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.07] bg-paper/85 px-4 py-3 md:hidden">
         <Link href="/" className="text-sm font-light tracking-[0.28em]">
           {brandLabel}
         </Link>
@@ -129,7 +129,7 @@ export function DashboardShell({
           <ThemeToggle className="h-8 w-8" />
         </div>
         {subtitle && (
-          <p className="mb-8 truncate text-xs uppercase tracking-[0.14em] text-neutral-500">
+          <p className="mb-8 truncate v3-label">
             {subtitle}
           </p>
         )}

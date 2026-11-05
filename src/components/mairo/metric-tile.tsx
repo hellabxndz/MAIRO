@@ -44,7 +44,7 @@ export function MetricTile({
           {info.plain}
         </span>
         {info.short && (
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-faint">
+          <span className="font-mono v3-label">
             {info.short}
           </span>
         )}

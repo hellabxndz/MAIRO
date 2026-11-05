@@ -133,7 +133,7 @@ export function GtmCard({
               <div className="flex flex-wrap items-center gap-2.5">
                 <p className="text-sm text-white">{a.label}</p>
                 {a.primary && (
-                  <span className="rounded-full border border-emerald-400/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-emerald-300">
+                  <span className="rounded-full border border-[color:var(--v3-line)] px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-white/90">
                     Optimise for this
                   </span>
                 )}
@@ -185,7 +185,7 @@ export function GtmCard({
       </div>
 
       {result && (
-        <p className={`text-xs ${result.ok ? "text-emerald-300" : "text-red-400"}`}>
+        <p className={`text-xs ${result.ok ? "text-white/90" : "text-red-400"}`}>
           {result.message}
         </p>
       )}

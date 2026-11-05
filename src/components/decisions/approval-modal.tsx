@@ -92,17 +92,17 @@ export function ApprovalModal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-2xl border p-6 outline-none sm:rounded-2xl"
-        style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.97)", boxShadow: "var(--mairo-glow-lift)" }}
+        style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.97)", boxShadow: "var(--mairo-glow-lift)" }}
       >
         {!result ? (
           <>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-blue-bright">Your approval</p>
+            <p className="font-mono text-blue-bright v3-label">Your approval</p>
             <h2 className="mt-1.5 text-[18px] font-medium text-white">{title}</h2>
             <p className="mt-1 text-[12.5px] text-muted">Nothing changes until you approve, and nothing is reported as done until Meta confirms it. You can undo any of it later from the campaign.</p>
 
             <ul className="mt-5 space-y-4">
               {actionable.map((d) => (
-                <li key={d.id} className="rounded-xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+                <li key={d.id} className="rounded-xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
                   <p className="text-[13px] text-white">{d.title}</p>
                   <ul className="mt-3 space-y-2.5">
                     {edits[d.id].map((c, i) => {
@@ -124,7 +124,7 @@ export function ApprovalModal({
                                   setChange(d.id, i, { ...c, toCents: v * 100 });
                                 }}
                                 className="w-24 rounded-lg border bg-transparent px-2 py-1 text-white"
-                                style={{ borderColor: "var(--mairo-line)" }}
+                                style={{ borderColor: "var(--v3-line)" }}
                                 aria-label={`New daily budget for ${c.campaignName}`}
                               />
                               <span>/day</span>
@@ -142,7 +142,7 @@ export function ApprovalModal({
                                   setChange(d.id, i, { ...c, to: { ...c.to, geoRadius: v } });
                                 }}
                                 className="w-20 rounded-lg border bg-transparent px-2 py-1 text-white"
-                                style={{ borderColor: "var(--mairo-line)" }}
+                                style={{ borderColor: "var(--v3-line)" }}
                                 aria-label="New radius in miles"
                               />
                               <span>miles</span>
@@ -167,7 +167,7 @@ export function ApprovalModal({
                 onClick={approve}
                 disabled={pending || actionable.length === 0}
                 className="rounded-full px-5 py-2.5 text-[13px] font-medium text-white disabled:opacity-50"
-                style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+                style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
               >
                 {pending ? "Making the changes…" : "Approve changes"}
               </button>
@@ -176,7 +176,7 @@ export function ApprovalModal({
                 onClick={() => setEditing((v) => !v)}
                 disabled={pending}
                 className="rounded-full border px-5 py-2.5 text-[13px] text-white/85 hover:text-white"
-                style={{ borderColor: "var(--mairo-line)" }}
+                style={{ borderColor: "var(--v3-line)" }}
               >
                 {editing ? "Done editing" : "Edit changes"}
               </button>
@@ -199,7 +199,7 @@ export function ApprovalModal({
             )}
             <ul className="mt-5 space-y-3">
               {result.applied.map((a, i) => (
-                <li key={i} className="rounded-xl border p-3.5 text-[12.5px]" style={{ borderColor: a.ok ? "var(--mairo-line)" : "rgba(255,61,110,0.35)" }}>
+                <li key={i} className="rounded-xl border p-3.5 text-[12.5px]" style={{ borderColor: a.ok ? "var(--v3-line)" : "rgba(255,61,110,0.35)" }}>
                   <p className="text-faint">{a.label}</p>
                   <p className="mt-0.5 text-white">
                     {a.ok ? (
@@ -224,7 +224,7 @@ export function ApprovalModal({
               >
                 Close
               </button>
-              <a href="/dashboard/activity" className="rounded-full border px-5 py-2.5 text-[13px] text-white/85" style={{ borderColor: "var(--mairo-line)" }}>
+              <a href="/dashboard/activity" className="rounded-full border px-5 py-2.5 text-[13px] text-white/85" style={{ borderColor: "var(--v3-line)" }}>
                 See MAIRO Activity
               </a>
             </div>

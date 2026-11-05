@@ -9,7 +9,7 @@ export function JourneyCard({ journey, founding }: { journey: Journey; founding:
   return (
     <section aria-labelledby="journey" className="rounded-[28px] p-6 sm:p-7" style={{ background: "linear-gradient(180deg, rgba(var(--mairo-fg-rgb),0.035), rgba(var(--mairo-fg-rgb),0.015))" }}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="journey" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">
+        <h2 id="journey" className="v3-label">
           Your first 30 days{founding ? " · Founding customer" : ""}
         </h2>
         <p className="text-[12.5px] text-muted">
@@ -22,7 +22,7 @@ export function JourneyCard({ journey, founding }: { journey: Journey; founding:
           <li
             key={s.key}
             aria-current={s.state === "current" ? "step" : undefined}
-            className={`rounded-2xl px-3 py-2.5 ${s.state === "current" ? "bg-white/[0.07] ring-1 ring-[color:var(--mairo-line-lit)]" : "bg-white/[0.025]"}`}
+            className={`rounded-2xl px-3 py-2.5 ${s.state === "current" ? "bg-white/[0.07] ring-1 ring-[color:var(--v3-line-strong)]" : "bg-white/[0.025]"}`}
           >
             <p className="text-[11px] text-faint">{s.when}</p>
             <p className={`mt-0.5 text-[13px] ${s.state === "upcoming" ? "text-white/50" : "text-white"}`}>
@@ -39,7 +39,7 @@ export function JourneyCard({ journey, founding }: { journey: Journey; founding:
           <ul className="mt-3 space-y-1.5">
             {current.items.map((i) => (
               <li key={i.label} className="flex items-center gap-2.5 text-[14px]">
-                <span aria-hidden className={i.done ? "text-emerald-300" : "text-white/30"}>
+                <span aria-hidden className={i.done ? "text-white/90" : "text-white/30"}>
                   {i.done ? "✓" : "○"}
                 </span>
                 {i.done ? (

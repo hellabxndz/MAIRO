@@ -78,8 +78,8 @@ export function MairoToday({
   ];
 
   return (
-    <section className="mb-8 rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "var(--mairo-glow-soft)" }}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-blue-bright">MAIRO today</p>
+    <section className="mb-8 rounded-2xl border p-5 sm:p-6" style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.6)", boxShadow: "none" }}>
+      <p className="font-mono text-blue-bright v3-label">MAIRO today</p>
       <h2 className="mt-2 text-[20px] font-medium text-white">
         {greeting(hour)}
         {firstName ? `, ${firstName}` : ""}.
@@ -104,7 +104,7 @@ export function MairoToday({
         <Link
           href="/dashboard/decisions"
           className="rounded-full px-5 py-2.5 text-[13px] font-medium text-white sm:ml-auto"
-          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
         >
           Review Decisions
         </Link>
@@ -112,7 +112,7 @@ export function MairoToday({
 
       <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-7">
         {metrics.map((m) => (
-          <div key={m.label} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--mairo-line)" }} title={m.help}>
+          <div key={m.label} className="rounded-xl border px-3 py-2.5" style={{ borderColor: "var(--v3-line)" }} title={m.help}>
             <p className="flex items-center gap-1 text-[11px] text-faint">
               {advanced ? m.advancedLabel : m.label}
               <span aria-label={m.help} className="cursor-help">ⓘ</span>
@@ -125,7 +125,7 @@ export function MairoToday({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">What MAIRO is doing</p>
+          <p className="font-mono v3-label">What MAIRO is doing</p>
           <ul className="mt-3 space-y-2">
             {doing.map((d) => (
               <li key={d.label} className="flex items-start gap-2.5 text-[13px]">
@@ -140,7 +140,7 @@ export function MairoToday({
         </div>
         <div>
           <div className="flex items-center justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">MAIRO activity</p>
+            <p className="font-mono v3-label">MAIRO activity</p>
             <Link href="/dashboard/activity" className="text-[12px] text-muted hover:text-white">All activity →</Link>
           </div>
           <div className="mt-3">

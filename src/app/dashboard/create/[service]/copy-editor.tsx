@@ -150,7 +150,7 @@ export function CopyEditor({
               <span className="text-[12.5px] text-white/85">Button</span>
               {ctas.length > 1 ? (
                 <select value={fitCta(chosen.cta, plan.destinationType)} onChange={(e) => edit({ cta: e.target.value })}
-                  className="mt-1.5 block w-full rounded-lg border bg-transparent px-3 py-2 text-[13px] text-white outline-none" style={{ borderColor: "var(--mairo-line)" }}>
+                  className="mt-1.5 block w-full rounded-lg border bg-transparent px-3 py-2 text-[13px] text-white outline-none" style={{ borderColor: "var(--v3-line)" }}>
                   {ctas.map((c) => (
                     <option key={c.value} value={c.value} className="bg-neutral-900">{c.label}</option>
                   ))}
@@ -191,7 +191,7 @@ export function CopyEditor({
             </p>
           ) : (
             <>
-              <div className="mt-3 inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--mairo-line)" }}>
+              <div className="mt-3 inline-flex rounded-full border p-0.5" style={{ borderColor: "var(--v3-line)" }}>
                 {[
                   { on: false, text: "Just the one" },
                   { on: true, text: `Test up to ${cap}` },

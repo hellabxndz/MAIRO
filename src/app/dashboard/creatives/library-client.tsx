@@ -34,7 +34,7 @@ export function LibraryList({ items }: { items: LibraryItem[] }) {
           ))}
         </div>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search words, campaigns, pictures" aria-label="Search the creative library"
-          className="min-h-[42px] w-full rounded-full border border-[color:var(--mairo-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--mairo-line-lit)] lg:ml-auto lg:max-w-[320px]" />
+          className="min-h-[42px] w-full rounded-full border border-[color:var(--v3-line)] bg-[rgba(var(--mairo-bg-rgb),0.6)] px-4 text-[14px] text-white placeholder-faint outline-none focus:border-[color:var(--v3-line-strong)] lg:ml-auto lg:max-w-[320px]" />
       </div>
       {shown.length === 0 ? (
         <p className="py-10 text-center text-[14px] text-muted">{items.length ? "Nothing matches." : "Nothing here yet. Suggested ads, pictures you make and ads that run all appear here."}</p>

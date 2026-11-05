@@ -163,18 +163,19 @@
   /* A raised panel: one step lighter, for the thing in front. */
   --mairo-glass-2: linear-gradient(170deg, rgba(34, 34, 34, 0.94) 0%, rgba(20, 20, 20, 0.94) 100%);
   /* The app's sidebar. */
-  --mairo-sidebar: linear-gradient(180deg, rgba(22, 22, 22, 0.94) 0%, rgba(11, 11, 11, 0.95) 60%, rgba(6, 6, 6, 0.97) 100%);
+  --mairo-sidebar: linear-gradient(#0b0b0b, #0b0b0b);
 
   /* Three lifts, a scale rather than a palette: rest, interactive, and the
      one thing on the screen that matters most (the white glow, like the
      ring around the mark). */
   --mairo-glow-soft: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px -26px rgba(0, 0, 0, 0.9);
   --mairo-glow-lift: 0 0 0 1px rgba(255, 255, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 26px 60px -26px rgba(255, 255, 255, 0.14);
-  --mairo-glow-key: 0 0 0 1px rgba(255, 255, 255, 0.7), 0 0 30px -4px rgba(255, 255, 255, 0.35), 0 24px 60px -28px rgba(0, 0, 0, 0.95);
+  /* v3 "Signal": no glows — the key action is solid white, nothing more. */
+  --mairo-glow-key: 0 0 0 0 transparent;
 
   /* The primary action: white, with black type (see the rule below), and the
      headline's accent line in brushed silver, like the mark. */
-  --mairo-ramp: linear-gradient(120deg, #e8e8e8 0%, #ffffff 55%, #f0f0f0 100%);
+  --mairo-ramp: linear-gradient(#ffffff, #ffffff);
   --mairo-ramp-soft: linear-gradient(120deg, #ffffff 0%, #bdbdbd 55%, #f5f5f5 100%);
 
   /* The environment behind the signed-in app and the site: a faint white

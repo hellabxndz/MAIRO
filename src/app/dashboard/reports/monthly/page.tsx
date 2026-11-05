@@ -123,8 +123,8 @@ export default async function ResultsPage({
           <a
             href={`/api/reports/${monthParam(key)}`}
             download={`mairo-${monthParam(key)}.txt`}
-            className="inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[13px] text-white/85 transition-colors hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-            style={{ borderColor: "var(--mairo-line)" }}
+            className="inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[13px] text-white/85 transition-colors hover:border-[color:var(--v3-line-strong)] hover:text-white"
+            style={{ borderColor: "var(--v3-line)" }}
           >
             Download
           </a>
@@ -141,7 +141,7 @@ export default async function ResultsPage({
           </Link>
         )}
         {!viewingCurrent && !sameMonth(next, thisMonth) && (
-          <Link href="/dashboard/reports/monthly?m=current" className="rounded-full border border-[color:var(--mairo-line)] px-3 py-1 text-[12px] text-white/85 hover:border-[color:var(--mairo-line-lit)]">
+          <Link href="/dashboard/reports/monthly?m=current" className="rounded-full border border-[color:var(--v3-line)] px-3 py-1 text-[12px] text-white/85 hover:border-[color:var(--v3-line-strong)]">
             This month so far
           </Link>
         )}
@@ -225,7 +225,7 @@ export default async function ResultsPage({
                 {actionable.map((f) => {
                   const sev = SEVERITY[f.severity] ?? SEVERITY.WATCH;
                   return (
-                    <li key={f.id} className="rounded-2xl border border-[color:var(--mairo-line)] p-4">
+                    <li key={f.id} className="rounded-2xl border border-[color:var(--v3-line)] p-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${sev.cls}`}>{sev.label}</span>
                         {f.campaignName && <span className="text-[12px] text-muted">&ldquo;{f.campaignName}&rdquo;</span>}
@@ -253,7 +253,7 @@ export default async function ResultsPage({
             </div>
             <TeamWork items={report.team} sinceStart={sinceStart} periodLabel={periodLabel} />
             {report.work.accepted.length > 0 && (
-              <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+              <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--v3-line)" }}>
                 <p className="text-[12px] text-faint">Recommendations you said yes to</p>
                 <ul className="mt-2 space-y-1.5 text-[13px] text-white/85">
                   {report.work.accepted.map((t) => <li key={t}>✓ {t}</li>)}

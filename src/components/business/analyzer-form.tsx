@@ -17,7 +17,7 @@ export function BusinessAnalyzer({ defaultUrl, analyzed }: { defaultUrl: string;
           defaultValue={defaultUrl}
           placeholder="https://example.com"
           className="mt-1.5 w-full rounded-xl border bg-transparent px-4 py-3 text-[14px] text-white placeholder:text-faint focus:outline-none"
-          style={{ borderColor: "var(--mairo-line)" }}
+          style={{ borderColor: "var(--v3-line)" }}
           required
         />
       </label>
@@ -25,7 +25,7 @@ export function BusinessAnalyzer({ defaultUrl, analyzed }: { defaultUrl: string;
         type="submit"
         disabled={pending}
         className="rounded-full px-6 py-3 text-[13.5px] font-medium text-white disabled:opacity-60"
-        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
       >
         {pending ? "Reading your site…" : analyzed ? "Analyze again" : "Analyze My Business"}
       </button>

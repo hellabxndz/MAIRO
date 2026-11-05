@@ -194,11 +194,11 @@ export function MairoAssistant({
             role="dialog"
             aria-label={`${assistantName}, your assistant`}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-3xl border-t lg:inset-y-0 lg:left-auto lg:right-0 lg:max-h-none lg:w-[420px] lg:rounded-none lg:border-l lg:border-t-0"
-            style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.98)" }}
+            style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.98)" }}
           >
             <header
               className="flex items-center gap-3 border-b px-5 py-4"
-              style={{ borderColor: "var(--mairo-line)" }}
+              style={{ borderColor: "var(--v3-line)" }}
             >
               <span className="relative flex h-2 w-2" aria-hidden>
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live/60" />
@@ -235,8 +235,8 @@ export function MairoAssistant({
                         key={q}
                         type="button"
                         onClick={() => ask(q)}
-                        className="w-full rounded-xl border px-3.5 py-2.5 text-left text-[13px] text-white/85 transition-colors hover:border-[color:var(--mairo-line-lit)] hover:text-white"
-                        style={{ borderColor: "var(--mairo-line)" }}
+                        className="w-full rounded-xl border px-3.5 py-2.5 text-left text-[13px] text-white/85 transition-colors hover:border-[color:var(--v3-line-strong)] hover:text-white"
+                        style={{ borderColor: "var(--v3-line)" }}
                       >
                         {q}
                       </button>
@@ -312,11 +312,11 @@ export function MairoAssistant({
                 ask(input.trim());
               }}
               className="border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-              style={{ borderColor: "var(--mairo-line)" }}
+              style={{ borderColor: "var(--v3-line)" }}
             >
               <div
                 className="flex items-center gap-2 rounded-full border px-4 py-2"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
+                style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.6)" }}
               >
                 <input
                   value={input}

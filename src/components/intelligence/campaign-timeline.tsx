@@ -43,7 +43,7 @@ export function TimelineEvent({ event, advanced, last = false }: { event: Event;
         </svg>
       </span>
       <div className="min-w-0 flex-1 pt-0.5">
-        <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-faint">
+        <p className="v3-label">
           Day {event.day}
           <span className="ml-2 font-normal normal-case tracking-normal">
             <time dateTime={event.at}>{new Date(event.at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</time>
@@ -98,7 +98,7 @@ export function CampaignTimeline({
     <section id="journey" className="scroll-mt-6 rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Campaign journey</h2>
+          <h2 className="v3-label">Campaign journey</h2>
           <p className="mt-1 text-[14px] text-muted">See what MAIRO has done since this campaign launched.</p>
         </div>
         {campaigns.length > 1 && journey && (

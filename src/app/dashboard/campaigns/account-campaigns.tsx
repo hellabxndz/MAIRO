@@ -3,6 +3,7 @@ import { goalLabel, primaryResult } from "@/lib/dashboard/campaigns";
 import { money } from "@/lib/dashboard/home";
 import { loadAccountHistory } from "@/lib/meta/account-history";
 import { adsManagerUrl, STATE_LABEL } from "@/lib/meta/account-history-rules";
+import { StatusDot } from "@/components/site/status-dot";
 
 // The Campaigns page's "On Meta" tab: campaigns already on the business's
 // Meta ad account that MAIRO didn't make. Read-only — each card opens the
@@ -60,9 +61,7 @@ export async function AccountCampaigns({ organizationId }: { organizationId: str
                     {from ? ` · ${from}${to ? ` – ${to}` : ""}` : ""}
                   </p>
                 </div>
-                <span className="shrink-0 text-[13px] text-white/85">
-                  {state.dot} {state.text}
-                </span>
+                <StatusDot dot={state.dot} text={state.text} className="shrink-0 text-[13px] text-white/85" />
               </div>
               <dl className="mt-5 grid grid-cols-2 gap-4">
                 <div>

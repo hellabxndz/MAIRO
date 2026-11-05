@@ -368,7 +368,7 @@ export function HeroCoreHud() {
         {/* The readout, under the baked wordmark. */}
         <div className="absolute inset-x-0 top-[68%] text-center">
           <p
-            className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#ffffff] sm:text-[10px]"
+            className="font-mono text-[#ffffff] v3-label"
             style={{ textShadow: "0 1px 10px rgba(12,12,12,1), 0 0 22px rgba(12,12,12,0.9)" }}
           >
             {text}
@@ -566,7 +566,7 @@ export function HeroCommand() {
       <div
         className="flex items-center gap-2 rounded-full border px-2 py-2 pl-4 transition-all duration-500 [transition-timing-function:var(--ease-mairo)]"
         style={{
-          borderColor: focused ? "rgba(245,245,245,0.6)" : "var(--mairo-line)",
+          borderColor: focused ? "rgba(245,245,245,0.6)" : "var(--v3-line)",
           background: "rgba(16,16,16,0.72)",
           boxShadow: focused ? "0 0 32px rgba(214,214,214,0.3)" : "none",
         }}
@@ -593,7 +593,7 @@ export function HeroCommand() {
         <button
           type="submit"
           className="inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110"
-          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
         >
           Ask MAIRO
           <span aria-hidden>→</span>

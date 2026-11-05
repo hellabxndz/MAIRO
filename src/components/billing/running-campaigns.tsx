@@ -69,7 +69,7 @@ export function RunningCampaigns({ campaigns: current, canPause }: { campaigns: 
                 )}
               </div>
               {st.kind === "paused" ? (
-                <span className="rounded-full border border-emerald-400/30 px-3 py-1 text-xs text-emerald-300">Paused · confirmed by Meta</span>
+                <span className="rounded-full border border-[color:var(--v3-line)] px-3 py-1 text-xs text-white/90">Paused · confirmed by Meta</span>
               ) : canPause && c.pausable === false ? (
                 <span className="text-xs text-neutral-400">Switch to this client to pause it</span>
               ) : canPause ? (

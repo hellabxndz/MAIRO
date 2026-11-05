@@ -123,7 +123,7 @@ export default async function CreativesPage() {
 
               {r.status === "BLOCKED" ? (
                 <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/[0.06] p-4">
-                  <p className="text-xs uppercase tracking-[0.12em] text-red-300">
+                  <p className="text-red-300 v3-label">
                     Can&apos;t run this one{r.reviewCategory ? ` · ${r.reviewCategory}` : ""}
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-neutral-300">
@@ -140,7 +140,7 @@ export default async function CreativesPage() {
                   <div className="mt-5 flex flex-col gap-5 border-t border-white/10 pt-5 sm:flex-row">
                     {r.referenceImage && (
                       <div className="shrink-0">
-                        <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                        <p className="mb-2 v3-label">
                           Your reference
                         </p>
                         {/* eslint-disable-next-line @next/next/no-img-element -- stored
@@ -154,7 +154,7 @@ export default async function CreativesPage() {
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <p className="mb-2 text-xs uppercase tracking-[0.12em] text-neutral-600">
+                      <p className="mb-2 v3-label">
                         Concept
                       </p>
                       {r.aiConcept ? (

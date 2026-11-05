@@ -9,7 +9,7 @@ import type { HealthArea, HealthReport } from "@/lib/intelligence/types";
 // and what would help most. No data, no number — the area says what it needs.
 
 const STATUS = {
-  healthy: { label: "Healthy", tone: "text-emerald-300", ring: "#22ff88" },
+  healthy: { label: "Healthy", tone: "text-white/90", ring: "#22ff88" },
   attention: { label: "Needs attention", tone: "text-amber-300", ring: "#ffdd00" },
   risk: { label: "At risk", tone: "text-alert", ring: "#ff3d6e" },
 } as const;
@@ -66,12 +66,12 @@ export function HealthCategory({ area, open, onToggle }: { area: HealthArea; ope
             <p className="text-[13px] text-muted">{area.needs}</p>
           ) : (
             <>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">MAIRO noticed</p>
+              <p className="v3-label">MAIRO noticed</p>
               <ul className="mt-1.5 space-y-1.5">
                 {area.reasons.length === 0 && <li className="text-[13px] text-muted">Nothing is pulling this score down.</li>}
                 {area.reasons.map((r) => (
                   <li key={r.text} className="flex gap-2 text-[13px] leading-snug">
-                    <span aria-hidden className={`mt-[3px] shrink-0 ${r.good ? "text-emerald-300" : "text-amber-300"}`}>{r.good ? "✓" : "•"}</span>
+                    <span aria-hidden className={`mt-[3px] shrink-0 ${r.good ? "text-white/90" : "text-amber-300"}`}>{r.good ? "✓" : "•"}</span>
                     <span className={r.good ? "text-white/75" : "text-white/90"}>{r.text}</span>
                   </li>
                 ))}
@@ -80,7 +80,7 @@ export function HealthCategory({ area, open, onToggle }: { area: HealthArea; ope
           )}
           {area.recommendation && (
             <div className="mt-3 rounded-lg bg-violet/10 p-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">Recommended action</p>
+              <p className="v3-label">Recommended action</p>
               <p className="mt-0.5 text-[13px] text-white/90">{area.recommendation.text}</p>
               <Link href={area.recommendation.href} className="mt-2.5 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-[#ffffff] px-3.5 text-[12.5px] font-medium text-black hover:brightness-110">
                 {area.recommendation.actionLabel} <span aria-hidden>→</span>
@@ -99,7 +99,7 @@ export function BusinessHealthScore({ health, showReportLink = true, defaultOpen
   return (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Business health</h2>
+        <h2 className="v3-label">Business health</h2>
         {showReportLink && (
           <Link href="/dashboard/health" className="text-[12.5px] text-violet-bright hover:text-white">
             View full health report →

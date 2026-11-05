@@ -16,7 +16,7 @@ import type { ImportSummary } from "@/lib/leads/history";
 // which rows are ready, which are refused and why, who appears twice — then
 // the server checks it all again before anything is saved.
 
-const field = "w-full rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white";
+const field = "w-full rounded-lg border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[13.5px] text-white";
 const FIELD_LABEL: Record<string, string> = { name: "Name", firstName: "First name", lastName: "Last name", email: "Email", phone: "Phone", status: "Status", value: "Value", date: "Date", notes: "Notes" };
 
 /** tracking: advanced revenue and lead tracking (MAIRO Scale) — imports and lead values. Checked again on the server. */
@@ -43,7 +43,7 @@ function AddLead({ onDone, tracking }: { onDone: () => void; tracking: boolean }
   return (
     <form
       className="mt-3 rounded-2xl border p-4"
-      style={{ borderColor: "var(--mairo-line)" }}
+      style={{ borderColor: "var(--v3-line)" }}
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
@@ -104,7 +104,7 @@ function ImportLeads() {
   }
 
   return (
-    <div className="mt-3 rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+    <div className="mt-3 rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
       <p className="text-[14px] font-medium text-white">Import from a spreadsheet</p>
       <p className="mt-0.5 text-[12.5px] leading-relaxed text-muted">
         A CSV with a header row. MAIRO reads columns called Name (or First name and Last name), Email, Phone, Status, Value, Date and Notes. Each row needs an email or a phone. Dates as YYYY-MM-DD. Up to 2,000 rows. Imported leads are yours to follow up; they&apos;re never counted as results of your ads.

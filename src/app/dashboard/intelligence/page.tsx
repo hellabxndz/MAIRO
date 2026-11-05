@@ -56,10 +56,10 @@ export default async function IntelligencePage() {
           Strategy, audience, creative, campaigns, optimization, budget, analytics and growth — in one place, from your account&rsquo;s own records. Ask one assistant about any of it; nothing changes without your approval.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium shadow-[var(--mairo-glow-key)]">
+          <Link href="/dashboard/agents" className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-[13.5px] font-medium">
             Ask MAIRO
           </Link>
-          <a href="#decisions" className="rounded-full border border-[color:var(--mairo-line-lit)] px-5 py-2.5 text-[13.5px] text-white">
+          <a href="#decisions" className="rounded-full border border-[color:var(--v3-line-strong)] px-5 py-2.5 text-[13.5px] text-white">
             {pending.length ? `${team.pending} decision${team.pending === 1 ? "" : "s"} waiting` : "No decisions waiting"}
           </a>
           {warnings > 0 && (
@@ -71,7 +71,7 @@ export default async function IntelligencePage() {
       </header>
 
       <Reveal>
-        <section aria-labelledby="brief" className="rounded-[28px] border border-[color:var(--mairo-line)] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(45,212,191,0.08), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
+        <section aria-labelledby="brief" className="rounded-[28px] border border-[color:var(--v3-line)] p-6 sm:p-7" style={{ background: "linear-gradient(160deg, rgba(45,212,191,0.08), rgba(var(--mairo-fg-rgb),0.015) 60%)" }}>
           <h2 id="brief" className={eyebrow}>Morning Brief</h2>
           <div className="mt-3">
             <DailyBrief brief={brief} now={now} timeZone={team.timeZone} />
@@ -119,7 +119,7 @@ export default async function IntelligencePage() {
 
       <CampaignTimeline journey={journey} campaigns={latest ? [{ id: latest.id, name: latest.name }] : []} advanced={advanced} />
 
-      <Link href="/dashboard?mode=profit" className="block rounded-[24px] border border-[color:var(--mairo-line)] p-5 transition hover:border-[color:var(--mairo-line-lit)]">
+      <Link href="/dashboard?mode=profit" className="block rounded-[24px] border border-[color:var(--v3-line)] p-5 transition hover:border-[color:var(--v3-line-strong)]">
         <p className={eyebrow}>Profit First</p>
         <p className="mt-2 text-[15px] text-white">Is your advertising making money?</p>
         <p className="mt-1 text-[13px] text-muted">Revenue, estimated profit and break-even from your own costs and Meta&rsquo;s reported sales — with what each figure is based on.</p>

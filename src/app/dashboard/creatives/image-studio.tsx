@@ -79,7 +79,7 @@ export function ImageStudio({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-xs uppercase tracking-[0.12em] text-neutral-600">
+        <p className="v3-label">
           Ad pictures
         </p>
         <p className="text-xs text-neutral-500">
@@ -118,7 +118,7 @@ export function ImageStudio({
                 type="button"
                 onClick={() => choose(current.id)}
                 disabled={busy || finals.length >= MAX_FINAL_IMAGES}
-                className="rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
+                className="rounded-lg border border-[color:var(--v3-line)] px-4 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40 v3-label"
               >
                 {choosing ? "Checking…" : "Use this in the campaign"}
               </button>
@@ -168,7 +168,7 @@ export function ImageStudio({
               type="button"
               onClick={runOwnPhoto}
               disabled={busy}
-              className="rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
+              className="rounded-lg border border-[color:var(--v3-line)] px-4 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white disabled:opacity-40 v3-label"
             >
               {choosing ? "Checking…" : "Use my photo as the ad"}
             </button>
@@ -185,7 +185,7 @@ export function ImageStudio({
 
       {finals.length > 0 && (
         <div className="border-t border-white/10 pt-4">
-          <p className="mb-3 text-xs uppercase tracking-[0.12em] text-neutral-600">
+          <p className="mb-3 v3-label">
             Chosen for the campaign
           </p>
           <div className="flex flex-wrap gap-3">
@@ -194,7 +194,7 @@ export function ImageStudio({
                 <img
                   src={image.imageData}
                   alt={`Chosen ad picture, version ${image.version}`}
-                  className="w-32 rounded-lg border border-emerald-500/40"
+                  className="w-32 rounded-lg border border-[color:var(--v3-line)]"
                 />
                 <button
                   type="button"

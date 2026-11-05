@@ -149,7 +149,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
             href={x.key === "custom" ? `/dashboard/results?range=custom&from=${period.from}&to=${period.to}` : `/dashboard/results?range=${x.key}`}
             aria-current={period.key === x.key ? "page" : undefined}
             className={`inline-flex min-h-10 shrink-0 items-center rounded-full px-4 text-[14px] transition ${period.key === x.key ? "bg-white font-medium text-black" : "border text-muted hover:text-white"}`}
-            style={period.key === x.key ? undefined : { borderColor: "var(--mairo-line)" }}
+            style={period.key === x.key ? undefined : { borderColor: "var(--v3-line)" }}
           >
             {x.label}
           </Link>
@@ -160,11 +160,11 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
           <input type="hidden" name="range" value="custom" />
           <label className="text-[12.5px] text-muted">
             From
-            <input type="date" name="from" defaultValue={period.from} className="mt-1 block min-h-11 rounded-xl border bg-transparent px-3 text-[16px] text-white" style={{ borderColor: "var(--mairo-line)" }} />
+            <input type="date" name="from" defaultValue={period.from} className="mt-1 block min-h-11 rounded-xl border bg-transparent px-3 text-[16px] text-white" style={{ borderColor: "var(--v3-line)" }} />
           </label>
           <label className="text-[12.5px] text-muted">
             To
-            <input type="date" name="to" defaultValue={period.to} className="mt-1 block min-h-11 rounded-xl border bg-transparent px-3 text-[16px] text-white" style={{ borderColor: "var(--mairo-line)" }} />
+            <input type="date" name="to" defaultValue={period.to} className="mt-1 block min-h-11 rounded-xl border bg-transparent px-3 text-[16px] text-white" style={{ borderColor: "var(--v3-line)" }} />
           </label>
           <button type="submit" className="min-h-11 rounded-full bg-white px-5 text-[14px] font-semibold text-black">Show</button>
         </form>
@@ -179,7 +179,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
               <>
                 <dd className="mt-1 truncate text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-white"><CountUp value={f.value} /></dd>
                 {f.change && (
-                  <dd className={`mt-1 text-[12px] ${f.change.good === null ? "text-faint" : f.change.good ? "text-emerald-300" : "text-amber-200"}`}>{f.change.text}</dd>
+                  <dd className={`mt-1 text-[12px] ${f.change.good === null ? "text-faint" : f.change.good ? "text-white/90" : "text-amber-200"}`}>{f.change.text}</dd>
                 )}
               </>
             ) : (
@@ -255,7 +255,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
                 <p className="text-[15.5px] font-medium text-white">{d.title}</p>
                 <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed text-muted">{`${d.noticed} ${d.whyItMatters}`.trim()}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Link href={`/dashboard/decisions#d-${d.id}`} className="inline-flex min-h-[40px] items-center rounded-full border px-4 text-[13px] text-white/90" style={{ borderColor: "var(--mairo-line)" }}>
+                  <Link href={`/dashboard/decisions#d-${d.id}`} className="inline-flex min-h-[40px] items-center rounded-full border px-4 text-[13px] text-white/90" style={{ borderColor: "var(--v3-line)" }}>
                     Review
                   </Link>
                   <DecisionControls decision={d} />

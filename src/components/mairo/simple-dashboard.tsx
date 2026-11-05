@@ -153,7 +153,7 @@ function Metric({
       <div className="flex items-center gap-3">
         <span
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-blue-bright"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(214,214,214,0.10)" }}
         >
           <span className="h-[18px] w-[18px]">{icon}</span>
         </span>
@@ -358,7 +358,7 @@ export function SimpleDashboard({
             <HeroOrb />
             <div
               className="absolute -top-1 right-0 flex items-center gap-2 rounded-xl border px-3 py-2"
-              style={{ borderColor: "var(--mairo-line-lit)", background: "rgba(var(--mairo-bg-rgb),0.85)" }}
+              style={{ borderColor: "var(--v3-line-strong)", background: "rgba(var(--mairo-bg-rgb),0.85)" }}
             >
               <span className="text-[12px] font-medium text-white">MAIRO AI</span>
               <AIStatus label="Online" />
@@ -490,7 +490,7 @@ export function SimpleDashboard({
                       <th
                         key={h}
                         scope="col"
-                        className="px-2 pb-3 font-mono text-[10px] font-normal uppercase tracking-[0.14em] text-faint"
+                        className="px-2 pb-3 font-mono font-normal v3-label"
                       >
                         {h}
                       </th>
@@ -514,7 +514,7 @@ export function SimpleDashboard({
                       <tr
                         key={c.id}
                         className="border-t transition-colors hover:bg-white/[0.03]"
-                        style={{ borderColor: "var(--mairo-line)" }}
+                        style={{ borderColor: "var(--v3-line)" }}
                       >
                         <td className="px-2 py-4">
                           <Link href="/dashboard/campaigns" className="block">
@@ -573,8 +573,8 @@ export function SimpleDashboard({
               <li key={q.text}>
                 <Link
                   href={`/dashboard/agents?ask=${encodeURIComponent(q.text)}`}
-                  className="flex items-center gap-3 rounded-xl border px-3.5 py-3 text-[13px] text-muted transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.04] hover:text-white"
-                  style={{ borderColor: "var(--mairo-line)" }}
+                  className="flex items-center gap-3 rounded-xl border px-3.5 py-3 text-[13px] text-muted transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.04] hover:text-white"
+                  style={{ borderColor: "var(--v3-line)" }}
                 >
                   <span className="h-4 w-4 shrink-0 text-blue-bright">{q.icon}</span>
                   {q.text}
@@ -586,7 +586,7 @@ export function SimpleDashboard({
           <Link
             href="/dashboard/agents"
             className="mt-auto flex items-center gap-3 rounded-full border px-4 py-2.5 pt-2.5 text-[13px] text-faint transition-colors hover:text-muted"
-            style={{ borderColor: "var(--mairo-line)", marginTop: "1.25rem" }}
+            style={{ borderColor: "var(--v3-line)", marginTop: "1.25rem" }}
           >
             Ask {assistantName} anything…
             <span
@@ -600,8 +600,8 @@ export function SimpleDashboard({
 
           {/* What MAIRO actually noticed, under the prompts rather than in its
               own panel — a recommendation is the assistant talking. */}
-          <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-faint">
+          <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--v3-line)" }}>
+            <p className="font-mono v3-label">
               MAIRO noticed
             </p>
             {notices.length > 0 ? (
@@ -650,7 +650,7 @@ export function SimpleDashboard({
             <div className="flex items-center gap-4">
               <span
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-blue-bright"
-                style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.10)" }}
+                style={{ borderColor: "var(--v3-line)", background: "rgba(214,214,214,0.10)" }}
               >
                 <span className="h-5 w-5">{a.icon}</span>
               </span>

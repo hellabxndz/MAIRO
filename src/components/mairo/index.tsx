@@ -48,14 +48,14 @@ export function MairoButton({
   const tones: Record<ButtonTone, string> = {
     primary: "text-white hover:brightness-110",
     ghost:
-      "text-white/85 border border-[color:var(--mairo-line)] bg-white/[0.02] " +
-      "hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.05] hover:text-white",
+      "text-white/85 border border-[color:var(--v3-line)] bg-white/[0.02] " +
+      "hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.05] hover:text-white",
     quiet: "text-muted hover:text-white",
   };
 
   const style =
     tone === "primary"
-      ? { backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }
+      ? { backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }
       : undefined;
 
   const cls = `${BUTTON_BASE} ${tone === "quiet" ? "px-1 py-1" : BUTTON_SIZE} ${tones[tone]} ${className}`;
@@ -103,8 +103,8 @@ export function GlassPanel({
       className={`relative overflow-hidden rounded-[var(--radius-panel)] border ${className}`}
       style={{
         backgroundImage: "var(--mairo-glass)",
-        borderColor: lit ? "var(--mairo-line-lit)" : "var(--mairo-line)",
-        boxShadow: lit ? "var(--mairo-glow-lift)" : "var(--mairo-glow-soft)",
+        borderColor: lit ? "var(--v3-line-strong)" : "var(--v3-line)",
+        boxShadow: lit ? "var(--mairo-glow-lift)" : "none",
       }}
     >
       {children}
@@ -148,10 +148,10 @@ export function MairoCard({
         backgroundImage: lit
           ? "linear-gradient(158deg, rgba(66,66,66,0.58), rgba(var(--mairo-bg-rgb),0.72))"
           : "var(--mairo-glass)",
-        borderColor: lit ? "rgba(238,238,238,0.42)" : "var(--mairo-line)",
+        borderColor: lit ? "rgba(238,238,238,0.42)" : "var(--v3-line)",
         boxShadow: lit
           ? "0 0 0 1px rgba(214,214,214,0.12), 0 0 28px rgba(214,214,214,0.22), 0 18px 48px rgba(10,10,10,0.6)"
-          : "var(--mairo-glow-soft)",
+          : "none",
       }}
     >
       {/* The border illumination, as an overlay rather than a border-colour
@@ -195,7 +195,7 @@ export function HudLabel({
 }) {
   return (
     <div className={`${align === "right" ? "text-right" : ""} ${className}`}>
-      <p className="font-mono text-[9px] uppercase leading-[1.7] tracking-[0.28em] text-faint sm:text-[10px]">
+      <p className="font-mono leading-[1.7] v3-label">
         {children}
       </p>
       <span
@@ -217,7 +217,7 @@ export function AIStatus({ label, live = true }: { label: string; live?: boolean
         )}
         <span className={`relative h-1.5 w-1.5 rounded-full ${live ? "bg-live" : "bg-faint"}`} />
       </span>
-      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">{label}</span>
+      <span className="font-mono v3-label">{label}</span>
     </span>
   );
 }
@@ -227,7 +227,7 @@ export function Chip({ children }: { children: ReactNode }) {
   return (
     <span
       className="inline-flex items-center rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted sm:text-[10px]"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
     >
       {children}
     </span>

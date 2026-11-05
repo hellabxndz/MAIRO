@@ -180,7 +180,7 @@ export async function HomeOverview({
           <ul className="overflow-hidden rounded-[24px] mairo-glass">
             <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start">
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.12em] text-faint">Tracking</span>
+                <span className="flex items-center gap-2 v3-label">Tracking</span>
                 <span className="mt-1 flex items-center gap-2 text-[15.5px] font-medium text-white">
                   <span aria-hidden className={manager.tracking.status === "working" ? "v3-dot" : manager.tracking.status === "attention" || manager.tracking.status === "broken" ? "h-[7px] w-[7px] shrink-0 rounded-full bg-amber-300" : "h-[7px] w-[7px] shrink-0 rounded-full bg-white/40"} />
                   {manager.tracking.headline}
@@ -191,9 +191,9 @@ export async function HomeOverview({
                 {manager.tracking.status === "working" ? "Details" : manager.tracking.status === "not_needed" ? "Tracking" : "Fix tracking"}
               </Link>
             </li>
-            <li className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-start" style={{ borderColor: "var(--mairo-line)" }}>
+            <li className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-start" style={{ borderColor: "var(--v3-line)" }}>
               <span className="min-w-0 flex-1">
-                <span className="text-[12px] font-medium uppercase tracking-[0.12em] text-faint">What MAIRO may do</span>
+                <span className="v3-label">What MAIRO may do</span>
                 <span className="mt-1 flex items-center gap-2 text-[15.5px] font-medium text-white">
                   {manager.mode.key === "autopilot" && <span aria-hidden className="v3-dot" />}
                   {manager.mode.label}
@@ -208,8 +208,8 @@ export async function HomeOverview({
                 </Link>
               )}
             </li>
-            <li className="border-t px-5 py-4" style={{ borderColor: "var(--mairo-line)" }}>
-              <span className="text-[12px] font-medium uppercase tracking-[0.12em] text-faint">Lately</span>
+            <li className="border-t px-5 py-4" style={{ borderColor: "var(--v3-line)" }}>
+              <span className="v3-label">Lately</span>
               {manager.recent.length === 0 ? (
                 <p className="mt-1 text-[14px] text-muted">Nothing changed in the last two weeks.</p>
               ) : (
@@ -244,7 +244,7 @@ export async function HomeOverview({
             ))}
           </div>
           {figures.length > 0 && (
-            <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-5 sm:grid-cols-4" style={{ borderColor: "var(--mairo-line)" }}>
+            <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-5 sm:grid-cols-4" style={{ borderColor: "var(--v3-line)" }}>
               {figures.map((f) => (
                 <div key={f.label} className="min-w-0">
                   <dd className="truncate text-[22px] font-medium tabular-nums text-white"><CountUp value={f.value} /></dd>
@@ -265,7 +265,7 @@ export async function HomeOverview({
               const decision = c.actions.decisions[item.key];
               return (
                 <li key={item.key} className="rounded-[24px] p-5 mairo-glass">
-                  <p className="text-[11.5px] font-medium uppercase tracking-[0.12em] text-faint">MAIRO recommendation</p>
+                  <p className="v3-label">MAIRO recommendation</p>
                   <p className="mt-1.5 text-[16px] font-medium text-white">{item.title}</p>
                   <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed text-muted">{item.why}</p>
                   {item.impact?.text && <p className="mt-2 text-[13px] text-white/80">{item.impact.text}</p>}
@@ -290,7 +290,7 @@ export async function HomeOverview({
         <Section title="Your campaigns" action={{ href: "/dashboard/campaigns", label: "All campaigns" }}>
           <ul className="overflow-hidden rounded-[24px] mairo-glass">
             {c.campaigns.rows.slice(0, 3).map((r, i) => (
-              <li key={r.id} className={i > 0 ? "border-t" : undefined} style={i > 0 ? { borderColor: "var(--mairo-line)" } : undefined}>
+              <li key={r.id} className={i > 0 ? "border-t" : undefined} style={i > 0 ? { borderColor: "var(--v3-line)" } : undefined}>
                 <Link href={r.href ?? `/dashboard/campaigns/${r.id}`} className="flex min-h-[64px] items-center gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]">
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] text-white">{r.name}</span>

@@ -38,8 +38,8 @@ export function SpacePanel({
     >
       {label && (
         <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-5 py-3.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
-          <span className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">{label}</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
+          <span className="v3-label">{label}</span>
         </div>
       )}
       <div className="p-5 sm:p-7">{children}</div>

@@ -204,7 +204,7 @@ export default async function TrackingPage() {
         <div
           className={`mt-6 rounded-xl border p-4 ${
             comparison.reading === "agrees"
-              ? "border-emerald-400/20 bg-emerald-400/[0.04]"
+              ? "border-[color:var(--v3-line)] bg-white/[0.04]"
               : comparison.reading === "over_claiming" ||
                   comparison.reading === "under_reporting"
                 ? "border-amber-400/20 bg-amber-400/[0.04]"
@@ -337,7 +337,7 @@ export default async function TrackingPage() {
                           title={f.message ?? undefined}
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
                             f.status === "SENT"
-                              ? "border-emerald-400/25 text-emerald-300"
+                              ? "border-[color:var(--v3-line)] text-white/90"
                               : f.status === "FAILED"
                                 ? "border-red-400/25 text-red-300"
                                 : "border-amber-400/25 text-amber-200"
@@ -385,7 +385,7 @@ function Figure({
 }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</p>
+      <p className="v3-label">{label}</p>
       <p
         className={`mt-1.5 truncate font-light tabular-nums text-white ${
           large ? "text-2xl" : "text-base"

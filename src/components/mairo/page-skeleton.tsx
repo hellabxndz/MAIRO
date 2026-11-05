@@ -20,7 +20,7 @@ function Panel({ className = "", children }: { className?: string; children?: Re
   return (
     <div
       className={`rounded-[var(--radius-panel)] border p-6 ${className}`}
-      style={{ backgroundImage: "var(--mairo-glass)", borderColor: "var(--mairo-line)" }}
+      style={{ backgroundImage: "var(--mairo-glass)", borderColor: "var(--v3-line)" }}
     >
       {children}
     </div>

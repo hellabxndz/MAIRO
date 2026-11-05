@@ -22,7 +22,7 @@ export function CreditMeter({
   return (
     <div
       className="rounded-xl border px-4 py-3"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[12px] text-neutral-400">

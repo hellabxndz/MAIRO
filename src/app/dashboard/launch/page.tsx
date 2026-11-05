@@ -80,8 +80,8 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
         {steps && <SetupProgress steps={steps} />}
         <div className={`${card} mt-6 p-6 sm:p-8`}>
           {delivering ? (
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
-              <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-400" /> Live
+            <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--v3-line)] px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/90">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-[color:var(--v3-signal)]" /> Live
             </span>
           ) : (
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-200">
@@ -146,15 +146,15 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
       {steps && <SetupProgress steps={steps} here={reviewing ? "launch" : "prepare"} showProblem={false} />}
 
       {(welcome === "1" || subscribed === "1") && (
-        <div className="mt-6 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.05] p-6">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Welcome to full MAIRO</p>
+        <div className="mt-6 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-6">
+          <p className="v3-label">Welcome to full MAIRO</p>
           <p className="mt-1 text-[19px] font-semibold text-white">Your plan is active.</p>
           <p className="mt-1 text-[14px] text-muted">Your approved strategy is ready to become a real campaign. Everything is prefilled from your plan — nothing to answer again.</p>
         </div>
       )}
 
       <div className="mt-6">
-        <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{reviewing ? "Step 10 of 10" : "Step 9 of 10"}</p>
+        <p className="v3-label">{reviewing ? "Step 10 of 10" : "Step 9 of 10"}</p>
         <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
           {journey.next === "waiting" ? "You approved the launch." : reviewing ? "Review your campaign before it goes live." : "Let\u2019s turn your plan into a real campaign."}
         </h1>
@@ -284,7 +284,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
             <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
               {prefilled.map(([k, v]) => (
                 <div key={k} className="min-w-0">
-                  <dt className="text-[11.5px] uppercase tracking-[0.14em] text-faint">{k}</dt>
+                  <dt className="v3-label">{k}</dt>
                   <dd className="text-[13px] leading-relaxed text-white/90">{v}</dd>
                 </div>
               ))}
@@ -311,7 +311,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
 
 function Step({ s }: { s: JourneyStep }) {
   const mark = s.state === "done" ? "✓" : s.state === "unknown" ? "?" : "○";
-  const tone = s.state === "done" ? "text-emerald-300" : s.state === "current" ? "text-violet-bright" : s.state === "unknown" ? "text-amber-300" : "text-faint";
+  const tone = s.state === "done" ? "text-white/90" : s.state === "current" ? "text-violet-bright" : s.state === "unknown" ? "text-amber-300" : "text-faint";
   const body = (
     <>
       <span aria-hidden className={`w-4 shrink-0 text-center ${tone}`}>{mark}</span>

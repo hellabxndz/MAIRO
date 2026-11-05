@@ -12,7 +12,7 @@ export function WeeklyReportCard({ report, nextDay, enabled }: { report: { id: s
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-field/80 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Weekly report</p>
+        <p className="v3-label">Weekly report</p>
         {ready && c ? (
           <>
             <p className="mt-1 text-[16px] font-semibold text-white">Your report is ready.</p>

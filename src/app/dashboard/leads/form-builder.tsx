@@ -185,14 +185,14 @@ export function FormBuilder({
           type="button"
           onClick={add}
           disabled={fields.length >= MAX_FIELDS}
-          className="rounded-lg border border-white/15 px-4 py-2 text-xs uppercase tracking-[0.1em] text-neutral-300 transition hover:border-white/30 hover:text-white disabled:opacity-40"
+          className="rounded-lg border border-white/15 px-4 py-2 transition hover:border-white/30 hover:text-white disabled:opacity-40 v3-label"
         >
           Add a question
         </button>
         <button type="button" onClick={save} disabled={pending} className={primaryButtonClass}>
           {pending ? "Saving…" : "Save the form"}
         </button>
-        {saved && <span className="text-sm text-emerald-300">Saved.</span>}
+        {saved && <span className="text-sm text-white/90">Saved.</span>}
         {fields.length >= MAX_FIELDS && (
           <span className="text-xs text-neutral-500">
             {MAX_FIELDS} is the most. Long forms get abandoned.

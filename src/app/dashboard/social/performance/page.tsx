@@ -49,7 +49,7 @@ export default async function SocialPerformancePage() {
           ["Skipped", count("SKIPPED")],
         ].map(([label, n]) => (
           <div key={label} className="rounded-xl border border-white/[0.07] bg-field/80 px-4 py-3">
-            <p className="text-[11.5px] uppercase tracking-[0.14em] text-faint">{label}</p>
+            <p className="v3-label">{label}</p>
             <p className="mt-1 text-[24px] font-semibold tabular-nums text-white">{n}</p>
           </div>
         ))}
@@ -90,7 +90,7 @@ export default async function SocialPerformancePage() {
             {top.map((p) => (
               <li key={p.id} className="flex items-start justify-between gap-4 text-[13px]">
                 <div className="min-w-0">
-                  <p className="text-[11.5px] uppercase tracking-[0.12em] text-faint">{p.network === "FACEBOOK" ? "Facebook" : "Instagram"} · {p.contentType ?? "Post"}</p>
+                  <p className="v3-label">{p.network === "FACEBOOK" ? "Facebook" : "Instagram"} · {p.contentType ?? "Post"}</p>
                   <p className="line-clamp-2 text-white/85">{p.caption}</p>
                   {p.permalink && <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-[12px] text-violet-bright underline underline-offset-4">See the post</a>}
                 </div>

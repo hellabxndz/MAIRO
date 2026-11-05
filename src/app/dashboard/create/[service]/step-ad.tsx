@@ -109,13 +109,13 @@ export function StepAd({
       {plan.adChoice === "attached" && plan.attachedPreview ? (
         <div className="space-y-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL, see studio-workspace.tsx */}
-          <img src={plan.attachedPreview} alt="Your advertisement" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--mairo-line)" }} />
+          <img src={plan.attachedPreview} alt="Your advertisement" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--v3-line)" }} />
           <BackLink onClick={back} />
         </div>
       ) : plan.adChoice === "video" && plan.video ? (
         <div className="space-y-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- remote blob URL */}
-          <img src={plan.video.posterUrl} alt="Your video" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--mairo-line)" }} />
+          <img src={plan.video.posterUrl} alt="Your video" className="max-w-xs rounded-xl border" style={{ borderColor: "var(--v3-line)" }} />
           <p className="text-[12.5px] text-muted">
             {plan.video.name} · {plan.video.width}×{plan.video.height} · {plan.video.durationSec}s
           </p>
@@ -192,7 +192,7 @@ export function StepAd({
               campaign so far is saved — you&rsquo;ll come straight back here to pick the post.
             </p>
             <button type="button" onClick={onConnectMeta}
-              className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+              className="mt-4 rounded-full px-5 py-2.5 text-[13px] font-medium text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}>
               Connect Facebook &amp; Instagram →
             </button>
           </div>

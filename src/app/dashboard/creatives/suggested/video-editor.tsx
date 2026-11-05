@@ -158,7 +158,7 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
             </p>
           )}
           {edits.overlay && (
-            <p className={`pointer-events-none absolute inset-x-4 mx-auto w-fit max-w-[90%] rounded-lg bg-black/70 px-3 py-1.5 text-center text-[16px] font-bold leading-snug text-[#fff] ${edits.overlay.position === "top" ? "top-[22%]" : edits.overlay.position === "middle" ? "top-1/2 -translate-y-1/2" : "bottom-[24%]"}`}>
+            <p className={`pointer-events-none absolute inset-x-4 mx-auto w-fit max-w-[90%] rounded-lg bg-black/70 px-3 py-1.5 text-center text-[16px] font-semibold leading-snug text-[#fff] ${edits.overlay.position === "top" ? "top-[22%]" : edits.overlay.position === "middle" ? "top-1/2 -translate-y-1/2" : "bottom-[24%]"}`}>
               {edits.overlay.text}
             </p>
           )}
@@ -190,7 +190,7 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
           <p className="mt-1 text-[12px] text-faint">From your video&apos;s length and shape and this ad&apos;s words. MAIRO hasn&apos;t watched or listened to it.</p>
           <ul className="mt-3 space-y-2">
             {suggestions.map((s) => (
-              <li key={s.id} className="rounded-xl border px-3.5 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+              <li key={s.id} className="rounded-xl border px-3.5 py-3" style={{ borderColor: "var(--v3-line)" }}>
                 <div className="flex flex-wrap items-baseline gap-2">
                   <button type="button" onClick={() => seek(s.atMs)} className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11.5px] tabular-nums text-white/85 hover:bg-white/[0.12]" aria-label={`Go to ${fmtTime(s.atMs)}`}>
                     {fmtTime(s.atMs)}{s.untilMs !== null ? `–${fmtTime(s.untilMs)}` : ""}
@@ -229,7 +229,7 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
                   aria-label={`Caption at ${fmtTime(c.startMs)}`}
                   onChange={(e) => setEdits({ ...edits, captions: edits.captions.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })}
                   onBlur={() => change(edits)}
-                  className="min-w-0 flex-1 rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-2.5 py-1.5 text-[13px] text-white"
+                  className="min-w-0 flex-1 rounded-lg border border-[color:var(--v3-line)] bg-transparent px-2.5 py-1.5 text-[13px] text-white"
                 />
                 <button type="button" onClick={() => change({ ...edits, captions: edits.captions.filter((_, j) => j !== i) })} className="text-[12px] text-muted hover:text-white" aria-label={`Remove the caption at ${fmtTime(c.startMs)}`}>Remove</button>
               </li>
@@ -251,14 +251,14 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
               aria-label="Text on the video"
               onChange={(e) => setEdits({ ...edits, overlay: e.target.value ? { text: e.target.value, position: edits.overlay?.position ?? "bottom" } : null })}
               onBlur={() => change(edits)}
-              className="min-w-0 flex-1 rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-2.5 py-1.5 text-[13px] text-white"
+              className="min-w-0 flex-1 rounded-lg border border-[color:var(--v3-line)] bg-transparent px-2.5 py-1.5 text-[13px] text-white"
             />
             {edits.overlay && <button type="button" onClick={() => change({ ...edits, overlay: null })} className="text-[12px] text-muted hover:text-white">Remove</button>}
           </div>
           {edits.overlay && (
             <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Where the text goes">
               {POSITIONS.map((p) => (
-                <label key={p.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.overlay?.position === p.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+                <label key={p.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.overlay?.position === p.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
                   <input type="radio" name={`pos-${video.videoId}`} checked={edits.overlay?.position === p.value} onChange={() => change({ ...edits, overlay: { text: edits.overlay!.text, position: p.value } })} className="sr-only" />
                   {p.label}
                 </label>
@@ -277,7 +277,7 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Which corner">
                 {CORNERS.map((c) => (
-                  <label key={c.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.logo?.corner === c.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+                  <label key={c.value} className={`cursor-pointer rounded-full border px-3 py-1 text-[12px] ${edits.logo?.corner === c.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
                     <input type="radio" name={`corner-${video.videoId}`} checked={edits.logo?.corner === c.value} onChange={() => change({ ...edits, logo: { url: edits.logo!.url, corner: c.value } })} className="sr-only" />
                     {c.label}
                   </label>
@@ -306,7 +306,7 @@ export function VideoEditor({ video, words, onBusy, rendering = { ok: false, rea
           <legend className="text-[14px] font-semibold text-white">Crop</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {ASPECTS.map((a) => (
-              <label key={a.value} className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] ${edits.aspect === a.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+              <label key={a.value} className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] ${edits.aspect === a.value ? "border-white/70 bg-white/[0.08] text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
                 <input type="radio" name={`aspect-${video.videoId}`} value={a.value} checked={edits.aspect === a.value} onChange={() => change({ ...edits, aspect: a.value })} className="sr-only" />
                 {a.label}
               </label>
@@ -360,7 +360,7 @@ function RenderPanel({ video, dirty, rendering, what }: { video: EditableVideo; 
       router.refresh();
     });
   const box = "mt-4 rounded-xl border px-3.5 py-3 text-[12.5px] leading-relaxed";
-  if (dirty) return <p className={`${box} border-[color:var(--mairo-line)] text-muted`}>Save these edits as a version first; then MAIRO can write them into a new video file.</p>;
+  if (dirty) return <p className={`${box} border-[color:var(--v3-line)] text-muted`}>Save these edits as a version first; then MAIRO can write them into a new video file.</p>;
   if (r?.status === "READY" && r.url) {
     return (
       <div className={`${box} border-live/30 bg-live/[0.05]`}>
@@ -371,7 +371,7 @@ function RenderPanel({ video, dirty, rendering, what }: { video: EditableVideo; 
       </div>
     );
   }
-  if (r?.status === "RENDERING" || pending) return <p role="status" className={`${box} border-[color:var(--mairo-line)] text-white/85`}>Writing {what} into a new file… usually under a minute for a short clip. You can keep editing the words meanwhile.</p>;
+  if (r?.status === "RENDERING" || pending) return <p role="status" className={`${box} border-[color:var(--v3-line)] text-white/85`}>Writing {what} into a new file… usually under a minute for a short clip. You can keep editing the words meanwhile.</p>;
   return (
     <div className={`${box} border-amber-300/30 bg-amber-300/[0.06] text-white/85`}>
       <p>Above, {what} {what.includes(" and ") ? "are" : "is"} shown as a preview over your original. To have {what.includes(" and ") ? "them" : "it"} in the ad, MAIRO writes a new video file for this version — the original is kept.</p>
@@ -392,7 +392,7 @@ function TimeField({ label, value, max, onChange, onNow }: { label: string; valu
       <label className="block text-[12px] text-muted">
         {label} (seconds)
         <input type="number" min={0} max={secs(max)} step={0.1} value={secs(value)} onChange={(e) => onChange(Math.round(Number(e.target.value) * 1000))}
-          className="mt-1 w-full rounded-lg border border-[color:var(--mairo-line)] bg-transparent px-2.5 py-1.5 text-[13px] tabular-nums text-white" />
+          className="mt-1 w-full rounded-lg border border-[color:var(--v3-line)] bg-transparent px-2.5 py-1.5 text-[13px] tabular-nums text-white" />
       </label>
       <button type="button" onClick={onNow} className="mt-1 text-[12px] text-violet-bright underline-offset-4 hover:underline">Use the current moment</button>
     </div>

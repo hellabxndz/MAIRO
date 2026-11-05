@@ -160,7 +160,7 @@ export function WorkspaceShell({
       {/* ---- Desktop sidebar ---- */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r px-3.5 py-5 lg:flex"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.86)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.86)" }}
       >
         <Link href="/clients" className="mb-1 px-2 text-[15px] font-light tracking-[0.3em] text-white">
           MAIRO
@@ -168,7 +168,7 @@ export function WorkspaceShell({
         {/* The workspace, named. A freelancer's screens are otherwise full of
             client names, and it should never be ambiguous which of the two you
             are looking at. */}
-        <p className="mb-6 truncate px-2 font-mono text-[9px] uppercase tracking-[0.2em] text-faint">
+        <p className="mb-6 truncate px-2 font-mono v3-label">
           {workspaceName}
         </p>
 
@@ -178,14 +178,14 @@ export function WorkspaceShell({
 
         <div
           className="mb-4 rounded-2xl border p-4"
-          style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
+          style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}
         >
-          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-faint">Your plan</p>
+          <p className="font-mono v3-label">Your plan</p>
           <p className="mt-2 text-[13px] font-medium text-white">{planName}</p>
           <p className="mt-1 text-[11px] text-muted">{usage}</p>
         </div>
 
-        <div className="space-y-1 border-t pt-4" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="space-y-1 border-t pt-4" style={{ borderColor: "var(--v3-line)" }}>
           {footer}
         </div>
       </aside>
@@ -193,13 +193,13 @@ export function WorkspaceShell({
       {/* ---- Mobile top bar ---- */}
       <header
         className="sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.92)" }}
       >
         <Link href="/clients" className="text-[13px] font-light tracking-[0.3em] text-white">
           MAIRO
         </Link>
         <span className="truncate text-[12px] text-faint">{workspaceName}</span>
-        <span className="ml-auto shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+        <span className="ml-auto shrink-0 font-mono v3-label">
           {usage}
         </span>
       </header>
@@ -210,7 +210,7 @@ export function WorkspaceShell({
         <div className="mb-6 hidden items-center justify-end gap-4 lg:flex">
           <span
             className="rounded-full border px-3.5 py-1.5 text-[12px] text-muted"
-            style={{ borderColor: "var(--mairo-line)" }}
+            style={{ borderColor: "var(--v3-line)" }}
           >
             {planName} · {usage}
           </span>
@@ -221,7 +221,7 @@ export function WorkspaceShell({
       {/* ---- Mobile bottom navigation ---- */}
       <nav
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t px-1 pb-[env(safe-area-inset-bottom)] lg:hidden"
-        style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
+        style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.96)" }}
         aria-label="Primary"
       >
         {NAV.map((item) => {

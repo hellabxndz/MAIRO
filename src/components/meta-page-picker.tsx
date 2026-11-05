@@ -49,7 +49,7 @@ export function MetaPagePicker({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-xs uppercase tracking-[0.12em] text-neutral-500">Ads go out as</span>
+        <span className="v3-label">Ads go out as</span>
         {pageId ? (
           <span className="text-sm text-white">{pageName ?? pageId}</span>
         ) : (
@@ -59,7 +59,7 @@ export function MetaPagePicker({
           <button
             type="button"
             onClick={load}
-            className="text-xs uppercase tracking-[0.1em] text-neutral-400 underline underline-offset-4 transition hover:text-white"
+            className="underline underline-offset-4 transition hover:text-white v3-label"
           >
             {pageId ? "Change" : "Choose one"}
           </button>
@@ -98,7 +98,7 @@ export function MetaPagePicker({
                       className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition hover:bg-white/5 disabled:cursor-default"
                     >
                       <span className={current ? "text-white" : "text-neutral-300"}>{p.name}</span>
-                      <span className="text-[11px] uppercase tracking-[0.12em] text-neutral-600">
+                      <span className="v3-label">
                         {current ? "Current" : "Use this"}
                       </span>
                     </button>
@@ -113,7 +113,7 @@ export function MetaPagePicker({
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="text-xs uppercase tracking-[0.1em] text-neutral-500 transition hover:text-neutral-300"
+            className="transition hover:text-neutral-300 v3-label"
           >
             Close
           </button>

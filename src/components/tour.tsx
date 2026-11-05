@@ -194,7 +194,7 @@ export function Tour({
         ref={cardRef}
         className="absolute w-[min(360px,calc(100vw-24px))] rounded-2xl border border-white/[0.12] bg-neutral-950 p-6 shadow-2xl"
       >
-        <p className="text-[10px] uppercase tracking-[0.24em] text-neutral-500">
+        <p className="v3-label">
           {step + 1} of {steps.length}
         </p>
         <h3 className="mt-3 text-lg font-light leading-snug tracking-[-0.01em] text-white">
@@ -223,7 +223,7 @@ export function Tour({
             <button
               type="button"
               onClick={() => (last ? finish() : setStep(step + 1))}
-              className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2 text-xs font-medium text-black transition hover:brightness-110"
+              className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2 text-xs font-medium text-black transition hover:brightness-110"
             >
               {last ? "Got it" : "Next"}
             </button>

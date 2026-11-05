@@ -149,7 +149,7 @@ function Option({
       aria-pressed={selected}
       className={`rounded-2xl border p-4 text-left transition ${
         selected
-          ? "border-sky-400/40 bg-sky-400/[0.07]"
+          ? "border-[color:var(--v3-line)] bg-white/[0.04]"
           : "border-white/[0.07] bg-white/[0.02] hover:border-white/20"
       }`}
     >

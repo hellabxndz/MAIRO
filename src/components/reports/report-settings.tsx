@@ -136,7 +136,7 @@ export function ReportSettings({
       )}
 
       {state.error && <p className="rounded-lg bg-alert/10 px-3 py-2 text-[13px] text-alert">{state.error}</p>}
-      {state.ok && <p className="rounded-lg bg-emerald-400/10 px-3 py-2 text-[13px] text-emerald-300">Saved.</p>}
+      {state.ok && <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-[13px] text-white/90">Saved.</p>}
       <button type="submit" disabled={pending} className="min-h-[44px] rounded-lg bg-[#ffffff] px-5 text-[14px] font-medium text-black hover:brightness-110 disabled:opacity-60">
         {pending ? "Saving…" : "Save report settings"}
       </button>

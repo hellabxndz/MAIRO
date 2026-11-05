@@ -123,14 +123,14 @@ export type AttentionItem = {
 export function AttentionCard({ items }: { items: AttentionItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="flex items-center gap-2 rounded-[28px] px-6 py-5 text-[15px] text-emerald-200" style={{ background: "rgba(34,255,136,0.06)" }}>
+      <p className="flex items-center gap-2 rounded-[28px] px-6 py-5 text-[15px] text-white/90" style={{ background: "rgba(34,255,136,0.06)" }}>
         <span aria-hidden>✓</span> Everything is running normally.
       </p>
     );
   }
   return (
     <section aria-labelledby="attention" className={card} style={{ background: "linear-gradient(180deg, rgba(255,221,0,0.07), rgba(var(--mairo-fg-rgb),0.015))" }}>
-      <h2 id="attention" className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">Needs your attention</h2>
+      <h2 id="attention" className="text-amber-200 v3-label">Needs your attention</h2>
       <ul className="mt-3 space-y-5">
         {items.map((i) => (
           <li key={i.key} className="flex flex-col items-start gap-3">

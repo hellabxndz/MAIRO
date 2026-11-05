@@ -70,7 +70,7 @@ export function PauseEverything({ count }: { count: number }) {
           <ul className="mt-2 space-y-1.5 text-[13px]">
             {results.map((r) => (
               <li key={r.id} className="flex gap-2">
-                <span aria-hidden className={r.ok ? "text-emerald-300" : "text-amber-300"}>
+                <span aria-hidden className={r.ok ? "text-white/90" : "text-amber-300"}>
                   {r.ok ? "✓" : "!"}
                 </span>
                 <span className="min-w-0 text-white/80">

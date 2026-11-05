@@ -108,8 +108,8 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const one = launched.names.length === 1;
   const allDelivering = launched.delivering.length === launched.names.length;
   const launchedNotice = launched.launched ? (
-    <Card className="border-emerald-400/25 bg-emerald-400/[0.05]">
-      <p className="font-medium text-emerald-200">
+    <Card className="border-[color:var(--v3-line)] bg-white/[0.04]">
+      <p className="font-medium text-white/90">
         {allDelivering
           ? one ? `${launched.names[0]} is live` : `${launched.names.length} campaigns are live`
           : one ? `MAIRO switched ${launched.names[0]} on` : `MAIRO switched ${launched.names.length} campaigns on`}
@@ -261,7 +261,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
                   href={billingProblem.actionUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+                  className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
                 >
                   {billingProblem.actionLabel} →
                 </a>
@@ -334,7 +334,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
   const decisionsSection = (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO decisions</h2>
+        <h2 className="v3-label">MAIRO decisions</h2>
         <Link href="/dashboard/decisions" className="text-[12.5px] text-violet-bright hover:text-white">
           View all{overview.pendingCount > 0 ? ` ${overview.pendingCount}` : ""} →
         </Link>
@@ -418,7 +418,7 @@ export default async function DashboardOverviewPage({ searchParams }: { searchPa
         </p>
       ))}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Every figure</h2>
+        <h2 className="v3-label">Every figure</h2>
         <SourceChip />
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">

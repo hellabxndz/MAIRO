@@ -108,7 +108,7 @@ export function TrackingSetup({ view }: { view: SetupView }) {
             const done = at > i + 1 || view.stage.stage === "verified";
             const here = view.stage.stage === s;
             return (
-              <li key={s} aria-current={here ? "step" : undefined} className={`rounded-full px-2.5 py-1 text-[11.5px] ${here ? "bg-violet/20 font-medium text-white" : done ? "bg-emerald-400/10 text-emerald-300" : "bg-white/[0.04] text-neutral-500"}`}>
+              <li key={s} aria-current={here ? "step" : undefined} className={`rounded-full px-2.5 py-1 text-[11.5px] ${here ? "bg-violet/20 font-medium text-white" : done ? "bg-white/[0.04] text-white/90" : "bg-white/[0.04] text-neutral-500"}`}>
                 {done && !here ? "✓ " : ""}
                 {STAGE_LABEL[s]}
               </li>
@@ -121,7 +121,7 @@ export function TrackingSetup({ view }: { view: SetupView }) {
       </div>
 
       {note && (
-        <p role="status" className={`rounded-xl border px-4 py-2.5 text-sm ${note.ok ? "border-emerald-400/25 text-emerald-200" : "border-amber-400/30 text-amber-100"}`}>
+        <p role="status" className={`rounded-xl border px-4 py-2.5 text-sm ${note.ok ? "border-[color:var(--v3-line)] text-white/90" : "border-amber-400/30 text-amber-100"}`}>
           {note.text}
         </p>
       )}
@@ -308,7 +308,7 @@ export function TrackingSetup({ view }: { view: SetupView }) {
       )}
 
       {/* What the campaign gets */}
-      <div className={`rounded-2xl border p-5 ${view.handoff.ready ? "border-emerald-400/25 bg-emerald-400/[0.04]" : "border-amber-400/25 bg-amber-400/[0.04]"}`}>
+      <div className={`rounded-2xl border p-5 ${view.handoff.ready ? "border-[color:var(--v3-line)] bg-white/[0.04]" : "border-amber-400/25 bg-amber-400/[0.04]"}`}>
         <h3 className="text-sm font-medium text-white">For your campaign</h3>
         <p className="mt-1 text-sm text-neutral-300">
           {view.handoff.ready ? "Ready" : "Not ready yet"} — optimising for: <span className="text-white">{view.handoff.optimiseFor}</span>

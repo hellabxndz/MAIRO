@@ -92,11 +92,11 @@ function Status({ row }: { row: CampaignRow }) {
     row.status === "ACTIVE"
       ? row.testing
         ? ["Testing", "bg-amber-400/12 text-amber-300"]
-        : ["Active", "bg-emerald-400/12 text-emerald-300"]
+        : ["Active", "bg-white/[0.04] text-white/90"]
       : row.status === "PAUSED"
         ? ["Paused", "bg-white/[0.06] text-white/60"]
         : row.status === "PENDING_REVIEW"
-          ? ["In review", "bg-sky-400/12 text-sky-300"]
+          ? ["In review", "bg-white/[0.04] text-white/90"]
           : ["Draft", "bg-white/[0.06] text-white/50"];
   return (
     <span

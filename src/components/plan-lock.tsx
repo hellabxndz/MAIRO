@@ -18,9 +18,9 @@ export function PlanLock({
   body: string;
 }) {
   return (
-    <Card className="border-sky-400/20 bg-sky-400/[0.04]">
+    <Card className="border-[color:var(--v3-line)] bg-white/[0.04]">
       <div className="flex items-start gap-4">
-        <span className="mt-0.5 flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-sky-400/30 bg-sky-400/10 text-sky-200">
+        <span className="mt-0.5 flex h-10 w-10 flex-none items-center justify-center rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] text-white/90">
           <svg viewBox="0 0 20 20" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <rect x="4" y="8.5" width="12" height="8" rx="2" />
             <path d="M7 8.5V6a3 3 0 0 1 6 0v2.5" strokeLinecap="round" />
@@ -58,7 +58,7 @@ export function PlanLock({
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <Link
           href="/dashboard/billing"
-          className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+          className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
         >
           Choose a plan
         </Link>

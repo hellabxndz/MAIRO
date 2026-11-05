@@ -69,7 +69,7 @@ export function PictureEditor({ angleId, image, available, paid }: { angleId: st
     });
 
   return (
-    <section aria-labelledby={`pic-${angleId}`} className="rounded-2xl border px-4 py-4" style={{ borderColor: "var(--mairo-line)" }}>
+    <section aria-labelledby={`pic-${angleId}`} className="rounded-2xl border px-4 py-4" style={{ borderColor: "var(--v3-line)" }}>
       <h3 id={`pic-${angleId}`} className="text-[13.5px] font-semibold text-white">Change the picture</h3>
 
       {previous && image.url && (
@@ -97,16 +97,16 @@ export function PictureEditor({ angleId, image, available, paid }: { angleId: st
         <>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {PICTURE_CHIPS.map((c) => (
-              <button key={c} type="button" onClick={() => setInstruction(c)} aria-pressed={instruction === c} className={`rounded-full border px-3 py-1 text-[12px] ${instruction === c ? "border-white/70 text-white" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>{c}</button>
+              <button key={c} type="button" onClick={() => setInstruction(c)} aria-pressed={instruction === c} className={`rounded-full border px-3 py-1 text-[12px] ${instruction === c ? "border-white/70 text-white" : "border-[color:var(--v3-line)] text-muted hover:text-white"}`}>{c}</button>
             ))}
           </div>
           <label className="mt-2 block text-[12.5px] text-white">
             What to change
-            <input value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. a warmer, evening light" className="mt-1 w-full rounded-xl border border-[color:var(--mairo-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
+            <input value={instruction} onChange={(e) => setInstruction(e.target.value)} maxLength={300} placeholder="e.g. a warmer, evening light" className="mt-1 w-full rounded-xl border border-[color:var(--v3-line)] bg-transparent px-3 py-2 text-[13.5px] text-white" />
           </label>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
             {(["standard", "premium"] as const).map((v) => (
-              <label key={v} className={`cursor-pointer rounded-full border px-3 py-1 ${quality === v ? "border-white/70 text-white" : "border-[color:var(--mairo-line)] text-muted"}`}>
+              <label key={v} className={`cursor-pointer rounded-full border px-3 py-1 ${quality === v ? "border-white/70 text-white" : "border-[color:var(--v3-line)] text-muted"}`}>
                 <input type="radio" name={`pq-${angleId}`} value={v} checked={quality === v} onChange={() => setQuality(v)} className="sr-only" />
                 {v === "standard" ? "Standard" : "Premium"}
               </label>

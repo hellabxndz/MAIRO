@@ -75,7 +75,7 @@ export function CampaignMetric({
     <GlassPanel className="p-4 sm:p-5" lit={emphasis}>
       <div className="flex items-center gap-2.5">
         {icon && <span className="h-4 w-4 shrink-0 text-blue-bright">{icon}</span>}
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-faint">{label}</p>
+        <p className="font-mono v3-label">{label}</p>
       </div>
       <p
         className={`mt-3 text-[26px] font-semibold leading-none tracking-[-0.02em] tabular-nums sm:text-[30px] ${
@@ -103,7 +103,7 @@ export function CampaignHealthPanel({
   return (
     <GlassPanel className={`p-5 sm:p-6 ${className}`} lit={health.level === "attention"}>
       <div className="flex flex-wrap items-center gap-3">
-        <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-faint">
+        <p className="font-mono v3-label">
           Campaign health
         </p>
         <Badge tone={healthTone(health.level)}>{health.label}</Badge>
@@ -137,10 +137,10 @@ export function AIActionCard({
   return (
     <div
       className="rounded-[var(--radius-card)] border p-4"
-      style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}
+      style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.45)" }}
     >
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-blue-bright">
+        <span className="font-mono text-blue-bright v3-label">
           {entry.kind}
         </span>
         {entry.automatic ? (
@@ -170,7 +170,7 @@ export function NoActionsYet({ live }: { live: boolean }) {
   return (
     <div
       className="rounded-[var(--radius-card)] border border-dashed p-8 text-center"
-      style={{ borderColor: "var(--mairo-line)" }}
+      style={{ borderColor: "var(--v3-line)" }}
     >
       <p className="text-[14px] text-white">
         {live ? "Nothing to change yet" : "Nothing yet"}
@@ -224,7 +224,7 @@ export function PlatformCard({
       <div className="flex items-start gap-3.5">
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border p-2.5"
-          style={{ borderColor: "var(--mairo-line)", background: "rgba(214,214,214,0.08)" }}
+          style={{ borderColor: "var(--v3-line)", background: "rgba(214,214,214,0.08)" }}
         >
           {icon}
         </span>
@@ -243,7 +243,7 @@ export function PlatformCard({
             <span
               aria-hidden
               className="mt-[9px] h-px w-2.5 shrink-0"
-              style={{ background: "var(--mairo-line-lit)" }}
+              style={{ background: "var(--v3-line-strong)" }}
             />
             {c}
           </li>
@@ -252,7 +252,7 @@ export function PlatformCard({
 
       <div
         className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         <div className="min-w-0">
           <Badge
@@ -269,7 +269,7 @@ export function PlatformCard({
         ) : (
           <span
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] group-hover:brightness-110"
-            style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+            style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
           >
             Launch campaign
             <span aria-hidden>→</span>
@@ -283,7 +283,7 @@ export function PlatformCard({
     return (
       <div
         className="h-full rounded-[var(--radius-card)] border p-5 opacity-55"
-        style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}
+        style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}
       >
         {body}
       </div>

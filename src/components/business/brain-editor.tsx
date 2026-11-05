@@ -72,16 +72,16 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
               {mark(f.key)}
             </span>
             {f.long ? (
-              <textarea rows={3} value={p[f.key] as string} onChange={(e) => setP({ ...p, [f.key]: e.target.value })} className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
+              <textarea rows={3} value={p[f.key] as string} onChange={(e) => setP({ ...p, [f.key]: e.target.value })} className={fieldCls} style={{ borderColor: "var(--v3-line)" }} />
             ) : (
-              <input value={p[f.key] as string} onChange={(e) => setP({ ...p, [f.key]: e.target.value })} className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
+              <input value={p[f.key] as string} onChange={(e) => setP({ ...p, [f.key]: e.target.value })} className={fieldCls} style={{ borderColor: "var(--v3-line)" }} />
             )}
             {f.hint && <span className="mt-1 block text-[11.5px] text-faint">{f.hint}</span>}
           </label>
         ))}
         <label>
           <span className="text-[12.5px] text-muted">Brand colors{mark("brandColors")}</span>
-          <input value={colors} onChange={(e) => setColors(e.target.value)} placeholder="#2b2b2b, #ff6600" className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
+          <input value={colors} onChange={(e) => setColors(e.target.value)} placeholder="#2b2b2b, #ff6600" className={fieldCls} style={{ borderColor: "var(--v3-line)" }} />
           <span className="mt-1 block text-[11.5px] text-faint">Hex codes, separated by commas</span>
         </label>
         <label>
@@ -93,7 +93,7 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
             value={p.profitMarginPercent ?? ""}
             onChange={(e) => setP({ ...p, profitMarginPercent: e.target.value === "" ? null : Number(e.target.value) })}
             className={fieldCls}
-            style={{ borderColor: "var(--mairo-line)" }}
+            style={{ borderColor: "var(--v3-line)" }}
           />
           <span className="mt-1 block text-[11.5px] text-faint">Optional. Lets the dashboard show profit after ad spend, not just revenue.</span>
         </label>
@@ -104,9 +104,9 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
         <ul className="mt-2 space-y-2">
           {p.products.map((x, i) => (
             <li key={i} className="grid gap-2 sm:grid-cols-[2fr_1fr_1fr_auto]">
-              <input value={x.name} onChange={(e) => setProduct(i, { name: e.target.value })} placeholder="Name" className={fieldCls} style={{ borderColor: "var(--mairo-line)", marginTop: 0 }} aria-label="Product name" />
-              <input value={x.price ?? ""} onChange={(e) => setProduct(i, { price: e.target.value || null })} placeholder="Price" className={fieldCls} style={{ borderColor: "var(--mairo-line)", marginTop: 0 }} aria-label="Price" />
-              <input value={x.category ?? ""} onChange={(e) => setProduct(i, { category: e.target.value || null })} placeholder="Category" className={fieldCls} style={{ borderColor: "var(--mairo-line)", marginTop: 0 }} aria-label="Category" />
+              <input value={x.name} onChange={(e) => setProduct(i, { name: e.target.value })} placeholder="Name" className={fieldCls} style={{ borderColor: "var(--v3-line)", marginTop: 0 }} aria-label="Product name" />
+              <input value={x.price ?? ""} onChange={(e) => setProduct(i, { price: e.target.value || null })} placeholder="Price" className={fieldCls} style={{ borderColor: "var(--v3-line)", marginTop: 0 }} aria-label="Price" />
+              <input value={x.category ?? ""} onChange={(e) => setProduct(i, { category: e.target.value || null })} placeholder="Category" className={fieldCls} style={{ borderColor: "var(--v3-line)", marginTop: 0 }} aria-label="Category" />
               <button type="button" onClick={() => setP({ ...p, products: p.products.filter((_, j) => j !== i) })} className="px-2 text-[12px] text-muted hover:text-white">
                 Remove
               </button>
@@ -125,7 +125,7 @@ export function BusinessBrain({ profile, edited }: { profile: BrainProfile; edit
               {f.label}
               {mark(f.key)}
             </span>
-            <textarea rows={3} value={lists[f.key]} onChange={(e) => setLists({ ...lists, [f.key]: e.target.value })} placeholder="One per line" className={fieldCls} style={{ borderColor: "var(--mairo-line)" }} />
+            <textarea rows={3} value={lists[f.key]} onChange={(e) => setLists({ ...lists, [f.key]: e.target.value })} placeholder="One per line" className={fieldCls} style={{ borderColor: "var(--v3-line)" }} />
             {f.hint && <span className="mt-1 block text-[11.5px] text-faint">{f.hint}</span>}
           </label>
         ))}

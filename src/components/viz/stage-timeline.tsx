@@ -15,8 +15,8 @@ export function StageTimeline({ stages, summary }: { stages: Stage[]; summary?: 
   return (
     <div>
       <div className="relative">
-        <div aria-hidden className="absolute bottom-3 left-[11px] top-3 w-px sm:hidden" style={{ background: "var(--mairo-line)" }} />
-        <div aria-hidden className="absolute top-3 hidden h-px sm:block" style={{ left: half, right: half, background: "var(--mairo-line)" }} />
+        <div aria-hidden className="absolute bottom-3 left-[11px] top-3 w-px sm:hidden" style={{ background: "var(--v3-line)" }} />
+        <div aria-hidden className="absolute top-3 hidden h-px sm:block" style={{ left: half, right: half, background: "var(--v3-line)" }} />
         <div aria-hidden className="mairo-stage-progress absolute top-3 hidden h-px sm:block" style={{ left: half, width: `calc((100% - 100% / ${n}) * ${pct})`, background: "var(--color-signal)" }} />
         <ol className="relative grid gap-4 sm:grid-flow-col sm:gap-2 sm:[grid-auto-columns:minmax(0,1fr)]">
           {stages.map((s) => (
@@ -30,7 +30,7 @@ export function StageTimeline({ stages, summary }: { stages: Stage[]; summary?: 
                       ? "mairo-stage-now border-signal bg-[rgb(var(--mairo-bg-rgb))] text-signal"
                       : s.state === "problem"
                         ? "border-[color:var(--color-alert)] bg-[rgb(var(--mairo-bg-rgb))] text-[color:var(--color-alert)]"
-                        : "border-dashed border-[color:var(--mairo-line-lit)] bg-[rgb(var(--mairo-bg-rgb))]"
+                        : "border-dashed border-[color:var(--v3-line-strong)] bg-[rgb(var(--mairo-bg-rgb))]"
                 }`}
               >
                 {s.state === "done" ? "✓" : s.state === "problem" ? "!" : s.state === "current" ? "●" : ""}

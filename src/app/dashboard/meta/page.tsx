@@ -94,8 +94,8 @@ export default async function MetaConnectionPage({
         </Card>
       )}
       {connected && (
-        <Card className="mb-6 border-emerald-500/30 bg-emerald-500/[0.06]">
-          <p className="text-sm text-emerald-300">
+        <Card className="mb-6 border-[color:var(--v3-line)] bg-white/[0.04]">
+          <p className="text-sm text-white/90">
             {checkBilling
               ? "Meta account connected — but Meta says it can't run ads yet. Check the payment details below."
               : "Meta account connected successfully."}

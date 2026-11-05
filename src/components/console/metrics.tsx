@@ -31,10 +31,10 @@ const ICON: Record<string, string> = {
 
 export function MetricTile({ m }: { m: MetricData }) {
   return (
-    <div className="relative min-w-0 overflow-hidden rounded-[20px] border p-4 sm:p-5" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}>
+    <div className="relative min-w-0 overflow-hidden rounded-[20px] border p-4 sm:p-5" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "none" }}>
       <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.16),transparent_70%)]" />
       <div className="flex items-center gap-2">
-        <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/[0.12] text-violet-bright">
+        <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-violet-bright">
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             <path d={ICON[m.key] ?? ICON.results} />
           </svg>
@@ -46,7 +46,7 @@ export function MetricTile({ m }: { m: MetricData }) {
           <p className="mt-3 text-[clamp(24px,2.4vw,32px)] font-semibold leading-none tracking-[-0.03em] text-white tabular-nums">{m.value}</p>
           <p className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px]">
             {m.change && (
-              <span className={m.change.good === null ? "text-muted" : m.change.good ? "text-emerald-300" : "text-amber-300"}>{m.change.text}</span>
+              <span className={m.change.good === null ? "text-muted" : m.change.good ? "text-white/90" : "text-amber-300"}>{m.change.text}</span>
             )}
             {m.source && <span className="text-faint">{m.source}</span>}
           </p>
@@ -78,7 +78,7 @@ export function MetricStrip({ metrics, period }: { metrics: MetricData[]; period
   return (
     <section aria-label={`Results, ${period}`} className="@container">
       <div className="mb-2.5 flex items-baseline justify-between">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Results</h2>
+        <h2 className="v3-label">Results</h2>
         <p className="text-[12px] text-faint">{period}</p>
       </div>
       <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4">

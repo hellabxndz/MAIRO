@@ -31,7 +31,7 @@ export function ResultsPanel({
     <Panel id="results-panel" title="Performance" action={{ href: allHref, label: "Full performance" }}>
       <p className="-mt-2 mb-3 text-[12px] text-faint">Money spent and {count ? count.label.toLowerCase() : "sales"}, {period}</p>
       {empty || !points ? (
-        <div className="flex h-[220px] items-center justify-center rounded-2xl border border-dashed px-6 text-center" style={{ borderColor: "var(--mairo-line)" }}>
+        <div className="flex h-[220px] items-center justify-center rounded-2xl border border-dashed px-6 text-center" style={{ borderColor: "var(--v3-line)" }}>
           <p className="max-w-[360px] text-[13.5px] leading-relaxed text-muted">{empty}</p>
         </div>
       ) : (

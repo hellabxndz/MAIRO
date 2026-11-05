@@ -52,8 +52,8 @@ export function WebsiteReportPanel({ website, scan, decisions, gone }: { website
       {state.phase === "error" && <ScanError message={state.message} />}
       {result && !ok && <ScanError message={`The last reading didn't work: ${result.error ?? "MAIRO couldn't read the site."}`} />}
       {gone.length > 0 && (
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/[0.05] p-4">
-          <p className="text-[14px] font-medium text-emerald-200">Fixed, confirmed by a recheck</p>
+        <div className="rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-4">
+          <p className="text-[14px] font-medium text-white/90">Fixed, confirmed by a recheck</p>
           <ul className="mt-1.5 space-y-1 text-[13px] text-white/80">
             {gone.map((g) => <li key={g.key}>✓ {g.key.split(":")[0].replace(/-/g, " ")} on {g.key.split(":").slice(1).join(":")} — no longer seen on {new Date(g.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</li>)}
           </ul>
@@ -70,7 +70,7 @@ export function WebsiteReportPanel({ website, scan, decisions, gone }: { website
             <h2 id="rest" className="text-[18px] font-semibold text-white">Everything else MAIRO checked</h2>
             <div className="mt-3 space-y-3">
               {rest.map((f) => (f.status === "ok" ? (
-                <p key={f.key} className="rounded-xl border border-white/10 px-4 py-3 text-[13.5px] text-white/80"><span className="mr-2 text-emerald-300">✓</span>{f.title}{f.evidence ? <span className="text-muted"> — {f.evidence}</span> : null}</p>
+                <p key={f.key} className="rounded-xl border border-white/10 px-4 py-3 text-[13.5px] text-white/80"><span className="mr-2 text-white/90">✓</span>{f.title}{f.evidence ? <span className="text-muted"> — {f.evidence}</span> : null}</p>
               ) : card(f)))}
             </div>
           </section>

@@ -19,7 +19,7 @@ export function LibraryGrid({ items }: { items: LibraryItem[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-[var(--radius-panel)] border border-dashed p-10 text-center" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="rounded-[var(--radius-panel)] border border-dashed p-10 text-center" style={{ borderColor: "var(--v3-line)" }}>
         <p className="text-[14px] text-white/85">Nothing here yet</p>
         <p className="mx-auto mt-2 max-w-sm text-[12.5px] leading-relaxed text-neutral-500">
           Everything you generate or upload is saved here automatically — your library fills in as you create.
@@ -50,7 +50,7 @@ export function LibraryGrid({ items }: { items: LibraryItem[] }) {
         const busy = pending && busyId === item.assetId;
         const image = item.latestVersion;
         return (
-          <div key={item.assetId} className="group overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
+          <div key={item.assetId} className="group overflow-hidden rounded-xl border" style={{ borderColor: "var(--v3-line)" }}>
             <div className="relative aspect-square bg-field-3">
               {image?.status === "COMPLETE" && image.imageUrl ? (
                 <img src={image.imageUrl} alt={image.instruction ?? "Creative"} className="h-full w-full object-cover" />
@@ -87,7 +87,7 @@ export function LibraryGrid({ items }: { items: LibraryItem[] }) {
                     type="button"
                     disabled={busy}
                     onClick={() => attach(item.assetId)}
-                    className="text-[10.5px] text-sky-300 hover:text-white disabled:opacity-50"
+                    className="text-[10.5px] text-white/90 hover:text-white disabled:opacity-50"
                   >
                     {busy ? "…" : "Use in campaign"}
                   </button>

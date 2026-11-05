@@ -133,7 +133,7 @@ export function MeasurementSetup({ view, returnTo, reconnectHref }: { view: Meas
       </section>
 
       {note && (
-        <p role="status" className={`text-sm ${note.ok ? "text-emerald-300" : "text-red-300"}`}>
+        <p role="status" className={`text-sm ${note.ok ? "text-white/90" : "text-red-300"}`}>
           {note.text}
         </p>
       )}
@@ -224,7 +224,7 @@ function Step({ n, title, open, done, summary, onChange, locked, children }: { n
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id={`step-${n}`} className="flex items-center gap-2 text-base font-medium text-white">
-            <span aria-hidden className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${done ? "bg-emerald-400/20 text-emerald-300" : "bg-white/10 text-neutral-300"}`}>{done ? "✓" : n}</span>
+            <span aria-hidden className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${done ? "bg-white/[0.04] text-white/90" : "bg-white/10 text-neutral-300"}`}>{done ? "✓" : n}</span>
             {title}
           </h2>
           {!open && <p className="mt-1 break-words pl-8 text-sm text-neutral-400">{summary}</p>}
@@ -340,7 +340,7 @@ function GoalsStep({ view, pending, run, hasWebsite }: { view: MeasurementView; 
       )}
       {groups.map((grp) => (
         <fieldset key={grp.id} className="mt-4 first:mt-0">
-          <legend className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">{grp.title}</legend>
+          <legend className="v3-label">{grp.title}</legend>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {GOAL_ORDER.filter((g) => GOALS[g].group === grp.id).map((g) => {
               const goal = GOALS[g];

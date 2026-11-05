@@ -22,7 +22,7 @@ export function RegenerateConceptButton({ creativeRequestId }: { creativeRequest
             if (result?.error) setError(result.error);
           })
         }
-        className="rounded-lg border border-[color:var(--mairo-line)] px-4 py-2 text-xs uppercase tracking-[0.1em] text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60"
+        className="rounded-lg border border-[color:var(--v3-line)] px-4 py-2 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60 v3-label"
       >
         {pending ? "Writing…" : "Write the concept"}
       </button>

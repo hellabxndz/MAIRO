@@ -99,7 +99,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
       <HelpLinks className="-mt-5 mb-6" links={[{ slug: "credits-and-usage", label: "Credits, limits and what you pay for" }, { slug: "billing", label: "Plans, billing and cancelling" }]} />
 
       {justSubscribed === "1" && (
-        <p className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">
+        <p className="mb-6 rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3 text-sm text-white/90">
           You&rsquo;re subscribed. Thank you — everything in your plan is switched on.
         </p>
       )}
@@ -116,7 +116,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         </p>
       )}
       {changed === "1" && (
-        <p role="status" className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">
+        <p role="status" className="mb-6 rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3 text-sm text-white/90">
           Your plan change is confirmed. This page shows the new plan as soon as Stripe tells MAIRO — usually within a minute.
         </p>
       )}
@@ -129,7 +129,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
         </div>
       )}
       {trialEnded === "1" && (
-        <p role="status" className="mb-6 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm text-emerald-200">
+        <p role="status" className="mb-6 rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3 text-sm text-white/90">
           Your paid plan has started. You can connect any ad account you manage now.
         </p>
       )}
@@ -154,7 +154,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
       {/* Where they stand now. */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">Current plan</p>
+          <p className="v3-label">Current plan</p>
           <p className="mt-1 text-lg font-medium text-white">
             {current.name}
             {subscribed && current.priceMonthly > 0 && (
@@ -203,7 +203,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
             <div
               key={plan.tier}
               className={`relative flex flex-col rounded-2xl border p-6 ${
-                plan.featured ? "border-[color:var(--mairo-line-lit)] bg-white/[0.05]" : "border-white/10 bg-white/[0.02]"
+                plan.featured ? "border-[color:var(--v3-line-strong)] bg-white/[0.05]" : "border-white/10 bg-white/[0.02]"
               }`}
             >
               {plan.featured && (
@@ -225,12 +225,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
                 )}
                 {plan.features.map((f) => (
                   <li key={f} className="flex gap-2">
-                    <span aria-hidden className="mt-[2px] text-emerald-300">✓</span>
+                    <span aria-hidden className="mt-[2px] text-white/90">✓</span>
                     <span>{f}</span>
                   </li>
                 ))}
                 <li className="flex gap-2 text-neutral-400">
-                  <span aria-hidden className="mt-[2px] text-emerald-300">✓</span>
+                  <span aria-hidden className="mt-[2px] text-white/90">✓</span>
                   <span>{creativesLine(plan.limits.creativesPerMonth)}</span>
                 </li>
               </ul>
@@ -238,7 +238,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/dashboar
               <p className="mt-5 text-[11.5px] text-neutral-500">{plan.spendGuidance}</p>
 
               {isCurrent ? (
-                <p className="mt-4 rounded-full border border-emerald-400/30 py-2 text-center text-xs uppercase tracking-[0.12em] text-emerald-300">
+                <p className="mt-4 rounded-full border border-[color:var(--v3-line)] py-2 text-center text-xs uppercase tracking-[0.12em] text-white/90">
                   Your plan
                 </p>
               ) : !canBuy ? (

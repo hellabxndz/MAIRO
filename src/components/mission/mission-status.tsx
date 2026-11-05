@@ -63,18 +63,18 @@ export function GoalHero({
       <p className="mt-2 max-w-[760px] text-[16px] leading-relaxed text-white/85">&ldquo;{sentence}&rdquo;</p>
       <dl className="mt-5 grid gap-4 text-[13.5px] sm:grid-cols-3">
         <div className="min-w-0 sm:col-span-2">
-          <dt className="text-[11px] uppercase tracking-[0.14em] text-faint">Current strategy</dt>
+          <dt className="v3-label">Current strategy</dt>
           <dd className="mt-1 text-white/85">{strategy}</dd>
           {title !== primary && <dd className="mt-1 text-[12.5px] text-muted">Mission: {title}</dd>}
           {confidence && <dd className="mt-2 text-[13px] text-white/75"><ConfidenceText level={confidence.level} text={confidence.customer} /></dd>}
         </div>
         <div className="space-y-3">
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.14em] text-faint">Secondary goal</dt>
+            <dt className="v3-label">Secondary goal</dt>
             <dd className="mt-1 text-white/85">{secondary ?? "None"}</dd>
           </div>
           <div>
-            <dt className="text-[11px] uppercase tracking-[0.14em] text-faint">Strategy started</dt>
+            <dt className="v3-label">Strategy started</dt>
             <dd className="mt-1 text-white/85">{startedAt ? startedAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—"}</dd>
           </div>
         </div>
@@ -90,7 +90,7 @@ function Row({ label, value, href }: { label: string; value: string; href: strin
     <li>
       <Link href={href} className="group flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 transition hover:bg-white/[0.04]">
         <span className="min-w-0">
-          <span className="block text-[11px] uppercase tracking-[0.14em] text-faint">{label}</span>
+          <span className="block v3-label">{label}</span>
           <span className="mt-0.5 block text-[14.5px] text-white/90">{value}</span>
         </span>
         <span aria-hidden className="mt-3 text-[13px] text-faint transition group-hover:text-white">›</span>
@@ -157,7 +157,7 @@ export function Learned({ items }: { items: { learned: string; adjusted: string 
           {items.map((i) => (
             <li key={i.learned}>
               <p className="text-[14px] text-white/90">&ldquo;{i.learned}&rdquo;</p>
-              <p className="mt-0.5 text-[12.5px] text-emerald-300/90"><span className="font-semibold">MAIRO adjusted: </span>{i.adjusted}</p>
+              <p className="mt-0.5 text-[12.5px] text-white/90"><span className="font-semibold">MAIRO adjusted: </span>{i.adjusted}</p>
             </li>
           ))}
         </ul>
@@ -246,7 +246,7 @@ export function SocialCard({ activity, upgradeHref }: { activity: MissionActivit
 }
 
 const STATUS_TONE: Record<string, string> = {
-  ACTIVE: "bg-emerald-400/15 text-emerald-300",
+  ACTIVE: "bg-white/[0.04] text-white/90",
   PAUSED: "bg-white/[0.06] text-white/60",
   PENDING_REVIEW: "bg-amber-400/15 text-amber-200",
   DRAFT: "bg-white/[0.06] text-white/60",

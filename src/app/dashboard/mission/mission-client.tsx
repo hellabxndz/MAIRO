@@ -73,7 +73,7 @@ export function GoalPicker({ initialGoal = null, onCancel, compact = false, afte
       <div role="radiogroup" aria-label="Your goal" className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {MISSION_GOALS.map((g) => (
           <button key={g.key} type="button" role="radio" aria-checked={goal === g.key} onClick={() => setGoal(goal === g.key ? null : g.key)}
-            className={`min-h-[46px] rounded-xl border px-4 py-2 text-left text-[14px] transition ${goal === g.key ? "border-violet-400 bg-violet/[0.18] text-white" : "border-white/10 bg-white/[0.02] text-white/85 hover:border-white/25"}`}>
+            className={`min-h-[46px] rounded-xl border px-4 py-2 text-left text-[14px] transition ${goal === g.key ? "border-white/[0.22] bg-violet/[0.18] text-white" : "border-white/10 bg-white/[0.02] text-white/85 hover:border-white/25"}`}>
             {g.label}
           </button>
         ))}
@@ -133,7 +133,7 @@ export function ApproveBar({ missionId, scale }: { missionId: string; scale: boo
         </button>
       </div>
       {draft && (
-        <p className="mt-3 text-[13px] text-emerald-300">
+        <p className="mt-3 text-[13px] text-white/90">
           Approved. MAIRO prefilled your campaign — <Link className="underline underline-offset-4" href={`/dashboard/create/meta?draft=${draft}`}>review it and confirm the budget</Link>.
         </p>
       )}
@@ -170,8 +170,8 @@ export function TellMairo({ placeholder, initialText = "" }: { placeholder?: str
       </form>
       <Err text={error} />
       {result && (
-        <div role="status" className="mt-3 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.05] p-3.5">
-          <p className="text-[14px] text-emerald-200">{result.message}</p>
+        <div role="status" className="mt-3 rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] p-3.5">
+          <p className="text-[14px] text-white/90">{result.message}</p>
           {result.actions.length > 0 && (
             <ul className="mt-2 space-y-1 text-[13px] text-white/80">
               {result.actions.map((a) => <li key={a}>• {a}</li>)}

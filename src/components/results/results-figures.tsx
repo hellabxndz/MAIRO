@@ -40,7 +40,7 @@ export function Journey({ stages }: { stages: JourneyStage[] }) {
     <ol className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:flex lg:items-stretch lg:gap-0" aria-label="From ad to customer">
       {stages.map((s, i) => (
         <li key={s.key} className="flex min-w-0 items-stretch lg:flex-1">
-          <div className={`min-w-0 flex-1 rounded-2xl border px-3.5 py-3 ${s.value === null ? "border-dashed border-[color:var(--mairo-line)]" : "border-[color:var(--mairo-line)] bg-white/[0.02]"}`}>
+          <div className={`min-w-0 flex-1 rounded-2xl border px-3.5 py-3 ${s.value === null ? "border-dashed border-[color:var(--v3-line)]" : "border-[color:var(--v3-line)] bg-white/[0.02]"}`}>
             <p className="text-[11.5px] font-medium text-muted">{s.label}</p>
             <p className={`mt-1 text-[22px] font-semibold tabular-nums tracking-[-0.02em] ${s.value === null ? "text-faint" : "text-white"}`}>{s.value ?? "—"}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -87,7 +87,7 @@ export function TeamWork({ items, sinceStart, periodLabel }: { items: WorkItem[]
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((w) => (
-        <li key={w.key} className="flex flex-col rounded-2xl border border-[color:var(--mairo-line)] p-4">
+        <li key={w.key} className="flex flex-col rounded-2xl border border-[color:var(--v3-line)] p-4">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-[13px] font-medium text-white">{w.label}</p>
             <p className="text-[24px] font-semibold tabular-nums leading-none tracking-[-0.02em] text-white">{w.count.toLocaleString("en-US")}</p>

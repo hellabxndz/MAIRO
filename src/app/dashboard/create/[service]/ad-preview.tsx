@@ -35,8 +35,8 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
   }
 
   return (
-    <div className="mt-6 rounded-xl border p-5" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">Preview, drawn by Meta</p>
+    <div className="mt-6 rounded-xl border p-5" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-bg-rgb),0.5)" }}>
+      <p className="font-mono v3-label">Preview, drawn by Meta</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {PREVIEW_FORMATS.map((f) => (
           <button
@@ -47,7 +47,7 @@ export function AdPreview({ plan }: { plan: CampaignPlan }) {
             disabled={loading}
             className="rounded-full border px-3.5 py-1.5 text-[12px] transition disabled:opacity-50"
             style={{
-              borderColor: format === f.value ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+              borderColor: format === f.value ? "rgba(238,238,238,0.5)" : "var(--v3-line)",
               background: format === f.value ? "rgba(214,214,214,0.1)" : "transparent",
               color: format === f.value ? "var(--color-white)" : undefined,
             }}

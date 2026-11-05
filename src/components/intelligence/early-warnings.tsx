@@ -34,7 +34,7 @@ export function EarlyWarningCard({ insight, advanced }: { insight: InsightView; 
         {insight.campaignName && <span className="truncate text-[11.5px] text-faint">· {insight.campaignName}</span>}
       </div>
       <h3 className="mt-2 text-[15px] font-semibold leading-snug text-white">{insight.title}</h3>
-      <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">MAIRO noticed</p>
+      <p className="mt-2 v3-label">MAIRO noticed</p>
       <p className="mt-0.5 text-[13.5px] leading-relaxed text-white/85">{advanced ? insight.happenedAdvanced : insight.happened}</p>
       {insight.metric && insight.currentValue && (
         <dl className="mt-2.5 grid grid-cols-2 gap-2 text-[12.5px]">
@@ -50,7 +50,7 @@ export function EarlyWarningCard({ insight, advanced }: { insight: InsightView; 
           </div>
         </dl>
       )}
-      <p className="mt-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">What this means</p>
+      <p className="mt-2.5 v3-label">What this means</p>
       <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{insight.whyItMatters}</p>
       <p className="mt-2.5 text-[13px] text-white/85">
         <span className="font-medium text-white">Recommended action:</span> {insight.recommendation}
@@ -88,7 +88,7 @@ export function EarlyWarnings({ insights, advanced }: { insights: InsightView[];
   const shown = early.filter((i) => filter === "all" || i.category === filter);
   return (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO found this before you did</h2>
+      <h2 className="v3-label">MAIRO found this before you did</h2>
       <p className="mt-1 text-[14px] text-muted">Small problems become expensive when nobody notices them.</p>
       {early.length === 0 ? (
         <p className="mt-4 text-[13.5px] text-muted">Nothing caught early right now. MAIRO checks every day for rising costs, tired ads, audience fatigue, website and tracking problems.</p>

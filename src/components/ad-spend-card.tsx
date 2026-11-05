@@ -115,7 +115,7 @@ export function AdSpendCard({
             href={billing.actionUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+            className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
           >
             {billing.actionLabel ?? "Manage payment on Meta"} →
           </a>
@@ -152,7 +152,7 @@ function Figure({
 }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">{label}</p>
+      <p className="v3-label">{label}</p>
       <p className="mt-1.5 truncate text-base font-light tabular-nums text-white">{value}</p>
       {hint && <p className="mt-0.5 text-[10px] text-neutral-600">{hint}</p>}
     </div>

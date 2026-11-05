@@ -24,7 +24,7 @@ const KINDS: { value: FeedbackKind; label: string; placeholder: string }[] = [
 
 const chip = (on: boolean) =>
   `min-h-[38px] rounded-full border px-4 text-[13px] transition ${
-    on ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--mairo-line)] text-white/80 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
+    on ? "border-transparent bg-[image:var(--mairo-ramp)] text-black" : "border-[color:var(--v3-line)] text-white/80 hover:border-[color:var(--v3-line-strong)] hover:text-white"
   }`;
 
 function FeedbackForm({ onDone }: { onDone?: () => void }) {
@@ -103,7 +103,7 @@ function FeedbackForm({ onDone }: { onDone?: () => void }) {
           placeholder={chosen.placeholder}
           rows={4}
           maxLength={4000}
-          className="mt-3 w-full rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] px-4 py-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-[color:var(--mairo-line-lit)]"
+          className="mt-3 w-full rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] px-4 py-3 text-[14px] text-white outline-none placeholder:text-faint focus:border-[color:var(--v3-line-strong)]"
         />
       </fieldset>
       {error && <p className="text-[13px] text-red-300" role="alert">{error}</p>}
@@ -183,7 +183,7 @@ export function PulseCard() {
             onChange={(e) => setText(e.target.value)}
             rows={2}
             maxLength={4000}
-            className="mt-2 w-full rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] px-4 py-3 text-[14px] text-white outline-none focus:border-[color:var(--mairo-line-lit)]"
+            className="mt-2 w-full rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] px-4 py-3 text-[14px] text-white outline-none focus:border-[color:var(--v3-line-strong)]"
           />
           <button type="button" onClick={send} disabled={pending} className={`mt-3 ${actionClass}`}>
             {pending ? "Sending…" : "Send"}

@@ -10,7 +10,7 @@ import { ConfidenceBadge, FixWithMairo } from "./explain";
 
 const LEVEL: Record<OpportunityLevel, { n: number; label: string; tone: string }> = {
   LOW: { n: 1, label: "Low opportunity", tone: "text-white/55 bg-white/[0.05]" },
-  MEDIUM: { n: 2, label: "Medium opportunity", tone: "text-sky-300 bg-sky-400/10" },
+  MEDIUM: { n: 2, label: "Medium opportunity", tone: "text-white/90 bg-white/[0.04]" },
   HIGH: { n: 3, label: "High opportunity", tone: "text-violet-bright bg-violet/20" },
 };
 
@@ -56,7 +56,7 @@ export function OpportunityCard({ insight, rank }: { insight: InsightView; rank:
   const area = insight.radarArea ? insight.radarArea[0].toUpperCase() + insight.radarArea.slice(1) : "";
   return (
     <div className={`rounded-xl border p-4 ${rank === "Biggest opportunity" ? "border-violet/35 bg-violet/[0.07]" : "border-white/[0.07] bg-white/[0.02]"}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{rank}</p>
+      <p className="v3-label">{rank}</p>
       <p className="mt-1 text-[16px] font-semibold text-white">{area}</p>
       <p className="mt-1 text-[13.5px] text-white/85">{insight.happened}</p>
       <p className="mt-2 text-[13px] text-muted">
@@ -79,7 +79,7 @@ export function OpportunityRadar({ radar, insights }: { radar: RadarReport | nul
   const judged = radar?.areas.some((a) => a.level !== null) ?? false;
   return (
     <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
-      <h2 className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO opportunity radar</h2>
+      <h2 className="v3-label">MAIRO opportunity radar</h2>
       <p className="mt-1 text-[14px] text-muted">Where should you focus next?</p>
       {!radar || !judged ? (
         <p className="mt-4 text-[13.5px] text-muted">Not enough data yet — the radar fills in once a campaign has run for a few days.</p>
@@ -93,7 +93,7 @@ export function OpportunityRadar({ radar, insights }: { radar: RadarReport | nul
               {radar.areas.map((a) => (
                 <li key={a.area} className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
                   <span className="text-[13.5px] text-white">{a.label}</span>
-                  {a.level && <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] ${LEVEL[a.level].tone}`}>{LEVEL[a.level].label}</span>}
+                  {a.level && <span className={`rounded-md px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] ${LEVEL[a.level].tone}`}>{LEVEL[a.level].label}</span>}
                 </li>
               ))}
             </ul>

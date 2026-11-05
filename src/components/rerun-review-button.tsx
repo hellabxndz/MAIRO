@@ -32,7 +32,7 @@ export function RerunReviewButton({
             setMessage(result.message);
           })
         }
-        className="whitespace-nowrap rounded-lg border border-[color:var(--mairo-line)] px-3 py-1.5 text-xs text-white/85 transition hover:border-[color:var(--mairo-line-lit)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60"
+        className="whitespace-nowrap rounded-lg border border-[color:var(--v3-line)] px-3 py-1.5 text-xs text-white/85 transition hover:border-[color:var(--v3-line-strong)] hover:bg-white/[0.06] hover:text-white disabled:opacity-60"
       >
         {pending ? "Checking…" : label}
       </button>

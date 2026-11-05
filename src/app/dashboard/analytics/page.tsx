@@ -122,7 +122,7 @@ export default async function AnalyticsPage({
         title="Analytics"
         description={view === "simple" ? "Your results, in plain numbers." : "Every advertising metric, for when you want to dig in."}
         action={
-          <div role="group" aria-label="Detail" className="inline-flex rounded-full border border-[color:var(--mairo-line)] p-0.5">
+          <div role="group" aria-label="Detail" className="inline-flex rounded-full border border-[color:var(--v3-line)] p-0.5">
             {(["simple", "advanced"] as const).map((v) => {
               const q = new URLSearchParams();
               q.set("view", v);
@@ -206,7 +206,7 @@ export default async function AnalyticsPage({
         <>
           <Card>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-sm uppercase tracking-[0.16em] text-neutral-400">
+              <h2 className="text-sm v3-label">
                 {selected === null ? "Total MAIRO performance" : `${platformName(selected)} performance`}
               </h2>
               {selected === null && available.length > 1 && (
@@ -286,7 +286,7 @@ export default async function AnalyticsPage({
               nothing redundant underneath. */}
           {selected === null && report.byPlatform.length > 1 && (
             <Card className="mt-6">
-              <h2 className="mb-5 text-sm uppercase tracking-[0.16em] text-neutral-400">
+              <h2 className="mb-5 text-sm v3-label">
                 By platform
               </h2>
               <div className="space-y-3">
@@ -310,7 +310,7 @@ export default async function AnalyticsPage({
             <Card className="mt-6">
               <p className="text-sm text-neutral-400">
                 Every ad and placement side by side is part of {planFor("SCALE_V2").name}&rsquo;s advanced analytics.{" "}
-                <Link href="/dashboard/billing" className="text-sky-300 underline underline-offset-4">
+                <Link href="/dashboard/billing" className="text-white/90 underline underline-offset-4">
                   See plans
                 </Link>
               </p>
@@ -375,18 +375,18 @@ async function SimpleAnalytics({ organizationId, shown, hasData, campaigns }: { 
       </section>
       <div className="grid gap-5 lg:grid-cols-2">
         <section className={`${PANEL} p-6`}>
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Best creative</h2>
+          <h2 className="v3-label">Best creative</h2>
           {hub?.top[0] ? <div className="mt-4 max-w-[260px]"><AdCard ad={hub.top[0]} rank={1} /></div> : <p className="mt-3 text-[14px] text-muted">Not enough results to pick one yet.</p>}
         </section>
         <section className={`${PANEL} p-6`}>
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Best campaign</h2>
+          <h2 className="v3-label">Best campaign</h2>
           {best ? (
             <Link href={`/dashboard/campaigns/${best.c.mairoCampaignId}`} className="mt-3 block rounded-2xl p-1 hover:bg-white/[0.03]">
               <p className="text-[18px] text-white">{best.c.name}</p>
               <p className="mt-1 text-[14px] text-muted">{resultPhrase(family, best.results)} · {fmtMoney(Math.round(best.spend! / best.results!))} each</p>
             </Link>
           ) : <p className="mt-3 text-[14px] text-muted">Not enough results to pick one yet.</p>}
-          <h2 className="mt-7 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-bright">MAIRO insights</h2>
+          <h2 className="mt-7 v3-label">MAIRO insights</h2>
           {insights.length ? <ul className="mt-3 space-y-2 text-[14px] text-white/85">{insights.map((t) => <li key={t}>• {t}</li>)}</ul> : <p className="mt-3 text-[14px] text-muted">MAIRO is still learning what works for you.</p>}
         </section>
       </div>
@@ -441,7 +441,7 @@ function PlatformRow({ report }: { report: PlatformReport }) {
   return (
     <div className="rounded-xl bg-white/[0.02] px-4 py-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-neutral-400">
+        <span className="flex items-center gap-2 v3-label">
           <PlatformIcon platform={report.platform} className="h-3.5 w-3.5" />
           {platformName(report.platform)}
         </span>

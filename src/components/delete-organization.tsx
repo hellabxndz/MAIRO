@@ -31,7 +31,7 @@ export function DeleteOrganization({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-red-500/30 px-4 py-2 text-xs uppercase tracking-[0.1em] text-red-300 transition hover:border-red-400 hover:bg-red-500/10"
+        className="rounded-lg border border-red-500/30 px-4 py-2 text-red-300 transition hover:border-red-400 hover:bg-red-500/10 v3-label"
       >
         Delete this account
       </button>
@@ -52,7 +52,7 @@ export function DeleteOrganization({
       <div>
         <label
           htmlFor="confirmName"
-          className="mb-2 block text-xs uppercase tracking-[0.12em] text-neutral-500"
+          className="mb-2 block v3-label"
         >
           Type <span className="text-neutral-200">{name}</span> to confirm
         </label>
@@ -84,7 +84,7 @@ export function DeleteOrganization({
               if (result?.error) setError(result.error);
             })
           }
-          className="rounded-lg bg-red-500/90 px-4 py-2 text-xs uppercase tracking-[0.1em] text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg bg-red-500/90 px-4 py-2 transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40 v3-label"
         >
           {pending ? "Deleting…" : "Delete permanently"}
         </button>
@@ -95,7 +95,7 @@ export function DeleteOrganization({
             setTyped("");
             setError(null);
           }}
-          className="text-xs uppercase tracking-[0.1em] text-neutral-500 hover:text-neutral-300"
+          className="hover:text-neutral-300 v3-label"
         >
           Cancel
         </button>

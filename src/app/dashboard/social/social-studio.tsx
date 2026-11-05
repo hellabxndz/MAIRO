@@ -63,7 +63,7 @@ function Thumb({ url, kind }: { url: string | null; kind: "image" | "video" }) {
 function Notice({ result, network = "INSTAGRAM" }: { result: SocialResult | null; network?: Network }) {
   if (!result) return null;
   return result.ok ? (
-    <p className="mt-3 rounded-lg bg-emerald-400/10 px-3 py-2 text-[13px] text-emerald-300">
+    <p className="mt-3 rounded-lg bg-white/[0.04] px-3 py-2 text-[13px] text-white/90">
       {result.message}
       {result.permalink && (
         <a href={result.permalink} target="_blank" rel="noopener noreferrer" className="ml-2 underline underline-offset-4">See it on {network === "FACEBOOK" ? "Facebook" : "Instagram"}</a>
@@ -271,10 +271,10 @@ export function SocialStudio({
               const at = picked.indexOf(m.ref);
               return (
                 <button key={m.ref} type="button" onClick={() => toggle(m)} title={m.label}
-                  className={`relative rounded-xl border-2 p-0.5 transition ${at >= 0 ? "border-violet-400" : "border-transparent hover:border-white/20"}`}>
+                  className={`relative rounded-xl border-2 p-0.5 transition ${at >= 0 ? "border-white/[0.22]" : "border-transparent hover:border-white/20"}`}>
                   <Thumb url={m.previewUrl} kind={m.kind} />
                   {at >= 0 && (
-                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[11px] font-semibold text-black">
+                    <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[11px] font-semibold text-black">
                       {type === "CAROUSEL" ? at + 1 : "✓"}
                     </span>
                   )}
@@ -322,7 +322,7 @@ export function SocialStudio({
                 <div className="flex items-start gap-4">
                   <div className="w-16 shrink-0"><Thumb url={p.previewUrl} kind={p.mediaType === "REEL" ? "video" : "image"} /></div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">
+                    <p className="v3-label">
                       {mediaLabel(p.mediaType, network)} · {p.status === "CREATED" ? `Processing on ${facebook ? "Facebook" : "Instagram"}` : p.whenLabel}
                     </p>
                     {editing === p.id ? (

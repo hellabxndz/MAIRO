@@ -90,7 +90,7 @@ export function PlacementMock({ placement, media, words, businessName }: { place
   if (placement === "ig-feed") {
     const t = fold(text, SHOWN_IG);
     return (
-      <figure className="mx-auto w-full max-w-[340px] overflow-hidden rounded-2xl border bg-[#fff] text-[#111]" style={{ borderColor: "var(--mairo-line)" }}>
+      <figure className="mx-auto w-full max-w-[340px] overflow-hidden rounded-2xl border bg-[#fff] text-[#111]" style={{ borderColor: "var(--v3-line)" }}>
         <div className="flex items-center gap-2 px-3 py-2.5">
           <Avatar name={businessName} size={8} />
           <div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-semibold">{handle(businessName)}</p><p className="text-[10.5px] text-[#666]">Sponsored</p></div>
@@ -108,7 +108,7 @@ export function PlacementMock({ placement, media, words, businessName }: { place
   if (placement === "fb-feed") {
     const t = fold(text, SHOWN_FB);
     return (
-      <figure className="mx-auto w-full max-w-[340px] overflow-hidden rounded-2xl border bg-[#fff] text-[#111]" style={{ borderColor: "var(--mairo-line)" }}>
+      <figure className="mx-auto w-full max-w-[340px] overflow-hidden rounded-2xl border bg-[#fff] text-[#111]" style={{ borderColor: "var(--v3-line)" }}>
         <div className="flex items-center gap-2 px-3 py-2.5">
           <Avatar name={businessName} />
           <div className="min-w-0"><p className="truncate text-[12.5px] font-semibold">{businessName}</p><p className="text-[10.5px] text-[#666]">Sponsored · 🌐</p></div>
@@ -141,8 +141,8 @@ export function PlacementMock({ placement, media, words, businessName }: { place
       <figure className="relative mx-auto aspect-[9/16] w-full max-w-[250px] overflow-hidden rounded-2xl bg-black">
         <Media media={media} className="absolute inset-0 h-full w-full" />
         {/* Where Stories and Reels put their own text and buttons: keep words and faces out of these. */}
-        <div aria-hidden className="absolute inset-x-0 top-0 h-[14%] border-b border-dashed border-sky-300/80 bg-sky-300/10" />
-        <div aria-hidden className="absolute inset-x-0 bottom-0 h-[20%] border-t border-dashed border-sky-300/80 bg-sky-300/10" />
+        <div aria-hidden className="absolute inset-x-0 top-0 h-[14%] border-b border-dashed border-white/[0.22] bg-white/[0.04]" />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-[20%] border-t border-dashed border-white/[0.22] bg-white/[0.04]" />
         <span className="absolute left-2 top-[15%] rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-[#fff]">Safe area</span>
         <figcaption className="sr-only">The creative as 9:16; the dashed bands are where Stories and Reels place their own text and buttons</figcaption>
       </figure>
@@ -166,7 +166,7 @@ export function PlacementMock({ placement, media, words, businessName }: { place
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-10">
         <p className="line-clamp-2 text-[12px] leading-snug">{text}</p>
         {reels ? (
-          <span className="mt-2 block rounded-md bg-[#fff]/20 py-1.5 text-center text-[12px] font-semibold backdrop-blur">{words.cta}</span>
+          <span className="mt-2 block rounded-md bg-[#fff]/20 py-1.5 text-center text-[12px] font-semibold">{words.cta}</span>
         ) : (
           <span className="mt-2 flex flex-col items-center text-[12px] font-semibold"><span aria-hidden>︿</span><span className="rounded-full bg-[#fff] px-4 py-1.5 text-[#111]">{words.cta}</span></span>
         )}

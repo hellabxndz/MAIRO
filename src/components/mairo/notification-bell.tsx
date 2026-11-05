@@ -99,14 +99,14 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
           aria-label="Notifications"
           className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 max-h-[70dvh] overflow-y-auto overscroll-contain rounded-2xl border lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:top-11 lg:max-h-none lg:w-[360px] lg:overflow-hidden"
           style={{
-            borderColor: "var(--mairo-line-lit)",
+            borderColor: "var(--v3-line-strong)",
             background: "rgba(var(--mairo-bg-rgb),0.98)",
             boxShadow: "var(--mairo-glow-lift)",
           }}
         >
           <div
             className="flex items-center justify-between border-b px-4 py-3"
-            style={{ borderColor: "var(--mairo-line)" }}
+            style={{ borderColor: "var(--v3-line)" }}
           >
             <p className="text-[13px] font-medium text-white">Notifications</p>
             {unread > 0 && (
@@ -152,7 +152,7 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
                     </>
                   );
                   return (
-                    <li key={n.id} className="border-b last:border-b-0" style={{ borderColor: "var(--mairo-line)" }}>
+                    <li key={n.id} className="border-b last:border-b-0" style={{ borderColor: "var(--v3-line)" }}>
                       {n.href ? (
                         <Link href={n.href} className="block px-4 py-3 transition-colors hover:bg-white/[0.04]">
                           {inner}
@@ -167,7 +167,7 @@ export function NotificationBell({ items, unread }: { items: BellItem[]; unread:
             )}
           </div>
 
-          <div className="border-t px-4 py-2.5" style={{ borderColor: "var(--mairo-line)" }}>
+          <div className="border-t px-4 py-2.5" style={{ borderColor: "var(--v3-line)" }}>
             <Link href="/dashboard/notifications" className="text-[12px] text-blue-bright hover:text-white">
               See everything
             </Link>

@@ -52,13 +52,13 @@ export function CreateMenu({ variant = "sidebar" }: { variant?: "sidebar" | "bar
       {variant === "sidebar" ? (
         <button type="button" onClick={() => setOpen(true)} data-tour="create"
           className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[13.5px] font-medium text-white transition hover:brightness-110"
-          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}>
+          style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}>
           <span aria-hidden className="text-[16px] leading-none">+</span> Create
         </button>
       ) : (
         <button type="button" onClick={() => setOpen(true)} aria-label="Create"
           className="relative flex flex-col items-center gap-1 px-1 py-2">
-          <span className="-mt-5 flex h-11 w-11 items-center justify-center rounded-full text-[22px] leading-none text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }} aria-hidden>+</span>
+          <span className="-mt-5 flex h-11 w-11 items-center justify-center rounded-full text-[22px] leading-none text-white" style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }} aria-hidden>+</span>
           <span className="text-[10px] leading-none text-faint">Create</span>
         </button>
       )}
@@ -92,11 +92,11 @@ export function AskMairoButton({ name, compact = false, variant = "pill" }: { na
         type="button"
         onClick={open}
         className="flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-[14px] font-medium text-white transition-colors hover:bg-white/[0.04]"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         <span aria-hidden className="v3-dot" />
         <span className="min-w-0 flex-1 truncate">Ask {name}</span>
-        <kbd className="rounded-md border px-1.5 py-px font-mono text-[10.5px] text-white/55" style={{ borderColor: "var(--mairo-line)" }}>
+        <kbd className="rounded-md border px-1.5 py-px font-mono text-[10.5px] text-white/55" style={{ borderColor: "var(--v3-line)" }}>
           ⌘K
         </kbd>
       </button>
@@ -106,8 +106,8 @@ export function AskMairoButton({ name, compact = false, variant = "pill" }: { na
     <button
       type="button"
       onClick={open}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--mairo-line-lit)] ${compact ? "px-3" : ""}`}
-      style={{ borderColor: "var(--mairo-line)" }}
+      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:border-[color:var(--v3-line-strong)] ${compact ? "px-3" : ""}`}
+      style={{ borderColor: "var(--v3-line)" }}
     >
       <span aria-hidden className="v3-dot" />
       {compact ? (

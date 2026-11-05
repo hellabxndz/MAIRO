@@ -24,7 +24,7 @@ export async function PixelGuide({ organizationId, className = "" }: { organizat
       <details open={shop} className="group">
         <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-neutral-500">
+            <p className="v3-label">
               {shop ? "Set up tracking" : "Optional tracking"} · {stepsDone} of 3 done
             </p>
             <h2 className="mt-1 text-base font-medium text-white">{shop ? "Let MAIRO measure your website sales" : "Count enquiries made on your website"}</h2>

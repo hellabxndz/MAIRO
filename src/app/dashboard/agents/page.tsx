@@ -138,7 +138,7 @@ export default async function AssistantPage({
               key={skill.title}
               className="rounded-[var(--radius-card)] border p-5"
               style={{
-                borderColor: "var(--mairo-line)",
+                borderColor: "var(--v3-line)",
                 backgroundImage: "var(--mairo-glass)",
               }}
             >
@@ -184,7 +184,7 @@ function AssistantHero({
         <AssistantOrb />
 
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-faint">
+          <p className="font-mono v3-label">
             Ask MAIRO
           </p>
           <h1 className="mt-2.5 text-[32px] font-medium leading-[1.05] tracking-tight text-white sm:text-[42px]">
@@ -212,7 +212,7 @@ function AssistantHero({
       </div>
 
       {stats && (
-        <div className="relative mt-9 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border" style={{ borderColor: "var(--mairo-line)", background: "var(--mairo-line)" }}>
+        <div className="relative mt-9 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border" style={{ borderColor: "var(--v3-line)", background: "var(--v3-line)" }}>
           <Stat label="Campaigns running" value={stats.live} />
           <Stat label="Ads written for you" value={stats.creatives} />
           <Stat label="Changes MAIRO made" value={stats.changes} />
@@ -265,7 +265,7 @@ function AssistantOrb() {
       <span
         aria-hidden
         className="mairo-orb-pulse absolute inset-[22px] rounded-full"
-        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+        style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "none" }}
       />
       <span className="absolute inset-0 flex items-center justify-center">
         <svg viewBox="0 0 24 24" className="h-9 w-9 text-[#fff] sm:h-10 sm:w-10" fill="none" aria-hidden>

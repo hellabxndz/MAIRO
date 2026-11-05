@@ -74,7 +74,7 @@ export function ReadinessPanel({ r, onImprove, improving, onCreate }: { r: Readi
   const band = readinessBand(r.score, blocked(r));
   const pct = Math.max(4, Math.min(100, r.score));
   return (
-    <section aria-labelledby="ready-h" className="rounded-2xl border px-4 py-4" style={{ borderColor: "var(--mairo-line)" }}>
+    <section aria-labelledby="ready-h" className="rounded-2xl border px-4 py-4" style={{ borderColor: "var(--v3-line)" }}>
       <div className="flex items-baseline justify-between gap-3">
         <h3 id="ready-h" className="text-[13.5px] font-semibold text-white">Readiness check</h3>
         <p className="text-[12px] text-muted"><span className="text-[18px] font-semibold tabular-nums text-white">{r.score}</span> / 100 · {band.label}</p>

@@ -70,7 +70,7 @@ export default async function PlanPage() {
               <Badge tone={statusTone[plan.status]}>{plan.status}</Badge>
               {plan.status === "IN_REVIEW" && !fromStrategy && (
                 <form action={approvePlanAction}>
-                  <button type="submit" className="text-xs font-medium text-emerald-400 hover:underline">
+                  <button type="submit" className="text-xs font-medium text-white/70 hover:underline">
                     Approve this plan
                   </button>
                 </form>

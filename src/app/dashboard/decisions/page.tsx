@@ -146,10 +146,10 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
 
       {others.length > 0 && (
         <section aria-labelledby="waiting" className="mb-8">
-          <h2 id="waiting" className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Launches, plans and posts</h2>
+          <h2 id="waiting" className="mb-3 v3-label">Launches, plans and posts</h2>
           <ul className="grid gap-3 lg:grid-cols-2">
             {others.map((o) => (
-              <li key={o.key} className="flex flex-col rounded-2xl border p-4 sm:p-5" style={{ borderColor: o.kind === "launch" ? "rgba(255,196,0,0.4)" : "var(--mairo-line)" }}>
+              <li key={o.key} className="flex flex-col rounded-2xl border p-4 sm:p-5" style={{ borderColor: o.kind === "launch" ? "rgba(255,196,0,0.4)" : "var(--v3-line)" }}>
                 <div className="flex items-center gap-2.5">
                   <AgentIcon role={o.agent} size={28} />
                   <p className="text-[12.5px] text-muted">
@@ -174,7 +174,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
         </section>
       )}
 
-      <h2 className="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Changes MAIRO recommends</h2>
+      <h2 className="mb-3 v3-label">Changes MAIRO recommends</h2>
       <nav className="mb-6 flex gap-2 overflow-x-auto pb-1" aria-label="Filter decisions">
         {FILTERS.map((x) => (
           <Link
@@ -182,7 +182,7 @@ export default async function DecisionsPage({ searchParams }: { searchParams: Pr
             href={x.key === "all" ? "/dashboard/decisions" : `/dashboard/decisions?f=${x.key}`}
             className="shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors"
             style={{
-              borderColor: filter === x.key ? "var(--mairo-line-lit)" : "var(--mairo-line)",
+              borderColor: filter === x.key ? "var(--v3-line-strong)" : "var(--v3-line)",
               color: filter === x.key ? "var(--color-white)" : "var(--color-muted, #9aa3b5)",
               background: filter === x.key ? "rgba(238,238,238,0.12)" : "transparent",
             }}
@@ -233,7 +233,7 @@ function Empty({ filter, dataStatus }: { filter: string; dataStatus: "no-campaig
     title = `Nothing in ${CATEGORY_LABEL[CATEGORY_OF[filter] ?? "NEEDS_ATTENTION"].toLowerCase()} right now`;
   }
   return (
-    <div className="rounded-2xl border p-8 text-center" style={{ borderColor: "var(--mairo-line)" }}>
+    <div className="rounded-2xl border p-8 text-center" style={{ borderColor: "var(--v3-line)" }}>
       <p className="text-[15px] text-white">{title}</p>
       <p className="mx-auto mt-2 max-w-lg text-[13px] leading-relaxed text-muted">{body}</p>
       {dataStatus === "no-campaigns" && (

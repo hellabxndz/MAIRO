@@ -60,7 +60,7 @@ export function LaunchPanel({
 
   return (
     <section aria-labelledby="launch-confirm" className="rounded-2xl border-2 border-violet/50 bg-violet/[0.06] p-5 sm:p-6">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Final approval</p>
+      <p className="v3-label">Final approval</p>
       <h2 id="launch-confirm" className="mt-1 text-[20px] font-semibold text-white">Ready to launch &ldquo;{name}&rdquo;?</h2>
       <dl className="mt-3 grid grid-cols-1 gap-2 text-[13.5px] sm:grid-cols-2">
         <div><dt className="text-faint">Ad budget, charged by Meta</dt><dd className="text-white">{budget}{per30 ? ` — about ${per30} every 30 days` : ""}{adAccount ? ` · ${adAccount}` : ""}</dd></div>
@@ -68,7 +68,7 @@ export function LaunchPanel({
       </dl>
 
       {done ? (
-        <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-[14px] ${done.live ? "border border-emerald-400/30 bg-emerald-400/[0.06] text-white" : "bg-white/[0.04] text-white/90"}`}>
+        <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-[14px] ${done.live ? "border border-[color:var(--v3-line)] bg-white/[0.04] text-white" : "bg-white/[0.04] text-white/90"}`}>
           {done.live ? done.message ?? `Meta approved the ad and “${name}” is live. MAIRO is now watching how it does.` : done.message}
         </p>
       ) : (
@@ -84,7 +84,7 @@ export function LaunchPanel({
               type="button"
               onClick={launch}
               disabled={!agreed || pending || !ready}
-              className="min-h-[52px] rounded-xl bg-[#ffffff] px-8 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] hover:brightness-110 disabled:opacity-50"
+              className="min-h-[52px] rounded-xl bg-[#ffffff] px-8 text-[16px] font-semibold text-black hover:brightness-110 disabled:opacity-50"
             >
               {pending ? "Approving…" : "Approve and launch"}
             </button>

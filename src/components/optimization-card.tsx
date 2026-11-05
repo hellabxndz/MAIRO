@@ -27,7 +27,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
   if (applyState?.applied) {
     return (
       <Card>
-        <p className="text-sm text-emerald-300">
+        <p className="text-sm text-white/90">
           Budget updated for {item.campaignName}.
           {applyState.error && (
             <span className="mt-1 block text-xs text-amber-200/80">{applyState.error}</span>
@@ -41,7 +41,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-400/10 px-3 py-1 text-[9px] uppercase tracking-[0.16em] text-sky-300">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-1 text-[9px] uppercase tracking-[0.16em] text-white/90">
             {item.recommendation.headline}
           </span>
           <p className="mt-3 text-sm text-white">{item.recommendation.rationale}</p>
@@ -51,7 +51,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-          <p className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">Current</p>
+          <p className="v3-label">Current</p>
           <ul className="mt-2.5 space-y-1.5">
             {item.recommendation.proposal.map((p) => (
               <li key={p.platform} className="flex items-center justify-between text-sm">
@@ -65,8 +65,8 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-sky-400/25 bg-sky-400/[0.06] p-4">
-          <p className="text-[10px] uppercase tracking-[0.16em] text-sky-300/80">Recommended</p>
+        <div className="rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-4">
+          <p className="v3-label">Recommended</p>
           <ul className="mt-2.5 space-y-1.5">
             {item.recommendation.proposal.map((p) => {
               const up = p.toPercent > p.fromPercent;
@@ -79,7 +79,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
                   </span>
                   <span
                     className={`tabular-nums ${
-                      moved ? (up ? "text-emerald-300" : "text-neutral-400") : "text-neutral-400"
+                      moved ? (up ? "text-white/90" : "text-neutral-400") : "text-neutral-400"
                     }`}
                   >
                     {p.toPercent}%
@@ -114,7 +114,7 @@ export function OptimizationCard({ item }: { item: CampaignRecommendation }) {
           <button
             type="submit"
             disabled={applying}
-            className="rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110 disabled:opacity-60"
+            className="rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110 disabled:opacity-60"
           >
             {applying ? "Applying…" : "Apply MAIRO Recommendation"}
           </button>

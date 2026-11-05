@@ -10,8 +10,8 @@ import type { InsightView } from "@/lib/intelligence/run";
 // that acts on it.
 
 const CONFIDENCE: Record<DecisionConfidence, { label: string; tone: string; note: string | null }> = {
-  HIGH: { label: "High confidence", tone: "bg-emerald-400/12 text-emerald-300", note: null },
-  MEDIUM: { label: "Medium confidence", tone: "bg-sky-400/12 text-sky-300", note: null },
+  HIGH: { label: "High confidence", tone: "bg-white/[0.04] text-white/90", note: null },
+  MEDIUM: { label: "Medium confidence", tone: "bg-white/[0.04] text-white/90", note: null },
   EARLY: { label: "Early signal", tone: "bg-amber-400/12 text-amber-300", note: "MAIRO needs more data before making an automatic change." },
 };
 
@@ -19,7 +19,7 @@ export function ConfidenceBadge({ confidence, basedOn, compact = false }: { conf
   const c = CONFIDENCE[confidence];
   return (
     <div>
-      <span className={`inline-flex rounded-md px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] ${c.tone}`}>{c.label}</span>
+      <span className={`inline-flex rounded-md px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] ${c.tone}`}>{c.label}</span>
       {!compact && basedOn && <p className="mt-1.5 text-[12px] text-faint">Based on {basedOnLine(basedOn)}</p>}
       {!compact && c.note && <p className="mt-1 text-[12px] text-amber-200/70">{c.note}</p>}
     </div>
@@ -50,13 +50,13 @@ export function InsightExplanation({ insight, advanced }: { insight: InsightView
     <div className="space-y-3">
       {rows.map(([q, a]) => (
         <div key={q}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{q}</p>
+          <p className="v3-label">{q}</p>
           <p className="mt-0.5 text-[13.5px] leading-relaxed text-white/85">{a}</p>
         </div>
       ))}
       {insight.evidence.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-bright">What supports this</p>
+          <p className="v3-label">What supports this</p>
           <dl className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
             {insight.evidence.map((e) => (
               <div key={e.label} className="flex justify-between gap-3 rounded-lg bg-white/[0.03] px-3 py-2 text-[12.5px]">

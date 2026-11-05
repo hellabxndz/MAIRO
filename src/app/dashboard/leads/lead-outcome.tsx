@@ -39,7 +39,7 @@ const local = (iso: string | null) => {
 const toIso = (v: string) => (v ? new Date(v).toISOString() : null);
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null);
 
-const field = "rounded-lg border border-[color:var(--mairo-line)] bg-field px-2.5 py-1.5 text-[13px] text-white outline-none focus:border-[color:var(--mairo-line-lit)]";
+const field = "rounded-lg border border-[color:var(--v3-line)] bg-field px-2.5 py-1.5 text-[13px] text-white outline-none focus:border-[color:var(--v3-line-strong)]";
 
 export function LeadOutcome(props: LeadRecordProps) {
   const { leadId, labels } = props;
@@ -116,7 +116,7 @@ export function LeadOutcome(props: LeadRecordProps) {
               className={`min-h-[34px] rounded-full border px-3.5 text-[12.5px] transition disabled:opacity-60 ${
                 on
                   ? "border-transparent bg-[image:var(--mairo-ramp)] text-black"
-                  : "border-[color:var(--mairo-line)] text-white/80 hover:border-[color:var(--mairo-line-lit)] hover:text-white"
+                  : "border-[color:var(--v3-line)] text-white/80 hover:border-[color:var(--v3-line-strong)] hover:text-white"
               }`}
             >
               {labels[o.status]}
@@ -143,7 +143,7 @@ export function LeadOutcome(props: LeadRecordProps) {
             Last contacted
             <span className="flex gap-2">
               <input id={`contacted-${leadId}`} type="datetime-local" value={contacted} onChange={(e) => setContacted(e.target.value)} className={`${field} min-w-0 flex-1`} />
-              <button type="button" onClick={() => setContacted(local(new Date().toISOString()))} className="shrink-0 rounded-lg border border-[color:var(--mairo-line)] px-2.5 text-[12px] text-white/85 hover:text-white">
+              <button type="button" onClick={() => setContacted(local(new Date().toISOString()))} className="shrink-0 rounded-lg border border-[color:var(--v3-line)] px-2.5 text-[12px] text-white/85 hover:text-white">
                 Just now
               </button>
             </span>
@@ -192,7 +192,7 @@ export function LeadOutcome(props: LeadRecordProps) {
       )}
 
       <p className="mt-2 min-h-[16px] text-[12px]" aria-live="polite">
-        {error ? <span className="text-red-300">{error}</span> : saved ? <span className="text-emerald-300">✓ Saved</span> : null}
+        {error ? <span className="text-red-300">{error}</span> : saved ? <span className="text-white/90">✓ Saved</span> : null}
       </p>
     </div>
   );

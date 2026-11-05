@@ -34,7 +34,7 @@ export function Dropzone({
 
   if (value) {
     return (
-      <div className="relative overflow-hidden rounded-xl border" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="relative overflow-hidden rounded-xl border" style={{ borderColor: "var(--v3-line)" }}>
         <img src={value} alt="Uploaded" className="max-h-72 w-full object-contain bg-field-3" />
         <button
           type="button"
@@ -67,7 +67,7 @@ export function Dropzone({
           if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
         }}
         className={`flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed px-6 py-12 text-center transition-colors ${
-          dragOver ? "border-sky-400/60 bg-sky-400/[0.06]" : "border-white/15 hover:border-white/25"
+          dragOver ? "border-white/[0.22] bg-white/[0.04]" : "border-white/15 hover:border-white/25"
         }`}
       >
         <svg viewBox="0 0 24 24" className="h-7 w-7 text-neutral-500" fill="none" aria-hidden>

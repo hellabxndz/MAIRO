@@ -108,7 +108,7 @@ export function StoreCard({ ingestUrl, hasShopifySecret, lastReceivedAt, receive
           if it gets out.
         </p>
         {receivedCount > 0 && (
-          <p className="mt-1.5 text-xs text-emerald-300/80">
+          <p className="mt-1.5 text-xs text-white/80">
             {receivedCount.toLocaleString()} order{receivedCount === 1 ? "" : "s"} received
             {lastReceivedAt ? `, last one ${new Date(lastReceivedAt).toLocaleString()}` : ""}.
           </p>
@@ -149,7 +149,7 @@ export function StoreCard({ ingestUrl, hasShopifySecret, lastReceivedAt, receive
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[240px] flex-1 space-y-1">
             <label className="text-xs text-neutral-400" htmlFor="shopify-secret">
-              Shopify signing secret {hasShopifySecret && <span className="text-emerald-400">· saved</span>}
+              Shopify signing secret {hasShopifySecret && <span className="text-white/70">· saved</span>}
             </label>
             <input
               id="shopify-secret"
@@ -172,7 +172,7 @@ export function StoreCard({ ingestUrl, hasShopifySecret, lastReceivedAt, receive
       )}
 
       {result && (
-        <p className={`text-xs ${result.ok ? "text-emerald-300" : "text-red-400"}`}>
+        <p className={`text-xs ${result.ok ? "text-white/90" : "text-red-400"}`}>
           {result.message}
         </p>
       )}
@@ -244,7 +244,7 @@ export function ManualOrderForm({ currency }: { currency: string }) {
       </div>
 
       {result && (
-        <p className={`mt-3 text-xs ${result.ok ? "text-emerald-300" : "text-red-400"}`}>
+        <p className={`mt-3 text-xs ${result.ok ? "text-white/90" : "text-red-400"}`}>
           {result.message}
         </p>
       )}

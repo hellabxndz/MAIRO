@@ -22,7 +22,7 @@ export default async function MetaCapabilityPage({ params }: PageProps<"/dashboa
   if (!f || !["SUPPORTED", "PARTIALLY_SUPPORTED"].includes(f.mairoSupport)) notFound();
   return (
     <div className="mx-auto max-w-[720px]">
-      <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">A new Meta capability</p>
+      <p className="v3-label">A new Meta capability</p>
       <h1 className="mt-1 text-[clamp(24px,3vw,30px)] font-semibold text-white">{f.name}</h1>
       <p className="mt-3 text-[15px] leading-relaxed text-white/85">{f.description}</p>
       <ul className="mt-5 space-y-2 text-[14px] text-white/85">

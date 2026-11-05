@@ -57,14 +57,14 @@ export function CalendarView({
         {view === "week" ? (
           <ol className="grid grid-cols-1 gap-3 md:grid-cols-7">
             {dates.map((d) => (
-              <li key={d} className={`min-w-0 rounded-xl border p-2 ${d === today ? "border-violet-400/60" : "border-white/[0.07]"} bg-field/60`}>
+              <li key={d} className={`min-w-0 rounded-xl border p-2 ${d === today ? "border-white/[0.22]" : "border-white/[0.07]"} bg-field/60`}>
                 <p className="mb-2 px-1 text-[12px] text-faint">
                   <span className="font-semibold text-white/85">{dayName(d, { weekday: "short" })}</span> {dayName(d, { day: "numeric", month: "short" })}
                 </p>
                 <div className="space-y-2">
                   {(byDate.get(d) ?? []).map((p) => (
                     <button key={p.id} type="button" onClick={() => open(p.id)}
-                      className={`block w-full rounded-lg border p-2 text-left transition ${selected === p.id ? "border-violet-400 bg-violet/[0.12]" : "border-white/[0.07] hover:border-white/20"}`}>
+                      className={`block w-full rounded-lg border p-2 text-left transition ${selected === p.id ? "border-white/[0.22] bg-violet/[0.12]" : "border-white/[0.07] hover:border-white/20"}`}>
                       <span className="relative mb-1.5 block aspect-square w-full overflow-hidden rounded-md bg-white/[0.04]">
                         {p.previewUrl ? (
                           <Image src={p.previewUrl} alt="" fill unoptimized sizes="160px" className="object-cover" />
@@ -87,15 +87,15 @@ export function CalendarView({
           <div className="overflow-x-auto">
             <div className="grid min-w-[640px] grid-cols-7 gap-1.5">
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                <p key={d} className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-faint">{d}</p>
+                <p key={d} className="px-1 v3-label">{d}</p>
               ))}
               {dates.map((d) => (
-                <div key={d} className={`min-h-[92px] rounded-lg border p-1.5 ${d.slice(0, 7) === month ? "bg-field/60" : "bg-transparent opacity-50"} ${d === today ? "border-violet-400/60" : "border-white/[0.06]"}`}>
+                <div key={d} className={`min-h-[92px] rounded-lg border p-1.5 ${d.slice(0, 7) === month ? "bg-field/60" : "bg-transparent opacity-50"} ${d === today ? "border-white/[0.22]" : "border-white/[0.06]"}`}>
                   <p className="mb-1 text-[11.5px] text-white/70">{Number(d.slice(8))}</p>
                   <div className="space-y-1">
                     {(byDate.get(d) ?? []).map((p) => (
                       <button key={p.id} type="button" onClick={() => open(p.id)} title={`${p.contentType} · ${p.statusLabel}`}
-                        className={`flex w-full items-center gap-1 truncate rounded px-1.5 py-1 text-left text-[11px] ${TONE_CLASS[p.tone]} ${selected === p.id ? "ring-1 ring-violet-400" : ""}`}>
+                        className={`flex w-full items-center gap-1 truncate rounded px-1.5 py-1 text-left text-[11px] ${TONE_CLASS[p.tone]} ${selected === p.id ? "ring-1 ring-white/[0.22]" : ""}`}>
                         <PlatformMark network={p.network} className="h-3 w-3 shrink-0" />
                         <span className="truncate">{p.time} {p.contentType}</span>
                       </button>

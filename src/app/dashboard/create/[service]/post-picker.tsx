@@ -27,7 +27,7 @@ export function PostPicker({
     return (
       <p
         className="rounded-xl border p-4 text-[13px] leading-relaxed text-amber-200/90"
-        style={{ borderColor: "var(--mairo-line)" }}
+        style={{ borderColor: "var(--v3-line)" }}
       >
         {error}
       </p>
@@ -50,7 +50,7 @@ export function PostPicker({
               onClick={() => onSelect(post)}
               className="flex w-full gap-3 rounded-xl border p-3 text-left transition-all duration-300"
               style={{
-                borderColor: selected ? "rgba(238,238,238,0.5)" : "var(--mairo-line)",
+                borderColor: selected ? "rgba(238,238,238,0.5)" : "var(--v3-line)",
                 background: selected ? "rgba(214,214,214,0.08)" : "rgba(var(--mairo-fg-rgb),0.015)",
               }}
             >

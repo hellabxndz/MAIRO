@@ -69,7 +69,7 @@ export function ReadinessPanel({
             <span
               className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full border text-[10px] ${
                 step.done
-                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                  ? "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90"
                   : step.unknown
                     ? "border-neutral-600 text-neutral-500"
                     : "border-white/15 text-neutral-600"
@@ -105,7 +105,7 @@ export function ReadinessPanel({
                       href={action.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-4 py-2 text-[11px] font-medium text-black transition hover:brightness-110"
+                      className="mt-3 inline-flex rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[11px] font-medium text-black transition hover:brightness-110"
                     >
                       {action.label} →
                     </a>
@@ -152,7 +152,7 @@ export function PendingReason({
   // printing it twice reads as a system that has lost track of what it said.
   if (readiness.ready && !held && startsAt) {
     return (
-      <p className="mt-3 text-xs leading-relaxed text-emerald-300/90">
+      <p className="mt-3 text-xs leading-relaxed text-white/90">
         Everything&rsquo;s ready. This is just waiting for the time you picked.
       </p>
     );
@@ -160,7 +160,7 @@ export function PendingReason({
 
   if (readiness.ready && !held) {
     return (
-      <p className="mt-3 text-xs leading-relaxed text-emerald-300/90">
+      <p className="mt-3 text-xs leading-relaxed text-white/90">
         Everything&rsquo;s done — MAIRO is switching this on. Refresh in a moment.
       </p>
     );

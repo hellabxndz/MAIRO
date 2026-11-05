@@ -18,7 +18,7 @@ export function TeamPanel({ members, intro, allHref }: { members: TeamMemberData
       <ul className="mt-4 grid grid-cols-1 gap-2 @md:grid-cols-2 @4xl:grid-cols-4">
         {members.map((m) => (
           <li key={m.role}>
-            <Go href={m.href} className="flex h-full items-start gap-3 rounded-2xl border border-[color:var(--mairo-line)] p-3 transition hover:border-[color:var(--mairo-line-lit)]">
+            <Go href={m.href} className="flex h-full items-start gap-3 rounded-2xl border border-[color:var(--v3-line)] p-3 transition hover:border-[color:var(--v3-line-strong)]">
               <AgentIcon role={m.role} size={30} />
               <span className="min-w-0">
                 <span className="block truncate text-[13px] font-medium text-white">{AGENT[m.role].name}</span>

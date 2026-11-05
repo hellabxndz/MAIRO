@@ -21,7 +21,7 @@ export function ReviewNow() {
             router.refresh();
           })
         }
-        className="rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white hover:border-[color:var(--mairo-line-lit)] disabled:opacity-60"
+        className="rounded-full border border-[color:var(--v3-line)] px-4 py-2 text-[13px] text-white hover:border-[color:var(--v3-line-strong)] disabled:opacity-60"
       >
         {pending ? "Reviewing your results…" : "Review now"}
       </button>

@@ -124,7 +124,7 @@ export default async function CoachPage() {
         {changes.length === 0 && past.length === 0 ? (
           <p className="mt-4 text-[14px] text-muted">Nothing yet. Once a recommendation is carried out, what followed shows here.</p>
         ) : (
-          <ul className="mt-4 divide-y divide-[color:var(--mairo-line)]">
+          <ul className="mt-4 divide-y divide-[color:var(--v3-line)]">
             {changes.map((c) => {
               const v = c.verdict ? VERDICT[c.verdict] : null;
               return (

@@ -39,7 +39,7 @@ export function CreativeTile({ c }: { c: CreativeTileData }) {
   const k = KIND[c.kind];
   return (
     <Go href={c.href} className="group block min-w-0">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border transition group-hover:border-[color:var(--mairo-line-lit)]" style={{ borderColor: "var(--mairo-line)" }}>
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[18px] border transition group-hover:border-[color:var(--v3-line-strong)]" style={{ borderColor: "var(--v3-line)" }}>
         {c.art ? (
           <div className="h-full w-full [&>img]:h-full [&>img]:w-full [&>svg]:h-full [&>svg]:w-full">{c.art}</div>
         ) : c.imageUrl ? (
@@ -48,7 +48,7 @@ export function CreativeTile({ c }: { c: CreativeTileData }) {
         ) : (
           // A concept: its words on the brand's night, clearly not a photograph.
           <div className="flex h-full flex-col justify-end bg-[radial-gradient(120%_80%_at_80%_0%,rgba(255,255,255,0.45),transparent_60%),radial-gradient(90%_70%_at_0%_100%,rgba(210,210,210,0.35),transparent_60%),#181818] p-3.5">
-            <span className="mb-1.5 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-white/55">No picture yet</span>
+            <span className="mb-1.5 v3-label">No picture yet</span>
             <p className="text-[14px] font-semibold leading-snug text-white [text-wrap:balance]">{c.headline}</p>
           </div>
         )}

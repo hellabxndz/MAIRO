@@ -113,7 +113,7 @@ export default async function SocialManagerPage() {
       <section className={`${card} mb-6`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Your goal</p>
+            <p className="v3-label">Your goal</p>
             <h2 className="mt-1 text-[22px] font-semibold text-white">{g.label}</h2>
             {view.goal === "RECOMMEND" && <p className="text-[12.5px] text-muted">You asked MAIRO to recommend; this fits what your business sells.</p>}
             {view.goalDetail && <p className="mt-1 max-w-[640px] text-[13.5px] italic text-white/75">&ldquo;{view.goalDetail}&rdquo;</p>}
@@ -154,7 +154,7 @@ export default async function SocialManagerPage() {
         <p className="mt-0.5 text-[12.5px] text-muted">Tell MAIRO and it plans the posts around it, mixed with useful content so your feed doesn&rsquo;t turn into ads.{promotions ? ` ${promotions} running now.` : ""}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {PROMOTION_KINDS.map((k) => (
-            <Link key={k.key} href={`/dashboard/social/promotions?kind=${k.key}`} className="rounded-full border border-white/12 px-3.5 py-1.5 text-[13px] text-white/85 hover:border-violet-400">
+            <Link key={k.key} href={`/dashboard/social/promotions?kind=${k.key}`} className="rounded-full border border-white/12 px-3.5 py-1.5 text-[13px] text-white/85 hover:border-white/[0.22]">
               {k.label}
             </Link>
           ))}

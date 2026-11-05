@@ -15,7 +15,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
     <div className="space-y-4">
       <section className={card}>
         <dl className="grid gap-4 md:grid-cols-[160px_minmax(0,1fr)]">
-          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Goal</dt>
+          <dt className="v3-label">Goal</dt>
           <dd className="text-[16px] font-semibold text-white">
             {missionGoal(plan.goal).label}{plan.focusItem ? ` — ${plan.focusItem}` : ""}
             {plan.chosenGoal === "RECOMMEND" && <span className="ml-2 text-[12.5px] font-normal text-muted">(MAIRO&rsquo;s recommendation for your business)</span>}
@@ -23,7 +23,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
           </dd>
           {e && (
             <>
-              <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">What MAIRO understood</dt>
+              <dt className="v3-label">What MAIRO understood</dt>
               <dd>
                 <ul aria-label="What MAIRO understood" className="flex flex-wrap gap-1.5">
                   {[
@@ -41,33 +41,33 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
               </dd>
             </>
           )}
-          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Strategy</dt>
+          <dt className="v3-label">Strategy</dt>
           <dd className="text-[14.5px] leading-relaxed text-white/90">
             {plan.strategy}
             {e && <span className="mt-1 block text-[13px] text-muted">{e.statement}</span>}
           </dd>
-          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Why</dt>
+          <dt className="v3-label">Why</dt>
           <dd className="text-[14px] leading-relaxed text-white/80">{plan.why}</dd>
-          <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">MAIRO will focus on</dt>
+          <dt className="v3-label">MAIRO will focus on</dt>
           <dd>
             <ul className="grid gap-1.5 sm:grid-cols-2">
               {plan.focus.map((f) => (
-                <li key={f} className="flex gap-2 text-[14px] text-white/85"><span aria-hidden className="text-emerald-300">✓</span>{f}</li>
+                <li key={f} className="flex gap-2 text-[14px] text-white/85"><span aria-hidden className="text-white/90">✓</span>{f}</li>
               ))}
             </ul>
           </dd>
           {e && (
             <>
-              <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">How sure MAIRO is</dt>
+              <dt className="v3-label">How sure MAIRO is</dt>
               <dd className="text-[13.5px] text-white/80">
                 <ConfidenceText level={e.confidence.level} text={e.confidence.customer} />
-                {e.learningsApplied.length > 0 && <span className="mt-1 block text-[13px] text-emerald-200/90">From your results: {e.learningsApplied.join(" ")}</span>}
+                {e.learningsApplied.length > 0 && <span className="mt-1 block text-[13px] text-white/90">From your results: {e.learningsApplied.join(" ")}</span>}
               </dd>
             </>
           )}
           {plan.secondaryNote && (
             <>
-              <dt className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Second goal</dt>
+              <dt className="v3-label">Second goal</dt>
               <dd className="text-[13.5px] text-white/80">{plan.secondaryNote}</dd>
             </>
           )}
@@ -84,7 +84,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
                 <span className="text-[14px] font-medium text-white">{c.name}</span>
                 <span className="shrink-0 rounded-full bg-violet/[0.15] px-2 py-0.5 text-[11px] text-violet-bright">{c.objective}</span>
               </p>
-              <p className="mt-1 text-[12px] uppercase tracking-[0.12em] text-faint">{c.format === "VIDEO" ? "Video" : c.format === "CAROUSEL" ? "Carousel" : "Image"} · {c.cta}</p>
+              <p className="mt-1 v3-label">{c.format === "VIDEO" ? "Video" : c.format === "CAROUSEL" ? "Carousel" : "Image"} · {c.cta}</p>
               {c.headline && <p className="mt-2 text-[13.5px] font-medium text-white/90">{c.headline}</p>}
               <p className="mt-2 rounded-lg bg-violet/[0.07] px-3 py-2 text-[12.5px] leading-relaxed text-white/80">
                 <span className="font-semibold text-violet-bright">Why MAIRO created this ad: </span>{c.why}
@@ -105,7 +105,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
                   <span className="text-white/90">{a.purpose}</span>
                   <span className="tabular-nums text-white">{a.percent}%</span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white/[0.06]"><div className="h-1.5 rounded-full bg-violet-400/80" style={{ width: `${a.percent}%` }} /></div>
+                <div className="mt-1 h-1.5 rounded-full bg-white/[0.06]"><div className="h-1.5 rounded-full bg-white/50" style={{ width: `${a.percent}%` }} /></div>
                 <p className="mt-1 text-[12px] text-muted">{a.why}</p>
               </li>
             ))}
@@ -121,7 +121,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
           <ol className="mt-3 space-y-2">
             {e.launch.map((st) => (
               <li key={st.stage} className={`flex gap-3 text-[13.5px] ${st.include ? "" : "opacity-60"}`}>
-                <span aria-hidden className={st.include ? "text-emerald-300" : "text-faint"}>{st.include ? "✓" : "–"}</span>
+                <span aria-hidden className={st.include ? "text-white/90" : "text-faint"}>{st.include ? "✓" : "–"}</span>
                 <span className="min-w-0"><span className="font-medium text-white">{st.stage}</span>{!st.include && <span className="text-faint"> (skipped)</span>} <span className="text-white/70">— {st.reason}</span></span>
               </li>
             ))}
@@ -187,7 +187,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
               ...(e?.metaTools?.length ? [["Meta tools MAIRO may use", e.metaTools.map((t) => t.name).join(", ")]] : []),
             ].map(([k, v]) => (
               <div key={k} className="min-w-0">
-                <dt className="text-[11px] font-medium uppercase tracking-[0.14em] text-faint">{k}</dt>
+                <dt className="v3-label">{k}</dt>
                 <dd className="mt-0.5 text-white/85">{v}</dd>
               </div>
             ))}
@@ -201,7 +201,7 @@ export function PlanView({ plan, showTactics = true }: { plan: MissionPlan; show
 
 /** How sure MAIRO is, in words. Never a percentage. */
 export function ConfidenceText({ level, text }: { level: "low" | "medium" | "high"; text: string }) {
-  const dot = level === "high" ? "bg-emerald-400" : level === "medium" ? "bg-sky-400" : "bg-amber-300";
+  const dot = level === "high" ? "bg-[color:var(--v3-signal)]" : level === "medium" ? "bg-[image:var(--mairo-ramp)]" : "bg-amber-300";
   return (
     <span className="inline-flex items-start gap-2">
       <span aria-hidden className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />

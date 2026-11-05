@@ -25,7 +25,7 @@ export function PresetGrid({
             onClick={() => onChange(p.key === "CUSTOM" ? null : p.key)}
             aria-pressed={on}
             className={`rounded-xl border px-3.5 py-3 text-left transition-all duration-300 [transition-timing-function:var(--ease-mairo)] ${
-              on ? "border-sky-400/50 bg-sky-400/[0.08]" : "border-white/[0.08] hover:border-white/20"
+              on ? "border-white/[0.22] bg-white/[0.04]" : "border-white/[0.08] hover:border-white/20"
             }`}
           >
             <span className="block text-[12.5px] font-medium text-white">{p.label}</span>

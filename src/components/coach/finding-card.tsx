@@ -124,7 +124,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
           {f.evidence.length > 0 ? (
             <dl className="mt-1.5 grid gap-x-6 gap-y-1.5">
               {f.evidence.map((e) => (
-                <div key={e.label} className="flex justify-between gap-3 border-b border-[color:var(--mairo-line)] pb-1.5 text-[13px]">
+                <div key={e.label} className="flex justify-between gap-3 border-b border-[color:var(--v3-line)] pb-1.5 text-[13px]">
                   <dt className="text-muted">{e.label}</dt>
                   <dd className="tabular-nums text-white">{e.value}</dd>
                 </div>
@@ -155,13 +155,13 @@ export function FindingCard({ f }: { f: FindingCardData }) {
         </section>
       </div>
 
-      <section className="mt-5 border-t border-[color:var(--mairo-line)] pt-4">
+      <section className="mt-5 border-t border-[color:var(--v3-line)] pt-4">
         <h4 className={h}>Approve or investigate</h4>
         <details className="mt-2.5 rounded-2xl bg-white/[0.025] px-4 py-3" open={f.status === "APPROVED"}>
           <summary className="cursor-pointer text-[13px] text-white">Your improvement plan · {f.steps.filter((s) => s.status === "done").length} of {f.steps.length} done</summary>
           <ol className="mt-3 space-y-3">
             {f.steps.map((s) => (
-              <li key={s.id} className="rounded-xl border border-[color:var(--mairo-line)] px-3.5 py-3">
+              <li key={s.id} className="rounded-xl border border-[color:var(--v3-line)] px-3.5 py-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className={`text-[13.5px] font-medium ${s.status === "done" ? "text-muted line-through" : "text-white"}`}>
                     {s.priority}. {s.href ? <Link href={s.href} className="hover:underline">{s.title}</Link> : s.title}
@@ -179,7 +179,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
                     {(["done", "skipped", "todo"] as const)
                       .filter((st) => st !== s.status)
                       .map((st) => (
-                        <button key={st} type="button" disabled={pending} onClick={() => act(() => setStepStatusAction(f.id, s.id, st))} className="rounded-full border border-[color:var(--mairo-line)] px-2.5 py-1 text-[11.5px] text-white/80 hover:text-white disabled:opacity-60">
+                        <button key={st} type="button" disabled={pending} onClick={() => act(() => setStepStatusAction(f.id, s.id, st))} className="rounded-full border border-[color:var(--v3-line)] px-2.5 py-1 text-[11.5px] text-white/80 hover:text-white disabled:opacity-60">
                           {st === "done" ? "Mark done" : st === "skipped" ? "Skip" : "Back to to-do"}
                         </button>
                       ))}
@@ -202,7 +202,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
               Approve the plan
             </button>
           )}
-          <Link href={`/dashboard/agents?ask=${encodeURIComponent(ask)}`} className="rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white hover:border-[color:var(--mairo-line-lit)]">
+          <Link href={`/dashboard/agents?ask=${encodeURIComponent(ask)}`} className="rounded-full border border-[color:var(--v3-line)] px-4 py-2 text-[13px] text-white hover:border-[color:var(--v3-line-strong)]">
             Investigate with MAIRO
           </Link>
           <button type="button" disabled={pending} onClick={() => act(() => dismissFindingAction(f.id))} className="rounded-full px-3 py-2 text-[13px] text-muted hover:text-white disabled:opacity-60">
@@ -211,7 +211,7 @@ export function FindingCard({ f }: { f: FindingCardData }) {
           <span className="ml-auto flex items-center gap-1.5 text-[12px] text-faint">
             Helpful?
             {(["HELPFUL", "NOT_HELPFUL"] as const).map((v) => (
-              <button key={v} type="button" aria-pressed={f.feedback === v} disabled={pending} onClick={() => act(() => findingFeedbackAction(f.id, v))} className={`rounded-full border px-2 py-0.5 ${f.feedback === v ? "border-transparent bg-violet/15 text-violet-bright" : "border-[color:var(--mairo-line)] text-muted hover:text-white"}`}>
+              <button key={v} type="button" aria-pressed={f.feedback === v} disabled={pending} onClick={() => act(() => findingFeedbackAction(f.id, v))} className={`rounded-full border px-2 py-0.5 ${f.feedback === v ? "border-transparent bg-violet/15 text-violet-bright" : "border-[color:var(--v3-line)] text-muted hover:text-white"}`}>
                 {v === "HELPFUL" ? "Yes" : "No"}
               </button>
             ))}

@@ -117,7 +117,7 @@ export async function SocialPage({ network }: { network: Network }) {
             <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-neutral-300">{fbPage.error.message}</p>
             <Link
               href="/dashboard/meta"
-              className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+              className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
             >
               Open your Meta connection
             </Link>
@@ -134,7 +134,7 @@ export async function SocialPage({ network }: { network: Network }) {
             </p>
             <a
               href={PAGE_POSTING_CONNECT}
-              className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+              className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
             >
               Allow posting on Facebook
             </a>
@@ -193,7 +193,7 @@ export async function SocialPage({ network }: { network: Network }) {
               leaves for Facebook's dialog. */}
           <a
             href={INSTAGRAM_CONNECT}
-            className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] shadow-[var(--mairo-glow-key)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
+            className="mt-4 inline-flex rounded-full bg-[image:var(--mairo-ramp)] px-5 py-2.5 text-xs font-medium text-black transition hover:brightness-110"
           >
             Connect Instagram
           </a>
@@ -257,7 +257,7 @@ function PostHistory({ history, network }: { history: { id: string; caption: str
     <>
       {history.length > 0 && (
         <div className="mt-8">
-          <p className="mb-4 text-sm uppercase tracking-[0.16em] text-neutral-400">
+          <p className="mb-4 text-sm v3-label">
             What MAIRO has posted
           </p>
           <div className="space-y-3">

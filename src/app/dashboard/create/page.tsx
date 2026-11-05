@@ -179,8 +179,8 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
               required
               maxLength={200}
               placeholder="e.g. 20% off all hoodies this weekend"
-              className="min-h-12 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[16px] text-white placeholder:text-faint focus:border-[color:var(--mairo-line-lit)] focus:outline-none"
-              style={{ borderColor: "var(--mairo-line)" }}
+              className="min-h-12 min-w-0 flex-1 rounded-full border bg-transparent px-4 text-[16px] text-white placeholder:text-faint focus:border-[color:var(--v3-line-strong)] focus:outline-none"
+              style={{ borderColor: "var(--v3-line)" }}
             />
             <button type="submit" className="min-h-12 rounded-full bg-white px-6 text-[15px] font-semibold text-black">Continue</button>
           </div>
@@ -205,12 +205,12 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
       {drafts.length > 0 && (
         <section className="mt-10">
           <h2 className="text-[15px] font-semibold text-white">Pick up where you left off</h2>
-          <ul className="mt-3 divide-y overflow-hidden rounded-[22px] border" style={{ borderColor: "var(--mairo-line)" }}>
+          <ul className="mt-3 divide-y overflow-hidden rounded-[22px] border" style={{ borderColor: "var(--v3-line)" }}>
             {drafts.map((d) => {
               const building = d.step === "BUILDING";
               const step = WIZARD_STEPS.find((s) => s.id === d.step)?.label;
               return (
-                <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
                   <div className="min-w-0">
                     <p className="truncate text-[14px] text-white">{d.label}</p>
                     <p className="mt-0.5 text-[12px] text-faint">

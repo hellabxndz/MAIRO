@@ -26,7 +26,7 @@ export function CampaignTabs({ active }: { active: TabKey }) {
   return (
     <div
       className="-mx-4 mb-8 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0"
-      style={{ borderColor: "var(--mairo-line)" }}
+      style={{ borderColor: "var(--v3-line)" }}
     >
       <nav className="flex min-w-max gap-1" aria-label="Campaign sections">
         {TABS.map((tab) => {

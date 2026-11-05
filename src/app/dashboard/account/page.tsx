@@ -31,13 +31,13 @@ export const dynamic = "force-dynamic";
 
 type Row = { href: string; label: string; hint: string; status?: { text: string; tone: "ok" | "warn" | "muted" } };
 
-const TONE = { ok: "text-emerald-300", warn: "text-amber-200", muted: "text-faint" } as const;
+const TONE = { ok: "text-white/90", warn: "text-amber-200", muted: "text-faint" } as const;
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h2 className="mb-2 px-1 text-[12px] font-medium text-faint">{title}</h2>
-      <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+      <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
         {children}
       </div>
     </section>
@@ -48,7 +48,7 @@ function Rows({ rows }: { rows: Row[] }) {
   return (
     <ul>
       {rows.map((r, i) => (
-        <li key={r.href} className={i > 0 ? "border-t" : undefined} style={i > 0 ? { borderColor: "var(--mairo-line)" } : undefined}>
+        <li key={r.href} className={i > 0 ? "border-t" : undefined} style={i > 0 ? { borderColor: "var(--v3-line)" } : undefined}>
           <Link href={r.href} className="flex min-h-[60px] items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.03]">
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] text-white">{r.label}</span>
@@ -65,7 +65,7 @@ function Rows({ rows }: { rows: Row[] }) {
 
 function Line({ label, hint, children, first = false }: { label: string; hint: string; children: ReactNode; first?: boolean }) {
   return (
-    <div className={`flex min-h-[60px] flex-wrap items-center gap-3 px-4 py-3 ${first ? "" : "border-t"}`} style={first ? undefined : { borderColor: "var(--mairo-line)" }}>
+    <div className={`flex min-h-[60px] flex-wrap items-center gap-3 px-4 py-3 ${first ? "" : "border-t"}`} style={first ? undefined : { borderColor: "var(--v3-line)" }}>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] text-white">{label}</span>
         <span className="block text-[12.5px] text-muted">{hint}</span>
@@ -156,12 +156,12 @@ export default async function AccountPage() {
         <Group title="Help">
           <Rows rows={[{ href: "/dashboard/guide", label: "Help center", hint: "How MAIRO works — approvals, billing, tracking — with search" }]} />
           <Line label="Tell the MAIRO team something" hint="A problem, something confusing, or an idea">
-            <FeedbackButton className="shrink-0 rounded-full border border-[color:var(--mairo-line)] px-4 py-2 text-[13px] text-white/85 transition hover:text-white" />
+            <FeedbackButton className="shrink-0 rounded-full border border-[color:var(--v3-line)] px-4 py-2 text-[13px] text-white/85 transition hover:text-white" />
           </Line>
           <Line label="Take the tour again" hint="Thirty seconds around the four sections">
             <StartTourLink className="shrink-0 text-[13.5px] text-white underline underline-offset-4" />
           </Line>
-          <div className="border-t" style={{ borderColor: "var(--mairo-line)" }}>
+          <div className="border-t" style={{ borderColor: "var(--v3-line)" }}>
             <CaseStudyConsent given={Boolean(organization?.caseStudyConsentAt)} />
           </div>
         </Group>
@@ -178,7 +178,7 @@ export default async function AccountPage() {
         </details>
 
         <form action={signOutAction}>
-          <button type="submit" className="min-h-12 w-full rounded-2xl border text-[15px] text-white transition hover:bg-white/[0.04]" style={{ borderColor: "var(--mairo-line)" }}>
+          <button type="submit" className="min-h-12 w-full rounded-2xl border text-[15px] text-white transition hover:bg-white/[0.04]" style={{ borderColor: "var(--v3-line)" }}>
             Log out
           </button>
         </form>

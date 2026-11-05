@@ -12,7 +12,7 @@ function money(cents: number | null, whole = false): string {
 }
 
 export function ProfitMetricCard({ label, value, note, tone = "default", large = false }: { label: string; value: string; note?: string; tone?: "default" | "good" | "bad"; large?: boolean }) {
-  const color = tone === "good" ? "text-emerald-300" : tone === "bad" ? "text-alert" : "text-white";
+  const color = tone === "good" ? "text-white/90" : tone === "bad" ? "text-alert" : "text-white";
   return (
     <div className={`min-w-0 rounded-2xl border border-white/[0.07] bg-field/80 ${large ? "p-5" : "p-4"}`}>
       <p className="truncate text-[12.5px] text-muted">{label}</p>
@@ -51,11 +51,11 @@ function Waterfall({ r }: { r: ProfitReport }) {
         <span className="text-white">= Estimated profit</span>
         <span className="h-2.5 overflow-hidden rounded-full bg-white/[0.05]">
           <span
-            className={`block h-full rounded-full ${r.profitCents !== null && r.profitCents < 0 ? "bg-alert/70" : "bg-emerald-400/80"}`}
+            className={`block h-full rounded-full ${r.profitCents !== null && r.profitCents < 0 ? "bg-alert/70" : "bg-white/50"}`}
             style={{ width: revenue > 0 && r.profitCents !== null ? `${Math.min(100, (Math.abs(r.profitCents) / revenue) * 100)}%` : "0%" }}
           />
         </span>
-        <span className={`text-right tabular-nums ${r.profitCents === null ? "text-faint" : r.profitCents < 0 ? "text-alert" : "text-emerald-300"}`}>{money(r.profitCents)}</span>
+        <span className={`text-right tabular-nums ${r.profitCents === null ? "text-faint" : r.profitCents < 0 ? "text-alert" : "text-white/90"}`}>{money(r.profitCents)}</span>
       </li>
     </ul>
   );
@@ -87,7 +87,7 @@ function Table({ title, note, rows, empty }: { title: string; note: string; rows
                   <td className="py-2 text-right tabular-nums text-white/85">{money(r.revenueCents)}</td>
                   <td className="py-2 text-right tabular-nums text-white/85">{money(r.spendCents)}</td>
                   <td className="py-2 text-right tabular-nums text-white/85">{r.roas === null ? "—" : `${r.roas.toFixed(1)}x`}</td>
-                  <td className={`py-2 text-right tabular-nums ${r.profitCents === null ? "text-faint" : r.profitCents < 0 ? "text-alert" : "text-emerald-300"}`}>{money(r.profitCents)}</td>
+                  <td className={`py-2 text-right tabular-nums ${r.profitCents === null ? "text-faint" : r.profitCents < 0 ? "text-alert" : "text-white/90"}`}>{money(r.profitCents)}</td>
                 </tr>
               ))}
             </tbody>
@@ -133,8 +133,8 @@ export function ProfitFirstView({
       <section className="rounded-2xl border border-white/[0.07] bg-field/80 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Profit status</p>
-            <p className={`mt-1 text-[20px] font-semibold ${r.status === "above" ? "text-emerald-300" : r.status === "below" ? "text-alert" : "text-muted"}`}>
+            <p className="v3-label">Profit status</p>
+            <p className={`mt-1 text-[20px] font-semibold ${r.status === "above" ? "text-white/90" : r.status === "below" ? "text-alert" : "text-muted"}`}>
               {r.status === "above" ? "Above break-even" : r.status === "below" ? "Below break-even" : "Not enough to tell yet"}
             </p>
             <p className="mt-0.5 max-w-2xl text-[13.5px] text-muted">
