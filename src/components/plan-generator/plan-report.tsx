@@ -65,16 +65,16 @@ const SECTIONS = [
 ] as const;
 
 function SourceChip({ from }: { from: "website" | "you" | "suggestion" }) {
-  if (from === "website") return <span className="shrink-0 rounded-full bg-emerald-400/12 px-2 py-0.5 text-[10.5px] font-medium normal-case tracking-normal text-emerald-300">From your website</span>;
-  if (from === "you") return <span className="shrink-0 rounded-full bg-violet-500/15 px-2 py-0.5 text-[10.5px] font-medium normal-case tracking-normal text-violet-200">You told MAIRO</span>;
+  if (from === "website") return <span className="shrink-0 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10.5px] font-medium normal-case tracking-normal text-white/90">From your website</span>;
+  if (from === "you") return <span className="shrink-0 rounded-full bg-white/[0.04] px-2 py-0.5 text-[10.5px] font-medium normal-case tracking-normal text-white/90">You told MAIRO</span>;
   return <span className="shrink-0 rounded-full bg-amber-300/12 px-2 py-0.5 text-[10.5px] font-medium normal-case tracking-normal text-amber-200">MAIRO&rsquo;s suggestion</span>;
 }
 
 function Section({ id, letter, title, intro, children }: { id: string; letter: string; title: string; intro?: ReactNode; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-h`} className="mp-section scroll-mt-24 rounded-[28px] border p-5 sm:p-8" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}>
+    <section id={id} aria-labelledby={`${id}-h`} className="mp-section scroll-mt-24 rounded-[28px] border p-5 sm:p-8" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "none" }}>
       <div className="flex items-start gap-3.5">
-        <span aria-hidden className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/[0.12] font-mono text-[13px] font-semibold text-violet-200">{letter}</span>
+        <span aria-hidden className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] font-mono text-[13px] font-semibold text-white/90">{letter}</span>
         <div className="min-w-0">
           <h2 id={`${id}-h`} className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-white sm:text-[24px]">{title}</h2>
           {intro && <p className="mt-1.5 max-w-[760px] text-[14px] leading-relaxed text-white/65">{intro}</p>}
@@ -87,15 +87,15 @@ function Section({ id, letter, title, intro, children }: { id: string; letter: s
 
 function Tile({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
   return (
-    <div className={`min-w-0 rounded-2xl border p-4 ${wide ? "sm:col-span-2" : ""}`} style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">{label}</p>
+    <div className={`min-w-0 rounded-2xl border p-4 ${wide ? "sm:col-span-2" : ""}`} style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+      <p className="v3-label">{label}</p>
       <div className="mt-1.5 text-[14.5px] leading-snug text-white">{children}</div>
     </div>
   );
 }
 
 function Bullets({ items, tone = "violet" }: { items: string[]; tone?: "violet" | "emerald" | "amber" }) {
-  const dot = tone === "emerald" ? "bg-emerald-300" : tone === "amber" ? "bg-amber-300" : "bg-violet-300";
+  const dot = tone === "emerald" ? "bg-white" : tone === "amber" ? "bg-amber-300" : "bg-white";
   return (
     <ul className="space-y-2">
       {items.map((t) => (
@@ -160,14 +160,14 @@ function AtAGlance({ r }: { r: PlanReport }) {
     <section aria-label="Your plan at a glance" className="mt-7 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(238,238,238,0.28)", background: "radial-gradient(90% 140% at 100% 0%, rgba(255,255,255,0.20), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
       <div className="grid grid-cols-1 gap-px bg-white/[0.06] md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <div className="bg-[#121212]/80 p-5 sm:p-6">
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">First campaign</p>
+          <p className="v3-label">First campaign</p>
           <p className="mt-2 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-white">{r.strategy.objective}</p>
           <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">Meta optimises for {r.strategy.optimiseFor.toLowerCase()} · {r.strategy.placements.join(", ")}</p>
         </div>
         <div className="flex min-w-0 items-center gap-4 bg-[#121212]/80 p-5 sm:p-6">
           <BudgetRing lines={r.budget.lines} />
           <div className="min-w-0 flex-1">
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Monthly budget</p>
+            <p className="v3-label">Monthly budget</p>
             <p className="mt-1 text-[28px] font-semibold leading-none tracking-[-0.03em] text-white">{money(r.budget.monthly)}</p>
             <ul className="mt-2.5 space-y-1 text-[12.5px] text-white/70">
               {r.budget.lines.map((l, i) => (
@@ -181,7 +181,7 @@ function AtAGlance({ r }: { r: PlanReport }) {
           </div>
         </div>
         <div className="bg-[#121212]/80 p-5 sm:p-6">
-          <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-cyan-200/80">Test first</p>
+          <p className="v3-label">Test first</p>
           {first ? (
             <>
               <p className="mt-2 text-[17px] font-semibold leading-snug text-white">&ldquo;{first.headline}&rdquo;</p>
@@ -210,10 +210,10 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
     <article aria-labelledby="plan-title" className="mx-auto max-w-[1180px]">
       {/* The plan's header and its return actions. */}
       <header className="mp-head">
-        <p className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/[0.10] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-200">
+        <p className="inline-flex items-center gap-2 rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-white/90">
           <span aria-hidden>✨</span> Your free AI ad plan
         </p>
-        <h1 id="plan-title" ref={headingRef} tabIndex={-1} className="mt-4 text-[clamp(30px,5vw,54px)] font-semibold leading-[1.02] tracking-[-0.04em] text-white outline-none [text-wrap:balance]">
+        <h1 id="plan-title" ref={headingRef} tabIndex={-1} className="mt-4 text-white outline-none v3-display text-[clamp(34px,4.6vw,64px)]">
           {r.name}&rsquo;s Meta advertising strategy
         </h1>
         <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px] text-white/70">
@@ -238,8 +238,8 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
 
         <nav aria-label="Plan sections" className="mp-noprint -mx-1 mt-6 flex gap-2 overflow-x-auto px-1 pb-1">
           {SECTIONS.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12.5px] text-white/70 transition hover:border-violet-400/50 hover:text-white">
-              <span className="font-mono text-violet-300">{s.letter}</span> {s.title}
+            <a key={s.id} href={`#${s.id}`} className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12.5px] text-white/70 transition hover:border-white/[0.22] hover:text-white">
+              <span className="font-mono text-white/90">{s.letter}</span> {s.title}
             </a>
           ))}
         </nav>
@@ -250,8 +250,8 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         <Section id="plan-business" letter="A" title="Your business, understood" intro={<>What MAIRO knows, and where each fact came from — kept apart from what MAIRO suggests.</>}>
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="min-w-0">
-              <h3 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">The facts</h3>
-              <dl className="mt-3 divide-y divide-white/[0.06] rounded-2xl border" style={{ borderColor: "var(--mairo-line)" }}>
+              <h3 className="v3-label">The facts</h3>
+              <dl className="mt-3 divide-y divide-white/[0.06] rounded-2xl border" style={{ borderColor: "var(--v3-line)" }}>
                 {r.business.facts.map((f) => (
                   <div key={f.key} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
                     <dt className="w-[150px] shrink-0 text-[12.5px] text-white/50">{f.label}</dt>
@@ -280,18 +280,18 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </div>
             <div className="min-w-0 space-y-5">
               <div>
-                <h3 className="flex flex-wrap items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                <h3 className="flex flex-wrap items-center gap-2 v3-label">
                   What makes it appealing <SourceChip from="suggestion" />
                 </h3>
                 <div className="mt-3"><Bullets items={r.business.appeal} /></div>
               </div>
               <div>
-                <h3 className="flex flex-wrap items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                <h3 className="flex flex-wrap items-center gap-2 v3-label">
                   Advertising opportunities <SourceChip from="suggestion" />
                 </h3>
                 <ul className="mt-3 grid gap-2.5">
                   {r.business.opportunities.map((o) => (
-                    <li key={o.title} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+                    <li key={o.title} className="rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
                       <p className="text-[14px] font-semibold text-white">{o.title}</p>
                       <p className="mt-0.5 text-[13px] leading-relaxed text-white/65">{o.detail}</p>
                     </li>
@@ -318,11 +318,11 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
           <p className="mt-3 text-[13px] leading-relaxed text-white/60">{r.strategy.placementsWhy}</p>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div className="min-w-0">
-              <h3 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">What the ads should say</h3>
+              <h3 className="v3-label">What the ads should say</h3>
               <div className="mt-3"><Bullets items={r.strategy.messaging} /></div>
             </div>
             <div className="min-w-0">
-              <h3 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-white/55">Campaign structure</h3>
+              <h3 className="v3-label">Campaign structure</h3>
               <ol className="mt-3 space-y-2">
                 {r.strategy.structure.map((s, i) => (
                   <li key={s} className="flex gap-3 text-[14px] leading-relaxed text-white/80">
@@ -335,7 +335,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
           </div>
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             {r.strategy.why.map((w) => (
-              <div key={w.title} className="rounded-2xl border px-4 py-3.5" style={{ borderColor: "var(--mairo-line)" }}>
+              <div key={w.title} className="rounded-2xl border px-4 py-3.5" style={{ borderColor: "var(--v3-line)" }}>
                 <p className="text-[13.5px] font-semibold text-white">{w.title}</p>
                 <p className="mt-1 text-[13px] leading-relaxed text-white/65">{w.text}</p>
               </div>
@@ -356,7 +356,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
                 <p className="text-[12px] text-white/50">Change your budget</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {BUDGET_CHOICES.map((b) => (
-                    <button key={b} type="button" onClick={() => actions.onBudget(b)} aria-pressed={r.budget.monthly === b} className={`min-h-[36px] rounded-full border px-3 text-[13px] transition ${r.budget.monthly === b ? "border-violet-400/70 bg-violet-500/20 text-white" : "border-white/12 text-white/75 hover:border-white/30 hover:text-white"}`}>
+                    <button key={b} type="button" onClick={() => actions.onBudget(b)} aria-pressed={r.budget.monthly === b} className={`min-h-[36px] rounded-full border px-3 text-[13px] transition ${r.budget.monthly === b ? "border-white/[0.22] bg-white/[0.04] text-white" : "border-white/12 text-white/75 hover:border-white/30 hover:text-white"}`}>
                       {budgetLabel(b)}
                     </button>
                   ))}
@@ -369,7 +369,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
           </div>
           <ul className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {r.budget.lines.map((l, i) => (
-              <li key={l.key} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+              <li key={l.key} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
                 <p className="flex items-center gap-2 text-[13px] font-semibold text-white">
                   <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: SEGMENT[i % SEGMENT.length] }} />
                   {l.label}
@@ -381,7 +381,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             ))}
           </ul>
           {r.budget.notes.length > 0 && (
-            <div className="mt-4 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="mt-4 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
               <Bullets items={r.budget.notes} tone="amber" />
             </div>
           )}
@@ -391,7 +391,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         {/* D */}
         <Section id="plan-concepts" letter="D" title="Three AI ad concepts" intro={<>Three different openings for your first ads, shown as they&rsquo;d sit in the feed. They&rsquo;re concepts: where the picture goes, MAIRO describes what to show.</>}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className={`max-w-[720px] rounded-2xl border px-4 py-3 ${note.tone === "ai" ? "border-violet-400/25 bg-violet-500/[0.07]" : "border-amber-300/25 bg-amber-300/[0.06]"}`}>
+            <div className={`max-w-[720px] rounded-2xl border px-4 py-3 ${note.tone === "ai" ? "border-[color:var(--v3-line)] bg-white/[0.04]" : "border-amber-300/25 bg-amber-300/[0.06]"}`}>
               <p className="text-[13px] font-semibold text-white">{note.title}</p>
               <p className="mt-0.5 text-[12.5px] leading-relaxed text-white/65">{note.body}</p>
             </div>
@@ -407,14 +407,14 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             {r.concepts.list.map((c, i) => {
               const first = i === r.concepts.first;
               return (
-                <li key={`${c.headline}-${i}`} className={`flex min-w-0 flex-col rounded-[24px] border p-3 ${first ? "border-violet-400/60 bg-violet-500/[0.06] shadow-[var(--mairo-glow-key)]" : ""}`} style={first ? undefined : { borderColor: "var(--mairo-line)" }}>
+                <li key={`${c.headline}-${i}`} className={`flex min-w-0 flex-col rounded-[24px] border p-3 ${first ? "border-white/[0.22] bg-white/[0.04]" : ""}`} style={first ? undefined : { borderColor: "var(--v3-line)" }}>
                   <div className="flex items-center justify-between gap-2 px-1.5 pb-2.5 pt-1">
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/55">Concept {i + 1} · {c.label}</p>
-                    {first && <span className="rounded-full bg-[image:var(--mairo-ramp)] px-2.5 py-0.5 text-[11px] font-semibold text-black">Test first</span>}
+                    <p className="v3-label">Concept {i + 1} · {c.label}</p>
+                    {first && <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold text-black">Test first</span>}
                   </div>
                   <AdMock c={c} business={r.name} placement={placement} domain={domain} />
                   {first && (
-                    <p className="mt-3 rounded-2xl border border-violet-400/30 bg-violet-500/[0.10] px-3.5 py-2.5 text-[13px] leading-relaxed text-white">
+                    <p className="mt-3 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] px-3.5 py-2.5 text-[13px] leading-relaxed text-white">
                       <strong className="font-semibold">MAIRO recommends testing this one first.</strong> {r.concepts.firstWhy}
                     </p>
                   )}
@@ -438,19 +438,19 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             <>
               <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                 {r.website.seen.map((s) => (
-                  <li key={s.label} className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+                  <li key={s.label} className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
                     <span className="text-[13px] text-white/55">{s.label}</span>
-                    <span className={`text-right text-[13.5px] font-medium ${s.ok === true ? "text-emerald-300" : s.ok === false ? "text-amber-200" : "text-white"}`}>{s.value}</span>
+                    <span className={`text-right text-[13.5px] font-medium ${s.ok === true ? "text-white/90" : s.ok === false ? "text-amber-200" : "text-white"}`}>{s.value}</span>
                   </li>
                 ))}
               </ul>
               {r.website.findings.length > 0 ? (
                 <ul className="mt-5 grid gap-3 lg:grid-cols-2">
                   {r.website.findings.map((f) => (
-                    <li key={f.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+                    <li key={f.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
                       <p className="text-[14.5px] font-semibold text-white">{f.title}</p>
                       <p className="mt-1 text-[13px] leading-relaxed text-white/65">{f.why}</p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-white/85"><span className="font-semibold text-violet-200">Change: </span>{f.change}</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-white/85"><span className="font-semibold text-white/90">Change: </span>{f.change}</p>
                       {f.evidence && <p className="mt-2 border-l-2 border-white/15 pl-3 text-[12px] leading-relaxed text-white/50">Seen on your site: {f.evidence}</p>}
                     </li>
                   ))}
@@ -462,7 +462,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
             </>
           ) : (
             actions && (
-              <button type="button" onClick={actions.onEdit} className="mp-noprint inline-flex min-h-[42px] items-center rounded-full border border-white/15 px-4 text-[13.5px] text-white/85 transition hover:border-violet-400/60 hover:text-white">
+              <button type="button" onClick={actions.onEdit} className="mp-noprint inline-flex min-h-[42px] items-center rounded-full border border-white/15 px-4 text-[13.5px] text-white/85 transition hover:border-white/[0.22] hover:text-white">
                 Add my website and regenerate
               </button>
             )
@@ -473,8 +473,8 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         <Section id="plan-month" letter="F" title="Your first 30 days with MAIRO" intro={<>What MAIRO would do, week by week, if you put it to work. These are planned actions — none of them has happened, and nothing launches or spends without your approval.</>}>
           <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {r.month.map((w) => (
-              <li key={w.week} className="flex flex-col rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
-                <p className="flex items-center justify-between text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-300">
+              <li key={w.week} className="flex flex-col rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+                <p className="flex items-center justify-between v3-label">
                   Week {w.week}
                   <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal text-white/50">Planned</span>
                 </p>
@@ -489,7 +489,7 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
       </div>
 
       {/* The step from the free plan to MAIRO doing the work. */}
-      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-violet-400/30 p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(255,255,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(210,210,210,0.16), transparent 60%), linear-gradient(170deg,#242424,#121212)" }}>
+      <section aria-labelledby="work-title" className="mp-noprint relative mt-10 overflow-hidden rounded-[32px] border border-[color:var(--v3-line)] p-6 sm:p-10" style={{ background: "radial-gradient(80% 120% at 100% 0%, rgba(255,255,255,0.28), transparent 60%), radial-gradient(70% 90% at 0% 100%, rgba(210,210,210,0.16), transparent 60%), linear-gradient(170deg,#242424,#121212)" }}>
         <h2 id="work-title" className="max-w-[760px] text-[clamp(26px,4vw,42px)] font-semibold leading-[1.06] tracking-[-0.035em] text-white [text-wrap:balance]">
           {actions ? "Your strategy is ready. Let MAIRO put it to work." : "Want a plan like this for your business?"}
         </h2>
@@ -500,29 +500,29 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Free — {actions ? "yours now" : "in every plan"}</p>
+            <p className="v3-label">Free — {actions ? "yours now" : "in every plan"}</p>
             <ul className="mt-3 space-y-2 text-[14px] text-white/85">
               {["Your Meta advertising strategy", "Who to target", "Your monthly budget breakdown", "Three AI ad concepts", "Website suggestions", "A 30-day roadmap"].map((t) => (
-                <li key={t} className="flex gap-2.5"><span aria-hidden className="text-emerald-300">✓</span>{t}</li>
+                <li key={t} className="flex gap-2.5"><span aria-hidden className="text-white/90">✓</span>{t}</li>
               ))}
             </ul>
           </div>
-          <div className="rounded-[24px] border border-violet-400/35 bg-violet-500/[0.08] p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-200">With a MAIRO subscription</p>
+          <div className="rounded-[24px] border border-[color:var(--v3-line)] bg-white/[0.04] p-5">
+            <p className="v3-label">With a MAIRO subscription</p>
             <ul className="mt-3 space-y-2 text-[14px] text-white/85">
               {["Finished ad creatives from your concepts", "Connect your own Meta ad account", "Campaigns built for you, switched off until you approve", "Review and approve every ad and budget", "Launch the ads you approved", "Performance monitored every day", "Optimization recommendations, each waiting for your approval", "Your AI advertising team at work", "Your dashboard and reports"].map((t) => (
-                <li key={t} className="flex gap-2.5"><span aria-hidden className="text-violet-300">✦</span>{t}</li>
+                <li key={t} className="flex gap-2.5"><span aria-hidden className="text-white/90">✦</span>{t}</li>
               ))}
             </ul>
           </div>
         </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           {actions ? (
-            <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
+            <button type="button" onClick={actions.onWork} disabled={actions.working} className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white px-7 text-[16px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
               {actions.working ? "Saving your strategy…" : "I like it — get started →"}
             </button>
           ) : (
-            <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[16px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+            <Link href="/preview" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white px-7 text-[16px] font-semibold text-black transition hover:brightness-110">
               See your free plan →
             </Link>
           )}
@@ -582,9 +582,9 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
     <section aria-labelledby="feedback-title" className="mp-noprint mt-6 overflow-hidden rounded-[26px] border" style={{ borderColor: "rgba(246,246,246,0.35)", background: "radial-gradient(70% 120% at 0% 0%, rgba(230,230,230,0.16), transparent 60%), linear-gradient(170deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))" }}>
       <div className="p-5 sm:p-7">
         <div className="flex items-start gap-3.5">
-          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)]">M</span>
+          <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[15px] font-semibold text-black">M</span>
           <div className="min-w-0">
-            <p className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-200">MAIRO</p>
+            <p className="v3-label">MAIRO</p>
             <h2 id="feedback-title" className="mt-1 text-[clamp(19px,2.4vw,24px)] font-semibold leading-snug tracking-[-0.02em] text-white">Do you like your plan? What would you change?</h2>
             <p className="mt-1 text-[13.5px] leading-relaxed text-white/65">Tell me in your own words — your budget, your goal, where you advertise, who it&rsquo;s for, or your offer. I&rsquo;ll update the plan right here.</p>
           </div>
@@ -599,7 +599,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
                 <div key={i} className="max-w-[92%] rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-[14px] leading-relaxed text-white/90">
                   <p>{t.text}</p>
                   {t.changes && t.changes.length > 0 && (
-                    <ul className="mt-2 space-y-1 text-[13px] text-emerald-200">
+                    <ul className="mt-2 space-y-1 text-[13px] text-white/90">
                       {t.changes.map((c) => (
                         <li key={c} className="flex gap-2"><span aria-hidden>✓</span>{c}</li>
                       ))}
@@ -624,7 +624,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
         {a.chat.length === 0 && (
           <div className="mt-5 flex flex-wrap gap-2">
             {starters(r).map((q) => (
-              <button key={q} type="button" onClick={() => a.onAsk(q)} disabled={a.asking} className="min-h-[38px] rounded-full border border-violet-400/35 bg-violet-500/[0.08] px-3.5 text-[13px] text-white transition hover:bg-violet-500/20 disabled:opacity-50">
+              <button key={q} type="button" onClick={() => a.onAsk(q)} disabled={a.asking} className="min-h-[38px] rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3.5 text-[13px] text-white transition hover:bg-white/[0.04] disabled:opacity-50">
                 {q}
               </button>
             ))}
@@ -639,7 +639,7 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
             onChange={(e) => setText(e.target.value)}
             maxLength={500}
             placeholder="e.g. “Lower my budget to $300 and focus on phone calls”"
-            className="min-h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-[#121212]/70 px-5 text-[14.5px] text-white placeholder:text-white/35 focus:border-violet-400/60 focus:outline-none"
+            className="min-h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-[#121212]/70 px-5 text-[14.5px] text-white placeholder:text-white/35 focus:border-white/[0.22] focus:outline-none"
           />
           <button type="submit" disabled={a.asking || !text.trim()} className="min-h-[48px] shrink-0 rounded-full border border-white/20 px-5 text-[14px] font-semibold text-white transition hover:border-white/45 disabled:opacity-45">
             {a.asking ? "Updating…" : "Send to MAIRO"}
@@ -647,11 +647,11 @@ function PlanFeedback({ r, a }: { r: PlanReport; a: ReportActions }) {
         </form>
       </div>
 
-      <div className={`flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 ${lastLikes ? "bg-violet-500/[0.10]" : ""}`} style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+      <div className={`flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 ${lastLikes ? "bg-white/[0.04]" : ""}`} style={{ borderColor: "rgba(255,255,255,0.07)" }}>
         <p className="text-[13px] leading-relaxed text-white/65">
           <span className="font-semibold text-white">Like it as it is?</span> Create your free account, choose your MAIRO plan, then connect your Meta ad account. Nothing launches or spends until you approve it.
         </p>
-        <button type="button" onClick={a.onWork} disabled={a.working} className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60">
+        <button type="button" onClick={a.onWork} disabled={a.working} className="inline-flex min-h-[48px] shrink-0 items-center justify-center rounded-full bg-white px-6 text-[15px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60">
           {a.working ? "Saving your plan…" : "I like it — get started →"}
         </button>
       </div>
@@ -675,7 +675,7 @@ function ActionBar({ r, a }: { r: PlanReport; a: ReportActions }) {
       {goalOpen && (
         <div id="goal-switch" className="mt-3 flex flex-wrap gap-2">
           {GOAL_OPTIONS.filter((g) => g.value !== r.goal).map((g) => (
-            <button key={g.value} type="button" onClick={() => { setGoalOpen(false); a.onGoal(g.value); }} className="min-h-[38px] rounded-full border border-violet-400/35 bg-violet-500/[0.08] px-3.5 text-[13px] text-white transition hover:bg-violet-500/20">
+            <button key={g.value} type="button" onClick={() => { setGoalOpen(false); a.onGoal(g.value); }} className="min-h-[38px] rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3.5 text-[13px] text-white transition hover:bg-white/[0.04]">
               {g.label}
             </button>
           ))}
@@ -687,7 +687,7 @@ function ActionBar({ r, a }: { r: PlanReport; a: ReportActions }) {
           {a.save.token && (
             <>
               {" "}
-              <Link href={`/s/${a.save.token}`} className="break-all text-violet-200 underline underline-offset-2 hover:text-white">Open the link</Link>
+              <Link href={`/s/${a.save.token}`} className="break-all text-white/90 underline underline-offset-2 hover:text-white">Open the link</Link>
             </>
           )}
         </p>
@@ -701,7 +701,7 @@ function AccountPrompt({ onSave }: { onSave: () => void }) {
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
   return (
-    <aside aria-label="Keep your plan" className="mp-noprint mx-auto mt-6 flex max-w-[860px] flex-col gap-3 rounded-[22px] border px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--mairo-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
+    <aside aria-label="Keep your plan" className="mp-noprint mx-auto mt-6 flex max-w-[860px] flex-col gap-3 rounded-[22px] border px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "var(--v3-line)", background: "rgba(var(--mairo-fg-rgb),0.02)" }}>
       <p className="text-[13.5px] leading-relaxed text-white/70">
         <span className="font-semibold text-white">Want this plan on every device?</span> Save it now — a free account keeps it for good. No card needed.
       </p>

@@ -45,7 +45,7 @@ const MODES: { id: FreePlanMode; label: string; short: string }[] = [
 export type FreePlanDemo = { website: string; goal: FreePlanStart["goal"]; focus: "website" | "goal" | null; pressed: boolean };
 
 const field =
-  "block min-h-[48px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
+  "block min-h-[48px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3.5 text-[15px] text-white placeholder:text-white/35 outline-none transition focus:border-white/[0.22] focus:ring-2 focus:ring-[color:var(--v3-line)]";
 const label = "mb-1 block text-[12px] font-medium text-white/65";
 
 export function FreePlanForm({
@@ -75,7 +75,7 @@ export function FreePlanForm({
   const shownMode: FreePlanMode = demo ? "website" : mode;
   const shownWebsite = demo ? demo.website : website;
   const shownGoal = demo ? demo.goal : goal;
-  const lit = (k: "website" | "goal") => (demo?.focus === k ? " border-violet-400/70 ring-2 ring-violet-400/25" : "");
+  const lit = (k: "website" | "goal") => (demo?.focus === k ? " border-white/[0.22] ring-2 ring-[color:var(--v3-line)]" : "");
 
   const goalField = (
     <div>
@@ -145,7 +145,7 @@ export function FreePlanForm({
               setMode(m.id);
               setProblem(null);
             }}
-            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white shadow-[0_0_0_1px_rgba(255,255,255,0.25)]" : "text-white/55 hover:text-white"}`}
+            className={`min-h-[40px] truncate rounded-full px-2 py-2 text-[12.5px] font-medium transition sm:text-[13px] ${shownMode === m.id ? "bg-white/[0.1] text-white" : "text-white/55 hover:text-white"}`}
           >
             <span className="sm:hidden">{m.short}</span>
             <span className="hidden sm:inline">{m.label}</span>
@@ -205,7 +205,7 @@ export function FreePlanForm({
           </div>
         ) : (
           !demo && (
-            <button type="button" onClick={() => setMore(true)} className="mt-2.5 text-[12.5px] text-violet-200 underline-offset-4 hover:text-white hover:underline">
+            <button type="button" onClick={() => setMore(true)} className="mt-2.5 text-[12.5px] text-white/90 underline-offset-4 hover:text-white hover:underline">
               {shownMode === "describe" ? "Add a monthly budget (optional)" : "Add your industry and budget (optional)"}
             </button>
           )
@@ -219,7 +219,7 @@ export function FreePlanForm({
 
         <button
           type="submit"
-          className="mt-3.5 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-6 text-[16.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 focus-visible:outline-offset-4"
+          className="mt-3.5 inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-white px-6 text-[16.5px] font-semibold text-black transition hover:brightness-110 focus-visible:outline-offset-4"
           style={demo?.pressed ? { transform: "scale(0.97)", filter: "brightness(1.15)" } : undefined}
         >
           Build My Free Ad Plan <span aria-hidden>→</span>

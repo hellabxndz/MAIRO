@@ -43,7 +43,7 @@ export function ToolsHub({ tools, categories }: { tools: HubTool[]; categories: 
         {shown.map((t) => (
           <li key={t.slug}>
             <Link href={`/tools/${t.slug}`} className="group flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-violet/45 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{t.category}</span>
+              <span className="v3-label">{t.category}</span>
               <span className="mt-2 text-[16.5px] font-semibold text-white">{t.name}</span>
               <span className="mt-1.5 flex-1 text-[13.5px] leading-relaxed text-white/70">{t.summary}</span>
               <span className="mt-4 flex items-center justify-between text-[12px] text-white/50">

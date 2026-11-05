@@ -15,13 +15,13 @@ export default async function ResetPasswordPage({ searchParams }: PageProps<"/re
   const valid = await resetLinkValid(token);
   return (
     <AuthCard>
-      <h1 className="mb-1 text-[22px] font-bold tracking-[-0.02em] text-white">Choose a new password</h1>
+      <h1 className="mb-1 text-[22px] font-semibold tracking-[-0.02em] text-white">Choose a new password</h1>
       {valid ? (
         <ResetPasswordForm token={token} />
       ) : (
         <>
           <p role="alert" className="mt-3 text-sm leading-relaxed text-neutral-400">{RESET_INVALID_MESSAGE}</p>
-          <Link href="/forgot-password" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-lg bg-[image:var(--mairo-ramp)] px-3 text-[15px] font-semibold text-black">
+          <Link href="/forgot-password" className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-lg bg-white px-3 text-[15px] font-semibold text-black">
             Send me a new link
           </Link>
         </>

@@ -22,7 +22,7 @@ export function ScanProgressView({ progress }: { progress: ScanProgress | null }
         {(["home", "pages", "links", "audit"] as const).map((s) => {
           const i = STEPS.indexOf(s);
           return (
-            <li key={s} className={`rounded-full px-2.5 py-1 ${i < at ? "bg-emerald-400/15 text-emerald-300" : i === at ? "bg-violet/15 text-white" : "bg-white/[0.05] text-white/45"}`}>
+            <li key={s} className={`rounded-full px-2.5 py-1 ${i < at ? "bg-white/[0.04] text-white/90" : i === at ? "bg-violet/15 text-white" : "bg-white/[0.05] text-white/45"}`}>
               {i < at ? "✓ " : ""}{s === "home" ? "Home page" : s === "pages" ? "Other pages" : s === "links" ? "Links" : "Report"}
             </li>
           );
@@ -66,13 +66,13 @@ const PRI: Record<Finding["priority"], string> = { high: "bg-rose-400/15 text-ro
 
 export function FindingCard({ f, resolved, onResolve, compact }: { f: Finding; resolved?: boolean; onResolve?: (resolved: boolean) => void; compact?: boolean }) {
   return (
-    <li className={`rounded-2xl border p-4 sm:p-5 ${resolved ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/10 bg-white/[0.03]"}`}>
+    <li className={`rounded-2xl border p-4 sm:p-5 ${resolved ? "border-[color:var(--v3-line)] bg-white/[0.04]" : "border-white/10 bg-white/[0.03]"}`}>
       <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
         <span className={`rounded-full px-2 py-0.5 ${PRI[f.priority]}`}>{f.priority === "high" ? "High priority" : f.priority === "medium" ? "Medium priority" : "Low priority"}</span>
         <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-white/65">{f.category}</span>
         <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-white/65">{CONF[f.confidence]}</span>
         {f.effort && <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-white/65">Effort: {f.effort}</span>}
-        {resolved && <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-emerald-300">Marked resolved</span>}
+        {resolved && <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-white/90">Marked resolved</span>}
       </div>
       <p className="mt-2 text-[16px] font-semibold leading-snug text-white">{f.title}</p>
       {f.evidence && (
@@ -113,7 +113,7 @@ export function FactsList({ result }: { result: ScanResult }) {
         <div key={f.field} className="rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-2.5">
           <dt className="flex items-center justify-between gap-2 text-[12px] text-white/55">
             {f.label}
-            <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] ${f.kind === "found" ? "bg-emerald-400/15 text-emerald-300" : f.kind === "inferred" ? "bg-amber-400/15 text-amber-200" : "bg-white/[0.06] text-white/55"}`}>{f.kind === "found" ? "Found" : f.kind === "inferred" ? "MAIRO's guess" : f.kind === "not checked" ? "Not checked" : "Not found"}</span>
+            <span className={`rounded-full px-1.5 py-0.5 text-[10.5px] ${f.kind === "found" ? "bg-white/[0.04] text-white/90" : f.kind === "inferred" ? "bg-amber-400/15 text-amber-200" : "bg-white/[0.06] text-white/55"}`}>{f.kind === "found" ? "Found" : f.kind === "inferred" ? "MAIRO's guess" : f.kind === "not checked" ? "Not checked" : "Not found"}</span>
           </dt>
           <dd className="mt-0.5 break-words text-[13.5px] text-white">{f.value ?? "—"}</dd>
         </div>

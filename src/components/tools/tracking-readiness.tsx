@@ -9,7 +9,7 @@ const Row = ({ label, value, note, state }: { label: string; value: string; note
   <li className="rounded-xl border border-white/10 bg-paper/50 px-4 py-3">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="text-[14px] font-medium text-white">{label}</p>
-      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${state === "found" ? "bg-emerald-400/15 text-emerald-300" : state === "unknown" ? "bg-white/[0.07] text-white/65" : "bg-amber-400/15 text-amber-200"}`}>{state === "found" ? "Detected" : state === "unknown" ? "Can't tell from outside" : "Not detected"}</span>
+      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${state === "found" ? "bg-white/[0.04] text-white/90" : state === "unknown" ? "bg-white/[0.07] text-white/65" : "bg-amber-400/15 text-amber-200"}`}>{state === "found" ? "Detected" : state === "unknown" ? "Can't tell from outside" : "Not detected"}</span>
     </div>
     <p className="mt-1 break-all text-[13px] text-white/75">{value}</p>
     {note && <p className="mt-1 text-[12px] text-white/50">{note}</p>}

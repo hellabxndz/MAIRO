@@ -43,13 +43,13 @@ export default async function ToolPage({ params }: PageProps<"/tools/[slug]">) {
   if (!t || !usable(t) || !content) notFound();
   const related = content.related.map(tool).filter((r): r is NonNullable<typeof r> => Boolean(r && usable(r)));
   return (
-    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
+    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
       <LandingNav toolsLive />
       <main className="mx-auto max-w-[1200px] px-4 pb-20 pt-[104px] sm:px-8 sm:pt-[124px]">
         <nav aria-label="Breadcrumb" className="text-[12.5px] text-white/55">
           <Link href="/tools" className="hover:text-white">Free tools</Link> <span aria-hidden>/</span> <span>{t.category}</span>
         </nav>
-        <h1 className="mt-3 text-[30px] font-semibold leading-[1.12] tracking-[-0.025em] text-white sm:text-[40px]">{t.name}</h1>
+        <h1 className="mt-3 text-white v3-display text-[clamp(34px,4.6vw,64px)]">{t.name}</h1>
         <p className="mt-3 max-w-[760px] text-[15.5px] leading-relaxed text-white/75">{content.intro}</p>
         <p className="mt-3 inline-flex max-w-[760px] items-start gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[12.5px] leading-relaxed text-white/65">
           <span aria-hidden>{t.processing === "browser" ? "🔒" : "ⓘ"}</span>

@@ -278,7 +278,7 @@ export function PreviewFlow({
 
       {shown === "start" && (
         <section aria-labelledby="pv-start" className="mx-auto max-w-[760px]">
-          <h1 id="pv-start" ref={heading} tabIndex={-1} className="text-[clamp(32px,5vw,52px)] font-semibold leading-[1.04] tracking-[-0.035em] text-white outline-none">Build your free ad plan</h1>
+          <h1 id="pv-start" ref={heading} tabIndex={-1} className="v3-display text-[clamp(40px,6vw,88px)] text-white outline-none">Build your free ad plan</h1>
           <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-white/75">Tell us about your business, share your Instagram, or add your website. MAIRO analyzes the information available, identifies advertising opportunities, and builds a personalized AI advertising plan around your goals.</p>
           <div className="mt-7">
             <FreePlanForm onStart={begin} initial={{ goal: initialGoal, type: initialType ?? "", budget: initialBudget }} idPrefix="pv" />
@@ -295,7 +295,7 @@ export function PreviewFlow({
 
       {shown === "reading" && (
         <section aria-labelledby="pv-reading">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 1 · MAIRO analyzes your business</p>
+          <p className="v3-label">Step 1 · MAIRO analyzes your business</p>
           <h1 id="pv-reading" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">Reading {url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</h1>
           <div className="mt-5">
             {scan.phase === "running" && <ScanProgressView progress={scan.progress} />}
@@ -323,13 +323,13 @@ export function PreviewFlow({
 
       {shown === "instagram" && (
         <section aria-labelledby="pv-insta">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 1 · MAIRO analyzes your business</p>
+          <p className="v3-label">Step 1 · MAIRO analyzes your business</p>
           <h1 id="pv-insta" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">
             Reading @{insta.handle.replace(/^.*instagram\.com\//i, "").replace(/^@+|\/+$/g, "")} on Instagram
           </h1>
           {insta.busy ? (
             <p role="status" className="mt-5 flex items-center gap-3 text-[14.5px] text-white/80">
-              <span aria-hidden className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300/40 border-t-violet-200 motion-reduce:animate-none" />
+              <span aria-hidden className="h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--v3-line)] border-t-violet-200 motion-reduce:animate-none" />
               Opening the public profile — the name, bio and link Instagram shows anyone without signing in…
             </p>
           ) : insta.read && insta.read.status !== "read" ? (
@@ -347,7 +347,7 @@ export function PreviewFlow({
 
       {shown === "confirm" && current && (
         <section aria-labelledby="pv-confirm">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">{current.website || handle ? "Step 2 · What MAIRO discovered" : "Step 2 · Your business"}</p>
+          <p className="v3-label">{current.website || handle ? "Step 2 · What MAIRO discovered" : "Step 2 · Your business"}</p>
           <h1 id="pv-confirm" ref={heading} tabIndex={-1} className="mt-2 text-[28px] font-semibold tracking-[-0.02em] text-white outline-none sm:text-[34px]">{current.website || handle ? "Here’s what MAIRO found" : "Tell MAIRO about your business"}</h1>
           <p className="mt-2 max-w-[720px] text-[14.5px] leading-relaxed text-white/70">
             {current.website ? (
@@ -359,7 +359,7 @@ export function PreviewFlow({
             )}
           </p>
           {handle && !current.website && insta.read?.status === "read" && insta.read.profile.website && (
-            <p className="mt-3 rounded-xl border border-violet-400/25 bg-violet-500/[0.07] px-4 py-3 text-[13.5px] text-white/80">
+            <p className="mt-3 rounded-xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3 text-[13.5px] text-white/80">
               Your bio links to <span className="break-all font-medium text-white">{insta.read.profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>.{" "}
               <button type="button" onClick={() => { const w = insta.read?.status === "read" ? insta.read.profile.website : null; if (w) { setUrl(w); void read(w, current); } }} className="font-medium text-violet-bright underline underline-offset-4 hover:text-white">
                 Read it too
@@ -376,7 +376,7 @@ export function PreviewFlow({
 
           {(current.website || handle) && <Discovered facts={current} />}
 
-          <h2 className="mt-8 text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-bright">Step 3 · Confirm the important details</h2>
+          <h2 className="mt-8 v3-label">Step 3 · Confirm the important details</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {FACT_ORDER.map((k) => (
               <FactField key={k} k={k} facts={current} read={Boolean(current.website || handle)} onChange={(v) => update({ [k]: v } as Partial<PreviewFacts>, k)} />
@@ -490,7 +490,7 @@ export function Steps({ step }: { step: number }) {
         const state = n < step ? "done" : n === step ? "now" : "later";
         return (
           <li key={label} className="flex min-w-0 flex-1 items-center gap-2" aria-current={state === "now" ? "step" : undefined}>
-            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${state === "done" ? "bg-emerald-400/15 text-emerald-300" : state === "now" ? "bg-[image:var(--mairo-ramp)] text-black" : "bg-white/[0.06] text-black/45"}`}>{state === "done" ? "✓" : n}</span>
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${state === "done" ? "bg-white/[0.04] text-white/90" : state === "now" ? "bg-white text-black" : "bg-white/[0.06] text-black/45"}`}>{state === "done" ? "✓" : n}</span>
             <span className={`hidden truncate @md:inline ${state === "later" ? "text-white/45" : "text-white/85"}`}>{label}</span>
             {n < STEPS.length && <span aria-hidden className="h-px min-w-3 flex-1 bg-white/10" />}
           </li>
@@ -515,14 +515,14 @@ export function Discovered({ facts, shown }: { facts: PreviewFacts; shown?: numb
     <div className="@container mt-6">
       <ul className="grid gap-3 @lg:grid-cols-2 @4xl:grid-cols-4">
         {cards.map((c, i) => (
-          <li key={c.title} className="rounded-[20px] border p-4 transition duration-500" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)", opacity: on(i) ? 1 : 0, transform: on(i) ? undefined : "translateY(8px)" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-bright">{c.title}</p>
+          <li key={c.title} className="rounded-[20px] border p-4 transition duration-500" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "none", opacity: on(i) ? 1 : 0, transform: on(i) ? undefined : "translateY(8px)" }}>
+            <p className="v3-label">{c.title}</p>
             <p className={`mt-1.5 text-[14.5px] leading-snug ${c.value ? "text-white" : "text-white/40"}`}>{c.value ?? "—"}</p>
             <p className="mt-1.5 text-[11.5px] text-faint">{c.from}</p>
           </li>
         ))}
         {facts.pixelSeen !== null && (
-          <li className="rounded-[20px] border p-4 @lg:col-span-2 @4xl:col-span-4" style={{ borderColor: "var(--mairo-line)", opacity: on(cards.length) ? 1 : 0 }}>
+          <li className="rounded-[20px] border p-4 @lg:col-span-2 @4xl:col-span-4" style={{ borderColor: "var(--v3-line)", opacity: on(cards.length) ? 1 : 0 }}>
             <p className="text-[13px] text-white/75">
               <span className="font-medium text-white">Opportunity:</span> {facts.pixelSeen ? "a Meta pixel is on your website — setup checks it reports the right events." : "no Meta pixel was found on the pages read — the plan includes adding one, so Meta can see what your ads lead to."}
             </p>
@@ -629,7 +629,7 @@ function Recover({ onRetry, onManual, canRetry }: { onRetry: () => void; onManua
 
 function SourceChip({ k, facts, read }: { k: FactKey; facts: PreviewFacts; read: boolean }) {
   const src = facts.sources[k];
-  if (src?.from === "website") return <span className="rounded-full bg-emerald-400/12 px-2 py-0.5 text-[11px] font-medium text-emerald-300">From your website</span>;
+  if (src?.from === "website") return <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium text-white/90">From your website</span>;
   if (src?.from === "instagram") return <span className="rounded-full bg-pink-400/12 px-2 py-0.5 text-[11px] font-medium text-pink-200">From your Instagram</span>;
   if (src?.from === "you") return <span className="rounded-full bg-violet/15 px-2 py-0.5 text-[11px] font-medium text-violet-bright">You entered</span>;
   if (src?.from === "example") return <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[11px] font-medium text-amber-200">Example</span>;

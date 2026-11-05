@@ -100,7 +100,7 @@ export const PLANS: Plan[] = [
     tagline: "A complete AI advertising system for your business.",
     spendGuidance: "For a business running its own Facebook and Instagram ads",
     limits: { campaigns: 15, creativesPerMonth: 30 },
-    headline: "Your AI advertising department",
+    headline: "One AI advertising manager for your business",
     cta: "Get Started with Pro",
     features: [
       "Connect 1 Meta advertising account",

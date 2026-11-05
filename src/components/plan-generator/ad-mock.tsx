@@ -13,7 +13,7 @@ export type Placement = "facebook" | "instagram";
 
 function Avatar({ name }: { name: string }) {
   return (
-    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[13px] font-semibold text-black">
+    <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black">
       {name.trim().charAt(0).toUpperCase() || "M"}
     </span>
   );

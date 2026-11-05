@@ -85,7 +85,7 @@ export function ShopifyFeesTool() {
                   <tbody className="text-white/85">
                     {r.value.plans.map((p) => (
                       <tr key={p.id} className={`border-t border-white/[0.06] ${p.id === r.value.cheapest ? "text-white" : ""}`}>
-                        <th scope="row" className="py-2 pr-3 font-medium">{p.name}{p.id === r.value.cheapest && <span className="ml-2 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] text-emerald-300">Lowest</span>}</th>
+                        <th scope="row" className="py-2 pr-3 font-medium">{p.name}{p.id === r.value.cheapest && <span className="ml-2 rounded-full bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/90">Lowest</span>}</th>
                         <td className="py-2 pr-3">{m(p.subscription)}</td>
                         <td className="py-2 pr-3">{m(p.cardFees)}</td>
                         {s.payments === "other" && <td className="py-2 pr-3">{m(p.shopifyTransactionFees)}</td>}

@@ -34,14 +34,14 @@ export function SignUpForm({
 
   return (
     <div>
-      <h1 className="text-[22px] font-bold tracking-[-0.02em] text-white">Create your free account</h1>
+      <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-white">Create your free account</h1>
       <p className="mt-1 text-[14px] text-neutral-400">Get a personalized advertising plan for your business. No credit card needed.</p>
 
       <form action={formAction} className="mt-6 space-y-4">
         {businessType && <input type="hidden" name="businessType" value={businessType} />}
         {website && <input type="hidden" name="website" value={website} />}
         {planFor ? (
-          <p className="rounded-lg border border-violet-400/20 bg-violet-500/[0.06] px-3 py-2 text-[12.5px] leading-relaxed text-neutral-300">
+          <p className="rounded-lg border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-2 text-[12.5px] leading-relaxed text-neutral-300">
             Your free ad plan for <span className="text-white">{planFor.length > 60 ? `${planFor.slice(0, 57)}…` : planFor}</span> comes with your account, and setup opens with its answers for you to confirm.
           </p>
         ) : (
@@ -83,7 +83,7 @@ export function SignUpForm({
         <button
           type="submit"
           disabled={pending}
-          className="min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60"
+          className="min-h-[46px] w-full rounded-lg bg-white px-3 py-2.5 text-[15px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
         >
           {pending ? "Creating your account…" : "Create account"}
         </button>

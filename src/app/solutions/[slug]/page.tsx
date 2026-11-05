@@ -49,7 +49,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
   ];
 
   return (
-    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
+    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
       <LandingNav toolsLive={toolsLive} />
       <main className="mx-auto max-w-[1200px] px-4 pb-20 pt-[110px] sm:px-8 sm:pt-[130px]">
         <nav aria-label="Solutions" className="flex flex-wrap gap-2">
@@ -61,15 +61,15 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
         </nav>
 
         <header className="mt-8 max-w-[800px]">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Solutions · {u.label}</p>
-          <h1 className="mt-3 text-[32px] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance] sm:text-[46px]">{u.title}</h1>
+          <p className="v3-label">Solutions · {u.label}</p>
+          <h1 className="mt-3 text-white v3-display text-[clamp(40px,6vw,88px)]">{u.title}</h1>
           <p className="mt-4 text-[16.5px] leading-relaxed text-white/75">{u.sub}</p>
           <p className="mt-3 text-[14px] text-white/55">For {u.forWho.map((w) => w.charAt(0).toLowerCase() + w.slice(1)).join("; ")}.</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href={cta} className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-7 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-              Build My Free Ad Plan <span aria-hidden>→</span>
+            <Link href={cta} className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-black transition hover:brightness-110">
+              Build my free plan <span aria-hidden>→</span>
             </Link>
-            <Link href={`/preview?example=${u.example}`} className="inline-flex min-h-[50px] items-center justify-center rounded-full border border-white/15 px-6 text-[15px] font-medium text-white transition hover:border-violet-400/60">
+            <Link href={`/preview?example=${u.example}`} className="inline-flex min-h-[50px] items-center justify-center rounded-full border border-white/15 px-6 text-[15px] font-medium text-white transition hover:border-white/[0.22]">
               Open the full example
             </Link>
           </div>
@@ -82,7 +82,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
             <p className="mt-2 text-[14.5px] leading-relaxed text-white/70">
               From the plan MAIRO builds for {ex.name}, a fictional {ex.label.toLowerCase()}. Yours is built from your own website or answers, and you confirm everything before it&rsquo;s used.
             </p>
-            <dl className="mt-5 divide-y divide-[color:var(--mairo-line)] rounded-2xl border border-[color:var(--mairo-line)]">
+            <dl className="mt-5 divide-y divide-[color:var(--v3-line)] rounded-2xl border border-[color:var(--v3-line)]">
               {setsUp.map((s) => (
                 <div key={s.term} className="grid gap-1 px-4 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-4">
                   <dt className="text-[13px] font-semibold text-white">{s.term}</dt>
@@ -100,7 +100,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
             <h2 id="measured" className="text-[24px] font-semibold tracking-[-0.02em] text-white">How results are counted</h2>
             <dl className="mt-5 space-y-4">
               {u.measured.map((m) => (
-                <div key={m.term} className="rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] p-4">
+                <div key={m.term} className="rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] p-4">
                   <dt className="text-[14.5px] font-semibold text-white">{m.term}</dt>
                   <dd className="mt-1 text-[14px] leading-relaxed text-white/72">{m.text}</dd>
                 </div>
@@ -114,7 +114,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
               <ul className="mt-5 space-y-3">
                 {u.need.map((n) => (
                   <li key={n} className="flex gap-3 text-[14.5px] leading-relaxed text-white/78">
-                    <span aria-hidden className="mt-[3px] text-emerald-300">✓</span>
+                    <span aria-hidden className="mt-[3px] text-white/90">✓</span>
                     <span>{n}</span>
                   </li>
                 ))}
@@ -146,7 +146,7 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
             <ul className="mt-4 grid gap-3 sm:grid-cols-3">
               {help.map((a) => (
                 <li key={a.slug}>
-                  <Link href={`/help/${a.slug}`} className="block h-full rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] p-4 transition hover:border-violet/45">
+                  <Link href={`/help/${a.slug}`} className="block h-full rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] p-4 transition hover:border-violet/45">
                     <span className="block text-[14.5px] font-semibold text-white">{a.title}</span>
                     <span className="mt-1 block text-[13px] leading-relaxed text-white/65">{a.summary}</span>
                   </Link>
@@ -159,8 +159,8 @@ export default async function UseCasePage({ params }: PageProps<"/solutions/[slu
         <section className="mt-16 rounded-[28px] border border-violet/30 bg-gradient-to-br from-[#dfdfdf]/[0.08] to-[#cfcfcf]/[0.12] px-6 py-12 text-center sm:px-10">
           <h2 className="mx-auto max-w-[680px] text-[26px] font-semibold leading-tight tracking-[-0.025em] text-white sm:text-[34px]">See the plan MAIRO would build for your business</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[15px] leading-relaxed text-white/70">Start with your website or a few words about what you do. Free, and nothing runs until you approve it.</p>
-          <Link href={cta} className="mt-7 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-8 text-[15.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
-            Build My Free Ad Plan <span aria-hidden>→</span>
+          <Link href={cta} className="mt-7 inline-flex min-h-[52px] items-center gap-2 rounded-full bg-white px-8 text-[15.5px] font-semibold text-black transition hover:brightness-110">
+            Build my free plan <span aria-hidden>→</span>
           </Link>
         </section>
       </main>

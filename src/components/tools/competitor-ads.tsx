@@ -49,7 +49,7 @@ export function CompetitorAdsTool() {
           <div className="mt-4 space-y-4">
             {s.notes.map((n, i) => (
               <div key={i} className="rounded-xl border border-white/10 bg-paper/40 p-3.5">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-white/55">Ad {i + 1}</p>
+                <p className="v3-label">Ad {i + 1}</p>
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   <TextField label="How it opens" value={n.hook} onChange={(v) => setNote(i, { hook: v })} placeholder="In your own words" />
                   <TextField label="Offer, if any" value={n.offer} onChange={(v) => setNote(i, { offer: v })} />

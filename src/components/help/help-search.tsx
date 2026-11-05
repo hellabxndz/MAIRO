@@ -38,7 +38,7 @@ export function HelpSearch({ entries, categories, basePath, initialQuery = "" }:
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search: credits, pixel, cancel, approve…"
           autoComplete="off"
-          className="w-full rounded-full border border-[color:var(--mairo-line)] bg-white/[0.04] py-3 pl-11 pr-4 text-[16px] text-white outline-none placeholder:text-faint focus:border-violet/70 focus:ring-2 focus:ring-violet/25"
+          className="w-full rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] py-3 pl-11 pr-4 text-[16px] text-white outline-none placeholder:text-faint focus:border-violet/70 focus:ring-2 focus:ring-violet/25"
         />
       </form>
 
@@ -60,7 +60,7 @@ export function HelpSearch({ entries, categories, basePath, initialQuery = "" }:
             .filter((c) => entries.some((e) => e.category === c))
             .map((c) => (
               <section key={c} aria-labelledby={`help-cat-${slugOf(c)}`}>
-                <h2 id={`help-cat-${slugOf(c)}`} className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">
+                <h2 id={`help-cat-${slugOf(c)}`} className="v3-label">
                   {c}
                 </h2>
                 <ul className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -88,9 +88,9 @@ function ArticleCard({ entry, basePath, showCategory = false }: { entry: HelpInd
   return (
     <Link
       href={`${basePath}/${entry.slug}`}
-      className="group flex h-full flex-col rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] p-5 transition hover:border-violet/45 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet"
+      className="group flex h-full flex-col rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] p-5 transition hover:border-violet/45 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet"
     >
-      {showCategory && <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{entry.category}</span>}
+      {showCategory && <span className="v3-label">{entry.category}</span>}
       <span className={`${showCategory ? "mt-1.5 " : ""}text-[15.5px] font-semibold text-white`}>{entry.title}</span>
       <span className="mt-1 flex-1 text-[13.5px] leading-relaxed text-muted">{entry.summary}</span>
       <span aria-hidden className="mt-3 text-[13px] text-violet-bright transition group-hover:translate-x-0.5">

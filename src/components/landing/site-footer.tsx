@@ -2,19 +2,20 @@ import Link from "next/link";
 import { Wordmark } from "@/components/wordmark";
 import { LEGAL } from "@/lib/legal";
 
-// The public footer, shared by the landing page and the free tools. Links are
-// absolute so they work from any public page; the long tail of links lives
-// here so the top bar can stay at five.
+// The public footer (v3 "Signal"): quiet, on the same near-black as the
+// homepage, every link one tap away and every link to something that exists.
+// Anchors point at the homepage's own sections (#how, #one-mairo, #example,
+// #control) and the pricing page's (#faq, #integrations).
 
 export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
   const columns: { h: string; l: [string, string][] }[] = [
     {
       h: "Product",
       l: [
-        ["How it works", "/#how-it-works"],
-        ["Creative showcase", "/#showcase"],
-        ["Dashboard & results", "/#dashboard"],
-        ["MAIRO & approvals", "/#ai-team"],
+        ["How it works", "/#how"],
+        ["One MAIRO", "/#one-mairo"],
+        ["An example", "/#example"],
+        ["You stay in control", "/#control"],
         ["Pricing", "/pricing"],
       ],
     },
@@ -23,37 +24,44 @@ export function SiteFooter({ toolsLive = false }: { toolsLive?: boolean }) {
       l: [
         ["See your free plan", "/preview"],
         ...(toolsLive ? ([["Free advertising tools", "/tools"]] as [string, string][]) : []),
-        ["Watch MAIRO in action", "/#film"],
-        ["Security & control", "/#control"],
-        ["Integrations", "/#integrations"],
-        ["FAQ", "/#faq"],
         ["Help center", "/help"],
+        ["FAQ", "/pricing#faq"],
+        ["Integrations", "/pricing#integrations"],
       ],
     },
-    { h: "Company", l: [["Online stores", "/solutions/online-stores"], ["Local services", "/solutions/local-services"], ["Appointments", "/solutions/appointments"], ["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
+    {
+      h: "Built for",
+      l: [
+        ["Local services", "/solutions/local-services"],
+        ["Appointments", "/solutions/appointments"],
+        ["Online stores", "/solutions/online-stores"],
+      ],
+    },
+    { h: "Company", l: [["Sign in", "/sign-in"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Data deletion", "/data-deletion"]] },
   ];
   return (
-    <footer className="relative border-t border-white/[0.07] px-5 py-16 sm:px-8">
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),rgba(210,210,210,0.3),transparent)]" />
-      <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-10 sm:grid-cols-4">
+    <footer className="relative border-t border-[color:var(--v3-line)] bg-[color:var(--v3-ink)]">
+      <div className="mx-auto grid w-full max-w-[1320px] grid-cols-2 gap-10 px-5 py-16 sm:grid-cols-5 sm:px-10 lg:px-16">
         <div className="col-span-2 sm:col-span-1">
-          <Wordmark href={null} className="text-[18px]" />
-          <p className="mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/50">Your entire AI advertising team for Facebook &amp; Instagram — strategy, creative, campaigns and results, approved by you.</p>
-          <p className="mt-3 text-[12.5px] text-white/55">Support: <a href={`mailto:${LEGAL.contactEmail}`} className="underline underline-offset-4 hover:text-white">{LEGAL.contactEmail}</a></p>
-          <p className="mt-4 text-[12px] leading-relaxed text-white/45">
+          <Wordmark href={null} className="text-[15px]" />
+          <p className="mt-4 max-w-[240px] text-[13px] leading-relaxed text-[color:var(--v3-text-3)]">One AI that runs your Facebook &amp; Instagram ads, with your approval.</p>
+          <p className="mt-4 text-[12.5px] text-[color:var(--v3-text-3)]">
+            Support: <a href={`mailto:${LEGAL.contactEmail}`} className="underline underline-offset-4 hover:text-white">{LEGAL.contactEmail}</a>
+          </p>
+          <p className="mt-4 text-[12px] leading-relaxed text-white/35">
             {LEGAL.productName} is operated by {LEGAL.companyName}
-            {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.
+            {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}
             <br />© {new Date().getFullYear()} {LEGAL.companyName}
           </p>
         </div>
         {columns.map((col) => (
           <div key={col.h}>
-            <p className="text-[13px] font-semibold text-white">{col.h}</p>
+            <p className="v3-label">{col.h}</p>
             {/* Each link a full 44px row on a phone; the desktop list stays tight. */}
-            <ul className="mt-2 text-[13px] text-white/55 sm:mt-4 sm:space-y-2.5">
+            <ul className="mt-2 text-[13.5px] text-white/60 sm:mt-4 sm:space-y-2.5">
               {col.l.map(([label, href]) => (
                 <li key={label}>
-                  <Link href={href} className="flex min-h-11 items-center hover:text-white sm:pointer-fine:inline sm:pointer-fine:min-h-0">{label}</Link>
+                  <Link href={href} className="flex min-h-11 items-center transition hover:text-white sm:pointer-fine:inline sm:pointer-fine:min-h-0">{label}</Link>
                 </li>
               ))}
             </ul>

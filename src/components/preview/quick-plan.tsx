@@ -77,7 +77,7 @@ export function QuickPlan({
             Built from {given} detail{given === 1 ? "" : "s"}
           </Pill>
         </div>
-        <h1 id="qp-title" ref={headingRef} tabIndex={-1} className="mt-4 text-[clamp(28px,4.4vw,48px)] font-semibold leading-[1.05] tracking-[-0.035em] text-white outline-none [text-wrap:balance]">
+        <h1 id="qp-title" ref={headingRef} tabIndex={-1} className="mt-4 text-white outline-none v3-display text-[clamp(34px,4.6vw,64px)]">
           {p.name}: here&rsquo;s what MAIRO would build for you
         </h1>
         <p className="mt-3 max-w-[760px] text-[15.5px] leading-relaxed text-white/72">
@@ -116,7 +116,7 @@ export function QuickPlan({
         <Panel id="qp-mairo" title="3 · What MAIRO does for you">
           <ul className="grid gap-3 md:grid-cols-2">
             {actions.map((a) => (
-              <li key={a.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}>
+              <li key={a.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}>
                 <p className="text-[14.5px] font-semibold text-white">{a.title}</p>
                 <p className="mt-1 text-[13px] leading-relaxed text-white/70">{a.mairo}</p>
               </li>
@@ -178,7 +178,7 @@ export function QuickPlan({
                   Update my plan
                 </button>
                 {updated && (
-                  <p role="status" className="text-[12.5px] text-emerald-300">
+                  <p role="status" className="text-[12.5px] text-white/90">
                     Updated — the campaign and ads above now use what you added.
                   </p>
                 )}
@@ -189,7 +189,7 @@ export function QuickPlan({
 
         <Panel id="qp-next" title="Your next step" tone="lit">
           <h2 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-            Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+            Your Growth Plan Is Ready. <span className="">Let MAIRO Bring It to Life.</span>
           </h2>
           <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
           <div className="mt-5 flex flex-wrap gap-2.5">
@@ -215,12 +215,12 @@ export function QuickPlan({
           </button>
         </Panel>
 
-        <details className="group rounded-2xl border px-4 py-3" style={{ borderColor: "var(--mairo-line)" }}>
+        <details className="group rounded-2xl border px-4 py-3" style={{ borderColor: "var(--v3-line)" }}>
           <summary className="cursor-pointer text-[13px] font-medium text-white/80 marker:text-white/40 hover:text-white">How MAIRO built this plan</summary>
           <ol className="mt-3 space-y-2">
             {steps.map((s, i) => (
               <li key={s.label} className="flex gap-3 text-[13px]">
-                <span aria-hidden className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-[11px] text-emerald-300">{i + 1}</span>
+                <span aria-hidden className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[11px] text-white/90">{i + 1}</span>
                 <span className="min-w-0">
                   <span className="block font-medium text-white">{s.label}</span>
                   <span className="block leading-relaxed text-white/65">{s.result}</span>
@@ -235,11 +235,11 @@ export function QuickPlan({
 }
 
 const field =
-  "mt-1.5 block min-h-[44px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white placeholder:text-white/35 outline-none transition focus:border-violet-400/70 focus:ring-2 focus:ring-violet-400/25";
+  "mt-1.5 block min-h-[44px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white placeholder:text-white/35 outline-none transition focus:border-white/[0.22] focus:ring-2 focus:ring-[color:var(--v3-line)]";
 
 function Tile({ label, value, note, small = false }: { label: string; value: string; note?: string; small?: boolean }) {
   return (
-    <div className="min-w-0 rounded-[18px] border p-3.5" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}>
+    <div className="min-w-0 rounded-[18px] border p-3.5" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}>
       <p className="text-[11.5px] text-muted">{label}</p>
       <p className={`mt-1 font-semibold leading-snug tracking-[-0.01em] text-white ${small ? "text-[13.5px]" : "text-[16.5px]"}`}>{value}</p>
       {note && <p className="mt-0.5 text-[11px] leading-snug text-faint">{note}</p>}
@@ -250,9 +250,9 @@ function Tile({ label, value, note, small = false }: { label: string; value: str
 /** One ad, as it would read in the feed — the words MAIRO wrote and what the picture should show. A concept, so it says so. */
 function MiniAd({ d, business, first }: { d: Direction; business: string; first: boolean }) {
   return (
-    <figure className="flex h-full flex-col overflow-hidden rounded-2xl border bg-white text-[#111]" style={{ borderColor: "var(--mairo-line)" }}>
+    <figure className="flex h-full flex-col overflow-hidden rounded-2xl border bg-white text-[#111]" style={{ borderColor: "var(--v3-line)" }}>
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[image:var(--mairo-ramp)] text-[12px] font-semibold text-black">{business.charAt(0).toUpperCase()}</span>
+        <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-semibold text-black">{business.charAt(0).toUpperCase()}</span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12.5px] font-semibold">{business}</p>
           <p className="text-[10.5px] text-[#666]">Sponsored · concept</p>

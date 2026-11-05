@@ -117,8 +117,8 @@ export function Pill({ tone = "muted", dot = false, children, className = "" }: 
 /** The label every demonstration carries, so sample figures are never mistaken for a customer's. */
 export function SampleLabel({ children = "Product demo · sample data" }: { children?: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-[#0a0a0a]/85 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-amber-200">
-      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-300" />
+    <span className="v3-label inline-flex items-center gap-1.5 rounded-full border border-[color:var(--v3-line-strong)] bg-[color:var(--v3-ink)]/85 px-2.5 py-1 !text-[10.5px] !text-white/70">
+      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-white/50" />
       {children}
     </span>
   );

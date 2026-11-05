@@ -8,7 +8,7 @@ const EMPTY: S = { headline: "", subheadline: "", cta: "", offering: "", custome
 const EXAMPLE: S = { headline: "Innovative plumbing solutions for all your needs", subheadline: "The best service in town — limited time only!", cta: "Submit", offering: "emergency plumbing", customer: "homeowners", location: "Eastfield", outcome: "water back on the same day", priceOrFirstStep: "Price given before we come out", kind: "service", example: true };
 
 const BADGE: Record<ClarityStatus, string> = {
-  met: "bg-emerald-400/15 text-emerald-300",
+  met: "bg-white/[0.04] text-white/90",
   "not met": "bg-amber-400/15 text-amber-200",
   "not checked": "bg-white/[0.06] text-white/60",
 };

@@ -49,28 +49,23 @@ const COACH_EXAMPLE = Object.fromEntries(EXAMPLE_STEPS.map((s) => [s, coachExamp
 
 
 
-const PRIMARY = "bg-[image:var(--mairo-ramp)] text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110";
-const GRADIENT_TEXT = "bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent";
+const PRIMARY = "bg-white text-black transition hover:brightness-110";
+const GRADIENT_TEXT = "";
 // The console's surface: no backdrop-filter (it paints an opaque panel on mobile).
-const GLASS = "border border-[color:var(--mairo-line)] bg-[image:var(--mairo-glass)] shadow-[var(--mairo-glow-soft)]";
+const GLASS = "border border-[color:var(--v3-line)] bg-[color:var(--v3-ink-2)]";
 
 function Badge({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/[0.08] px-3.5 py-1.5 text-[12.5px] font-medium text-white/90">
-      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-violet-300" fill="currentColor" aria-hidden>
-        <path d="M8 1l1.6 4.4L14 7l-4.4 1.6L8 13l-1.6-4.4L2 7l4.4-1.6z" />
-      </svg>
-      {children}
-    </span>
-  );
+  return <p className="v3-label">{children}</p>;
 }
 
+// Section heading in the v3 "Signal" style: a mono label, then the title at
+// display size, left-aligned on the page grid like the homepage's sections.
 function SectionHead({ badge, title, sub }: { badge?: string; title: ReactNode; sub?: string }) {
   return (
-    <div className="mx-auto max-w-[760px] text-center">
+    <div className="max-w-[900px]">
       {badge && <Badge>{badge}</Badge>}
-      <h2 className="mt-4 text-[clamp(30px,4.2vw,50px)] font-bold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">{title}</h2>
-      {sub && <p className="mx-auto mt-4 max-w-[620px] text-[16.5px] leading-relaxed text-white/65">{sub}</p>}
+      <h2 className="v3-display mt-5 text-[clamp(40px,6vw,88px)] text-white">{title}</h2>
+      {sub && <p className="mt-6 max-w-[620px] text-[clamp(16px,1.3vw,18px)] leading-relaxed text-[color:var(--v3-text-2)]">{sub}</p>}
     </div>
   );
 }
@@ -81,9 +76,9 @@ function SectionHead({ badge, title, sub }: { badge?: string; title: ReactNode; 
 function Disclosure({ title, children }: { title: string; children: ReactNode }) {
   return (
     <details className={`group rounded-3xl ${GLASS} [&_summary::-webkit-details-marker]:hidden`}>
-      <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 rounded-3xl px-6 py-4 text-[15.5px] font-semibold text-white transition hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500">
+      <summary className="flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 rounded-3xl px-6 py-4 text-[15.5px] font-semibold text-white transition hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/[0.22]">
         {title}
-        <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-violet-300 transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white/90 transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
           <path d="M3.5 6l4.5 4.5L12.5 6" />
         </svg>
       </summary>
@@ -95,7 +90,7 @@ function Disclosure({ title, children }: { title: string; children: ReactNode })
 function Check({ children }: { children: ReactNode }) {
   return (
     <li className="flex items-center gap-2">
-      <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white/70" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
         <path d="M3 8.5l3 3 7-7" />
       </svg>
       {children}
@@ -131,8 +126,8 @@ const OUTCOME_STEPS: { step: string; body: string; source: Source }[] = [
 const SOURCE_TONE: Record<Source, string> = {
   "Meta reports": "border-[#d5d5d5]/30 bg-[#d5d5d5]/[0.07] text-[#bbbbbb]",
   "MAIRO counts": "border-white/15 bg-white/[0.04] text-white/70",
-  "You mark": "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
-  Confirmed: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
+  "You mark": "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90",
+  Confirmed: "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90",
 };
 const COACH_RULES: { title: string; body: string }[] = [
   { title: "Follows every lead past the click", body: "You mark which enquiries were good, which booked and which paid. MAIRO follows each one from the ad to the sale." },
@@ -159,21 +154,21 @@ const WHY_NOT = [
 ];
 
 const STATUS_TONE: Record<IntegrationStatus, string> = {
-  full: "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300",
+  full: "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90",
   limited: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   pending: "border-amber-400/35 bg-amber-400/[0.08] text-amber-300",
   tracking: "border-[#d5d5d5]/30 bg-[#d5d5d5]/[0.07] text-[#bbbbbb]",
-  billing: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
+  billing: "border-[color:var(--v3-line)] bg-white/[0.04] text-white/90",
   unsupported: "border-white/15 bg-white/[0.04] text-white/60",
 };
 
 function PlanCell({ cell, tier }: { cell: Cell; tier: string }) {
   return (
     <div role="cell" className="min-w-0 text-[13.5px]">
-      <span className="block text-[11px] font-medium uppercase tracking-[0.12em] text-white/45 sm:hidden">{tier}</span>
+      <span className="block sm:hidden v3-label">{tier}</span>
       {cell.kind === "yes" ? (
         <span className="inline-flex items-center gap-1.5 text-white">
-          <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-violet-500" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+          <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-white/70" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
             <path d="M3 8.5l3 3 7-7" />
           </svg>
           <span className="sr-only">Included</span>
@@ -269,21 +264,21 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <div className="mx-auto grid max-w-[1360px] grid-cols-1 items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10 lg:px-12">
               <div className="min-w-0">
                 <Badge>For Facebook &amp; Instagram ads</Badge>
-                <h1 className="mt-6 text-[clamp(38px,4.6vw,68px)] font-extrabold leading-[1.02] tracking-[-0.045em] [text-wrap:balance]">
+                <h1 className="mt-6 text-[clamp(38px,4.6vw,68px)] font-semibold leading-[1.02] tracking-[-0.045em] [text-wrap:balance]">
                   Meet your <span className={GRADIENT_TEXT}>AI Advertising Team.</span>
                 </h1>
                 <p className="mt-6 max-w-[580px] text-[clamp(16.5px,1.4vw,19.5px)] leading-relaxed text-white/75">
                   Eight specialized capabilities of one coordinated AI system plan, create, manage and improve your Facebook and Instagram ads — from one simple dashboard, on your own Meta ad account.
                 </p>
                 <p className="mt-5 flex items-start gap-3 text-[15px] font-semibold leading-snug text-white">
-                  <span aria-hidden className="mt-[0.7em] h-px w-8 shrink-0 bg-[image:var(--mairo-ramp)]" />
+                  <span aria-hidden className="mt-[0.7em] h-px w-8 shrink-0 bg-white" />
                   <span>You run the business. MAIRO handles the advertising.</span>
                 </p>
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/preview" className={`${PRIMARY} inline-flex min-h-[56px] items-center justify-center gap-2 rounded-full px-8 text-[16px] font-semibold`}>
                     Build My Free Ad Plan <span aria-hidden>→</span>
                   </Link>
-                  <a href="#ai-team" className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-full border border-white/15 bg-paper px-7 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
+                  <a href="#ai-team" className="inline-flex min-h-[56px] items-center justify-center gap-2.5 rounded-full border border-white/15 bg-paper px-7 text-[16px] font-semibold text-white transition hover:border-[color:var(--v3-line-strong)]">
                     Meet My AI Team
                   </a>
                 </div>
@@ -311,7 +306,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
                 </div>
                 <p className="max-w-[620px] text-[13px] leading-relaxed text-white/65">
                   Also works with <span className="text-white/85">Shopify</span> to count sales, a <span className="text-white/85">Google Tag Manager</span> container to set up your Meta pixel, and <span className="text-white/85">Stripe</span> for your subscription.{" "}
-                  <a href="#integrations" className="text-violet-300 hover:text-white">What each connection does →</a>
+                  <a href="#integrations" className="text-white/90 hover:text-white">What each connection does →</a>
                 </p>
               </div>
             </div>
@@ -333,24 +328,24 @@ export function Home({ hero }: { hero: HeroVariant }) {
             />
             <ol className="relative mt-14 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
               {/* The timeline line on phones. */}
-              <span aria-hidden className="absolute bottom-6 left-[31px] top-6 w-px bg-gradient-to-b from-violet-500/60 via-violet-500/30 to-transparent lg:hidden" />
+              <span aria-hidden className="absolute bottom-6 left-[31px] top-6 w-px bg-gradient-to-b from-white/[0.06] via-white/[0.06] to-transparent lg:hidden" />
               {steps.map((s, i) => (
                 <li key={s.n} className="relative flex gap-5 lg:flex-col lg:gap-0">
                   <div className="flex items-center gap-4">
-                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ffffff] to-[#dfdfdf] text-[20px] font-bold shadow-[0_0_40px_-4px_rgba(255,255,255,0.85)]">
+                    <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ffffff] to-[#dfdfdf] text-[20px] font-semibold">
                       {s.n}
                     </span>
                     {i < steps.length - 1 && (
                       <span aria-hidden className="mr-6 hidden flex-1 items-center lg:flex">
-                        <span className="h-px flex-1 bg-gradient-to-r from-violet-400/70 to-violet-400/25" />
-                        <svg viewBox="0 0 8 12" className="h-3 w-2 text-violet-400/50">
+                        <span className="h-px flex-1 bg-gradient-to-r from-white/[0.06] to-white/[0.06]" />
+                        <svg viewBox="0 0 8 12" className="h-3 w-2 text-white/50">
                           <path d="M1 1l6 5-6 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
                         </svg>
                       </span>
                     )}
                   </div>
                   <div className="lg:mt-6 lg:pr-6">
-                    <svg viewBox="0 0 24 24" className="h-7 w-7 text-violet-300" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-7 w-7 text-white/90" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d={s.icon} />
                     </svg>
                     <p className="mt-3 text-[18px] font-semibold">{s.title}</p>
@@ -383,7 +378,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
     <>
     {/* ── Your AI advertising team ──────────────────────────────────── */}
           <section id="ai-team" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-24 -z-10 mx-auto h-[420px] max-w-[1000px] rounded-full bg-violet-600/15 blur-[120px]" />
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-24 -z-10 mx-auto h-[420px] max-w-[1000px] rounded-full bg-white/[0.04] blur-[120px]" />
             <SectionHead
               badge="YOUR AI ADVERTISING TEAM"
               title={<><span className="inline-block">Eight specialties.</span> <span className="inline-block">One team.</span> <span className="inline-block">You in charge.</span></>}
@@ -432,7 +427,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <span id="health" aria-hidden className="block scroll-mt-20" />
             <div className="mx-auto max-w-[820px] text-center">
               <Badge>PERFORMANCE COACH &amp; REAL RESULTS</Badge>
-              <h2 id="coach-title" className="mt-4 text-[clamp(30px,4.2vw,50px)] font-bold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">
+              <h2 id="coach-title" className="mt-4 text-[clamp(30px,4.2vw,50px)] font-semibold leading-[1.08] tracking-[-0.035em] [text-wrap:balance]">
                 Clicks aren&rsquo;t customers. <span className={GRADIENT_TEXT}>MAIRO tracks the difference.</span>
               </h2>
               <p className="mx-auto mt-4 max-w-[660px] text-[16.5px] leading-relaxed text-white/65">
@@ -448,7 +443,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <ol className="mx-auto mt-10 grid max-w-[1180px] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6" aria-label="From the ad to verified revenue">
               {OUTCOME_STEPS.map((o, i) => (
                 <li key={o.step} className={`relative flex flex-col rounded-2xl ${GLASS} p-5`}>
-                  <span className="text-[12px] font-semibold tabular-nums text-violet-300">{i + 1}</span>
+                  <span className="text-[12px] font-semibold tabular-nums text-white/90">{i + 1}</span>
                   <p className="mt-1 text-[15.5px] font-semibold leading-snug text-white">{o.step}</p>
                   <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-white/65">{o.body}</p>
                   <span className={`mt-3 self-start rounded-full border px-2.5 py-0.5 text-[11.5px] font-medium ${SOURCE_TONE[o.source]}`}>{o.source}</span>
@@ -482,7 +477,7 @@ export function Home({ hero }: { hero: HeroVariant }) {
             <ol className="mx-auto mt-12 grid max-w-[1180px] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {WHY.map((w, i) => (
                 <li key={w.job} className={`flex flex-col rounded-3xl ${GLASS} p-6`}>
-                  <span className="text-[12px] font-semibold tabular-nums text-violet-300">0{i + 1}</span>
+                  <span className="text-[12px] font-semibold tabular-nums text-white/90">0{i + 1}</span>
                   <h3 className="mt-2 text-[19px] font-semibold tracking-[-0.02em] text-white">{w.job}</h3>
                   <p className="mt-1 text-[12.5px] font-medium text-white/55">{w.who}</p>
                   <p className="mt-3 text-[14.5px] leading-relaxed text-white/75">{w.body}</p>
@@ -512,19 +507,19 @@ export function Home({ hero }: { hero: HeroVariant }) {
               <div className="mx-auto max-w-[1180px]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-300">Free tools</p>
-                    <h2 id="tools-title" className="mt-3 text-[clamp(26px,3.4vw,38px)] font-bold leading-[1.1] tracking-[-0.03em]">Start with your numbers — no account needed.</h2>
+                    <p className="v3-label">Free tools</p>
+                    <h2 id="tools-title" className="mt-3 text-[clamp(26px,3.4vw,38px)] font-semibold leading-[1.1] tracking-[-0.03em]">Start with your numbers — no account needed.</h2>
                   </div>
                   <Link href="/tools" className="text-[14px] text-white/80 underline underline-offset-4 hover:text-white">See all free tools →</Link>
                 </div>
                 <ul className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                   {featuredTools.map((t) => (
                     <li key={t.slug}>
-                      <Link href={`/tools/${t.slug}`} className={`flex h-full flex-col rounded-3xl ${GLASS} p-6 transition hover:border-violet-400/40`}>
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-300">{t.category}</span>
+                      <Link href={`/tools/${t.slug}`} className={`flex h-full flex-col rounded-3xl ${GLASS} p-6 transition hover:border-[color:var(--v3-line)]`}>
+                        <span className="v3-label">{t.category}</span>
                         <span className="mt-2 text-[18px] font-semibold tracking-[-0.02em] text-white">{t.name}</span>
                         <span className="mt-2 flex-1 text-[14px] leading-relaxed text-white/70">{t.summary}</span>
-                        <span className="mt-4 text-[13px] text-violet-300">Try it free →</span>
+                        <span className="mt-4 text-[13px] text-white/90">Try it free →</span>
                       </Link>
                     </li>
                   ))}
@@ -542,8 +537,8 @@ export function Home({ hero }: { hero: HeroVariant }) {
     <>
     {/* ── Final call ───────────────────────────────────────────────── */}
           <section className="relative mx-auto max-w-[1360px] px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-            <div className="relative overflow-hidden rounded-[32px] border border-violet-400/25 bg-[radial-gradient(90%_120%_at_80%_0%,rgba(255,255,255,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(255,255,255,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
-              <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-bold leading-[1.05] tracking-[-0.04em]">
+            <div className="relative overflow-hidden rounded-[32px] border border-[color:var(--v3-line)] bg-[radial-gradient(90%_120%_at_80%_0%,rgba(255,255,255,0.16),transparent_55%),radial-gradient(70%_100%_at_10%_100%,rgba(255,255,255,0.14),transparent_60%),linear-gradient(135deg,#f6f3ff,#ffffff)] px-6 py-16 text-center sm:px-12">
+              <h2 className="mx-auto max-w-[820px] text-[clamp(32px,5vw,56px)] font-semibold leading-[1.05] tracking-[-0.04em]">
                 {story ? (
                   <>
                     <span className="inline-block">What could MAIRO create</span> <span className={`inline-block ${GRADIENT_TEXT}`}>for your business?</span>
@@ -564,11 +559,11 @@ export function Home({ hero }: { hero: HeroVariant }) {
                   {cta.label} <span aria-hidden>→</span>
                 </Link>
                 {story ? (
-                  <Link href="/preview?example=service" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
+                  <Link href="/preview?example=service" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--v3-line-strong)]">
                     Try an example
                   </Link>
                 ) : (
-                  <a href="#ai-team" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--mairo-line-lit)]">
+                  <a href="#ai-team" className="inline-flex min-h-[58px] items-center rounded-full border border-white/15 bg-paper px-8 text-[16px] font-semibold text-white transition hover:border-[color:var(--v3-line-strong)]">
                     Meet My AI Team
                   </a>
                 )}
@@ -625,13 +620,13 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
   return (
     <>
     {/* ── Pricing ──────────────────────────────────────────────────── */}
-          <section id="pricing" className="relative mx-auto max-w-[1360px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+          <section id="pricing" className="relative mx-auto w-full max-w-[1320px] scroll-mt-20 px-5 py-[clamp(80px,10vw,140px)] sm:px-10 lg:px-16">
             <SectionHead
               badge="PRICING"
               title="Two plans, one MAIRO"
               sub="Start with a free AI plan for your business — no card. When you're happy with it, choose MAIRO Pro or MAIRO Scale and MAIRO builds and runs it, with your approval before anything launches or spends."
             />
-            <div className="mx-auto mt-12 grid max-w-[1120px] grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+            <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
               {planStories().map((story) => {
                 const plan = PLANS.find((p) => p.tier === story.tier)!;
                 const scale = story.featured;
@@ -641,33 +636,15 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                     aria-labelledby={`plan-${story.tier}`}
                     className={`group relative flex min-w-0 flex-col overflow-hidden rounded-[28px] p-7 transition duration-500 [transition-timing-function:var(--ease-mairo)] hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-9 ${
                       scale
-                        ? "border border-[#dedede]/55 bg-[#171717] shadow-[0_40px_120px_-40px_rgba(255,255,255,0.75)] hover:shadow-[0_50px_140px_-40px_rgba(255,255,255,0.95)]"
-                        : `${GLASS} hover:border-[color:var(--mairo-line-lit)]`
+                        ? "border border-[color:var(--v3-line-strong)] bg-[color:var(--v3-ink-2)]"
+                        : `${GLASS} hover:border-[color:var(--v3-line-strong)]`
                     }`}
                   >
-                    {/* Galaxy accents: two soft nebulae and a scatter of stars. Decoration only. */}
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-700 group-hover:opacity-100"
-                      style={{
-                        backgroundImage: scale
-                          ? "radial-gradient(60% 45% at 85% 0%, rgba(222,222,222,0.38), transparent 70%), radial-gradient(45% 35% at 0% 100%, rgba(225,225,225,0.22), transparent 70%)"
-                          : "radial-gradient(55% 40% at 100% 0%, rgba(222,222,222,0.16), transparent 70%)",
-                      }}
-                    />
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_55%)]"
-                      style={{
-                        backgroundImage:
-                          "radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 72% 9%, rgba(255,255,255,0.7), transparent), radial-gradient(1.5px 1.5px at 88% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 40% 6%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 58% 26%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 26% 34%, rgba(255,255,255,0.6), transparent)",
-                      }}
-                    />
                     <div className="relative flex flex-1 flex-col">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <h3 id={`plan-${story.tier}`} className="text-[22px] font-semibold tracking-[-0.02em] text-white">{story.name}</h3>
                         {scale && (
-                          <span className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-black shadow-[0_8px_24px_-8px_rgba(255,255,255,0.9)]">Most Popular</span>
+                          <span className="v3-label !text-white">Most Popular</span>
                         )}
                       </div>
                       <p className="mt-1 text-[14px] text-white/60">{plan.headline}</p>
@@ -675,14 +652,14 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                         <span className="text-[56px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-white">{money(story.price)}</span>
                         <span className="text-[15px] text-white/55">/month</span>
                       </p>
-                      <p className="mt-2 min-h-[20px] text-[13px] font-medium text-emerald-300">{story.trialDays ? `${story.trialDays}-day free trial` : "Billed from the day you subscribe"}</p>
+                      <p className="mt-2 min-h-[20px] text-[13px] font-medium text-white/70">{story.trialDays ? `${story.trialDays}-day free trial` : "Billed from the day you subscribe"}</p>
                       <p className="mt-4 text-[14.5px] leading-relaxed text-white/75">{plan.tagline}</p>
 
                       <ul className="mt-6 flex-1 space-y-2.5 border-t border-white/[0.08] pt-6 text-[14px]" aria-label={`What ${story.name} includes`}>
                         {plan.inherits && <li className="pb-1 text-[13px] font-medium text-white/55">Everything in {plan.inherits}, plus:</li>}
                         {plan.features.map((f) => (
                           <li key={f} className="flex gap-2.5">
-                            <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#f7f7f7]" : "text-violet-400"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                            <svg viewBox="0 0 16 16" className={`mt-[3px] h-4 w-4 shrink-0 ${scale ? "text-[#f7f7f7]" : "text-white/70"}`} fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                               <path d="M3 8.5l3 3 7-7" />
                             </svg>
                             <span className="text-white/85">{f}</span>
@@ -706,13 +683,13 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               })}
             </div>
 
-            <div className="mx-auto mt-6 flex max-w-[1120px] flex-col gap-3 rounded-3xl border border-white/10 bg-white/[0.02] px-6 py-5 sm:flex-row sm:items-center sm:gap-6 sm:px-8">
+            <div className="mt-6 flex flex-col gap-3 rounded-[24px] border border-[color:var(--v3-line)] px-6 py-5 sm:flex-row sm:items-center sm:gap-6 sm:px-8">
               <p className="shrink-0 text-[14px] font-semibold text-white">Ad spend is separate</p>
               <p className="text-[13.5px] leading-relaxed text-white/65">
-                Your MAIRO subscription pays for your AI advertising team. What your ads cost is paid by you, directly to Meta, from your own ad account at the budget you approve — never through MAIRO, and never included in the price above.
+                Your MAIRO subscription pays for MAIRO. What your ads cost is paid by you, directly to Meta, from your own ad account at the budget you approve — never through MAIRO, and never included in the price above.
               </p>
             </div>
-            <p className="mt-4 text-center text-[12.5px] text-white/50">Prices in US dollars, billed monthly. Cancel any time; cancelling stops the next renewal.</p>
+            <p className="mt-4 text-[12.5px] text-[color:var(--v3-text-3)]">Prices in US dollars, billed monthly. Cancel any time; cancelling stops the next renewal.</p>
 
             <div className={`mt-6 rounded-3xl ${GLASS} px-6 py-5 sm:px-8`}>
               <h3 className="text-[14px] font-semibold text-white">Included in every plan</h3>
@@ -723,7 +700,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               </ul>
             </div>
 
-            <h3 className="mt-14 text-center text-[clamp(21px,2.4vw,28px)] font-bold tracking-[-0.03em] text-white">Manual, AI Assist or Full Autopilot</h3>
+            <h3 className="mt-14 text-center text-[clamp(21px,2.4vw,28px)] font-semibold tracking-[-0.03em] text-white">Manual, AI Assist or Full Autopilot</h3>
             <p className="mx-auto mt-2 max-w-[660px] text-center text-[14.5px] leading-relaxed text-white/60">
               How much MAIRO may do on its own. You choose the level in Settings and can go back to Manual at any time. No level can launch a campaign or raise your total budget.
             </p>
@@ -732,13 +709,13 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
                 <li key={l.level} className={`flex flex-col rounded-3xl ${GLASS} p-6`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <h4 className="text-[17px] font-semibold text-white">{l.label}</h4>
-                    <span className="text-[12px] font-medium text-violet-300">{l.plans}</span>
+                    <span className="text-[12px] font-medium text-white/90">{l.plans}</span>
                   </div>
                   <p className="mt-2 text-[14px] leading-relaxed text-white/75">{l.summary}</p>
                   <ul className="mt-3 space-y-1.5 text-[13px] leading-relaxed text-white/65">
                     {l.does.map((d) => (
                       <li key={d} className="flex gap-2">
-                        <span aria-hidden className="mt-[2px] text-[11px] text-violet-300">✓</span>
+                        <span aria-hidden className="mt-[2px] text-[11px] text-white/90">✓</span>
                         {d}
                       </li>
                     ))}
@@ -768,7 +745,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               {comparison().map((g) => (
                 <div key={g.key} role="rowgroup">
                   <div role="row" className="border-b border-white/[0.07] px-6 pb-2 pt-5">
-                    <span role="rowheader" className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-violet-300">{g.title}</span>
+                    <span role="rowheader" className="v3-label">{g.title}</span>
                   </div>
                   {g.rows.map((r) => (
                     <div key={r.key} role="row" className="grid grid-cols-2 gap-x-4 gap-y-2 border-b border-white/[0.06] px-6 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1.7fr)_repeat(2,minmax(0,1fr))] sm:items-start">
@@ -787,7 +764,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-              <div className="rounded-3xl border border-violet-400/30 bg-violet-500/[0.05] p-6 sm:p-7">
+              <div className="rounded-3xl border border-[color:var(--v3-line)] bg-white/[0.04] p-6 sm:p-7">
                 <h3 className="text-[17px] font-semibold text-white">Always your decision — on every plan, in every mode</h3>
                 <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {alwaysYours().map((a) => (
@@ -813,7 +790,7 @@ export function PricingBlock({ cta }: { cta: { href: string; label: string } }) 
               </div>
             </div>
             <p className="mx-auto mt-6 max-w-3xl text-center text-[13px] leading-relaxed text-white/50">
-              <Link href="/pricing" className="text-violet-300 hover:text-white">More than one business or brand? MAIRO Scale covers up to three Meta ad accounts →</Link>
+              <Link href="/pricing" className="text-white/90 hover:text-white">More than one business or brand? MAIRO Scale covers up to three Meta ad accounts →</Link>
             </p>
             <ResultsNote className="mx-auto mt-3 max-w-3xl text-center" />
           </section>
@@ -829,7 +806,7 @@ export function TrustBlock() {
             <span id="control" aria-hidden className="block scroll-mt-20" />
             <div className="mx-auto max-w-[760px] text-center">
               <Badge>SECURITY, BUDGET CONTROL AND TRUST</Badge>
-              <h2 id="trust-title" className="mt-4 text-[clamp(28px,3.6vw,42px)] font-bold leading-[1.1] tracking-[-0.035em] [text-wrap:balance]"><span className="inline-block">Your account.</span> <span className="inline-block">Your approval.</span> <span className="inline-block">Your money.</span></h2>
+              <h2 id="trust-title" className="mt-4 text-[clamp(28px,3.6vw,42px)] font-semibold leading-[1.1] tracking-[-0.035em] [text-wrap:balance]"><span className="inline-block">Your account.</span> <span className="inline-block">Your approval.</span> <span className="inline-block">Your money.</span></h2>
             </div>
             <ul className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {TRUST.map((t) => (
@@ -844,7 +821,7 @@ export function TrustBlock() {
                 </li>
               ))}
             </ul>
-            <h3 className="mt-14 text-center text-[clamp(22px,2.6vw,30px)] font-bold tracking-[-0.03em] text-white">How money, approvals and control work</h3>
+            <h3 className="mt-14 text-center text-[clamp(22px,2.6vw,30px)] font-semibold tracking-[-0.03em] text-white">How money, approvals and control work</h3>
             <p className="mx-auto mt-2 max-w-[600px] text-center text-[15px] text-white/60">The plain answers, before you sign up.</p>
             <dl className={`mx-auto mt-8 grid max-w-[1120px] grid-cols-1 gap-x-10 rounded-3xl ${GLASS} px-6 py-2 sm:px-8 md:grid-cols-2`}>
               {MONEY_AND_CONTROL.map((m) => (
@@ -855,8 +832,8 @@ export function TrustBlock() {
               ))}
             </dl>
             <p className="mt-6 text-center text-[13px] text-white/55">
-              The same rules are in our <Link href="/terms" className="text-violet-300 hover:text-white">Terms</Link>, and how to remove your data is on the{" "}
-              <Link href="/data-deletion" className="text-violet-300 hover:text-white">data deletion page</Link>.
+              The same rules are in our <Link href="/terms" className="text-white/90 hover:text-white">Terms</Link>, and how to remove your data is on the{" "}
+              <Link href="/data-deletion" className="text-white/90 hover:text-white">data deletion page</Link>.
             </p>
             <div id="integrations" className="mt-8 scroll-mt-24">
               <Disclosure title="What MAIRO connects to — and what for">
@@ -884,7 +861,7 @@ export function FaqBlock() {
   return (
     <>
     {/* ── FAQ ──────────────────────────────────────────────────────── */}
-          <section id="faq" className="relative mx-auto max-w-[1100px] scroll-mt-20 px-5 py-20 sm:px-8 lg:px-12">
+          <section id="faq" className="relative mx-auto w-full max-w-[1320px] scroll-mt-20 border-t border-[color:var(--v3-line)] px-5 py-[clamp(80px,10vw,140px)] sm:px-10 lg:px-16">
             <SectionHead badge="FAQ" title="Questions, answered" />
             <div className="mt-10">
               <Faq items={FAQ} />

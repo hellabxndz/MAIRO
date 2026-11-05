@@ -13,8 +13,8 @@ export function HelpArticleView({ article, related, basePath, signedIn }: { arti
       <Link href={basePath} className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-white">
         <span aria-hidden>←</span> All help
       </Link>
-      <p className="mt-6 text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{article.category}</p>
-      <h1 className="mt-2 text-[28px] font-semibold leading-[1.15] tracking-[-0.025em] text-white sm:text-[34px]">{article.title}</h1>
+      <p className="mt-6 v3-label">{article.category}</p>
+      <h1 className="mt-2 text-white v3-display text-[clamp(34px,4.6vw,64px)]">{article.title}</h1>
       <p className="mt-3 text-[16px] leading-relaxed text-muted">{article.summary}</p>
 
       <div className="mt-8 space-y-4 text-[15px] leading-[1.7] text-white/80">
@@ -24,12 +24,12 @@ export function HelpArticleView({ article, related, basePath, signedIn }: { arti
       </div>
 
       {article.links.length > 0 && (
-        <nav aria-label="Where to do this" className="mt-10 rounded-2xl border border-[color:var(--mairo-line)] bg-white/[0.03] p-5">
+        <nav aria-label="Where to do this" className="mt-10 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] p-5">
           <p className="text-[13px] font-semibold text-white">Where to do this</p>
           <ul className="mt-3 flex flex-wrap gap-2">
             {article.links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-[color:var(--mairo-line)] px-4 text-[13.5px] text-white/90 transition hover:border-violet/50 hover:text-white">
+                <Link href={l.href} className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-[color:var(--v3-line)] px-4 text-[13.5px] text-white/90 transition hover:border-violet/50 hover:text-white">
                   {l.label}
                   {l.app && !signedIn && <span className="text-[11.5px] text-faint">· sign in</span>}
                   <span aria-hidden className="text-violet-bright">→</span>
@@ -48,7 +48,7 @@ export function HelpArticleView({ article, related, basePath, signedIn }: { arti
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {related.map((r) => (
               <li key={r.slug}>
-                <Link href={`${basePath}/${r.slug}`} className="block rounded-xl border border-[color:var(--mairo-line)] px-4 py-3 text-[14px] text-white/90 transition hover:border-violet/45 hover:text-white">
+                <Link href={`${basePath}/${r.slug}`} className="block rounded-xl border border-[color:var(--v3-line)] px-4 py-3 text-[14px] text-white/90 transition hover:border-violet/45 hover:text-white">
                   {r.title}
                 </Link>
               </li>
@@ -91,7 +91,7 @@ function Block({ block: b }: { block: HelpBlock }) {
       );
     case "terms":
       return (
-        <dl className="divide-y divide-[color:var(--mairo-line)] rounded-2xl border border-[color:var(--mairo-line)]">
+        <dl className="divide-y divide-[color:var(--v3-line)] rounded-2xl border border-[color:var(--v3-line)]">
           {b.items.map((t) => (
             <div key={t.term} className="grid gap-1 px-4 py-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] sm:gap-4">
               <dt className="break-words text-[14px] font-semibold text-white">{t.term}</dt>
@@ -102,10 +102,10 @@ function Block({ block: b }: { block: HelpBlock }) {
       );
     case "table":
       return (
-        <div className="overflow-x-auto rounded-2xl border border-[color:var(--mairo-line)]">
+        <div className="overflow-x-auto rounded-2xl border border-[color:var(--v3-line)]">
           <table className="w-full min-w-[520px] text-left text-[13.5px]">
             <thead>
-              <tr className="border-b border-[color:var(--mairo-line)]">
+              <tr className="border-b border-[color:var(--v3-line)]">
                 {b.head.map((h, i) => (
                   <th key={i} scope="col" className="px-4 py-3 font-semibold text-white">
                     {h}
@@ -113,7 +113,7 @@ function Block({ block: b }: { block: HelpBlock }) {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[color:var(--mairo-line)]">
+            <tbody className="divide-y divide-[color:var(--v3-line)]">
               {b.rows.map((r) => (
                 <tr key={r[0]}>
                   <th scope="row" className="px-4 py-3 font-medium text-white">
@@ -136,7 +136,7 @@ function Block({ block: b }: { block: HelpBlock }) {
 /** Where to go when the answer isn't here: the support address the legal pages use, and, signed in, the in-app routes. */
 export function HelpContact({ signedIn }: { signedIn: boolean }) {
   return (
-    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--mairo-line)] bg-gradient-to-br from-[#dfdfdf]/[0.07] to-[#cfcfcf]/[0.09] p-6">
+    <section aria-labelledby="help-contact" className="mt-12 rounded-2xl border border-[color:var(--v3-line)] bg-gradient-to-br from-[#dfdfdf]/[0.07] to-[#cfcfcf]/[0.09] p-6">
       <h2 id="help-contact" className="text-[17px] font-semibold text-white">
         Didn&rsquo;t find the answer?
       </h2>
@@ -158,7 +158,7 @@ export function HelpContact({ signedIn }: { signedIn: boolean }) {
         </p>
       )}
       {signedIn && (
-        <Link href="/dashboard/agents" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-[image:var(--mairo-ramp)] px-5 text-[13.5px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110">
+        <Link href="/dashboard/agents" className="mt-4 inline-flex min-h-[42px] items-center gap-2 rounded-full bg-white px-5 text-[13.5px] font-semibold text-black transition hover:brightness-110">
           Ask MAIRO <span aria-hidden>→</span>
         </Link>
       )}

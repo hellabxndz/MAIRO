@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function PricingPage() {
   const toolsLive = USABLE_TOOLS().length > 0;
   return (
-    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-paper text-white`}>
+    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-[color:var(--v3-ink)] text-white`}>
       <LandingNav toolsLive={toolsLive} />
       <main className="pt-6">
         {/* The block's visible heading is an h2 (it's a section of the homepage too). */}

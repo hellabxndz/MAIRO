@@ -41,7 +41,7 @@ export function LandingPageAuditTool() {
             <h2 id="all-findings" className="text-[18px] font-semibold text-white">The full report</h2>
             <ul className="mt-3 space-y-3">
               {rest.map((f) => (f.status === "ok" ? (
-                <li key={f.key} className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-[13.5px] text-white/80"><span className="mr-2 text-emerald-300">✓</span>{f.title}{f.evidence ? <span className="text-white/50"> — {f.evidence}</span> : null}</li>
+                <li key={f.key} className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-[13.5px] text-white/80"><span className="mr-2 text-white/90">✓</span>{f.title}{f.evidence ? <span className="text-white/50"> — {f.evidence}</span> : null}</li>
               ) : (
                 <FindingCard key={f.key} f={f} compact resolved={resolved.includes(f.key)} onResolve={f.status === "issue" ? (r) => setResolved((x) => (r ? [...x, f.key] : x.filter((k) => k !== f.key))) : undefined} />
               )))}

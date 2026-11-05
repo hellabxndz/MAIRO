@@ -25,7 +25,7 @@ export default async function HelpArticlePage({ params }: PageProps<"/help/[slug
   const related = article.related.map(helpArticle).filter((a) => a !== null);
   const toolsLive = USABLE_TOOLS().length > 0;
   return (
-    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
+    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
       <LandingNav toolsLive={toolsLive} />
       <main className="mx-auto max-w-[960px] px-4 pb-20 pt-[110px] sm:px-8 sm:pt-[130px]">
         <HelpArticleView article={article} related={related} basePath="/help" signedIn={false} />

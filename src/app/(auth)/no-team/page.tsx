@@ -14,7 +14,7 @@ export default async function NoTeamPage() {
   if (session.user.organizationId) redirect("/dashboard");
   return (
     <AuthCard>
-      <h1 className="text-[20px] font-bold tracking-[-0.02em] text-white">You&rsquo;re not on a team</h1>
+      <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-white">You&rsquo;re not on a team</h1>
       <p className="mt-2 text-[14px] leading-relaxed text-neutral-400">
         {session.user.email} isn&rsquo;t on any business&rsquo;s team in MAIRO now. If you should be, ask the business&rsquo;s owner or administrator for a new invitation.
       </p>

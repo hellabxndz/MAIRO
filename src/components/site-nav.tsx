@@ -141,7 +141,7 @@ export function SiteNav() {
                   <div
                     className="absolute left-1/2 top-full z-50 mt-2 w-[260px] -translate-x-1/2 overflow-hidden rounded-2xl border p-1.5"
                     style={{
-                      borderColor: "var(--mairo-line-lit)",
+                      borderColor: "var(--v3-line-strong)",
                       backgroundColor: "rgba(var(--mairo-bg-rgb),0.97)",
                       boxShadow: "var(--mairo-glow-lift)",
                     }}
@@ -182,7 +182,7 @@ export function SiteNav() {
             <Link
               href="/sign-up"
               className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[12.5px] font-medium text-white transition-all duration-300 [transition-timing-function:var(--ease-mairo)] hover:brightness-110"
-              style={{ backgroundImage: "var(--mairo-ramp)", boxShadow: "var(--mairo-glow-key)" }}
+              style={{ backgroundImage: "#ffffff", boxShadow: "none" }}
             >
               Launch your ads
               <span aria-hidden>→</span>
@@ -204,7 +204,7 @@ export function SiteNav() {
         {open && (
           <div
             className="pointer-events-auto mx-auto mt-2 max-h-[70vh] max-w-[1500px] overflow-y-auto rounded-3xl border px-6 py-6 lg:hidden"
-            style={{ borderColor: "var(--mairo-line)", backgroundColor: "rgba(var(--mairo-bg-rgb),0.98)" }}
+            style={{ borderColor: "var(--v3-line)", backgroundColor: "rgba(var(--mairo-bg-rgb),0.98)" }}
           >
             {GROUPS.map((g) => (
               <div key={g.label} className="mb-5">

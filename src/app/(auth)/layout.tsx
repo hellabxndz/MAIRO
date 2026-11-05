@@ -1,4 +1,4 @@
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 import { Wordmark } from "@/components/wordmark";
 import { brandFont } from "@/lib/fonts";
 
@@ -7,7 +7,7 @@ import { brandFont } from "@/lib/fonts";
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${brandFont.className} relative flex min-h-screen items-center justify-center px-4 py-12 sm:py-16`}>
-      <AmbientSky />
+      <SiteBackdrop />
       <div className="relative w-full max-w-[960px]">
         <div className="mb-8 text-center">
           <Wordmark />

@@ -24,7 +24,7 @@ export function ShopifyAppDetectorTool() {
               <div className="space-y-4">
                 {groups.map((g) => (
                   <div key={g}>
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{g}</p>
+                    <p className="v3-label">{g}</p>
                     <ul className="mt-1.5 space-y-1.5">
                       {r.apps.filter((a) => a.category === g).map((a) => (
                         <li key={a.name} className="rounded-lg bg-paper/50 px-3 py-2 text-[13px]"><span className="font-medium text-white">{a.name}</span> <span className="break-all text-white/55">— {a.evidence.where}</span></li>

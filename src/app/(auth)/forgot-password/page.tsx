@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default function ForgotPasswordPage() {
   return (
     <AuthCard>
-      <h1 className="mb-1 text-[22px] font-bold tracking-[-0.02em] text-white">Forgot your password?</h1>
+      <h1 className="mb-1 text-[22px] font-semibold tracking-[-0.02em] text-white">Forgot your password?</h1>
       {emailConfigured() ? (
         <ForgotPasswordForm />
       ) : (

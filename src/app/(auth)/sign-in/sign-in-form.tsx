@@ -22,7 +22,7 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
 
   return (
     <div>
-      <h1 className="mb-1 text-[22px] font-bold tracking-[-0.02em] text-white">Welcome back</h1>
+      <h1 className="mb-1 text-[22px] font-semibold tracking-[-0.02em] text-white">Welcome back</h1>
       <p className="mb-6 text-sm text-neutral-400">Sign in to your MAIRO dashboard.</p>
 
       <form action={formAction} className="space-y-4">
@@ -44,7 +44,7 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
         </p>
 
         {resetDone && !error && (
-          <p role="status" className="rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2 text-[13.5px] text-emerald-300">
+          <p role="status" className="rounded-lg border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-2 text-[13.5px] text-white/90">
             Your password has been changed. Sign in with the new one.
           </p>
         )}
@@ -58,7 +58,7 @@ export function SignInForm({ googleEnabled }: { googleEnabled: boolean }) {
         <button
           type="submit"
           disabled={pending}
-          className="min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60"
+          className="min-h-[46px] w-full rounded-lg bg-white px-3 py-2.5 text-[15px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
         >
           {pending ? "Signing in…" : "Sign in"}
         </button>

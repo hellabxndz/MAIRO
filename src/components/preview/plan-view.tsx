@@ -120,7 +120,7 @@ export function PlanView({
             {p.name}: your free advertising plan
           </p>
         ) : (
-          <h1 id="pv-title" ref={headingRef} tabIndex={-1} className="mt-4 text-[clamp(28px,4vw,46px)] font-semibold leading-[1.05] tracking-[-0.035em] text-white outline-none">
+          <h1 id="pv-title" ref={headingRef} tabIndex={-1} className="mt-4 text-white outline-none v3-display text-[clamp(34px,4.6vw,64px)]">
             {p.name}: your free advertising plan
           </h1>
         )}
@@ -133,7 +133,7 @@ export function PlanView({
 
       <div className="grid gap-6 @4xl/plan:grid-cols-[200px_minmax(0,1fr)]">
         <nav aria-label="Plan sections" className="hidden @4xl/plan:block">
-          <ol className="sticky top-24 space-y-0.5 border-l pl-3" style={{ borderColor: "var(--mairo-line)" }}>
+          <ol className="sticky top-24 space-y-0.5 border-l pl-3" style={{ borderColor: "var(--v3-line)" }}>
             {NAV.filter(([id]) => !(isExample && id === "pl-refine")).map(([id, label]) => (
               <li key={id}>
                 <a href={`#${id}`} className="block rounded-lg px-2 py-1.5 text-[13px] text-muted transition hover:bg-white/[0.04] hover:text-white">
@@ -157,7 +157,7 @@ export function PlanView({
             <p className="-mt-1 mb-3 text-[13px] text-white/65">What MAIRO understands about your business, and where each fact came from.</p>
             <dl className="grid gap-3 @md/plan:grid-cols-2">
               {overview.map((o) => (
-                <div key={o.label} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--mairo-line)" }}>
+                <div key={o.label} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--v3-line)" }}>
                   <dt className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-faint">
                     {o.label}
                     <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${o.source === "MAIRO's suggestion" ? "bg-white/[0.07] text-white/55" : o.source === "Example" ? "bg-amber-300/15 text-amber-200" : "bg-violet/15 text-violet-bright"}`}>{o.source}</span>
@@ -172,8 +172,8 @@ export function PlanView({
             <p className="-mt-1 mb-3 text-[13px] text-white/65">Where your advertising can be stronger — from what you told MAIRO{facts.website ? " and the pages it read" : instagram ? " and your Instagram profile" : ""}. Suggestions, not promises of results.</p>
             <ul className="grid gap-3 @xl/plan:grid-cols-2">
               {opps.map((o) => (
-                <li key={o.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{o.area}</p>
+                <li key={o.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)" }}>
+                  <p className="v3-label">{o.area}</p>
                   <p className="mt-1 text-[14.5px] font-semibold text-white">{o.title}</p>
                   <p className="mt-1 text-[13px] leading-relaxed text-white/70">{o.detail}</p>
                 </li>
@@ -217,11 +217,11 @@ export function PlanView({
               <Pill tone={p.allocation.fromOwner ? "live" : "warn"}>{p.allocation.fromOwner ? "Your amount" : "Example amount"}</Pill>
             </div>
             <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-white/[0.06]" role="img" aria-label="All of the budget goes to the first test for two weeks">
-              <span className="h-full w-full bg-[image:var(--mairo-ramp)]" />
+              <span className="h-full w-full bg-white" />
             </div>
             <ul className="mt-4 grid gap-3 @md:grid-cols-2">
               {p.allocation.parts.map((part) => (
-                <li key={part.label} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--mairo-line)" }}>
+                <li key={part.label} className="rounded-2xl border p-3.5" style={{ borderColor: "var(--v3-line)" }}>
                   <p className="flex items-baseline justify-between gap-2 text-[13.5px] font-medium text-white">
                     {part.label} <span className="text-[12px] font-normal text-faint">{part.when}</span>
                   </p>
@@ -280,7 +280,7 @@ export function PlanView({
             <p className="-mt-1 mb-3 text-[13px] text-white/65">The {actions.length} things worth doing first, most important first — and how MAIRO helps with each. Nothing happens until you approve it.</p>
             <ol className="space-y-3">
               {actions.map((a, i) => (
-                <li key={a.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+                <li key={a.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[12px] tabular-nums text-faint">{i + 1}</span>
                     <p className="text-[14.5px] font-semibold text-white">{a.title}</p>
@@ -311,7 +311,7 @@ export function PlanView({
                 {facts.website ? "Nothing urgent stood out on the pages MAIRO read. Your account runs the full website check." : "MAIRO didn't read a website for this plan. Add one and it checks what an ad visitor would see — speed, the call to action, tracking."}
               </p>
             )}
-            <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
               <p className="text-[13.5px] font-medium text-white">What Meta needs to see</p>
               <p className="mt-1 text-[12.5px] leading-relaxed text-white/65">{p.tracking.status}</p>
               <ul className="mt-2 flex flex-wrap gap-2">
@@ -350,7 +350,7 @@ export function PlanView({
           <Panel id="pl-why" title="Why MAIRO recommends this" style={{ scrollMarginTop: 96 }}>
             <dl className="grid gap-3 @md:grid-cols-2">
               {p.reasons.map((r) => (
-                <div key={r.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--mairo-line)" }}>
+                <div key={r.title} className="rounded-2xl border p-4" style={{ borderColor: "var(--v3-line)" }}>
                   <dt className="text-[13.5px] font-semibold text-white">{r.title}</dt>
                   <dd className="mt-1 text-[13px] leading-relaxed text-white/70">{r.text}</dd>
                 </div>
@@ -379,7 +379,7 @@ export function PlanView({
             ) : (
               <>
                 <h3 className="max-w-[820px] text-[clamp(24px,3.2vw,36px)] font-semibold leading-[1.1] tracking-[-0.03em] text-white [text-wrap:balance]">
-                  Your Growth Plan Is Ready. <span className="bg-gradient-to-r from-[#ffffff] via-[#ffffff] to-[#f6f6f6] bg-clip-text text-transparent">Let MAIRO Bring It to Life.</span>
+                  Your Growth Plan Is Ready. <span className="">Let MAIRO Bring It to Life.</span>
                 </h3>
                 <p className="mt-3 max-w-[720px] text-[14.5px] leading-relaxed text-white/75">MAIRO can help turn this strategy into real advertising campaigns, create your ad creatives, and help you manage and optimize your advertising.</p>
                 <div className="mt-5 flex flex-wrap gap-2.5">
@@ -402,7 +402,7 @@ export function PlanView({
                 </button>
               </>
             )}
-            <dl className="mt-5 grid gap-3 border-t pt-4 text-[12.5px] leading-relaxed @lg:grid-cols-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <dl className="mt-5 grid gap-3 border-t pt-4 text-[12.5px] leading-relaxed @lg:grid-cols-3" style={{ borderColor: "var(--v3-line)" }}>
               <div>
                 <dt className="font-medium text-white">Free</dt>
                 <dd className="text-white/60">This plan, its concepts and the website check.</dd>
@@ -425,7 +425,7 @@ export function PlanView({
 
 function Glance({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="rounded-[20px] border p-4" style={{ borderColor: "var(--mairo-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "var(--mairo-glow-soft)" }}>
+    <div className="rounded-[20px] border p-4" style={{ borderColor: "var(--v3-line)", backgroundImage: "var(--mairo-glass)", boxShadow: "none" }}>
       <p className="text-[12px] text-muted">{label}</p>
       <p className="mt-1.5 truncate text-[18px] font-semibold tracking-[-0.02em] text-white">{value}</p>
       {note && <p className="mt-0.5 truncate text-[11.5px] text-faint">{note}</p>}
@@ -444,8 +444,8 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Note({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-2xl border p-3.5" style={{ borderColor: "var(--mairo-line)" }}>
-      <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{title}</p>
+    <div className="rounded-2xl border p-3.5" style={{ borderColor: "var(--v3-line)" }}>
+      <p className="v3-label">{title}</p>
       <p className="mt-1 text-[13px] leading-relaxed text-white/75">{children}</p>
     </div>
   );
@@ -525,9 +525,9 @@ export function ConceptCard({
   }
 
   return (
-    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-violet-400/50" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--mairo-line)", background: c.recommended ? "linear-gradient(165deg, rgba(255,255,255,0.12), rgba(24,24,24,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
+    <li className={`flex flex-col rounded-[20px] border p-4 ${c.recommended ? "border-white/[0.22]" : ""}`} style={{ borderColor: c.recommended ? undefined : "var(--v3-line)", background: c.recommended ? "linear-gradient(165deg, rgba(255,255,255,0.12), rgba(24,24,24,0.6) 55%)" : "rgba(var(--mairo-bg-rgb),0.5)" }}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-faint">Concept {index + 1}</span>
+        <span className="v3-label">Concept {index + 1}</span>
         <Pill tone="muted">{c.label}</Pill>
         {c.recommended && <Pill tone="violet">Test this first</Pill>}
         {saved && <Pill tone="live">Saved</Pill>}
@@ -535,13 +535,13 @@ export function ConceptCard({
 
       <dl className="mt-3 space-y-2.5 text-[13px] leading-relaxed">
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Headline</dt>
+          <dt className="v3-label">Headline</dt>
           {editing ? (
             <dd className="mt-1 flex gap-2">
               <label htmlFor={`hl-${c.angle}`} className="sr-only">
                 Headline
               </label>
-              <input id={`hl-${c.angle}`} value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13.5px] text-white outline-none focus:border-violet-400/70" />
+              <input id={`hl-${c.angle}`} value={headline} maxLength={60} onChange={(e) => setHeadline(e.target.value)} className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13.5px] text-white outline-none focus:border-white/[0.22]" />
               <button
                 type="button"
                 className="shrink-0 rounded-lg bg-white/[0.08] px-3 text-[12.5px] text-white hover:bg-white/[0.12]"
@@ -559,25 +559,25 @@ export function ConceptCard({
           )}
         </div>
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Ad copy</dt>
+          <dt className="v3-label">Ad copy</dt>
           <dd className="mt-0.5 text-white/85">{words.body}</dd>
         </div>
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Visual direction</dt>
+          <dt className="v3-label">Visual direction</dt>
           <dd className="mt-0.5 text-white/70">{c.visual}</dd>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <div>
-            <dt className="inline text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Button </dt>
+            <dt className="inline v3-label">Button </dt>
             <dd className="inline text-white/85">{c.cta}</dd>
           </div>
           <div>
-            <dt className="inline text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Works as </dt>
+            <dt className="inline v3-label">Works as </dt>
             <dd className="inline text-white/70">{c.format}</dd>
           </div>
         </div>
         <div>
-          <dt className="text-[11px] font-medium uppercase tracking-[0.12em] text-faint">Why MAIRO recommends it</dt>
+          <dt className="v3-label">Why MAIRO recommends it</dt>
           <dd className="mt-0.5 text-white/70">{c.why}</dd>
         </div>
       </dl>
@@ -586,7 +586,7 @@ export function ConceptCard({
       <div className="mt-4">
         <div role="group" aria-label="Preview placements" className="flex flex-wrap gap-1.5">
           {SHOW.map((pl) => (
-            <button key={pl} type="button" aria-pressed={placement === pl} onClick={() => setPlacement(placement === pl ? null : pl)} style={press(pl)} className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${placement === pl ? "border-violet-400/60 bg-violet-500/15 text-white" : "border-white/10 text-white/65 hover:text-white"}`}>
+            <button key={pl} type="button" aria-pressed={placement === pl} onClick={() => setPlacement(placement === pl ? null : pl)} style={press(pl)} className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${placement === pl ? "border-white/[0.22] bg-white/[0.04] text-white" : "border-white/10 text-white/65 hover:text-white"}`}>
               {pl === "fb-feed" ? "Facebook feed" : pl === "ig-feed" ? "Instagram feed" : "Instagram Story"}
             </button>
           ))}
@@ -603,8 +603,8 @@ export function ConceptCard({
 
       {!isExample && (
         <>
-          <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3.5" style={{ borderColor: "var(--mairo-line)" }}>
-            <button type="button" onClick={() => setRefining((v) => !v)} style={press("Refine")} className="rounded-full bg-[image:var(--mairo-ramp)] px-3 py-1.5 text-[12px] font-semibold text-black">
+          <div className="mt-4 flex flex-wrap gap-1.5 border-t pt-3.5" style={{ borderColor: "var(--v3-line)" }}>
+            <button type="button" onClick={() => setRefining((v) => !v)} style={press("Refine")} className="rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-black">
               Refine with MAIRO
             </button>
             <button type="button" onClick={() => setEditing(true)} style={press("Edit headline")} className="rounded-full border border-white/12 px-3 py-1.5 text-[12px] text-white/85 hover:text-white">
@@ -621,13 +621,13 @@ export function ConceptCard({
           </div>
           <p className="mt-2 text-[11.5px] leading-relaxed text-faint">
             Upload your own image or video in Creative Studio after you{" "}
-            <Link href={signUpHref} className="text-violet-200 underline-offset-2 hover:underline">
+            <Link href={signUpHref} className="text-white/90 underline-offset-2 hover:underline">
               create your free account
             </Link>
             . Saved concepts carry over.
           </p>
           {refining && (
-            <div className="mt-3 rounded-2xl border p-3" style={{ borderColor: "var(--mairo-line)" }}>
+            <div className="mt-3 rounded-2xl border p-3" style={{ borderColor: "var(--v3-line)" }}>
               <label htmlFor={`rf-${c.angle}`} className="text-[12.5px] font-medium text-white">
                 What should MAIRO change?
               </label>
@@ -644,7 +644,7 @@ export function ConceptCard({
                     }
                   }}
                   placeholder="e.g. Make it shorter and more premium"
-                  className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70"
+                  className="min-h-[38px] w-full rounded-lg border border-white/15 bg-[#181818] px-2.5 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-white/[0.22]"
                 />
                 <button type="button" disabled={busy || ask.trim().length < 3} onClick={() => void refine()} className="shrink-0 rounded-lg bg-white/[0.08] px-3 text-[12.5px] text-white hover:bg-white/[0.12] disabled:opacity-50">
                   {busy ? "Working…" : "Ask"}
@@ -663,8 +663,8 @@ export function ConceptCard({
                 </p>
               )}
               {proposal && (
-                <div className="mt-3 rounded-xl bg-violet-500/[0.08] p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-200">MAIRO&rsquo;s proposal</p>
+                <div className="mt-3 rounded-xl bg-white/[0.04] p-3">
+                  <p className="v3-label">MAIRO&rsquo;s proposal</p>
                   <p className="mt-1 text-[13.5px] font-semibold text-white">{proposal.hook}</p>
                   {proposal.body && <p className="mt-1 text-[12.5px] text-white/80">{proposal.body}</p>}
                   <p className="mt-1.5 text-[11.5px] text-white/55">{proposal.note}</p>
@@ -702,7 +702,7 @@ function RefinePanel({ facts, onRefine, onEdit }: { facts: PreviewFacts; onRefin
   const [customer, setCustomer] = useState(facts.customer);
   const [offer, setOffer] = useState(facts.offer);
   const [done, setDone] = useState(false);
-  const input = "min-h-[42px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-violet-400/70";
+  const input = "min-h-[42px] w-full rounded-xl border border-white/12 bg-[#181818]/80 px-3 text-[14px] text-white outline-none placeholder:text-white/35 focus:border-white/[0.22]";
   return (
     <Panel id="pl-refine" title="Refine your plan with MAIRO" style={{ scrollMarginTop: 96 }}>
       <p className="-mt-1 max-w-[760px] text-[13.5px] leading-relaxed text-white/70">Change the objective, the budget, who it&rsquo;s for or a real offer, and MAIRO rebuilds the plan from your new answers. To change a concept&rsquo;s words, use Refine with MAIRO on the concept.</p>
@@ -753,7 +753,7 @@ function RefinePanel({ facts, onRefine, onEdit }: { facts: PreviewFacts; onRefin
           Edit all details
         </button>
         {done && (
-          <p role="status" className="text-[12.5px] text-emerald-300">
+          <p role="status" className="text-[12.5px] text-white/90">
             Rebuilt from your answers.
           </p>
         )}

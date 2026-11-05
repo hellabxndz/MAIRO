@@ -14,7 +14,7 @@ export function OfferReadinessTool({ toolNames }: { toolNames: Record<string, st
       <Panel>
         {groups.map((g) => (
           <fieldset key={g} className="mb-6 last:mb-0">
-            <legend className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{g}</legend>
+            <legend className="v3-label">{g}</legend>
             <ul className="mt-2 space-y-3">
               {READINESS_ITEMS.filter((i) => i.group === g).map((i) => (
                 <li key={i.id} className="rounded-xl border border-white/10 bg-paper/40 p-3.5">

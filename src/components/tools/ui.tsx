@@ -12,7 +12,7 @@ import { saveHandoff, type HandoffInput } from "@/lib/tools/handoff";
 export const inputCls =
   "w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2.5 text-[14.5px] text-white placeholder:text-white/35 outline-none transition focus:border-violet/70 focus:ring-2 focus:ring-violet/25";
 export const primaryBtn =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#dfdfdf] to-[#cfcfcf] px-5 py-2.5 text-[14px] font-semibold text-black shadow-[0_8px_26px_-10px_rgba(255,255,255,0.9)] transition hover:brightness-110 disabled:opacity-50";
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#dfdfdf] to-[#cfcfcf] px-5 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-110 disabled:opacity-50";
 export const secondaryBtn =
   "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-4 py-2 text-[13.5px] text-white/85 transition hover:border-white/35 hover:text-white disabled:opacity-50";
 
@@ -190,7 +190,7 @@ export function Panel({ children, className = "" }: { children: ReactNode; class
 export function ResultPanel({ title = "Your result", children, live = true }: { title?: string; children: ReactNode; live?: boolean }) {
   return (
     <section aria-label={title} aria-live={live ? "polite" : undefined} className="rounded-2xl border border-violet/35 bg-violet/[0.06] p-5 sm:p-6">
-      <h2 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-violet-bright">{title}</h2>
+      <h2 className="v3-label">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );

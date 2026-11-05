@@ -20,11 +20,11 @@ export default async function HelpPage({ searchParams }: PageProps<"/help">) {
   const { q } = await searchParams;
   const toolsLive = USABLE_TOOLS().length > 0;
   return (
-    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-paper text-white`}>
+    <div className={`${brandFont.className} relative min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
       <LandingNav toolsLive={toolsLive} />
       <main className="mx-auto max-w-[960px] px-4 pb-20 pt-[110px] sm:px-8 sm:pt-[130px]">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-violet-bright">Help center</p>
-        <h1 className="mt-3 text-[34px] font-semibold leading-[1.1] tracking-[-0.03em] text-white sm:text-[44px]">How can we help?</h1>
+        <p className="v3-label">Help center</p>
+        <h1 className="mt-3 text-white v3-display text-[clamp(40px,6vw,88px)]">How can we help?</h1>
         <p className="mt-4 max-w-[640px] text-[16px] leading-relaxed text-white/75">Plain answers about MAIRO — what it does, what waits for you, and what costs money.</p>
         <div className="mt-8">
           <HelpSearch entries={helpIndex()} categories={HELP_CATEGORIES} basePath="/help" initialQuery={typeof q === "string" ? q : ""} />

@@ -9,7 +9,7 @@ export function ForgotPasswordForm() {
   const [state, formAction, pending] = useActionState(requestPasswordResetAction, undefined);
   if (state?.sent) {
     return (
-      <p role="status" className="mt-3 rounded-lg border border-emerald-400/30 bg-emerald-500/[0.06] px-3 py-2.5 text-[13.5px] leading-relaxed text-emerald-300">
+      <p role="status" className="mt-3 rounded-lg border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-2.5 text-[13.5px] leading-relaxed text-white/90">
         {RESET_SENT_MESSAGE}
       </p>
     );
@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={pending}
-          className="min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60"
+          className="min-h-[46px] w-full rounded-lg bg-white px-3 py-2.5 text-[15px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
         >
           {pending ? "Sending…" : "Send me a reset link"}
         </button>

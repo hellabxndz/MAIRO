@@ -20,7 +20,7 @@ export function FreelancerSignUpForm({
 
   return (
     <div>
-      <h1 className="text-[22px] font-bold tracking-[-0.02em] text-white">Set up your studio</h1>
+      <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-white">Set up your studio</h1>
       <p className="mt-1 text-[14px] leading-relaxed text-neutral-400">
         For people who run ads for other businesses. One login, every client you
         work with, each with their own ad account and campaigns.
@@ -63,7 +63,7 @@ export function FreelancerSignUpForm({
         <button
           type="submit"
           disabled={pending}
-          className="min-h-[46px] w-full rounded-lg bg-[image:var(--mairo-ramp)] px-3 py-2.5 text-[15px] font-semibold text-black shadow-[var(--mairo-glow-key)] transition hover:brightness-110 disabled:opacity-60"
+          className="min-h-[46px] w-full rounded-lg bg-white px-3 py-2.5 text-[15px] font-semibold text-black transition hover:brightness-110 disabled:opacity-60"
         >
           {pending ? "Creating your studio…" : "Create studio"}
         </button>

@@ -193,7 +193,7 @@ export function ControlBand() {
     { t: "Pause any time", s: "One tap stops Autopilot. MAIRO keeps watching and recommending." },
   ];
   return (
-    <section aria-labelledby="control-title" className="relative border-y border-[color:var(--v3-line)] bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
+    <section id="control" aria-labelledby="control-title" className="relative scroll-mt-20 border-y border-[color:var(--v3-line)] bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
       <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
         <h2 id="control-title" data-reveal className="v3-label">MAIRO runs your ads, you stay in control</h2>
         <ul className="mt-10 divide-y divide-[color:var(--v3-line)]">

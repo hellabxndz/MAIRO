@@ -8,7 +8,7 @@ import { normalizeUrl } from "@/lib/campaigns/destination";
 import { businessTypeFrom } from "@/lib/onboarding/business-types";
 import { ONBOARDING_TYPE, PREVIEW_EXAMPLE } from "@/lib/demo/examples";
 import { USABLE_TOOLS } from "@/lib/tools/registry";
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 
 // The free AI ad plan. By default, the Free AI Meta Ad Strategy Generator:
 // the website, what the business sells, the goal and the monthly Meta budget
@@ -52,8 +52,8 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
   if (!legacy) {
     const g = typeof goal === "string" && (GOALS as readonly string[]).includes(goal) ? (goal as (typeof GOALS)[number]) : "";
     return (
-      <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-paper text-white`}>
-        <AmbientSky />
+      <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
+        <SiteBackdrop />
         <LandingNav toolsLive={USABLE_TOOLS().length > 0} />
         <main className="px-4 pb-20 pt-[104px] sm:px-8 sm:pt-[124px]">
           <PlanGenerator
@@ -74,8 +74,8 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
   }
 
   return (
-    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-paper text-white`}>
-      <AmbientSky />
+    <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-hidden bg-[color:var(--v3-ink)] text-white`}>
+      <SiteBackdrop />
       <LandingNav toolsLive={USABLE_TOOLS().length > 0} />
       <main className="px-4 pb-20 pt-[104px] sm:px-8 sm:pt-[124px]">
         <PreviewFlow

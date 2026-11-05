@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { AmbientSky } from "@/components/ambient-sky";
+import { SiteBackdrop } from "@/components/site/backdrop";
 import { Wordmark } from "@/components/wordmark";
 import { brandFont } from "@/lib/fonts";
 import { LEGAL } from "@/lib/legal";
@@ -20,7 +20,7 @@ export function LegalPage({
 }) {
   return (
     <div className={`${brandFont.className} relative min-h-screen text-white`}>
-      <AmbientSky />
+      <SiteBackdrop />
 
       <div className="relative mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-20">
         <div className="flex items-center justify-between gap-4">
@@ -30,9 +30,9 @@ export function LegalPage({
           </Link>
         </div>
 
-        <h1 className="mt-12 text-4xl font-bold leading-[1.05] tracking-[-0.035em] sm:text-5xl">{title}</h1>
+        <h1 className="mt-12 v3-display text-[clamp(40px,6vw,88px)]">{title}</h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-400">{intro}</p>
-        <p className="mt-6 text-xs uppercase tracking-[0.15em] text-neutral-500">
+        <p className="mt-6 v3-label">
           Last updated {LEGAL.lastUpdated}
         </p>
 
@@ -53,7 +53,7 @@ export function LegalPage({
             {LEGAL.productName} is operated by {LEGAL.companyName}
             {LEGAL.companyAddress ? `, ${LEGAL.companyAddress}` : ""}.
           </p>
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-[0.15em] text-neutral-500">
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 v3-label">
             <Link href="/privacy" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 transition hover:text-white">Privacy</Link>
             <Link href="/terms" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 transition hover:text-white">Terms</Link>
             <Link href="/data-deletion" className="inline-flex min-h-11 items-center sm:pointer-fine:min-h-0 transition hover:text-white">Data deletion</Link>

@@ -66,7 +66,7 @@ export function HookGeneratorTool() {
                 return (
                   <li key={h.angle} className="rounded-xl border border-white/10 bg-paper/60 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-violet-bright">{ANGLE_LABEL[h.angle]}</p>
+                      <p className="v3-label">{ANGLE_LABEL[h.angle]}</p>
                       <label className="flex items-center gap-2 text-[12.5px] text-white/70">
                         <input type="checkbox" className="accent-[#ffffff]" checked={on} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, h.text] : p.filter((x) => x !== h.text)))} />
                         Use in my plan

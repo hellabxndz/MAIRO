@@ -65,7 +65,7 @@ export default async function Page({ searchParams }: PageProps<"/sign-up">) {
         <ol className="mt-5 space-y-4">
           {(plan ? PLAN_STEPS : STEPS).map((s, i) => (
             <li key={s.title} className="flex gap-3.5">
-              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-[12.5px] font-semibold text-violet-300">
+              <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[12.5px] font-semibold text-white/90">
                 {i + 1}
               </span>
               <div>
