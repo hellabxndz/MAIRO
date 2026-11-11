@@ -97,7 +97,8 @@ export async function POST(req: Request) {
       subscriptionStatus: true, paymentRequired: true,
     },
   });
-  if (!org || !hasActivePlan(org)) {
+  // MAIRO's own owner may use it to test the product; everyone else needs a plan.
+  if (!org || (!hasActivePlan(org) && session.user.role !== "OWNER")) {
     return new Response(
       "Your assistant comes with a plan. Choose one in Settings and it opens up straight away.",
       { status: 402 }

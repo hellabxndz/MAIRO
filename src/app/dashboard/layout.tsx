@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AppShell } from "@/components/mairo/app-shell";
 import { MairoAssistant } from "@/components/mairo/assistant";
+import { AssistantLocked } from "@/components/mairo/assistant-locked";
 import { findOrCreateThread, loadThreadMessages } from "@/lib/ai/threads";
 import { assistantNameOf, CLIENT_AGENT } from "@/lib/ai/agents";
 import { recentNotifications, unreadCount } from "@/lib/notifications/notify";
@@ -151,8 +152,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // The assistant's thread. Same thread the full-page chat uses, so the panel
   // and the page are one conversation rather than two that each forget the
   // other. Created lazily on first dashboard load and reused after that.
+  // MAIRO's own owner (the platform OWNER role) may use it to test the product
+  // on any business; customers need a plan, as the chat endpoint enforces.
+  const ownerPreview = session.user.role === "OWNER";
   const assistant =
-    organization && hasActivePlan(organization) && session.user.id
+    organization && (hasActivePlan(organization) || ownerPreview) && session.user.id
       ? await (async () => {
           const thread = await findOrCreateThread(session.user.id!, organizationId, CLIENT_AGENT);
           return { threadId: thread.id, messages: await loadThreadMessages(thread.id) };
@@ -246,13 +250,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
           Only for accounts whose plan includes it — the endpoint costs real
           money to serve and already refuses without one, so a launcher that
           opens onto a refusal would be a button that lies. */}
-      {assistant && (
+      {assistant ? (
         <MairoAssistant
           threadId={assistant.threadId}
           initialMessages={assistant.messages}
           businessName={organization?.name ?? "your business"}
           assistantName={assistantNameOf(organization?.assistantName)}
         />
+      ) : (
+        // The button is on every screen: without a plan it says why, rather than doing nothing.
+        <AssistantLocked name={assistantNameOf(organization?.assistantName)} />
       )}
     </AppShell>
   );
