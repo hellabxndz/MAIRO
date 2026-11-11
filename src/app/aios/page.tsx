@@ -35,8 +35,23 @@ function Stat({ label, value, note, source, href, children }: { label: string; v
   return href ? <Link href={href} className="block h-full">{body}</Link> : body;
 }
 
-function greeting(now: Date) {
-  const h = now.getHours();
+// What MAIRO's owner asked to be called on the Command Center (owner-only).
+const OWNER_NICKNAME = "Leodaddy";
+
+/** A time zone Intl accepts, or null — a bad stored value must never break the page. */
+function validTimeZone(tz: string | null | undefined): string | null {
+  if (!tz) return null;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return null;
+  }
+}
+
+/** Morning, afternoon or evening where the owner is — not the server's clock, which is UTC. */
+function greeting(now: Date, timeZone: string) {
+  const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hourCycle: "h23", timeZone }).format(now));
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 }
 
@@ -49,7 +64,9 @@ export default async function CommandCenterPage() {
   ]);
   const brief = founderBrief(s);
   const state = coreState(brief);
-  const first = me?.name?.split(" ")[0];
+  // The owner's own business's time zone, so the greeting and the date are theirs.
+  const savedTz = me ? (await db.user.findUnique({ where: { id: me.id }, select: { organization: { select: { timezone: true } } } }))?.organization?.timezone : null;
+  const tz = validTimeZone(savedTz) ?? "America/New_York";
   const rev = s.revenue;
 
   return (
@@ -61,8 +78,8 @@ export default async function CommandCenterPage() {
               <AiCore state={state} />
               <div>
                 <p className={eyebrow}>AIOS · Command Center</p>
-                <h1 className="mt-2 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{greeting(now)}{first ? `, ${first}` : ""}.</h1>
-                <p className="mt-1 text-[14px] text-neutral-400">{CORE_LABEL[state]} · {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+                <h1 className="mt-2 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{greeting(now, tz)}, {OWNER_NICKNAME}.</h1>
+                <p className="mt-1 text-[14px] text-neutral-400">{CORE_LABEL[state]} · {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: tz })}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link href="/aios/copilot" className="rounded-full bg-[image:var(--mairo-ramp)] px-4 py-2 text-[13px] font-medium shadow-[var(--mairo-glow-key)]">Ask JARVIS</Link>
                   <Link href="/aios/projects" className="rounded-full border border-[color:var(--mairo-line-lit)] px-4 py-2 text-[13px] text-white">Projects</Link>
