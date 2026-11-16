@@ -190,9 +190,9 @@ export default async function ActivatePage({ searchParams }: { searchParams: Pro
             <section id="plans" className="scroll-mt-6">
               <p className="v3-label">Choose your MAIRO plan</p>
               <h1 className="mt-1 text-[clamp(26px,3.4vw,34px)] font-semibold leading-tight tracking-[-0.02em]">
-                Your strategy is ready.
+                Your strategy is ready
                 <br />
-                Now activate MAIRO.
+                Now activate MAIRO
               </h1>
               <p className="mt-1.5 text-[14.5px] text-muted">Choose a plan to turn your approved strategy into a real advertising campaign.</p>
 

@@ -84,19 +84,29 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
   const perBefore = p && rp?.value && p.spendCents !== null ? Math.round(p.spendCents / rp.value) : null;
   const reported = now.hasData;
   const unreadable = now.problems.length > 0;
-  const trackingMissing = pixel?.need === "required_for_purchases" && !(pixel.status === "receiving" || pixel.status === "purchases_verified");
+  // A shop's result is purchases: page views arriving doesn't mean purchases
+  // are counted, so only a verified Purchase event counts as tracked here.
+  const trackingMissing = pixel?.need === "required_for_purchases" && pixel.status !== "purchases_verified";
+  const metaConnected = pixel?.connected ?? false;
   const revenue = m.revenueCents && m.revenueCents > 0 ? m.revenueCents : null;
   const roas = revenue && m.spendCents ? revenue / m.spendCents : null;
 
-  const missing = campaignCount === 0
-    ? "Starts with your first campaign."
-    : unreadable
-      ? "Meta couldn't be read just now — missing, not zero."
-      : "Nothing reported for this period.";
+  // Meta was connected and its campaigns exist, but the connection stopped
+  // working (token expired, access removed): unavailable, not "not started".
+  const metaLost = !metaConnected && campaignCount > 0;
+  const missing = metaLost
+    ? "Unavailable — reconnect Meta to read it. Missing, not zero."
+    : !metaConnected
+    ? "Pending — starts once Meta is connected."
+    : campaignCount === 0
+      ? "Pending — starts with your first campaign."
+      : unreadable
+        ? "Unavailable — Meta couldn't be read just now. Missing, not zero."
+        : "Pending — nothing reported for this period yet.";
   const revenueMissing = campaignCount === 0
     ? missing
     : trackingMissing
-      ? "Not measured: tracking isn't set up, so Meta can't count website sales."
+      ? "Not measured yet: Meta hasn't confirmed a purchase from your website."
       : family === "sales"
         ? "No sale values were reported for this period."
         : "Not measured for your goal — MAIRO counts your leads instead.";
@@ -106,15 +116,32 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
     { key: "spend", label: "Spend", value: reported ? usd(m.spendCents) : null, empty: missing, change: change(m.spendCents, p?.spendCents, "none") },
     { key: "results", label: r.label, value: reported && r.value !== null ? whole(r.value) : null, empty: reported ? `No ${r.label.toLowerCase()} reported for this period.` : missing, change: change(r.value, rp?.value, "up") },
     { key: "cost", label: r.costLabel, value: reported ? usd(per) : null, empty: reported ? `Shown once there are ${r.label.toLowerCase()} to divide by.` : missing, change: change(per, perBefore, "down") },
-    { key: "revenue", label: "Revenue", value: usd(revenue), empty: revenueMissing, change: revenue ? change(revenue, p?.revenueCents, "up") : null, fix: trackingMissing ? { href: "/dashboard/pixel", label: "Fix tracking" } : undefined },
+    // Lead generation is judged on leads and cost per lead; revenue and ROAS
+    // only appear for it when sale values were actually reported.
+    ...(family !== "sales" && !revenue ? [] : [
+    { key: "revenue", label: "Revenue", value: usd(revenue), empty: revenueMissing, change: revenue ? change(revenue, p?.revenueCents, "up") : null, fix: trackingMissing && metaConnected ? { href: "/dashboard/pixel", label: "Verify purchase tracking" } : undefined },
     { key: "roas", label: "ROAS", value: roas ? `${roas.toFixed(2)}×` : null, empty: revenue ? "Needs spend to compare with." : revenueMissing, change: roas && p?.roas ? change(roas, p.roas, "up") : null },
+    ]),
   ];
+  // One sentence, at the top, for when there's nothing to show yet: why, and
+  // the one thing that gets the figures going.
+  const waitingFor: { text: string; href?: string; cta?: string } | null = reported
+    ? null
+    : metaLost
+      ? { text: "Results are unavailable: MAIRO's connection to your Meta ad account stopped working, so it can't read your figures. Nothing below is zero — it's unknown until you reconnect.", href: "/dashboard/meta", cta: "Reconnect Meta" }
+      : !metaConnected
+      ? { text: "No results yet. MAIRO needs your Meta ad account connected before it can build your campaign and read its results.", href: "/dashboard/launch", cta: "Connect Meta" }
+      : campaignCount === 0
+        ? { text: "No results yet. Results start once your first campaign is approved and Meta starts delivering it.", href: "/dashboard/launch", cta: "Continue your first campaign" }
+        : unreadable
+          ? { text: "Results are unavailable right now: Meta couldn't be read. Nothing below is zero — it's unknown until Meta answers. Try again in a few minutes." }
+          : { text: "Waiting for Meta's first figures. They usually arrive a few hours after an ad starts delivering, and nothing below is shown until Meta reports it." };
 
   const { working, improve } = findings(
     family,
     now.campaigns.map((c) => ({ id: c.mairoCampaignId, name: c.name, metrics: c.total, hasData: c.hasData })),
   );
-  if (trackingMissing) improve.unshift({ key: "tracking", text: "Website purchases aren't being counted: your Meta Pixel isn't confirmed yet.", href: "/dashboard/pixel" });
+  if (trackingMissing && metaConnected) improve.unshift({ key: "tracking", text: "Website purchases aren't verified yet: Meta hasn't confirmed a purchase from your website.", href: "/dashboard/pixel" });
   for (const problem of now.problems) improve.unshift({ key: `p:${problem.platform}`, text: problem.message });
   const decisions = pending.map(toView);
 
@@ -142,13 +169,24 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         <p className="mt-1 text-[14.5px] text-muted">{period.label}, as Meta reports it.</p>
         {/* Where the figures came from and how fresh they are: read from Meta as this page loaded. */}
         <p className="mt-1 text-[12.5px] text-faint">
-          {campaignCount === 0
+          {!metaConnected || campaignCount === 0
             ? "Source: your Meta ad account, once a campaign runs."
             : unreadable
               ? "Source: your Meta ad account — it couldn't be read just now, so missing figures are unknown, not zero."
               : "Source: your Meta ad account, read just now. Meta can take a few hours to report the latest activity."}
         </p>
       </header>
+
+      {waitingFor && (
+        <div className="mb-5 rounded-[22px] p-5 mairo-glass" data-results-state={metaLost ? "unavailable" : !metaConnected ? "no-meta" : campaignCount === 0 ? "no-campaign" : unreadable ? "unavailable" : "pending"}>
+          <p className="text-[15px] leading-relaxed text-white/90">{waitingFor.text}</p>
+          {waitingFor.href && (
+            <Link href={waitingFor.href} className="mt-3 inline-flex min-h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-black">
+              {waitingFor.cta}
+            </Link>
+          )}
+        </div>
+      )}
 
       <nav aria-label="Period" className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
         {RANGES.map((x) => (
@@ -178,8 +216,8 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
         </form>
       )}
 
-      {/* The five figures. */}
-      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* The figures for this goal: spend, results, cost per result — plus revenue and ROAS for sales. */}
+      <dl className={`mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 ${figures.length > 3 ? "lg:grid-cols-5" : ""}`}>
         {figures.map((f, i) => (
           <div key={f.key} className={`mairo-glass rounded-[22px] p-4 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`}>
             <dt className="text-[13px] text-muted">{f.label}</dt>

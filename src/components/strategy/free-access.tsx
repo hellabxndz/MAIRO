@@ -164,7 +164,7 @@ export function FreeHome({
         </div>
       )}
       <p className="mt-8 v3-label">{businessName}</p>
-      <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{approved ? "Your strategy is ready." : "Your free plan is ready to review."}</h1>
+      <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">{approved ? "Your strategy is ready" : "Your free plan is ready to review"}</h1>
       <p className="mt-1.5 max-w-[640px] text-[14.5px] text-muted">
         Your free plan shows you how MAIRO would advertise your business. A subscription is required before MAIRO builds or launches the real campaign.
       </p>

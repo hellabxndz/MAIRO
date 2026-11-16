@@ -13,6 +13,7 @@ import { agentModel } from "@/lib/ai/model";
 import { recentTurns } from "@/lib/ai/threads";
 import { systemPromptFor } from "@/lib/ai/agents";
 import { memoryBrief, memoryProfile } from "@/lib/memory/profile";
+import { managerStatusBrief } from "@/lib/dashboard/manager-brief";
 import type { AgentType } from "@/generated/prisma/enums";
 
 function lastUserText(messages: UIMessage[]): string | null {
@@ -134,7 +135,12 @@ export async function POST(req: Request) {
   // them in confidently, and a confident guess about somebody's own business
   // is the fastest way to lose them.
   // One Business Brain for the assistant, as for every other part of MAIRO.
-  const [memory, brain] = await Promise.all([memoryProfile(threadOrgId), loadBrainState(threadOrgId, new Date(), { accountHistory: true })]);
+  // And where it stands right now — the Overview's facts, so both agree.
+  const [memory, brain, standing] = await Promise.all([
+    memoryProfile(threadOrgId),
+    loadBrainState(threadOrgId, new Date(), { accountHistory: true }),
+    managerStatusBrief(threadOrgId).catch(() => ""),
+  ]);
 
   await recordUserMessage(threadId, messages);
 
@@ -145,7 +151,7 @@ export async function POST(req: Request) {
   const system = `${systemPromptFor(agentType, {
     assistantName: org.assistantName,
     businessName: org.name,
-  })}\n\n${readinessBrief(readiness)}\n\n${memoryBrief(memory)}\n\n${brainPrompt(brain)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${AI_TEAM_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}${roleBrief(role) ? `\n\n${roleBrief(role)}` : ""}`;
+  })}\n\n${readinessBrief(readiness)}${standing ? `\n\n${standing}` : ""}\n\n${memoryBrief(memory)}\n\n${brainPrompt(brain)}\n\n${await strategyBrief(threadOrgId)}\n\n${await strategyEngineBrief(threadOrgId)}\n\n${await metaKnowledgeBrief().catch(() => "")}\n\n${MISSION_BRIEF}\n\n${AI_TEAM_BRIEF}\n\n${ONE_CLICK_FIX_BRIEF}${roleBrief(role) ? `\n\n${roleBrief(role)}` : ""}`;
 
   return stream(threadId, system, messages, assistantTools(threadOrgId, role));
 }

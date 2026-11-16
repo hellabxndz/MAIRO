@@ -141,7 +141,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (!["/dashboard/launch", "/dashboard/billing"].some((p) => pathname.startsWith(p))) redirect("/dashboard/launch");
   }
 
-  if (!unpaid && !metaAccount && !exploring && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
+  // Home and Results open too, for a business that came through the plan:
+  // Home is where it's told exactly what MAIRO is waiting for (Meta) with the
+  // button to do it, and Results says plainly that nothing has arrived yet.
+  // Bouncing both tabs back to the checklist read as a broken dashboard.
+  const homeOrResults = Boolean(journey) && (pathname === "/dashboard" || pathname.startsWith("/dashboard/results"));
+  if (!unpaid && !metaAccount && !exploring && !homeOrResults && !ALWAYS_REACHABLE.some((p) => pathname.startsWith(p))) {
     redirect(journey ? "/dashboard/launch" : "/dashboard/meta?required=1");
   }
 
@@ -226,14 +231,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
 
-      {!metaAccount && !unpaid && !pathname.startsWith("/dashboard/launch") && (
+      {/* Not on Home or Results for a plan business: both already say Meta is
+          the next step, with its button — a second amber box saying the
+          same thing as "looking around" is wrong for someone who just paid. */}
+      {!metaAccount && !unpaid && !homeOrResults && !pathname.startsWith("/dashboard/launch") && (
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-amber-200">
             You&apos;re looking around without a Meta account connected. Plans and
             creatives work, but nothing can go live until you connect one.
           </p>
           <Link
-            href="/dashboard/meta"
+            href={journey ? "/dashboard/launch" : "/dashboard/meta"}
             className="shrink-0 rounded-lg border border-amber-400/40 px-4 py-2 text-amber-100 transition hover:bg-amber-400 hover:text-black v3-label"
           >
             Connect Meta

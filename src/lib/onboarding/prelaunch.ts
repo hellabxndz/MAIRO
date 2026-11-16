@@ -128,6 +128,10 @@ export function composePreLaunch(i: PreLaunchInput) {
   const purchaseGate = i.measurement?.need === "required_for_purchases" ? i.measurement.gate : null;
   if (purchaseGate && !purchaseGate.ok) {
     tracking.push(`${purchaseGate.title}. ${purchaseGate.reason}`);
+  } else if (purchaseGate?.ok) {
+    // Said in so many words before launch: an online shop's whole result is
+    // purchases, and "pixel active" alone doesn't tell them those are counted.
+    tracking.push("Purchase tracking is verified: Meta has received a Purchase event from your website, so MAIRO can count sales, cost per purchase and return on ad spend.");
   } else if (c.destinationType === "WEBSITE") {
     if (i.pixelActive) tracking.push("Your Meta pixel is active, so Meta can count sales and sign-ups on your website.");
     else {

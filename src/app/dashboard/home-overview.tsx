@@ -6,8 +6,7 @@ import { pulseDue } from "@/lib/success/store";
 import { PULSE_LATER_COOKIE } from "@/lib/success/journey";
 import { loadConsole } from "@/lib/dashboard/console";
 import type { RangeDays } from "@/lib/dashboard/overview";
-import { loadSimplePixel } from "@/lib/tracking/simple-view";
-import { loadPixelSetup } from "@/lib/tracking/pixel-setup";
+import { loadPixelSetup, pixelStateFor } from "@/lib/tracking/pixel-setup";
 import { assistantNameOf } from "@/lib/ai/agents";
 import { Pill } from "@/components/console/kit";
 import { DecisionControls } from "@/components/console/decision-controls";
@@ -18,6 +17,9 @@ import { MairoCore } from "@/components/cinematic/core";
 import { CountUp } from "@/components/cinematic/count-up";
 import { loadManagerStatus } from "@/lib/dashboard/manager";
 import { AutopilotToggle } from "@/components/dashboard/home/autopilot-toggle";
+import { loadJourney } from "@/lib/strategy/journey";
+import { launchGate } from "@/lib/tracking/pixel-rules";
+import { rightNow } from "@/lib/dashboard/right-now";
 
 // The Overview, as simple as a chat app's home: who you are, one box to say
 // what you want, the one thing to do next, a short summary of how the ads are
@@ -30,7 +32,18 @@ import { AutopilotToggle } from "@/components/dashboard/home/autopilot-toggle";
 // the activity feed, every metric) is still a tap away, in Results, the
 // approvals, and Account → More.
 
-type Next = { title: string; text: string; href: string; cta: string };
+// What's missing for purchase tracking, said about the business rather than
+// "this campaign" — the Overview may be read before any campaign exists.
+const PURCHASE_GAP: Record<string, string> = {
+  no_pixel: "No Meta Pixel is set up for your website yet.",
+  declined: "You chose not to connect a Meta Pixel.",
+  access_lost: "MAIRO can't reach your Meta Pixel right now.",
+  not_receiving: "Your Pixel isn't sending website events to Meta yet.",
+  deferred: "You chose to set up tracking later.",
+  purchase_not_chosen: "Completed purchases aren't among what you chose to measure.",
+  no_purchase_seen: "Meta hasn't seen a purchase from your website yet.",
+  purchase_no_value: "Your purchases reach Meta without an order value and currency.",
+};
 
 const btn = "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-6 text-[15px] font-semibold text-black transition hover:bg-white/90 sm:w-auto";
 
@@ -63,10 +76,9 @@ export async function HomeOverview({
   above?: ReactNode;
   askFeedback?: boolean;
 }) {
-  const [c, org, pixel, setup, pulseWanted, pulseLater, manager] = await Promise.all([
+  const [c, org, setup, pulseWanted, pulseLater, manager] = await Promise.all([
     loadConsole(organizationId, userName, days),
     db.organization.findUnique({ where: { id: organizationId }, select: { assistantName: true } }),
-    loadSimplePixel(organizationId).catch(() => null),
     loadPixelSetup(organizationId).catch(() => null),
     pulseDue(organizationId).catch(() => false),
     cookies().then((k) => k.get(PULSE_LATER_COOKIE)?.value === "1"),
@@ -77,24 +89,19 @@ export async function HomeOverview({
   const o = c.overview;
   const noCampaigns = o.campaigns.length === 0;
 
-  // ---- The one next step: what's in the way first, then the first
-  // campaign, then tracking a shop needs, then anything waiting, then results.
-  const blocker = c.actions.items.find((i) => i.key === "readiness" || i.key === "billing");
+  // The first campaign's exact step, while it isn't launched — so the top of
+  // the page can say "connect Meta" or "approve it" rather than "continue".
   const firstSetup = c.actions.items.find((i) => i.key === "first");
-  const trackingNeeded =
-    Boolean(pixel?.view?.connected) && !pixel?.verified && setup?.need === "required_for_purchases" && setup?.decision !== "declined";
+  const journey = firstSetup ? await loadJourney(organizationId, { checkFunding: false }).catch(() => null) : null;
+  // A shop's result is purchases: verified only once Meta has received a
+  // Purchase event (with its value, where Meta says) — the launch gate's rule.
+  const sellsOnline = setup?.need === "required_for_purchases";
+  const purchaseGate = sellsOnline ? launchGate("required_for_purchases", await pixelStateFor(organizationId)) : null;
+  const purchaseVerified = Boolean(purchaseGate?.ok);
+  const trackingNeeded = sellsOnline && Boolean(setup?.connected) && !purchaseVerified && setup?.decision !== "declined";
+
+  const blocker = c.actions.items.find((i) => i.key === "readiness" || i.key === "billing");
   const waiting = c.actions.items.filter((i) => i.key.startsWith("d:") || i.key.startsWith("o:") || i.key === "suggested");
-  const next: Next & { key?: string } = blocker
-    ? { key: blocker.key, title: blocker.title, text: blocker.why, href: blocker.href ?? "/dashboard/meta", cta: blocker.cta }
-    : firstSetup
-      ? { key: firstSetup.key, title: firstSetup.title, text: firstSetup.why, href: firstSetup.href ?? "/dashboard/launch", cta: "Continue setting up" }
-      : noCampaigns
-        ? { title: "Create your first campaign", text: "Tell MAIRO what you want to advertise. It builds the campaign and the ad, and shows you everything before anything spends.", href: "/dashboard/create", cta: "Create your first campaign" }
-        : trackingNeeded
-          ? { title: "Fix tracking", text: "Meta can't count website purchases from your ads yet. Set up your Pixel so MAIRO can measure sales — about five minutes.", href: "/dashboard/pixel", cta: "Fix tracking" }
-          : waiting.length > 0
-            ? { title: `${waiting.length === 1 ? "Something is" : `${waiting.length} things are`} waiting for your approval`, text: "Nothing changes in your ad account until you say yes.", href: "/dashboard/decisions", cta: "Review pending ads" }
-            : { title: "Your ads are running", text: "Nothing needs you right now. MAIRO checks again every day.", href: "/dashboard/results", cta: "View results" };
 
   // ---- Status and the figures Meta reported.
   const { live, review, paused } = c.campaigns.counts;
@@ -111,6 +118,7 @@ export async function HomeOverview({
   const spend = metric("spend");
   const results = metric("results");
   const value = metric("value");
+  const cost = metric("cost");
   const roas = o.current.roas !== null && (o.current.revenueCents ?? 0) > 0 ? `${o.current.roas.toFixed(2)}×` : null;
   const figures: { label: string; value: string }[] = [
     ...(spend?.value ? [{ label: "Spent", value: spend.value }] : []),
@@ -126,8 +134,30 @@ export async function HomeOverview({
       ? [c.results.empty, ...(o.problems.length ? [o.problems[0].message] : [])]
       : c.results.insights.map((i) => i.text);
   if (!noCampaigns && !value?.value && !roas && !c.results.empty) {
-    summary.push(trackingNeeded ? "Revenue isn't measured yet because tracking isn't set up." : "Revenue isn't shown because no sale values were reported.");
+    summary.push(trackingNeeded ? "Revenue isn't measured yet because purchase tracking isn't verified." : "Revenue isn't shown because no sale values were reported.");
   }
+
+  // ---- The three questions, answered at the top, with one primary button.
+  const now = rightNow({
+    journey: journey && !journey.launched ? journey.next : null,
+    meta: c.header.adAccount.state,
+    blocker: blocker ? { title: blocker.title, why: blocker.why, href: blocker.href ?? "/dashboard/meta", cta: blocker.cta } : null,
+    approvals: waiting.length,
+    campaigns: { live, review, paused, total: o.campaigns.length },
+    purchaseTracking: sellsOnline
+      ? { verified: purchaseVerified, declined: setup?.decision === "declined", title: purchaseGate && !purchaseGate.ok ? PURCHASE_GAP[purchaseGate.code] : null, href: "/dashboard/pixel" }
+      : null,
+    figures: {
+      spend: spend?.value ?? null,
+      results: results?.value ?? null,
+      resultsLabel: results?.label ?? "Results",
+      cost: cost?.value ?? null,
+      costLabel: cost?.label ?? "Cost per result",
+      roas: sellsOnline ? roas : null,
+    },
+    unreadable: o.problems.length > 0,
+    mode: manager?.mode.label ?? null,
+  });
 
   const restingLabel = waiting.length > 0
     ? `${waiting.length} ${waiting.length === 1 ? "thing waits" : "things wait"} for your approval`
@@ -158,20 +188,49 @@ export async function HomeOverview({
         </p>
       </header>
 
-      <HomeComposer assistantName={name} />
-
-      {/* The one thing to do next. */}
-      <section aria-labelledby="next-step" className="mt-8 rounded-[24px] p-5 sm:p-6 mairo-glass">
-        <h2 id="next-step" className="text-[18px] font-semibold text-white">{next.title}</h2>
-        <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">{next.text}</p>
-        <div className="mt-4">
-          {next.href.startsWith("http") ? (
-            <a href={next.href} target="_blank" rel="noopener noreferrer" className={btn}>{next.cta}</a>
+      {/* Right now: what MAIRO is doing, what needs you, what you're getting —
+          and the one button that matters for this account's state. */}
+      <section aria-labelledby="right-now" className="rounded-[24px] p-5 sm:p-6 mairo-glass" data-right-now={now.needs ? "needs-you" : "moving"}>
+        <h2 id="right-now" className="v3-label">Right now</h2>
+        <dl className="mt-3 space-y-4">
+          <div>
+            <dt className="text-[12.5px] text-muted">What MAIRO is doing</dt>
+            <dd className="mt-0.5 text-[15.5px] leading-relaxed text-white">{now.doing}</dd>
+          </div>
+          <div>
+            <dt className="text-[12.5px] text-muted">What needs you</dt>
+            <dd className={`mt-0.5 text-[15.5px] leading-relaxed ${now.needs ? "font-medium text-white" : "text-white/85"}`}>
+              {now.needs ? now.needs.text : "Nothing right now. MAIRO tells you here, and by email, when something needs your yes."}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[12.5px] text-muted">Results so far</dt>
+            <dd className={`mt-0.5 text-[15.5px] leading-relaxed tabular-nums ${now.results.state === "reported" ? "text-white" : "text-white/75"}`} data-results={now.results.state}>
+              {now.results.text}
+            </dd>
+          </div>
+          {now.tracking && (
+            <div>
+              <dt className="text-[12.5px] text-muted">Purchase tracking</dt>
+              <dd className="mt-0.5 flex items-start gap-2 text-[14.5px] leading-relaxed text-white/85" data-purchase-tracking={now.tracking.verified ? "verified" : "not-verified"}>
+                <span aria-hidden className={`mt-[9px] shrink-0 ${now.tracking.verified ? "v3-dot" : "h-[7px] w-[7px] rounded-full bg-amber-300"}`} />
+                {now.tracking.text}
+              </dd>
+            </div>
+          )}
+        </dl>
+        <div className="mt-5">
+          {now.primary.href.startsWith("http") ? (
+            <a href={now.primary.href} target="_blank" rel="noopener noreferrer" className={btn}>{now.primary.cta}</a>
           ) : (
-            <Link href={next.href} className={btn}>{next.cta}</Link>
+            <Link href={now.primary.href} className={btn}>{now.primary.cta}</Link>
           )}
         </div>
       </section>
+
+      <div className="mt-8">
+        <HomeComposer assistantName={name} />
+      </div>
 
       {/* What MAIRO is doing for this business: tracking, what it may do on
           its own, and what it last did — each from a stored record. */}

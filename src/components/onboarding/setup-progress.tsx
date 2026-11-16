@@ -52,8 +52,10 @@ export function SetupProgress({ steps, here, showProblem = true }: { steps: Onbo
             <span className="font-medium text-white">Setup complete — your first campaign is live. Next steps are on your dashboard.</span>
           )}
         </p>
-        <p className="text-[12px] text-faint">
-          {finished} of {total} steps done · saved as you go
+        {/* One counter on screen — the phase above. A second "x of 13 steps"
+            next to it read as a different, contradicting count. */}
+        <p className="text-[12px] text-faint" data-steps-done={`${finished}/${total}`}>
+          Saved as you go
         </p>
       </div>
       <ol className="mt-3 grid grid-cols-9 gap-1" aria-label="Setup phases">

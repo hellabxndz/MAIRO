@@ -88,7 +88,7 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
               <span aria-hidden className="h-2 w-2 rounded-full bg-amber-300" /> {rejected ? "Needs a fix" : "In Meta's review"}
             </span>
           )}
-          <h1 className="mt-3 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Welcome to your full MAIRO dashboard.</h1>
+          <h1 className="mt-3 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">Welcome to your full MAIRO dashboard</h1>
           <p className="mt-2 text-[15px] text-muted">
             {delivering
               ? "Meta approved your first campaign's ad and it's delivering. MAIRO is now monitoring performance."
@@ -143,20 +143,23 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      {steps && <SetupProgress steps={steps} here={reviewing ? "launch" : "prepare"} showProblem={false} />}
+      {/* Described as the step this page is actually waiting on — Meta first,
+          when it isn't connected, rather than "MAIRO prepares your campaign"
+          with the real blocker tucked underneath as "also still open". */}
+      {steps && <SetupProgress steps={steps} here={reviewing ? "launch" : journey.next === "connect" ? "connect" : "prepare"} showProblem={false} />}
 
       {(welcome === "1" || subscribed === "1") && (
         <div className="mt-6 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] p-6">
           <p className="v3-label">Welcome to full MAIRO</p>
-          <p className="mt-1 text-[19px] font-semibold text-white">Your plan is active.</p>
+          <p className="mt-1 text-[19px] font-semibold text-white">Your plan is active</p>
           <p className="mt-1 text-[14px] text-muted">Your approved strategy is ready to become a real campaign. Everything is prefilled from your plan — nothing to answer again.</p>
         </div>
       )}
 
       <div className="mt-6">
-        <p className="v3-label">{reviewing ? "Step 10 of 10" : "Step 9 of 10"}</p>
+        <p className="v3-label">Your first campaign</p>
         <h1 className="mt-1 text-[clamp(24px,3vw,32px)] font-semibold tracking-[-0.02em] text-white">
-          {journey.next === "waiting" ? "You approved the launch." : reviewing ? "Review your campaign before it goes live." : "Let\u2019s turn your plan into a real campaign."}
+          {journey.next === "waiting" ? "You approved the launch" : reviewing ? "Review your campaign before it goes live" : journey.next === "connect" ? "Connect Meta so MAIRO can build your campaign" : "Let\u2019s turn your plan into a real campaign"}
         </h1>
         <p className="mt-1.5 text-[14.5px] text-muted">
           {journey.next === "waiting"
