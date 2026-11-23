@@ -49,3 +49,9 @@ next-env.d.ts
 # the video renderer's own dependencies
 /video/node_modules
 /public/_local-media
+
+# Database exports never go in Git (scripts/ops/restore-check.mjs, docs/BETA-READINESS-2026-10.md §6).
+*.dump
+*.dump.enc
+*.sql.gz
+*.pgdump

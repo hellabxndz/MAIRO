@@ -433,11 +433,30 @@ touched):
    the result proves the copy is really from then.
 4. Switch the sidebar back to `production`, then delete the branch.
 
+**Checking a restored branch with the script** (read-only; prints aggregates
+only, never a connection string or a row):
+
+```sh
+RESTORE_URL='<restored branch>' PROD_URL='<production, read-only role>' \
+AS_OF='2026-11-23T12:00:00Z' npm run ops:restore-check
+```
+
+It checks:
+- connections;
+- the schema: every Prisma model's table, plus plpgsql;
+- migration history against `prisma/migrations` (none half-applied, none unknown; newer ones are listed as not yet applied);
+- counts in 23 critical tables, compared with production's rows created at or before `AS_OF`;
+- orphaned rows across 10 key relationships;
+- that the newest row isn't after the recovery point.
+
+It exits 1 on any failure. It was tested on 23 Nov 2026 against an encrypted local backup restored into an isolated database, both intact and deliberately damaged.
+
 **Drill log**
 
 | Date | Restored to | Result |
 | --- | --- | --- |
 | 29 Oct 2026 | 16:00 UTC, before the 16:36 UTC deploy | **Pass.** `FounderProject` absent (created by that deploy's migration); newest migration `20261129120000_meta_reliability` (27 Oct 19:45 UTC); 22 organisations, 22 users, 12 campaigns — the same as production. Branch `restore-drill-2026-10-29`, deleted afterwards. |
+| 23 Nov 2026 | — | **Blocked.** No Neon or Vercel access in the session, so production's project and branch couldn't be confirmed and no restore was run. The verification script and the encrypted backup → isolated restore procedure were tested on local data only. No independent backup exists yet. |
 
 The `pre-2026-10-29-deploy` branch taken for that deploy was never checked on
 the branch itself — the queries meant for it ran on production (the sidebar

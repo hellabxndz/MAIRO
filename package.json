@@ -69,6 +69,7 @@
     "check:ad-score": "tsx scripts/check-ad-score.ts",
     "check:results": "tsx scripts/check-results.ts",
     "check:right-now": "tsx scripts/check-right-now.ts",
+    "ops:restore-check": "node scripts/ops/restore-check.mjs",
     "check:first-ad": "tsx scripts/check-first-ad.ts",
     "check:creative-loop": "tsx scripts/check-creative-loop.ts",
     "check:right-now-db": "tsx scripts/check-right-now-db.ts",
