@@ -69,6 +69,8 @@
     "check:ad-score": "tsx scripts/check-ad-score.ts",
     "check:results": "tsx scripts/check-results.ts",
     "check:right-now": "tsx scripts/check-right-now.ts",
+    "check:first-ad": "tsx scripts/check-first-ad.ts",
+    "check:creative-loop": "tsx scripts/check-creative-loop.ts",
     "check:right-now-db": "tsx scripts/check-right-now-db.ts",
     "check:results-db": "tsx scripts/check-results-db.ts",
     "check:command-center": "tsx scripts/check-command-center.ts",

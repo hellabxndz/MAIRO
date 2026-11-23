@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { PlanConcept } from "@/lib/preview/plan-writing";
 
 // One ad concept as it would sit in a Facebook or Instagram feed: the words
@@ -85,5 +85,27 @@ export function AdMock({ c, business, placement, domain, image, imageLabel = "Sa
         <span className="shrink-0 rounded-md bg-[#e2e5e9] px-3 py-1.5 text-[13px] font-semibold">{c.cta}</span>
       </div>
     </figure>
+  );
+}
+
+/**
+ * A picture from the business's own website (its share image), for the
+ * first-ad preview. Shown as theirs and never altered; when it can't load
+ * (moved, blocked from other sites) `onFail` lets the caller fall back to the
+ * written visual concept rather than show a broken image.
+ */
+export function SitePicture({ src, alt, onFail }: { src: string; alt: string; onFail: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- the business's own image on its own host; not ours to optimise or proxy
+    <img
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      decoding="async"
+      onLoad={(e) => (e.currentTarget.naturalWidth > 40 ? setLoaded(true) : onFail())}
+      onError={onFail}
+      className={`object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+    />
   );
 }

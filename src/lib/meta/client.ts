@@ -10,6 +10,23 @@ const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_API_VE
 const GRAPH_HOST = "https://graph.facebook.com";
 
 /**
+ * Browser tests point Graph calls at a local fake Meta (scripts/e2e/
+ * fake-meta.mjs) with META_FAKE_GRAPH, as the fake Stripe does. Honoured only
+ * for a loopback address and never on Vercel, so it can't redirect a
+ * deployment's Meta calls anywhere.
+ */
+function graphHost(): string {
+  const fake = process.env.META_FAKE_GRAPH?.trim();
+  if (!fake || process.env.VERCEL) return GRAPH_HOST;
+  try {
+    const u = new URL(fake);
+    return u.hostname === "localhost" || u.hostname === "127.0.0.1" ? u.origin : GRAPH_HOST;
+  } catch {
+    return GRAPH_HOST;
+  }
+}
+
+/**
  * Meta Intelligence's test harness: a transport (and optionally an API
  * version) for every Graph call made inside withGraphTransport(). Scoped to
  * that async context only — a contract test running a stubbed Meta, or a
@@ -136,7 +153,7 @@ async function sendGraphRequest<T>(
 ): Promise<T> {
   const ctx = transport.getStore();
   const version = ctx?.version ?? GRAPH_VERSION;
-  const url = new URL(`${GRAPH_HOST}/${version}${path}`);
+  const url = new URL(`${graphHost()}/${version}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) url.searchParams.set(key, String(value));
   }
@@ -310,7 +327,7 @@ export async function metaGraphPaginate<T>(
     } catch {
       break;
     }
-    if (nextUrl.origin !== GRAPH_HOST) break;
+    if (nextUrl.origin !== graphHost()) break;
     page = await metaGraphRequest(path, { ...options, params: { ...(options.params ?? {}), after } });
   }
   return out;

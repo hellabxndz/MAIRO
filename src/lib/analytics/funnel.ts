@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 // are supporting evidence only.
 
 export const PUBLIC_EVENT_NAMES = ["hero_view", "hero_example", "hero_chapter", "hero_play", "preview_start", "preview_result", "preview_complete", "preview_save", "preview_refine", "hero_cta", "tool_result", "walkthrough"] as const;
-export const SERVER_EVENT_NAMES = ["plan_created", "plan_approved", "checkout_success", "first_launch"] as const;
+export const SERVER_EVENT_NAMES = ["plan_created", "plan_approved", "checkout_start", "checkout_success", "meta_connected", "tracking_ready", "launch_approved", "first_launch", "first_result", "next_test_approved"] as const;
 
 export async function heroVariantCookie(): Promise<string> {
   try {
@@ -61,27 +61,85 @@ export async function heroFunnel(days: number): Promise<VariantFunnel[]> {
 // subscribed is read from the subscription itself rather than recorded, so
 // it can't drift from what Stripe says.
 
+// From the first look to the first follow-up test. `segment` marks a step
+// only some businesses take (purchase tracking is for shops): it's counted,
+// but the step after it is compared with the last step everyone takes, so
+// lead businesses don't read as a leak.
 export const FUNNEL_STEPS = [
   { name: "hero_view", label: "Landing views" },
-  { name: "preview_start", label: "Free plans started" },
-  { name: "preview_complete", label: "Free plans finished" },
-  { name: "plan_created", label: "Plans saved to an account" },
+  { name: "preview_start", label: "First ads started (website entered)" },
+  { name: "preview_complete", label: "First ads shown" },
+  { name: "plan_created", label: "Accounts created with their plan" },
   { name: "plan_approved", label: "Plans approved" },
+  { name: "checkout_start", label: "Checkout started" },
   { name: "checkout_success", label: "Subscribed" },
+  { name: "meta_connected", label: "Meta ad account connected" },
+  { name: "tracking_ready", label: "Purchase tracking verified (shops)", segment: true },
+  { name: "launch_approved", label: "First launch approved" },
   { name: "first_launch", label: "First campaign live on Meta" },
+  { name: "first_result", label: "First result reported by Meta" },
+  { name: "next_test_approved", label: "First follow-up test approved" },
 ] as const;
 
 export type FunnelStep = { name: (typeof FUNNEL_STEPS)[number]["name"]; label: string; count: number; fromPrevious: number | null };
 
-/** Pure: event names in, one count per step, with the share of the step before. */
+/** Pure: event names in, one count per step, with the share of the step before (skipping segment-only steps). */
 export function tallyFunnel(names: string[]): FunnelStep[] {
   const counts = new Map<string, number>();
   for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
   return FUNNEL_STEPS.map((s, i) => {
     const count = counts.get(s.name) ?? 0;
-    const before = i > 0 ? (counts.get(FUNNEL_STEPS[i - 1].name) ?? 0) : 0;
+    let j = i - 1;
+    while (j >= 0 && "segment" in FUNNEL_STEPS[j] && !("segment" in s)) j--;
+    const before = j >= 0 ? (counts.get(FUNNEL_STEPS[j].name) ?? 0) : 0;
     return { name: s.name, label: s.label, count, fromPrevious: i > 0 && before > 0 ? count / before : null };
   });
+}
+
+// --- Time to value ---------------------------------------------------------------
+//
+// Medians, so one stalled account doesn't hide how long most take: how long a
+// visitor waits from entering a website to seeing their first ad (the same
+// anonymous id, same day), and how long a business takes from signing up to
+// its first live campaign and first reported result.
+
+export function median(xs: number[]): number | null {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/** Pure: seconds from each visitor's first "started" to their first "shown" after it. */
+export function previewSeconds(rows: { name: string; anonId: string | null; at: Date }[]): number[] {
+  const start = new Map<string, number>();
+  const out: number[] = [];
+  const done = new Set<string>();
+  for (const r of [...rows].sort((a, b) => a.at.getTime() - b.at.getTime())) {
+    if (!r.anonId) continue;
+    if (r.name === "preview_start" && !start.has(r.anonId)) start.set(r.anonId, r.at.getTime());
+    if (r.name === "preview_complete" && start.has(r.anonId) && !done.has(r.anonId)) {
+      const s = (r.at.getTime() - start.get(r.anonId)!) / 1000;
+      if (s >= 0 && s < 6 * 3600) out.push(s);
+      done.add(r.anonId);
+    }
+  }
+  return out;
+}
+
+export type TimeToValue = { previewSeconds: number | null; previews: number; hoursToLive: number | null; live: number; hoursToResult: number | null; results: number };
+
+export async function timeToValue(days: number): Promise<TimeToValue> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const [anon, steps] = await Promise.all([
+    db.funnelEvent.findMany({ where: { createdAt: { gte: since }, name: { in: ["preview_start", "preview_complete"] }, anonId: { not: null } }, select: { name: true, anonId: true, createdAt: true }, take: 20_000 }),
+    db.funnelEvent.findMany({ where: { createdAt: { gte: since }, name: { in: ["first_launch", "first_result"] }, organizationId: { not: null } }, select: { name: true, createdAt: true, organization: { select: { createdAt: true } } } }),
+  ]);
+  const secs = previewSeconds(anon.map((r) => ({ name: r.name, anonId: r.anonId, at: r.createdAt })));
+  const hours = (n: string) => steps.filter((s) => s.name === n && s.organization).map((s) => (s.createdAt.getTime() - s.organization!.createdAt.getTime()) / 3_600_000);
+  const live = hours("first_launch");
+  const res = hours("first_result");
+  return { previewSeconds: median(secs), previews: secs.length, hoursToLive: median(live), live: live.length, hoursToResult: median(res), results: res.length };
 }
 
 export async function stepFunnel(days: number): Promise<FunnelStep[]> {

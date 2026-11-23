@@ -49,6 +49,7 @@ const INSIGHT_KIND: Record<string, { kind: TimelineKind; filters: TimelineFilter
   "creative-fatigue": { kind: "creative", filters: ["creative"] },
   "pause-ad": { kind: "creative", filters: ["creative"] },
   "test-variation": { kind: "creative", filters: ["creative"] },
+  "test-from-winner": { kind: "creative", filters: ["creative"] },
   "scale-winner": { kind: "winner", filters: ["budget"] },
   "shift-budget": { kind: "budget", filters: ["budget"] },
   "widen-audience": { kind: "audience", filters: ["audience"] },

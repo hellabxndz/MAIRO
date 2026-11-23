@@ -58,6 +58,7 @@ const FROM_DECISION: Record<string, { actionType: ActionType | null; radar: Rada
   "landing-page": { actionType: "analyze_website", radar: "website", early: true, severity: (d) => (d.urgent ? "URGENT" : "ATTENTION") },
   "widen-audience": { actionType: "expand_audience", radar: "audience", early: true, severity: () => "ATTENTION" },
   "test-variation": { actionType: "generate_creative", radar: "creative", early: false, severity: () => "OPPORTUNITY" },
+  "test-from-winner": { actionType: "generate_creative", radar: "creative", early: false, severity: () => "OPPORTUNITY" },
   "shift-budget": { actionType: "adjust_budget", radar: "budget", early: false, severity: () => "OPPORTUNITY" },
   "scale-winner": { actionType: "adjust_budget", radar: "budget", early: false, severity: () => "OPPORTUNITY" },
 };

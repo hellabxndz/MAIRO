@@ -57,6 +57,8 @@ export type PlanReport = {
     url: string | null;
     pagesRead: number;
     platform: string | null;
+    /** A picture from the business's own website, for the first-ad preview; null when none was found. */
+    image: string | null;
     /** What the reading saw where it matters for ads, each a plain observation. */
     seen: { label: string; value: string; ok: boolean | null }[];
     findings: SavedPlan["findings"];
@@ -186,7 +188,7 @@ export function buildReport(p: SavedPlan): PlanReport | null {
     },
     budget,
     concepts: { list, first, firstWhy, source: p.source, filled: p.filled, dropped: p.dropped },
-    website: { read: Boolean(p.site), url: p.site?.url ?? p.inputs.website, pagesRead: p.site?.pagesRead ?? 0, platform: p.site?.platform ?? null, seen, findings: p.findings },
+    website: { read: Boolean(p.site), url: p.site?.url ?? p.inputs.website, pagesRead: p.site?.pagesRead ?? 0, platform: p.site?.platform ?? null, image: p.site?.image ?? null, seen, findings: p.findings },
     month: firstMonth({ ...budgetInputOf(p, preview), firstAd: list[first]?.headline ?? list[0]?.headline ?? "your first ad" }),
   };
 }

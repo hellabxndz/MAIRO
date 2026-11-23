@@ -1,5 +1,7 @@
 "use server";
 
+import { recordOnce } from "@/lib/analytics/funnel";
+
 import { executionBlock } from "@/lib/billing/execution";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -72,10 +74,18 @@ export async function approveDecisionsAction(input: {
     if (!outcome.ok) errors.push(outcome.error);
     else if (outcome.partial) partial = true;
   }
+  // The first follow-up creative test the owner approved — the loop closing
+  // from results to the next test (lib/analytics/funnel.ts). Counted only
+  // once it went through.
+  const tests = await db.mairoDecision.count({ where: { id: { in: ids.data }, organizationId: ctx.organizationId, status: "APPLIED", kind: { in: NEXT_TEST_KINDS } } });
+  if (tests > 0) await recordOnce("next_test_approved", ctx.organizationId);
   revalidate();
   if (applied.every((a) => !a.ok) && errors.length > 0) return { ok: false, error: errors[0], applied };
   return { ok: true, applied, partial: partial || errors.length > 0 };
 }
+
+/** Decisions that put a new creative test in front of Meta. */
+const NEXT_TEST_KINDS = ["test-from-winner", "test-variation", "creative-fatigue"];
 
 async function setStatus(decisionId: string, status: "REJECTED" | "IGNORED"): Promise<{ ok: boolean; error?: string }> {
   // Role check: decision.approve (lib/members/roles.ts).

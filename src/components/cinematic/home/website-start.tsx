@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { FIELD_EVENT } from "@/lib/cinematic/field-event";
+import { heroVariant, track } from "@/lib/analytics/track";
 
-// The one action on the homepage: a business's website, straight into the
-// free plan (/preview reads ?website=). A plain GET form, so it works before
-// any JavaScript arrives and the plan page owns every check.
+// The one action on the homepage: a business's website, straight into its
+// first ad. /preview reads ?website= and, with ?generate=1, reads the site and
+// makes the first ad at once — no form in between; only what the website
+// can't answer is asked. A plain GET form, so it works before any JavaScript
+// arrives and the plan page owns every check.
 //
 // Typing stirs the Field behind the page (FIELD_EVENT) and tells the hero's
 // readout what's being typed — the page answering the visitor, nothing sent
@@ -15,10 +18,11 @@ const stir = (text: string) => {
   window.dispatchEvent(new CustomEvent(FIELD_EVENT, { detail: { energy: Math.min(1, 0.35 + text.length / 24), text } }));
 };
 
-export function WebsiteStart({ id, label = "Build my free plan" }: { id: string; label?: string }) {
+export function WebsiteStart({ id, label = "See my first ad" }: { id: string; label?: string }) {
   return (
     <div>
-      <form action="/preview" method="get" className="flex flex-col gap-2 rounded-[30px] border border-[color:var(--v3-line-strong)] bg-[color:var(--v3-ink)] p-1.5 sm:flex-row sm:items-center sm:rounded-full">
+      <form action="/preview" method="get" onSubmit={() => track({ name: "hero_cta", props: { cta: "first_ad", variant: heroVariant() } })} className="flex flex-col gap-2 rounded-[30px] border border-[color:var(--v3-line-strong)] bg-[color:var(--v3-ink)] p-1.5 sm:flex-row sm:items-center sm:rounded-full">
+        <input type="hidden" name="generate" value="1" />
         <label htmlFor={id} className="sr-only">
           Your business website
         </label>
@@ -39,7 +43,7 @@ export function WebsiteStart({ id, label = "Build my free plan" }: { id: string;
         </button>
       </form>
       <p className="mt-3 px-2 text-[13px] text-[color:var(--v3-text-3)]">
-        Free. No card. No website?{" "}
+        Start with your website. Free, no card, nothing launched. No website?{" "}
         <Link href="/preview?manual=1" className="text-white/80 underline decoration-white/30 underline-offset-4 hover:text-white">
           Describe your business instead
         </Link>

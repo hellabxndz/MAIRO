@@ -16,7 +16,7 @@ export type PublicEvent =
   | { name: "preview_complete"; props: { kind: string; variant: string } }
   | { name: "preview_save"; props: { variant: string } }
   | { name: "preview_refine"; props: { variant: string } }
-  | { name: "hero_cta"; props: { cta: "free_plan" | "watch" | "sign_up"; variant: string } }
+  | { name: "hero_cta"; props: { cta: "free_plan" | "first_ad" | "watch" | "sign_up"; variant: string } }
   | { name: "tool_result"; props: { tool: string } }
   | { name: "walkthrough"; props: { action: "play" | "chapter" | "video" } };
 

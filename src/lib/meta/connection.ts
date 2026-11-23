@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/secret-box";
 import type { MetaConnectionStatus } from "@/generated/prisma/enums";
 
@@ -88,4 +89,5 @@ export async function saveMetaConnection(input: {
     create: { organizationId: input.organizationId, ...stored },
     update: stored,
   });
+  await recordOnce("meta_connected", input.organizationId);
 }

@@ -11,6 +11,7 @@ import { otherApprovals } from "@/lib/approvals/queue";
 import { readinessFor } from "@/lib/readiness";
 import { fetchMetaBillingStatus } from "@/lib/meta/billing";
 import { firstCampaignState } from "@/lib/strategy/first-campaign";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { suggestedAdsGate } from "@/lib/suggested-ads/store";
 import { fromAds } from "@/lib/leads/outcomes";
 import { RISK_LABEL } from "@/components/decisions/labels";
@@ -235,6 +236,10 @@ export async function loadConsole(organizationId: string, userName: string, days
     metaProblem: overview.problems.length > 0,
     markedValueCents: markedValue._sum.valueCents ?? null,
   });
+  // The first result Meta reports for the business's goal — a funnel step,
+  // recorded once (lib/analytics/funnel.ts). After the page is drawn.
+  const firstResult = metrics.find((m) => m.key === "results");
+  if (firstResult?.value && firstResult.source === "Meta reports" && firstResult.value !== "0") void recordOnce("first_result", organizationId);
 
   // ---- Action Center: what's in the way first, then approvals, then new creative directions.
   const items: ActionItemData[] = [];

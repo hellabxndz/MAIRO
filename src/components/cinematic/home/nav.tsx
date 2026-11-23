@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/wordmark";
 
-// The homepage's header: the wordmark, two anchors, sign in, start. Nothing
+// The homepage's header: the wordmark, two anchors, sign in, and the one
+// action — which takes the visitor to the website box, not to another form. Nothing
 // else — the rest of the site is one tap away in the footer.
 
 export function HomeNav() {
@@ -13,7 +14,7 @@ export function HomeNav() {
           <a href="#how" className="hidden min-h-11 items-center px-3 text-[14px] text-white/65 transition hover:text-white md:inline-flex">How it works</a>
           <a href="#pricing" className="hidden min-h-11 items-center px-3 text-[14px] text-white/65 transition hover:text-white md:inline-flex">Pricing</a>
           <Link href="/sign-in" className="inline-flex min-h-11 items-center px-3 text-[14px] text-white/80 transition hover:text-white">Sign in</Link>
-          <Link href="/preview" className="cine-cta inline-flex min-h-10 items-center rounded-full px-4 text-[14px] font-semibold">Start free</Link>
+          <a href="#hero-website" className="cine-cta inline-flex min-h-10 items-center rounded-full px-4 text-[14px] font-semibold">See my first ad</a>
         </nav>
       </div>
     </header>

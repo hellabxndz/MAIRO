@@ -85,7 +85,7 @@ export function toSavedPlan(a: GeneratorAnswers, f: PreviewFacts, scan: ScanResu
       fromWebsite: FACT_KEYS.filter((k) => f.sources[k]?.from === "website"),
       destinations: f.destinations ? { ...f.destinations, booking: f.destinations.booking?.slice(0, 60) ?? null } : null,
     },
-    site: read ? { url: (scan.finalUrl ?? scan.requestedUrl).slice(0, 300), pagesRead: Math.min(50, scan.pages.length), platform: scan.platform?.name ?? null } : null,
+    site: read ? { url: (scan.finalUrl ?? scan.requestedUrl).slice(0, 300), pagesRead: Math.min(50, scan.pages.length), platform: scan.platform?.name ?? null, image: scan.image ?? null } : null,
     findings: read
       ? scan.audit.top
           .filter((x) => x.status === "issue")

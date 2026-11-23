@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { WebsiteStart } from "./website-start";
+import { SHOWCASE_PHOTOS } from "@/components/home/showcase-photos";
 
 // The homepage after the hero (docs/DESIGN-SPEC-v3.md §7): how it works,
 // one example, the two plans, and the closing line. The Field behind the
@@ -211,7 +212,7 @@ export function ControlBand() {
   );
 }
 
-export type PricePlan = { tier: string; name: string; price: string; line: string; features: string[] };
+export type PricePlan = { tier: string; name: string; price: string; line: string; start: string; rows: [string, string][] };
 
 export function PricingSimple({ plans }: { plans: PricePlan[] }) {
   return (
@@ -225,7 +226,7 @@ export function PricingSimple({ plans }: { plans: PricePlan[] }) {
             </h2>
           </div>
           <p data-reveal className="max-w-[420px] text-[15.5px] leading-relaxed text-[color:var(--v3-text-2)]">
-            Your free plan costs nothing. A subscription is for building and running real campaigns — your ad spend is paid to Meta, separately.
+            Seeing your first ad is free. The subscription is MAIRO&rsquo;s fee for making and running your campaigns. Your ad spend is separate: you set it, and Meta charges it to your own ad account.
           </p>
         </div>
         <div className="mt-12 grid gap-4 md:grid-cols-2">
@@ -239,22 +240,23 @@ export function PricingSimple({ plans }: { plans: PricePlan[] }) {
                 <span className="text-[clamp(48px,5vw,68px)] font-semibold tracking-[-0.05em] text-white">{p.price}</span>
                 <span className="text-[14px] text-[color:var(--v3-text-3)]">/ month</span>
               </p>
+              <p className="mt-1 text-[13px] text-[color:var(--v3-text-3)]">+ your Meta ad spend, paid to Meta · {p.start}</p>
               <p className="mt-4 text-[15px] text-[color:var(--v3-text-2)]">{p.line}</p>
-              <ul className="mt-7 space-y-2.5 border-t border-[color:var(--v3-line)] pt-7">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-3 text-[14.5px] leading-snug text-white/85">
-                    <span aria-hidden className="mt-[0.6em] h-px w-3 shrink-0 bg-white/40" />
-                    {f}
-                  </li>
+              <dl className="mt-7 divide-y divide-[color:var(--v3-line)] border-t border-[color:var(--v3-line)]">
+                {p.rows.map(([k, v]) => (
+                  <div key={k} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-4 py-3 text-[14.5px] leading-snug">
+                    <dt className="text-[color:var(--v3-text-3)]">{k}</dt>
+                    <dd className="text-white/90">{v}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
             </div>
           ))}
         </div>
         <div data-reveal className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <Link href="/preview" className="cine-cta inline-flex min-h-[52px] items-center gap-2 rounded-full px-7 text-[15.5px] font-semibold">
-            Start with a free plan <span aria-hidden>→</span>
-          </Link>
+          <a href="#hero-website" className="cine-cta inline-flex min-h-[52px] items-center gap-2 rounded-full px-7 text-[15.5px] font-semibold">
+            See my first ad <span aria-hidden>→</span>
+          </a>
           <nav aria-label="Plan details" className="flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-[color:var(--v3-text-2)]">
             <Link href="/pricing" className="underline decoration-white/25 underline-offset-4 hover:text-white">Compare everything in each plan</Link>
             <span>You approve every launch</span>
@@ -278,6 +280,101 @@ export function Closing() {
         </h2>
         <div data-reveal className="mt-10 max-w-[620px]">
           <WebsiteStart id="close-website" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// --- The work ---------------------------------------------------------------
+//
+// What MAIRO makes, at a size where the work can be judged: four sample ads
+// for fictional brands, each in a different format and built on a different
+// idea, with the creative decision behind it in one line. The pictures are
+// renders made for this page (showcase-photos.ts) — never a customer's
+// product — and every card says "Sample".
+
+const WORK = [
+  { key: "online", brand: "Kiln & Co", format: "Feed · 1:1", aspect: "aspect-square", headline: "The gift that gets used every morning", idea: "Offer first", why: "Leads with the gift box, because a ready-to-give set is the reason to buy now." },
+  { key: "local", brand: "Harbour Plumbing", format: "Feed · 4:5", aspect: "aspect-[4/5]", headline: "Leak under the sink? Fixed today.", idea: "Problem first", why: "Opens on the problem customers call about most, then answers it in four words." },
+  { key: "fitness", brand: "Ironhouse", format: "Stories · 9:16", aspect: "aspect-[9/16]", headline: "Everything you need. Nothing you don't.", idea: "Show the product", why: "Shows exactly what arrives, so people who are comparing don't have to guess." },
+  { key: "furniture", brand: "Sage & Oak", format: "Feed · 4:5", aspect: "aspect-[4/5]", headline: "Picture it in your living room", idea: "Picture the outcome", why: "A real room, in afternoon light, so people imagine it in theirs before they see a price." },
+] as const;
+
+export function TheWork() {
+  return (
+    <section id="work" aria-labelledby="work-title" className="relative scroll-mt-20 bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
+      <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
+        <div className="flex flex-wrap items-end justify-between gap-x-12 gap-y-5">
+          <div>
+            <p data-reveal className="v3-label">The work · sample ads for fictional brands</p>
+            <h2 id="work-title" data-reveal className="v3-display mt-5 text-[clamp(40px,6vw,96px)] text-white">
+              Different ideas,
+              <br />
+              not one ad four ways
+            </h2>
+          </div>
+          <p data-reveal className="max-w-[420px] text-[15.5px] leading-relaxed text-[color:var(--v3-text-2)]">
+            MAIRO changes the idea, not just the colour: the offer, the problem, the product or the outcome — each in the format it&rsquo;ll run in, with the reason it might work.
+          </p>
+        </div>
+        <ul className="mt-12 grid items-end gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {WORK.map((w) => {
+            const photo = SHOWCASE_PHOTOS[w.key];
+            return (
+              <li key={w.key} data-reveal className="min-w-0">
+                <div className={`relative ${w.aspect} overflow-hidden rounded-[18px] border border-[color:var(--v3-line)] bg-[color:var(--v3-ink-2)]`}>
+                  {photo && <Image src={photo.src} alt={photo.alt} fill sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 300px" className="object-cover" style={photo.focus ? { objectPosition: photo.focus } : undefined} />}
+                  <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/90">Sample</span>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 pt-12">
+                    <p className="text-[11.5px] text-white/70">{w.brand} · Sponsored</p>
+                    <p className="mt-1 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-white">{w.headline}</p>
+                  </div>
+                </div>
+                <p className="mt-4 flex items-baseline justify-between gap-3">
+                  <span className="text-[14px] font-medium text-white">{w.idea}</span>
+                  <span className="font-mono text-[11px] text-[color:var(--v3-text-3)]">{w.format}</span>
+                </p>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-[color:var(--v3-text-2)]">{w.why}</p>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+// --- Practical questions ----------------------------------------------------
+//
+// The four things owners ask before they start, answered by what the product
+// does: who pays Meta, what access MAIRO gets, what needs approval, and what
+// they need to begin.
+
+const FAQ = [
+  { q: "Who pays for the ads?", a: "You do, directly to Meta. Ad spend is charged to your own Meta ad account at the budget you approve. MAIRO's subscription is separate and covers making and running your campaigns — MAIRO never takes a cut of your ad spend." },
+  { q: "What access does MAIRO get to my Meta account?", a: "You sign in with Facebook and choose the ad account and Page MAIRO may use. Campaigns are created in your account, where you can see, pause or stop them in Ads Manager. You can disconnect MAIRO at any time." },
+  { q: "Does anything go live without my approval?", a: "No launch, new ad or budget increase happens without your yes, and MAIRO shows the exact ad, budget, schedule and destination first. On Scale you can let Autopilot make smaller changes inside limits you set; it never raises your total budget." },
+  { q: "What do I need to get started?", a: "Just your website to see your first ad. To run it: a free account, a MAIRO plan, and a Meta ad account with a payment method and a Facebook Page. Online stores also need purchase tracking — MAIRO checks it before a sales campaign launches." },
+];
+
+export function PracticalFaq() {
+  return (
+    <section id="faq" aria-labelledby="faq-title" className="relative scroll-mt-20 bg-[color:var(--v3-ink)] pb-[clamp(64px,9vw,128px)]">
+      <div className="mx-auto grid w-full max-w-[1320px] gap-10 px-5 sm:px-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:px-16">
+        <h2 id="faq-title" data-reveal className="v3-display text-[clamp(32px,4vw,56px)] text-white">
+          Before you start
+        </h2>
+        <div className="divide-y divide-[color:var(--v3-line)] border-y border-[color:var(--v3-line)]">
+          {FAQ.map((f) => (
+            <details key={f.q} data-reveal className="group py-5">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 text-[17px] font-medium text-white">
+                {f.q}
+                <span aria-hidden className="text-[20px] leading-none text-white/50 transition group-open:rotate-45">+</span>
+              </summary>
+              <p className="mt-3 max-w-[640px] text-[15px] leading-relaxed text-[color:var(--v3-text-2)]">{f.a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>

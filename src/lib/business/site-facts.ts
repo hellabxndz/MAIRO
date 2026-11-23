@@ -21,6 +21,13 @@ export type SiteFacts = {
   ctas: string[];
   /** Products the page describes in its structured data. */
   products: { name: string; price: string | null }[];
+  /**
+   * The picture the business chose to represent this page when it's shared
+   * (og:image, else twitter:image): absolute https, never an SVG or data URL.
+   * Shown in the free preview as "a picture from your website" — the
+   * business's own asset, never generated or altered.
+   */
+  image: string | null;
   /** Same-site links worth reading next: shop, pricing, services, about. */
   keyLinks: string[];
   mobileReady: boolean;
@@ -53,6 +60,20 @@ function meta(html: string, name: string): string | null {
   );
   const m = html.match(re);
   return m ? decode((m[1] ?? m[2]).trim()) : null;
+}
+
+/** The page's share picture as an absolute https address; null when there isn't a usable one. */
+export function shareImage(html: string, pageUrl: string): string | null {
+  const raw = meta(html, "og:image:secure_url") ?? meta(html, "og:image") ?? meta(html, "twitter:image") ?? meta(html, "twitter:image:src");
+  if (!raw) return null;
+  try {
+    const u = new URL(raw, pageUrl);
+    if (u.protocol === "http:") u.protocol = "https:";
+    if (u.protocol !== "https:" || /\.svg(\?|$)/i.test(u.pathname) || u.toString().length > 500) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
 }
 
 /** The text a person would read: no scripts, styles or markup. */
@@ -173,6 +194,7 @@ export function readSiteFacts(html: string, url: string): SiteFacts {
     colors: findColors(html),
     ctas: findCtas(html),
     products: findProducts(html),
+    image: shareImage(html, url),
     keyLinks: findKeyLinks(html, url),
     mobileReady: /<meta[^>]+name=["']?viewport["']?[^>]*>/i.test(html),
     hasMetaPixel: /connect\.facebook\.net\/[^"']*fbevents\.js|fbq\(\s*['"]init['"]/i.test(html),

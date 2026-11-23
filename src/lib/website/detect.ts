@@ -387,6 +387,23 @@ export function quoteSentences(text: string, re: RegExp, max = 3): string[] {
 }
 
 export const OFFER_RE = /\b(\d{1,2}% off|free (shipping|delivery|quote|estimate|consultation|trial|inspection|returns?)|save \$\d+|first (visit|order|month|lesson|class) (free|\$\d+)|buy one,? get one|no call-?out fee)\b/i;
+/**
+ * The place a service-area sentence names — "Proudly serving Portland, OR and
+ * nearby" → "Portland, OR". Null when what follows isn't a place: "Now
+ * serving: our winter menu" is a menu, not a service area, and used to end up
+ * in a plan's audience as "where you sell: now serving: our winter menu".
+ * A place starts with a capital letter right after the phrase.
+ */
+export function placeFromSentence(s: string): string | null {
+  const m = s.match(/\b(?:[Pp]roudly serving|[Ss]erving|[Ww]e serve|[Ww]e cover|[Bb]ased in|[Ll]ocated in|[Aa]reas? we (?:serve|cover):?|[Ss]ervice areas?:)\s+(?:the\s+)?((?:[A-Z][\w'.-]*)(?:(?:,\s*|\s+(?:and|&)\s+|\s+)[A-Z][\w'.-]*)*)/);
+  if (!m) return null;
+  const place = m[1].replace(/[,.\s]+$/, "").trim();
+  if (place.length < 3 || place.length > 80) return null;
+  // Words that start a sentence, not a place.
+  if (/^(Our|The|Your|We|All|Every|Customers|Clients|You|Now|Since)\b/.test(place)) return null;
+  return place;
+}
+
 export const SERVICE_AREA_RE = /\b(serving|we serve|areas? we (serve|cover)|service areas?|we cover|based in|located in|proudly serving)\b/i;
 export const TRUST_RE = /\b(licensed|insured|certified|accredited|years? (of experience|in business)|since (19|20)\d{2}|family[- ]owned|warranty|money[- ]back|satisfaction)\b/i;
 export const POLICY_RE = /\b(refund|returns?|cancellation|shipping) polic(y|ies)\b/i;

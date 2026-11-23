@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { stripe, priceEnvFor, priceIdFor, purchasableTiers, stripeMode } from "@/lib/stripe/client";
 import { reportError } from "@/lib/monitoring/report";
 import type { SubscriptionTier } from "@/generated/prisma/enums";
@@ -287,6 +288,7 @@ export async function beginCheckout(input: { organizationId: string; email: stri
     // Meta's cookies from this browser, for MAIRO's own ad measurement when
     // the subscription starts (lib/site-tracking.ts). Empty unless that's on.
     const clickIds = await adClickIds();
+    await recordOnce("checkout_start", organizationId);
     const checkout = await stripe().checkout.sessions.create(
       {
         mode: "subscription",

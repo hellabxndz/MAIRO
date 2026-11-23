@@ -3,12 +3,13 @@ import { SiteFooter } from "@/components/landing/site-footer";
 import { LandingBeacon } from "@/components/landing/landing-beacon";
 import { RevealOnScroll } from "@/components/landing/console-sections";
 import { USABLE_TOOLS } from "@/lib/tools/registry";
-import { PLANS } from "@/lib/plans";
+import { PLANS, trialDaysFor } from "@/lib/plans";
+import { DEFAULT_ENTITLEMENTS } from "@/lib/entitlements";
 import { brandFont } from "@/lib/fonts";
 import { CinematicBackdrop } from "@/components/cinematic/home/director";
 import { CinematicHero } from "@/components/cinematic/home/hero";
 import { HomeNav } from "@/components/cinematic/home/nav";
-import { Closing, ControlBand, ExampleRun, HowItWorks, PricingSimple } from "@/components/cinematic/home/scenes";
+import { Closing, ControlBand, ExampleRun, HowItWorks, PracticalFaq, PricingSimple, TheWork } from "@/components/cinematic/home/scenes";
 import { AskMairoScene } from "@/components/cinematic/home/conversation";
 import { MobileCta, ScrollProgress } from "@/components/cinematic/home/live";
 
@@ -41,9 +42,29 @@ const SOLUTIONS = [
 
 export function ConsoleHome() {
   const toolsLive = USABLE_TOOLS().length > 0;
+  // The two plans as they're enforced: prices from lib/plans, allowances
+  // from the entitlement table the server checks — so the comparison can't
+  // promise more than the product gives.
   const plans = PLANS.filter((p) => !p.legacy)
     .slice(0, 2)
-    .map((p) => ({ tier: p.tier, name: p.name, price: `$${p.priceMonthly.toFixed(2)}`, line: p.tagline, features: p.features.slice(0, 5) }));
+    .map((p) => {
+      const e = DEFAULT_ENTITLEMENTS[p.tier];
+      const trial = trialDaysFor(p.tier);
+      return {
+        tier: p.tier,
+        name: p.name,
+        price: `$${p.priceMonthly.toFixed(2)}`,
+        line: p.spendGuidance,
+        start: trial ? `${trial}-day free trial, then monthly` : "Billed monthly from the day you start",
+        rows: [
+          ["Meta ad accounts", e.ad_account_limit === 1 ? "1" : `Up to ${e.ad_account_limit}`],
+          ["AI creative credits a month", String(e.studio_credits_monthly)],
+          ["Changes to your ads", e.autopilot ? "You approve them, or let Autopilot act inside your limits" : "MAIRO recommends; you approve each one"],
+          ["Team members", e.member_limit === 1 ? "Just you" : "Your team, with approval permissions"],
+          ["Campaigns", Number.isFinite(p.limits.campaigns) ? `Up to ${p.limits.campaigns}` : "Unlimited"],
+        ] as [string, string][],
+      };
+    });
   return (
     <div className={`${brandFont.className} relative isolate min-h-screen overflow-x-clip bg-[color:var(--v3-ink)] text-white`}>
       <CinematicBackdrop />
@@ -52,11 +73,13 @@ export function ConsoleHome() {
       <HomeNav />
       <main className="relative z-10">
         <CinematicHero />
+        <TheWork />
         <HowItWorks />
         <AskMairoScene />
         <ExampleRun />
         <ControlBand />
         <PricingSimple plans={plans} />
+        <PracticalFaq />
         <Closing />
         <nav aria-label="Built for" className="mx-auto flex w-full max-w-[1320px] flex-wrap items-center gap-x-6 gap-y-2 px-5 pb-16 sm:px-10 lg:px-16">
           <span className="v3-label">Built for</span>

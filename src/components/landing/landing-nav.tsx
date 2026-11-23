@@ -27,7 +27,7 @@ const resourcesFor = (toolsLive: boolean) => [
 
 export function LandingNav({
   toolsLive = false,
-  cta = { href: "/preview", label: "Start free" },
+  cta = { href: "/preview", label: "See my first ad" },
 }: {
   toolsLive?: boolean;
   cta?: { href: string; label: string };

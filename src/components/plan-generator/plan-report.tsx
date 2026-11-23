@@ -6,7 +6,7 @@ import type { PlanReport } from "@/lib/preview/report";
 import type { PreviewGoal } from "@/lib/preview/build";
 import { BUDGET_CHOICES, GOAL_OPTIONS, budgetLabel } from "@/lib/preview/strategy";
 import { PLANS, PRO_TRIAL_DAYS } from "@/lib/plans";
-import { AdMock, type Placement } from "./ad-mock";
+import { AdMock, SitePicture, type Placement } from "./ad-mock";
 
 // The free AI ad plan, sections A to F, then the step from the free plan to
 // MAIRO doing the work. Live (just generated) it carries the return actions —
@@ -200,7 +200,116 @@ function AtAGlance({ r }: { r: PlanReport }) {
   );
 }
 
-export function PlanReportView({ report: r, actions, headingRef, savedAt }: { report: PlanReport; actions: ReportActions | null; headingRef?: RefObject<HTMLHeadingElement | null>; savedAt?: string }) {
+/** What the first test is judged on, for each goal — the metric MAIRO reads from Meta. */
+const FIRST_METRIC: Record<PreviewGoal, string> = {
+  sales: "purchases and cost per purchase",
+  leads: "leads and cost per lead",
+  bookings: "bookings and cost per booking",
+  traffic: "landing-page views and cost per view",
+  awareness: "people reached and cost per 1,000 reached",
+};
+
+/**
+ * The result opens with the deliverable: this business's first ad, as it
+ * would sit in the feed (with a picture from its own website where there is
+ * one), who it's for, why it might work, and the first test MAIRO would run —
+ * then one next action. The strategy behind it follows below.
+ */
+function FirstAd({ r, domain, placement, setPlacement, actions, assumed }: { r: PlanReport; domain: string | null; placement: Placement; setPlacement: (p: Placement) => void; actions: ReportActions | null; assumed: string[] }) {
+  const [shown, setShown] = useState(r.concepts.first);
+  const [pictureFailed, setPictureFailed] = useState(false);
+  const c = r.concepts.list[shown] ?? r.concepts.list[0];
+  if (!c) return null;
+  const others = r.concepts.list.filter((_, i) => i !== shown);
+  // Each rival named by its headline — or by its idea when two headlines read
+  // the same (MAIRO's templates can repeat one), so the test is never "this
+  // ad against X and X".
+  const heads = others.map((o) => o.headline.trim().toLowerCase());
+  const otherNames = others.map((o, i) => (heads.indexOf(heads[i]) !== i || heads.lastIndexOf(heads[i]) !== i || o.headline.trim().toLowerCase() === c.headline.trim().toLowerCase() ? `the “${o.label.toLowerCase()}” version` : `“${o.headline}”`));
+  const picture = r.website.image && !pictureFailed ? r.website.image : null;
+  const isFirst = shown === r.concepts.first;
+  return (
+    <section aria-labelledby="first-ad-title" className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:gap-10" data-first-ad>
+      <div className="min-w-0">
+        <div role="group" aria-label="Where the ad appears" className="mb-3 inline-flex rounded-full border border-[color:var(--v3-line)] p-1">
+          {(["facebook", "instagram"] as const).map((p) => (
+            <button key={p} type="button" aria-pressed={placement === p} onClick={() => setPlacement(p)} className={`min-h-9 rounded-full px-4 text-[13px] ${placement === p ? "bg-white font-medium text-black" : "text-white/70 hover:text-white"}`}>
+              {p === "facebook" ? "Facebook feed" : "Instagram feed"}
+            </button>
+          ))}
+        </div>
+        <AdMock
+          c={c}
+          business={r.name}
+          placement={placement}
+          domain={domain}
+          image={picture ? <SitePicture src={picture} alt={`A picture from ${domain ?? "your website"}`} onFail={() => setPictureFailed(true)} /> : undefined}
+          imageLabel={`From ${domain ?? "your website"}`}
+        />
+        <p className="mt-2.5 text-[12.5px] leading-relaxed text-white/55">
+          {picture
+            ? `The picture is from your own website, as a stand-in. Finished creatives are made in MAIRO after you subscribe, and none runs until you approve it.`
+            : "No picture yet: MAIRO describes what to show. Finished creatives are made in MAIRO after you subscribe, and none runs until you approve it."}
+          {placement === "instagram" ? " Shown at 4:5, the Instagram feed size." : " Shown at the Facebook feed size."}
+        </p>
+      </div>
+
+      <div className="min-w-0">
+        <p className="v3-label">{isFirst ? "The ad MAIRO would test first" : `Idea ${shown + 1} of ${r.concepts.list.length}`}</p>
+        <h2 id="first-ad-title" className="mt-2 text-[clamp(24px,3vw,34px)] font-semibold leading-tight tracking-[-0.02em] text-white">&ldquo;{c.headline}&rdquo;</h2>
+        <dl className="mt-5 space-y-4">
+          <div>
+            <dt className="text-[12.5px] text-white/50">Who it&rsquo;s for</dt>
+            <dd className="mt-0.5 text-[15px] leading-relaxed text-white">{c.targetCustomer}</dd>
+          </div>
+          <div>
+            <dt className="text-[12.5px] text-white/50">Why it might work</dt>
+            <dd className="mt-0.5 text-[15px] leading-relaxed text-white">{c.why}</dd>
+          </div>
+          <div>
+            <dt className="text-[12.5px] text-white/50">The first test MAIRO would run</dt>
+            <dd className="mt-0.5 text-[15px] leading-relaxed text-white">
+              {others.length
+                ? <>This ad against {otherNames.map((n, i) => <span key={n}>{i > 0 ? " and " : ""}{n}</span>)}, at about {money(r.budget.daily)} a day in total. After about a week of delivery MAIRO compares them on {FIRST_METRIC[r.goal]} and proposes the next test — you approve it.</>
+                : <>This ad at about {money(r.budget.daily)} a day, judged on {FIRST_METRIC[r.goal]} after about a week of delivery.</>}
+            </dd>
+          </div>
+        </dl>
+
+        {assumed.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.03] px-4 py-3" data-assumed>
+            <p className="text-[13px] font-medium text-white">To make this from your website alone, MAIRO assumed</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[13.5px] leading-relaxed text-white/70">
+              {assumed.map((a) => <li key={a}>{a}</li>)}
+            </ul>
+            {actions && (
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px]">
+                <a href="#plan-budget" className="inline-flex min-h-11 items-center text-white underline decoration-white/30 underline-offset-4 sm:min-h-0">Change the budget</a>
+                <button type="button" onClick={actions.onEdit} className="inline-flex min-h-11 items-center text-white underline decoration-white/30 underline-offset-4 sm:min-h-0">Correct the business details</button>
+              </p>
+            )}
+          </div>
+        )}
+
+        {actions && (
+          <div className="mp-noprint mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <button type="button" onClick={actions.onWork} disabled={actions.working} data-cta="get-started" className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-[15px] font-semibold text-black disabled:opacity-60">
+              {actions.working ? "Saving your plan…" : "I like it — get started"}
+            </button>
+            {r.concepts.list.length > 1 && (
+              <button type="button" onClick={() => setShown((shown + 1) % r.concepts.list.length)} className="inline-flex min-h-12 items-center justify-center rounded-full border border-[color:var(--v3-line-strong)] px-5 text-[14.5px] text-white/90 hover:text-white">
+                Show me another idea
+              </button>
+            )}
+          </div>
+        )}
+        {actions && <p className="mt-3 text-[12.5px] leading-relaxed text-white/50">Next: a free account, then your MAIRO plan and your Meta ad account. Nothing launches or spends until you approve it.</p>}
+      </div>
+    </section>
+  );
+}
+
+export function PlanReportView({ report: r, actions, headingRef, savedAt, assumed = [] }: { report: PlanReport; actions: ReportActions | null; headingRef?: RefObject<HTMLHeadingElement | null>; savedAt?: string; assumed?: string[] }) {
   const [placement, setPlacement] = useState<Placement>("facebook");
   const domain = domainOf(r.website.url);
   const note = sourceNote(r);
@@ -211,10 +320,10 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
       {/* The plan's header and its return actions. */}
       <header className="mp-head">
         <p className="inline-flex items-center gap-2 rounded-full border border-[color:var(--v3-line)] bg-white/[0.04] px-3 py-1 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-white/90">
-          <span aria-hidden>✨</span> Your free AI ad plan
+          Your free first ad
         </p>
         <h1 id="plan-title" ref={headingRef} tabIndex={-1} className="mt-4 text-white outline-none v3-display text-[clamp(34px,4.6vw,64px)]">
-          {r.name}&rsquo;s Meta advertising strategy
+          {r.name}&rsquo;s first ad
         </h1>
         <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[14.5px] text-white/70">
           <span>{r.goalLabel}</span>
@@ -230,6 +339,9 @@ export function PlanReportView({ report: r, actions, headingRef, savedAt }: { re
           )}
         </p>
 
+        <FirstAd r={r} domain={domain} placement={placement} setPlacement={setPlacement} actions={actions} assumed={assumed} />
+
+        <h2 className="mt-12 v3-label">The plan behind it</h2>
         <AtAGlance r={r} />
 
         {actions && <PlanFeedback r={r} a={actions} />}

@@ -38,7 +38,16 @@ export const savedPlanSchema = z.object({
     destinations: z.object({ booking: text(60).nullable(), form: z.boolean(), phone: z.boolean(), checkout: z.boolean() }).nullable().default(null),
   }),
   /** What MAIRO's reading of the website saw — the only technical claims the plan makes. Null when no website was read. */
-  site: z.object({ url: text(300), pagesRead: z.number().int().min(0).max(50), platform: text(40).nullable().default(null) }).nullable().default(null),
+  site: z
+    .object({
+      url: text(300),
+      pagesRead: z.number().int().min(0).max(50),
+      platform: text(40).nullable().default(null),
+      /** The website's own share picture (og:image), shown in the first-ad preview as theirs. Absent on older plans. */
+      image: z.string().trim().max(500).regex(/^https:\/\//).nullable().default(null),
+    })
+    .nullable()
+    .default(null),
   findings: z.array(z.object({ title: text(200), why: text(600), change: text(600), evidence: text(300).nullable().default(null) })).max(6).default([]),
   written: z
     .object({

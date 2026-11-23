@@ -116,7 +116,12 @@ check("the core moves only for real operations: each report sits on a real pendi
 check("the pages read without the particles: real headings, decorative canvas, a fallback", () => {
   const hero = read("src/components/cinematic/home/hero.tsx");
   assert.match(hero, /<h1 id="hero-title"/);
-  assert.match(hero, /Your ads,/);
+  assert.match(hero, /Your AI agency for Facebook and Instagram ads/);
+  // The hero's ad is a labelled sample, and it rests (no loop) under reduced motion.
+  const ad = read("src/components/cinematic/home/hero-ad.tsx");
+  assert.match(ad, />Sample</);
+  assert.match(ad, /Sample campaign for Lumen Skin, a fictional brand/);
+  assert.match(ad, /prefers-reduced-motion: reduce\)"\)\.matches\) return/);
   assert.match(hero, /<WebsiteStart id="hero-website" \/>/);
   // The website box is a plain GET form into the free plan: it works before script.
   const start = read("src/components/cinematic/home/website-start.tsx");

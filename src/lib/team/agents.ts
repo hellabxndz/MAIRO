@@ -210,6 +210,7 @@ export function agentForDecision(kind: string, category: string): AgentRole {
     case "widen-audience":
       return "AUDIENCE";
     case "test-variation":
+    case "test-from-winner":
       return "CREATIVE";
     case "pause-ad":
     case "creative-fatigue":

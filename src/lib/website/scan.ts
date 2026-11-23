@@ -5,6 +5,7 @@ import { normalizeUrl } from "@/lib/campaigns/destination";
 import { readSiteFacts, type SiteFacts } from "@/lib/business/site-facts";
 import { auditSite, siteKind, type Audit, type AuditContext, type LinkCheck, type PageSummary, type PerformanceReading, type ScanFacts } from "./audit";
 import {
+  placeFromSentence,
   countAppExtensions,
   detectApps,
   detectConsent,
@@ -75,6 +76,8 @@ export type ScanResult = {
   trust: string[];
   policies: string[];
   colors: string[];
+  /** The home page's share picture (og:image), when it has a usable one. Optional: older stored readings don't. */
+  image?: string | null;
   kind: "shop" | "service" | "unknown";
   facts: BusinessFact[];
   linkChecks: LinkCheck[];
@@ -162,7 +165,7 @@ function businessFacts(r: Omit<ScanResult, "facts" | "audit" | "coverage">, home
   const name = r.business.name ?? home?.siteName ?? home?.title?.split(/[|–—-]/)[0]?.trim() ?? null;
   const products = home?.products.length ? home.products.slice(0, 5).map((p) => (p.price ? `${p.name} (${p.price})` : p.name)).join(", ") : null;
   const prices = [...new Set(r.pages.flatMap((p) => p.prices))].slice(0, 6).join(", ") || null;
-  const place = r.business.areaServed.length ? r.business.areaServed.join(", ") : r.business.locality ? [r.business.locality, r.business.region].filter(Boolean).join(", ") : r.serviceArea[0] ?? null;
+  const place = r.business.areaServed.length ? r.business.areaServed.join(", ") : r.business.locality ? [r.business.locality, r.business.region].filter(Boolean).join(", ") : r.serviceArea.map(placeFromSentence).find(Boolean) ?? null;
   return [
     f("name", "Business name", name),
     f("type", "Kind of business", r.kind === "shop" ? "Sells online" : r.kind === "service" ? "Service business" : null, r.kind === "unknown" ? "not found" : "inferred"),
@@ -349,6 +352,7 @@ export async function scanWebsite(raw: string, opts: ScanOptions = {}): Promise<
     trust: quoteSentences(blocks, TRUST_RE),
     policies: quoteSentences(blocks, POLICY_RE, 2).concat(/\/policies\/(refund|shipping)/i.test(all) ? ["Store policy pages linked"] : []).slice(0, 2),
     colors: homeFacts.colors,
+    image: homeFacts.image ?? siteFacts.find((s) => s.image)?.image ?? null,
     kind: "unknown" as ScanResult["kind"],
     linkChecks,
     performance,

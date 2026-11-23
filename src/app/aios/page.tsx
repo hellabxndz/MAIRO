@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import Link from "next/link";
 import { Card, Badge } from "@/components/ui";
 import { metaIntelligenceSummary } from "@/lib/meta-intelligence";
-import { heroFunnel, retention, stepFunnel } from "@/lib/analytics/funnel";
+import { heroFunnel, retention, stepFunnel, timeToValue } from "@/lib/analytics/funnel";
 import { staffUser } from "@/lib/aios/workspace";
 import { loadFounderSignals } from "@/lib/aios/signals";
 import { coreState, founderBrief, money, type Tone } from "@/lib/aios/brief";
@@ -210,7 +210,8 @@ async function GrowthSection() {
 
   const metaIntel = await metaIntelligenceSummary().catch(() => null);
   const heroes = await heroFunnel(30).catch(() => []);
-  const [steps, kept] = await Promise.all([stepFunnel(30).catch(() => []), retention(30).catch(() => null)]);
+  const [steps, kept, ttv] = await Promise.all([stepFunnel(30).catch(() => []), retention(30).catch(() => null), timeToValue(30).catch(() => null)]);
+  const dur = (h: number | null) => (h === null ? "not measured yet" : h < 48 ? `${h.toFixed(1)} hours` : `${(h / 24).toFixed(1)} days`);
 
   const recentOrgs = await db.organization.findMany({
     orderBy: { createdAt: "desc" },
@@ -301,6 +302,11 @@ async function GrowthSection() {
             ? `Still subscribed: ${kept.retained} of the ${kept.eligible} businesses that subscribed at least ${kept.afterDays} days ago (${((kept.rate ?? 0) * 100).toFixed(0)}%).`
             : `Still subscribed after ${kept?.afterDays ?? 30} days: no business subscribed that long ago yet.`}
         </p>
+        {ttv && (
+          <p className="mt-1 text-[13px] text-neutral-300" data-time-to-value>
+            Median time to first ad: {ttv.previewSeconds === null ? "not measured yet" : `${Math.round(ttv.previewSeconds)} seconds`} ({ttv.previews} visitors) · sign-up to first live campaign: {dur(ttv.hoursToLive)} ({ttv.live}) · sign-up to first result: {dur(ttv.hoursToResult)} ({ttv.results})
+          </p>
+        )}
         <p className="mt-1 text-xs text-neutral-500">Steps a business took before these events were recorded aren&apos;t counted, so early numbers undercount.</p>
       </Card>
 

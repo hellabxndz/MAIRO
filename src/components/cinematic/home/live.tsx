@@ -109,8 +109,8 @@ export function MobileCta() {
       className={`fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--v3-line)] bg-[color:var(--v3-ink)]/95 px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 transition-transform duration-300 [transition-timing-function:var(--ease-mairo)] sm:hidden ${show ? "translate-y-0" : "translate-y-full"}`}
       aria-hidden={!show}
     >
-      <Link href="/preview" tabIndex={show ? 0 : -1} className="cine-cta flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full text-[15.5px] font-semibold">
-        Build my free plan <span aria-hidden>→</span>
+      <Link href="#hero-website" tabIndex={show ? 0 : -1} className="cine-cta flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full text-[15.5px] font-semibold">
+        See my first ad <span aria-hidden>→</span>
       </Link>
     </div>
   );

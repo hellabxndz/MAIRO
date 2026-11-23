@@ -62,6 +62,9 @@ export const STAGES = [
   "Preparing your personalized plan",
 ];
 
+/** The monthly Meta budget a website-only start assumes — said on the result, with a one-tap change. */
+const FIRST_AD_BUDGET = 500;
+
 const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const domainOf = (url: string) => url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
 
@@ -163,6 +166,12 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
   const [chat, setChat] = useState<ChatTurn[]>([]);
   const [asking, setAsking] = useState(false);
   const [last, setLast] = useState<Last | null>(null);
+  // What MAIRO had to assume to make the first ad from a website alone, said
+  // on the result beside the way to change it.
+  const [assumed, setAssumed] = useState<string[]>([]);
+  // Set when a website-only start couldn't tell what the business sells: the
+  // form then asks only that, with everything else already filled in.
+  const [onlyAsk, setOnlyAsk] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const runningHeading = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -309,6 +318,45 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
         void generate(a, start?.scan ?? null);
         return;
       }
+    }
+    // "See my first ad" with just a website: read it, fill in what it says,
+    // assume a starting budget (said on the result, one tap to change) and
+    // make the first ad — no form in between. Only what the website couldn't
+    // answer is asked, with the rest already filled in.
+    if (initial.autostart && initial.website && normalize(initial.website)) {
+      // A one-time start from the homepage's website box.
+      setPhase("running");
+      setStages(STAGES.map((label, i) => ({ label, state: i === 0 ? "working" : "waiting", detail: null })));
+      const monthly = initial.budget && initial.budget >= BUDGET_MIN ? initial.budget : FIRST_AD_BUDGET;
+      if ((BUDGET_CHOICES as readonly number[]).includes(monthly)) setBudget(monthly);
+      else {
+        setCustomOn(true);
+        setCustom(String(monthly));
+      }
+      void (async () => {
+        const read = await readSite(initial.website!);
+        const f = read && readOk(read.result) ? factsFromScan(read.result!) : null;
+        const g = (initial.goal || f?.goal || "") as PreviewGoal | "";
+        if (read && f?.offering && f.name && g) {
+          const notes = [
+            ...(initial.budget ? [] : [`a starting budget of ${money(monthly)} a month on Meta`]),
+            ...(initial.goal ? [] : [`the goal “${GOAL_OPTIONS.find((o) => o.value === g)?.label ?? g}”, from your website`]),
+            `what you sell, from your website: “${f.offering}”`,
+          ];
+          setAssumed(notes);
+          void generate({ website: read.url, sells: initial.sells?.trim() || f.offering, name: "", goal: g, monthly }, read.result);
+          return;
+        }
+        setPhase("input");
+        // Name exactly what's still needed — nothing the website already answered.
+        const missing = [!f?.name && "the business name", !f?.offering && "what you sell", !g && "your goal"].filter((x): x is string => Boolean(x));
+        const list = missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}` : missing[0] ?? "what you sell";
+        const opening = !read || !readOk(read.result) ? `MAIRO couldn't read ${domainOf(initial.website!)}.` : `MAIRO read ${domainOf(read.url)}.`;
+        setOnlyAsk(`${opening} Tell it ${list}, and it makes your first ad.`);
+        const firstField = !f?.name ? "name" : !f?.offering ? "sells" : "goal";
+        window.setTimeout(() => formRef.current?.querySelector<HTMLElement>(`[data-field="${firstField}"]`)?.focus(), 50);
+      })();
+      return;
     }
     setLast(readLast());
     // An address carried from another page is read straight away, so "What do you sell?" is ready to check.
@@ -529,8 +577,12 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
         <PlanReportView
           report={report}
           headingRef={heading}
+          assumed={assumed}
           actions={{
-            onEdit: () => setPhase("input"),
+            onEdit: () => {
+              setAssumed([]);
+              setPhase("input");
+            },
             onBudget: changeBudget,
             onGoal: (g) => void tryGoal(g),
             onSave: () => void doSave(),
@@ -631,6 +683,11 @@ export function PlanGenerator({ mode, initial = {} }: { mode: "hero" | "page"; i
           style={{ borderColor: "rgba(236,236,236,0.22)", backgroundImage: "var(--mairo-glass)", boxShadow: "none" }}
         >
           <input type="hidden" name="generate" value="1" />
+          {onlyAsk && (
+            <p role="status" className="mb-5 rounded-2xl border border-[color:var(--v3-line)] bg-white/[0.04] px-4 py-3 text-[14.5px] leading-relaxed text-white" data-only-ask>
+              {onlyAsk}
+            </p>
+          )}
           <div aria-hidden className="pointer-events-none absolute inset-x-12 -top-px h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
 
           {/* The four steps. */}

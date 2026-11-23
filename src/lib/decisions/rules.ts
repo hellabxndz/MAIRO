@@ -1,6 +1,7 @@
 import type { AdGoal, DecisionConfidence } from "@/generated/prisma/enums";
 import type { PlatformMetrics } from "@/lib/ad-platforms/types";
 import { resultsFor, resultWord, usd } from "@/lib/protection/rules";
+import { creativeReport } from "@/lib/creative/winner";
 import type {
   AdSnapshot,
   CampaignSnapshot,
@@ -31,8 +32,8 @@ import type {
 //   It says nothing rather than something weak. An account with nothing worth
 //   changing gets no decisions, and the page says MAIRO is watching.
 
-export const LEARNING_DAYS = 3;
-export const LEARNING_SPEND_CENTS = 2000;
+import { LEARNING_DAYS, LEARNING_SPEND_CENTS, pastLearning } from "./learning";
+export { LEARNING_DAYS, LEARNING_SPEND_CENTS, pastLearning };
 /** The smallest daily budget MAIRO will leave a campaign on. Meta's floor is lower; below this, learning stalls. */
 export const MIN_CAMPAIGN_DAILY_CENTS = 500;
 /** No more than this many at once. Five things to decide is already a lot. */
@@ -74,14 +75,6 @@ function daysLive(c: CampaignSnapshot, now: Date): number {
   return Math.floor((now.getTime() - c.liveSince.getTime()) / DAY);
 }
 
-/** Past the learning period, judged on the last week. */
-export function pastLearning(c: CampaignSnapshot, now: Date): boolean {
-  return (
-    c.status === "ACTIVE" &&
-    daysLive(c, now) >= LEARNING_DAYS &&
-    (c.week?.spendCents ?? 0) >= LEARNING_SPEND_CENTS
-  );
-}
 
 /**
  * How sure MAIRO can be, from how much it has seen.
@@ -424,6 +417,60 @@ const testVariation: Rule = (c, { now }) => {
   ];
 };
 
+/**
+ * The next creative test, from a clear winner. When one ad in a campaign has
+ * won on enough results (lib/creative/winner.ts — the same judgement the
+ * Results page shows), MAIRO proposes a new version written from the winning
+ * ad, run beside it inside the same budget. The owner approves it like any
+ * other new creative; nothing is built until they do.
+ */
+const MAX_ADS_FOR_A_TEST = 5;
+const testFromWinner: Rule = (c, { now }) => {
+  if (c.ads.length < 2 || c.ads.length >= MAX_ADS_FOR_A_TEST) return [];
+  const report = creativeReport(c, now);
+  if (report.verdict !== "winner" || !report.best?.campaignAdId) return [];
+  const best = report.best;
+  if (best.kind !== "IMAGE" && best.kind !== "VIDEO") return [];
+  const winnerAd = c.ads.find((a) => a.campaignAdId === best.campaignAdId);
+  if (!winnerAd || fatigueOf(winnerAd)) return []; // A tired winner is the fatigue decision's to handle.
+  const word = report.word;
+  return [
+    {
+      kind: "test-from-winner",
+      category: "TESTING",
+      urgent: false,
+      mairoCampaignId: c.mairoCampaignId,
+      platform: c.platform,
+      title: `Test a new version of your best ad in "${c.name}"`,
+      noticed: report.evidence,
+      noticedAdvanced: `${best.label}: ${best.results} ${word}s @ ${usd(best.costPerResultCents ?? 0)} (7d)${report.runnerUp ? ` vs ${report.runnerUp.label} ${report.runnerUp.costPerResultCents ? `@ ${usd(report.runnerUp.costPerResultCents)}` : "with none"}` : ""}.`,
+      whyItMatters: "The winning ad will wear out as the same people see it again. A new version of what's already working is the most likely way to find the next winner.",
+      recommendation: `Add a new version written by MAIRO from ${best.label}${best.headline ? ` (“${best.headline}”)` : ""}: a different opening line on the same idea and picture. It runs beside the winner, and Meta favours whichever does better.`,
+      impact: "No change to what you spend: the new version shares the campaign's budget.",
+      risk: "LOW",
+      confidence: confidenceFrom(report.basis.results, report.basis.spendCents, daysLive(c, now)),
+      evidence: [
+        { label: `${best.label}: ${word}s this week`, value: String(best.results ?? 0) },
+        { label: `${best.label}: cost per ${word}`, value: usd(best.costPerResultCents ?? 0) },
+        ...(report.runnerUp ? [{ label: `${report.runnerUp.label}: cost per ${word}`, value: report.runnerUp.costPerResultCents ? usd(report.runnerUp.costPerResultCents) : `no ${word}s` }] : []),
+        { label: "Spent on these ads this week", value: usd(report.basis.spendCents) },
+      ],
+      changes: [
+        {
+          type: "new-ad-variation",
+          platform: c.platform,
+          mairoCampaignId: c.mairoCampaignId,
+          basedOnCampaignAdId: best.campaignAdId!,
+          basedOnLabel: best.label,
+          campaignName: c.name,
+        },
+      ],
+      dedupeKey: `next-test:${c.platformCampaignId}:${weekKey(now)}`,
+      priority: 32,
+    },
+  ];
+};
+
 // --- rules across campaigns ---------------------------------------------------
 
 /** Two campaigns chasing the same result, one far cheaper: move some money. */
@@ -595,7 +642,7 @@ function scaleWinners(input: DecisionInput): DecisionDraft[] {
   return out;
 }
 
-const PER_CAMPAIGN: Rule[] = [notSpending, pauseLoser, creativeFatigue, landingPage, widenAudience, testVariation];
+const PER_CAMPAIGN: Rule[] = [notSpending, pauseLoser, creativeFatigue, landingPage, widenAudience, testVariation, testFromWinner];
 
 export function dataStatusOf(input: DecisionInput): DataStatus {
   const live = input.campaigns.filter((c) => c.status === "ACTIVE" || c.status === "PAUSED");

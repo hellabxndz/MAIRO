@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { db } from "@/lib/db";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { agentModel } from "@/lib/ai/model";
 import { loadCredentials } from "@/lib/ad-platforms/connections";
 import { resolveHost, urlProblem } from "@/lib/net/safe-fetch";
@@ -338,6 +339,8 @@ async function record(organizationId: string, pixelId: string, check: string, r:
   await db.trackingVerification.create({
     data: { organizationId, pixelId, check, status: r.status, source: r.source, detail: r.detail, count: r.count ?? null, windowStart: window.start, windowEnd: window.end },
   });
+  // Meta confirmed it received purchases: the shop's tracking is ready to launch on.
+  if (check === "event:Purchase" && r.status === "VERIFIED") await recordOnce("tracking_ready", organizationId);
 }
 
 /**

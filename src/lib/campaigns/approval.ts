@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { recordOnce } from "@/lib/analytics/funnel";
 import { approvalHash, approvalState } from "./approval-terms";
 
 export { approvalHash, approvalState, approvalTerms, type ApprovalTermsInput } from "./approval-terms";
@@ -42,6 +43,7 @@ export async function recordLaunchApproval(organizationId: string, mairoCampaign
     where: { id: mairoCampaignId, organizationId },
     data: { launchApprovedAt: now, launchApprovalHash: approvalHash(c) },
   });
+  await recordOnce("launch_approved", organizationId);
   return true;
 }
 

@@ -13,6 +13,8 @@ import { loadPixelSetup } from "@/lib/tracking/pixel-setup";
 import { DecisionControls } from "@/components/console/decision-controls";
 import { ResultsNote } from "@/components/results-disclaimer";
 import { CountUp } from "@/components/cinematic/count-up";
+import { Suspense } from "react";
+import { BestAd } from "@/components/results/best-ad";
 
 // Results: what the ads cost and what came back, for one period.
 //
@@ -270,6 +272,15 @@ export default async function ResultsPage({ searchParams }: { searchParams: Prom
             <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-3 rounded-full bg-[color:var(--v3-signal)]" aria-hidden /> {r.label}</span>
           </p>
         </section>
+      )}
+
+      {/* The loop: the ad that's working, the evidence, and the next test to approve. */}
+      {campaignCount > 0 && metaConnected && (
+        <div className="mt-6">
+          <Suspense fallback={<div className="rounded-[24px] p-5 text-[14px] text-muted mairo-glass" aria-busy="true">Reading each ad&rsquo;s results from Meta…</div>}>
+            <BestAd organizationId={organizationId} />
+          </Suspense>
+        </div>
       )}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

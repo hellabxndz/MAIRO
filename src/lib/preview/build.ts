@@ -126,8 +126,17 @@ export function factsFromScan(r: ScanResult): PreviewFacts {
     f.sources[k] = { from: "website", url, quote };
   };
   set("name", asLine(fact("name"), 80), null);
+  // What they sell: the page's own description or heading; when neither fits
+  // on a line, the products its structured data lists — so a shop whose home
+  // page has no description isn't asked a question its website answers.
   const offering = fact("offering");
   set("offering", asLine(offering, 110), offering);
+  if (!f.offering) {
+    const products = fact("products");
+    const names = products ? products.split(", ").map((p) => p.replace(/\s*\([^)]*\)$/, "").trim()).filter(Boolean).slice(0, 3) : [];
+    const line = names.length ? asLine(`${names.join(", ")}${names.length > 1 ? " and more" : ""}`, 110) : "";
+    if (line) set("offering", line, products);
+  }
   set("location", asLine(fact("location"), 80), null);
   const offer = r.offers.find((o) => asLine(o, 70));
   set("offer", asLine(offer, 70), offer ?? null);
