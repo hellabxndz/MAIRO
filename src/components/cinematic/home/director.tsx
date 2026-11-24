@@ -57,6 +57,27 @@ export function CinematicBackdrop() {
   const target = useRef<StageTarget>({ ...DEFAULT_TARGET, seq: [...SEQ], pos: 0, gain: 0.9, size: 0.05, visible: true, wave: 1, scan: 1, spin: 0.35 });
   // Read once, in the browser; the server's guess is never drawn.
   const [device] = useState(deviceBudget);
+  // The Field is decoration: it starts only once the page has loaded and the
+  // browser is idle, so building its shapes never competes with the headline
+  // and the website box for the first seconds on a phone.
+  const [awake, setAwake] = useState(false);
+  useEffect(() => {
+    let idle = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const wake = () => {
+      const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      if (w.requestIdleCallback) idle = w.requestIdleCallback(() => setAwake(true), { timeout: 2500 });
+      else timer = setTimeout(() => setAwake(true), 600);
+    };
+    if (document.readyState === "complete") wake();
+    else window.addEventListener("load", wake, { once: true });
+    return () => {
+      window.removeEventListener("load", wake);
+      const w = window as Window & { cancelIdleCallback?: (id: number) => void };
+      if (idle && w.cancelIdleCallback) w.cancelIdleCallback(idle);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     const reduced = prefersReducedMotion();
@@ -170,7 +191,7 @@ export function CinematicBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
       <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: "var(--scene-glow, 1)" }}>
-        <ParticleStage
+        {awake ? <ParticleStage
           target={target}
           count={device.count}
           weak={device.weak}
@@ -181,7 +202,7 @@ export function CinematicBackdrop() {
             return out;
           }}
           fallback={<FieldFallback className="absolute inset-0" />}
-        />
+        /> : null}
       </div>
       {/* The edges fall away to the page's black. */}
       <div className="absolute inset-0" style={{ background: "radial-gradient(130% 95% at 50% 50%, transparent 60%, rgba(5,5,5,0.7))" }} />

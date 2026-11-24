@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requestAddress, tooManyEvents } from "@/lib/security/rate";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { adClickIds, later, reportSiteEvent } from "@/lib/site-tracking";
@@ -25,6 +26,8 @@ const event = z.discriminatedUnion("name", [
 const body = z.object({ anonId: z.string().uuid().nullable().optional() }).and(event);
 
 export async function POST(request: Request) {
+  // A script filling the table is refused per address (lib/security/rate.ts).
+  if (tooManyEvents(requestAddress(request), Date.now())) return new NextResponse(null, { status: 429 });
   let parsed: z.infer<typeof body>;
   try {
     const raw = await request.text();

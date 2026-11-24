@@ -11,9 +11,12 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// Only small labels use it: not preloaded, so it never competes with the
+// headline and body fonts on the first paint. It swaps in when it arrives.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 // What a search engine, a social network and a browser tab each see.
@@ -28,7 +31,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {
-    default: "MAIRO — Your AI advertising team for Facebook & Instagram",
+    default: "MAIRO — Your AI advertising department for Facebook & Instagram",
     // Every other page appends to this rather than replacing it, so a tab
     // reads "Pricing · MAIRO" instead of a bare word with no owner.
     template: `%s · ${SITE_NAME}`,

@@ -9,7 +9,7 @@ import { brandFont } from "@/lib/fonts";
 import { CinematicBackdrop } from "@/components/cinematic/home/director";
 import { CinematicHero } from "@/components/cinematic/home/hero";
 import { HomeNav } from "@/components/cinematic/home/nav";
-import { Closing, ControlBand, ExampleRun, HowItWorks, PracticalFaq, PricingSimple, TheWork } from "@/components/cinematic/home/scenes";
+import { Closing, ControlBand, ExampleRun, HowItWorks, PracticalFaq, PricingSimple, TheWork, VersusAgency } from "@/components/cinematic/home/scenes";
 import { AskMairoScene } from "@/components/cinematic/home/conversation";
 import { MobileCta, ScrollProgress } from "@/components/cinematic/home/live";
 
@@ -78,6 +78,7 @@ export function ConsoleHome() {
         <AskMairoScene />
         <ExampleRun />
         <ControlBand />
+        <VersusAgency />
         <PricingSimple plans={plans} />
         <PracticalFaq />
         <Closing />

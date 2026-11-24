@@ -380,3 +380,58 @@ export function PracticalFaq() {
     </section>
   );
 }
+
+// --- Versus an agency -------------------------------------------------------
+//
+// How the work gets done, side by side — structure only. No prices for
+// agencies (they vary too much to quote honestly) and no claimed savings or
+// results; MAIRO's own column is only what the product does and enforces.
+
+const VERSUS: [string, string, string][] = [
+  ["Who makes the ads", "An account team, on their schedule", "MAIRO, from your website and your results — ready in minutes"],
+  ["What you pay", "Often a monthly retainer, sometimes a share of your ad spend", "One flat MAIRO plan. Your ad spend goes to Meta, never through MAIRO"],
+  ["Whose ad account", "Sometimes theirs", "Always yours — you can see and stop everything in Ads Manager"],
+  ["What needs your yes", "Varies by agency", "Every launch, every new ad and every budget increase"],
+  ["How it improves", "Monthly reports and calls", "MAIRO reads your results every day and proposes the next test for you to approve"],
+];
+
+export function VersusAgency() {
+  return (
+    <section id="versus" aria-labelledby="versus-title" className="relative scroll-mt-20 bg-[color:var(--v3-ink)] py-[clamp(80px,11vw,160px)]">
+      <div className="mx-auto w-full max-w-[1320px] px-5 sm:px-10 lg:px-16">
+        <p data-reveal className="v3-label">MAIRO or an agency</p>
+        <h2 id="versus-title" data-reveal className="v3-display mt-5 max-w-[900px] text-[clamp(40px,6vw,96px)] text-white">
+          The work of an ad team, without handing over the keys
+        </h2>
+        <div data-reveal className="mt-12 overflow-hidden rounded-[24px] border border-[color:var(--v3-line)]">
+          <table className="w-full text-left">
+            <caption className="sr-only">How MAIRO compares with a typical agency</caption>
+            <thead>
+              <tr className="border-b border-[color:var(--v3-line)] text-[13px] text-[color:var(--v3-text-3)]">
+                <th scope="col" className="hidden px-5 py-4 font-normal sm:table-cell sm:w-[24%]"><span className="sr-only">Question</span></th>
+                <th scope="col" className="px-5 py-4 font-normal">A typical agency</th>
+                <th scope="col" className="px-5 py-4 font-medium text-white">MAIRO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {VERSUS.map(([q, agency, mairo]) => (
+                <tr key={q} className="border-b border-[color:var(--v3-line)] last:border-b-0 align-top">
+                  <th scope="row" className="hidden px-5 py-5 text-[14.5px] font-medium text-white sm:table-cell">{q}</th>
+                  <td className="px-5 py-5 text-[14.5px] leading-relaxed text-[color:var(--v3-text-3)]">
+                    <span className="mb-1 block text-[12.5px] font-medium text-white/80 sm:hidden">{q}</span>
+                    {agency}
+                  </td>
+                  <td className="px-5 py-5 text-[14.5px] leading-relaxed text-white">
+                    <span className="mb-1 block text-[12.5px] text-transparent sm:hidden" aria-hidden>{q}</span>
+                    {mairo}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p data-reveal className="mt-4 text-[13px] text-[color:var(--v3-text-3)]">Agencies differ; this describes how the work is commonly set up, not any particular one.</p>
+      </div>
+    </section>
+  );
+}

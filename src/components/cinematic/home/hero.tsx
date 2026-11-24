@@ -26,18 +26,16 @@ export function CinematicHero() {
     >
       <div className="mx-auto grid w-full max-w-[1320px] gap-10 px-5 pb-16 pt-[104px] sm:px-10 sm:pt-[132px] lg:pt-[112px] lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center lg:gap-16 lg:px-16 lg:pb-24">
         <div className="min-w-0">
-          <p className="cine-intro v3-label" style={{ "--d": 80 } as React.CSSProperties}>
-            AI ad agency · Facebook &amp; Instagram
-          </p>
+          <p className="v3-label">AI advertising for Facebook &amp; Instagram</p>
+          {/* Painted at once — no entry animation. The headline is the page's
+              largest element, so anything that hides it first (a mask, a fade)
+              delays Largest Contentful Paint for every visitor. */}
           <h1 id="hero-title" className="v3-display mt-5 text-[clamp(40px,10.5vw,58px)] text-white [text-wrap:balance] sm:text-[clamp(56px,6.4vw,92px)]">
-            <span className="v3-mask">
-              <span className="v3-rise" style={{ "--d": 160 } as React.CSSProperties}>
-                Your AI agency for Facebook and Instagram ads
-              </span>
-            </span>
+            Your AI advertising department.{" "}
+            <span className="text-[color:var(--v3-text-2)]">Without the agency fees.</span>
           </h1>
-          <p className="cine-intro mt-6 max-w-[540px] text-[clamp(16.5px,1.4vw,19px)] leading-relaxed text-[color:var(--v3-text-2)]" style={{ "--d": 320 } as React.CSSProperties}>
-            MAIRO makes your ads, runs the campaigns you approve on your own Meta ad account, and uses the results to plan what to test next.
+          <p className="mt-6 max-w-[560px] text-[clamp(16.5px,1.4vw,19px)] leading-relaxed text-[color:var(--v3-text-2)]">
+            Connect your Meta ad account, tell MAIRO your goal and budget, and approve the strategy. MAIRO makes the ads, runs the campaigns you approve, and learns from every result.
           </p>
           <div className="cine-intro mt-8 max-w-[600px]" style={{ "--d": 440 } as React.CSSProperties}>
             <WebsiteStart id="hero-website" />

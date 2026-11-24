@@ -46,6 +46,7 @@ model User {
   passwordResets  PasswordReset[]
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+  @@index([organizationId])
 }
 
 /// What one person may do in one business — see lib/members/roles.ts for each
@@ -812,6 +813,7 @@ model Campaign {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@index([organizationId])
 }
 
 // --- Creative production ----------------------------------------------
@@ -875,6 +877,7 @@ model CreativeRequest {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@index([organizationId])
 }
 
 // One pass of the picture the client is working on. Every time they say
@@ -933,6 +936,8 @@ model AgentThread {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  /// Looked up on every dashboard page: this person's assistant thread for this business.
+  @@index([userId, organizationId, agentType])
 }
 
 enum MessageRole {

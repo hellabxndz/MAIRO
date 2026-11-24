@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { bearerMatches } from "@/lib/security/bearer";
 import { reportError, startCronCheckIn } from "@/lib/monitoring/report";
 import { db } from "@/lib/db";
 import { maybeGoLive } from "@/lib/campaigns/auto-launch";
@@ -42,10 +43,8 @@ export const maxDuration = 60;
  * the first run instead of silently inviting the internet to spend money.
  */
 function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (!secret) return false;
-  const header = req.headers.get("authorization") ?? "";
-  return header === `Bearer ${secret}`;
+  // Constant-time, and closed when CRON_SECRET isn't set (lib/security/bearer.ts).
+  return bearerMatches(req.headers.get("authorization"), process.env.CRON_SECRET);
 }
 
 export async function GET(req: Request) {
