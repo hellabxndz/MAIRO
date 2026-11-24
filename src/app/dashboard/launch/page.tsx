@@ -188,6 +188,13 @@ export default async function LaunchPage({ searchParams }: { searchParams: Promi
             )
           )}
 
+          {connected && (
+            <Link href="/dashboard/analysis" className={`${card} block p-5 transition hover:border-white/20`} data-analyze-link>
+              <p className="text-[15px] font-semibold text-white">See MAIRO&rsquo;s analysis of your ad account</p>
+              <p className="mt-1 text-[13.5px] text-muted">What your past campaigns did well, where money may have been wasted, and what MAIRO recommends — read-only, nothing changed.</p>
+            </Link>
+          )}
+
           {askPixel && pixelStep && (
             <div className={`${card} p-6`} data-step="pixel">
               <p className="text-[17px] font-semibold text-white">{pixelStep.label}</p>

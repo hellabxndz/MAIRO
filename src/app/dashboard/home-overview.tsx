@@ -228,6 +228,14 @@ export async function HomeOverview({
         </div>
       </section>
 
+      {c.header.adAccount.state === "connected" && (
+        <p className="mt-3 px-1 text-[14px]">
+          <Link href="/dashboard/analysis" className="inline-flex min-h-11 items-center text-white/85 underline decoration-white/30 underline-offset-4 hover:text-white sm:min-h-0" data-analyze-link>
+            Analyze my ads — what&rsquo;s working, what to fix, and what MAIRO recommends →
+          </Link>
+        </p>
+      )}
+
       <div className="mt-8">
         <HomeComposer assistantName={name} />
       </div>

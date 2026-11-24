@@ -31,6 +31,28 @@ createServer((req, res) => {
     res.end(JSON.stringify(body));
   };
   if (req.method !== "GET") return send(400, { error: { message: "The fake Meta refuses writes.", type: "OAuthException", code: 100 } });
+  // The account's campaigns (the Analyzer): the fixture's MAIRO campaign and
+  // three made before MAIRO — one efficient, one expensive, one that spent
+  // with no sales.
+  if (url.pathname.endsWith("/campaigns")) {
+    return send(200, { data: [
+      { id: "loop-camp", name: "Holiday mugs", objective: "OUTCOME_SALES", effective_status: "ACTIVE" },
+      { id: "old-best", name: "Best sellers — retargeting", objective: "OUTCOME_SALES", effective_status: "ACTIVE" },
+      { id: "old-cold", name: "Spring launch — broad", objective: "OUTCOME_SALES", effective_status: "PAUSED" },
+      { id: "old-zero", name: "Gift guide test", objective: "OUTCOME_SALES", effective_status: "PAUSED" },
+    ] });
+  }
+  if (url.pathname.endsWith("/insights") && url.searchParams.get("level") === "campaign" && url.searchParams.get("time_range")) {
+    const r = JSON.parse(url.searchParams.get("time_range"));
+    const days = Math.round((Date.parse(r.until) - Date.parse(r.since)) / 86_400_000) + 1;
+    const k = days / 30;
+    return send(200, { data: [
+      row("loop-camp", "campaign_id", 240 * Math.min(k, 0.5), Math.round(16 * Math.min(k, 0.5)), Math.round(380 * Math.min(k, 0.5))),
+      row("old-best", "campaign_id", 300 * k, Math.round(30 * k), Math.round(500 * k)),
+      row("old-cold", "campaign_id", 400 * k, Math.round(8 * k), Math.round(600 * k)),
+      ...(days >= 60 ? [row("old-zero", "campaign_id", 250, 0, 420)] : []),
+    ] });
+  }
   if (url.pathname.endsWith("/insights")) {
     const level = url.searchParams.get("level");
     if (level === "ad" && url.pathname.includes("loop-camp")) return send(200, { data: [row("loop-ad-0", "ad_id", 120, 12, 220), row("loop-ad-1", "ad_id", 120, 4, 160)] });

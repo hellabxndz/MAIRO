@@ -70,6 +70,7 @@
     "check:results": "tsx scripts/check-results.ts",
     "check:right-now": "tsx scripts/check-right-now.ts",
     "check:security": "tsx scripts/check-security.ts",
+    "check:analyzer": "tsx scripts/check-analyzer.ts",
     "ops:restore-check": "node scripts/ops/restore-check.mjs",
     "check:first-ad": "tsx scripts/check-first-ad.ts",
     "check:creative-loop": "tsx scripts/check-creative-loop.ts",

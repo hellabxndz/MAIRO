@@ -8,6 +8,8 @@ import type { OnboardingStep } from "@/lib/onboarding/progress";
 
 /** Pages a free-plan account can open before subscribing. */
 export const FREE_PAGES = [
+  // The Meta Ads Analyzer: free, so connecting Meta shows its value before paying.
+  "/dashboard/analysis",
   "/dashboard/business",
   "/dashboard/settings",
   "/dashboard/account",

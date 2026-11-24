@@ -29,3 +29,15 @@ export function tooManyEvents(key: string, now: number, store: Map<string, numbe
 }
 
 export const EVENT_LIMIT = { windowMs: WINDOW_MS, max: MAX_PER_WINDOW };
+
+// The Meta Ads Analyzer: a handful of runs per business is plenty (Meta's
+// figures are cached for two minutes anyway); a loop is refused.
+const runs = new Map<string, number[]>();
+export const ANALYZER_LIMIT = { windowMs: 10 * 60_000, max: 10 };
+export function tooManyAnalyzerRuns(organizationId: string, now: number, store: Map<string, number[]> = runs): boolean {
+  const recent = (store.get(organizationId) ?? []).filter((t) => now - t < ANALYZER_LIMIT.windowMs);
+  if (recent.length >= ANALYZER_LIMIT.max) return true;
+  recent.push(now);
+  store.set(organizationId, recent);
+  return false;
+}
